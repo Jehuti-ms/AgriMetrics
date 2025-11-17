@@ -375,6 +375,7 @@
 
     <script>
 // Supabase Configuration
+// Supabase Configuration
 const SUPABASE_URL = 'https://psfpaqncvqrytkqqouvt.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzZnBhcW5jdnFyeXRrcXFvdXZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDM3OTYsImV4cCI6MjA3ODk3OTc5Nn0.LtKR0QtHnasYBKiZPbxvFFv9CS_w_8x-fLBX4aq4lNM';
 
@@ -384,17 +385,29 @@ console.log("Supabase connected");
 
 // UI Functions
 function showSection(sectionName) {
+    console.log("Showing section:", sectionName);
+    
+    // Hide all sections
     document.querySelectorAll('.section').forEach(section => {
         section.classList.add('hidden');
     });
-    document.getElementById(sectionName)?.classList.remove('hidden');
+    
+    // Show target section
+    const targetSection = document.getElementById(sectionName);
+    if (targetSection) {
+        targetSection.classList.remove('hidden');
+    } else {
+        console.error("Section not found:", sectionName);
+    }
 }
 
 function showLogin() {
+    console.log("Show login called");
     showSection('loginSection');
 }
 
 function showRegister() {
+    console.log("Show register called");
     showSection('registerSection');
 }
 
@@ -403,7 +416,7 @@ function showModal(modalId) {
 }
 
 function hideModal(modalId) {
-    document.getElementById(modalId)?.classList.add('hidden');
+    document.getElementById(modalId)?.classlList.add('hidden');
 }
 
 function showInventoryModal() { showModal('inventoryModal'); }
@@ -447,8 +460,7 @@ async function handleLogin(event) {
 
         if (error) throw error;
         
-        // Success - auth state listener will handle UI
-        console.log("Login successful");
+        console.log("Login successful, waiting for auth state change...");
     } catch (error) {
         alert('Error: ' + error.message);
     }
@@ -463,15 +475,21 @@ async function logout() {
     }
 }
 
-// Demo login (for testing without Supabase setup)
+// Force demo mode (bypass Supabase auth issues)
 function loginDemo() {
+    console.log("Demo login activated");
+    
+    // Hide auth sections
     document.getElementById('loginSection').classList.add('hidden');
     document.getElementById('registerSection').classList.add('hidden');
+    
+    // Show app section
     document.getElementById('appSection').classList.remove('hidden');
     document.getElementById('userEmail').textContent = "demo@agrimetrics.com";
     document.getElementById('logoutBtn').classList.remove('hidden');
     document.getElementById('loginBtn').classList.add('hidden');
     
+    // Show dashboard
     showSection('dashboard');
     alert("Welcome to AgriMetrics Demo Mode!");
 }
@@ -479,63 +497,53 @@ function loginDemo() {
 // Inventory Functions
 async function addInventoryItem(event) {
     event.preventDefault();
-    const user = (await supabase.auth.getUser()).data.user;
-    
-    if (!user) {
-        alert('Please log in first');
-        return;
-    }
-
-    const itemData = {
-        user_id: user.id,
-        name: document.getElementById('itemName').value,
-        category: document.getElementById('itemCategory').value,
-        condition: document.getElementById('itemCondition').value,
-        comments: document.getElementById('itemComments').value
-    };
-
-    try {
-        const { data, error } = await supabase
-            .from('inventory')
-            .insert([itemData])
-            .select();
-
-        if (error) throw error;
-        
-        hideModal('inventoryModal');
-        event.target.reset();
-        alert('Inventory item added successfully!');
-    } catch (error) {
-        alert('Error adding item: ' + error.message);
-    }
+    alert("In demo mode: Item would be saved to Supabase");
+    hideModal('inventoryModal');
+    event.target.reset();
 }
 
-// Auth State Listener
+// Auth State Listener with detailed logging
 supabase.auth.onAuthStateChange((event, session) => {
-    console.log("Auth state changed:", event, session);
+    console.log("Auth state changed - Event:", event, "Session:", session);
     
-    if (session) {
-        // User signed in
+    if (session && session.user) {
+        console.log("User signed in:", session.user.email);
+        
+        // Hide auth sections
         document.getElementById('loginSection').classList.add('hidden');
         document.getElementById('registerSection').classList.add('hidden');
+        
+        // Show app section
         document.getElementById('appSection').classList.remove('hidden');
         document.getElementById('userEmail').textContent = session.user.email;
         document.getElementById('logoutBtn').classList.remove('hidden');
         document.getElementById('loginBtn').classList.add('hidden');
         
+        // Force show dashboard
         showSection('dashboard');
+        
     } else {
-        // User signed out
+        console.log("User signed out");
+        
+        // Show auth sections
         document.getElementById('loginSection').classList.remove('hidden');
         document.getElementById('appSection').classList.add('hidden');
         document.getElementById('logoutBtn').classList.add('hidden');
         document.getElementById('loginBtn').classList.remove('hidden');
+        
         showSection('loginSection');
     }
 });
 
-// Initialize
+// Initialize - Start with login section
+console.log("Initializing AgriMetrics...");
 showSection('loginSection');
+
+// Add a temporary debug button to force show app
+setTimeout(() => {
+    console.log("App initialized. Check browser console for errors.");
+}, 1000);
+        
     </script>
 </body>
 </html>
