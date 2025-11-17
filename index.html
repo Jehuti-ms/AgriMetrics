@@ -374,215 +374,73 @@
     </div>
 
     <script>
-        // Supabase Configuration - REPLACE WITH YOUR CREDENTIALS
-        const SUPABASE_URL = 'https://psfpaqncvqrytkqqouvt.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzZnBhcW5jdnFyeXRrcXFvdXZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDM3OTYsImV4cCI6MjA3ODk3OTc5Nn0.LtKR0QtHnasYBKiZPbxvFFv9CS_w_8x-fLBX4aq4lNM';
-        
-        // Initialize Supabase
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        window.supabaseClient = supabase;
+     // Supabase Configuration
+const SUPABASE_URL = 'https://psfpaqncvqrytkqqouvt.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzZnBhcW5jdnFyeXRrcXFvdXZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDM3OTYsImV4cCI6MjA3ODk3OTc5Nn0.LtKR0QtHnasYBKiZPbxvFFv9CS_w_8x-fLBX4aq4lNM';
 
-        // UI Functions
-        function showSection(sectionName) {
-            document.querySelectorAll('.section').forEach(section => {
-                section.classList.add('hidden');
-            });
-            document.getElementById(sectionName).classList.remove('hidden');
-        }
+// Initialize Supabase but handle errors gracefully
+let supabase;
+try {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  console.log("Supabase connected");
+} catch (error) {
+  console.log("Supabase failed, using demo mode");
+  supabase = null;
+}
 
-        function showLogin() {
-            showSection('loginSection');
-        }
+// UI Functions
+function showSection(sectionName) {
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.add('hidden');
+    });
+    document.getElementById(sectionName)?.classList.remove('hidden');
+}
 
-        function showRegister() {
-            showSection('registerSection');
-        }
+function showModal(modalId) {
+    document.getElementById(modalId)?.classList.remove('hidden');
+}
 
-        function showInventoryModal() {
-            document.getElementById('inventoryModal').classList.remove('hidden');
-        }
+function hideModal(modalId) {
+    document.getElementById(modalId)?.classList.add('hidden');
+}
 
-        function hideInventoryModal() {
-            document.getElementById('inventoryModal').classList.add('hidden');
-        }
+function showInventoryModal() { showModal('inventoryModal'); }
 
-        // Auth Functions
-        async function handleRegister(event) {
-            event.preventDefault();
-            const email = document.getElementById('regEmail').value;
-            const password = document.getElementById('regPassword').value;
+function loginDemo() {
+    document.getElementById('loginSection').classList.add('hidden');
+    document.getElementById('appSection').classList.remove('hidden');
+    document.getElementById('userEmail').textContent = "demo@agrimetrics.com";
+    document.getElementById('logoutBtn').classList.remove('hidden');
+    document.getElementById('loginBtn').classList.add('hidden');
+    showSection('dashboard');
+    alert("Welcome to AgriMetrics! Running in demo mode.");
+}
 
-            try {
-                const { data, error } = await supabase.auth.signUp({
-                    email: email,
-                    password: password,
-                });
+function logout() {
+    document.getElementById('loginSection').classList.remove('hidden');
+    document.getElementById('appSection').classList.add('hidden');
+    document.getElementById('logoutBtn').classList.add('hidden');
+    document.getElementById('loginBtn').classList.remove('hidden');
+    showSection('loginSection');
+}
 
-                if (error) throw error;
-                
-                alert('Registration successful! Check your email for verification.');
-                showLogin();
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
+function addInventoryItem(event) {
+    event.preventDefault();
+    const itemName = document.getElementById('itemName').value;
+    alert(`In demo mode: "${itemName}" would be saved to Supabase database`);
+    hideModal('inventoryModal');
+    event.target.reset();
+}
 
-        async function handleLogin(event) {
-            event.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+// Initialize - Skip Supabase auth for now
+showSection('loginSection');
 
-            try {
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email: email,
-                    password: password,
-                });
-
-                if (error) throw error;
-                
-                // Success - auth state listener will handle UI
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-
-        async function logout() {
-            try {
-                const { error } = await supabase.auth.signOut();
-                if (error) throw error;
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-
-        // Inventory Functions
-        async function addInventoryItem(event) {
-            event.preventDefault();
-            const user = (await supabase.auth.getUser()).data.user;
-            if (!user) return;
-
-            const itemData = {
-                user_id: user.id,
-                name: document.getElementById('itemName').value,
-                category: document.getElementById('itemCategory').value,
-                condition: document.getElementById('itemCondition').value,
-                comments: document.getElementById('itemComments').value
-            };
-
-            try {
-                const { data, error } = await supabase
-                    .from('inventory')
-                    .insert([itemData])
-                    .select();
-
-                if (error) throw error;
-                
-                hideInventoryModal();
-                event.target.reset();
-                loadInventory();
-            } catch (error) {
-                alert('Error adding item: ' + error.message);
-            }
-        }
-
-        async function loadInventory() {
-            const user = (await supabase.auth.getUser()).data.user;
-            if (!user) return;
-
-            try {
-                const { data: inventory, error } = await supabase
-                    .from('inventory')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-
-                const inventoryTable = document.getElementById('inventoryTable');
-                
-                if (!inventory || inventory.length === 0) {
-                    inventoryTable.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No inventory items yet</td></tr>';
-                    document.getElementById('totalInventory').textContent = '0';
-                    document.getElementById('sidebarInventory').textContent = '0';
-                    return;
-                }
-
-                inventoryTable.innerHTML = inventory.map(item => `
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap">${item.name}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${item.category}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="condition-${item.condition} font-semibold">
-                                ${item.condition.charAt(0).toUpperCase() + item.condition.slice(1)}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">${new Date(item.created_at).toLocaleDateString()}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <button onclick="deleteInventoryItem('${item.id}')" class="text-red-600 hover:text-red-900 text-sm">Delete</button>
-                        </td>
-                    </tr>
-                `).join('');
-
-                // Update counts
-                document.getElementById('totalInventory').textContent = inventory.length;
-                document.getElementById('sidebarInventory').textContent = inventory.length;
-
-                // Update recent activity
-                const recentItems = inventory.slice(0, 3);
-                document.getElementById('recentInventory').innerHTML = recentItems.map(item => `
-                    <div class="flex justify-between items-center py-2 border-b">
-                        <span>${item.name}</span>
-                        <span class="condition-${item.condition} text-sm">${item.condition}</span>
-                    </div>
-                `).join('');
-
-            } catch (error) {
-                console.error('Error loading inventory:', error);
-            }
-        }
-
-        async function deleteInventoryItem(itemId) {
-            if (!confirm('Are you sure you want to delete this item?')) return;
-
-            try {
-                const { error } = await supabase
-                    .from('inventory')
-                    .delete()
-                    .eq('id', itemId);
-
-                if (error) throw error;
-                
-                loadInventory();
-            } catch (error) {
-                alert('Error deleting item: ' + error.message);
-            }
-        }
-
-        // Auth State Listener
-        supabase.auth.onAuthStateChange((event, session) => {
-            if (session) {
-                // User signed in
-                document.getElementById('loginSection').classList.add('hidden');
-                document.getElementById('registerSection').classList.add('hidden');
-                document.getElementById('appSection').classList.remove('hidden');
-                document.getElementById('userEmail').textContent = session.user.email;
-                document.getElementById('logoutBtn').classList.remove('hidden');
-                document.getElementById('loginBtn').classList.add('hidden');
-                
-                loadInventory();
-                showSection('dashboard');
-            } else {
-                // User signed out
-                document.getElementById('loginSection').classList.remove('hidden');
-                document.getElementById('appSection').classList.add('hidden');
-                document.getElementById('logoutBtn').classList.add('hidden');
-                document.getElementById('loginBtn').classList.remove('hidden');
-                showSection('loginSection');
-            }
-        });
-
-        // Initialize
-        showSection('loginSection');
+// Placeholder functions
+function showIncomeModal() { alert("Income feature - connect to Supabase"); }
+function showExpenseModal() { alert("Expense feature - connect to Supabase"); }
+function showOrderModal() { alert("Order feature - connect to Supabase"); }
+function showProductionModal() { alert("Production feature - connect to Supabase"); }
+function showSalesModal() { alert("Sales feature - connect to Supabase"); }
     </script>
 </body>
 </html>
