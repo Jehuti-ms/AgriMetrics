@@ -375,7 +375,6 @@
 
     <script>
 // Supabase Configuration
-// Supabase Configuration
 const SUPABASE_URL = 'https://psfpaqncvqrytkqqouvt.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzZnBhcW5jdnFyeXRrcXFvdXZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDM3OTYsImV4cCI6MjA3ODk3OTc5Nn0.LtKR0QtHnasYBKiZPbxvFFv9CS_w_8x-fLBX4aq4lNM';
 
@@ -385,19 +384,30 @@ console.log("Supabase connected");
 
 // UI Functions
 function showSection(sectionName) {
-    console.log("Showing section:", sectionName);
+    console.log("🔄 Showing section:", sectionName);
     
     // Hide all sections
-    document.querySelectorAll('.section').forEach(section => {
+    const sections = document.querySelectorAll('.section');
+    console.log("Found sections:", sections.length);
+    
+    sections.forEach(section => {
         section.classList.add('hidden');
+        console.log("Hiding:", section.id);
     });
     
     // Show target section
     const targetSection = document.getElementById(sectionName);
     if (targetSection) {
         targetSection.classList.remove('hidden');
+        console.log("✅ Now showing:", sectionName);
     } else {
-        console.error("Section not found:", sectionName);
+        console.error("❌ Section not found:", sectionName);
+        // Fallback to dashboard
+        const dashboard = document.getElementById('dashboard');
+        if (dashboard) {
+            dashboard.classList.remove('hidden');
+            console.log("🔄 Fallback to dashboard");
+        }
     }
 }
 
@@ -412,13 +422,20 @@ function showRegister() {
 }
 
 function showModal(modalId) {
-    document.getElementById(modalId)?.classList.remove('hidden');
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('hidden');
+    }
 }
 
 function hideModal(modalId) {
-    document.getElementById(modalId)?.classlList.add('hidden');
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('hidden');
+    }
 }
 
+// Section navigation
 function showInventoryModal() { showModal('inventoryModal'); }
 function showIncomeModal() { alert("Income feature - connect to Supabase"); }
 function showExpenseModal() { alert("Expense feature - connect to Supabase"); }
@@ -460,7 +477,7 @@ async function handleLogin(event) {
 
         if (error) throw error;
         
-        console.log("Login successful, waiting for auth state change...");
+        console.log("✅ Login successful");
     } catch (error) {
         alert('Error: ' + error.message);
     }
@@ -475,9 +492,9 @@ async function logout() {
     }
 }
 
-// Force demo mode (bypass Supabase auth issues)
+// Demo login (bypass any auth issues)
 function loginDemo() {
-    console.log("Demo login activated");
+    console.log("🚀 Demo login activated");
     
     // Hide auth sections
     document.getElementById('loginSection').classList.add('hidden');
@@ -489,25 +506,27 @@ function loginDemo() {
     document.getElementById('logoutBtn').classList.remove('hidden');
     document.getElementById('loginBtn').classList.add('hidden');
     
-    // Show dashboard
-    showSection('dashboard');
-    alert("Welcome to AgriMetrics Demo Mode!");
+    // Force show dashboard with timeout to ensure DOM is ready
+    setTimeout(() => {
+        showSection('dashboard');
+    }, 100);
 }
 
-// Inventory Functions
-async function addInventoryItem(event) {
-    event.preventDefault();
-    alert("In demo mode: Item would be saved to Supabase");
+// Simple inventory function for demo
+function addInventoryItem(event) {
+    if (event) event.preventDefault();
+    const itemName = document.getElementById('itemName').value;
+    alert(`Demo: "${itemName}" would be saved to database`);
     hideModal('inventoryModal');
-    event.target.reset();
+    if (event) event.target.reset();
 }
 
-// Auth State Listener with detailed logging
+// Auth State Listener
 supabase.auth.onAuthStateChange((event, session) => {
-    console.log("Auth state changed - Event:", event, "Session:", session);
+    console.log("🔐 Auth state changed:", event);
     
     if (session && session.user) {
-        console.log("User signed in:", session.user.email);
+        console.log("✅ User signed in:", session.user.email);
         
         // Hide auth sections
         document.getElementById('loginSection').classList.add('hidden');
@@ -519,11 +538,13 @@ supabase.auth.onAuthStateChange((event, session) => {
         document.getElementById('logoutBtn').classList.remove('hidden');
         document.getElementById('loginBtn').classList.add('hidden');
         
-        // Force show dashboard
-        showSection('dashboard');
+        // Show dashboard with small delay to ensure DOM is ready
+        setTimeout(() => {
+            showSection('dashboard');
+        }, 100);
         
     } else {
-        console.log("User signed out");
+        console.log("🚪 User signed out");
         
         // Show auth sections
         document.getElementById('loginSection').classList.remove('hidden');
@@ -535,15 +556,23 @@ supabase.auth.onAuthStateChange((event, session) => {
     }
 });
 
-// Initialize - Start with login section
-console.log("Initializing AgriMetrics...");
+// Initialize app
+console.log("🌱 AgriMetrics initializing...");
 showSection('loginSection');
 
-// Add a temporary debug button to force show app
-setTimeout(() => {
-    console.log("App initialized. Check browser console for errors.");
-}, 1000);
+// Add global error handler to catch any JS errors
+window.addEventListener('error', function(e) {
+    console.error('❌ Global error:', e.error);
+});
         
     </script>
+    <!-- Debug Panel -->
+<div style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; z-index: 10000; font-size: 12px;">
+    <div>Debug Panel</div>
+    <button onclick="showSection('dashboard')" style="background: green; color: white; border: none; padding: 5px; margin: 2px; border-radius: 3px;">Show Dashboard</button>
+    <button onclick="showSection('inventory')" style="background: blue; color: white; border: none; padding: 5px; margin: 2px; border-radius: 3px;">Show Inventory</button>
+    <button onclick="loginDemo()" style="background: orange; color: white; border: none; padding: 5px; margin: 2px; border-radius: 3px;">Force Demo</button>
+    <button onclick="console.log('Sections:', document.querySelectorAll('.section'))" style="background: gray; color: white; border: none; padding: 5px; margin: 2px; border-radius: 3px;">Log Sections</button>
+</div>
 </body>
 </html>
