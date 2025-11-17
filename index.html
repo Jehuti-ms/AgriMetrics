@@ -374,19 +374,13 @@
     </div>
 
     <script>
-     // Supabase Configuration
+// Supabase Configuration
 const SUPABASE_URL = 'https://psfpaqncvqrytkqqouvt.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzZnBhcW5jdnFyeXRrcXFvdXZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDM3OTYsImV4cCI6MjA3ODk3OTc5Nn0.LtKR0QtHnasYBKiZPbxvFFv9CS_w_8x-fLBX4aq4lNM';
 
-// Initialize Supabase but handle errors gracefully
-let supabase;
-try {
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  console.log("Supabase connected");
-} catch (error) {
-  console.log("Supabase failed, using demo mode");
-  supabase = null;
-}
+// Initialize Supabase
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+console.log("Supabase connected");
 
 // UI Functions
 function showSection(sectionName) {
@@ -394,6 +388,14 @@ function showSection(sectionName) {
         section.classList.add('hidden');
     });
     document.getElementById(sectionName)?.classList.remove('hidden');
+}
+
+function showLogin() {
+    showSection('loginSection');
+}
+
+function showRegister() {
+    showSection('registerSection');
 }
 
 function showModal(modalId) {
@@ -405,42 +407,135 @@ function hideModal(modalId) {
 }
 
 function showInventoryModal() { showModal('inventoryModal'); }
-
-function loginDemo() {
-    document.getElementById('loginSection').classList.add('hidden');
-    document.getElementById('appSection').classList.remove('hidden');
-    document.getElementById('userEmail').textContent = "demo@agrimetrics.com";
-    document.getElementById('logoutBtn').classList.remove('hidden');
-    document.getElementById('loginBtn').classList.add('hidden');
-    showSection('dashboard');
-    alert("Welcome to AgriMetrics! Running in demo mode.");
-}
-
-function logout() {
-    document.getElementById('loginSection').classList.remove('hidden');
-    document.getElementById('appSection').classList.add('hidden');
-    document.getElementById('logoutBtn').classList.add('hidden');
-    document.getElementById('loginBtn').classList.remove('hidden');
-    showSection('loginSection');
-}
-
-function addInventoryItem(event) {
-    event.preventDefault();
-    const itemName = document.getElementById('itemName').value;
-    alert(`In demo mode: "${itemName}" would be saved to Supabase database`);
-    hideModal('inventoryModal');
-    event.target.reset();
-}
-
-// Initialize - Skip Supabase auth for now
-showSection('loginSection');
-
-// Placeholder functions
 function showIncomeModal() { alert("Income feature - connect to Supabase"); }
 function showExpenseModal() { alert("Expense feature - connect to Supabase"); }
 function showOrderModal() { alert("Order feature - connect to Supabase"); }
 function showProductionModal() { alert("Production feature - connect to Supabase"); }
 function showSalesModal() { alert("Sales feature - connect to Supabase"); }
+
+// Auth Functions
+async function handleRegister(event) {
+    event.preventDefault();
+    const email = document.getElementById('regEmail').value;
+    const password = document.getElementById('regPassword').value;
+
+    try {
+        const { data, error } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+        });
+
+        if (error) throw error;
+        
+        alert('Registration successful! You can now login.');
+        showLogin();
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function handleLogin(event) {
+    event.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password,
+        });
+
+        if (error) throw error;
+        
+        // Success - auth state listener will handle UI
+        console.log("Login successful");
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function logout() {
+    try {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+// Demo login (for testing without Supabase setup)
+function loginDemo() {
+    document.getElementById('loginSection').classList.add('hidden');
+    document.getElementById('registerSection').classList.add('hidden');
+    document.getElementById('appSection').classList.remove('hidden');
+    document.getElementById('userEmail').textContent = "demo@agrimetrics.com";
+    document.getElementById('logoutBtn').classList.remove('hidden');
+    document.getElementById('loginBtn').classList.add('hidden');
+    
+    showSection('dashboard');
+    alert("Welcome to AgriMetrics Demo Mode!");
+}
+
+// Inventory Functions
+async function addInventoryItem(event) {
+    event.preventDefault();
+    const user = (await supabase.auth.getUser()).data.user;
+    
+    if (!user) {
+        alert('Please log in first');
+        return;
+    }
+
+    const itemData = {
+        user_id: user.id,
+        name: document.getElementById('itemName').value,
+        category: document.getElementById('itemCategory').value,
+        condition: document.getElementById('itemCondition').value,
+        comments: document.getElementById('itemComments').value
+    };
+
+    try {
+        const { data, error } = await supabase
+            .from('inventory')
+            .insert([itemData])
+            .select();
+
+        if (error) throw error;
+        
+        hideModal('inventoryModal');
+        event.target.reset();
+        alert('Inventory item added successfully!');
+    } catch (error) {
+        alert('Error adding item: ' + error.message);
+    }
+}
+
+// Auth State Listener
+supabase.auth.onAuthStateChange((event, session) => {
+    console.log("Auth state changed:", event, session);
+    
+    if (session) {
+        // User signed in
+        document.getElementById('loginSection').classList.add('hidden');
+        document.getElementById('registerSection').classList.add('hidden');
+        document.getElementById('appSection').classList.remove('hidden');
+        document.getElementById('userEmail').textContent = session.user.email;
+        document.getElementById('logoutBtn').classList.remove('hidden');
+        document.getElementById('loginBtn').classList.add('hidden');
+        
+        showSection('dashboard');
+    } else {
+        // User signed out
+        document.getElementById('loginSection').classList.remove('hidden');
+        document.getElementById('appSection').classList.add('hidden');
+        document.getElementById('logoutBtn').classList.add('hidden');
+        document.getElementById('loginBtn').classList.remove('hidden');
+        showSection('loginSection');
+    }
+});
+
+// Initialize
+showSection('loginSection');
     </script>
 </body>
 </html>
