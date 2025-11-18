@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Farm Management System</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
     <style>
         :root {
             --primary-color: #2e7d32;
@@ -793,421 +794,556 @@
     </div>
 
     <script>
+        // Safe element selector function
+        function safeQuerySelector(selector) {
+            const element = document.querySelector(selector);
+            if (!element) {
+                console.warn(`Element not found: ${selector}`);
+            }
+            return element;
+        }
+
+        // Safe element selector for multiple elements
+        function safeQuerySelectorAll(selector) {
+            const elements = document.querySelectorAll(selector);
+            if (elements.length === 0) {
+                console.warn(`No elements found: ${selector}`);
+            }
+            return elements;
+        }
+
         // Navigation functionality
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const target = this.getAttribute('data-target');
-                
-                // Update active nav link
-                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                this.classList.add('active');
-                
-                // Show target section
-                document.querySelectorAll('.section').forEach(section => {
-                    section.classList.remove('active');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize navigation
+            const navLinks = safeQuerySelectorAll('.nav-link');
+            if (navLinks.length > 0) {
+                navLinks.forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const target = this.getAttribute('data-target');
+                        
+                        // Update active nav link
+                        navLinks.forEach(l => l.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // Show target section
+                        const sections = safeQuerySelectorAll('.section');
+                        sections.forEach(section => {
+                            section.classList.remove('active');
+                        });
+                        
+                        const targetSection = safeQuerySelector(`#${target}`);
+                        if (targetSection) {
+                            targetSection.classList.add('active');
+                        }
+                    });
                 });
-                document.getElementById(target).classList.add('active');
-            });
-        });
-        
-        // Sidebar quick actions
-        document.querySelectorAll('.sidebar-link').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const target = this.getAttribute('data-target');
-                
-                // Update active nav link
-                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                document.querySelector(`.nav-link[data-target="${target}"]`).classList.add('active');
-                
-                // Show target section
-                document.querySelectorAll('.section').forEach(section => {
-                    section.classList.remove('active');
+            }
+            
+            // Sidebar quick actions
+            const sidebarLinks = safeQuerySelectorAll('.sidebar-link');
+            if (sidebarLinks.length > 0) {
+                sidebarLinks.forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const target = this.getAttribute('data-target');
+                        
+                        // Update active nav link
+                        navLinks.forEach(l => l.classList.remove('active'));
+                        const targetNavLink = safeQuerySelector(`.nav-link[data-target="${target}"]`);
+                        if (targetNavLink) {
+                            targetNavLink.classList.add('active');
+                        }
+                        
+                        // Show target section
+                        const sections = safeQuerySelectorAll('.section');
+                        sections.forEach(section => {
+                            section.classList.remove('active');
+                        });
+                        
+                        const targetSection = safeQuerySelector(`#${target}`);
+                        if (targetSection) {
+                            targetSection.classList.add('active');
+                        }
+                    });
                 });
-                document.getElementById(target).classList.add('active');
-            });
-        });
-        
-        // Production veins selection
-        document.querySelectorAll('.production-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const type = this.getAttribute('data-type');
-                
-                // Update active production item
-                document.querySelectorAll('.production-item').forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
-                
-                // Show production section
-                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                document.querySelector('.nav-link[data-target="production"]').classList.add('active');
-                
-                document.querySelectorAll('.section').forEach(section => {
-                    section.classList.remove('active');
+            }
+            
+            // Production veins selection
+            const productionItems = safeQuerySelectorAll('.production-item');
+            if (productionItems.length > 0) {
+                productionItems.forEach(item => {
+                    item.addEventListener('click', function() {
+                        const type = this.getAttribute('data-type');
+                        
+                        // Update active production item
+                        productionItems.forEach(i => i.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // Show production section
+                        navLinks.forEach(l => l.classList.remove('active'));
+                        const productionNavLink = safeQuerySelector('.nav-link[data-target="production"]');
+                        if (productionNavLink) {
+                            productionNavLink.classList.add('active');
+                        }
+                        
+                        const sections = safeQuerySelectorAll('.section');
+                        sections.forEach(section => {
+                            section.classList.remove('active');
+                        });
+                        
+                        const productionSection = safeQuerySelector('#production');
+                        if (productionSection) {
+                            productionSection.classList.add('active');
+                        }
+                        
+                        // Show appropriate production form
+                        const productionSubsections = safeQuerySelectorAll('.production-subsection');
+                        productionSubsections.forEach(sub => {
+                            sub.classList.add('hidden');
+                        });
+                        
+                        const typeSelector = safeQuerySelector('#production-type-selector');
+                        if (typeSelector) {
+                            typeSelector.classList.add('hidden');
+                        }
+                        
+                        if (type === 'vegetables-open' || type === 'vegetables-aquaponics' || 
+                            type === 'vegetables-greenhouse' || type === 'seedlings') {
+                            const vegetablesProduction = safeQuerySelector('#vegetables-production');
+                            if (vegetablesProduction) {
+                                vegetablesProduction.classList.remove('hidden');
+                            }
+                        } else if (type === 'broilers' || type === 'rabbits' || type === 'sheep' || 
+                                   type === 'ducks' || type === 'other') {
+                            const animalProduction = safeQuerySelector('#animal-production');
+                            if (animalProduction) {
+                                animalProduction.classList.remove('hidden');
+                            }
+                        }
+                    });
                 });
-                document.getElementById('production').classList.add('active');
-                
-                // Show appropriate production form
-                document.querySelectorAll('.production-subsection').forEach(sub => {
-                    sub.classList.add('hidden');
+            }
+            
+            // Condition selection
+            const conditionOptions = safeQuerySelectorAll('.condition-option');
+            if (conditionOptions.length > 0) {
+                conditionOptions.forEach(option => {
+                    option.addEventListener('click', function() {
+                        conditionOptions.forEach(o => o.classList.remove('active'));
+                        this.classList.add('active');
+                    });
                 });
+            }
+            
+            // Report selection
+            const reportOptions = safeQuerySelectorAll('.report-option');
+            if (reportOptions.length > 0) {
+                reportOptions.forEach(option => {
+                    option.addEventListener('click', function() {
+                        const reportType = this.getAttribute('data-report');
+                        const preview = safeQuerySelector('#report-preview');
+                        
+                        if (preview) {
+                            let content = '';
+                            if (reportType === 'order-record') {
+                                content = '<h3>Order Record Report</h3><p>This report will contain all order records with details about stock, delivery status, and payments.</p>';
+                            } else if (reportType === 'sales-record') {
+                                content = '<h3>Sales Record Report</h3><p>This report will contain all sales records with customer information, quantities, and payment status.</p>';
+                            } else if (reportType === 'income-expenditure') {
+                                content = '<h3>Income & Expenditure Statement</h3><p>This report will show a summary of all income and expenses with net profit/loss calculations.</p>';
+                            }
+                            
+                            preview.innerHTML = content;
+                        }
+                    });
+                });
+            }
+            
+            // Add material row
+            const addMaterialBtn = safeQuerySelector('#add-material');
+            if (addMaterialBtn) {
+                addMaterialBtn.addEventListener('click', function() {
+                    const table = safeQuerySelector('#materials-table tbody');
+                    if (table) {
+                        const newRow = table.insertRow();
+                        
+                        newRow.innerHTML = `
+                            <td><input type="text" class="material-item"></td>
+                            <td><input type="number" class="material-quantity"></td>
+                            <td><input type="number" class="material-unit-cost" step="0.01"></td>
+                            <td><span class="material-total">0.00</span></td>
+                            <td><button class="btn btn-danger remove-material">Remove</button></td>
+                        `;
+                        
+                        // Add event listeners to new inputs
+                        const quantityInput = newRow.querySelector('.material-quantity');
+                        const unitCostInput = newRow.querySelector('.material-unit-cost');
+                        
+                        if (quantityInput && unitCostInput) {
+                            quantityInput.addEventListener('input', calculateMaterialTotal);
+                            unitCostInput.addEventListener('input', calculateMaterialTotal);
+                        }
+                        
+                        // Add event listener to remove button
+                        const removeBtn = newRow.querySelector('.remove-material');
+                        if (removeBtn) {
+                            removeBtn.addEventListener('click', function() {
+                                table.deleteRow(newRow.rowIndex);
+                                calculateProjectTotal();
+                            });
+                        }
+                    }
+                });
+            }
+            
+            // Calculate material total
+            function calculateMaterialTotal() {
+                const row = this.parentNode.parentNode;
+                const quantity = parseFloat(row.querySelector('.material-quantity').value) || 0;
+                const unitCost = parseFloat(row.querySelector('.material-unit-cost').value) || 0;
+                const total = quantity * unitCost;
                 
-                document.getElementById('production-type-selector').classList.add('hidden');
-                
-                if (type === 'vegetables-open' || type === 'vegetables-aquaponics' || 
-                    type === 'vegetables-greenhouse' || type === 'seedlings') {
-                    document.getElementById('vegetables-production').classList.remove('hidden');
-                } else if (type === 'broilers' || type === 'rabbits' || type === 'sheep' || 
-                           type === 'ducks' || type === 'other') {
-                    document.getElementById('animal-production').classList.remove('hidden');
+                const totalCell = row.querySelector('.material-total');
+                if (totalCell) {
+                    totalCell.textContent = total.toFixed(2);
                 }
-            });
-        });
-        
-        // Condition selection
-        document.querySelectorAll('.condition-option').forEach(option => {
-            option.addEventListener('click', function() {
-                document.querySelectorAll('.condition-option').forEach(o => o.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-        
-        // Report selection
-        document.querySelectorAll('.report-option').forEach(option => {
-            option.addEventListener('click', function() {
-                const reportType = this.getAttribute('data-report');
-                const preview = document.getElementById('report-preview');
-                
-                let content = '';
-                if (reportType === 'order-record') {
-                    content = '<h3>Order Record Report</h3><p>This report will contain all order records with details about stock, delivery status, and payments.</p>';
-                } else if (reportType === 'sales-record') {
-                    content = '<h3>Sales Record Report</h3><p>This report will contain all sales records with customer information, quantities, and payment status.</p>';
-                } else if (reportType === 'income-expenditure') {
-                    content = '<h3>Income & Expenditure Statement</h3><p>This report will show a summary of all income and expenses with net profit/loss calculations.</p>';
-                }
-                
-                preview.innerHTML = content;
-            });
-        });
-        
-        // Add material row
-        document.getElementById('add-material').addEventListener('click', function() {
-            const table = document.getElementById('materials-table').getElementsByTagName('tbody')[0];
-            const newRow = table.insertRow();
-            
-            newRow.innerHTML = `
-                <td><input type="text" class="material-item"></td>
-                <td><input type="number" class="material-quantity"></td>
-                <td><input type="number" class="material-unit-cost" step="0.01"></td>
-                <td><span class="material-total">0.00</span></td>
-                <td><button class="btn btn-danger remove-material">Remove</button></td>
-            `;
-            
-            // Add event listeners to new inputs
-            const quantityInput = newRow.querySelector('.material-quantity');
-            const unitCostInput = newRow.querySelector('.material-unit-cost');
-            
-            quantityInput.addEventListener('input', calculateMaterialTotal);
-            unitCostInput.addEventListener('input', calculateMaterialTotal);
-            
-            // Add event listener to remove button
-            newRow.querySelector('.remove-material').addEventListener('click', function() {
-                table.deleteRow(newRow.rowIndex);
                 calculateProjectTotal();
+            }
+            
+            // Calculate project total
+            function calculateProjectTotal() {
+                let total = 0;
+                const materialTotals = safeQuerySelectorAll('.material-total');
+                materialTotals.forEach(cell => {
+                    total += parseFloat(cell.textContent) || 0;
+                });
+                
+                const projectTotal = safeQuerySelector('#project-total');
+                if (projectTotal) {
+                    projectTotal.textContent = total.toFixed(2);
+                }
+            }
+            
+            // Initialize material calculation events
+            const materialInputs = safeQuerySelectorAll('.material-quantity, .material-unit-cost');
+            materialInputs.forEach(input => {
+                input.addEventListener('input', calculateMaterialTotal);
             });
-        });
-        
-        // Calculate material total
-        function calculateMaterialTotal() {
-            const row = this.parentNode.parentNode;
-            const quantity = parseFloat(row.querySelector('.material-quantity').value) || 0;
-            const unitCost = parseFloat(row.querySelector('.material-unit-cost').value) || 0;
-            const total = quantity * unitCost;
             
-            row.querySelector('.material-total').textContent = total.toFixed(2);
-            calculateProjectTotal();
-        }
-        
-        // Calculate project total
-        function calculateProjectTotal() {
-            let total = 0;
-            document.querySelectorAll('.material-total').forEach(cell => {
-                total += parseFloat(cell.textContent) || 0;
+            // Photo upload preview
+            const uploadPhotoBtn = safeQuerySelector('#upload-photo');
+            if (uploadPhotoBtn) {
+                uploadPhotoBtn.addEventListener('click', function() {
+                    const fileInput = safeQuerySelector('#inventory-photo');
+                    if (fileInput && fileInput.files[0]) {
+                        const file = fileInput.files[0];
+                        const reader = new FileReader();
+                        
+                        reader.onload = function(e) {
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.className = 'photo-preview';
+                            
+                            const previewContainer = safeQuerySelector('#photo-preview-container');
+                            if (previewContainer) {
+                                previewContainer.innerHTML = '';
+                                previewContainer.appendChild(img);
+                            }
+                        };
+                        
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+            
+            // Transaction photo upload
+            const uploadTransactionPhotoBtn = safeQuerySelector('#upload-transaction-photo');
+            if (uploadTransactionPhotoBtn) {
+                uploadTransactionPhotoBtn.addEventListener('click', function() {
+                    const fileInput = safeQuerySelector('#transaction-photo');
+                    if (fileInput && fileInput.files[0]) {
+                        const file = fileInput.files[0];
+                        const reader = new FileReader();
+                        
+                        reader.onload = function(e) {
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.className = 'photo-preview';
+                            
+                            const previewContainer = safeQuerySelector('#transaction-photo-preview');
+                            if (previewContainer) {
+                                previewContainer.innerHTML = '';
+                                previewContainer.appendChild(img);
+                            }
+                        };
+                        
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+            
+            // Save transaction
+            const saveTransactionBtn = safeQuerySelector('#save-transaction');
+            if (saveTransactionBtn) {
+                saveTransactionBtn.addEventListener('click', function() {
+                    const type = safeQuerySelector('#transaction-type').value;
+                    const date = safeQuerySelector('#transaction-date').value;
+                    const amount = safeQuerySelector('#transaction-amount').value;
+                    const organization = safeQuerySelector('#transaction-organization').value;
+                    const description = safeQuerySelector('#transaction-description').value;
+                    const value = parseFloat(safeQuerySelector('#transaction-value').value) || 0;
+                    const comments = safeQuerySelector('#transaction-comments').value;
+                    
+                    if (!date || !organization || !description) {
+                        alert('Please fill in all required fields');
+                        return;
+                    }
+                    
+                    const table = safeQuerySelector('#transaction-history');
+                    if (table) {
+                        const newRow = table.insertRow();
+                        
+                        // Calculate running total
+                        let runningTotal = 0;
+                        const runningTotalElement = safeQuerySelector('#running-total');
+                        if (runningTotalElement) {
+                            runningTotal = parseFloat(runningTotalElement.textContent) || 0;
+                        }
+                        
+                        if (type === 'income') {
+                            runningTotal += value;
+                        } else {
+                            runningTotal -= value;
+                        }
+                        
+                        if (runningTotalElement) {
+                            runningTotalElement.textContent = runningTotal.toFixed(2);
+                        }
+                        
+                        newRow.innerHTML = `
+                            <td>${date}</td>
+                            <td>${type.charAt(0).toUpperCase() + type.slice(1)}</td>
+                            <td>${description}</td>
+                            <td>${organization}</td>
+                            <td>${amount}</td>
+                            <td>$${value.toFixed(2)}</td>
+                            <td>$${runningTotal.toFixed(2)}</td>
+                        `;
+                        
+                        // Clear form
+                        safeQuerySelector('#transaction-date').value = '';
+                        safeQuerySelector('#transaction-amount').value = '';
+                        safeQuerySelector('#transaction-organization').value = '';
+                        safeQuerySelector('#transaction-description').value = '';
+                        safeQuerySelector('#transaction-value').value = '';
+                        safeQuerySelector('#transaction-comments').value = '';
+                        
+                        const transactionPhotoPreview = safeQuerySelector('#transaction-photo-preview');
+                        if (transactionPhotoPreview) {
+                            transactionPhotoPreview.innerHTML = '';
+                        }
+                    }
+                });
+            }
+            
+            // Save production record
+            const saveProductionBtn = safeQuerySelector('#save-production');
+            if (saveProductionBtn) {
+                saveProductionBtn.addEventListener('click', function() {
+                    const vegetablesForm = safeQuerySelector('#vegetables-production');
+                    const animalForm = safeQuerySelector('#animal-production');
+                    
+                    let type = '';
+                    let details = '';
+                    
+                    if (vegetablesForm && !vegetablesForm.classList.contains('hidden')) {
+                        type = 'Vegetables';
+                        const plantingDate = safeQuerySelector('#planting-date').value;
+                        const seedsCost = parseFloat(safeQuerySelector('#seeds-cost').value) || 0;
+                        const fertilizerCost = parseFloat(safeQuerySelector('#fertilizer-cost').value) || 0;
+                        const pestControlCost = parseFloat(safeQuerySelector('#pest-control-cost').value) || 0;
+                        const totalCost = seedsCost + fertilizerCost + pestControlCost;
+                        
+                        details = `Planting: ${plantingDate}, Seeds: $${seedsCost.toFixed(2)}, Fertilizer: $${fertilizerCost.toFixed(2)}, Pest Control: $${pestControlCost.toFixed(2)}`;
+                        
+                        // Add to production history
+                        const table = safeQuerySelector('#production-history');
+                        if (table) {
+                            const newRow = table.insertRow();
+                            newRow.innerHTML = `
+                                <td>${plantingDate}</td>
+                                <td>${type}</td>
+                                <td>$${totalCost.toFixed(2)}</td>
+                                <td>${details}</td>
+                            `;
+                        }
+                        
+                        // Clear form
+                        safeQuerySelector('#planting-date').value = '';
+                        safeQuerySelector('#seeds-cost').value = '';
+                        safeQuerySelector('#fertilizer-cost').value = '';
+                        safeQuerySelector('#pest-control-cost').value = '';
+                        
+                    } else if (animalForm && !animalForm.classList.contains('hidden')) {
+                        type = 'Animal';
+                        const livestockType = safeQuerySelector('#livestock-type').value;
+                        const newStockCost = parseFloat(safeQuerySelector('#new-stock-cost').value) || 0;
+                        const feedCost = parseFloat(safeQuerySelector('#feed-cost').value) || 0;
+                        const diseaseControlCost = parseFloat(safeQuerySelector('#disease-control-cost').value) || 0;
+                        const totalCost = newStockCost + feedCost + diseaseControlCost;
+                        
+                        details = `Livestock: ${livestockType}, New Stock: $${newStockCost.toFixed(2)}, Feed: $${feedCost.toFixed(2)}, Disease Control: $${diseaseControlCost.toFixed(2)}`;
+                        
+                        // Add to production history
+                        const table = safeQuerySelector('#production-history');
+                        if (table) {
+                            const newRow = table.insertRow();
+                            newRow.innerHTML = `
+                                <td>${new Date().toISOString().split('T')[0]}</td>
+                                <td>${type} (${livestockType})</td>
+                                <td>$${totalCost.toFixed(2)}</td>
+                                <td>${details}</td>
+                            `;
+                        }
+                        
+                        // Clear form
+                        safeQuerySelector('#new-stock-cost').value = '';
+                        safeQuerySelector('#feed-cost').value = '';
+                        safeQuerySelector('#disease-control-cost').value = '';
+                    } else {
+                        alert('Please select a production type first');
+                        return;
+                    }
+                    
+                    alert('Production record saved successfully!');
+                });
+            }
+            
+            // Save order
+            const saveOrderBtn = safeQuerySelector('#save-order');
+            if (saveOrderBtn) {
+                saveOrderBtn.addEventListener('click', function() {
+                    const orderName = safeQuerySelector('#order-name').value;
+                    const startDate = safeQuerySelector('#order-start-date').value;
+                    const openingStock = safeQuerySelector('#opening-stock').value;
+                    const availableStock = safeQuerySelector('#available-stock').value;
+                    const numberOfOrders = safeQuerySelector('#number-of-orders').value;
+                    const orderWeight = safeQuerySelector('#order-weight').value;
+                    const deliveryStatus = safeQuerySelector('#delivery-status').value;
+                    const paymentStatus = safeQuerySelector('#payment-status').value;
+                    const paymentsReceived = parseFloat(safeQuerySelector('#payments-received').value) || 0;
+                    const outstandingPayments = parseFloat(safeQuerySelector('#outstanding-payments').value) || 0;
+                    
+                    if (!orderName || !startDate) {
+                        alert('Please fill in all required fields');
+                        return;
+                    }
+                    
+                    const table = safeQuerySelector('#order-history');
+                    if (table) {
+                        const newRow = table.insertRow();
+                        newRow.innerHTML = `
+                            <td>${orderName}</td>
+                            <td>${startDate}</td>
+                            <td>${openingStock}</td>
+                            <td>${availableStock}</td>
+                            <td>${numberOfOrders}</td>
+                            <td>${orderWeight}</td>
+                            <td>${deliveryStatus}</td>
+                            <td>${paymentStatus}</td>
+                            <td>$${paymentsReceived.toFixed(2)}</td>
+                            <td>$${outstandingPayments.toFixed(2)}</td>
+                        `;
+                        
+                        // Clear form
+                        safeQuerySelector('#order-name').value = '';
+                        safeQuerySelector('#order-start-date').value = '';
+                        safeQuerySelector('#opening-stock').value = '';
+                        safeQuerySelector('#available-stock').value = '';
+                        safeQuerySelector('#number-of-orders').value = '';
+                        safeQuerySelector('#order-weight').value = '';
+                        safeQuerySelector('#payments-received').value = '';
+                        safeQuerySelector('#outstanding-payments').value = '';
+                        
+                        alert('Order saved successfully!');
+                    }
+                });
+            }
+            
+            // Save sale record
+            const saveSaleBtn = safeQuerySelector('#save-sale');
+            if (saveSaleBtn) {
+                saveSaleBtn.addEventListener('click', function() {
+                    const startDate = safeQuerySelector('#sale-start-date').value;
+                    const reference = safeQuerySelector('#sale-reference').value;
+                    const saleDate = safeQuerySelector('#sale-date').value;
+                    const customer = safeQuerySelector('#sale-customer').value;
+                    const saleType = safeQuerySelector('#sale-type').value;
+                    const quantityItems = safeQuerySelector('#sale-quantity-items').value;
+                    const quantityWeight = safeQuerySelector('#sale-quantity-weight').value;
+                    const totalSales = parseFloat(safeQuerySelector('#sale-total').value) || 0;
+                    const outstanding = parseFloat(safeQuerySelector('#sale-outstanding').value) || 0;
+                    
+                    if (!reference || !saleDate || !customer) {
+                        alert('Please fill in all required fields');
+                        return;
+                    }
+                    
+                    const table = safeQuerySelector('#sales-history');
+                    if (table) {
+                        const newRow = table.insertRow();
+                        newRow.innerHTML = `
+                            <td>${reference}</td>
+                            <td>${saleDate}</td>
+                            <td>${customer}</td>
+                            <td>${saleType}</td>
+                            <td>${quantityItems}</td>
+                            <td>${quantityWeight}</td>
+                            <td>$${totalSales.toFixed(2)}</td>
+                            <td>$${outstanding.toFixed(2)}</td>
+                        `;
+                        
+                        // Clear form
+                        safeQuerySelector('#sale-start-date').value = '';
+                        safeQuerySelector('#sale-reference').value = '';
+                        safeQuerySelector('#sale-date').value = '';
+                        safeQuerySelector('#sale-customer').value = '';
+                        safeQuerySelector('#sale-quantity-items').value = '';
+                        safeQuerySelector('#sale-quantity-weight').value = '';
+                        safeQuerySelector('#sale-total').value = '';
+                        safeQuerySelector('#sale-outstanding').value = '';
+                        
+                        alert('Sale record saved successfully!');
+                    }
+                });
+            }
+            
+            // Generate and email report
+            const generateReportBtn = safeQuerySelector('#generate-report');
+            if (generateReportBtn) {
+                generateReportBtn.addEventListener('click', function() {
+                    const email = safeQuerySelector('#report-email').value;
+                    
+                    if (!email) {
+                        alert('Please enter an email address');
+                        return;
+                    }
+                    
+                    // In a real application, this would generate a PDF and send it via email
+                    // For this demo, we'll just show a success message
+                    alert(`Report will be generated and sent to ${email}`);
+                });
+            }
+            
+            // Initialize with current date for date fields
+            const today = new Date().toISOString().split('T')[0];
+            const dateInputs = safeQuerySelectorAll('input[type="date"]');
+            dateInputs.forEach(input => {
+                if (!input.id.includes('start-date') && !input.id.includes('planting-date')) {
+                    input.value = today;
+                }
             });
-            
-            document.getElementById('project-total').textContent = total.toFixed(2);
-        }
-        
-        // Initialize material calculation events
-        document.querySelectorAll('.material-quantity, .material-unit-cost').forEach(input => {
-            input.addEventListener('input', calculateMaterialTotal);
-        });
-        
-        // Photo upload preview
-        document.getElementById('upload-photo').addEventListener('click', function() {
-            const fileInput = document.getElementById('inventory-photo');
-            const file = fileInput.files[0];
-            
-            if (file) {
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = 'photo-preview';
-                    
-                    document.getElementById('photo-preview-container').innerHTML = '';
-                    document.getElementById('photo-preview-container').appendChild(img);
-                };
-                
-                reader.readAsDataURL(file);
-            }
-        });
-        
-        // Transaction photo upload
-        document.getElementById('upload-transaction-photo').addEventListener('click', function() {
-            const fileInput = document.getElementById('transaction-photo');
-            const file = fileInput.files[0];
-            
-            if (file) {
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = 'photo-preview';
-                    
-                    document.getElementById('transaction-photo-preview').innerHTML = '';
-                    document.getElementById('transaction-photo-preview').appendChild(img);
-                };
-                
-                reader.readAsDataURL(file);
-            }
-        });
-        
-        // Save transaction
-        document.getElementById('save-transaction').addEventListener('click', function() {
-            const type = document.getElementById('transaction-type').value;
-            const date = document.getElementById('transaction-date').value;
-            const amount = document.getElementById('transaction-amount').value;
-            const organization = document.getElementById('transaction-organization').value;
-            const description = document.getElementById('transaction-description').value;
-            const value = parseFloat(document.getElementById('transaction-value').value) || 0;
-            const comments = document.getElementById('transaction-comments').value;
-            
-            if (!date || !organization || !description) {
-                alert('Please fill in all required fields');
-                return;
-            }
-            
-            const table = document.getElementById('transaction-history');
-            const newRow = table.insertRow();
-            
-            // Calculate running total
-            let runningTotal = parseFloat(document.getElementById('running-total').textContent) || 0;
-            if (type === 'income') {
-                runningTotal += value;
-            } else {
-                runningTotal -= value;
-            }
-            document.getElementById('running-total').textContent = runningTotal.toFixed(2);
-            
-            newRow.innerHTML = `
-                <td>${date}</td>
-                <td>${type.charAt(0).toUpperCase() + type.slice(1)}</td>
-                <td>${description}</td>
-                <td>${organization}</td>
-                <td>${amount}</td>
-                <td>$${value.toFixed(2)}</td>
-                <td>$${runningTotal.toFixed(2)}</td>
-            `;
-            
-            // Clear form
-            document.getElementById('transaction-date').value = '';
-            document.getElementById('transaction-amount').value = '';
-            document.getElementById('transaction-organization').value = '';
-            document.getElementById('transaction-description').value = '';
-            document.getElementById('transaction-value').value = '';
-            document.getElementById('transaction-comments').value = '';
-            document.getElementById('transaction-photo-preview').innerHTML = '';
-        });
-        
-        // Save production record
-        document.getElementById('save-production').addEventListener('click', function() {
-            const vegetablesForm = document.getElementById('vegetables-production');
-            const animalForm = document.getElementById('animal-production');
-            
-            let type = '';
-            let details = '';
-            
-            if (!vegetablesForm.classList.contains('hidden')) {
-                type = 'Vegetables';
-                const plantingDate = document.getElementById('planting-date').value;
-                const seedsCost = parseFloat(document.getElementById('seeds-cost').value) || 0;
-                const fertilizerCost = parseFloat(document.getElementById('fertilizer-cost').value) || 0;
-                const pestControlCost = parseFloat(document.getElementById('pest-control-cost').value) || 0;
-                const totalCost = seedsCost + fertilizerCost + pestControlCost;
-                
-                details = `Planting: ${plantingDate}, Seeds: $${seedsCost.toFixed(2)}, Fertilizer: $${fertilizerCost.toFixed(2)}, Pest Control: $${pestControlCost.toFixed(2)}`;
-                
-                // Add to production history
-                const table = document.getElementById('production-history');
-                const newRow = table.insertRow();
-                newRow.innerHTML = `
-                    <td>${plantingDate}</td>
-                    <td>${type}</td>
-                    <td>$${totalCost.toFixed(2)}</td>
-                    <td>${details}</td>
-                `;
-                
-                // Clear form
-                document.getElementById('planting-date').value = '';
-                document.getElementById('seeds-cost').value = '';
-                document.getElementById('fertilizer-cost').value = '';
-                document.getElementById('pest-control-cost').value = '';
-                
-            } else if (!animalForm.classList.contains('hidden')) {
-                type = 'Animal';
-                const livestockType = document.getElementById('livestock-type').value;
-                const newStockCost = parseFloat(document.getElementById('new-stock-cost').value) || 0;
-                const feedCost = parseFloat(document.getElementById('feed-cost').value) || 0;
-                const diseaseControlCost = parseFloat(document.getElementById('disease-control-cost').value) || 0;
-                const totalCost = newStockCost + feedCost + diseaseControlCost;
-                
-                details = `Livestock: ${livestockType}, New Stock: $${newStockCost.toFixed(2)}, Feed: $${feedCost.toFixed(2)}, Disease Control: $${diseaseControlCost.toFixed(2)}`;
-                
-                // Add to production history
-                const table = document.getElementById('production-history');
-                const newRow = table.insertRow();
-                newRow.innerHTML = `
-                    <td>${new Date().toISOString().split('T')[0]}</td>
-                    <td>${type} (${livestockType})</td>
-                    <td>$${totalCost.toFixed(2)}</td>
-                    <td>${details}</td>
-                `;
-                
-                // Clear form
-                document.getElementById('new-stock-cost').value = '';
-                document.getElementById('feed-cost').value = '';
-                document.getElementById('disease-control-cost').value = '';
-            } else {
-                alert('Please select a production type first');
-                return;
-            }
-            
-            alert('Production record saved successfully!');
-        });
-        
-        // Save order
-        document.getElementById('save-order').addEventListener('click', function() {
-            const orderName = document.getElementById('order-name').value;
-            const startDate = document.getElementById('order-start-date').value;
-            const openingStock = document.getElementById('opening-stock').value;
-            const availableStock = document.getElementById('available-stock').value;
-            const numberOfOrders = document.getElementById('number-of-orders').value;
-            const orderWeight = document.getElementById('order-weight').value;
-            const deliveryStatus = document.getElementById('delivery-status').value;
-            const paymentStatus = document.getElementById('payment-status').value;
-            const paymentsReceived = parseFloat(document.getElementById('payments-received').value) || 0;
-            const outstandingPayments = parseFloat(document.getElementById('outstanding-payments').value) || 0;
-            
-            if (!orderName || !startDate) {
-                alert('Please fill in all required fields');
-                return;
-            }
-            
-            const table = document.getElementById('order-history');
-            const newRow = table.insertRow();
-            newRow.innerHTML = `
-                <td>${orderName}</td>
-                <td>${startDate}</td>
-                <td>${openingStock}</td>
-                <td>${availableStock}</td>
-                <td>${numberOfOrders}</td>
-                <td>${orderWeight}</td>
-                <td>${deliveryStatus}</td>
-                <td>${paymentStatus}</td>
-                <td>$${paymentsReceived.toFixed(2)}</td>
-                <td>$${outstandingPayments.toFixed(2)}</td>
-            `;
-            
-            // Clear form
-            document.getElementById('order-name').value = '';
-            document.getElementById('order-start-date').value = '';
-            document.getElementById('opening-stock').value = '';
-            document.getElementById('available-stock').value = '';
-            document.getElementById('number-of-orders').value = '';
-            document.getElementById('order-weight').value = '';
-            document.getElementById('payments-received').value = '';
-            document.getElementById('outstanding-payments').value = '';
-            
-            alert('Order saved successfully!');
-        });
-        
-        // Save sale record
-        document.getElementById('save-sale').addEventListener('click', function() {
-            const startDate = document.getElementById('sale-start-date').value;
-            const reference = document.getElementById('sale-reference').value;
-            const saleDate = document.getElementById('sale-date').value;
-            const customer = document.getElementById('sale-customer').value;
-            const saleType = document.getElementById('sale-type').value;
-            const quantityItems = document.getElementById('sale-quantity-items').value;
-            const quantityWeight = document.getElementById('sale-quantity-weight').value;
-            const totalSales = parseFloat(document.getElementById('sale-total').value) || 0;
-            const outstanding = parseFloat(document.getElementById('sale-outstanding').value) || 0;
-            
-            if (!reference || !saleDate || !customer) {
-                alert('Please fill in all required fields');
-                return;
-            }
-            
-            const table = document.getElementById('sales-history');
-            const newRow = table.insertRow();
-            newRow.innerHTML = `
-                <td>${reference}</td>
-                <td>${saleDate}</td>
-                <td>${customer}</td>
-                <td>${saleType}</td>
-                <td>${quantityItems}</td>
-                <td>${quantityWeight}</td>
-                <td>$${totalSales.toFixed(2)}</td>
-                <td>$${outstanding.toFixed(2)}</td>
-            `;
-            
-            // Clear form
-            document.getElementById('sale-start-date').value = '';
-            document.getElementById('sale-reference').value = '';
-            document.getElementById('sale-date').value = '';
-            document.getElementById('sale-customer').value = '';
-            document.getElementById('sale-quantity-items').value = '';
-            document.getElementById('sale-quantity-weight').value = '';
-            document.getElementById('sale-total').value = '';
-            document.getElementById('sale-outstanding').value = '';
-            
-            alert('Sale record saved successfully!');
-        });
-        
-        // Generate and email report
-        document.getElementById('generate-report').addEventListener('click', function() {
-            const email = document.getElementById('report-email').value;
-            
-            if (!email) {
-                alert('Please enter an email address');
-                return;
-            }
-            
-            // In a real application, this would generate a PDF and send it via email
-            // For this demo, we'll just show a success message
-            alert(`Report will be generated and sent to ${email}`);
-        });
-        
-        // Initialize with current date for date fields
-        const today = new Date().toISOString().split('T')[0];
-        document.querySelectorAll('input[type="date"]').forEach(input => {
-            if (!input.id.includes('start-date') && !input.id.includes('planting-date')) {
-                input.value = today;
-            }
         });
     </script>
 </body>
