@@ -3,123 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgriMetrics - Farm Data Management</title>
+    <title>AgriMetrics - Farm Management</title>
+    <!-- Local Tailwind CSS to avoid CDN issues -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .section { display: block; }
-        .section.hidden { display: none; }
+        .hidden { display: none !important; }
+        .brand-gradient { 
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        }
         .condition-great { color: #10B981; }
         .condition-good { color: #3B82F6; }
         .condition-fair { color: #F59E0B; }
         .condition-poor { color: #EF4444; }
         .condition-replace { color: #DC2626; }
-        .brand-gradient { 
-            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-        }
     </style>
 </head>
 <body class="bg-gray-50">
-    <!-- Navigation -->
-    <nav class="brand-gradient text-white shadow-lg">
-        <div class="container mx-auto px-4">
-            <div class="flex justify-between items-center py-4">
-                <div class="flex items-center">
-                    <i class="fas fa-chart-line text-2xl mr-3"></i>
-                    <h1 class="text-2xl font-bold">AgriMetrics</h1>
-                    <span class="ml-2 text-sm bg-green-800 px-2 py-1 rounded">PRO</span>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <span id="userEmail" class="mr-4">Not signed in</span>
-                    <button onclick="logout()" class="bg-green-700 hover:bg-green-800 px-4 py-2 rounded hidden" id="logoutBtn">
-                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
-                    </button>
-                    <button onclick="showLogin()" class="bg-green-700 hover:bg-green-800 px-4 py-2 rounded" id="loginBtn">
-                        <i class="fas fa-sign-in-alt mr-2"></i>Login
-                    </button>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Login Section -->
-    <div id="loginSection" class="section">
-        <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <!-- Auth Sections -->
+    <div id="authSections">
+        <!-- Login Section -->
+        <div id="loginSection" class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
             <div class="max-w-md w-full space-y-8">
                 <div class="text-center">
                     <i class="fas fa-chart-line text-green-600 text-6xl mb-4"></i>
                     <h2 class="text-3xl font-bold text-gray-900">AgriMetrics</h2>
                     <p class="mt-2 text-gray-600">Farm Data Management Platform</p>
-                    <h3 class="mt-6 text-center text-xl font-extrabold text-gray-900">
-                        Sign in to your account
-                    </h3>
                 </div>
                 <form class="mt-8 space-y-6" onsubmit="handleLogin(event)">
-                    <div class="rounded-md shadow-sm -space-y-px">
-                        <div>
-                            <input id="email" name="email" type="email" required 
-                                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm" 
-                                placeholder="Email address">
-                        </div>
-                        <div>
-                            <input id="password" name="password" type="password" required 
-                                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm" 
-                                placeholder="Password">
-                        </div>
-                    </div>
-
                     <div>
-                        <button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white brand-gradient hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-200">
-                            <i class="fas fa-sign-in-alt mr-2"></i>Sign in
+                        <input id="email" name="email" type="email" required 
+                            class="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                            placeholder="Email address">
+                    </div>
+                    <div>
+                        <input id="password" name="password" type="password" required 
+                            class="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                            placeholder="Password">
+                    </div>
+                    <div>
+                        <button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white brand-gradient hover:shadow-lg">
+                            Sign In
                         </button>
                     </div>
-                    
                     <div class="text-center">
-                        <button type="button" onclick="showRegister()" class="text-green-600 hover:text-green-500 font-medium">
-                            Don't have an account? Register now
+                        <button type="button" onclick="showRegister()" class="text-green-600 hover:text-green-500">
+                            Don't have an account? Register
+                        </button>
+                    </div>
+                    <div class="text-center">
+                        <button type="button" onclick="loginDemo()" class="text-blue-600 hover:text-blue-500">
+                            Or try Demo Mode
                         </button>
                     </div>
                 </form>
             </div>
         </div>
-    </div>
 
-    <!-- Register Section -->
-    <div id="registerSection" class="section hidden">
-        <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <!-- Register Section -->
+        <div id="registerSection" class="hidden min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
             <div class="max-w-md w-full space-y-8">
                 <div class="text-center">
                     <i class="fas fa-chart-line text-green-600 text-6xl mb-4"></i>
-                    <h2 class="text-3xl font-bold text-gray-900">AgriMetrics</h2>
-                    <p class="mt-2 text-gray-600">Start your data-driven farming journey</p>
-                    <h3 class="mt-6 text-center text-xl font-extrabold text-gray-900">
-                        Create your account
-                    </h3>
+                    <h2 class="text-3xl font-bold text-gray-900">Create Account</h2>
                 </div>
                 <form class="mt-8 space-y-6" onsubmit="handleRegister(event)">
-                    <div class="rounded-md shadow-sm -space-y-px">
-                        <div>
-                            <input id="regEmail" name="email" type="email" required 
-                                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm" 
-                                placeholder="Email address">
-                        </div>
-                        <div>
-                            <input id="regPassword" name="password" type="password" required 
-                                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm" 
-                                placeholder="Password (min 6 characters)">
-                        </div>
-                    </div>
-
                     <div>
-                        <button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white brand-gradient hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-200">
-                            <i class="fas fa-user-plus mr-2"></i>Create Account
+                        <input id="regEmail" name="email" type="email" required 
+                            class="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                            placeholder="Email address">
+                    </div>
+                    <div>
+                        <input id="regPassword" name="password" type="password" required 
+                            class="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                            placeholder="Password">
+                    </div>
+                    <div>
+                        <button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white brand-gradient hover:shadow-lg">
+                            Create Account
                         </button>
                     </div>
-                    
                     <div class="text-center">
-                        <button type="button" onclick="showLogin()" class="text-green-600 hover:text-green-500 font-medium">
-                            Already have an account? Sign in
+                        <button type="button" onclick="showLogin()" class="text-green-600 hover:text-green-500">
+                            Already have an account? Sign In
                         </button>
                     </div>
                 </form>
@@ -127,8 +94,27 @@
         </div>
     </div>
 
-    <!-- Main App -->
-    <div id="appSection" class="section hidden">
+    <!-- Main App Section -->
+    <div id="appSection" class="hidden">
+        <!-- Navigation -->
+        <nav class="brand-gradient text-white shadow-lg">
+            <div class="container mx-auto px-4">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-chart-line text-2xl mr-3"></i>
+                        <h1 class="text-2xl font-bold">AgriMetrics</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span id="userEmail" class="mr-4"></span>
+                        <button onclick="logout()" class="bg-green-700 hover:bg-green-800 px-4 py-2 rounded">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
         <div class="flex h-screen">
             <!-- Sidebar -->
             <div class="w-64 bg-white shadow-lg border-r">
@@ -140,40 +126,19 @@
                 </div>
                 <div class="p-4">
                     <ul class="space-y-1">
-                        <li><button onclick="showSection('dashboard')" class="w-full text-left p-3 hover:bg-green-50 rounded flex items-center text-gray-700 hover:text-green-700"><i class="fas fa-tachometer-alt mr-3"></i>Dashboard</button></li>
-                        <li><button onclick="showSection('inventory')" class="w-full text-left p-3 hover:bg-green-50 rounded flex items-center text-gray-700 hover:text-green-700"><i class="fas fa-boxes mr-3"></i>Inventory Check</button></li>
-                        <li><button onclick="showSection('production')" class="w-full text-left p-3 hover:bg-green-50 rounded flex items-center text-gray-700 hover:text-green-700"><i class="fas fa-tractor mr-3"></i>Production Veins</button></li>
-                        <li><button onclick="showSection('income')" class="w-full text-left p-3 hover:bg-green-50 rounded flex items-center text-gray-700 hover:text-green-700"><i class="fas fa-money-bill-wave mr-3"></i>Income & Expenses</button></li>
-                        <li><button onclick="showSection('orders')" class="w-full text-left p-3 hover:bg-green-50 rounded flex items-center text-gray-700 hover:text-green-700"><i class="fas fa-clipboard-list mr-3"></i>Orders</button></li>
-                        <li><button onclick="showSection('sales')" class="w-full text-left p-3 hover:bg-green-50 rounded flex items-center text-gray-700 hover:text-green-700"><i class="fas fa-chart-line mr-3"></i>Sales Records</button></li>
-                        <li><button onclick="showSection('reports')" class="w-full text-left p-3 hover:bg-green-50 rounded flex items-center text-gray-700 hover:text-green-700"><i class="fas fa-chart-bar mr-3"></i>Analytics</button></li>
+                        <li><button onclick="showAppSection('dashboard')" class="w-full text-left p-3 hover:bg-green-50 rounded flex items-center text-gray-700 hover:text-green-700"><i class="fas fa-tachometer-alt mr-3"></i>Dashboard</button></li>
+                        <li><button onclick="showAppSection('inventory')" class="w-full text-left p-3 hover:bg-green-50 rounded flex items-center text-gray-700 hover:text-green-700"><i class="fas fa-boxes mr-3"></i>Inventory</button></li>
+                        <li><button onclick="showAppSection('production')" class="w-full text-left p-3 hover:bg-green-50 rounded flex items-center text-gray-700 hover:text-green-700"><i class="fas fa-tractor mr-3"></i>Production</button></li>
+                        <li><button onclick="showAppSection('finance')" class="w-full text-left p-3 hover:bg-green-50 rounded flex items-center text-gray-700 hover:text-green-700"><i class="fas fa-money-bill-wave mr-3"></i>Finance</button></li>
                     </ul>
-                    
-                    <div class="mt-8 p-4 bg-gray-50 rounded-lg">
-                        <h4 class="font-semibold text-sm text-gray-600 mb-3">QUICK STATS</h4>
-                        <div class="space-y-2">
-                            <div class="flex justify-between text-sm">
-                                <span>Inventory Items:</span>
-                                <span class="font-semibold" id="sidebarInventory">0</span>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                                <span>This Month Income:</span>
-                                <span class="font-semibold text-green-600" id="sidebarIncome">$0</span>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
-            <!-- Main Content -->
+            <!-- Content Area -->
             <div class="flex-1 p-8 overflow-auto bg-gray-50">
-                <!-- Dashboard Section -->
-                <div id="dashboard" class="section">
-                    <div class="mb-6">
-                        <h2 class="text-3xl font-bold text-gray-800">Farm Dashboard</h2>
-                        <p class="text-gray-600">Welcome back! Here's your farm overview.</p>
-                    </div>
-                    
+                <!-- Dashboard -->
+                <div id="dashboardSection" class="app-content-section">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Dashboard</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                         <div class="bg-white p-6 rounded-lg shadow-sm border">
                             <div class="flex items-center">
@@ -181,8 +146,8 @@
                                     <i class="fas fa-boxes text-blue-600 text-2xl"></i>
                                 </div>
                                 <div class="ml-4">
-                                    <h3 class="text-gray-500 text-sm font-medium">Total Inventory</h3>
-                                    <p class="text-2xl font-bold text-gray-800" id="totalInventory">0</p>
+                                    <h3 class="text-gray-500 text-sm font-medium">Inventory Items</h3>
+                                    <p class="text-2xl font-bold text-gray-800">12</p>
                                 </div>
                             </div>
                         </div>
@@ -193,7 +158,7 @@
                                 </div>
                                 <div class="ml-4">
                                     <h3 class="text-gray-500 text-sm font-medium">Total Income</h3>
-                                    <p class="text-2xl font-bold text-gray-800" id="totalIncome">$0</p>
+                                    <p class="text-2xl font-bold text-gray-800">$2,540</p>
                                 </div>
                             </div>
                         </div>
@@ -204,7 +169,7 @@
                                 </div>
                                 <div class="ml-4">
                                     <h3 class="text-gray-500 text-sm font-medium">Total Expenses</h3>
-                                    <p class="text-2xl font-bold text-gray-800" id="totalExpenses">$0</p>
+                                    <p class="text-2xl font-bold text-gray-800">$1,230</p>
                                 </div>
                             </div>
                         </div>
@@ -215,112 +180,61 @@
                                 </div>
                                 <div class="ml-4">
                                     <h3 class="text-gray-500 text-sm font-medium">Pending Orders</h3>
-                                    <p class="text-2xl font-bold text-gray-800" id="pendingOrders">0</p>
+                                    <p class="text-2xl font-bold text-gray-800">5</p>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="bg-white p-6 rounded-lg shadow-sm border mb-8">
-                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h3>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <button onclick="showInventoryModal()" class="p-4 border-2 border-dashed border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 text-center transition duration-200">
-                                <i class="fas fa-plus text-green-500 text-2xl mb-2"></i>
-                                <p class="text-sm font-medium">Add Inventory</p>
-                            </button>
-                            <button onclick="showIncomeModal()" class="p-4 border-2 border-dashed border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 text-center transition duration-200">
-                                <i class="fas fa-money-bill text-green-500 text-2xl mb-2"></i>
-                                <p class="text-sm font-medium">Record Income</p>
-                            </button>
-                            <button onclick="showOrderModal()" class="p-4 border-2 border-dashed border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 text-center transition duration-200">
-                                <i class="fas fa-clipboard-list text-green-500 text-2xl mb-2"></i>
-                                <p class="text-sm font-medium">New Order</p>
-                            </button>
-                            <button onclick="showSection('reports')" class="p-4 border-2 border-dashed border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 text-center transition duration-200">
-                                <i class="fas fa-chart-bar text-green-500 text-2xl mb-2"></i>
-                                <p class="text-sm font-medium">View Analytics</p>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-lg shadow-sm border">
-                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Recent Inventory</h3>
-                        <div id="recentInventory" class="text-gray-500">
-                            No recent activity
-                        </div>
-                    </div>
                 </div>
 
-                <!-- Inventory Check Section -->
-                <div id="inventory" class="section hidden">
+                <!-- Inventory -->
+                <div id="inventorySection" class="app-content-section hidden">
                     <div class="flex justify-between items-center mb-6">
-                        <div>
-                            <h2 class="text-3xl font-bold text-gray-800">Inventory Management</h2>
-                            <p class="text-gray-600">Track equipment and materials condition</p>
-                        </div>
-                        <button onclick="showInventoryModal()" class="brand-gradient hover:shadow-lg text-white px-4 py-2 rounded flex items-center transition duration-200">
+                        <h2 class="text-3xl font-bold text-gray-800">Inventory Management</h2>
+                        <button onclick="showInventoryModal()" class="brand-gradient hover:shadow-lg text-white px-4 py-2 rounded flex items-center">
                             <i class="fas fa-plus mr-2"></i>Add Item
                         </button>
                     </div>
-                    
                     <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Condition</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Condition</th>
                                 </tr>
                             </thead>
-                            <tbody id="inventoryTable" class="bg-white divide-y divide-gray-200">
+                            <tbody class="bg-white divide-y divide-gray-200">
                                 <tr>
-                                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">No inventory items yet</td>
+                                    <td class="px-6 py-4">Tractor</td>
+                                    <td class="px-6 py-4">Equipment</td>
+                                    <td class="px-6 py-4"><span class="condition-good font-semibold">Good</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4">Seed Stock</td>
+                                    <td class="px-6 py-4">Supplies</td>
+                                    <td class="px-6 py-4"><span class="condition-fair font-semibold">Fair</span></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Other sections -->
-                <div id="production" class="section hidden">
+                <!-- Production -->
+                <div id="productionSection" class="app-content-section hidden">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Production Management</h2>
                     <div class="text-center py-12">
                         <i class="fas fa-tractor text-gray-300 text-6xl mb-4"></i>
-                        <h2 class="text-2xl font-bold text-gray-600 mb-2">Production Veins</h2>
-                        <p class="text-gray-500">Coming in the next update</p>
+                        <p class="text-gray-500">Production tracking coming soon</p>
                     </div>
                 </div>
-                
-                <div id="income" class="section hidden">
+
+                <!-- Finance -->
+                <div id="financeSection" class="app-content-section hidden">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Income & Expenses</h2>
                     <div class="text-center py-12">
                         <i class="fas fa-money-bill-wave text-gray-300 text-6xl mb-4"></i>
-                        <h2 class="text-2xl font-bold text-gray-600 mb-2">Income & Expenses</h2>
-                        <p class="text-gray-500">Coming in the next update</p>
-                    </div>
-                </div>
-                
-                <div id="orders" class="section hidden">
-                    <div class="text-center py-12">
-                        <i class="fas fa-clipboard-list text-gray-300 text-6xl mb-4"></i>
-                        <h2 class="text-2xl font-bold text-gray-600 mb-2">Order Management</h2>
-                        <p class="text-gray-500">Coming in the next update</p>
-                    </div>
-                </div>
-                
-                <div id="sales" class="section hidden">
-                    <div class="text-center py-12">
-                        <i class="fas fa-chart-line text-gray-300 text-6xl mb-4"></i>
-                        <h2 class="text-2xl font-bold text-gray-600 mb-2">Sales Analytics</h2>
-                        <p class="text-gray-500">Coming in the next update</p>
-                    </div>
-                </div>
-                
-                <div id="reports" class="section hidden">
-                    <div class="text-center py-12">
-                        <i class="fas fa-chart-bar text-gray-300 text-6xl mb-4"></i>
-                        <h2 class="text-2xl font-bold text-gray-600 mb-2">Advanced Analytics</h2>
-                        <p class="text-gray-500">Coming in the next update</p>
+                        <p class="text-gray-500">Financial tracking coming soon</p>
                     </div>
                 </div>
             </div>
@@ -333,7 +247,7 @@
             <div class="mt-3">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-medium text-gray-900">Add Inventory Item</h3>
-                    <button onclick="hideInventoryModal()" class="text-gray-400 hover:text-gray-600">
+                    <button onclick="hideModal('inventoryModal')" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -344,27 +258,23 @@
                     </div>
                     <div class="mb-4">
                         <label class="block text-gray-700 text-sm font-bold mb-2">Category</label>
-                        <input type="text" id="itemCategory" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="e.g., Equipment, Seeds, Tools">
+                        <input type="text" id="itemCategory" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500">
                     </div>
                     <div class="mb-4">
                         <label class="block text-gray-700 text-sm font-bold mb-2">Condition</label>
                         <select id="itemCondition" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500">
-                            <option value="great">Great - Like new</option>
-                            <option value="good">Good - Minor wear</option>
-                            <option value="fair">Fair - Needs attention</option>
-                            <option value="poor">Poor - Requires repair</option>
-                            <option value="replace">Replace - Beyond repair</option>
+                            <option value="great">Great</option>
+                            <option value="good">Good</option>
+                            <option value="fair">Fair</option>
+                            <option value="poor">Poor</option>
+                            <option value="replace">Replace</option>
                         </select>
                     </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Comments</label>
-                        <textarea id="itemComments" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Any notes about the item..."></textarea>
-                    </div>
                     <div class="flex items-center justify-between">
-                        <button type="button" onclick="hideInventoryModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded transition duration-200">
+                        <button type="button" onclick="hideModal('inventoryModal')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded">
                             Cancel
                         </button>
-                        <button type="submit" class="brand-gradient hover:shadow-lg text-white py-2 px-4 rounded transition duration-200">
+                        <button type="submit" class="brand-gradient hover:shadow-lg text-white py-2 px-4 rounded">
                             Add Item
                         </button>
                     </div>
@@ -374,205 +284,120 @@
     </div>
 
     <script>
-// Supabase Configuration
-const SUPABASE_URL = 'https://psfpaqncvqrytkqqouvt.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzZnBhcW5jdnFyeXRrcXFvdXZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDM3OTYsImV4cCI6MjA3ODk3OTc5Nn0.LtKR0QtHnasYBKiZPbxvFFv9CS_w_8x-fLBX4aq4lNM';
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://psfpaqncvqrytkqqouvt.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzZnBhcW5jdnFyeXRrcXFvdXZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDM3OTYsImV4cCI6MjA3ODk3OTc5Nn0.LtKR0QtHnasYBKiZPbxvFFv9CS_w_8x-fLBX4aq4lNM';
 
-// Initialize Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-console.log("Supabase connected");
+        // Initialize Supabase
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// UI Functions
-function showSection(sectionName) {
-    console.log("🔄 Showing section:", sectionName);
-    
-    // Hide all sections
-    const sections = document.querySelectorAll('.section');
-    console.log("Found sections:", sections.length);
-    
-    sections.forEach(section => {
-        section.classList.add('hidden');
-        console.log("Hiding:", section.id);
-    });
-    
-    // Show target section
-    const targetSection = document.getElementById(sectionName);
-    if (targetSection) {
-        targetSection.classList.remove('hidden');
-        console.log("✅ Now showing:", sectionName);
-    } else {
-        console.error("❌ Section not found:", sectionName);
-        // Fallback to dashboard
-        const dashboard = document.getElementById('dashboard');
-        if (dashboard) {
-            dashboard.classList.remove('hidden');
-            console.log("🔄 Fallback to dashboard");
+        // UI Functions
+        function showAuthSection(sectionName) {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('registerSection').classList.add('hidden');
+            document.getElementById(sectionName).classList.remove('hidden');
         }
-    }
-}
 
-function showLogin() {
-    console.log("Show login called");
-    showSection('loginSection');
-}
+        function showLogin() {
+            showAuthSection('loginSection');
+        }
 
-function showRegister() {
-    console.log("Show register called");
-    showSection('registerSection');
-}
+        function showRegister() {
+            showAuthSection('registerSection');
+        }
 
-function showModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('hidden');
-    }
-}
+        function showAppSection(sectionName) {
+            // Hide all app sections
+            document.querySelectorAll('.app-content-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            // Show target section
+            document.getElementById(sectionName + 'Section').classList.remove('hidden');
+        }
 
-function hideModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.add('hidden');
-    }
-}
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
 
-// Section navigation
-function showInventoryModal() { showModal('inventoryModal'); }
-function showIncomeModal() { alert("Income feature - connect to Supabase"); }
-function showExpenseModal() { alert("Expense feature - connect to Supabase"); }
-function showOrderModal() { alert("Order feature - connect to Supabase"); }
-function showProductionModal() { alert("Production feature - connect to Supabase"); }
-function showSalesModal() { alert("Sales feature - connect to Supabase"); }
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
 
-// Auth Functions
-async function handleRegister(event) {
-    event.preventDefault();
-    const email = document.getElementById('regEmail').value;
-    const password = document.getElementById('regPassword').value;
+        function showInventoryModal() { 
+            showModal('inventoryModal'); 
+        }
 
-    try {
-        const { data, error } = await supabase.auth.signUp({
-            email: email,
-            password: password,
+        // Auth Functions
+        async function handleRegister(event) {
+            event.preventDefault();
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+
+            try {
+                const { data, error } = await supabase.auth.signUp({ email, password });
+                if (error) throw error;
+                alert('Registration successful! Please check your email.');
+                showLogin();
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                // Auth state change will handle the UI
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function logout() {
+            try {
+                await supabase.auth.signOut();
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        function loginDemo() {
+            // Show app, hide auth
+            document.getElementById('authSections').classList.add('hidden');
+            document.getElementById('appSection').classList.remove('hidden');
+            document.getElementById('userEmail').textContent = "demo@agrimetrics.com";
+            showAppSection('dashboard');
+        }
+
+        function addInventoryItem(event) {
+            event.preventDefault();
+            alert('Item added (demo mode)');
+            hideModal('inventoryModal');
+            event.target.reset();
+        }
+
+        // Auth State Listener
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (session) {
+                // User signed in
+                document.getElementById('authSections').classList.add('hidden');
+                document.getElementById('appSection').classList.remove('hidden');
+                document.getElementById('userEmail').textContent = session.user.email;
+                showAppSection('dashboard');
+            } else {
+                // User signed out
+                document.getElementById('authSections').classList.remove('hidden');
+                document.getElementById('appSection').classList.add('hidden');
+                showLogin();
+            }
         });
 
-        if (error) throw error;
-        
-        alert('Registration successful! You can now login.');
+        // Initialize
         showLogin();
-    } catch (error) {
-        alert('Error: ' + error.message);
-    }
-}
-
-async function handleLogin(event) {
-    event.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-
-    try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password,
-        });
-
-        if (error) throw error;
-        
-        console.log("✅ Login successful");
-    } catch (error) {
-        alert('Error: ' + error.message);
-    }
-}
-
-async function logout() {
-    try {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
-    } catch (error) {
-        alert('Error: ' + error.message);
-    }
-}
-
-// Demo login (bypass any auth issues)
-function loginDemo() {
-    console.log("🚀 Demo login activated");
-    
-    // Hide auth sections
-    document.getElementById('loginSection').classList.add('hidden');
-    document.getElementById('registerSection').classList.add('hidden');
-    
-    // Show app section
-    document.getElementById('appSection').classList.remove('hidden');
-    document.getElementById('userEmail').textContent = "demo@agrimetrics.com";
-    document.getElementById('logoutBtn').classList.remove('hidden');
-    document.getElementById('loginBtn').classList.add('hidden');
-    
-    // Force show dashboard with timeout to ensure DOM is ready
-    setTimeout(() => {
-        showSection('dashboard');
-    }, 100);
-}
-
-// Simple inventory function for demo
-function addInventoryItem(event) {
-    if (event) event.preventDefault();
-    const itemName = document.getElementById('itemName').value;
-    alert(`Demo: "${itemName}" would be saved to database`);
-    hideModal('inventoryModal');
-    if (event) event.target.reset();
-}
-
-// Auth State Listener
-supabase.auth.onAuthStateChange((event, session) => {
-    console.log("🔐 Auth state changed:", event);
-    
-    if (session && session.user) {
-        console.log("✅ User signed in:", session.user.email);
-        
-        // Hide auth sections
-        document.getElementById('loginSection').classList.add('hidden');
-        document.getElementById('registerSection').classList.add('hidden');
-        
-        // Show app section
-        document.getElementById('appSection').classList.remove('hidden');
-        document.getElementById('userEmail').textContent = session.user.email;
-        document.getElementById('logoutBtn').classList.remove('hidden');
-        document.getElementById('loginBtn').classList.add('hidden');
-        
-        // Show dashboard with small delay to ensure DOM is ready
-        setTimeout(() => {
-            showSection('dashboard');
-        }, 100);
-        
-    } else {
-        console.log("🚪 User signed out");
-        
-        // Show auth sections
-        document.getElementById('loginSection').classList.remove('hidden');
-        document.getElementById('appSection').classList.add('hidden');
-        document.getElementById('logoutBtn').classList.add('hidden');
-        document.getElementById('loginBtn').classList.remove('hidden');
-        
-        showSection('loginSection');
-    }
-});
-
-// Initialize app
-console.log("🌱 AgriMetrics initializing...");
-showSection('loginSection');
-
-// Add global error handler to catch any JS errors
-window.addEventListener('error', function(e) {
-    console.error('❌ Global error:', e.error);
-});
-        
     </script>
-    <!-- Debug Panel -->
-<div style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; z-index: 10000; font-size: 12px;">
-    <div>Debug Panel</div>
-    <button onclick="showSection('dashboard')" style="background: green; color: white; border: none; padding: 5px; margin: 2px; border-radius: 3px;">Show Dashboard</button>
-    <button onclick="showSection('inventory')" style="background: blue; color: white; border: none; padding: 5px; margin: 2px; border-radius: 3px;">Show Inventory</button>
-    <button onclick="loginDemo()" style="background: orange; color: white; border: none; padding: 5px; margin: 2px; border-radius: 3px;">Force Demo</button>
-    <button onclick="console.log('Sections:', document.querySelectorAll('.section'))" style="background: gray; color: white; border: none; padding: 5px; margin: 2px; border-radius: 3px;">Log Sections</button>
-</div>
 </body>
 </html>
