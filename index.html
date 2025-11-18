@@ -119,6 +119,7 @@
             border-radius: 4px;
             cursor: pointer;
             transition: background-color 0.3s;
+            margin: 2px;
         }
         
         .btn:hover {
@@ -276,6 +277,19 @@
             background-color: var(--light-color);
             border-radius: 4px;
         }
+        
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .edit-form {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid var(--info-color);
+        }
     </style>
 </head>
 <body>
@@ -287,8 +301,10 @@
                     <ul>
                         <li><a href="#" class="nav-link active" data-target="dashboard">Dashboard</a></li>
                         <li><a href="#" class="nav-link" data-target="project-planning">Project Planning</a></li>
-                        <li><a href="#" class="nav-link" data-target="inventory">Inventory</a></li>
+                        <li><a href="#" class="nav-link" data-target="inventory-check">Inventory Check</a></li>
                         <li><a href="#" class="nav-link" data-target="production">Production</a></li>
+                        <li><a href="#" class="nav-link" data-target="income-expenses">Income & Expenses</a></li>
+                        <li><a href="#" class="nav-link" data-target="orders">Orders</a></li>
                         <li><a href="#" class="nav-link" data-target="sales">Sales</a></li>
                         <li><a href="#" class="nav-link" data-target="reports">Reports</a></li>
                     </ul>
@@ -305,7 +321,7 @@
                     <li><a href="#" class="sidebar-link" data-target="income-expenses">Add Income/Expense</a></li>
                     <li><a href="#" class="sidebar-link" data-target="inventory-check">Inventory Check</a></li>
                     <li><a href="#" class="sidebar-link" data-target="orders">Create Order</a></li>
-                    <li><a href="#" class="sidebar-link" data-target="sales-record">Record Sale</a></li>
+                    <li><a href="#" class="sidebar-link" data-target="sales">Record Sale</a></li>
                 </ul>
                 
                 <h3>Production Veins</h3>
@@ -392,10 +408,26 @@
                     </div>
                     
                     <button class="btn" style="margin-top: 20px;">Save Project</button>
+                    
+                    <h3>Saved Projects</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Project Name</th>
+                                <th>Description</th>
+                                <th>Total Cost</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projects-history">
+                            <!-- Projects will be added here dynamically -->
+                        </tbody>
+                    </table>
                 </div>
                 
                 <!-- Inventory Check Section -->
-                <div id="inventory" class="section">
+                <div id="inventory-check" class="section">
                     <h1>Inventory Check</h1>
                     
                     <div class="file-upload">
@@ -408,6 +440,22 @@
                     <div class="form-group">
                         <label for="inventory-item">Item Name</label>
                         <input type="text" id="inventory-item">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="inventory-category">Category</label>
+                        <select id="inventory-category">
+                            <option value="equipment">Equipment</option>
+                            <option value="tools">Tools</option>
+                            <option value="materials">Materials</option>
+                            <option value="supplies">Supplies</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="inventory-quantity">Quantity</label>
+                        <input type="number" id="inventory-quantity">
                     </div>
                     
                     <div class="form-group">
@@ -426,7 +474,7 @@
                         <textarea id="inventory-comments" rows="3"></textarea>
                     </div>
                     
-                    <button class="btn">Save Inventory Check</button>
+                    <button class="btn" id="save-inventory">Save Inventory Check</button>
                     
                     <h3>Inventory History</h3>
                     <table>
@@ -434,9 +482,12 @@
                             <tr>
                                 <th>Date</th>
                                 <th>Item</th>
+                                <th>Category</th>
+                                <th>Quantity</th>
                                 <th>Condition</th>
                                 <th>Comments</th>
                                 <th>Photo</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="inventory-history">
@@ -462,17 +513,22 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="seeds-cost">Seeds/Seedlings Cost</label>
+                            <label for="crop-type">Crop Type</label>
+                            <input type="text" id="crop-type" placeholder="e.g., Tomatoes, Lettuce">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="seeds-cost">Seeds/Seedlings Cost ($)</label>
                             <input type="number" id="seeds-cost" step="0.01" placeholder="Cost">
                         </div>
                         
                         <div class="form-group">
-                            <label for="fertilizer-cost">Fertilizer Cost</label>
+                            <label for="fertilizer-cost">Fertilizer Cost ($)</label>
                             <input type="number" id="fertilizer-cost" step="0.01" placeholder="Cost">
                         </div>
                         
                         <div class="form-group">
-                            <label for="pest-control-cost">Pest Control Cost</label>
+                            <label for="pest-control-cost">Pest Control Cost ($)</label>
                             <input type="number" id="pest-control-cost" step="0.01" placeholder="Cost">
                         </div>
                     </div>
@@ -492,17 +548,17 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="new-stock-cost">New Stock Cost</label>
+                            <label for="new-stock-cost">New Stock Cost ($)</label>
                             <input type="number" id="new-stock-cost" step="0.01" placeholder="Cost">
                         </div>
                         
                         <div class="form-group">
-                            <label for="feed-cost">Feed Cost</label>
+                            <label for="feed-cost">Feed Cost ($)</label>
                             <input type="number" id="feed-cost" step="0.01" placeholder="Cost">
                         </div>
                         
                         <div class="form-group">
-                            <label for="disease-control-cost">Disease Control Cost</label>
+                            <label for="disease-control-cost">Disease Control Cost ($)</label>
                             <input type="number" id="disease-control-cost" step="0.01" placeholder="Cost">
                         </div>
                     </div>
@@ -515,8 +571,9 @@
                             <tr>
                                 <th>Date</th>
                                 <th>Type</th>
-                                <th>Costs</th>
                                 <th>Details</th>
+                                <th>Total Cost</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="production-history">
@@ -591,6 +648,7 @@
                                 <th>Amount</th>
                                 <th>Value</th>
                                 <th>Running Total</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="transaction-history">
@@ -676,6 +734,7 @@
                                 <th>Payment Status</th>
                                 <th>Payments Received</th>
                                 <th>Outstanding Payments</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="order-history">
@@ -685,7 +744,7 @@
                 </div>
                 
                 <!-- Sales Record Section -->
-                <div id="sales-record" class="section">
+                <div id="sales" class="section">
                     <h1>Sales Record</h1>
                     
                     <div class="form-group">
@@ -750,6 +809,7 @@
                                 <th>Quantity (Weight)</th>
                                 <th>Total Sales</th>
                                 <th>Outstanding Payments</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="sales-history">
@@ -794,6 +854,16 @@
     </div>
 
     <script>
+        // Data storage for all records
+        const appData = {
+            inventory: [],
+            transactions: [],
+            production: [],
+            orders: [],
+            sales: [],
+            projects: []
+        };
+
         // Safe element selector function
         function safeQuerySelector(selector) {
             const element = document.querySelector(selector);
@@ -810,6 +880,11 @@
                 console.warn(`No elements found: ${selector}`);
             }
             return elements;
+        }
+
+        // Generate unique ID
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
         }
 
         // Navigation functionality
@@ -1083,6 +1158,164 @@
                 });
             }
             
+            // Save inventory check
+            const saveInventoryBtn = safeQuerySelector('#save-inventory');
+            if (saveInventoryBtn) {
+                saveInventoryBtn.addEventListener('click', function() {
+                    const item = safeQuerySelector('#inventory-item').value;
+                    const category = safeQuerySelector('#inventory-category').value;
+                    const quantity = safeQuerySelector('#inventory-quantity').value;
+                    const condition = safeQuerySelector('.condition-option.active')?.getAttribute('data-condition') || '';
+                    const comments = safeQuerySelector('#inventory-comments').value;
+                    
+                    if (!item || !condition) {
+                        alert('Please fill in all required fields');
+                        return;
+                    }
+                    
+                    const inventoryRecord = {
+                        id: generateId(),
+                        date: new Date().toISOString().split('T')[0],
+                        item,
+                        category,
+                        quantity,
+                        condition,
+                        comments,
+                        photo: safeQuerySelector('#photo-preview-container img')?.src || ''
+                    };
+                    
+                    appData.inventory.push(inventoryRecord);
+                    renderInventoryHistory();
+                    
+                    // Clear form
+                    safeQuerySelector('#inventory-item').value = '';
+                    safeQuerySelector('#inventory-quantity').value = '';
+                    safeQuerySelector('#inventory-comments').value = '';
+                    safeQuerySelector('#photo-preview-container').innerHTML = '';
+                    conditionOptions.forEach(opt => opt.classList.remove('active'));
+                    
+                    alert('Inventory check saved successfully!');
+                });
+            }
+            
+            // Render inventory history
+            function renderInventoryHistory() {
+                const table = safeQuerySelector('#inventory-history');
+                if (!table) return;
+                
+                table.innerHTML = '';
+                appData.inventory.forEach(record => {
+                    const row = table.insertRow();
+                    row.innerHTML = `
+                        <td>${record.date}</td>
+                        <td>${record.item}</td>
+                        <td>${record.category}</td>
+                        <td>${record.quantity}</td>
+                        <td><span class="condition-${record.condition}">${record.condition.charAt(0).toUpperCase() + record.condition.slice(1)}</span></td>
+                        <td>${record.comments}</td>
+                        <td>${record.photo ? '<img src="' + record.photo + '" class="photo-preview">' : 'No photo'}</td>
+                        <td class="action-buttons">
+                            <button class="btn btn-warning edit-inventory" data-id="${record.id}">Edit</button>
+                            <button class="btn btn-danger delete-inventory" data-id="${record.id}">Delete</button>
+                        </td>
+                    `;
+                });
+                
+                // Add event listeners for edit and delete buttons
+                safeQuerySelectorAll('.edit-inventory').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        editInventoryRecord(id);
+                    });
+                });
+                
+                safeQuerySelectorAll('.delete-inventory').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        deleteInventoryRecord(id);
+                    });
+                });
+            }
+            
+            // Edit inventory record
+            function editInventoryRecord(id) {
+                const record = appData.inventory.find(r => r.id === id);
+                if (!record) return;
+                
+                // Create edit form
+                const editForm = document.createElement('div');
+                editForm.className = 'edit-form';
+                editForm.innerHTML = `
+                    <h4>Edit Inventory Record</h4>
+                    <div class="form-group">
+                        <label>Item Name</label>
+                        <input type="text" id="edit-inventory-item" value="${record.item}">
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="edit-inventory-category">
+                            <option value="equipment" ${record.category === 'equipment' ? 'selected' : ''}>Equipment</option>
+                            <option value="tools" ${record.category === 'tools' ? 'selected' : ''}>Tools</option>
+                            <option value="materials" ${record.category === 'materials' ? 'selected' : ''}>Materials</option>
+                            <option value="supplies" ${record.category === 'supplies' ? 'selected' : ''}>Supplies</option>
+                            <option value="other" ${record.category === 'other' ? 'selected' : ''}>Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" id="edit-inventory-quantity" value="${record.quantity}">
+                    </div>
+                    <div class="form-group">
+                        <label>Condition</label>
+                        <select id="edit-inventory-condition">
+                            <option value="great" ${record.condition === 'great' ? 'selected' : ''}>Great</option>
+                            <option value="good" ${record.condition === 'good' ? 'selected' : ''}>Good</option>
+                            <option value="fair" ${record.condition === 'fair' ? 'selected' : ''}>Fair</option>
+                            <option value="poor" ${record.condition === 'poor' ? 'selected' : ''}>Poor</option>
+                            <option value="replace" ${record.condition === 'replace' ? 'selected' : ''}>Replace</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Comments</label>
+                        <textarea id="edit-inventory-comments" rows="3">${record.comments}</textarea>
+                    </div>
+                    <button class="btn btn-info update-inventory" data-id="${id}">Update</button>
+                    <button class="btn btn-danger cancel-edit">Cancel</button>
+                `;
+                
+                // Find the record row and insert edit form after it
+                const recordRow = safeQuerySelector(`.edit-inventory[data-id="${id}"]`).closest('tr');
+                recordRow.parentNode.insertBefore(editForm, recordRow.nextSibling);
+                
+                // Add event listeners
+                safeQuerySelector('.update-inventory').addEventListener('click', function() {
+                    const updatedRecord = {
+                        ...record,
+                        item: safeQuerySelector('#edit-inventory-item').value,
+                        category: safeQuerySelector('#edit-inventory-category').value,
+                        quantity: safeQuerySelector('#edit-inventory-quantity').value,
+                        condition: safeQuerySelector('#edit-inventory-condition').value,
+                        comments: safeQuerySelector('#edit-inventory-comments').value
+                    };
+                    
+                    const index = appData.inventory.findIndex(r => r.id === id);
+                    appData.inventory[index] = updatedRecord;
+                    renderInventoryHistory();
+                });
+                
+                safeQuerySelector('.cancel-edit').addEventListener('click', function() {
+                    editForm.remove();
+                });
+            }
+            
+            // Delete inventory record
+            function deleteInventoryRecord(id) {
+                if (confirm('Are you sure you want to delete this inventory record?')) {
+                    appData.inventory = appData.inventory.filter(r => r.id !== id);
+                    renderInventoryHistory();
+                }
+            }
+            
             // Save transaction
             const saveTransactionBtn = safeQuerySelector('#save-transaction');
             if (saveTransactionBtn) {
@@ -1100,51 +1333,169 @@
                         return;
                     }
                     
-                    const table = safeQuerySelector('#transaction-history');
-                    if (table) {
-                        const newRow = table.insertRow();
-                        
-                        // Calculate running total
-                        let runningTotal = 0;
-                        const runningTotalElement = safeQuerySelector('#running-total');
-                        if (runningTotalElement) {
-                            runningTotal = parseFloat(runningTotalElement.textContent) || 0;
-                        }
-                        
-                        if (type === 'income') {
-                            runningTotal += value;
-                        } else {
-                            runningTotal -= value;
-                        }
-                        
-                        if (runningTotalElement) {
-                            runningTotalElement.textContent = runningTotal.toFixed(2);
-                        }
-                        
-                        newRow.innerHTML = `
-                            <td>${date}</td>
-                            <td>${type.charAt(0).toUpperCase() + type.slice(1)}</td>
-                            <td>${description}</td>
-                            <td>${organization}</td>
-                            <td>${amount}</td>
-                            <td>$${value.toFixed(2)}</td>
-                            <td>$${runningTotal.toFixed(2)}</td>
-                        `;
-                        
-                        // Clear form
-                        safeQuerySelector('#transaction-date').value = '';
-                        safeQuerySelector('#transaction-amount').value = '';
-                        safeQuerySelector('#transaction-organization').value = '';
-                        safeQuerySelector('#transaction-description').value = '';
-                        safeQuerySelector('#transaction-value').value = '';
-                        safeQuerySelector('#transaction-comments').value = '';
-                        
-                        const transactionPhotoPreview = safeQuerySelector('#transaction-photo-preview');
-                        if (transactionPhotoPreview) {
-                            transactionPhotoPreview.innerHTML = '';
-                        }
+                    const transactionRecord = {
+                        id: generateId(),
+                        type,
+                        date,
+                        amount,
+                        organization,
+                        description,
+                        value,
+                        comments,
+                        photo: safeQuerySelector('#transaction-photo-preview img')?.src || ''
+                    };
+                    
+                    appData.transactions.push(transactionRecord);
+                    renderTransactionHistory();
+                    
+                    // Clear form
+                    safeQuerySelector('#transaction-date').value = '';
+                    safeQuerySelector('#transaction-amount').value = '';
+                    safeQuerySelector('#transaction-organization').value = '';
+                    safeQuerySelector('#transaction-description').value = '';
+                    safeQuerySelector('#transaction-value').value = '';
+                    safeQuerySelector('#transaction-comments').value = '';
+                    
+                    const transactionPhotoPreview = safeQuerySelector('#transaction-photo-preview');
+                    if (transactionPhotoPreview) {
+                        transactionPhotoPreview.innerHTML = '';
                     }
+                    
+                    alert('Transaction saved successfully!');
                 });
+            }
+            
+            // Render transaction history
+            function renderTransactionHistory() {
+                const table = safeQuerySelector('#transaction-history');
+                if (!table) return;
+                
+                table.innerHTML = '';
+                let runningTotal = 0;
+                
+                appData.transactions.forEach(record => {
+                    if (record.type === 'income') {
+                        runningTotal += record.value;
+                    } else {
+                        runningTotal -= record.value;
+                    }
+                    
+                    const row = table.insertRow();
+                    row.innerHTML = `
+                        <td>${record.date}</td>
+                        <td>${record.type.charAt(0).toUpperCase() + record.type.slice(1)}</td>
+                        <td>${record.description}</td>
+                        <td>${record.organization}</td>
+                        <td>${record.amount}</td>
+                        <td>$${record.value.toFixed(2)}</td>
+                        <td>$${runningTotal.toFixed(2)}</td>
+                        <td class="action-buttons">
+                            <button class="btn btn-warning edit-transaction" data-id="${record.id}">Edit</button>
+                            <button class="btn btn-danger delete-transaction" data-id="${record.id}">Delete</button>
+                        </td>
+                    `;
+                });
+                
+                // Update running total display
+                const runningTotalElement = safeQuerySelector('#running-total');
+                if (runningTotalElement) {
+                    runningTotalElement.textContent = runningTotal.toFixed(2);
+                }
+                
+                // Add event listeners for edit and delete buttons
+                safeQuerySelectorAll('.edit-transaction').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        editTransactionRecord(id);
+                    });
+                });
+                
+                safeQuerySelectorAll('.delete-transaction').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        deleteTransactionRecord(id);
+                    });
+                });
+            }
+            
+            // Edit transaction record
+            function editTransactionRecord(id) {
+                const record = appData.transactions.find(r => r.id === id);
+                if (!record) return;
+                
+                // Create edit form
+                const editForm = document.createElement('div');
+                editForm.className = 'edit-form';
+                editForm.innerHTML = `
+                    <h4>Edit Transaction</h4>
+                    <div class="form-group">
+                        <label>Transaction Type</label>
+                        <select id="edit-transaction-type">
+                            <option value="income" ${record.type === 'income' ? 'selected' : ''}>Income</option>
+                            <option value="expense" ${record.type === 'expense' ? 'selected' : ''}>Expense</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="edit-transaction-date" value="${record.date}">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount/Quantity</label>
+                        <input type="text" id="edit-transaction-amount" value="${record.amount}">
+                    </div>
+                    <div class="form-group">
+                        <label>Organization/Person</label>
+                        <input type="text" id="edit-transaction-organization" value="${record.organization}">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="edit-transaction-description" rows="3">${record.description}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Value ($)</label>
+                        <input type="number" id="edit-transaction-value" step="0.01" value="${record.value}">
+                    </div>
+                    <div class="form-group">
+                        <label>Comments</label>
+                        <textarea id="edit-transaction-comments" rows="3">${record.comments}</textarea>
+                    </div>
+                    <button class="btn btn-info update-transaction" data-id="${id}">Update</button>
+                    <button class="btn btn-danger cancel-edit">Cancel</button>
+                `;
+                
+                // Find the record row and insert edit form after it
+                const recordRow = safeQuerySelector(`.edit-transaction[data-id="${id}"]`).closest('tr');
+                recordRow.parentNode.insertBefore(editForm, recordRow.nextSibling);
+                
+                // Add event listeners
+                safeQuerySelector('.update-transaction').addEventListener('click', function() {
+                    const updatedRecord = {
+                        ...record,
+                        type: safeQuerySelector('#edit-transaction-type').value,
+                        date: safeQuerySelector('#edit-transaction-date').value,
+                        amount: safeQuerySelector('#edit-transaction-amount').value,
+                        organization: safeQuerySelector('#edit-transaction-organization').value,
+                        description: safeQuerySelector('#edit-transaction-description').value,
+                        value: parseFloat(safeQuerySelector('#edit-transaction-value').value) || 0,
+                        comments: safeQuerySelector('#edit-transaction-comments').value
+                    };
+                    
+                    const index = appData.transactions.findIndex(r => r.id === id);
+                    appData.transactions[index] = updatedRecord;
+                    renderTransactionHistory();
+                });
+                
+                safeQuerySelector('.cancel-edit').addEventListener('click', function() {
+                    editForm.remove();
+                });
+            }
+            
+            // Delete transaction record
+            function deleteTransactionRecord(id) {
+                if (confirm('Are you sure you want to delete this transaction?')) {
+                    appData.transactions = appData.transactions.filter(r => r.id !== id);
+                    renderTransactionHistory();
+                }
             }
             
             // Save production record
@@ -1154,58 +1505,55 @@
                     const vegetablesForm = safeQuerySelector('#vegetables-production');
                     const animalForm = safeQuerySelector('#animal-production');
                     
-                    let type = '';
-                    let details = '';
+                    let productionRecord = {};
                     
                     if (vegetablesForm && !vegetablesForm.classList.contains('hidden')) {
-                        type = 'Vegetables';
                         const plantingDate = safeQuerySelector('#planting-date').value;
+                        const cropType = safeQuerySelector('#crop-type').value;
                         const seedsCost = parseFloat(safeQuerySelector('#seeds-cost').value) || 0;
                         const fertilizerCost = parseFloat(safeQuerySelector('#fertilizer-cost').value) || 0;
                         const pestControlCost = parseFloat(safeQuerySelector('#pest-control-cost').value) || 0;
                         const totalCost = seedsCost + fertilizerCost + pestControlCost;
                         
-                        details = `Planting: ${plantingDate}, Seeds: $${seedsCost.toFixed(2)}, Fertilizer: $${fertilizerCost.toFixed(2)}, Pest Control: $${pestControlCost.toFixed(2)}`;
-                        
-                        // Add to production history
-                        const table = safeQuerySelector('#production-history');
-                        if (table) {
-                            const newRow = table.insertRow();
-                            newRow.innerHTML = `
-                                <td>${plantingDate}</td>
-                                <td>${type}</td>
-                                <td>$${totalCost.toFixed(2)}</td>
-                                <td>${details}</td>
-                            `;
-                        }
+                        productionRecord = {
+                            id: generateId(),
+                            type: 'Vegetables',
+                            date: plantingDate,
+                            details: `Crop: ${cropType}`,
+                            costs: {
+                                seeds: seedsCost,
+                                fertilizer: fertilizerCost,
+                                pestControl: pestControlCost
+                            },
+                            totalCost: totalCost
+                        };
                         
                         // Clear form
                         safeQuerySelector('#planting-date').value = '';
+                        safeQuerySelector('#crop-type').value = '';
                         safeQuerySelector('#seeds-cost').value = '';
                         safeQuerySelector('#fertilizer-cost').value = '';
                         safeQuerySelector('#pest-control-cost').value = '';
                         
                     } else if (animalForm && !animalForm.classList.contains('hidden')) {
-                        type = 'Animal';
                         const livestockType = safeQuerySelector('#livestock-type').value;
                         const newStockCost = parseFloat(safeQuerySelector('#new-stock-cost').value) || 0;
                         const feedCost = parseFloat(safeQuerySelector('#feed-cost').value) || 0;
                         const diseaseControlCost = parseFloat(safeQuerySelector('#disease-control-cost').value) || 0;
                         const totalCost = newStockCost + feedCost + diseaseControlCost;
                         
-                        details = `Livestock: ${livestockType}, New Stock: $${newStockCost.toFixed(2)}, Feed: $${feedCost.toFixed(2)}, Disease Control: $${diseaseControlCost.toFixed(2)}`;
-                        
-                        // Add to production history
-                        const table = safeQuerySelector('#production-history');
-                        if (table) {
-                            const newRow = table.insertRow();
-                            newRow.innerHTML = `
-                                <td>${new Date().toISOString().split('T')[0]}</td>
-                                <td>${type} (${livestockType})</td>
-                                <td>$${totalCost.toFixed(2)}</td>
-                                <td>${details}</td>
-                            `;
-                        }
+                        productionRecord = {
+                            id: generateId(),
+                            type: 'Animal',
+                            date: new Date().toISOString().split('T')[0],
+                            details: `Livestock: ${livestockType}`,
+                            costs: {
+                                newStock: newStockCost,
+                                feed: feedCost,
+                                diseaseControl: diseaseControlCost
+                            },
+                            totalCost: totalCost
+                        };
                         
                         // Clear form
                         safeQuerySelector('#new-stock-cost').value = '';
@@ -1216,8 +1564,169 @@
                         return;
                     }
                     
+                    appData.production.push(productionRecord);
+                    renderProductionHistory();
                     alert('Production record saved successfully!');
                 });
+            }
+            
+            // Render production history
+            function renderProductionHistory() {
+                const table = safeQuerySelector('#production-history');
+                if (!table) return;
+                
+                table.innerHTML = '';
+                appData.production.forEach(record => {
+                    const row = table.insertRow();
+                    row.innerHTML = `
+                        <td>${record.date}</td>
+                        <td>${record.type}</td>
+                        <td>${record.details}</td>
+                        <td>$${record.totalCost.toFixed(2)}</td>
+                        <td class="action-buttons">
+                            <button class="btn btn-warning edit-production" data-id="${record.id}">Edit</button>
+                            <button class="btn btn-danger delete-production" data-id="${record.id}">Delete</button>
+                        </td>
+                    `;
+                });
+                
+                // Add event listeners for edit and delete buttons
+                safeQuerySelectorAll('.edit-production').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        editProductionRecord(id);
+                    });
+                });
+                
+                safeQuerySelectorAll('.delete-production').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        deleteProductionRecord(id);
+                    });
+                });
+            }
+            
+            // Edit production record
+            function editProductionRecord(id) {
+                const record = appData.production.find(r => r.id === id);
+                if (!record) return;
+                
+                // Create edit form
+                const editForm = document.createElement('div');
+                editForm.className = 'edit-form';
+                
+                let formContent = '';
+                if (record.type === 'Vegetables') {
+                    formContent = `
+                        <h4>Edit Vegetable Production Record</h4>
+                        <div class="form-group">
+                            <label>Planting Date</label>
+                            <input type="date" id="edit-planting-date" value="${record.date}">
+                        </div>
+                        <div class="form-group">
+                            <label>Crop Type</label>
+                            <input type="text" id="edit-crop-type" value="${record.details.replace('Crop: ', '')}">
+                        </div>
+                        <div class="form-group">
+                            <label>Seeds/Seedlings Cost ($)</label>
+                            <input type="number" id="edit-seeds-cost" step="0.01" value="${record.costs.seeds}">
+                        </div>
+                        <div class="form-group">
+                            <label>Fertilizer Cost ($)</label>
+                            <input type="number" id="edit-fertilizer-cost" step="0.01" value="${record.costs.fertilizer}">
+                        </div>
+                        <div class="form-group">
+                            <label>Pest Control Cost ($)</label>
+                            <input type="number" id="edit-pest-control-cost" step="0.01" value="${record.costs.pestControl}">
+                        </div>
+                    `;
+                } else {
+                    formContent = `
+                        <h4>Edit Animal Production Record</h4>
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" id="edit-production-date" value="${record.date}">
+                        </div>
+                        <div class="form-group">
+                            <label>Livestock Type</label>
+                            <select id="edit-livestock-type">
+                                <option value="broilers" ${record.details.includes('broilers') ? 'selected' : ''}>Broilers</option>
+                                <option value="rabbits" ${record.details.includes('rabbits') ? 'selected' : ''}>Rabbits</option>
+                                <option value="sheep" ${record.details.includes('sheep') ? 'selected' : ''}>Sheep</option>
+                                <option value="ducks" ${record.details.includes('ducks') ? 'selected' : ''}>Ducks</option>
+                                <option value="other" ${record.details.includes('other') ? 'selected' : ''}>Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>New Stock Cost ($)</label>
+                            <input type="number" id="edit-new-stock-cost" step="0.01" value="${record.costs.newStock}">
+                        </div>
+                        <div class="form-group">
+                            <label>Feed Cost ($)</label>
+                            <input type="number" id="edit-feed-cost" step="0.01" value="${record.costs.feed}">
+                        </div>
+                        <div class="form-group">
+                            <label>Disease Control Cost ($)</label>
+                            <input type="number" id="edit-disease-control-cost" step="0.01" value="${record.costs.diseaseControl}">
+                        </div>
+                    `;
+                }
+                
+                editForm.innerHTML = formContent + `
+                    <button class="btn btn-info update-production" data-id="${id}">Update</button>
+                    <button class="btn btn-danger cancel-edit">Cancel</button>
+                `;
+                
+                // Find the record row and insert edit form after it
+                const recordRow = safeQuerySelector(`.edit-production[data-id="${id}"]`).closest('tr');
+                recordRow.parentNode.insertBefore(editForm, recordRow.nextSibling);
+                
+                // Add event listeners
+                safeQuerySelector('.update-production').addEventListener('click', function() {
+                    let updatedRecord = { ...record };
+                    
+                    if (record.type === 'Vegetables') {
+                        updatedRecord = {
+                            ...record,
+                            date: safeQuerySelector('#edit-planting-date').value,
+                            details: `Crop: ${safeQuerySelector('#edit-crop-type').value}`,
+                            costs: {
+                                seeds: parseFloat(safeQuerySelector('#edit-seeds-cost').value) || 0,
+                                fertilizer: parseFloat(safeQuerySelector('#edit-fertilizer-cost').value) || 0,
+                                pestControl: parseFloat(safeQuerySelector('#edit-pest-control-cost').value) || 0
+                            }
+                        };
+                    } else {
+                        updatedRecord = {
+                            ...record,
+                            date: safeQuerySelector('#edit-production-date').value,
+                            details: `Livestock: ${safeQuerySelector('#edit-livestock-type').value}`,
+                            costs: {
+                                newStock: parseFloat(safeQuerySelector('#edit-new-stock-cost').value) || 0,
+                                feed: parseFloat(safeQuerySelector('#edit-feed-cost').value) || 0,
+                                diseaseControl: parseFloat(safeQuerySelector('#edit-disease-control-cost').value) || 0
+                            }
+                        };
+                    }
+                    
+                    updatedRecord.totalCost = Object.values(updatedRecord.costs).reduce((sum, cost) => sum + cost, 0);
+                    
+                    const index = appData.production.findIndex(r => r.id === id);
+                    appData.production[index] = updatedRecord;
+                    renderProductionHistory();
+                });
+                
+                safeQuerySelector('.cancel-edit').addEventListener('click', function() {
+                    editForm.remove();
+                });
+            }
+            
+            // Delete production record
+            function deleteProductionRecord(id) {
+                if (confirm('Are you sure you want to delete this production record?')) {
+                    appData.production = appData.production.filter(r => r.id !== id);
+                    renderProductionHistory();
+                }
             }
             
             // Save order
@@ -1240,35 +1749,176 @@
                         return;
                     }
                     
-                    const table = safeQuerySelector('#order-history');
-                    if (table) {
-                        const newRow = table.insertRow();
-                        newRow.innerHTML = `
-                            <td>${orderName}</td>
-                            <td>${startDate}</td>
-                            <td>${openingStock}</td>
-                            <td>${availableStock}</td>
-                            <td>${numberOfOrders}</td>
-                            <td>${orderWeight}</td>
-                            <td>${deliveryStatus}</td>
-                            <td>${paymentStatus}</td>
-                            <td>$${paymentsReceived.toFixed(2)}</td>
-                            <td>$${outstandingPayments.toFixed(2)}</td>
-                        `;
-                        
-                        // Clear form
-                        safeQuerySelector('#order-name').value = '';
-                        safeQuerySelector('#order-start-date').value = '';
-                        safeQuerySelector('#opening-stock').value = '';
-                        safeQuerySelector('#available-stock').value = '';
-                        safeQuerySelector('#number-of-orders').value = '';
-                        safeQuerySelector('#order-weight').value = '';
-                        safeQuerySelector('#payments-received').value = '';
-                        safeQuerySelector('#outstanding-payments').value = '';
-                        
-                        alert('Order saved successfully!');
-                    }
+                    const orderRecord = {
+                        id: generateId(),
+                        orderName,
+                        startDate,
+                        openingStock,
+                        availableStock,
+                        numberOfOrders,
+                        orderWeight,
+                        deliveryStatus,
+                        paymentStatus,
+                        paymentsReceived,
+                        outstandingPayments
+                    };
+                    
+                    appData.orders.push(orderRecord);
+                    renderOrderHistory();
+                    
+                    // Clear form
+                    safeQuerySelector('#order-name').value = '';
+                    safeQuerySelector('#order-start-date').value = '';
+                    safeQuerySelector('#opening-stock').value = '';
+                    safeQuerySelector('#available-stock').value = '';
+                    safeQuerySelector('#number-of-orders').value = '';
+                    safeQuerySelector('#order-weight').value = '';
+                    safeQuerySelector('#payments-received').value = '';
+                    safeQuerySelector('#outstanding-payments').value = '';
+                    
+                    alert('Order saved successfully!');
                 });
+            }
+            
+            // Render order history
+            function renderOrderHistory() {
+                const table = safeQuerySelector('#order-history');
+                if (!table) return;
+                
+                table.innerHTML = '';
+                appData.orders.forEach(record => {
+                    const row = table.insertRow();
+                    row.innerHTML = `
+                        <td>${record.orderName}</td>
+                        <td>${record.startDate}</td>
+                        <td>${record.openingStock}</td>
+                        <td>${record.availableStock}</td>
+                        <td>${record.numberOfOrders}</td>
+                        <td>${record.orderWeight}</td>
+                        <td>${record.deliveryStatus}</td>
+                        <td>${record.paymentStatus}</td>
+                        <td>$${record.paymentsReceived.toFixed(2)}</td>
+                        <td>$${record.outstandingPayments.toFixed(2)}</td>
+                        <td class="action-buttons">
+                            <button class="btn btn-warning edit-order" data-id="${record.id}">Edit</button>
+                            <button class="btn btn-danger delete-order" data-id="${record.id}">Delete</button>
+                        </td>
+                    `;
+                });
+                
+                // Add event listeners for edit and delete buttons
+                safeQuerySelectorAll('.edit-order').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        editOrderRecord(id);
+                    });
+                });
+                
+                safeQuerySelectorAll('.delete-order').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        deleteOrderRecord(id);
+                    });
+                });
+            }
+            
+            // Edit order record
+            function editOrderRecord(id) {
+                const record = appData.orders.find(r => r.id === id);
+                if (!record) return;
+                
+                // Create edit form
+                const editForm = document.createElement('div');
+                editForm.className = 'edit-form';
+                editForm.innerHTML = `
+                    <h4>Edit Order</h4>
+                    <div class="form-group">
+                        <label>Order Name (Person/Organization)</label>
+                        <input type="text" id="edit-order-name" value="${record.orderName}">
+                    </div>
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" id="edit-order-start-date" value="${record.startDate}">
+                    </div>
+                    <div class="form-group">
+                        <label>Opening Stock</label>
+                        <input type="number" id="edit-opening-stock" value="${record.openingStock}">
+                    </div>
+                    <div class="form-group">
+                        <label>Available Stock</label>
+                        <input type="number" id="edit-available-stock" value="${record.availableStock}">
+                    </div>
+                    <div class="form-group">
+                        <label>Number of Orders</label>
+                        <input type="number" id="edit-number-of-orders" value="${record.numberOfOrders}">
+                    </div>
+                    <div class="form-group">
+                        <label>Weight (lbs/kg etc)</label>
+                        <input type="text" id="edit-order-weight" value="${record.orderWeight}">
+                    </div>
+                    <div class="form-group">
+                        <label>Delivery Status</label>
+                        <select id="edit-delivery-status">
+                            <option value="pending" ${record.deliveryStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                            <option value="in-transit" ${record.deliveryStatus === 'in-transit' ? 'selected' : ''}>In Transit</option>
+                            <option value="delivered" ${record.deliveryStatus === 'delivered' ? 'selected' : ''}>Delivered</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Status</label>
+                        <select id="edit-payment-status">
+                            <option value="cash" ${record.paymentStatus === 'cash' ? 'selected' : ''}>Cash</option>
+                            <option value="credit" ${record.paymentStatus === 'credit' ? 'selected' : ''}>Credit</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Payments Received ($)</label>
+                        <input type="number" id="edit-payments-received" step="0.01" value="${record.paymentsReceived}">
+                    </div>
+                    <div class="form-group">
+                        <label>Outstanding Payments ($)</label>
+                        <input type="number" id="edit-outstanding-payments" step="0.01" value="${record.outstandingPayments}">
+                    </div>
+                    <button class="btn btn-info update-order" data-id="${id}">Update</button>
+                    <button class="btn btn-danger cancel-edit">Cancel</button>
+                `;
+                
+                // Find the record row and insert edit form after it
+                const recordRow = safeQuerySelector(`.edit-order[data-id="${id}"]`).closest('tr');
+                recordRow.parentNode.insertBefore(editForm, recordRow.nextSibling);
+                
+                // Add event listeners
+                safeQuerySelector('.update-order').addEventListener('click', function() {
+                    const updatedRecord = {
+                        ...record,
+                        orderName: safeQuerySelector('#edit-order-name').value,
+                        startDate: safeQuerySelector('#edit-order-start-date').value,
+                        openingStock: safeQuerySelector('#edit-opening-stock').value,
+                        availableStock: safeQuerySelector('#edit-available-stock').value,
+                        numberOfOrders: safeQuerySelector('#edit-number-of-orders').value,
+                        orderWeight: safeQuerySelector('#edit-order-weight').value,
+                        deliveryStatus: safeQuerySelector('#edit-delivery-status').value,
+                        paymentStatus: safeQuerySelector('#edit-payment-status').value,
+                        paymentsReceived: parseFloat(safeQuerySelector('#edit-payments-received').value) || 0,
+                        outstandingPayments: parseFloat(safeQuerySelector('#edit-outstanding-payments').value) || 0
+                    };
+                    
+                    const index = appData.orders.findIndex(r => r.id === id);
+                    appData.orders[index] = updatedRecord;
+                    renderOrderHistory();
+                });
+                
+                safeQuerySelector('.cancel-edit').addEventListener('click', function() {
+                    editForm.remove();
+                });
+            }
+            
+            // Delete order record
+            function deleteOrderRecord(id) {
+                if (confirm('Are you sure you want to delete this order?')) {
+                    appData.orders = appData.orders.filter(r => r.id !== id);
+                    renderOrderHistory();
+                }
             }
             
             // Save sale record
@@ -1290,33 +1940,164 @@
                         return;
                     }
                     
-                    const table = safeQuerySelector('#sales-history');
-                    if (table) {
-                        const newRow = table.insertRow();
-                        newRow.innerHTML = `
-                            <td>${reference}</td>
-                            <td>${saleDate}</td>
-                            <td>${customer}</td>
-                            <td>${saleType}</td>
-                            <td>${quantityItems}</td>
-                            <td>${quantityWeight}</td>
-                            <td>$${totalSales.toFixed(2)}</td>
-                            <td>$${outstanding.toFixed(2)}</td>
-                        `;
-                        
-                        // Clear form
-                        safeQuerySelector('#sale-start-date').value = '';
-                        safeQuerySelector('#sale-reference').value = '';
-                        safeQuerySelector('#sale-date').value = '';
-                        safeQuerySelector('#sale-customer').value = '';
-                        safeQuerySelector('#sale-quantity-items').value = '';
-                        safeQuerySelector('#sale-quantity-weight').value = '';
-                        safeQuerySelector('#sale-total').value = '';
-                        safeQuerySelector('#sale-outstanding').value = '';
-                        
-                        alert('Sale record saved successfully!');
-                    }
+                    const saleRecord = {
+                        id: generateId(),
+                        startDate,
+                        reference,
+                        saleDate,
+                        customer,
+                        saleType,
+                        quantityItems,
+                        quantityWeight,
+                        totalSales,
+                        outstanding
+                    };
+                    
+                    appData.sales.push(saleRecord);
+                    renderSalesHistory();
+                    
+                    // Clear form
+                    safeQuerySelector('#sale-start-date').value = '';
+                    safeQuerySelector('#sale-reference').value = '';
+                    safeQuerySelector('#sale-date').value = '';
+                    safeQuerySelector('#sale-customer').value = '';
+                    safeQuerySelector('#sale-quantity-items').value = '';
+                    safeQuerySelector('#sale-quantity-weight').value = '';
+                    safeQuerySelector('#sale-total').value = '';
+                    safeQuerySelector('#sale-outstanding').value = '';
+                    
+                    alert('Sale record saved successfully!');
                 });
+            }
+            
+            // Render sales history
+            function renderSalesHistory() {
+                const table = safeQuerySelector('#sales-history');
+                if (!table) return;
+                
+                table.innerHTML = '';
+                appData.sales.forEach(record => {
+                    const row = table.insertRow();
+                    row.innerHTML = `
+                        <td>${record.reference}</td>
+                        <td>${record.saleDate}</td>
+                        <td>${record.customer}</td>
+                        <td>${record.saleType}</td>
+                        <td>${record.quantityItems}</td>
+                        <td>${record.quantityWeight}</td>
+                        <td>$${record.totalSales.toFixed(2)}</td>
+                        <td>$${record.outstanding.toFixed(2)}</td>
+                        <td class="action-buttons">
+                            <button class="btn btn-warning edit-sale" data-id="${record.id}">Edit</button>
+                            <button class="btn btn-danger delete-sale" data-id="${record.id}">Delete</button>
+                        </td>
+                    `;
+                });
+                
+                // Add event listeners for edit and delete buttons
+                safeQuerySelectorAll('.edit-sale').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        editSaleRecord(id);
+                    });
+                });
+                
+                safeQuerySelectorAll('.delete-sale').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        deleteSaleRecord(id);
+                    });
+                });
+            }
+            
+            // Edit sale record
+            function editSaleRecord(id) {
+                const record = appData.sales.find(r => r.id === id);
+                if (!record) return;
+                
+                // Create edit form
+                const editForm = document.createElement('div');
+                editForm.className = 'edit-form';
+                editForm.innerHTML = `
+                    <h4>Edit Sale Record</h4>
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" id="edit-sale-start-date" value="${record.startDate}">
+                    </div>
+                    <div class="form-group">
+                        <label>Reference No.</label>
+                        <input type="text" id="edit-sale-reference" value="${record.reference}">
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="edit-sale-date" value="${record.saleDate}">
+                    </div>
+                    <div class="form-group">
+                        <label>Customer (Person/Organization)</label>
+                        <input type="text" id="edit-sale-customer" value="${record.customer}">
+                    </div>
+                    <div class="form-group">
+                        <label>Sales Type</label>
+                        <select id="edit-sale-type">
+                            <option value="cash" ${record.saleType === 'cash' ? 'selected' : ''}>Cash</option>
+                            <option value="credit" ${record.saleType === 'credit' ? 'selected' : ''}>Credit</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity (Number of items)</label>
+                        <input type="number" id="edit-sale-quantity-items" value="${record.quantityItems}">
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity (lbs/kg etc)</label>
+                        <input type="text" id="edit-sale-quantity-weight" value="${record.quantityWeight}">
+                    </div>
+                    <div class="form-group">
+                        <label>Total Sales ($)</label>
+                        <input type="number" id="edit-sale-total" step="0.01" value="${record.totalSales}">
+                    </div>
+                    <div class="form-group">
+                        <label>Outstanding Payments ($)</label>
+                        <input type="number" id="edit-sale-outstanding" step="0.01" value="${record.outstanding}">
+                    </div>
+                    <button class="btn btn-info update-sale" data-id="${id}">Update</button>
+                    <button class="btn btn-danger cancel-edit">Cancel</button>
+                `;
+                
+                // Find the record row and insert edit form after it
+                const recordRow = safeQuerySelector(`.edit-sale[data-id="${id}"]`).closest('tr');
+                recordRow.parentNode.insertBefore(editForm, recordRow.nextSibling);
+                
+                // Add event listeners
+                safeQuerySelector('.update-sale').addEventListener('click', function() {
+                    const updatedRecord = {
+                        ...record,
+                        startDate: safeQuerySelector('#edit-sale-start-date').value,
+                        reference: safeQuerySelector('#edit-sale-reference').value,
+                        saleDate: safeQuerySelector('#edit-sale-date').value,
+                        customer: safeQuerySelector('#edit-sale-customer').value,
+                        saleType: safeQuerySelector('#edit-sale-type').value,
+                        quantityItems: safeQuerySelector('#edit-sale-quantity-items').value,
+                        quantityWeight: safeQuerySelector('#edit-sale-quantity-weight').value,
+                        totalSales: parseFloat(safeQuerySelector('#edit-sale-total').value) || 0,
+                        outstanding: parseFloat(safeQuerySelector('#edit-sale-outstanding').value) || 0
+                    };
+                    
+                    const index = appData.sales.findIndex(r => r.id === id);
+                    appData.sales[index] = updatedRecord;
+                    renderSalesHistory();
+                });
+                
+                safeQuerySelector('.cancel-edit').addEventListener('click', function() {
+                    editForm.remove();
+                });
+            }
+            
+            // Delete sale record
+            function deleteSaleRecord(id) {
+                if (confirm('Are you sure you want to delete this sale record?')) {
+                    appData.sales = appData.sales.filter(r => r.id !== id);
+                    renderSalesHistory();
+                }
             }
             
             // Generate and email report
