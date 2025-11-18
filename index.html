@@ -3,401 +3,1212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgriMetrics - Farm Management</title>
-    <!-- Local Tailwind CSS to avoid CDN issues -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Farm Management System</title>
     <style>
-        .hidden { display: none !important; }
-        .brand-gradient { 
-            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        :root {
+            --primary-color: #2e7d32;
+            --secondary-color: #4caf50;
+            --light-color: #e8f5e9;
+            --dark-color: #1b5e20;
+            --danger-color: #f44336;
+            --warning-color: #ff9800;
+            --info-color: #2196f3;
         }
-        .condition-great { color: #10B981; }
-        .condition-good { color: #3B82F6; }
-        .condition-fair { color: #F59E0B; }
-        .condition-poor { color: #EF4444; }
-        .condition-replace { color: #DC2626; }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+        
+        nav ul li {
+            margin-left: 20px;
+        }
+        
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        nav ul li a:hover, nav ul li a.active {
+            background-color: var(--dark-color);
+        }
+        
+        .main-content {
+            display: flex;
+            margin-top: 20px;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-right: 20px;
+        }
+        
+        .content-area {
+            flex: 1;
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        h1, h2, h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .section {
+            display: none;
+            margin-bottom: 30px;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: var(--dark-color);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+        }
+        
+        .btn-info {
+            background-color: var(--info-color);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: var(--light-color);
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .production-veins {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .production-item {
+            background-color: var(--light-color);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s, background-color 0.3s;
+        }
+        
+        .production-item:hover {
+            transform: translateY(-5px);
+            background-color: #c8e6c9;
+        }
+        
+        .production-item.active {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .file-upload {
+            border: 2px dashed #ddd;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .condition-options {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .condition-option {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+        
+        .condition-option.active {
+            background-color: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
+        }
+        
+        .condition-great { border-left: 4px solid #4caf50; }
+        .condition-good { border-left: 4px solid #8bc34a; }
+        .condition-fair { border-left: 4px solid #ffc107; }
+        .condition-poor { border-left: 4px solid #ff9800; }
+        .condition-replace { border-left: 4px solid #f44336; }
+        
+        .report-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .report-option {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            background-color: var(--light-color);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .report-option:hover {
+            background-color: #c8e6c9;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .photo-preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin-top: 10px;
+        }
+        
+        .running-total {
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: var(--light-color);
+            border-radius: 4px;
+        }
     </style>
 </head>
-<body class="bg-gray-50">
-    <!-- Auth Sections -->
-    <div id="authSections">
-        <!-- Login Section -->
-        <div id="loginSection" class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
-            <div class="max-w-md w-full space-y-8">
-                <div class="text-center">
-                    <i class="fas fa-chart-line text-green-600 text-6xl mb-4"></i>
-                    <h2 class="text-3xl font-bold text-gray-900">AgriMetrics</h2>
-                    <p class="mt-2 text-gray-600">Farm Data Management Platform</p>
-                </div>
-                <form class="mt-8 space-y-6" onsubmit="handleLogin(event)">
-                    <div>
-                        <input id="email" name="email" type="email" required 
-                            class="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500"
-                            placeholder="Email address">
-                    </div>
-                    <div>
-                        <input id="password" name="password" type="password" required 
-                            class="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500"
-                            placeholder="Password">
-                    </div>
-                    <div>
-                        <button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white brand-gradient hover:shadow-lg">
-                            Sign In
-                        </button>
-                    </div>
-                    <div class="text-center">
-                        <button type="button" onclick="showRegister()" class="text-green-600 hover:text-green-500">
-                            Don't have an account? Register
-                        </button>
-                    </div>
-                    <div class="text-center">
-                        <button type="button" onclick="loginDemo()" class="text-blue-600 hover:text-blue-500">
-                            Or try Demo Mode
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Register Section -->
-        <div id="registerSection" class="hidden min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
-            <div class="max-w-md w-full space-y-8">
-                <div class="text-center">
-                    <i class="fas fa-chart-line text-green-600 text-6xl mb-4"></i>
-                    <h2 class="text-3xl font-bold text-gray-900">Create Account</h2>
-                </div>
-                <form class="mt-8 space-y-6" onsubmit="handleRegister(event)">
-                    <div>
-                        <input id="regEmail" name="email" type="email" required 
-                            class="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500"
-                            placeholder="Email address">
-                    </div>
-                    <div>
-                        <input id="regPassword" name="password" type="password" required 
-                            class="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500"
-                            placeholder="Password">
-                    </div>
-                    <div>
-                        <button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white brand-gradient hover:shadow-lg">
-                            Create Account
-                        </button>
-                    </div>
-                    <div class="text-center">
-                        <button type="button" onclick="showLogin()" class="text-green-600 hover:text-green-500">
-                            Already have an account? Sign In
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main App Section -->
-    <div id="appSection" class="hidden">
-        <!-- Navigation -->
-        <nav class="brand-gradient text-white shadow-lg">
-            <div class="container mx-auto px-4">
-                <div class="flex justify-between items-center py-4">
-                    <div class="flex items-center">
-                        <i class="fas fa-chart-line text-2xl mr-3"></i>
-                        <h1 class="text-2xl font-bold">AgriMetrics</h1>
-                    </div>
-                    <div class="flex items-center space-x-4">
-                        <span id="userEmail" class="mr-4"></span>
-                        <button onclick="logout()" class="bg-green-700 hover:bg-green-800 px-4 py-2 rounded">
-                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </nav>
-
-        <!-- Main Content -->
-        <div class="flex h-screen">
-            <!-- Sidebar -->
-            <div class="w-64 bg-white shadow-lg border-r">
-                <div class="p-4 border-b">
-                    <div class="flex items-center">
-                        <i class="fas fa-chart-line text-green-600 text-xl mr-2"></i>
-                        <span class="font-semibold">AgriMetrics</span>
-                    </div>
-                </div>
-                <div class="p-4">
-                    <ul class="space-y-1">
-                        <li><button onclick="showAppSection('dashboard')" class="w-full text-left p-3 hover:bg-green-50 rounded flex items-center text-gray-700 hover:text-green-700"><i class="fas fa-tachometer-alt mr-3"></i>Dashboard</button></li>
-                        <li><button onclick="showAppSection('inventory')" class="w-full text-left p-3 hover:bg-green-50 rounded flex items-center text-gray-700 hover:text-green-700"><i class="fas fa-boxes mr-3"></i>Inventory</button></li>
-                        <li><button onclick="showAppSection('production')" class="w-full text-left p-3 hover:bg-green-50 rounded flex items-center text-gray-700 hover:text-green-700"><i class="fas fa-tractor mr-3"></i>Production</button></li>
-                        <li><button onclick="showAppSection('finance')" class="w-full text-left p-3 hover:bg-green-50 rounded flex items-center text-gray-700 hover:text-green-700"><i class="fas fa-money-bill-wave mr-3"></i>Finance</button></li>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">Farm Management System</div>
+                <nav>
+                    <ul>
+                        <li><a href="#" class="nav-link active" data-target="dashboard">Dashboard</a></li>
+                        <li><a href="#" class="nav-link" data-target="project-planning">Project Planning</a></li>
+                        <li><a href="#" class="nav-link" data-target="inventory">Inventory</a></li>
+                        <li><a href="#" class="nav-link" data-target="production">Production</a></li>
+                        <li><a href="#" class="nav-link" data-target="sales">Sales</a></li>
+                        <li><a href="#" class="nav-link" data-target="reports">Reports</a></li>
                     </ul>
-                </div>
-            </div>
-
-            <!-- Content Area -->
-            <div class="flex-1 p-8 overflow-auto bg-gray-50">
-                <!-- Dashboard -->
-                <div id="dashboardSection" class="app-content-section">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Dashboard</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        <div class="bg-white p-6 rounded-lg shadow-sm border">
-                            <div class="flex items-center">
-                                <div class="p-3 bg-blue-50 rounded-lg">
-                                    <i class="fas fa-boxes text-blue-600 text-2xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="text-gray-500 text-sm font-medium">Inventory Items</h3>
-                                    <p class="text-2xl font-bold text-gray-800">12</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="bg-white p-6 rounded-lg shadow-sm border">
-                            <div class="flex items-center">
-                                <div class="p-3 bg-green-50 rounded-lg">
-                                    <i class="fas fa-money-bill-wave text-green-600 text-2xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="text-gray-500 text-sm font-medium">Total Income</h3>
-                                    <p class="text-2xl font-bold text-gray-800">$2,540</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="bg-white p-6 rounded-lg shadow-sm border">
-                            <div class="flex items-center">
-                                <div class="p-3 bg-red-50 rounded-lg">
-                                    <i class="fas fa-receipt text-red-600 text-2xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="text-gray-500 text-sm font-medium">Total Expenses</h3>
-                                    <p class="text-2xl font-bold text-gray-800">$1,230</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="bg-white p-6 rounded-lg shadow-sm border">
-                            <div class="flex items-center">
-                                <div class="p-3 bg-purple-50 rounded-lg">
-                                    <i class="fas fa-shopping-cart text-purple-600 text-2xl"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="text-gray-500 text-sm font-medium">Pending Orders</h3>
-                                    <p class="text-2xl font-bold text-gray-800">5</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Inventory -->
-                <div id="inventorySection" class="app-content-section hidden">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-3xl font-bold text-gray-800">Inventory Management</h2>
-                        <button onclick="showInventoryModal()" class="brand-gradient hover:shadow-lg text-white px-4 py-2 rounded flex items-center">
-                            <i class="fas fa-plus mr-2"></i>Add Item
-                        </button>
-                    </div>
-                    <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Condition</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                <tr>
-                                    <td class="px-6 py-4">Tractor</td>
-                                    <td class="px-6 py-4">Equipment</td>
-                                    <td class="px-6 py-4"><span class="condition-good font-semibold">Good</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="px-6 py-4">Seed Stock</td>
-                                    <td class="px-6 py-4">Supplies</td>
-                                    <td class="px-6 py-4"><span class="condition-fair font-semibold">Fair</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Production -->
-                <div id="productionSection" class="app-content-section hidden">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Production Management</h2>
-                    <div class="text-center py-12">
-                        <i class="fas fa-tractor text-gray-300 text-6xl mb-4"></i>
-                        <p class="text-gray-500">Production tracking coming soon</p>
-                    </div>
-                </div>
-
-                <!-- Finance -->
-                <div id="financeSection" class="app-content-section hidden">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Income & Expenses</h2>
-                    <div class="text-center py-12">
-                        <i class="fas fa-money-bill-wave text-gray-300 text-6xl mb-4"></i>
-                        <p class="text-gray-500">Financial tracking coming soon</p>
-                    </div>
-                </div>
+                </nav>
             </div>
         </div>
-    </div>
-
-    <!-- Inventory Modal -->
-    <div id="inventoryModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-medium text-gray-900">Add Inventory Item</h3>
-                    <button onclick="hideModal('inventoryModal')" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times"></i>
-                    </button>
+    </header>
+    
+    <div class="container">
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>Quick Actions</h3>
+                <ul>
+                    <li><a href="#" class="sidebar-link" data-target="income-expenses">Add Income/Expense</a></li>
+                    <li><a href="#" class="sidebar-link" data-target="inventory-check">Inventory Check</a></li>
+                    <li><a href="#" class="sidebar-link" data-target="orders">Create Order</a></li>
+                    <li><a href="#" class="sidebar-link" data-target="sales-record">Record Sale</a></li>
+                </ul>
+                
+                <h3>Production Veins</h3>
+                <div class="production-veins">
+                    <div class="production-item" data-type="vegetables-open">Vegetables (Open field)</div>
+                    <div class="production-item" data-type="vegetables-aquaponics">Vegetables (Aquaponics)</div>
+                    <div class="production-item" data-type="vegetables-greenhouse">Vegetables (Greenhouse)</div>
+                    <div class="production-item" data-type="seedlings">Seedlings (Shadehouse)</div>
+                    <div class="production-item" data-type="broilers">Broilers</div>
+                    <div class="production-item" data-type="rabbits">Rabbits</div>
+                    <div class="production-item" data-type="sheep">Sheep</div>
+                    <div class="production-item" data-type="ducks">Ducks</div>
+                    <div class="production-item" data-type="other">Add Other</div>
                 </div>
-                <form onsubmit="addInventoryItem(event)">
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Item Name</label>
-                        <input type="text" id="itemName" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500">
+            </div>
+            
+            <div class="content-area">
+                <!-- Dashboard Section -->
+                <div id="dashboard" class="section active">
+                    <h1>Dashboard</h1>
+                    <p>Welcome to your Farm Management System. Use the navigation to access different features.</p>
+                    
+                    <div class="dashboard-stats">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;">
+                            <div style="background-color: var(--light-color); padding: 15px; border-radius: 8px; text-align: center;">
+                                <h3>Total Income</h3>
+                                <p style="font-size: 24px; font-weight: bold;">$0.00</p>
+                            </div>
+                            <div style="background-color: var(--light-color); padding: 15px; border-radius: 8px; text-align: center;">
+                                <h3>Total Expenses</h3>
+                                <p style="font-size: 24px; font-weight: bold;">$0.00</p>
+                            </div>
+                            <div style="background-color: var(--light-color); padding: 15px; border-radius: 8px; text-align: center;">
+                                <h3>Net Profit</h3>
+                                <p style="font-size: 24px; font-weight: bold;">$0.00</p>
+                            </div>
+                            <div style="background-color: var(--light-color); padding: 15px; border-radius: 8px; text-align: center;">
+                                <h3>Active Projects</h3>
+                                <p style="font-size: 24px; font-weight: bold;">0</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Category</label>
-                        <input type="text" id="itemCategory" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500">
+                </div>
+                
+                <!-- Project Planning Section -->
+                <div id="project-planning" class="section">
+                    <h1>Project Planning and Organizing</h1>
+                    
+                    <div class="form-group">
+                        <label for="project-name">Project Name</label>
+                        <input type="text" id="project-name">
                     </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2">Condition</label>
-                        <select id="itemCondition" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500">
-                            <option value="great">Great</option>
-                            <option value="good">Good</option>
-                            <option value="fair">Fair</option>
-                            <option value="poor">Poor</option>
-                            <option value="replace">Replace</option>
+                    
+                    <div class="form-group">
+                        <label for="project-description">Project Description</label>
+                        <textarea id="project-description" rows="4"></textarea>
+                    </div>
+                    
+                    <h3>Materials & Equipment</h3>
+                    <table id="materials-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Quantity</th>
+                                <th>Unit Cost</th>
+                                <th>Total Cost</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="text" class="material-item"></td>
+                                <td><input type="number" class="material-quantity"></td>
+                                <td><input type="number" class="material-unit-cost" step="0.01"></td>
+                                <td><span class="material-total">0.00</span></td>
+                                <td><button class="btn btn-danger remove-material">Remove</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button class="btn" id="add-material">Add Material</button>
+                    
+                    <div class="running-total">
+                        Total Project Cost: $<span id="project-total">0.00</span>
+                    </div>
+                    
+                    <button class="btn" style="margin-top: 20px;">Save Project</button>
+                </div>
+                
+                <!-- Inventory Check Section -->
+                <div id="inventory" class="section">
+                    <h1>Inventory Check</h1>
+                    
+                    <div class="file-upload">
+                        <p>Upload pictures of inventory items</p>
+                        <input type="file" id="inventory-photo" accept="image/*">
+                        <button class="btn" id="upload-photo">Upload Photo</button>
+                        <div id="photo-preview-container"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="inventory-item">Item Name</label>
+                        <input type="text" id="inventory-item">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Condition</label>
+                        <div class="condition-options">
+                            <div class="condition-option condition-great" data-condition="great">Great</div>
+                            <div class="condition-option condition-good" data-condition="good">Good</div>
+                            <div class="condition-option condition-fair" data-condition="fair">Fair</div>
+                            <div class="condition-option condition-poor" data-condition="poor">Poor</div>
+                            <div class="condition-option condition-replace" data-condition="replace">Replace</div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="inventory-comments">Comments</label>
+                        <textarea id="inventory-comments" rows="3"></textarea>
+                    </div>
+                    
+                    <button class="btn">Save Inventory Check</button>
+                    
+                    <h3>Inventory History</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Item</th>
+                                <th>Condition</th>
+                                <th>Comments</th>
+                                <th>Photo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-history">
+                            <!-- Inventory records will be added here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Production Section -->
+                <div id="production" class="section">
+                    <h1>Production Records</h1>
+                    
+                    <div id="production-type-selector">
+                        <p>Select a production type from the sidebar to continue</p>
+                    </div>
+                    
+                    <div id="vegetables-production" class="production-subsection hidden">
+                        <h3>Vegetables & Seedlings Production</h3>
+                        
+                        <div class="form-group">
+                            <label for="planting-date">Planting Date</label>
+                            <input type="date" id="planting-date">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="seeds-cost">Seeds/Seedlings Cost</label>
+                            <input type="number" id="seeds-cost" step="0.01" placeholder="Cost">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fertilizer-cost">Fertilizer Cost</label>
+                            <input type="number" id="fertilizer-cost" step="0.01" placeholder="Cost">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="pest-control-cost">Pest Control Cost</label>
+                            <input type="number" id="pest-control-cost" step="0.01" placeholder="Cost">
+                        </div>
+                    </div>
+                    
+                    <div id="animal-production" class="production-subsection hidden">
+                        <h3>Animal Production</h3>
+                        
+                        <div class="form-group">
+                            <label for="livestock-type">Livestock Type</label>
+                            <select id="livestock-type">
+                                <option value="broilers">Broilers</option>
+                                <option value="rabbits">Rabbits</option>
+                                <option value="sheep">Sheep</option>
+                                <option value="ducks">Ducks</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="new-stock-cost">New Stock Cost</label>
+                            <input type="number" id="new-stock-cost" step="0.01" placeholder="Cost">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="feed-cost">Feed Cost</label>
+                            <input type="number" id="feed-cost" step="0.01" placeholder="Cost">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="disease-control-cost">Disease Control Cost</label>
+                            <input type="number" id="disease-control-cost" step="0.01" placeholder="Cost">
+                        </div>
+                    </div>
+                    
+                    <button class="btn" id="save-production">Save Production Record</button>
+                    
+                    <h3>Production History</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Costs</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="production-history">
+                            <!-- Production records will be added here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Income & Expenses Tracking Section -->
+                <div id="income-expenses" class="section">
+                    <h1>Income & Expenses Tracking</h1>
+                    
+                    <div class="form-group">
+                        <label for="transaction-type">Transaction Type</label>
+                        <select id="transaction-type">
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
                         </select>
                     </div>
-                    <div class="flex items-center justify-between">
-                        <button type="button" onclick="hideModal('inventoryModal')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded">
-                            Cancel
-                        </button>
-                        <button type="submit" class="brand-gradient hover:shadow-lg text-white py-2 px-4 rounded">
-                            Add Item
-                        </button>
+                    
+                    <div class="form-group">
+                        <label for="transaction-date">Date</label>
+                        <input type="date" id="transaction-date">
                     </div>
-                </form>
+                    
+                    <div class="form-group">
+                        <label for="transaction-amount">Amount/Quantity</label>
+                        <input type="text" id="transaction-amount" placeholder="e.g., 100 lbs">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="transaction-organization">Name of Organization/Person</label>
+                        <input type="text" id="transaction-organization">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="transaction-description">Description</label>
+                        <textarea id="transaction-description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="transaction-value">Value ($)</label>
+                        <input type="number" id="transaction-value" step="0.01">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="transaction-comments">Comments</label>
+                        <textarea id="transaction-comments" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="file-upload">
+                        <p>Upload supporting documents/photos</p>
+                        <input type="file" id="transaction-photo" accept="image/*">
+                        <button class="btn" id="upload-transaction-photo">Upload Photo</button>
+                        <div id="transaction-photo-preview"></div>
+                    </div>
+                    
+                    <button class="btn" id="save-transaction">Save Transaction</button>
+                    
+                    <div class="running-total">
+                        Running Total: $<span id="running-total">0.00</span>
+                    </div>
+                    
+                    <h3>Transaction History</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Organization/Person</th>
+                                <th>Amount</th>
+                                <th>Value</th>
+                                <th>Running Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transaction-history">
+                            <!-- Transaction records will be added here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Orders Section -->
+                <div id="orders" class="section">
+                    <h1>Order Sheet</h1>
+                    
+                    <div class="form-group">
+                        <label for="order-name">Order Name (Person/Organization)</label>
+                        <input type="text" id="order-name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="order-start-date">Start Date</label>
+                        <input type="date" id="order-start-date">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="opening-stock">Opening Stock</label>
+                        <input type="number" id="opening-stock">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="available-stock">Available Stock</label>
+                        <input type="number" id="available-stock">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="number-of-orders">Number of Orders</label>
+                        <input type="number" id="number-of-orders">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="order-weight">Weight (lbs/kg etc)</label>
+                        <input type="text" id="order-weight">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="delivery-status">Delivery Status</label>
+                        <select id="delivery-status">
+                            <option value="pending">Pending</option>
+                            <option value="in-transit">In Transit</option>
+                            <option value="delivered">Delivered</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="payment-status">Payment Status</label>
+                        <select id="payment-status">
+                            <option value="cash">Cash</option>
+                            <option value="credit">Credit</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="payments-received">Payments Received ($)</label>
+                        <input type="number" id="payments-received" step="0.01">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="outstanding-payments">Outstanding Payments ($)</label>
+                        <input type="number" id="outstanding-payments" step="0.01">
+                    </div>
+                    
+                    <button class="btn" id="save-order">Save Order</button>
+                    
+                    <h3>Order History</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order Name</th>
+                                <th>Start Date</th>
+                                <th>Opening Stock</th>
+                                <th>Available Stock</th>
+                                <th>Number of Orders</th>
+                                <th>Weight</th>
+                                <th>Delivery Status</th>
+                                <th>Payment Status</th>
+                                <th>Payments Received</th>
+                                <th>Outstanding Payments</th>
+                            </tr>
+                        </thead>
+                        <tbody id="order-history">
+                            <!-- Order records will be added here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Sales Record Section -->
+                <div id="sales-record" class="section">
+                    <h1>Sales Record</h1>
+                    
+                    <div class="form-group">
+                        <label for="sale-start-date">Start Date</label>
+                        <input type="date" id="sale-start-date">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sale-reference">Reference No.</label>
+                        <input type="text" id="sale-reference">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sale-date">Date</label>
+                        <input type="date" id="sale-date">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sale-customer">Customer (Person/Organization)</label>
+                        <input type="text" id="sale-customer">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sale-type">Sales Type</label>
+                        <select id="sale-type">
+                            <option value="cash">Cash</option>
+                            <option value="credit">Credit</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sale-quantity-items">Quantity (Number of items)</label>
+                        <input type="number" id="sale-quantity-items">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sale-quantity-weight">Quantity (lbs/kg etc)</label>
+                        <input type="text" id="sale-quantity-weight">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sale-total">Total Sales ($)</label>
+                        <input type="number" id="sale-total" step="0.01">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sale-outstanding">Outstanding Payments ($)</label>
+                        <input type="number" id="sale-outstanding" step="0.01">
+                    </div>
+                    
+                    <button class="btn" id="save-sale">Save Sale Record</button>
+                    
+                    <h3>Sales History</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Reference No.</th>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Sales Type</th>
+                                <th>Quantity (Items)</th>
+                                <th>Quantity (Weight)</th>
+                                <th>Total Sales</th>
+                                <th>Outstanding Payments</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sales-history">
+                            <!-- Sales records will be added here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Reports Section -->
+                <div id="reports" class="section">
+                    <h1>Reports</h1>
+                    
+                    <div class="report-options">
+                        <div class="report-option" data-report="order-record">
+                            <h3>Order Record</h3>
+                            <p>Generate order record PDF</p>
+                        </div>
+                        <div class="report-option" data-report="sales-record">
+                            <h3>Sales Record</h3>
+                            <p>Generate sales record PDF</p>
+                        </div>
+                        <div class="report-option" data-report="income-expenditure">
+                            <h3>Income & Expenditure</h3>
+                            <p>Generate income & expenditure statement PDF</p>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="report-email">Email Address to Send Report</label>
+                        <input type="email" id="report-email" placeholder="Enter email address">
+                    </div>
+                    
+                    <button class="btn" id="generate-report">Generate and Email Report</button>
+                    
+                    <div id="report-preview" style="margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+                        <h3>Report Preview</h3>
+                        <p>Select a report type to generate a preview</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Supabase Configuration
-        const SUPABASE_URL = 'https://psfpaqncvqrytkqqouvt.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzZnBhcW5jdnFyeXRrcXFvdXZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MDM3OTYsImV4cCI6MjA3ODk3OTc5Nn0.LtKR0QtHnasYBKiZPbxvFFv9CS_w_8x-fLBX4aq4lNM';
-
-        // Initialize Supabase
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // UI Functions
-        function showAuthSection(sectionName) {
-            document.getElementById('loginSection').classList.add('hidden');
-            document.getElementById('registerSection').classList.add('hidden');
-            document.getElementById(sectionName).classList.remove('hidden');
-        }
-
-        function showLogin() {
-            showAuthSection('loginSection');
-        }
-
-        function showRegister() {
-            showAuthSection('registerSection');
-        }
-
-        function showAppSection(sectionName) {
-            // Hide all app sections
-            document.querySelectorAll('.app-content-section').forEach(section => {
-                section.classList.add('hidden');
+        // Navigation functionality
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = this.getAttribute('data-target');
+                
+                // Update active nav link
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Show target section
+                document.querySelectorAll('.section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(target).classList.add('active');
             });
-            // Show target section
-            document.getElementById(sectionName + 'Section').classList.remove('hidden');
+        });
+        
+        // Sidebar quick actions
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = this.getAttribute('data-target');
+                
+                // Update active nav link
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                document.querySelector(`.nav-link[data-target="${target}"]`).classList.add('active');
+                
+                // Show target section
+                document.querySelectorAll('.section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(target).classList.add('active');
+            });
+        });
+        
+        // Production veins selection
+        document.querySelectorAll('.production-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const type = this.getAttribute('data-type');
+                
+                // Update active production item
+                document.querySelectorAll('.production-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Show production section
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                document.querySelector('.nav-link[data-target="production"]').classList.add('active');
+                
+                document.querySelectorAll('.section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById('production').classList.add('active');
+                
+                // Show appropriate production form
+                document.querySelectorAll('.production-subsection').forEach(sub => {
+                    sub.classList.add('hidden');
+                });
+                
+                document.getElementById('production-type-selector').classList.add('hidden');
+                
+                if (type === 'vegetables-open' || type === 'vegetables-aquaponics' || 
+                    type === 'vegetables-greenhouse' || type === 'seedlings') {
+                    document.getElementById('vegetables-production').classList.remove('hidden');
+                } else if (type === 'broilers' || type === 'rabbits' || type === 'sheep' || 
+                           type === 'ducks' || type === 'other') {
+                    document.getElementById('animal-production').classList.remove('hidden');
+                }
+            });
+        });
+        
+        // Condition selection
+        document.querySelectorAll('.condition-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.condition-option').forEach(o => o.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        // Report selection
+        document.querySelectorAll('.report-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const reportType = this.getAttribute('data-report');
+                const preview = document.getElementById('report-preview');
+                
+                let content = '';
+                if (reportType === 'order-record') {
+                    content = '<h3>Order Record Report</h3><p>This report will contain all order records with details about stock, delivery status, and payments.</p>';
+                } else if (reportType === 'sales-record') {
+                    content = '<h3>Sales Record Report</h3><p>This report will contain all sales records with customer information, quantities, and payment status.</p>';
+                } else if (reportType === 'income-expenditure') {
+                    content = '<h3>Income & Expenditure Statement</h3><p>This report will show a summary of all income and expenses with net profit/loss calculations.</p>';
+                }
+                
+                preview.innerHTML = content;
+            });
+        });
+        
+        // Add material row
+        document.getElementById('add-material').addEventListener('click', function() {
+            const table = document.getElementById('materials-table').getElementsByTagName('tbody')[0];
+            const newRow = table.insertRow();
+            
+            newRow.innerHTML = `
+                <td><input type="text" class="material-item"></td>
+                <td><input type="number" class="material-quantity"></td>
+                <td><input type="number" class="material-unit-cost" step="0.01"></td>
+                <td><span class="material-total">0.00</span></td>
+                <td><button class="btn btn-danger remove-material">Remove</button></td>
+            `;
+            
+            // Add event listeners to new inputs
+            const quantityInput = newRow.querySelector('.material-quantity');
+            const unitCostInput = newRow.querySelector('.material-unit-cost');
+            
+            quantityInput.addEventListener('input', calculateMaterialTotal);
+            unitCostInput.addEventListener('input', calculateMaterialTotal);
+            
+            // Add event listener to remove button
+            newRow.querySelector('.remove-material').addEventListener('click', function() {
+                table.deleteRow(newRow.rowIndex);
+                calculateProjectTotal();
+            });
+        });
+        
+        // Calculate material total
+        function calculateMaterialTotal() {
+            const row = this.parentNode.parentNode;
+            const quantity = parseFloat(row.querySelector('.material-quantity').value) || 0;
+            const unitCost = parseFloat(row.querySelector('.material-unit-cost').value) || 0;
+            const total = quantity * unitCost;
+            
+            row.querySelector('.material-total').textContent = total.toFixed(2);
+            calculateProjectTotal();
         }
-
-        function showModal(modalId) {
-            document.getElementById(modalId).classList.remove('hidden');
+        
+        // Calculate project total
+        function calculateProjectTotal() {
+            let total = 0;
+            document.querySelectorAll('.material-total').forEach(cell => {
+                total += parseFloat(cell.textContent) || 0;
+            });
+            
+            document.getElementById('project-total').textContent = total.toFixed(2);
         }
-
-        function hideModal(modalId) {
-            document.getElementById(modalId).classList.add('hidden');
-        }
-
-        function showInventoryModal() { 
-            showModal('inventoryModal'); 
-        }
-
-        // Auth Functions
-        async function handleRegister(event) {
-            event.preventDefault();
-            const email = document.getElementById('regEmail').value;
-            const password = document.getElementById('regPassword').value;
-
-            try {
-                const { data, error } = await supabase.auth.signUp({ email, password });
-                if (error) throw error;
-                alert('Registration successful! Please check your email.');
-                showLogin();
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-
-        async function handleLogin(event) {
-            event.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
-            try {
-                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-                if (error) throw error;
-                // Auth state change will handle the UI
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-
-        async function logout() {
-            try {
-                await supabase.auth.signOut();
-            } catch (error) {
-                console.error('Logout error:', error);
-            }
-        }
-
-        function loginDemo() {
-            // Show app, hide auth
-            document.getElementById('authSections').classList.add('hidden');
-            document.getElementById('appSection').classList.remove('hidden');
-            document.getElementById('userEmail').textContent = "demo@agrimetrics.com";
-            showAppSection('dashboard');
-        }
-
-        function addInventoryItem(event) {
-            event.preventDefault();
-            alert('Item added (demo mode)');
-            hideModal('inventoryModal');
-            event.target.reset();
-        }
-
-        // Auth State Listener
-        supabase.auth.onAuthStateChange((event, session) => {
-            if (session) {
-                // User signed in
-                document.getElementById('authSections').classList.add('hidden');
-                document.getElementById('appSection').classList.remove('hidden');
-                document.getElementById('userEmail').textContent = session.user.email;
-                showAppSection('dashboard');
-            } else {
-                // User signed out
-                document.getElementById('authSections').classList.remove('hidden');
-                document.getElementById('appSection').classList.add('hidden');
-                showLogin();
+        
+        // Initialize material calculation events
+        document.querySelectorAll('.material-quantity, .material-unit-cost').forEach(input => {
+            input.addEventListener('input', calculateMaterialTotal);
+        });
+        
+        // Photo upload preview
+        document.getElementById('upload-photo').addEventListener('click', function() {
+            const fileInput = document.getElementById('inventory-photo');
+            const file = fileInput.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'photo-preview';
+                    
+                    document.getElementById('photo-preview-container').innerHTML = '';
+                    document.getElementById('photo-preview-container').appendChild(img);
+                };
+                
+                reader.readAsDataURL(file);
             }
         });
-
-        // Initialize
-        showLogin();
+        
+        // Transaction photo upload
+        document.getElementById('upload-transaction-photo').addEventListener('click', function() {
+            const fileInput = document.getElementById('transaction-photo');
+            const file = fileInput.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'photo-preview';
+                    
+                    document.getElementById('transaction-photo-preview').innerHTML = '';
+                    document.getElementById('transaction-photo-preview').appendChild(img);
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Save transaction
+        document.getElementById('save-transaction').addEventListener('click', function() {
+            const type = document.getElementById('transaction-type').value;
+            const date = document.getElementById('transaction-date').value;
+            const amount = document.getElementById('transaction-amount').value;
+            const organization = document.getElementById('transaction-organization').value;
+            const description = document.getElementById('transaction-description').value;
+            const value = parseFloat(document.getElementById('transaction-value').value) || 0;
+            const comments = document.getElementById('transaction-comments').value;
+            
+            if (!date || !organization || !description) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            const table = document.getElementById('transaction-history');
+            const newRow = table.insertRow();
+            
+            // Calculate running total
+            let runningTotal = parseFloat(document.getElementById('running-total').textContent) || 0;
+            if (type === 'income') {
+                runningTotal += value;
+            } else {
+                runningTotal -= value;
+            }
+            document.getElementById('running-total').textContent = runningTotal.toFixed(2);
+            
+            newRow.innerHTML = `
+                <td>${date}</td>
+                <td>${type.charAt(0).toUpperCase() + type.slice(1)}</td>
+                <td>${description}</td>
+                <td>${organization}</td>
+                <td>${amount}</td>
+                <td>$${value.toFixed(2)}</td>
+                <td>$${runningTotal.toFixed(2)}</td>
+            `;
+            
+            // Clear form
+            document.getElementById('transaction-date').value = '';
+            document.getElementById('transaction-amount').value = '';
+            document.getElementById('transaction-organization').value = '';
+            document.getElementById('transaction-description').value = '';
+            document.getElementById('transaction-value').value = '';
+            document.getElementById('transaction-comments').value = '';
+            document.getElementById('transaction-photo-preview').innerHTML = '';
+        });
+        
+        // Save production record
+        document.getElementById('save-production').addEventListener('click', function() {
+            const vegetablesForm = document.getElementById('vegetables-production');
+            const animalForm = document.getElementById('animal-production');
+            
+            let type = '';
+            let details = '';
+            
+            if (!vegetablesForm.classList.contains('hidden')) {
+                type = 'Vegetables';
+                const plantingDate = document.getElementById('planting-date').value;
+                const seedsCost = parseFloat(document.getElementById('seeds-cost').value) || 0;
+                const fertilizerCost = parseFloat(document.getElementById('fertilizer-cost').value) || 0;
+                const pestControlCost = parseFloat(document.getElementById('pest-control-cost').value) || 0;
+                const totalCost = seedsCost + fertilizerCost + pestControlCost;
+                
+                details = `Planting: ${plantingDate}, Seeds: $${seedsCost.toFixed(2)}, Fertilizer: $${fertilizerCost.toFixed(2)}, Pest Control: $${pestControlCost.toFixed(2)}`;
+                
+                // Add to production history
+                const table = document.getElementById('production-history');
+                const newRow = table.insertRow();
+                newRow.innerHTML = `
+                    <td>${plantingDate}</td>
+                    <td>${type}</td>
+                    <td>$${totalCost.toFixed(2)}</td>
+                    <td>${details}</td>
+                `;
+                
+                // Clear form
+                document.getElementById('planting-date').value = '';
+                document.getElementById('seeds-cost').value = '';
+                document.getElementById('fertilizer-cost').value = '';
+                document.getElementById('pest-control-cost').value = '';
+                
+            } else if (!animalForm.classList.contains('hidden')) {
+                type = 'Animal';
+                const livestockType = document.getElementById('livestock-type').value;
+                const newStockCost = parseFloat(document.getElementById('new-stock-cost').value) || 0;
+                const feedCost = parseFloat(document.getElementById('feed-cost').value) || 0;
+                const diseaseControlCost = parseFloat(document.getElementById('disease-control-cost').value) || 0;
+                const totalCost = newStockCost + feedCost + diseaseControlCost;
+                
+                details = `Livestock: ${livestockType}, New Stock: $${newStockCost.toFixed(2)}, Feed: $${feedCost.toFixed(2)}, Disease Control: $${diseaseControlCost.toFixed(2)}`;
+                
+                // Add to production history
+                const table = document.getElementById('production-history');
+                const newRow = table.insertRow();
+                newRow.innerHTML = `
+                    <td>${new Date().toISOString().split('T')[0]}</td>
+                    <td>${type} (${livestockType})</td>
+                    <td>$${totalCost.toFixed(2)}</td>
+                    <td>${details}</td>
+                `;
+                
+                // Clear form
+                document.getElementById('new-stock-cost').value = '';
+                document.getElementById('feed-cost').value = '';
+                document.getElementById('disease-control-cost').value = '';
+            } else {
+                alert('Please select a production type first');
+                return;
+            }
+            
+            alert('Production record saved successfully!');
+        });
+        
+        // Save order
+        document.getElementById('save-order').addEventListener('click', function() {
+            const orderName = document.getElementById('order-name').value;
+            const startDate = document.getElementById('order-start-date').value;
+            const openingStock = document.getElementById('opening-stock').value;
+            const availableStock = document.getElementById('available-stock').value;
+            const numberOfOrders = document.getElementById('number-of-orders').value;
+            const orderWeight = document.getElementById('order-weight').value;
+            const deliveryStatus = document.getElementById('delivery-status').value;
+            const paymentStatus = document.getElementById('payment-status').value;
+            const paymentsReceived = parseFloat(document.getElementById('payments-received').value) || 0;
+            const outstandingPayments = parseFloat(document.getElementById('outstanding-payments').value) || 0;
+            
+            if (!orderName || !startDate) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            const table = document.getElementById('order-history');
+            const newRow = table.insertRow();
+            newRow.innerHTML = `
+                <td>${orderName}</td>
+                <td>${startDate}</td>
+                <td>${openingStock}</td>
+                <td>${availableStock}</td>
+                <td>${numberOfOrders}</td>
+                <td>${orderWeight}</td>
+                <td>${deliveryStatus}</td>
+                <td>${paymentStatus}</td>
+                <td>$${paymentsReceived.toFixed(2)}</td>
+                <td>$${outstandingPayments.toFixed(2)}</td>
+            `;
+            
+            // Clear form
+            document.getElementById('order-name').value = '';
+            document.getElementById('order-start-date').value = '';
+            document.getElementById('opening-stock').value = '';
+            document.getElementById('available-stock').value = '';
+            document.getElementById('number-of-orders').value = '';
+            document.getElementById('order-weight').value = '';
+            document.getElementById('payments-received').value = '';
+            document.getElementById('outstanding-payments').value = '';
+            
+            alert('Order saved successfully!');
+        });
+        
+        // Save sale record
+        document.getElementById('save-sale').addEventListener('click', function() {
+            const startDate = document.getElementById('sale-start-date').value;
+            const reference = document.getElementById('sale-reference').value;
+            const saleDate = document.getElementById('sale-date').value;
+            const customer = document.getElementById('sale-customer').value;
+            const saleType = document.getElementById('sale-type').value;
+            const quantityItems = document.getElementById('sale-quantity-items').value;
+            const quantityWeight = document.getElementById('sale-quantity-weight').value;
+            const totalSales = parseFloat(document.getElementById('sale-total').value) || 0;
+            const outstanding = parseFloat(document.getElementById('sale-outstanding').value) || 0;
+            
+            if (!reference || !saleDate || !customer) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            const table = document.getElementById('sales-history');
+            const newRow = table.insertRow();
+            newRow.innerHTML = `
+                <td>${reference}</td>
+                <td>${saleDate}</td>
+                <td>${customer}</td>
+                <td>${saleType}</td>
+                <td>${quantityItems}</td>
+                <td>${quantityWeight}</td>
+                <td>$${totalSales.toFixed(2)}</td>
+                <td>$${outstanding.toFixed(2)}</td>
+            `;
+            
+            // Clear form
+            document.getElementById('sale-start-date').value = '';
+            document.getElementById('sale-reference').value = '';
+            document.getElementById('sale-date').value = '';
+            document.getElementById('sale-customer').value = '';
+            document.getElementById('sale-quantity-items').value = '';
+            document.getElementById('sale-quantity-weight').value = '';
+            document.getElementById('sale-total').value = '';
+            document.getElementById('sale-outstanding').value = '';
+            
+            alert('Sale record saved successfully!');
+        });
+        
+        // Generate and email report
+        document.getElementById('generate-report').addEventListener('click', function() {
+            const email = document.getElementById('report-email').value;
+            
+            if (!email) {
+                alert('Please enter an email address');
+                return;
+            }
+            
+            // In a real application, this would generate a PDF and send it via email
+            // For this demo, we'll just show a success message
+            alert(`Report will be generated and sent to ${email}`);
+        });
+        
+        // Initialize with current date for date fields
+        const today = new Date().toISOString().split('T')[0];
+        document.querySelectorAll('input[type="date"]').forEach(input => {
+            if (!input.id.includes('start-date') && !input.id.includes('planting-date')) {
+                input.value = today;
+            }
+        });
     </script>
 </body>
 </html>
