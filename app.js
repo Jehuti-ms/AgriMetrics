@@ -1,4 +1,4 @@
-// app.js - Updated with better error handling
+// app.js - Complete corrected version
 function initializeApp() {
     console.log('Initializing main app...');
     
@@ -68,47 +68,31 @@ function initializeNavigation() {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const target = e.target.getAttribute('data-target');
-                
-                // Update active states
-                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-                
-                e.target.classList.add('active');
-                const targetSection = document.getElementById(target);
-                if (targetSection) targetSection.classList.add('active');
+                FarmModules.navigateTo(target);
             });
         });
+
+        // Initialize sidebar for dashboard
+        FarmModules.updateSidebar('dashboard');
+        
+        console.log('Navigation initialized successfully');
     } catch (error) {
         console.error('Error initializing navigation:', error);
     }
 }
-   
-    // Create content sections
-    let contentHTML = '';
-    for (const moduleName in FarmModules.modules) {
-        const module = FarmModules.modules[moduleName];
-        if (module.isAuthModule) continue;
-        
-        contentHTML += module.template || `<div id="${moduleName}" class="section">${module.name} Content</div>`;
-    }
-    contentArea.innerHTML = contentHTML;
-    
-    // Set dashboard as active
-    const dashboardSection = document.getElementById('dashboard');
-    const dashboardLink = document.querySelector('.nav-link[data-target="dashboard"]');
-    if (dashboardSection) dashboardSection.classList.add('active');
-    if (dashboardLink) dashboardLink.classList.add('active');
-    
-   
-}
 
 function setCurrentDates() {
-    const today = new Date().toISOString().split('T')[0];
-    document.querySelectorAll('input[type="date"]').forEach(input => {
-        if (!input.value) {
-            input.value = today;
-        }
-    });
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        document.querySelectorAll('input[type="date"]').forEach(input => {
+            if (!input.value) {
+                input.value = today;
+            }
+        });
+        console.log('Current dates set');
+    } catch (error) {
+        console.error('Error setting dates:', error);
+    }
 }
 
 // Initialize when DOM is ready
@@ -129,3 +113,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Make initializeApp globally available
     window.initializeApp = initializeApp;
 });
+
+// Add debug helper
+function debugApp() {
+    console.log('=== APP DEBUG INFO ===');
+    console.log('FarmModules:', FarmModules);
+    console.log('Modules loaded:', Object.keys(FarmModules.modules));
+    console.log('Current user:', FirebaseAuth ? FirebaseAuth.getCurrentUser() : 'FirebaseAuth not available');
+    console.log('Navigation elements:', {
+        mainNav: document.getElementById('main-nav'),
+        contentArea: document.getElementById('content-area'),
+        sidebar: document.getElementById('sidebar')
+    });
+}
+
+// Make debug function available globally
+window.debugApp = debugApp;
