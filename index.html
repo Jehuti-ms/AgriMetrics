@@ -4,172 +4,87 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Farm Management System</title>
-    <meta name="theme-color" content="#2e7d32">
-    <meta name="description" content="A comprehensive farm management system for tracking inventory, production, sales, and finances">
     
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
-    <!-- iOS Support -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Farm Management">
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
-    
-    <!-- Favicon and Icons -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
-    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512x512.png">
-
-    <!-- Add this to your index.html head -->
-<style>
-    /* Temporary debug styles */
-    .debug-info {
-        position: fixed;
-        top: 10px;
-        left: 10px;
-        background: rgba(0,0,0,0.8);
-        color: white;
-        padding: 10px;
-        border-radius: 5px;
-        font-size: 12px;
-        z-index: 10000;
-    }
-</style>
-
-<!-- Add debug info (remove in production) -->
-<div class="debug-info" id="debugInfo">
-    Auth Status: Checking...
-</div>
-    <!-- Styles -->
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Basic styles to prevent unstyled content */
+        .hidden { display: none !important; }
+        .auth-form { display: none; }
+        .auth-form.active { display: block; }
+        .section { display: none; }
+        .section.active { display: block; }
+    </style>
 </head>
 <body>
-   <!-- Updated Authentication Section in index.html -->
-            <div id="auth-container" class="auth-container">
-                <div class="auth-forms">
-                    <!-- Sign In Form -->
-                    <div id="signin-form" class="auth-form active">
-                        <div class="auth-header">
-                            <h2>Welcome Back</h2>
-                            <p>Sign in to your farm management account</p>
-                        </div>
-                        <form id="signin-form-element">
-                            <div class="form-group">
-                                <label for="signin-email">Email Address</label>
-                                <input type="email" id="signin-email" required placeholder="Enter your email">
-                                <div class="error-message">Please enter a valid email address</div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="signin-password">Password</label>
-                                <input type="password" id="signin-password" required placeholder="Enter your password">
-                                <div class="error-message">Password is required</div>
-                            </div>
-                            
-                            <div class="btn-container">
-                                <button type="submit" class="btn btn-auth" id="signin-submit">
-                                    Sign In
-                                </button>
-                            </div>
-                            
-                            <div class="auth-links">
-                                <a href="#" id="show-forgot-password">Forgot Password?</a>
-                                <a href="#" id="show-signup">Don't have an account? Sign Up</a>
-                            </div>
-                            
-                            <div class="auth-separator">
-                                <span>or continue with</span>
-                            </div>
-                            
-                            <button type="button" class="btn btn-google" id="google-signin">
-                                <span class="google-icon">G</span>
-                                Sign in with Google
-                            </button>
-                        </form>
+    <!-- Auth Container -->
+    <div id="auth-container">
+        <div class="auth-forms">
+            <!-- Sign In Form -->
+            <div id="signin-form" class="auth-form active">
+                <h2>Sign In</h2>
+                <form id="signin-form-element">
+                    <div>
+                        <label>Email:</label>
+                        <input type="email" id="signin-email" required>
                     </div>
-
-                    <!-- Sign Up Form -->
-                    <div id="signup-form" class="auth-form">
-                        <div class="auth-header">
-                            <h2>Create Account</h2>
-                            <p>Set up your farm management account</p>
-                        </div>
-                        <form id="signup-form-element">
-                            <div class="form-group">
-                                <label for="signup-name">Full Name</label>
-                                <input type="text" id="signup-name" required placeholder="Enter your full name">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="signup-email">Email Address</label>
-                                <input type="email" id="signup-email" required placeholder="Enter your email">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="signup-password">Password</label>
-                                <input type="password" id="signup-password" required placeholder="Create a password" minlength="6">
-                                <div class="password-strength" id="password-strength"></div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="signup-confirm-password">Confirm Password</label>
-                                <input type="password" id="signup-confirm-password" required placeholder="Confirm your password">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="farm-name">Farm Name</label>
-                                <input type="text" id="farm-name" required placeholder="Enter your farm name">
-                            </div>
-                            
-                            <div class="btn-container">
-                                <button type="submit" class="btn btn-auth">Create Account</button>
-                            </div>
-                            
-                            <div class="auth-links">
-                                <a href="#" id="show-signin">Already have an account? Sign In</a>
-                            </div>
-                        </form>
+                    <div>
+                        <label>Password:</label>
+                        <input type="password" id="signin-password" required>
                     </div>
-            
-                    <!-- Forgot Password Form -->
-                    <div id="forgot-password-form" class="auth-form">
-                        <div class="auth-header">
-                            <h2>Reset Password</h2>
-                            <p>Enter your email to reset your password</p>
-                        </div>
-                        <form id="forgot-password-form-element">
-                            <div class="form-group">
-                                <label for="forgot-email">Email Address</label>
-                                <input type="email" id="forgot-email" required placeholder="Enter your email">
-                            </div>
-                            
-                            <div class="btn-container">
-                                <button type="submit" class="btn btn-auth">Send Reset Link</button>
-                            </div>
-                            
-                            <div class="auth-links">
-                                <a href="#" id="show-signin-from-forgot">Back to Sign In</a>
-                            </div>
-                        </form>
+                    <button type="submit">Sign In</button>
+                    <div>
+                        <a href="#" id="show-forgot-password">Forgot Password?</a>
+                        <a href="#" id="show-signup">Sign Up</a>
                     </div>
-                </div>
+                    <button type="button" id="google-signin">Sign in with Google</button>
+                </form>
             </div>
-                       
+
+            <!-- Sign Up Form -->
+            <div id="signup-form" class="auth-form">
+                <h2>Sign Up</h2>
+                <form id="signup-form-element">
+                    <div>
+                        <label>Full Name:</label>
+                        <input type="text" id="signup-name" required>
+                    </div>
+                    <div>
+                        <label>Email:</label>
+                        <input type="email" id="signup-email" required>
+                    </div>
+                    <div>
+                        <label>Password:</label>
+                        <input type="password" id="signup-password" required>
+                    </div>
+                    <div>
+                        <label>Confirm Password:</label>
+                        <input type="password" id="signup-confirm-password" required>
+                    </div>
+                    <div>
+                        <label>Farm Name:</label>
+                        <input type="text" id="farm-name" required>
+                    </div>
+                    <button type="submit">Create Account</button>
+                    <div>
+                        <a href="#" id="show-signin">Already have an account?</a>
+                    </div>
+                </form>
+            </div>
 
             <!-- Forgot Password Form -->
             <div id="forgot-password-form" class="auth-form">
-                <div class="auth-header">
-                    <h2>Reset Password</h2>
-                    <p>Enter your email to reset your password</p>
-                </div>
+                <h2>Reset Password</h2>
                 <form id="forgot-password-form-element">
-                    <div class="form-group">
-                        <label for="forgot-email">Email</label>
-                        <input type="email" id="forgot-email" required placeholder="Enter your email">
+                    <div>
+                        <label>Email:</label>
+                        <input type="email" id="forgot-email" required>
                     </div>
-                    <button type="submit" class="btn btn-auth">Send Reset Link</button>
-                    <div class="auth-links">
+                    <button type="submit">Send Reset Link</button>
+                    <div>
                         <a href="#" id="show-signin-from-forgot">Back to Sign In</a>
                     </div>
                 </form>
@@ -177,111 +92,28 @@
         </div>
     </div>
 
-    <!-- Main Application (Hidden until authenticated) -->
-    <div id="app-container" class="app-container hidden">
-        <!-- Offline Indicator -->
-        <div class="offline-indicator" id="offlineIndicator">
-            You are currently offline. Some features may be limited.
-        </div>
-        
-        <!-- Sync Status -->
-        <div class="sync-status" id="syncStatus">
-            <span id="syncMessage">Syncing data...</span>
-        </div>
-        
-        <!-- Install Prompt -->
-        <div class="install-prompt" id="installPrompt">
-            <p>Install Farm Management System for a better experience?</p>
-            <button class="btn" id="installBtn">Install</button>
-            <button class="btn btn-danger" id="dismissInstall">Not Now</button>
-        </div>
-        
+    <!-- App Container -->
+    <div id="app-container" class="hidden">
         <header>
-            <div class="container">
-                <div class="header-content">
-                    <div class="logo">Farm Management System</div>
-                    <nav id="main-nav">
-                        <!-- Navigation will be populated by JavaScript -->
-                    </nav>
-                    <div class="user-menu">
-                        <span id="user-greeting">Welcome!</span>
-                        <div class="user-dropdown">
-                            <button class="btn btn-user" id="user-menu-btn">
-                                <span id="user-initials">U</span>
-                            </button>
-                            <div class="dropdown-content">
-                                <a href="#" data-target="profile">Profile Settings</a>
-                                <a href="#" id="change-password-btn">Change Password</a>
-                                <a href="#" id="signout-btn">Sign Out</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <nav id="main-nav">
+                <!-- Navigation will be populated by JavaScript -->
+            </nav>
         </header>
         
-        <div class="container">
-            <div class="main-content">
-                <div class="sidebar" id="sidebar">
-                    <!-- Sidebar content will be populated by JavaScript -->
-                </div>
-                
-                <div class="content-area" id="content-area">
-                    <!-- Content will be populated by JavaScript -->
-                </div>
+        <main>
+            <div id="content-area">
+                <!-- Content will be populated by JavaScript -->
             </div>
-        </div>
+        </main>
     </div>
 
-    <!-- Change Password Modal -->
-    <div id="change-password-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Change Password</h3>
-                <span class="close">&times;</span>
-            </div>
-            <form id="change-password-form">
-                <div class="form-group">
-                    <label for="current-password">Current Password</label>
-                    <input type="password" id="current-password" required>
-                </div>
-                <div class="form-group">
-                    <label for="new-password">New Password</label>
-                    <input type="password" id="new-password" required minlength="6">
-                </div>
-                <div class="form-group">
-                    <label for="confirm-new-password">Confirm New Password</label>
-                    <input type="password" id="confirm-new-password" required>
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" id="cancel-password-change">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update Password</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-
-    <!-- JavaScript Files -->
+    <!-- Load scripts in order -->
     <script src="firebase/firebase-config.js"></script>
     <script src="firebase/firebase-auth.js"></script>
-    <script src="firebase/firebase-firestore.js"></script>
     <script src="modules/core.js"></script>
     <script src="modules/auth.js"></script>
     <script src="modules/dashboard.js"></script>
-    <script src="modules/project-planning.js"></script>
-    <script src="modules/inventory-check.js"></script>
-    <script src="modules/production.js"></script>
-    <script src="modules/income-expenses.js"></script>
-    <script src="modules/orders.js"></script>
-    <script src="modules/sales.js"></script>
-    <script src="modules/reports.js"></script>
-    <script src="modules/feed-records.js"></script>
-    <script src="modules/profile.js"></script>
+    <!-- Add other modules as needed -->
     <script src="app.js"></script>
 </body>
 </html>
