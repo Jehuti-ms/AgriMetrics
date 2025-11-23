@@ -1208,3 +1208,246 @@
     font-size: 12px;
     color: #4caf50;
 }
+
+/* Enhanced Authentication Form Styling */
+.auth-forms {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 50px 40px;
+    width: 100%;
+    max-width: 440px;
+    position: relative;
+    z-index: 1;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.auth-form {
+    display: none;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.auth-form.active {
+    display: block;
+}
+
+.auth-form .form-group {
+    margin-bottom: 24px;
+    position: relative;
+}
+
+.auth-form label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.auth-form input {
+    width: 100%;
+    padding: 16px 20px;
+    border: 2px solid #e1e5e9;
+    border-radius: 12px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+    box-sizing: border-box; /* Ensure proper box model */
+    font-family: inherit;
+}
+
+.auth-form input:focus {
+    outline: none;
+    border-color: #4caf50;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+    transform: translateY(-2px);
+}
+
+.auth-form input::placeholder {
+    color: #a0a4a8;
+}
+
+/* Specific form layouts */
+#signin-form .form-group,
+#signup-form .form-group,
+#forgot-password-form .form-group {
+    margin-bottom: 20px;
+}
+
+/* Button container for proper spacing */
+.auth-form .btn-container {
+    margin-top: 30px;
+}
+
+/* Enhanced button styles */
+.btn-auth {
+    width: 100%;
+    background: linear-gradient(135deg, #2e7d32, #4caf50);
+    color: white;
+    padding: 18px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    display: block;
+    box-sizing: border-box;
+}
+
+.btn-auth:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+}
+
+.btn-auth:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Google button specific */
+.btn-google {
+    width: 100%;
+    background: white;
+    color: #333;
+    padding: 16px 20px;
+    border: 2px solid #e1e5e9;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+    box-sizing: border-box;
+}
+
+/* Form validation styles */
+.auth-form input:invalid:not(:focus):not(:placeholder-shown) {
+    border-color: #f44336;
+    background: rgba(244, 67, 54, 0.05);
+}
+
+.auth-form input:valid:not(:focus):not(:placeholder-shown) {
+    border-color: #4caf50;
+    background: rgba(76, 175, 80, 0.05);
+}
+
+/* Error message styling */
+.error-message {
+    color: #f44336;
+    font-size: 12px;
+    margin-top: 5px;
+    display: none;
+}
+
+.auth-form input:invalid:not(:focus):not(:placeholder-shown) + .error-message {
+    display: block;
+}
+
+/* Loading state for forms */
+.form-loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.form-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* Specific form layouts */
+#signin-form {
+    padding: 0;
+}
+
+#signup-form {
+    padding: 0;
+}
+
+#forgot-password-form {
+    padding: 0;
+}
+
+/* Ensure proper form structure */
+.auth-form form {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+    .auth-forms {
+        padding: 30px 25px;
+        margin: 10px;
+        border-radius: 16px;
+    }
+    
+    .auth-form input {
+        padding: 14px 16px;
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+    
+    .btn-auth,
+    .btn-google {
+        padding: 16px;
+    }
+}
+
+/* Fix for iOS Safari */
+@supports (-webkit-touch-callout: none) {
+    .auth-form input {
+        font-size: 16px; /* Prevent zoom on focus */
+    }
+}
+
+/* Enhanced focus states for accessibility */
+.auth-form input:focus {
+    outline: 2px solid #4caf50;
+    outline-offset: 2px;
+}
+
+.btn-auth:focus,
+.btn-google:focus {
+    outline: 2px solid #2e7d32;
+    outline-offset: 2px;
+}
+
+/* Password toggle visibility */
+.password-toggle {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.password-toggle:hover {
+    color: #333;
+}
+
