@@ -20,7 +20,27 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
     <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512x512.png">
-    
+
+    <!-- Add this to your index.html head -->
+<style>
+    /* Temporary debug styles */
+    .debug-info {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 12px;
+        z-index: 10000;
+    }
+</style>
+
+<!-- Add debug info (remove in production) -->
+<div class="debug-info" id="debugInfo">
+    Auth Status: Checking...
+</div>
     <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
 </head>
