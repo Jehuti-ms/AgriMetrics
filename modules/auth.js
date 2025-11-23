@@ -186,6 +186,21 @@ FarmModules.registerModule('auth', {
                 this.setLoadingState('change-password-form', false);
             });
     },
+
+            // Add this method to auth module
+            updatePasswordStrength: function(password) {
+                const strengthIndicator = document.getElementById('password-strength');
+                if (!strengthIndicator) return;
+            
+                let strength = 0;
+                if (password.length >= 6) strength++;
+                if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+                if (password.match(/\d/)) strength++;
+                if (password.match(/[^a-zA-Z\d]/)) strength++;
+            
+                const strengthClasses = ['strength-weak', 'strength-fair', 'strength-good', 'strength-strong'];
+                strengthIndicator.className = 'password-strength ' + (strengthClasses[strength - 1] || '');
+            }
     
     handleSignOut: function() {
         FirebaseAuth.signOut()
