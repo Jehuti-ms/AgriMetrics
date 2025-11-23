@@ -1,107 +1,38 @@
-// ==================== MAIN APPLICATION ====================
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize PWA features
-    initializePWA();
+// app.js - Simplified version
+function initializeApp() {
+    console.log('Initializing main app...');
     
-    // Load data from storage
-    FarmModules.loadDataFromStorage();
+    // Initialize navigation
+    initializeNavigation();
     
-    // Initialize authentication first
-    if (FarmModules.modules.auth) {
-        FarmModules.modules.auth.initialize();
+    // Initialize modules
+    if (FarmModules && FarmModules.initializeModules) {
+        FarmModules.initializeModules();
     }
     
-    // Initialize other modules after auth check
-    FirebaseAuth.onAuthStateChanged((user) => {
-        if (user) {
-            // User is signed in, initialize app
-            initializeNavigation();
-            FarmModules.initializeModules();
-            setCurrentDates();
-        }
-    });
-});
-
-// PWA Initialization
-function initializePWA() {
-    let deferredPrompt;
-    const installPrompt = document.getElementById('installPrompt');
-    const installBtn = document.getElementById('installBtn');
-    const dismissInstall = document.getElementById('dismissInstall');
-    const offlineIndicator = document.getElementById('offlineIndicator');
-
-    // Service Worker Registration
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js')
-            .then(function(registration) {
-                console.log('ServiceWorker registration successful with scope: ', registration.scope);
-            })
-            .catch(function(error) {
-                console.log('ServiceWorker registration failed: ', error);
-            });
-    }
-
-    // Online/Offline Detection
-    window.addEventListener('online', function() {
-        offlineIndicator.classList.remove('show');
-        console.log('App is online');
-    });
-
-    window.addEventListener('offline', function() {
-        offlineIndicator.classList.add('show');
-        console.log('App is offline');
-    });
-
-    // Install Prompt Handling
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        setTimeout(showInstallPrompt, 3000);
-    });
-
-    function showInstallPrompt() {
-        if (deferredPrompt) {
-            installPrompt.classList.add('show');
-        }
-    }
-
-    function hideInstallPrompt() {
-        installPrompt.classList.remove('show');
-    }
-
-    installBtn.addEventListener('click', async () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-                console.log('User accepted the install prompt');
-            } else {
-                console.log('User dismissed the install prompt');
-            }
-            deferredPrompt = null;
-            hideInstallPrompt();
-        }
-    });
-
-    dismissInstall.addEventListener('click', hideInstallPrompt);
+    // Set current dates
+    setCurrentDates();
 }
 
-// Navigation Initialization
 function initializeNavigation() {
     const mainNav = document.getElementById('main-nav');
     const contentArea = document.getElementById('content-area');
     
-    // Create navigation (exclude auth module)
+    if (!mainNav || !contentArea) {
+        console.log('Navigation elements not found yet');
+        return;
+    }
+    
+    // Create navigation
     let navHTML = '<ul>';
     for (const moduleName in FarmModules.modules) {
         const module = FarmModules.modules[moduleName];
-        if (module.isAuthModule) continue; // Skip auth module from main nav
+        if (module.isAuthModule) continue;
         
         navHTML += `
             <li>
-                <a href="#" class="nav-link ${moduleName === 'dashboard' ? 'active' : ''}" 
-                   data-target="${moduleName}">
-                   ${module.icon || '📄'} ${module.name}
+                <a href="#" class="nav-link" data-target="${moduleName}">
+                    ${module.icon || '📄'} ${module.name}
                 </a>
             </li>
         `;
@@ -109,48 +40,63 @@ function initializeNavigation() {
     navHTML += '</ul>';
     mainNav.innerHTML = navHTML;
     
-    // Create content sections (exclude auth module)
+    // Create content sections
     let contentHTML = '';
     for (const moduleName in FarmModules.modules) {
         const module = FarmModules.modules[moduleName];
-        if (module.isAuthModule) continue; // Skip auth module from content
+        if (module.isAuthModule) continue;
         
-        contentHTML += module.template || `<div id="${moduleName}" class="section ${moduleName === 'dashboard' ? 'active' : ''}"><h1>${module.name}</h1><p>Content for ${module.name}</p></div>`;
+        contentHTML += module.template || `<div id="${moduleName}" class="section">${module.name} Content</div>`;
     }
     contentArea.innerHTML = contentHTML;
     
-    // Attach navigation event listeners
+    // Set dashboard as active
+    const dashboardSection = document.getElementById('dashboard');
+    const dashboardLink = document.querySelector('.nav-link[data-target="dashboard"]');
+    if (dashboardSection) dashboardSection.classList.add('active');
+    if (dashboardLink) dashboardLink.classList.add('active');
+    
+    // Add navigation event listeners
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const target = e.target.getAttribute('data-target');
-            FarmModules.navigateTo(target);
+            
+            // Update active states
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            
+            e.target.classList.add('active');
+            const targetSection = document.getElementById(target);
+            if (targetSection) targetSection.classList.add('active');
         });
     });
-    
-    // Initialize sidebar for dashboard
-    FarmModules.updateSidebar('dashboard');
 }
 
-// Set current dates in date fields
 function setCurrentDates() {
     const today = new Date().toISOString().split('T')[0];
     document.querySelectorAll('input[type="date"]').forEach(input => {
-        if (!input.id.includes('start-date') && !input.id.includes('planting-date')) {
+        if (!input.value) {
             input.value = today;
         }
     });
 }
 
-// Enhanced save function with auto-sync
-function saveWithSync(dataType, data) {
-    const user = FirebaseAuth.getCurrentUser();
-    if (user) {
-        // Update local data
-        FarmModules.appData[dataType] = data;
-        FarmModules.saveDataToStorage();
-        
-        // Queue for sync
-        AutoSyncManager.queueSync(user.uid, dataType, data);
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, starting initialization...');
+    
+    // Check if Firebase is available
+    if (typeof firebase === 'undefined') {
+        console.error('Firebase not loaded');
+        return;
     }
-}
+    
+    // Initialize auth module first
+    if (FarmModules.modules.auth) {
+        FarmModules.modules.auth.initialize();
+    }
+    
+    // Make initializeApp globally available
+    window.initializeApp = initializeApp;
+});
