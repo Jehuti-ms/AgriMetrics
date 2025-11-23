@@ -1,188 +1,192 @@
-// modules/core.js - Complete corrected version
-const FarmModules = {
-    modules: {},
-    appData: {
-        inventory: [], 
-        transactions: [], 
-        production: [], 
-        orders: [], 
-        sales: [], 
-        projects: [], 
-        feedRecords: []
-    },
+// modules/core.js - Core functionality and utilities
+class CoreModule {
+    constructor() {
+        this.app = window.app;
+        this.init();
+    }
 
-    registerModule: function(name, module) {
-        this.modules[name] = module;
-        console.log(`Module registered: ${name}`);
-    },
+    init() {
+        console.log('Core module initialized');
+        this.setupGlobalErrorHandling();
+        this.setupOfflineDetection();
+    }
 
-    initializeModules: function() {
-        console.log('Initializing all modules...');
-        for (const moduleName in this.modules) {
-            if (this.modules[moduleName].initialize && !this.modules[moduleName].isAuthModule) {
-                console.log(`Initializing module: ${moduleName}`);
-                this.modules[moduleName].initialize();
+    setupGlobalErrorHandling() {
+        window.addEventListener('error', (event) => {
+            console.error('Global error:', event.error);
+            this.showNotification('An error occurred. Please try again.', 'error');
+        });
+
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('Unhandled promise rejection:', event.reason);
+            this.showNotification('Something went wrong. Please refresh the page.', 'error');
+        });
+    }
+
+    setupOfflineDetection() {
+        window.addEventListener('online', () => {
+            this.showNotification('Connection restored', 'success');
+        });
+
+        window.addEventListener('offline', () => {
+            this.showNotification('You are offline. Some features may not work.', 'warning');
+        });
+    }
+
+    // Utility function to show notifications
+    showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
+            <span>${message}</span>
+            <button onclick="this.parentElement.remove()">&times;</button>
+        `;
+
+        // Add styles if not already added
+        if (!document.querySelector('#notification-styles')) {
+            const styles = `
+                <style>
+                    .notification {
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        padding: 1rem 1.5rem;
+                        border-radius: 8px;
+                        color: white;
+                        z-index: 1000;
+                        display: flex;
+                        align-items: center;
+                        gap: 1rem;
+                        max-width: 400px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                        animation: slideIn 0.3s ease-out;
+                    }
+                    .notification-success { background: linear-gradient(135deg, #22c55e, #16a34a); }
+                    .notification-error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+                    .notification-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+                    .notification-info { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+                    .notification button {
+                        background: none;
+                        border: none;
+                        color: white;
+                        font-size: 1.2rem;
+                        cursor: pointer;
+                        padding: 0;
+                        width: 20px;
+                        height: 20px;
+                    }
+                    @keyframes slideIn {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                </style>
+            `;
+            document.head.insertAdjacentHTML('beforeend', styles);
+        }
+
+        document.body.appendChild(notification);
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
             }
-        }
-    },
+        }, 5000);
+    }
 
-    saveDataToStorage: function() {
-        try {
-            localStorage.setItem('farmData', JSON.stringify(this.appData));
-            console.log('Data saved to localStorage');
-        } catch (error) {
-            console.error('Save error:', error);
-        }
-    },
+    // Format currency
+    formatCurrency(amount) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(amount);
+    }
 
-    loadDataFromStorage: function() {
-        try {
-            const saved = localStorage.getItem('farmData');
-            if (saved) {
-                this.appData = JSON.parse(saved);
-                console.log('Data loaded from localStorage');
-            }
-        } catch (error) {
-            console.error('Load error:', error);
-        }
-    },
-
-    // Navigation system
-    navigateTo: function(moduleName) {
-        console.log('Navigating to:', moduleName);
-        
-        if (!this.modules[moduleName]) {
-            console.error(`Module not found: ${moduleName}`);
-            return;
-        }
-        
-        // Hide all sections
-        document.querySelectorAll('.section').forEach(section => {
-            section.classList.remove('active');
+    // Format date
+    formatDate(date) {
+        return new Date(date).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
         });
-        
-        // Remove active class from all nav links
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('active');
-        });
-        
-        // Show target section
-        const targetSection = document.getElementById(moduleName);
-        if (targetSection) {
-            targetSection.classList.add('active');
-        } else {
-            console.error(`Section not found: ${moduleName}`);
-        }
-        
-        // Activate nav link
-        const targetNavLink = document.querySelector(`.nav-link[data-target="${moduleName}"]`);
-        if (targetNavLink) {
-            targetNavLink.classList.add('active');
-        }
-        
-        // Update sidebar
-        this.updateSidebar(moduleName);
-        
-        console.log(`Successfully navigated to ${moduleName}`);
-    },
-
-    // Update sidebar content
-    updateSidebar: function(moduleName) {
-        const sidebar = document.getElementById('sidebar');
-        if (sidebar && this.modules[moduleName] && this.modules[moduleName].sidebar) {
-            sidebar.innerHTML = this.modules[moduleName].sidebar;
-            this.attachSidebarEvents();
-            console.log(`Sidebar updated for: ${moduleName}`);
-        } else {
-            console.log(`No sidebar found for: ${moduleName}`);
-        }
-    },
-
-    // Attach sidebar event listeners
-    attachSidebarEvents: function() {
-        console.log('Attaching sidebar events...');
-        
-        // Sidebar links
-        document.querySelectorAll('.sidebar-link').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const target = e.target.getAttribute('data-target');
-                console.log('Sidebar link clicked:', target);
-                this.navigateTo(target);
-            });
-        });
-        
-        // Production items
-        document.querySelectorAll('.production-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                document.querySelectorAll('.production-item').forEach(i => i.classList.remove('active'));
-                e.target.classList.add('active');
-                this.navigateTo('production');
-            });
-        });
-        
-        // Feed type items
-        document.querySelectorAll('.feed-type-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                document.querySelectorAll('.feed-type-item').forEach(i => i.classList.remove('active'));
-                e.target.classList.add('active');
-            });
-        });
-
-        // Dashboard sidebar actions
-        document.querySelectorAll('.sidebar-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const action = e.target.closest('.sidebar-btn').dataset.action;
-                console.log('Sidebar button clicked:', action);
-                this.handleSidebarAction(action);
-            });
-        });
-        
-        console.log('Sidebar events attached');
-    },
-
-    // Handle sidebar actions
-    handleSidebarAction: function(action) {
-        console.log('Handling sidebar action:', action);
-        const actionMap = {
-            'add-income': 'income-expenses',
-            'add-expense': 'income-expenses',
-            'inventory-check': 'inventory-check',
-            'record-sale': 'sales',
-            'add-production': 'production',
-            'create-order': 'orders'
-        };
-
-        if (actionMap[action]) {
-            this.navigateTo(actionMap[action]);
-        } else {
-            console.warn('Unknown sidebar action:', action);
-        }
-    },
+    }
 
     // Generate unique ID
-    generateId: function() {
+    generateId() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
-    },
-
-    // Safe element selector
-    safeQuerySelector: function(selector) {
-        const element = document.querySelector(selector);
-        if (!element) {
-            console.warn(`Element not found: ${selector}`);
-        }
-        return element;
-    },
-
-    // Safe element selector for multiple elements
-    safeQuerySelectorAll: function(selector) {
-        const elements = document.querySelectorAll(selector);
-        if (elements.length === 0) {
-            console.warn(`No elements found: ${selector}`);
-        }
-        return elements;
     }
-};
 
-// Make FarmModules globally available
-window.FarmModules = FarmModules;
+    // Debounce function for search inputs
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Load data from Firestore with error handling
+    async loadData(collection, docId = null) {
+        try {
+            const db = firebase.firestore();
+            let data;
+
+            if (docId) {
+                const doc = await db.collection(collection).doc(docId).get();
+                data = doc.exists ? doc.data() : null;
+            } else {
+                const snapshot = await db.collection(collection).get();
+                data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            }
+
+            return { success: true, data };
+        } catch (error) {
+            console.error(`Error loading data from ${collection}:`, error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    // Save data to Firestore
+    async saveData(collection, data, docId = null) {
+        try {
+            const db = firebase.firestore();
+            const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+            const dataToSave = {
+                ...data,
+                updatedAt: timestamp
+            };
+
+            if (!docId) {
+                dataToSave.createdAt = timestamp;
+            }
+
+            const ref = docId ? 
+                db.collection(collection).doc(docId) : 
+                db.collection(collection).doc();
+
+            await ref.set(dataToSave, { merge: true });
+
+            return { success: true, id: ref.id };
+        } catch (error) {
+            console.error(`Error saving data to ${collection}:`, error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    // Delete data from Firestore
+    async deleteData(collection, docId) {
+        try {
+            await firebase.firestore().collection(collection).doc(docId).delete();
+            return { success: true };
+        } catch (error) {
+            console.error(`Error deleting data from ${collection}:`, error);
+            return { success: false, error: error.message };
+        }
+    }
+}
+
+// Initialize core module
+window.coreModule = new CoreModule();
