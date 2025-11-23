@@ -5,10 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Farm Management System</title>
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- Load scripts in correct order -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<script src="firebase/firebase-config.js"></script>
+<script src="firebase/firebase-auth.js"></script>
+<script src="firebase/firebase-firestore.js"></script>
+
+<!-- Core must be loaded first -->
+<script src="modules/core.js"></script>
+
+<!-- Then load other modules -->
+<script src="modules/auth.js"></script>
+<script src="modules/dashboard.js"></script>
+<script src="modules/income-expenses.js"></script>
+<script src="modules/inventory-check.js"></script>
+<script src="modules/reports.js"></script>
+    
+ <!-- Add this to your index.html head -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+<!-- App last -->
+<script src="app.js"></script>
     
     <style>
         /* Basic styles to prevent unstyled content */
@@ -18,8 +38,7 @@
         .section { display: none; }
         .section.active { display: block; }
     </style>
-    <!-- Add this to your index.html head -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+   
 </head>
 <body>
     <!-- Auth Container -->
