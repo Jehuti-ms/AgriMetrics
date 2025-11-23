@@ -6,14 +6,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load data from storage
     FarmModules.loadDataFromStorage();
     
-    // Initialize navigation
-    initializeNavigation();
+    // Initialize authentication first
+    if (FarmModules.modules.auth) {
+        FarmModules.modules.auth.initialize();
+    }
     
-    // Initialize all modules
-    FarmModules.initializeModules();
-    
-    // Set current date for date fields
-    setCurrentDates();
+    // Initialize other modules after auth check
+    FirebaseAuth.onAuthStateChanged((user) => {
+        if (user) {
+            // User is signed in, initialize app
+            initializeNavigation();
+            FarmModules.initializeModules();
+            setCurrentDates();
+        }
+    });
 });
 
 // PWA Initialization
@@ -85,10 +91,12 @@ function initializeNavigation() {
     const mainNav = document.getElementById('main-nav');
     const contentArea = document.getElementById('content-area');
     
-    // Create navigation
+    // Create navigation (exclude auth module)
     let navHTML = '<ul>';
     for (const moduleName in FarmModules.modules) {
         const module = FarmModules.modules[moduleName];
+        if (module.isAuthModule) continue; // Skip auth module from main nav
+        
         navHTML += `
             <li>
                 <a href="#" class="nav-link ${moduleName === 'dashboard' ? 'active' : ''}" 
@@ -101,10 +109,12 @@ function initializeNavigation() {
     navHTML += '</ul>';
     mainNav.innerHTML = navHTML;
     
-    // Create content sections
+    // Create content sections (exclude auth module)
     let contentHTML = '';
     for (const moduleName in FarmModules.modules) {
         const module = FarmModules.modules[moduleName];
+        if (module.isAuthModule) continue; // Skip auth module from content
+        
         contentHTML += module.template || `<div id="${moduleName}" class="section ${moduleName === 'dashboard' ? 'active' : ''}"><h1>${module.name}</h1><p>Content for ${module.name}</p></div>`;
     }
     contentArea.innerHTML = contentHTML;
@@ -130,4 +140,17 @@ function setCurrentDates() {
             input.value = today;
         }
     });
+}
+
+// Enhanced save function with auto-sync
+function saveWithSync(dataType, data) {
+    const user = FirebaseAuth.getCurrentUser();
+    if (user) {
+        // Update local data
+        FarmModules.appData[dataType] = data;
+        FarmModules.saveDataToStorage();
+        
+        // Queue for sync
+        AutoSyncManager.queueSync(user.uid, dataType, data);
+    }
 }
