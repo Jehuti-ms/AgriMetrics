@@ -96,6 +96,14 @@ FarmModules.registerModule('auth', {
         const confirmPassword = document.getElementById('signup-confirm-password').value;
         const farmName = document.getElementById('farm-name').value;
         
+        // Password strength indicator
+        const passwordInput = document.getElementById('signup-password');
+        if (passwordInput) {
+            passwordInput.addEventListener('input', (e) => {
+                this.updatePasswordStrength(e.target.value);
+            });
+        }
+        
         if (password !== confirmPassword) {
             alert('Passwords do not match');
             return;
