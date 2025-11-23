@@ -1,4 +1,4 @@
-// modules/dashboard.js - Enhanced version
+// modules/dashboard.js - Fixed version
 FarmModules.registerModule('dashboard', {
     name: 'Dashboard',
     icon: '📊',
@@ -224,13 +224,16 @@ FarmModules.registerModule('dashboard', {
     `,
 
     initialize: function() {
+        console.log('Dashboard module initializing...');
         this.loadDashboardData();
         this.attachEventListeners();
         this.updateGreeting();
         this.startAutoRefresh();
+        this.initializeAnimations();
     },
 
     loadDashboardData: function() {
+        console.log('Loading dashboard data...');
         this.updateFinancialMetrics();
         this.updateInventoryMetrics();
         this.updateProductionMetrics();
@@ -247,28 +250,32 @@ FarmModules.registerModule('dashboard', {
         // Calculate totals
         const totalIncome = transactions
             .filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + (t.value || 0), 0);
+            .reduce((sum, t) => sum + (parseFloat(t.value) || 0), 0);
         
         const totalExpenses = transactions
             .filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + (t.value || 0), 0);
+            .reduce((sum, t) => sum + (parseFloat(t.value) || 0), 0);
         
         const netProfit = totalIncome - totalExpenses;
 
         // Today's totals
         const todayIncome = transactions
             .filter(t => t.type === 'income' && new Date(t.date).toDateString() === today)
-            .reduce((sum, t) => sum + (t.value || 0), 0);
+            .reduce((sum, t) => sum + (parseFloat(t.value) || 0), 0);
 
         const todayExpenses = transactions
             .filter(t => t.type === 'expense' && new Date(t.date).toDateString() === today)
-            .reduce((sum, t) => sum + (t.value || 0), 0);
+            .reduce((sum, t) => sum + (parseFloat(t.value) || 0), 0);
 
         // Monthly sales (current month)
         const currentMonth = new Date().getMonth();
-        const monthlySales = FarmModules.appData.sales
-            .filter(sale => new Date(sale.saleDate).getMonth() === currentMonth)
-            .reduce((sum, sale) => sum + (sale.totalSales || 0), 0);
+        const currentYear = new Date().getFullYear();
+        const monthlySales = (FarmModules.appData.sales || [])
+            .filter(sale => {
+                const saleDate = new Date(sale.saleDate);
+                return saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear;
+            })
+            .reduce((sum, sale) => sum + (parseFloat(sale.totalSales) || 0), 0);
 
         // Update DOM
         this.updateElement('total-income', `$${totalIncome.toFixed(2)}`);
@@ -306,7 +313,6 @@ FarmModules.registerModule('dashboard', {
         ).length;
 
         this.updateElement('production-count', activeProduction);
-        this.updateElement('active-projects', projects.length);
     },
 
     updateRecentActivity: function() {
@@ -317,36 +323,36 @@ FarmModules.registerModule('dashboard', {
         const allActivities = [];
         
         // Add recent transactions
-        FarmModules.appData.transactions.slice(-5).forEach(transaction => {
+        (FarmModules.appData.transactions || []).slice(-5).forEach(transaction => {
             allActivities.push({
                 type: 'transaction',
                 icon: transaction.type === 'income' ? '💰' : '💸',
-                description: `${transaction.type === 'income' ? 'Income' : 'Expense'}: ${transaction.description}`,
-                amount: transaction.value,
+                description: `${transaction.type === 'income' ? 'Income' : 'Expense'}: ${transaction.description || 'No description'}`,
+                amount: parseFloat(transaction.value) || 0,
                 date: transaction.date,
                 color: transaction.type === 'income' ? 'success' : 'error'
             });
         });
 
         // Add recent sales
-        FarmModules.appData.sales.slice(-5).forEach(sale => {
+        (FarmModules.appData.sales || []).slice(-5).forEach(sale => {
             allActivities.push({
                 type: 'sale',
                 icon: '🛒',
-                description: `Sale to ${sale.customer}`,
-                amount: sale.totalSales,
+                description: `Sale to ${sale.customer || 'Unknown'}`,
+                amount: parseFloat(sale.totalSales) || 0,
                 date: sale.saleDate,
                 color: 'success'
             });
         });
 
         // Add recent inventory checks
-        FarmModules.appData.inventory.slice(-5).forEach(item => {
+        (FarmModules.appData.inventory || []).slice(-5).forEach(item => {
             allActivities.push({
                 type: 'inventory',
                 icon: '📦',
-                description: `Inventory: ${item.item}`,
-                details: `Qty: ${item.quantity}, Condition: ${item.condition}`,
+                description: `Inventory: ${item.item || 'Unknown Item'}`,
+                details: `Qty: ${item.quantity || 0}, Condition: ${item.condition || 'Unknown'}`,
                 date: item.date,
                 color: 'info'
             });
@@ -397,17 +403,28 @@ FarmModules.registerModule('dashboard', {
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
         const weeklySales = sales
             .filter(sale => new Date(sale.saleDate) >= oneWeekAgo)
-            .reduce((sum, sale) => sum + (sale.totalSales || 0), 0);
+            .reduce((sum, sale) => sum + (parseFloat(sale.totalSales) || 0), 0);
 
         // Monthly feed cost
         const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
         const monthlyFeedCost = feedRecords
-            .filter(record => new Date(record.date).getMonth() === currentMonth)
-            .reduce((sum, record) => sum + (record.totalCost || 0), 0);
+            .filter(record => {
+                const recordDate = new Date(record.date);
+                return recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear;
+            })
+            .reduce((sum, record) => sum + (parseFloat(record.totalCost) || 0), 0);
 
         this.updateElement('pending-orders', pendingOrders);
         this.updateElement('weekly-sales', `$${weeklySales.toFixed(2)}`);
         this.updateElement('monthly-feed-cost', `$${monthlyFeedCost.toFixed(2)}`);
+        
+        // Today's sales count
+        const today = new Date().toDateString();
+        const todaySales = sales.filter(sale => 
+            new Date(sale.saleDate).toDateString() === today
+        ).length;
+        this.updateElement('today-sales', todaySales);
     },
 
     updateAlerts: function() {
@@ -417,7 +434,7 @@ FarmModules.registerModule('dashboard', {
         const alerts = [];
 
         // Check for low stock
-        const lowStockItems = FarmModules.appData.inventory.filter(item => {
+        const lowStockItems = (FarmModules.appData.inventory || []).filter(item => {
             const quantity = parseInt(item.quantity) || 0;
             return quantity > 0 && quantity < 5;
         });
@@ -431,7 +448,7 @@ FarmModules.registerModule('dashboard', {
         }
 
         // Check for pending orders
-        const pendingOrders = FarmModules.appData.orders.filter(order => 
+        const pendingOrders = (FarmModules.appData.orders || []).filter(order => 
             order.deliveryStatus === 'pending'
         ).length;
 
@@ -445,7 +462,7 @@ FarmModules.registerModule('dashboard', {
 
         // Check for today's activities
         const today = new Date().toDateString();
-        const todayActivities = FarmModules.appData.transactions.filter(t => 
+        const todayActivities = (FarmModules.appData.transactions || []).filter(t => 
             new Date(t.date).toDateString() === today
         ).length;
 
@@ -487,27 +504,52 @@ FarmModules.registerModule('dashboard', {
             .filter(t => t.type === 'income' && 
                 new Date(t.date).getMonth() === currentMonth &&
                 new Date(t.date).getFullYear() === currentYear)
-            .reduce((sum, t) => sum + (t.value || 0), 0);
+            .reduce((sum, t) => sum + (parseFloat(t.value) || 0), 0);
 
         const lastMonthIncome = transactions
             .filter(t => t.type === 'income' && 
                 new Date(t.date).getMonth() === lastMonth &&
                 new Date(t.date).getFullYear() === lastMonthYear)
-            .reduce((sum, t) => sum + (t.value || 0), 0);
+            .reduce((sum, t) => sum + (parseFloat(t.value) || 0), 0);
 
         const incomeChange = lastMonthIncome > 0 ? 
             ((currentMonthIncome - lastMonthIncome) / lastMonthIncome) * 100 : 0;
 
         this.updateTrendElement('income-trend', incomeChange);
-        // Similar calculations for expenses and profit...
+        
+        // Similar for expenses
+        const currentMonthExpenses = transactions
+            .filter(t => t.type === 'expense' && 
+                new Date(t.date).getMonth() === currentMonth &&
+                new Date(t.date).getFullYear() === currentYear)
+            .reduce((sum, t) => sum + (parseFloat(t.value) || 0), 0);
+
+        const lastMonthExpenses = transactions
+            .filter(t => t.type === 'expense' && 
+                new Date(t.date).getMonth() === lastMonth &&
+                new Date(t.date).getFullYear() === lastMonthYear)
+            .reduce((sum, t) => sum + (parseFloat(t.value) || 0), 0);
+
+        const expenseChange = lastMonthExpenses > 0 ? 
+            ((currentMonthExpenses - lastMonthExpenses) / lastMonthExpenses) * 100 : 0;
+
+        this.updateTrendElement('expense-trend', expenseChange);
+        
+        // Profit trend
+        const profitChange = incomeChange - expenseChange;
+        this.updateTrendElement('profit-trend', profitChange);
     },
 
     updateTrendElement: function(elementId, change) {
         const element = document.getElementById(elementId);
         if (!element) return;
 
-        const indicator = change > 0 ? '📈' : change < 0 ? '📉' : '→';
-        const text = change !== 0 ? `${Math.abs(change).toFixed(1)}% ${change > 0 ? 'increase' : 'decrease'}` : 'No change';
+        const indicator = change > 5 ? '📈' : change < -5 ? '📉' : '→';
+        let text = 'No change';
+        
+        if (Math.abs(change) > 5) {
+            text = `${Math.abs(change).toFixed(1)}% ${change > 0 ? 'increase' : 'decrease'}`;
+        }
 
         element.innerHTML = `
             <span class="trend-indicator">${indicator}</span>
@@ -535,15 +577,20 @@ FarmModules.registerModule('dashboard', {
 
         const incomeData = last6Months.map(month => 
             transactions.filter(t => t.type === 'income' && this.isSameMonth(t.date, month))
-                .reduce((sum, t) => sum + (t.value || 0), 0)
+                .reduce((sum, t) => sum + (parseFloat(t.value) || 0), 0)
         );
 
         const expenseData = last6Months.map(month => 
             transactions.filter(t => t.type === 'expense' && this.isSameMonth(t.date, month))
-                .reduce((sum, t) => sum + (t.value || 0), 0)
+                .reduce((sum, t) => sum + (parseFloat(t.value) || 0), 0)
         );
 
-        new Chart(ctx, {
+        // Destroy existing chart if it exists
+        if (ctx.chart) {
+            ctx.chart.destroy();
+        }
+
+        ctx.chart = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: last6Months.map(month => month.toLocaleDateString('en', { month: 'short' })),
@@ -602,7 +649,12 @@ FarmModules.registerModule('dashboard', {
             types[type] = (types[type] || 0) + 1;
         });
 
-        new Chart(ctx, {
+        // Destroy existing chart if it exists
+        if (ctx.chart) {
+            ctx.chart.destroy();
+        }
+
+        ctx.chart = new Chart(ctx, {
             type: 'doughnut',
             data: {
                 labels: Object.keys(types),
@@ -654,7 +706,6 @@ FarmModules.registerModule('dashboard', {
 
         // View all activity
         document.getElementById('view-all-activity')?.addEventListener('click', () => {
-            // Could navigate to reports or activity log
             FarmModules.navigateTo('reports');
         });
     },
@@ -700,6 +751,31 @@ FarmModules.registerModule('dashboard', {
         }, 30000);
     },
 
+    initializeAnimations: function() {
+        // Add intersection observer for scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe all metric cards and charts
+        document.querySelectorAll('.metric-card, .chart-card, .activity-card, .quick-stats-card').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            observer.observe(el);
+        });
+    },
+
     // Utility functions
     updateElement: function(id, value) {
         const element = document.getElementById(id);
@@ -707,8 +783,12 @@ FarmModules.registerModule('dashboard', {
     },
 
     formatDate: function(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } catch (e) {
+            return 'Invalid date';
+        }
     },
 
     getLast6Months: function() {
@@ -722,41 +802,11 @@ FarmModules.registerModule('dashboard', {
     },
 
     isSameMonth: function(dateString, month) {
-        const date = new Date(dateString);
-        return date.getMonth() === month.getMonth() && date.getFullYear() === month.getFullYear();
+        try {
+            const date = new Date(dateString);
+            return date.getMonth() === month.getMonth() && date.getFullYear() === month.getFullYear();
+        } catch (e) {
+            return false;
+        }
     }
 });
-
-// Add to the initialize method in dashboard.js
-initialize: function() {
-    this.loadDashboardData();
-    this.attachEventListeners();
-    this.updateGreeting();
-    this.startAutoRefresh();
-    this.initializeAnimations();
-},
-
-initializeAnimations: function() {
-    // Add intersection observer for scroll animations
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
-            }
-        });
-    }, observerOptions);
-
-    // Observe all metric cards and charts
-    document.querySelectorAll('.metric-card, .chart-card, .activity-card, .quick-stats-card').forEach(el => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(20px)';
-        el.style.transition = 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-        observer.observe(el);
-    });
-},
