@@ -1,131 +1,293 @@
-// app.js - Complete corrected version
-function initializeApp() {
-    console.log('Initializing main app...');
-    
-    try {
-        // Initialize navigation
-        initializeNavigation();
-        
-        // Initialize modules
-        if (FarmModules && FarmModules.initializeModules) {
-            FarmModules.initializeModules();
-        }
-        
-        // Set current dates
-        setCurrentDates();
-        
-        console.log('App initialized successfully');
-    } catch (error) {
-        console.error('Error initializing app:', error);
+// app.js - Updated to use modules
+class FarmManagementApp {
+    constructor() {
+        this.currentUser = null;
+        this.currentSection = 'dashboard';
+        this.modules = {};
+        this.init();
     }
-}
 
-function initializeNavigation() {
-    try {
-        const mainNav = document.getElementById('main-nav');
-        const contentArea = document.getElementById('content-area');
-        
-        if (!mainNav || !contentArea) {
-            console.log('Navigation elements not found yet');
-            return;
-        }
-        
-        // Create navigation
-        let navHTML = '<ul>';
-        for (const moduleName in FarmModules.modules) {
-            const module = FarmModules.modules[moduleName];
-            if (module.isAuthModule) continue;
+    async init() {
+        try {
+            // Initialize Firebase first
+            await this.initializeFirebase();
             
-            navHTML += `
-                <li>
-                    <a href="#" class="nav-link" data-target="${moduleName}">
-                        ${module.icon || '📄'} ${module.name}
-                    </a>
-                </li>
-            `;
-        }
-        navHTML += '</ul>';
-        mainNav.innerHTML = navHTML;
-        
-        // Create content sections
-        let contentHTML = '';
-        for (const moduleName in FarmModules.modules) {
-            const module = FarmModules.modules[moduleName];
-            if (module.isAuthModule) continue;
+            // Check authentication state
+            this.setupAuthListener();
             
-            contentHTML += module.template || `<div id="${moduleName}" class="section">${module.name} Content</div>`;
+            // Setup navigation and event listeners
+            this.setupNavigation();
+            this.setupEventListeners();
+            
+            console.log('Farm Management App initialized');
+        } catch (error) {
+            console.error('Failed to initialize app:', error);
         }
-        contentArea.innerHTML = contentHTML;
-        
-        // Set dashboard as active
-        const dashboardSection = document.getElementById('dashboard');
-        const dashboardLink = document.querySelector('.nav-link[data-target="dashboard"]');
-        if (dashboardSection) dashboardSection.classList.add('active');
-        if (dashboardLink) dashboardLink.classList.add('active');
-        
-        // Add navigation event listeners
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const target = e.target.getAttribute('data-target');
-                FarmModules.navigateTo(target);
-            });
-        });
-
-        // Initialize sidebar for dashboard
-        FarmModules.updateSidebar('dashboard');
-        
-        console.log('Navigation initialized successfully');
-    } catch (error) {
-        console.error('Error initializing navigation:', error);
     }
-}
 
-function setCurrentDates() {
-    try {
-        const today = new Date().toISOString().split('T')[0];
-        document.querySelectorAll('input[type="date"]').forEach(input => {
-            if (!input.value) {
-                input.value = today;
+    async initializeFirebase() {
+        if (typeof firebase === 'undefined') {
+            throw new Error('Firebase not loaded');
+        }
+    }
+
+    setupAuthListener() {
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                this.currentUser = user;
+                this.showApp();
+                this.loadUserData();
+            } else {
+                this.currentUser = null;
+                this.showAuth();
             }
         });
-        console.log('Current dates set');
-    } catch (error) {
-        console.error('Error setting dates:', error);
+    }
+
+    setupNavigation() {
+        const navConfig = [
+            { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+            { id: 'income-expenses', label: 'Income & Expenses', icon: '💰' },
+            { id: 'inventory-check', label: 'Inventory', icon: '📦' },
+            { id: 'reports', label: 'Reports', icon: '📈' },
+            { id: 'animals', label: 'Animals', icon: '🐄' },
+            { id: 'crops', label: 'Crops', icon: '🌱' }
+        ];
+
+        const navElement = document.getElementById('main-nav');
+        const navList = document.createElement('ul');
+        navList.className = 'nav-list';
+
+        navConfig.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'nav-item';
+            
+            const a = document.createElement('a');
+            a.href = '#';
+            a.className = 'nav-link';
+            a.dataset.section = item.id;
+            a.innerHTML = `${item.icon} ${item.label}`;
+            
+            li.appendChild(a);
+            navList.appendChild(li);
+        });
+
+        // Add user info and logout
+        const userLi = document.createElement('li');
+        userLi.className = 'nav-item';
+        userLi.innerHTML = `
+            <div class="user-info">
+                <span id="user-name">User</span>
+                <button class="btn btn-secondary logout-btn">Logout</button>
+            </div>
+        `;
+        navList.appendChild(userLi);
+
+        navElement.appendChild(navList);
+
+        // Add logout handler
+        navElement.querySelector('.logout-btn').addEventListener('click', () => this.logout());
+    }
+
+    setupEventListeners() {
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('nav-link')) {
+                e.preventDefault();
+                const section = e.target.dataset.section;
+                this.showSection(section);
+            }
+        });
+    }
+
+    showAuth() {
+        document.getElementById('auth-container').classList.remove('hidden');
+        document.getElementById('app-container').classList.add('hidden');
+    }
+
+    showApp() {
+        document.getElementById('auth-container').classList.add('hidden');
+        document.getElementById('app-container').classList.remove('hidden');
+        
+        // Update user name in nav
+        const userNameElement = document.getElementById('user-name');
+        if (userNameElement && this.currentUser) {
+            userNameElement.textContent = this.currentUser.displayName || this.currentUser.email;
+        }
+        
+        this.showSection(this.currentSection);
+    }
+
+    async showSection(sectionId) {
+        // Update navigation
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+        document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
+
+        // Update content
+        this.currentSection = sectionId;
+        await this.loadSectionContent(sectionId);
+    }
+
+    async loadSectionContent(sectionId) {
+        const contentArea = document.getElementById('content-area');
+        contentArea.innerHTML = '<div class="text-center"><div class="spinner"></div>Loading...</div>';
+
+        try {
+            let content = '';
+            
+            switch(sectionId) {
+                case 'dashboard':
+                    content = await window.dashboardModule.loadDashboard();
+                    break;
+                case 'income-expenses':
+                    content = await this.loadIncomeExpenses();
+                    break;
+                case 'inventory-check':
+                    content = await this.loadInventory();
+                    break;
+                case 'reports':
+                    content = await this.loadReports();
+                    break;
+                default:
+                    content = `<h1>${sectionId.charAt(0).toUpperCase() + sectionId.slice(1)}</h1><p>Section under development</p>`;
+            }
+            
+            contentArea.innerHTML = content;
+        } catch (error) {
+            console.error('Error loading section:', error);
+            contentArea.innerHTML = '<div class="text-error">Error loading content</div>';
+        }
+    }
+
+    async loadIncomeExpenses() {
+        return `
+            <div class="section-header">
+                <h1>Income & Expenses</h1>
+                <p>Manage your farm finances</p>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>2024-01-15</td>
+                            <td>Corn Harvest</td>
+                            <td>Crops</td>
+                            <td>$2,500.00</td>
+                            <td class="text-success">Income</td>
+                        </tr>
+                        <tr>
+                            <td>2024-01-14</td>
+                            <td>Animal Feed</td>
+                            <td>Supplies</td>
+                            <td>$450.00</td>
+                            <td class="text-error">Expense</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    async loadInventory() {
+        return `
+            <div class="section-header">
+                <h1>Inventory Management</h1>
+                <p>Track your farm inventory</p>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Category</th>
+                            <th>Quantity</th>
+                            <th>Unit</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Corn Seeds</td>
+                            <td>Seeds</td>
+                            <td>150</td>
+                            <td>kg</td>
+                            <td class="text-success">In Stock</td>
+                        </tr>
+                        <tr>
+                            <td>Animal Feed</td>
+                            <td>Feed</td>
+                            <td>45</td>
+                            <td>bags</td>
+                            <td class="text-warning">Low Stock</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    async loadReports() {
+        return `
+            <div class="section-header">
+                <h1>Reports & Analytics</h1>
+                <p>Generate farm reports and analytics</p>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Monthly Report</h3>
+                    <p>Generate monthly summary</p>
+                    <button class="btn btn-primary mt-1">Generate</button>
+                </div>
+                <div class="stat-card">
+                    <h3>Financial Report</h3>
+                    <p>Income vs Expenses</p>
+                    <button class="btn btn-primary mt-1">Generate</button>
+                </div>
+                <div class="stat-card">
+                    <h3>Inventory Report</h3>
+                    <p>Stock levels analysis</p>
+                    <button class="btn btn-primary mt-1">Generate</button>
+                </div>
+            </div>
+        `;
+    }
+
+    async loadUserData() {
+        try {
+            const userDoc = await firebase.firestore()
+                .collection('users')
+                .doc(this.currentUser.uid)
+                .get();
+            
+            if (userDoc.exists) {
+                console.log('User data loaded:', userDoc.data());
+            }
+        } catch (error) {
+            console.error('Error loading user data:', error);
+        }
+    }
+
+    async logout() {
+        try {
+            await firebase.auth().signOut();
+            this.coreModule.showNotification('Logged out successfully', 'success');
+        } catch (error) {
+            console.error('Error signing out:', error);
+        }
     }
 }
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, starting initialization...');
-    
-    // Check if Firebase is available
-    if (typeof firebase === 'undefined') {
-        console.error('Firebase not loaded');
-        return;
-    }
-    
-    // Initialize auth module first
-    if (FarmModules.modules.auth) {
-        FarmModules.modules.auth.initialize();
-    }
-    
-    // Make initializeApp globally available
-    window.initializeApp = initializeApp;
+// Initialize the app when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    window.app = new FarmManagementApp();
 });
-
-// Add debug helper
-function debugApp() {
-    console.log('=== APP DEBUG INFO ===');
-    console.log('FarmModules:', FarmModules);
-    console.log('Modules loaded:', Object.keys(FarmModules.modules));
-    console.log('Current user:', FirebaseAuth ? FirebaseAuth.getCurrentUser() : 'FirebaseAuth not available');
-    console.log('Navigation elements:', {
-        mainNav: document.getElementById('main-nav'),
-        contentArea: document.getElementById('content-area'),
-        sidebar: document.getElementById('sidebar')
-    });
-}
-
-// Make debug function available globally
-window.debugApp = debugApp;
