@@ -399,4 +399,24 @@ FarmModules.registerModule('feed-records', {
             .slice(0, 5);
         
         if (recentRecords.length === 0) {
-            recentElement.innerHTML = '<p>No
+            recentElement.innerHTML = '<p>No recent feeding records</p>';
+            return;
+        }
+        
+        let html = '';
+        recentRecords.forEach(record => {
+            html += `
+                <div class="schedule-item">
+                    <div>
+                        <strong>${record.animalType}</strong> - ${record.feedType}
+                    </div>
+                    <div>
+                        ${record.quantity}kg (${record.feedingTime})
+                    </div>
+                </div>
+            `;
+        });
+        
+        recentElement.innerHTML = html;
+    }
+});
