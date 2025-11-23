@@ -120,4 +120,90 @@ FarmModules.registerModule('reports', {
                         <span class="metric-label">Total Items:</span>
                         <span class="metric-value">${inventory.length}</span>
                     </div>
-                   
+                    <div class="metric-row">
+                        <span class="metric-label">Low Stock Items:</span>
+                        <span class="metric-value warning">${lowStockCount}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Categories:</span>
+                        <span class="metric-value">${[...new Set(inventory.map(item => item.category))].length}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="report-section">
+                <h4>Category Breakdown</h4>
+                ${this.generateCategoryBreakdown()}
+            </div>
+        `;
+
+        this.showReport('Inventory Report', reportContent);
+    },
+
+    generateProductionReport: function() {
+        const reportContent = `
+            <div class="report-section">
+                <h4>Production Overview</h4>
+                <p>Production tracking features coming soon!</p>
+                <p>This module will track crop yields, livestock production, and other farm outputs.</p>
+            </div>
+        `;
+
+        this.showReport('Production Report', reportContent);
+    },
+
+    generateCategoryBreakdown: function() {
+        const inventory = FarmModules.appData.inventory || [];
+        const categories = {};
+
+        inventory.forEach(item => {
+            const category = item.category || 'other';
+            categories[category] = (categories[category] || 0) + 1;
+        });
+
+        if (Object.keys(categories).length === 0) {
+            return '<p>No inventory categories found.</p>';
+        }
+
+        return Object.entries(categories).map(([category, count]) => `
+            <div class="category-item">
+                <span class="category-name">${this.formatCategory(category)}</span>
+                <span class="category-count">${count} items</span>
+            </div>
+        `).join('');
+    },
+
+    showReport: function(title, content) {
+        const outputSection = document.getElementById('report-output');
+        const outputTitle = document.getElementById('output-title');
+        const outputContent = document.getElementById('output-content');
+
+        if (outputTitle) outputTitle.textContent = title;
+        if (outputContent) outputContent.innerHTML = content;
+        if (outputSection) outputSection.style.display = 'block';
+
+        this.showNotification(`Generated: ${title}`, 'success');
+    },
+
+    // Utility functions
+    formatCurrency: function(amount) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(amount);
+    },
+
+    formatCategory: function(category) {
+        if (!category) return 'Other';
+        return category.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+    },
+
+    showNotification: function(message, type) {
+        if (window.coreModule && window.coreModule.showNotification) {
+            window.coreModule.showNotification(message, type);
+        } else {
+            alert(message);
+        }
+    }
+});
