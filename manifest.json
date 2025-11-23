@@ -1,13 +1,22 @@
-// Firebase Configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyAO37tTin-BEBEXZNBtWbl57-s2UZAQxL8",
-    authDomain: "agrimetrics-a316c.firebaseapp.com",
-    projectId: "agrimetrics-a316c",
-    storageBucket: "agrimetrics-a316c.firebasestorage.app",
-    messagingSenderId: "464595577104",
-    appId: "1:464595577104:web:5e24c30c38c7b7c6e45d95",
-    measurementId: "G-KQW4GMBDVY"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+{
+  "name": "Farm Management System",
+  "short_name": "Farm Manager",
+  "description": "A comprehensive farm management system",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f5f5",
+  "theme_color": "#2e7d32",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
