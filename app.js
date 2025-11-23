@@ -1,9 +1,8 @@
-// app.js - Updated to use modules
+// app.js - Updated to use FarmModules framework
 class FarmManagementApp {
     constructor() {
         this.currentUser = null;
         this.currentSection = 'dashboard';
-        this.modules = {};
         this.init();
     }
 
@@ -122,144 +121,15 @@ class FarmManagementApp {
         document.querySelectorAll('.nav-link').forEach(link => {
             link.classList.remove('active');
         });
-        document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
-
-        // Update content
-        this.currentSection = sectionId;
-        await this.loadSectionContent(sectionId);
-    }
-
-    async loadSectionContent(sectionId) {
-        const contentArea = document.getElementById('content-area');
-        contentArea.innerHTML = '<div class="text-center"><div class="spinner"></div>Loading...</div>';
-
-        try {
-            let content = '';
-            
-            switch(sectionId) {
-                case 'dashboard':
-                    content = await window.dashboardModule.loadDashboard();
-                    break;
-                case 'income-expenses':
-                    content = await this.loadIncomeExpenses();
-                    break;
-                case 'inventory-check':
-                    content = await this.loadInventory();
-                    break;
-                case 'reports':
-                    content = await this.loadReports();
-                    break;
-                default:
-                    content = `<h1>${sectionId.charAt(0).toUpperCase() + sectionId.slice(1)}</h1><p>Section under development</p>`;
-            }
-            
-            contentArea.innerHTML = content;
-        } catch (error) {
-            console.error('Error loading section:', error);
-            contentArea.innerHTML = '<div class="text-error">Error loading content</div>';
+        
+        const targetLink = document.querySelector(`[data-section="${sectionId}"]`);
+        if (targetLink) {
+            targetLink.classList.add('active');
         }
-    }
 
-    async loadIncomeExpenses() {
-        return `
-            <div class="section-header">
-                <h1>Income & Expenses</h1>
-                <p>Manage your farm finances</p>
-            </div>
-            <div class="table-container">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Description</th>
-                            <th>Category</th>
-                            <th>Amount</th>
-                            <th>Type</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>2024-01-15</td>
-                            <td>Corn Harvest</td>
-                            <td>Crops</td>
-                            <td>$2,500.00</td>
-                            <td class="text-success">Income</td>
-                        </tr>
-                        <tr>
-                            <td>2024-01-14</td>
-                            <td>Animal Feed</td>
-                            <td>Supplies</td>
-                            <td>$450.00</td>
-                            <td class="text-error">Expense</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        `;
-    }
-
-    async loadInventory() {
-        return `
-            <div class="section-header">
-                <h1>Inventory Management</h1>
-                <p>Track your farm inventory</p>
-            </div>
-            <div class="table-container">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Item</th>
-                            <th>Category</th>
-                            <th>Quantity</th>
-                            <th>Unit</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Corn Seeds</td>
-                            <td>Seeds</td>
-                            <td>150</td>
-                            <td>kg</td>
-                            <td class="text-success">In Stock</td>
-                        </tr>
-                        <tr>
-                            <td>Animal Feed</td>
-                            <td>Feed</td>
-                            <td>45</td>
-                            <td>bags</td>
-                            <td class="text-warning">Low Stock</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        `;
-    }
-
-    async loadReports() {
-        return `
-            <div class="section-header">
-                <h1>Reports & Analytics</h1>
-                <p>Generate farm reports and analytics</p>
-            </div>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h3>Monthly Report</h3>
-                    <p>Generate monthly summary</p>
-                    <button class="btn btn-primary mt-1">Generate</button>
-                </div>
-                <div class="stat-card">
-                    <h3>Financial Report</h3>
-                    <p>Income vs Expenses</p>
-                    <button class="btn btn-primary mt-1">Generate</button>
-                </div>
-                <div class="stat-card">
-                    <h3>Inventory Report</h3>
-                    <p>Stock levels analysis</p>
-                    <button class="btn btn-primary mt-1">Generate</button>
-                </div>
-            </div>
-        `;
+        // Update content using FarmModules framework
+        this.currentSection = sectionId;
+        FarmModules.initializeModule(sectionId);
     }
 
     async loadUserData() {
@@ -270,7 +140,15 @@ class FarmManagementApp {
                 .get();
             
             if (userDoc.exists) {
-                console.log('User data loaded:', userDoc.data());
+                const userData = userDoc.data();
+                console.log('User data loaded:', userData);
+                
+                // Update app data with user-specific data
+                FarmModules.updateAppData({
+                    user: userData,
+                    farmName: userData.farmName,
+                    // Load other user data as needed
+                });
             }
         } catch (error) {
             console.error('Error loading user data:', error);
@@ -280,9 +158,14 @@ class FarmManagementApp {
     async logout() {
         try {
             await firebase.auth().signOut();
-            this.coreModule.showNotification('Logged out successfully', 'success');
+            if (window.coreModule && window.coreModule.showNotification) {
+                window.coreModule.showNotification('Logged out successfully', 'success');
+            }
         } catch (error) {
             console.error('Error signing out:', error);
+            if (window.coreModule && window.coreModule.showNotification) {
+                window.coreModule.showNotification('Error signing out', 'error');
+            }
         }
     }
 }
