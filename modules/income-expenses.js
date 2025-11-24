@@ -18,6 +18,33 @@ FarmModules.registerModule('income-expenses', {
                 </div>
             </div>
 
+            <!-- Quick Add Form -->
+            <div class="quick-add-form card">
+                <h3>Quick Add Transaction</h3>
+                <form id="quick-transaction-form" class="form-inline">
+                    <div class="form-row compact">
+                        <div class="form-group">
+                            <select id="quick-type" required class="form-compact">
+                                <option value="income">Income</option>
+                                <option value="expense">Expense</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="quick-description" placeholder="Description" required class="form-compact">
+                        </div>
+                        <div class="form-group">
+                            <input type="number" id="quick-amount" step="0.01" placeholder="Amount" required class="form-compact">
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-compact">Add</button>
+                            <button type="button" class="btn btn-text btn-compact" id="show-detailed-form">
+                                Detailed ➔
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
             <div class="summary-cards">
                 <div class="summary-card income">
                     <div class="summary-icon">💰</div>
@@ -52,12 +79,13 @@ FarmModules.registerModule('income-expenses', {
                                 <th>Category</th>
                                 <th>Type</th>
                                 <th>Amount</th>
+                                <th>Receipts</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="transactions-body">
                             <tr>
-                                <td colspan="6" class="empty-state">
+                                <td colspan="7" class="empty-state">
                                     <div class="empty-content">
                                         <span class="empty-icon">💰</span>
                                         <h4>No transactions yet</h4>
@@ -80,12 +108,18 @@ FarmModules.registerModule('income-expenses', {
                     <div class="modal-body">
                         <form id="transaction-form">
                             <input type="hidden" id="transaction-id">
-                            <div class="form-group">
-                                <label for="transaction-type">Type:</label>
-                                <select id="transaction-type" required>
-                                    <option value="income">Income</option>
-                                    <option value="expense">Expense</option>
-                                </select>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="transaction-type">Type:</label>
+                                    <select id="transaction-type" required>
+                                        <option value="income">Income</option>
+                                        <option value="expense">Expense</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="transaction-date">Date:</label>
+                                    <input type="date" id="transaction-date" required>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label for="transaction-description">Description:</label>
@@ -119,18 +153,50 @@ FarmModules.registerModule('income-expenses', {
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="transaction-date">Date:</label>
-                                <input type="date" id="transaction-date" required>
-                            </div>
-                            <div class="form-group">
                                 <label for="transaction-notes">Notes (Optional):</label>
                                 <textarea id="transaction-notes" placeholder="Add any additional notes..." rows="3"></textarea>
+                            </div>
+                            
+                            <!-- Receipt Upload Section -->
+                            <div class="form-group">
+                                <label for="transaction-receipt">Attach Receipt (Optional):</label>
+                                <div class="file-upload-area" id="receipt-upload-area">
+                                    <div class="file-upload-placeholder">
+                                        <span class="upload-icon">📎</span>
+                                        <p>Drop receipt files here or click to browse</p>
+                                        <small>Supports: JPG, PNG, PDF (Max: 5MB)</small>
+                                    </div>
+                                    <input type="file" id="transaction-receipt" 
+                                           accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" 
+                                           multiple
+                                           style="display: none;">
+                                </div>
+                                <div id="receipt-preview" class="file-preview-container"></div>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-text close-modal">Cancel</button>
                         <button type="button" class="btn btn-primary" id="save-transaction">Save Transaction</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Receipt Viewer Modal -->
+            <div id="receipt-viewer-modal" class="modal hidden">
+                <div class="modal-content receipt-viewer">
+                    <div class="modal-header">
+                        <h3>Receipt Viewer</h3>
+                        <button class="btn-icon close-receipt-viewer">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="receipt-viewer-content">
+                            <!-- Receipt content will be displayed here -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-text close-receipt-viewer">Close</button>
+                        <button type="button" class="btn btn-primary" id="download-receipt">Download</button>
                     </div>
                 </div>
             </div>
@@ -156,7 +222,7 @@ FarmModules.registerModule('income-expenses', {
         if (transactions.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="empty-state">
+                    <td colspan="7" class="empty-state">
                         <div class="empty-content">
                             <span class="empty-icon">💰</span>
                             <h4>No transactions yet</h4>
@@ -188,6 +254,18 @@ FarmModules.registerModule('income-expenses', {
                 <td class="transaction-amount ${transaction.type}">
                     ${transaction.type === 'income' ? '+' : '-'}${this.formatCurrency(transaction.amount)}
                 </td>
+                <td class="transaction-receipts">
+                    ${transaction.receipts && transaction.receipts.length > 0 ? `
+                        <div class="receipt-thumbnails">
+                            ${transaction.receipts.slice(0, 3).map((receipt, index) => `
+                                <div class="receipt-thumbnail" data-transaction-id="${transaction.id}" data-receipt-index="${index}">
+                                    ${this.getFileIcon(receipt.type)}
+                                    ${transaction.receipts.length > 3 && index === 2 ? `<span class="more-count">+${transaction.receipts.length - 3}</span>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : '<span class="no-receipt">—</span>'}
+                </td>
                 <td class="transaction-actions">
                     <button class="btn-icon edit-transaction" data-id="${transaction.id}" title="Edit">✏️</button>
                     <button class="btn-icon delete-transaction" data-id="${transaction.id}" title="Delete">🗑️</button>
@@ -215,6 +293,24 @@ FarmModules.registerModule('income-expenses', {
     },
 
     attachEventListeners: function() {
+        // Quick form submission
+        const quickForm = document.getElementById('quick-transaction-form');
+        if (quickForm) {
+            quickForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleQuickAdd();
+            });
+        }
+
+        // Show detailed form
+        const showDetailedBtn = document.getElementById('show-detailed-form');
+        if (showDetailedBtn) {
+            showDetailedBtn.addEventListener('click', () => {
+                const type = document.getElementById('quick-type').value;
+                this.showTransactionModal(type);
+            });
+        }
+
         // Add transaction buttons
         const addIncomeBtn = document.getElementById('add-income-btn');
         const addExpenseBtn = document.getElementById('add-expense-btn');
@@ -238,6 +334,30 @@ FarmModules.registerModule('income-expenses', {
             saveBtn.addEventListener('click', () => this.saveTransaction());
         }
 
+        // File upload events
+        this.setupFileUpload();
+
+        // Receipt viewer events
+        const closeReceiptViewer = document.querySelector('.close-receipt-viewer');
+        if (closeReceiptViewer) {
+            closeReceiptViewer.addEventListener('click', () => this.hideReceiptViewer());
+        }
+
+        const downloadReceiptBtn = document.getElementById('download-receipt');
+        if (downloadReceiptBtn) {
+            downloadReceiptBtn.addEventListener('click', () => this.downloadReceipt());
+        }
+
+        // Receipt thumbnail clicks
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.receipt-thumbnail')) {
+                const thumbnail = e.target.closest('.receipt-thumbnail');
+                const transactionId = thumbnail.dataset.transactionId;
+                const receiptIndex = parseInt(thumbnail.dataset.receiptIndex);
+                this.viewReceipt(transactionId, receiptIndex);
+            }
+        });
+
         // Edit and delete transactions
         document.addEventListener('click', (e) => {
             if (e.target.closest('.edit-transaction')) {
@@ -259,6 +379,172 @@ FarmModules.registerModule('income-expenses', {
                 }
             });
         }
+
+        // Close receipt viewer on backdrop click
+        const receiptViewerModal = document.getElementById('receipt-viewer-modal');
+        if (receiptViewerModal) {
+            receiptViewerModal.addEventListener('click', (e) => {
+                if (e.target === receiptViewerModal) {
+                    this.hideReceiptViewer();
+                }
+            });
+        }
+    },
+
+    handleQuickAdd: function() {
+        const type = document.getElementById('quick-type').value;
+        const description = document.getElementById('quick-description').value;
+        const amount = parseFloat(document.getElementById('quick-amount').value);
+
+        if (!description || !amount) {
+            this.showNotification('Please fill in description and amount', 'error');
+            return;
+        }
+
+        if (amount <= 0) {
+            this.showNotification('Amount must be greater than 0', 'error');
+            return;
+        }
+
+        const transactionData = {
+            type: type,
+            description: description,
+            amount: amount,
+            category: type === 'income' ? 'other-income' : 'other-expenses',
+            date: new Date().toISOString().split('T')[0],
+            notes: 'Added via quick form'
+        };
+
+        this.addTransaction(transactionData);
+        
+        // Clear quick form
+        document.getElementById('quick-description').value = '';
+        document.getElementById('quick-amount').value = '';
+        
+        this.showNotification(`${type === 'income' ? 'Income' : 'Expense'} added successfully!`, 'success');
+    },
+
+    setupFileUpload: function() {
+        const uploadArea = document.getElementById('receipt-upload-area');
+        const fileInput = document.getElementById('transaction-receipt');
+        const previewContainer = document.getElementById('receipt-preview');
+
+        if (!uploadArea || !fileInput) return;
+
+        // Click to browse
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            this.handleFileSelection(files);
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            this.handleFileSelection(e.target.files);
+        });
+    },
+
+    handleFileSelection: function(files) {
+        const previewContainer = document.getElementById('receipt-preview');
+        if (!previewContainer) return;
+
+        // Clear existing previews
+        previewContainer.innerHTML = '';
+
+        Array.from(files).forEach(file => {
+            if (!this.validateFile(file)) {
+                return;
+            }
+
+            const fileItem = this.createFilePreview(file);
+            previewContainer.appendChild(fileItem);
+        });
+    },
+
+    validateFile: function(file) {
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        const maxSize = 5 * 1024 * 1024; // 5MB
+
+        if (!validTypes.includes(file.type)) {
+            this.showNotification('Invalid file type. Please upload JPG, PNG, or PDF files.', 'error');
+            return false;
+        }
+
+        if (file.size > maxSize) {
+            this.showNotification('File too large. Maximum size is 5MB.', 'error');
+            return false;
+        }
+
+        return true;
+    },
+
+    createFilePreview: function(file) {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-preview-item';
+        fileItem.innerHTML = `
+            <div class="file-info">
+                <span class="file-icon">${this.getFileIcon(file.type)}</span>
+                <div class="file-details">
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-size">${this.formatFileSize(file.size)}</div>
+                </div>
+            </div>
+            <button type="button" class="btn-icon remove-file" title="Remove file">🗑️</button>
+        `;
+
+        // Remove file button
+        const removeBtn = fileItem.querySelector('.remove-file');
+        removeBtn.addEventListener('click', () => {
+            fileItem.remove();
+        });
+
+        return fileItem;
+    },
+
+    getFileIcon: function(fileType) {
+        if (fileType.startsWith('image/')) return '🖼️';
+        if (fileType === 'application/pdf') return '📄';
+        if (fileType.includes('word')) return '📝';
+        return '📎';
+    },
+
+    formatFileSize: function(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    },
+
+    getReceiptFiles: function() {
+        const previewContainer = document.getElementById('receipt-preview');
+        const fileInput = document.getElementById('transaction-receipt');
+        
+        if (!previewContainer || !fileInput) return [];
+
+        const files = Array.from(fileInput.files || []);
+        
+        return files.map(file => ({
+            name: file.name,
+            type: file.type.startsWith('image/') ? 'image' : 'document',
+            size: file.size,
+            file: file
+        }));
     },
 
     showTransactionModal: function(type = 'income') {
@@ -270,6 +556,10 @@ FarmModules.registerModule('income-expenses', {
             // Reset form
             form.reset();
             document.getElementById('transaction-id').value = '';
+            
+            // Clear file previews
+            const previewContainer = document.getElementById('receipt-preview');
+            if (previewContainer) previewContainer.innerHTML = '';
             
             // Set type and title
             document.getElementById('transaction-type').value = type;
@@ -301,6 +591,7 @@ FarmModules.registerModule('income-expenses', {
         const category = document.getElementById('transaction-category').value;
         const date = document.getElementById('transaction-date').value;
         const notes = document.getElementById('transaction-notes').value;
+        const receiptFiles = this.getReceiptFiles();
 
         // Validation
         if (!description || !amount || !category || !date) {
@@ -319,7 +610,8 @@ FarmModules.registerModule('income-expenses', {
             amount: amount,
             category: category,
             date: date,
-            notes: notes
+            notes: notes,
+            receipts: receiptFiles
         };
 
         if (transactionId) {
@@ -370,6 +662,10 @@ FarmModules.registerModule('income-expenses', {
             document.getElementById('transaction-date').value = transaction.date || '';
             document.getElementById('transaction-notes').value = transaction.notes || '';
             
+            // Note: File previews would need special handling for existing files
+            const previewContainer = document.getElementById('receipt-preview');
+            if (previewContainer) previewContainer.innerHTML = 'Existing receipts cannot be edited in demo mode';
+            
             title.textContent = `Edit ${transaction.type === 'income' ? 'Income' : 'Expense'}`;
             modal.classList.remove('hidden');
         }
@@ -398,6 +694,81 @@ FarmModules.registerModule('income-expenses', {
             this.updateSummaryCards();
             this.showNotification('Transaction deleted successfully', 'success');
         }
+    },
+
+    viewReceipt: function(transactionId, receiptIndex) {
+        const transactions = FarmModules.appData.transactions || [];
+        const transaction = transactions.find(t => t.id === transactionId);
+        
+        if (!transaction || !transaction.receipts || !transaction.receipts[receiptIndex]) {
+            this.showNotification('Receipt not found', 'error');
+            return;
+        }
+
+        const receipt = transaction.receipts[receiptIndex];
+        const viewerModal = document.getElementById('receipt-viewer-modal');
+        const viewerContent = document.getElementById('receipt-viewer-content');
+
+        if (viewerModal && viewerContent) {
+            let content = '';
+            
+            if (receipt.type === 'image') {
+                content = `
+                    <div class="receipt-image-viewer">
+                        <div class="image-placeholder">
+                            <span class="file-icon-large">🖼️</span>
+                            <p>Image preview would appear here</p>
+                        </div>
+                        <div class="receipt-info">
+                            <h4>${receipt.name}</h4>
+                            <p>Size: ${this.formatFileSize(receipt.size)}</p>
+                            <p>Type: Image File</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                content = `
+                    <div class="receipt-document-viewer">
+                        <div class="document-icon">📄</div>
+                        <div class="receipt-info">
+                            <h4>${receipt.name}</h4>
+                            <p>Size: ${this.formatFileSize(receipt.size)}</p>
+                            <p>Type: Document File</p>
+                            <p>This is a document file. Please download to view.</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            viewerContent.innerHTML = content;
+            viewerModal.classList.remove('hidden');
+
+            // Store current receipt info for download
+            this.currentReceipt = { transactionId, receiptIndex, receipt };
+        }
+    },
+
+    hideReceiptViewer: function() {
+        const viewerModal = document.getElementById('receipt-viewer-modal');
+        if (viewerModal) {
+            viewerModal.classList.add('hidden');
+            this.currentReceipt = null;
+        }
+    },
+
+    downloadReceipt: function() {
+        if (!this.currentReceipt) return;
+
+        const { receipt } = this.currentReceipt;
+        
+        // In a real app, this would download the actual file
+        // For demo purposes, we'll create a placeholder
+        const link = document.createElement('a');
+        link.href = '#'; // In real app, this would be the file URL
+        link.download = receipt.name;
+        link.click();
+        
+        this.showNotification(`Downloading ${receipt.name}...`, 'info');
     },
 
     formatCategory: function(category) {
