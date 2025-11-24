@@ -11,15 +11,51 @@ FarmModules.registerModule('profile', {
             </div>
 
             <div class="profile-content">
+                <!-- Farm Stats Overview -->
+                <div class="stats-overview">
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-content">
+                            <h3>Total Transactions</h3>
+                            <div class="stat-value" id="total-transactions">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-content">
+                            <h3>Inventory Items</h3>
+                            <div class="stat-value" id="total-inventory">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🌾</div>
+                        <div class="stat-content">
+                            <h3>Feed Records</h3>
+                            <div class="stat-value" id="total-feed-records">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-content">
+                            <h3>Farm Value</h3>
+                            <div class="stat-value" id="farm-value">$0</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="profile-card card">
                     <div class="profile-header">
                         <div class="profile-avatar">
                             <span class="avatar-icon">🚜</span>
                         </div>
                         <div class="profile-info">
-                            <h2 id="profile-farm-name">Green Valley Farm</h2>
-                            <p id="profile-farmer-name">Demo Farmer</p>
-                            <p class="profile-email" id="profile-email">demo@farm.com</p>
+                            <h2 id="profile-farm-name">Loading...</h2>
+                            <p id="profile-farmer-name">Loading...</p>
+                            <p class="profile-email" id="profile-email">Loading...</p>
+                            <div class="profile-stats">
+                                <span class="stat-badge" id="member-since">Member since: Loading...</span>
+                                <span class="stat-badge" id="data-entries">Data entries: 0</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -30,11 +66,11 @@ FarmModules.registerModule('profile', {
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="farm-name">Farm Name</label>
-                                <input type="text" id="farm-name" placeholder="Enter farm name">
+                                <input type="text" id="farm-name" placeholder="Enter farm name" required>
                             </div>
                             <div class="form-group">
                                 <label for="farmer-name">Farmer Name</label>
-                                <input type="text" id="farmer-name" placeholder="Enter your name">
+                                <input type="text" id="farmer-name" placeholder="Enter your name" required>
                             </div>
                         </div>
                         <div class="form-row">
@@ -52,7 +88,7 @@ FarmModules.registerModule('profile', {
                             </div>
                             <div class="form-group">
                                 <label for="farm-size">Farm Size (acres)</label>
-                                <input type="number" id="farm-size" placeholder="e.g., 100">
+                                <input type="number" id="farm-size" placeholder="e.g., 100" min="0">
                             </div>
                         </div>
                         <div class="form-group">
@@ -66,58 +102,85 @@ FarmModules.registerModule('profile', {
                         
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">Save Profile</button>
-                            <button type="button" class="btn btn-text" id="reset-profile">Reset</button>
+                            <button type="button" class="btn btn-text" id="reset-profile">Reset to Current</button>
                         </div>
                     </form>
                 </div>
 
                 <div class="settings-section card">
-                    <h3>Settings</h3>
+                    <h3>Application Settings</h3>
                     <div class="settings-list">
                         <div class="setting-item">
                             <div class="setting-info">
-                                <h4>Units System</h4>
-                                <p>Choose between metric or imperial units</p>
+                                <h4>Default Currency</h4>
+                                <p>Set your preferred currency for financial records</p>
                             </div>
-                            <select id="units-system" class="setting-control">
-                                <option value="metric">Metric (kg, liters)</option>
-                                <option value="imperial">Imperial (lbs, gallons)</option>
+                            <select id="default-currency" class="setting-control">
+                                <option value="USD">US Dollar ($)</option>
+                                <option value="EUR">Euro (€)</option>
+                                <option value="GBP">British Pound (£)</option>
+                                <option value="CAD">Canadian Dollar (C$)</option>
+                                <option value="AUD">Australian Dollar (A$)</option>
                             </select>
                         </div>
                         
                         <div class="setting-item">
                             <div class="setting-info">
-                                <h4>Low Stock Alerts</h4>
-                                <p>Receive notifications when inventory is low</p>
+                                <h4>Low Stock Threshold</h4>
+                                <p>Set when to receive low inventory alerts</p>
                             </div>
-                            <label class="switch">
-                                <input type="checkbox" id="low-stock-alerts" checked>
-                                <span class="slider"></span>
-                            </label>
+                            <input type="number" id="low-stock-threshold" class="setting-control" min="1" max="100" value="10">
+                            <span class="setting-unit">items</span>
                         </div>
                         
                         <div class="setting-item">
                             <div class="setting-info">
-                                <h4>Monthly Reports</h4>
-                                <p>Automatically generate monthly reports</p>
+                                <h4>Auto-backup Data</h4>
+                                <p>Automatically backup your farm data</p>
                             </div>
                             <label class="switch">
-                                <input type="checkbox" id="monthly-reports" checked>
+                                <input type="checkbox" id="auto-backup" checked>
                                 <span class="slider"></span>
                             </label>
                         </div>
                     </div>
                 </div>
 
-                <div class="account-actions card">
-                    <h3>Account Actions</h3>
+                <div class="data-management card">
+                    <h3>Data Management</h3>
+                    <div class="data-stats">
+                        <div class="data-stat">
+                            <label>Transactions:</label>
+                            <span id="transactions-count">0 records</span>
+                        </div>
+                        <div class="data-stat">
+                            <label>Inventory:</label>
+                            <span id="inventory-count">0 items</span>
+                        </div>
+                        <div class="data-stat">
+                            <label>Feed Records:</label>
+                            <span id="feed-records-count">0 entries</span>
+                        </div>
+                        <div class="data-stat">
+                            <label>Total Data:</label>
+                            <span id="total-data-size">0 KB</span>
+                        </div>
+                    </div>
                     <div class="action-buttons">
-                        <button class="btn btn-secondary" id="export-data">Export Farm Data</button>
-                        <button class="btn btn-text" id="clear-data">Clear All Data</button>
-                        ${window.app && !window.app.isDemoMode ? 
-                            '<button class="btn btn-danger" id="logout-profile">Logout</button>' : 
-                            '<button class="btn btn-primary" id="demo-login">Switch to Real Account</button>'
+                        <button class="btn btn-secondary" id="export-data">📥 Export All Data</button>
+                        <button class="btn btn-warning" id="clear-transactions">🗑️ Clear Transactions</button>
+                        <button class="btn btn-danger" id="clear-all-data">⚠️ Clear All Data</button>
+                    </div>
+                </div>
+
+                <div class="account-actions card">
+                    <h3>Account</h3>
+                    <div class="action-buttons">
+                        ${window.app && window.app.isDemoMode ? 
+                            '<button class="btn btn-primary" id="demo-login">🔐 Switch to Real Account</button>' : 
+                            '<button class="btn btn-secondary" id="logout-profile">🚪 Logout</button>'
                         }
+                        <button class="btn btn-text" id="refresh-data">🔄 Refresh Data</button>
                     </div>
                 </div>
             </div>
@@ -126,8 +189,43 @@ FarmModules.registerModule('profile', {
 
     styles: `
         .profile-content {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
+        }
+
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            opacity: 0.8;
+        }
+
+        .stat-content h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-color);
         }
 
         .profile-card {
@@ -165,18 +263,30 @@ FarmModules.registerModule('profile', {
             color: var(--text-muted);
         }
 
-        .profile-email {
-            font-size: 0.9rem;
+        .profile-stats {
+            margin-top: 0.5rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
 
-        .profile-details, .settings-section, .account-actions {
+        .stat-badge {
+            background: var(--bg-color);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+        }
+
+        .profile-details, .settings-section, .data-management, .account-actions {
             margin-bottom: 1.5rem;
         }
 
         .settings-list {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.5rem;
         }
 
         .setting-item {
@@ -203,7 +313,35 @@ FarmModules.registerModule('profile', {
         }
 
         .setting-control {
-            min-width: 200px;
+            min-width: 150px;
+        }
+
+        .setting-unit {
+            margin-left: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .data-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--bg-color);
+            border-radius: 8px;
+        }
+
+        .data-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+        }
+
+        .data-stat label {
+            font-weight: 500;
+            color: var(--text-muted);
         }
 
         .action-buttons {
@@ -261,57 +399,107 @@ FarmModules.registerModule('profile', {
 
     initialize: function() {
         console.log('Profile module initializing...');
-        this.loadProfileData();
+        this.loadRealData();
         this.attachEventListeners();
-        this.updateProfileDisplay();
+        this.updateAllDisplays();
     },
 
-    loadProfileData: function() {
-        // Initialize profile data if it doesn't exist
+    loadRealData: function() {
+        // Initialize profile with real data from app
         if (!FarmModules.appData.profile) {
             FarmModules.appData.profile = {
-                farmName: 'Green Valley Farm',
-                farmerName: 'Demo Farmer',
-                email: 'demo@farm.com',
+                farmName: FarmModules.appData.farmName || 'My Farm',
+                farmerName: FarmModules.appData.user?.displayName || 'Farmer',
+                email: FarmModules.appData.user?.email || 'No email',
                 farmType: '',
                 farmSize: '',
                 farmLocation: '',
                 farmDescription: '',
-                unitsSystem: 'metric',
-                lowStockAlerts: true,
-                monthlyReports: true
+                currency: 'USD',
+                lowStockThreshold: 10,
+                autoBackup: true,
+                memberSince: new Date().toISOString()
             };
-        }
-        
-        // Load user data if available
-        if (FarmModules.appData.user) {
-            const user = FarmModules.appData.user;
-            if (user.farmName) FarmModules.appData.profile.farmName = user.farmName;
-            if (user.displayName) FarmModules.appData.profile.farmerName = user.displayName;
-            if (user.email) FarmModules.appData.profile.email = user.email;
         }
     },
 
-    updateProfileDisplay: function() {
+    updateAllDisplays: function() {
+        this.updateProfileInfo();
+        this.updateStatsOverview();
+        this.updateDataManagement();
+        this.updateSettings();
+    },
+
+    updateProfileInfo: function() {
         const profile = FarmModules.appData.profile;
+        const user = FarmModules.appData.user;
         
-        // Update header display
-        this.updateElement('profile-farm-name', profile.farmName);
-        this.updateElement('profile-farmer-name', profile.farmerName);
-        this.updateElement('profile-email', profile.email);
+        // Use real user data
+        const farmName = profile.farmName || user?.farmName || 'My Farm';
+        const farmerName = profile.farmerName || user?.displayName || 'Farmer';
+        const email = profile.email || user?.email || 'No email';
         
-        // Update form fields
-        this.setValue('farm-name', profile.farmName);
-        this.setValue('farmer-name', profile.farmerName);
+        this.updateElement('profile-farm-name', farmName);
+        this.updateElement('profile-farmer-name', farmerName);
+        this.updateElement('profile-email', email);
+        
+        // Update form with current data
+        this.setValue('farm-name', farmName);
+        this.setValue('farmer-name', farmerName);
         this.setValue('farm-type', profile.farmType);
         this.setValue('farm-size', profile.farmSize);
         this.setValue('farm-location', profile.farmLocation);
         this.setValue('farm-description', profile.farmDescription);
         
-        // Update settings
-        this.setValue('units-system', profile.unitsSystem);
-        this.setChecked('low-stock-alerts', profile.lowStockAlerts);
-        this.setChecked('monthly-reports', profile.monthlyReports);
+        // Member since
+        const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
+        this.updateElement('member-since', `Member since: ${memberSince}`);
+    },
+
+    updateStatsOverview: function() {
+        // Real data from other modules
+        const transactions = FarmModules.appData.transactions || [];
+        const inventory = FarmModules.appData.inventory || [];
+        const feedTransactions = FarmModules.appData.feedTransactions || [];
+        
+        // Calculate farm value (inventory value + cash flow)
+        const inventoryValue = inventory.reduce((sum, item) => sum + (item.quantity * (item.cost || 0)), 0);
+        const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0);
+        const expenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.amount || 0), 0);
+        const netProfit = income - expenses;
+        const farmValue = inventoryValue + netProfit;
+        
+        this.updateElement('total-transactions', transactions.length);
+        this.updateElement('total-inventory', inventory.length);
+        this.updateElement('total-feed-records', feedTransactions.length);
+        this.updateElement('farm-value', this.formatCurrency(farmValue));
+        
+        // Update data entries count
+        const totalEntries = transactions.length + inventory.length + feedTransactions.length;
+        this.updateElement('data-entries', `Data entries: ${totalEntries}`);
+    },
+
+    updateDataManagement: function() {
+        const transactions = FarmModules.appData.transactions || [];
+        const inventory = FarmModules.appData.inventory || [];
+        const feedTransactions = FarmModules.appData.feedTransactions || [];
+        
+        this.updateElement('transactions-count', `${transactions.length} records`);
+        this.updateElement('inventory-count', `${inventory.length} items`);
+        this.updateElement('feed-records-count', `${feedTransactions.length} entries`);
+        
+        // Calculate approximate data size
+        const dataSize = JSON.stringify(FarmModules.appData).length;
+        const sizeInKB = (dataSize / 1024).toFixed(2);
+        this.updateElement('total-data-size', `${sizeInKB} KB`);
+    },
+
+    updateSettings: function() {
+        const profile = FarmModules.appData.profile;
+        
+        this.setValue('default-currency', profile.currency || 'USD');
+        this.setValue('low-stock-threshold', profile.lowStockThreshold || 10);
+        this.setChecked('auto-backup', profile.autoBackup !== false);
     },
 
     attachEventListeners: function() {
@@ -323,34 +511,40 @@ FarmModules.registerModule('profile', {
 
         // Reset button
         document.getElementById('reset-profile').addEventListener('click', () => {
-            this.resetProfile();
+            this.updateAllDisplays();
+            this.showNotification('Profile form reset to current values', 'info');
         });
 
         // Settings changes
-        document.getElementById('units-system').addEventListener('change', (e) => {
-            this.saveSetting('unitsSystem', e.target.value);
+        document.getElementById('default-currency').addEventListener('change', (e) => {
+            this.saveSetting('currency', e.target.value);
         });
 
-        document.getElementById('low-stock-alerts').addEventListener('change', (e) => {
-            this.saveSetting('lowStockAlerts', e.target.checked);
+        document.getElementById('low-stock-threshold').addEventListener('change', (e) => {
+            this.saveSetting('lowStockThreshold', parseInt(e.target.value));
         });
 
-        document.getElementById('monthly-reports').addEventListener('change', (e) => {
-            this.saveSetting('monthlyReports', e.target.checked);
+        document.getElementById('auto-backup').addEventListener('change', (e) => {
+            this.saveSetting('autoBackup', e.target.checked);
         });
 
-        // Account actions
+        // Data management
         document.getElementById('export-data').addEventListener('click', () => {
             this.exportData();
         });
 
-        document.getElementById('clear-data').addEventListener('click', () => {
-            this.clearData();
+        document.getElementById('clear-transactions').addEventListener('click', () => {
+            this.clearTransactions();
         });
 
-        // Logout/demo login
+        document.getElementById('clear-all-data').addEventListener('click', () => {
+            this.clearAllData();
+        });
+
+        // Account actions
         const logoutBtn = document.getElementById('logout-profile');
         const demoLoginBtn = document.getElementById('demo-login');
+        const refreshBtn = document.getElementById('refresh-data');
         
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
@@ -360,7 +554,14 @@ FarmModules.registerModule('profile', {
         
         if (demoLoginBtn) {
             demoLoginBtn.addEventListener('click', () => {
-                this.showNotification('Real account login coming soon!', 'info');
+                this.showNotification('Real account features coming soon!', 'info');
+            });
+        }
+        
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.updateAllDisplays();
+                this.showNotification('Data refreshed', 'success');
             });
         }
     },
@@ -375,9 +576,14 @@ FarmModules.registerModule('profile', {
         profile.farmLocation = document.getElementById('farm-location').value;
         profile.farmDescription = document.getElementById('farm-description').value;
 
-        // Update display
-        this.updateProfileDisplay();
-        
+        // Also update main app data
+        FarmModules.appData.farmName = profile.farmName;
+        if (FarmModules.appData.user) {
+            FarmModules.appData.user.farmName = profile.farmName;
+            FarmModules.appData.user.displayName = profile.farmerName;
+        }
+
+        this.updateAllDisplays();
         this.showNotification('Profile saved successfully!', 'success');
     },
 
@@ -386,52 +592,43 @@ FarmModules.registerModule('profile', {
         this.showNotification('Setting updated', 'info');
     },
 
-    resetProfile: function() {
-        if (confirm('Are you sure you want to reset your profile? This will clear all your farm information.')) {
-            FarmModules.appData.profile = {
-                farmName: 'Green Valley Farm',
-                farmerName: 'Demo Farmer',
-                email: 'demo@farm.com',
-                farmType: '',
-                farmSize: '',
-                farmLocation: '',
-                farmDescription: '',
-                unitsSystem: 'metric',
-                lowStockAlerts: true,
-                monthlyReports: true
-            };
-            
-            this.updateProfileDisplay();
-            this.showNotification('Profile reset to defaults', 'info');
-        }
-    },
-
     exportData: function() {
         const dataStr = JSON.stringify(FarmModules.appData, null, 2);
         const dataBlob = new Blob([dataStr], {type: 'application/json'});
         
         const link = document.createElement('a');
         link.href = URL.createObjectURL(dataBlob);
-        link.download = `farm-data-${new Date().toISOString().split('T')[0]}.json`;
+        link.download = `farm-data-backup-${new Date().toISOString().split('T')[0]}.json`;
         link.click();
         
-        this.showNotification('Farm data exported successfully!', 'success');
+        this.showNotification('All farm data exported successfully!', 'success');
     },
 
-    clearData: function() {
-        if (confirm('Are you sure you want to clear all farm data? This cannot be undone.')) {
+    clearTransactions: function() {
+        if (confirm('Are you sure you want to clear all transactions? This cannot be undone.')) {
+            FarmModules.appData.transactions = [];
+            this.showNotification('All transactions cleared', 'success');
+            this.updateAllDisplays();
+        }
+    },
+
+    clearAllData: function() {
+        if (confirm('ARE YOU SURE? This will delete ALL your farm data including transactions, inventory, and feed records. This cannot be undone!')) {
             FarmModules.appData.transactions = [];
             FarmModules.appData.inventory = [];
             FarmModules.appData.feedTransactions = [];
             FarmModules.appData.feedStock = { current: 0, unit: 'kg', lowStockThreshold: 100 };
             
             this.showNotification('All data cleared successfully', 'success');
-            
-            // Refresh current module to show empty states
-            if (FarmModules.currentModule) {
-                FarmModules.initializeModule(FarmModules.currentModule);
-            }
+            this.updateAllDisplays();
         }
+    },
+
+    formatCurrency: function(amount) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: FarmModules.appData.profile?.currency || 'USD'
+        }).format(amount);
     },
 
     setValue: function(id, value) {
