@@ -84,62 +84,62 @@ class FarmManagementApp {
         this.showApp();
     }
 
-    setupNavigation() {
-        const navElement = document.getElementById('main-nav');
-        if (!navElement) {
-            console.error('❌ Navigation element not found');
-            return;
-        }
-
-        const navConfig = [
-            { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-            { id: 'income-expenses', label: 'Income & Expenses', icon: '💰' },
-            { id: 'inventory-check', label: 'Inventory', icon: '📦' },
-            { id: 'feed-record', label: 'Feed Records', icon: '🌾' },
-            { id: 'reports', label: 'Reports', icon: '📈' },
-            { id: 'profile', label: 'Profile', icon: '👤' }
-        ];
-
-        const navList = document.createElement('ul');
-        navList.className = 'nav-list';
-
-        navConfig.forEach(item => {
-            const li = document.createElement('li');
-            li.className = 'nav-item';
-            
-            const a = document.createElement('a');
-            a.href = '#';
-            a.className = 'nav-link';
-            a.dataset.section = item.id;
-            a.innerHTML = `${item.icon} ${item.label}`;
-            
-            li.appendChild(a);
-            navList.appendChild(li);
-        });
-
-        // Add user info
-        const userLi = document.createElement('li');
-        userLi.className = 'nav-item';
-        userLi.innerHTML = `
-            <div class="user-info">
-                <span id="user-name">${this.isDemoMode ? 'Demo Farmer' : 'User'}</span>
-                ${this.isDemoMode ? '<span class="demo-badge">Demo</span>' : '<button class="btn btn-secondary logout-btn">Logout</button>'}
-            </div>
-        `;
-        navList.appendChild(userLi);
-
-        navElement.appendChild(navList);
-
-        if (!this.isDemoMode) {
-            const logoutBtn = navElement.querySelector('.logout-btn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', () => this.logout());
-            }
-        }
-
-        console.log('✅ Navigation setup complete');
+   setupNavigation() {
+    const navElement = document.getElementById('main-nav');
+    if (!navElement) {
+        console.error('❌ Navigation element not found');
+        return;
     }
 
+    const navConfig = [
+        { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+        { id: 'income-expenses', label: 'Income & Expenses', icon: '💰' },
+        { id: 'inventory-check', label: 'Inventory', icon: '📦' },
+        { id: 'feed-record', label: 'Feed Records', icon: '🌾' },
+        { id: 'reports', label: 'Reports', icon: '📈' },
+        { id: 'profile', label: 'Profile', icon: '👤' } // Make sure there's no comma after this last item
+    ]; // <-- This closing bracket and semicolon are important
+
+    const navList = document.createElement('ul');
+    navList.className = 'nav-list';
+
+    navConfig.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'nav-item';
+        
+        const a = document.createElement('a');
+        a.href = '#';
+        a.className = 'nav-link';
+        a.dataset.section = item.id;
+        a.innerHTML = `${item.icon} ${item.label}`;
+        
+        li.appendChild(a);
+        navList.appendChild(li);
+    });
+
+    // Add user info
+    const userLi = document.createElement('li');
+    userLi.className = 'nav-item';
+    userLi.innerHTML = `
+        <div class="user-info">
+            <span id="user-name">${this.isDemoMode ? 'Demo Farmer' : 'User'}</span>
+            ${this.isDemoMode ? '<span class="demo-badge">Demo</span>' : '<button class="btn btn-secondary logout-btn">Logout</button>'}
+        </div>
+    `;
+    navList.appendChild(userLi);
+
+    navElement.appendChild(navList);
+
+    if (!this.isDemoMode) {
+        const logoutBtn = navElement.querySelector('.logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => this.logout());
+        }
+    }
+
+    console.log('✅ Navigation setup complete');
+}
+    
     setupEventListeners() {
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('nav-link')) {
