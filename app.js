@@ -96,6 +96,7 @@ setupNavigation() {
         { id: 'income-expenses', label: 'Income & Expenses', icon: '💰' },
         { id: 'inventory-check', label: 'Inventory', icon: '📦' },
         { id: 'feed-record', label: 'Feed Record', icon: '🌾' },
+        { id: 'broiler-mortality', label: 'Broiler Mortality', icon: '🐔' },
         { id: 'reports', label: 'Reports', icon: '📈' },
         { id: 'profile', label: 'Profile', icon: '👤' }
     ];
