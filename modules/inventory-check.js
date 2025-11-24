@@ -10,7 +10,7 @@ FarmModules.registerModule('inventory-check', {
                 <p>Track and manage your farm inventory</p>
                 <div class="header-actions">
                     <button class="btn btn-primary" id="add-inventory-item">
-                        <span>➕</span> Add Item
+                        ➕ Add Item
                     </button>
                 </div>
             </div>
@@ -21,7 +21,6 @@ FarmModules.registerModule('inventory-check', {
                     <div class="summary-content">
                         <h3>Total Items</h3>
                         <div class="summary-value" id="total-items-count">0</div>
-                        <div class="summary-trend">Across all categories</div>
                     </div>
                 </div>
                 <div class="summary-card">
@@ -29,7 +28,6 @@ FarmModules.registerModule('inventory-check', {
                     <div class="summary-content">
                         <h3>Low Stock</h3>
                         <div class="summary-value" id="low-stock-count">0</div>
-                        <div class="summary-trend">Need reordering</div>
                     </div>
                 </div>
                 <div class="summary-card">
@@ -37,7 +35,6 @@ FarmModules.registerModule('inventory-check', {
                     <div class="summary-content">
                         <h3>Total Value</h3>
                         <div class="summary-value" id="total-inventory-value">$0.00</div>
-                        <div class="summary-trend">Current stock value</div>
                     </div>
                 </div>
             </div>
@@ -48,7 +45,6 @@ FarmModules.registerModule('inventory-check', {
                         <span class="empty-icon">📦</span>
                         <h4>No inventory items yet</h4>
                         <p>Start by adding your first inventory item</p>
-                        <button class="btn btn-primary" id="add-first-item">Add First Item</button>
                     </div>
                 </div>
             </div>
@@ -78,7 +74,6 @@ FarmModules.registerModule('inventory-check', {
                         <span class="empty-icon">📦</span>
                         <h4>No inventory items yet</h4>
                         <p>Start by adding your first inventory item</p>
-                        <button class="btn btn-primary" id="add-first-item">Add First Item</button>
                     </div>
                 </div>
             `;
@@ -93,8 +88,7 @@ FarmModules.registerModule('inventory-check', {
                         <span class="category-name">${this.formatCategory(item.category)}</span>
                     </div>
                     <div class="item-actions">
-                        <button class="btn-icon edit-item" title="Edit">✏️</button>
-                        <button class="btn-icon delete-item" title="Delete">🗑️</button>
+                        <button class="btn-icon delete-item" onclick="FarmModules.getModule('inventory-check').deleteItem('${item.id}')">🗑️</button>
                     </div>
                 </div>
                 
@@ -115,13 +109,6 @@ FarmModules.registerModule('inventory-check', {
                             <span class="detail-label">Location:</span>
                             <span class="detail-value location">${item.location || 'Not specified'}</span>
                         </div>
-                        
-                        ${item.cost ? `
-                        <div class="detail-row">
-                            <span class="detail-label">Unit Cost:</span>
-                            <span class="detail-value cost">${this.formatCurrency(item.cost)}</span>
-                        </div>
-                        ` : ''}
                     </div>
                 </div>
                 
@@ -130,9 +117,6 @@ FarmModules.registerModule('inventory-check', {
                         <span class="status-badge ${this.getStockStatusClass(item)}">
                             ${this.getStockStatusText(item)}
                         </span>
-                    </div>
-                    <div class="last-updated">
-                        Updated: ${this.formatDate(item.lastUpdated || item.dateAdded)}
                     </div>
                 </div>
             </div>
@@ -156,15 +140,9 @@ FarmModules.registerModule('inventory-check', {
     },
 
     attachEventListeners: function() {
-        // Add item buttons
         const addItemBtn = document.getElementById('add-inventory-item');
-        const addFirstBtn = document.getElementById('add-first-item');
-
         if (addItemBtn) {
             addItemBtn.addEventListener('click', () => this.addSampleItem());
-        }
-        if (addFirstBtn) {
-            addFirstBtn.addEventListener('click', () => this.addSampleItem());
         }
     },
 
@@ -175,10 +153,10 @@ FarmModules.registerModule('inventory-check', {
 
         const categories = ['seeds', 'feed', 'equipment', 'tools'];
         const names = {
-            seeds: ['Corn Seeds', 'Wheat Seeds', 'Vegetable Seeds', 'Fruit Seeds'],
-            feed: ['Animal Feed', 'Poultry Feed', 'Cattle Feed', 'Organic Feed'],
-            equipment: ['Tractor Parts', 'Irrigation Kit', 'Fencing', 'Tools'],
-            tools: ['Shovel', 'Rake', 'Pruner', 'Wheelbarrow']
+            seeds: ['Corn Seeds', 'Wheat Seeds', 'Vegetable Seeds'],
+            feed: ['Animal Feed', 'Poultry Feed', 'Cattle Feed'],
+            equipment: ['Tractor Parts', 'Irrigation Kit', 'Fencing'],
+            tools: ['Shovel', 'Rake', 'Pruner']
         };
 
         const category = categories[Math.floor(Math.random() * categories.length)];
@@ -193,9 +171,7 @@ FarmModules.registerModule('inventory-check', {
             unit: category === 'seeds' ? 'kg' : category === 'feed' ? 'bags' : 'units',
             location: 'Storage Shed ' + (Math.floor(Math.random() * 3) + 1),
             cost: Math.floor(Math.random() * 100) + 10,
-            minStock: 10,
-            lastUpdated: new Date().toISOString(),
-            dateAdded: new Date().toISOString()
+            minStock: 10
         };
 
         FarmModules.appData.inventory.push(newItem);
@@ -206,7 +182,13 @@ FarmModules.registerModule('inventory-check', {
         this.showNotification('Inventory item added successfully!', 'success');
     },
 
-    // Utility functions
+    deleteItem: function(itemId) {
+        FarmModules.appData.inventory = FarmModules.appData.inventory.filter(item => item.id !== itemId);
+        this.loadInventoryData();
+        this.updateSummary();
+        this.showNotification('Inventory item deleted', 'success');
+    },
+
     getStockStatusClass: function(item) {
         if (this.isOutOfStock(item)) return 'out-of-stock';
         if (this.isLowStock(item)) return 'low-stock';
@@ -257,19 +239,9 @@ FarmModules.registerModule('inventory-check', {
         }).format(amount);
     },
 
-    formatDate: function(dateString) {
-        try {
-            return new Date(dateString).toLocaleDateString();
-        } catch (e) {
-            return 'Recent';
-        }
-    },
-
     showNotification: function(message, type) {
         if (window.coreModule && window.coreModule.showNotification) {
             window.coreModule.showNotification(message, type);
-        } else {
-            alert(message);
         }
     }
 });
