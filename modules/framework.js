@@ -112,6 +112,7 @@ FarmModules.appData = {
     inventory: [],
     sales: [],
     production: [],
+    feedTransactions: [],
     user: { name: 'Demo Farmer', farmName: 'Green Valley Farm' },
     farmName: 'Green Valley Farm'
 };
