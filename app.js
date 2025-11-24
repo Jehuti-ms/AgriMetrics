@@ -95,7 +95,7 @@ setupNavigation() {
         { id: 'dashboard', label: 'Dashboard', icon: '📊' },
         { id: 'income-expenses', label: 'Income & Expenses', icon: '💰' },
         { id: 'inventory-check', label: 'Inventory', icon: '📦' },
-        { id: 'feed-record', label: 'Feed Records', icon: '🌾' },
+        { id: 'feed-record', label: 'Feed Record', icon: '🌾' },
         { id: 'reports', label: 'Reports', icon: '📈' },
         { id: 'profile', label: 'Profile', icon: '👤' }
     ];
