@@ -115,12 +115,16 @@ FarmModules.registerModule('profile', {
                                 <h4>Default Currency</h4>
                                 <p>Set your preferred currency for financial records</p>
                             </div>
-                            <select id="default-currency" class="setting-control">
+                           <select id="default-currency" class="setting-control">
                                 <option value="USD">US Dollar ($)</option>
                                 <option value="EUR">Euro (€)</option>
                                 <option value="GBP">British Pound (£)</option>
+                                <option value="BBD">Barbadian Dollar (BBD$)</option>
                                 <option value="CAD">Canadian Dollar (C$)</option>
                                 <option value="AUD">Australian Dollar (A$)</option>
+                                <option value="JMD">Jamaican Dollar (J$)</option>
+                                <option value="TTD">Trinidad & Tobago Dollar (TT$)</option>
+                                <option value="XCD">East Caribbean Dollar (EC$)</option>
                             </select>
                         </div>
                         
