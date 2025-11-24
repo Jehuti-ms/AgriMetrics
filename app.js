@@ -95,6 +95,7 @@ class FarmManagementApp {
             { id: 'dashboard', label: 'Dashboard', icon: '📊' },
             { id: 'income-expenses', label: 'Income & Expenses', icon: '💰' },
             { id: 'inventory-check', label: 'Inventory', icon: '📦' },
+            { id: 'feed-record', label: 'Feed Records', icon: '🌾' },
             { id: 'reports', label: 'Reports', icon: '📈' }
         ];
 
