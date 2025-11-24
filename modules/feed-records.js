@@ -210,6 +210,125 @@ FarmModules.registerModule('feed-record', {
         </div>
     `,
 
+    styles: `
+        .feed-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .summary-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .summary-icon {
+            font-size: 2rem;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-content h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-trend, .summary-period {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .summary-trend.positive {
+            color: var(--success-color);
+        }
+
+        .summary-trend.negative {
+            color: var(--danger-color);
+        }
+
+        .quick-actions {
+            margin: 1.5rem 0;
+        }
+
+        .quick-actions .form-row.compact {
+            margin-bottom: 0.75rem;
+        }
+
+        .quick-actions .form-row.compact:last-child {
+            margin-bottom: 0;
+        }
+
+        .recent-transactions .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .transaction-type.purchase {
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
+        .transaction-type.usage {
+            color: var(--danger-color);
+            font-weight: 600;
+        }
+
+        .transaction-type.adjustment {
+            color: var(--warning-color);
+            font-weight: 600;
+        }
+
+        .stock-low {
+            color: var(--danger-color);
+            font-weight: 600;
+        }
+
+        .stock-adequate {
+            color: var(--success-color);
+        }
+
+        .stock-warning {
+            color: var(--warning-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            opacity: 0.5;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .empty-content h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.2rem;
+        }
+
+        .empty-content p {
+            margin: 0;
+            opacity: 0.8;
+        }
+    `,
+
     initialize: function() {
         console.log('Feed Records module initializing...');
         this.loadFeedData();
@@ -267,7 +386,7 @@ FarmModules.registerModule('feed-record', {
                     <td><span class="${typeClass}">${typeLabel}</span></td>
                     <td>${this.formatCategory(transaction.category)}</td>
                     <td>${transaction.amount} ${transaction.unit}</td>
-                    <td>${transaction.remainingStock} ${transaction.unit}</td>
+                    <td>${transaction.remainingStock || FarmModules.appData.feedStock.current} ${FarmModules.appData.feedStock.unit}</td>
                     <td>${transaction.notes || '—'}</td>
                     <td class="transaction-actions">
                         <button class="btn-icon edit-transaction" data-id="${transaction.id}" title="Edit">✏️</button>
@@ -304,13 +423,13 @@ FarmModules.registerModule('feed-record', {
         const currentStockKg = this.convertToKg(stock.current, stock.unit);
 
         // Update summary cards
-        this.updateElement('current-stock', `${stock.current} ${stock.unit}`);
+        this.updateElement('current-stock', `${stock.current.toFixed(1)} ${stock.unit}`);
         this.updateElement('total-purchased', `${totalPurchased.toFixed(1)} kg`);
         this.updateElement('total-used', `${totalUsed.toFixed(1)} kg`);
 
         // Stock trend
         const trendElement = document.getElementById('stock-trend');
-        if (trendElement) {
+        if (trendElement && transactions.length > 0) {
             const lastTransaction = transactions[transactions.length - 1];
             if (lastTransaction) {
                 const change = lastTransaction.type === 'purchase' ? '↗ Increase' : 
@@ -319,9 +438,6 @@ FarmModules.registerModule('feed-record', {
                 trendElement.className = 'summary-trend ' + 
                     (lastTransaction.type === 'purchase' ? 'positive' : 
                      lastTransaction.type === 'usage' ? 'negative' : '');
-            } else {
-                trendElement.textContent = 'No change';
-                trendElement.className = 'summary-trend';
             }
         }
 
@@ -490,6 +606,7 @@ FarmModules.registerModule('feed-record', {
         } else if (transaction.type === 'usage') {
             stock.current -= amountInStockUnit;
         }
+        // For adjustment type, you would set stock.current to a specific value
     },
 
     convertUnits: function(amount, fromUnit, toUnit) {
@@ -686,7 +803,9 @@ FarmModules.registerModule('feed-record', {
     },
 
     showAllTransactions: function() {
-        this.showNotification('Full transactions view coming soon!', 'info');
+        // For now, just show a notification. In a full implementation, this would show all transactions
+        this.showNotification('Showing all transactions', 'info');
+        // You could implement a full table view here
     },
 
     formatCategory: function(category) {
@@ -713,7 +832,22 @@ FarmModules.registerModule('feed-record', {
         if (window.coreModule && window.coreModule.showNotification) {
             window.coreModule.showNotification(message, type);
         } else {
-            alert(message); // Fallback
+            // Fallback notification
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                background: ${type === 'error' ? '#f44336' : type === 'success' ? '#4CAF50' : '#2196F3'};
+                color: white;
+                border-radius: 4px;
+                z-index: 1000;
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
         }
     }
 });
