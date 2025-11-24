@@ -1,5 +1,5 @@
-// modules/feed-record.js
-FarmModules.registerModule('feed-record', {
+// modules/feed-records.js
+FarmModules.registerModule('feed-records', {
     name: 'Feed Records',
     icon: '🌾',
     
@@ -347,36 +347,25 @@ FarmModules.registerModule('feed-record', {
     },
 
     attachEventListeners: function() {
-        const quickPurchaseBtn = document.getElementById('quick-purchase');
-        const quickUsageBtn = document.getElementById('quick-usage');
-        
-        if (quickPurchaseBtn) {
-            quickPurchaseBtn.addEventListener('click', () => this.handleQuickPurchase());
-        }
-        if (quickUsageBtn) {
-            quickUsageBtn.addEventListener('click', () => this.handleQuickUsage());
-        }
+        // Quick actions
+        document.getElementById('quick-purchase').addEventListener('click', () => this.handleQuickPurchase());
+        document.getElementById('quick-usage').addEventListener('click', () => this.handleQuickUsage());
 
-        const addTransactionBtn = document.getElementById('add-feed-transaction');
-        if (addTransactionBtn) {
-            addTransactionBtn.addEventListener('click', () => this.showFeedModal());
-        }
+        // Modal buttons
+        document.getElementById('add-feed-transaction').addEventListener('click', () => this.showFeedModal());
 
-        const closeButtons = document.querySelectorAll('.close-modal');
-        closeButtons.forEach(btn => {
+        // Modal events
+        document.querySelectorAll('.close-modal').forEach(btn => {
             btn.addEventListener('click', () => this.hideModal());
         });
 
-        const saveBtn = document.getElementById('save-feed');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', () => this.saveFeedTransaction());
-        }
+        // Save button
+        document.getElementById('save-feed').addEventListener('click', () => this.saveFeedTransaction());
 
-        const feedTypeSelect = document.getElementById('feed-type');
-        if (feedTypeSelect) {
-            feedTypeSelect.addEventListener('change', (e) => this.handleTypeChange(e.target.value));
-        }
+        // Form changes
+        document.getElementById('feed-type').addEventListener('change', (e) => this.handleTypeChange(e.target.value));
 
+        // Edit and delete
         document.addEventListener('click', (e) => {
             if (e.target.closest('.edit-transaction')) {
                 const transactionId = e.target.closest('.edit-transaction').dataset.id;
@@ -388,14 +377,12 @@ FarmModules.registerModule('feed-record', {
             }
         });
 
-        const modal = document.getElementById('feed-modal');
-        if (modal) {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    this.hideModal();
-                }
-            });
-        }
+        // Modal backdrop
+        document.getElementById('feed-modal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                this.hideModal();
+            }
+        });
     },
 
     handleQuickPurchase: function() {
