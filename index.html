@@ -13,7 +13,6 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Farm Management">
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
     
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
@@ -24,14 +23,10 @@
     <!-- Chart.js for dashboard charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <style>
-        /* Basic styles to prevent unstyled content */
-        .hidden { display: none !important; }
-        .auth-form { display: none; }
-        .auth-form.active { display: block; }
-        .section { display: none; }
-        .section.active { display: block; }
-    </style>
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
     <!-- Auth Container -->
@@ -41,20 +36,20 @@
             <div id="signin-form" class="auth-form active">
                 <h2>Sign In</h2>
                 <form id="signin-form-element">
-                    <div>
+                    <div class="form-group">
                         <label>Email:</label>
                         <input type="email" id="signin-email" required>
                     </div>
-                    <div>
+                    <div class="form-group">
                         <label>Password:</label>
                         <input type="password" id="signin-password" required>
                     </div>
-                    <button type="submit">Sign In</button>
-                    <div>
+                    <button type="submit" class="btn btn-primary">Sign In</button>
+                    <div class="auth-links">
                         <a href="#" id="show-forgot-password">Forgot Password?</a>
                         <a href="#" id="show-signup">Sign Up</a>
                     </div>
-                    <button type="button" id="google-signin">Sign in with Google</button>
+                    <button type="button" id="google-signin" class="btn btn-google">Sign in with Google</button>
                 </form>
             </div>
 
@@ -62,28 +57,28 @@
             <div id="signup-form" class="auth-form">
                 <h2>Sign Up</h2>
                 <form id="signup-form-element">
-                    <div>
+                    <div class="form-group">
                         <label>Full Name:</label>
                         <input type="text" id="signup-name" required>
                     </div>
-                    <div>
+                    <div class="form-group">
                         <label>Email:</label>
                         <input type="email" id="signup-email" required>
                     </div>
-                    <div>
+                    <div class="form-group">
                         <label>Password:</label>
                         <input type="password" id="signup-password" required>
                     </div>
-                    <div>
+                    <div class="form-group">
                         <label>Confirm Password:</label>
                         <input type="password" id="signup-confirm-password" required>
                     </div>
-                    <div>
+                    <div class="form-group">
                         <label>Farm Name:</label>
                         <input type="text" id="farm-name" required>
                     </div>
-                    <button type="submit">Create Account</button>
-                    <div>
+                    <button type="submit" class="btn btn-primary">Create Account</button>
+                    <div class="auth-links">
                         <a href="#" id="show-signin">Already have an account?</a>
                     </div>
                 </form>
@@ -93,12 +88,12 @@
             <div id="forgot-password-form" class="auth-form">
                 <h2>Reset Password</h2>
                 <form id="forgot-password-form-element">
-                    <div>
+                    <div class="form-group">
                         <label>Email:</label>
                         <input type="email" id="forgot-email" required>
                     </div>
-                    <button type="submit">Send Reset Link</button>
-                    <div>
+                    <button type="submit" class="btn btn-primary">Send Reset Link</button>
+                    <div class="auth-links">
                         <a href="#" id="show-signin-from-forgot">Back to Sign In</a>
                     </div>
                 </form>
@@ -121,23 +116,16 @@
         </main>
     </div>
 
-    <!-- Load scripts in correct order - ONLY ONCE -->
+    <!-- Load scripts in correct order -->
     <script src="firebase/firebase-config.js"></script>
     <script src="firebase/firebase-auth.js"></script>
-    <script src="firebase/firebase-firestore.js"></script>
-    
-    <!-- Framework first -->
     <script src="modules/framework.js"></script>
     <script src="modules/core.js"></script>
     <script src="modules/auth.js"></script>
-    
-    <!-- Then modules -->
     <script src="modules/dashboard.js"></script>
     <script src="modules/income-expenses.js"></script>
     <script src="modules/inventory-check.js"></script>
     <script src="modules/reports.js"></script>
-    
-    <!-- App last -->
     <script src="app.js"></script>
 </body>
 </html>
