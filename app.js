@@ -97,6 +97,7 @@ class FarmManagementApp {
             { id: 'inventory-check', label: 'Inventory', icon: '📦' },
             { id: 'feed-record', label: 'Feed Records', icon: '🌾' },
             { id: 'reports', label: 'Reports', icon: '📈' }
+            { id: 'profile', label: 'Profile', icon: '👤' }
         ];
 
         const navList = document.createElement('ul');
