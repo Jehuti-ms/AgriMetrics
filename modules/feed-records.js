@@ -210,125 +210,6 @@ FarmModules.registerModule('feed-record', {
         </div>
     `,
 
-    styles: `
-        .feed-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
-            margin: 1.5rem 0;
-        }
-
-        .summary-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
-            border: 1px solid var(--border-color);
-        }
-
-        .summary-icon {
-            font-size: 2rem;
-            opacity: 0.8;
-            margin-bottom: 0.5rem;
-        }
-
-        .summary-content h3 {
-            margin: 0 0 0.5rem 0;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .summary-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-color);
-            margin-bottom: 0.25rem;
-        }
-
-        .summary-trend, .summary-period {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .summary-trend.positive {
-            color: var(--success-color);
-        }
-
-        .summary-trend.negative {
-            color: var(--danger-color);
-        }
-
-        .quick-actions {
-            margin: 1.5rem 0;
-        }
-
-        .quick-actions .form-row.compact {
-            margin-bottom: 0.75rem;
-        }
-
-        .quick-actions .form-row.compact:last-child {
-            margin-bottom: 0;
-        }
-
-        .recent-transactions .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .transaction-type.purchase {
-            color: var(--success-color);
-            font-weight: 600;
-        }
-
-        .transaction-type.usage {
-            color: var(--danger-color);
-            font-weight: 600;
-        }
-
-        .transaction-type.adjustment {
-            color: var(--warning-color);
-            font-weight: 600;
-        }
-
-        .stock-low {
-            color: var(--danger-color);
-            font-weight: 600;
-        }
-
-        .stock-adequate {
-            color: var(--success-color);
-        }
-
-        .stock-warning {
-            color: var(--warning-color);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-muted);
-        }
-
-        .empty-icon {
-            font-size: 3rem;
-            opacity: 0.5;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .empty-content h4 {
-            margin: 0 0 0.5rem 0;
-            font-size: 1.2rem;
-        }
-
-        .empty-content p {
-            margin: 0;
-            opacity: 0.8;
-        }
-    `,
-
     initialize: function() {
         console.log('Feed Records module initializing...');
         this.loadFeedData();
@@ -337,7 +218,6 @@ FarmModules.registerModule('feed-record', {
     },
 
     loadFeedData: function() {
-        // Initialize feed data if it doesn't exist
         if (!FarmModules.appData.feedTransactions) {
             FarmModules.appData.feedTransactions = [];
         }
@@ -372,7 +252,6 @@ FarmModules.registerModule('feed-record', {
             return;
         }
 
-        // Show only last 10 transactions for recent view
         const recentTransactions = transactions.slice(-10).reverse();
 
         tbody.innerHTML = recentTransactions.map(transaction => {
@@ -401,7 +280,6 @@ FarmModules.registerModule('feed-record', {
         const transactions = FarmModules.appData.feedTransactions || [];
         const stock = FarmModules.appData.feedStock || { current: 0, unit: 'kg' };
 
-        // Calculate totals for current month
         const currentDate = new Date();
         const currentMonth = currentDate.getMonth();
         const currentYear = currentDate.getFullYear();
@@ -422,12 +300,10 @@ FarmModules.registerModule('feed-record', {
 
         const currentStockKg = this.convertToKg(stock.current, stock.unit);
 
-        // Update summary cards
         this.updateElement('current-stock', `${stock.current.toFixed(1)} ${stock.unit}`);
         this.updateElement('total-purchased', `${totalPurchased.toFixed(1)} kg`);
         this.updateElement('total-used', `${totalUsed.toFixed(1)} kg`);
 
-        // Stock trend
         const trendElement = document.getElementById('stock-trend');
         if (trendElement && transactions.length > 0) {
             const lastTransaction = transactions[transactions.length - 1];
@@ -441,7 +317,6 @@ FarmModules.registerModule('feed-record', {
             }
         }
 
-        // Low stock alert
         const alertElement = document.getElementById('low-stock-alert');
         const statusElement = document.getElementById('stock-status');
         if (alertElement && statusElement) {
@@ -465,14 +340,13 @@ FarmModules.registerModule('feed-record', {
         const conversions = {
             'kg': 1,
             'lbs': 0.453592,
-            'bags': 25, // assuming 25kg per bag
+            'bags': 25,
             'tons': 1000
         };
         return amount * (conversions[unit] || 1);
     },
 
     attachEventListeners: function() {
-        // Quick actions
         const quickPurchaseBtn = document.getElementById('quick-purchase');
         const quickUsageBtn = document.getElementById('quick-usage');
         
@@ -483,31 +357,26 @@ FarmModules.registerModule('feed-record', {
             quickUsageBtn.addEventListener('click', () => this.handleQuickUsage());
         }
 
-        // Modal open button
         const addTransactionBtn = document.getElementById('add-feed-transaction');
         if (addTransactionBtn) {
             addTransactionBtn.addEventListener('click', () => this.showFeedModal());
         }
 
-        // Modal events
         const closeButtons = document.querySelectorAll('.close-modal');
         closeButtons.forEach(btn => {
             btn.addEventListener('click', () => this.hideModal());
         });
 
-        // Save feed transaction
         const saveBtn = document.getElementById('save-feed');
         if (saveBtn) {
             saveBtn.addEventListener('click', () => this.saveFeedTransaction());
         }
 
-        // Transaction type change
         const feedTypeSelect = document.getElementById('feed-type');
         if (feedTypeSelect) {
             feedTypeSelect.addEventListener('change', (e) => this.handleTypeChange(e.target.value));
         }
 
-        // Edit and delete transactions
         document.addEventListener('click', (e) => {
             if (e.target.closest('.edit-transaction')) {
                 const transactionId = e.target.closest('.edit-transaction').dataset.id;
@@ -519,13 +388,6 @@ FarmModules.registerModule('feed-record', {
             }
         });
 
-        // View all transactions
-        const viewAllBtn = document.getElementById('view-all-transactions');
-        if (viewAllBtn) {
-            viewAllBtn.addEventListener('click', () => this.showAllTransactions());
-        }
-
-        // Close modal on backdrop click
         const modal = document.getElementById('feed-modal');
         if (modal) {
             modal.addEventListener('click', (e) => {
@@ -559,7 +421,6 @@ FarmModules.registerModule('feed-record', {
             return;
         }
 
-        // Check if enough stock
         const currentStock = FarmModules.appData.feedStock.current;
         const usageInStockUnit = this.convertUnits(amount, unit, FarmModules.appData.feedStock.unit);
         
@@ -586,11 +447,9 @@ FarmModules.registerModule('feed-record', {
             supplier: ''
         };
 
-        // Update stock
         this.updateStock(transaction);
         transaction.remainingStock = FarmModules.appData.feedStock.current;
 
-        // Add to transactions
         FarmModules.appData.feedTransactions.push(transaction);
         
         this.renderTransactionsTable();
@@ -606,7 +465,6 @@ FarmModules.registerModule('feed-record', {
         } else if (transaction.type === 'usage') {
             stock.current -= amountInStockUnit;
         }
-        // For adjustment type, you would set stock.current to a specific value
     },
 
     convertUnits: function(amount, fromUnit, toUnit) {
@@ -665,7 +523,6 @@ FarmModules.registerModule('feed-record', {
         const brand = document.getElementById('feed-brand').value;
         const animals = document.getElementById('feed-animals').value;
 
-        // Validation
         if (!type || !category || !amount || !date) {
             this.showNotification('Please fill in all required fields', 'error');
             return;
@@ -676,7 +533,6 @@ FarmModules.registerModule('feed-record', {
             return;
         }
 
-        // Check stock for usage
         if (type === 'usage') {
             const currentStock = FarmModules.appData.feedStock.current;
             const usageInStockUnit = this.convertUnits(amount, unit, FarmModules.appData.feedStock.unit);
@@ -719,7 +575,6 @@ FarmModules.registerModule('feed-record', {
             ...transactionData
         };
 
-        // Update stock
         this.updateStock(newTransaction);
         newTransaction.remainingStock = FarmModules.appData.feedStock.current;
 
@@ -765,18 +620,14 @@ FarmModules.registerModule('feed-record', {
         const index = transactions.findIndex(t => t.id === transactionId);
         
         if (index !== -1) {
-            // For simplicity, we'll remove and re-add to recalculate stock
             const oldTransaction = transactions[index];
             
-            // Reverse the old transaction's effect on stock
             const reverseTransaction = { ...oldTransaction };
             reverseTransaction.type = reverseTransaction.type === 'purchase' ? 'usage' : 'purchase';
             this.updateStock(reverseTransaction);
             
-            // Remove old transaction
             transactions.splice(index, 1);
             
-            // Add new transaction
             this.addTransaction(transactionData);
         }
     },
@@ -787,12 +638,10 @@ FarmModules.registerModule('feed-record', {
             const transaction = transactions.find(t => t.id === transactionId);
             
             if (transaction) {
-                // Reverse the transaction's effect on stock
                 const reverseTransaction = { ...transaction };
                 reverseTransaction.type = reverseTransaction.type === 'purchase' ? 'usage' : 'purchase';
                 this.updateStock(reverseTransaction);
                 
-                // Remove from transactions
                 FarmModules.appData.feedTransactions = transactions.filter(t => t.id !== transactionId);
                 
                 this.renderTransactionsTable();
@@ -800,12 +649,6 @@ FarmModules.registerModule('feed-record', {
                 this.showNotification('Transaction deleted successfully', 'success');
             }
         }
-    },
-
-    showAllTransactions: function() {
-        // For now, just show a notification. In a full implementation, this would show all transactions
-        this.showNotification('Showing all transactions', 'info');
-        // You could implement a full table view here
     },
 
     formatCategory: function(category) {
@@ -832,22 +675,7 @@ FarmModules.registerModule('feed-record', {
         if (window.coreModule && window.coreModule.showNotification) {
             window.coreModule.showNotification(message, type);
         } else {
-            // Fallback notification
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.textContent = message;
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 12px 20px;
-                background: ${type === 'error' ? '#f44336' : type === 'success' ? '#4CAF50' : '#2196F3'};
-                color: white;
-                border-radius: 4px;
-                z-index: 1000;
-            `;
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 3000);
+            alert(message);
         }
     }
 });
