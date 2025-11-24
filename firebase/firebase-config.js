@@ -9,5 +9,17 @@ const firebaseConfig = {
     measurementId: "G-KQW4GMBDVY"
 };
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+if (typeof firebase !== 'undefined') {
+    try {
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+            console.log('✅ Firebase initialized successfully');
+        } else {
+            console.log('✅ Firebase already initialized');
+        }
+    } catch (error) {
+        console.error('❌ Error initializing Firebase:', error);
+    }
+} else {
+    console.log('⚠️ Firebase not available - running in demo mode');
+}
