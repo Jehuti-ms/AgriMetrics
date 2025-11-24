@@ -53,7 +53,6 @@ FarmModules.registerModule('reports', {
                     </button>
                 </div>
                 <div class="output-content" id="output-content">
-                    <!-- Report content will be rendered here -->
                 </div>
             </div>
         </div>
@@ -61,20 +60,14 @@ FarmModules.registerModule('reports', {
 
     initialize: function() {
         console.log('Reports module initializing...');
-        this.attachEventListeners();
-    },
-
-    attachEventListeners: function() {
-        // Any report-specific event listeners can go here
-        console.log('Reports event listeners attached');
     },
 
     generateFinancialReport: function() {
         const transactions = FarmModules.appData.transactions || [];
         const totalIncome = transactions.filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + (parseFloat(t.amount) || parseFloat(t.value) || 0), 0);
+            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
         const totalExpenses = transactions.filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + (parseFloat(t.amount) || parseFloat(t.value) || 0), 0);
+            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
 
         const reportContent = `
             <div class="report-section">
@@ -95,7 +88,7 @@ FarmModules.registerModule('reports', {
                 </div>
             </div>
             <div class="report-section">
-                <h4>Transaction Count</h4>
+                <h4>Transaction Overview</h4>
                 <p>Total transactions: ${transactions.length}</p>
                 <p>Income transactions: ${transactions.filter(t => t.type === 'income').length}</p>
                 <p>Expense transactions: ${transactions.filter(t => t.type === 'expense').length}</p>
@@ -130,10 +123,6 @@ FarmModules.registerModule('reports', {
                     </div>
                 </div>
             </div>
-            <div class="report-section">
-                <h4>Category Breakdown</h4>
-                ${this.generateCategoryBreakdown()}
-            </div>
         `;
 
         this.showReport('Inventory Report', reportContent);
@@ -151,27 +140,6 @@ FarmModules.registerModule('reports', {
         this.showReport('Production Report', reportContent);
     },
 
-    generateCategoryBreakdown: function() {
-        const inventory = FarmModules.appData.inventory || [];
-        const categories = {};
-
-        inventory.forEach(item => {
-            const category = item.category || 'other';
-            categories[category] = (categories[category] || 0) + 1;
-        });
-
-        if (Object.keys(categories).length === 0) {
-            return '<p>No inventory categories found.</p>';
-        }
-
-        return Object.entries(categories).map(([category, count]) => `
-            <div class="category-item">
-                <span class="category-name">${this.formatCategory(category)}</span>
-                <span class="category-count">${count} items</span>
-            </div>
-        `).join('');
-    },
-
     showReport: function(title, content) {
         const outputSection = document.getElementById('report-output');
         const outputTitle = document.getElementById('output-title');
@@ -184,7 +152,6 @@ FarmModules.registerModule('reports', {
         this.showNotification(`Generated: ${title}`, 'success');
     },
 
-    // Utility functions
     formatCurrency: function(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -192,18 +159,9 @@ FarmModules.registerModule('reports', {
         }).format(amount);
     },
 
-    formatCategory: function(category) {
-        if (!category) return 'Other';
-        return category.split('-').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1)
-        ).join(' ');
-    },
-
     showNotification: function(message, type) {
         if (window.coreModule && window.coreModule.showNotification) {
             window.coreModule.showNotification(message, type);
-        } else {
-            alert(message);
         }
     }
 });
