@@ -1,5 +1,5 @@
-// modules/feed-records.js
-FarmModules.registerModule('feed-records', {
+// modules/feed-record.js
+FarmModules.registerModule('feed-record', {
     name: 'Feed Records',
     icon: '🌾',
     
@@ -210,6 +210,125 @@ FarmModules.registerModule('feed-records', {
         </div>
     `,
 
+    styles: `
+        .feed-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .summary-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .summary-icon {
+            font-size: 2rem;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-content h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-trend, .summary-period {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .summary-trend.positive {
+            color: var(--success-color);
+        }
+
+        .summary-trend.negative {
+            color: var(--danger-color);
+        }
+
+        .quick-actions {
+            margin: 1.5rem 0;
+        }
+
+        .quick-actions .form-row.compact {
+            margin-bottom: 0.75rem;
+        }
+
+        .quick-actions .form-row.compact:last-child {
+            margin-bottom: 0;
+        }
+
+        .recent-transactions .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .transaction-type.purchase {
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
+        .transaction-type.usage {
+            color: var(--danger-color);
+            font-weight: 600;
+        }
+
+        .transaction-type.adjustment {
+            color: var(--warning-color);
+            font-weight: 600;
+        }
+
+        .stock-low {
+            color: var(--danger-color);
+            font-weight: 600;
+        }
+
+        .stock-adequate {
+            color: var(--success-color);
+        }
+
+        .stock-warning {
+            color: var(--warning-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            opacity: 0.5;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .empty-content h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.2rem;
+        }
+
+        .empty-content p {
+            margin: 0;
+            opacity: 0.8;
+        }
+    `,
+
     initialize: function() {
         console.log('Feed Records module initializing...');
         this.loadFeedData();
@@ -347,25 +466,17 @@ FarmModules.registerModule('feed-records', {
     },
 
     attachEventListeners: function() {
-        // Quick actions
         document.getElementById('quick-purchase').addEventListener('click', () => this.handleQuickPurchase());
         document.getElementById('quick-usage').addEventListener('click', () => this.handleQuickUsage());
-
-        // Modal buttons
         document.getElementById('add-feed-transaction').addEventListener('click', () => this.showFeedModal());
+        document.getElementById('save-feed').addEventListener('click', () => this.saveFeedTransaction());
 
-        // Modal events
         document.querySelectorAll('.close-modal').forEach(btn => {
             btn.addEventListener('click', () => this.hideModal());
         });
 
-        // Save button
-        document.getElementById('save-feed').addEventListener('click', () => this.saveFeedTransaction());
-
-        // Form changes
         document.getElementById('feed-type').addEventListener('change', (e) => this.handleTypeChange(e.target.value));
 
-        // Edit and delete
         document.addEventListener('click', (e) => {
             if (e.target.closest('.edit-transaction')) {
                 const transactionId = e.target.closest('.edit-transaction').dataset.id;
@@ -377,7 +488,6 @@ FarmModules.registerModule('feed-records', {
             }
         });
 
-        // Modal backdrop
         document.getElementById('feed-modal').addEventListener('click', (e) => {
             if (e.target === e.currentTarget) {
                 this.hideModal();
