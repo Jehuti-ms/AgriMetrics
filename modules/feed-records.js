@@ -210,102 +210,6 @@ FarmModules.registerModule('feed-record', {
         </div>
     `,
 
-    styles: `
-        .feed-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
-            margin: 1.5rem 0;
-        }
-
-        .summary-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
-            border: 1px solid var(--border-color);
-        }
-
-        .summary-icon {
-            font-size: 2rem;
-            opacity: 0.8;
-            margin-bottom: 0.5rem;
-        }
-
-        .summary-content h3 {
-            margin: 0 0 0.5rem 0;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .summary-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-color);
-            margin-bottom: 0.25rem;
-        }
-
-        .summary-trend, .summary-period {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .summary-trend.positive {
-            color: var(--success-color);
-        }
-
-        .summary-trend.negative {
-            color: var(--danger-color);
-        }
-
-        .quick-actions {
-            margin: 1.5rem 0;
-        }
-
-        .quick-actions .form-row.compact {
-            margin-bottom: 0.75rem;
-        }
-
-        .quick-actions .form-row.compact:last-child {
-            margin-bottom: 0;
-        }
-
-        .recent-transactions .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .transaction-type.purchase {
-            color: var(--success-color);
-            font-weight: 600;
-        }
-
-        .transaction-type.usage {
-            color: var(--danger-color);
-            font-weight: 600;
-        }
-
-        .transaction-type.adjustment {
-            color: var(--warning-color);
-            font-weight: 600;
-        }
-
-        .stock-low {
-            color: var(--danger-color);
-            font-weight: 600;
-        }
-
-        .stock-adequate {
-            color: var(--success-color);
-        }
-
-        .stock-warning {
-            color: var(--warning-color);
-        }
-    `,
-
     initialize: function() {
         console.log('Feed Records module initializing...');
         this.loadFeedData();
@@ -314,6 +218,7 @@ FarmModules.registerModule('feed-record', {
     },
 
     loadFeedData: function() {
+        // Initialize feed data if it doesn't exist
         if (!FarmModules.appData.feedTransactions) {
             FarmModules.appData.feedTransactions = [];
         }
@@ -321,7 +226,7 @@ FarmModules.registerModule('feed-record', {
             FarmModules.appData.feedStock = {
                 current: 0,
                 unit: 'kg',
-                lowStockThreshold: 100 // kg default threshold
+                lowStockThreshold: 100
             };
         }
         this.renderTransactionsTable();
@@ -585,11 +490,9 @@ FarmModules.registerModule('feed-record', {
         } else if (transaction.type === 'usage') {
             stock.current -= amountInStockUnit;
         }
-        // For adjustments, we'd set the stock to a specific value
     },
 
     convertUnits: function(amount, fromUnit, toUnit) {
-        // Simple conversion - in real app, you'd have proper conversion rates
         const conversions = {
             'kg': { 'kg': 1, 'lbs': 2.20462, 'bags': 0.04, 'tons': 0.001 },
             'lbs': { 'kg': 0.453592, 'lbs': 1, 'bags': 0.0181437, 'tons': 0.000453592 },
@@ -783,7 +686,6 @@ FarmModules.registerModule('feed-record', {
     },
 
     showAllTransactions: function() {
-        // In a full implementation, this would show a modal or navigate to a full transactions view
         this.showNotification('Full transactions view coming soon!', 'info');
     },
 
@@ -810,6 +712,8 @@ FarmModules.registerModule('feed-record', {
     showNotification: function(message, type) {
         if (window.coreModule && window.coreModule.showNotification) {
             window.coreModule.showNotification(message, type);
+        } else {
+            alert(message); // Fallback
         }
     }
 });
