@@ -9,7 +9,7 @@ FarmModules.registerModule('inventory-check', {
                 <h1>Inventory Management</h1>
                 <p>Track and manage your farm inventory</p>
                 <div class="header-actions">
-                    <button class="btn btn-primary" onclick="FarmModules.getModule('inventory-check').openModal()">
+                    <button class="btn btn-primary" id="add-inventory-item">
                         ➕ Add Item
                     </button>
                 </div>
@@ -36,7 +36,7 @@ FarmModules.registerModule('inventory-check', {
                         </div>
                         <div class="form-group">
                             <button type="submit" class="btn btn-primary btn-compact">Add</button>
-                            <button type="button" class="btn btn-text btn-compact" onclick="FarmModules.getModule('inventory-check').openModal()">
+                            <button type="button" class="btn btn-text btn-compact" id="show-detailed-inventory">
                                 Detailed ➔
                             </button>
                         </div>
@@ -230,6 +230,7 @@ FarmModules.registerModule('inventory-check', {
     `,
 
     scripts: function() {
+        const self = this;
         let inventory = JSON.parse(localStorage.getItem('farmos_inventory') || '[]');
         let editingId = null;
 
@@ -243,6 +244,15 @@ FarmModules.registerModule('inventory-check', {
         function bindEvents() {
             // Quick add form
             $('#quick-inventory-form').on('submit', handleQuickAdd);
+            
+            // Modal buttons - use event delegation
+            $(document).on('click', '#add-inventory-item', function() {
+                openModal();
+            });
+            
+            $(document).on('click', '#show-detailed-inventory', function() {
+                openModal();
+            });
         }
 
         function handleQuickAdd(e) {
@@ -279,13 +289,12 @@ FarmModules.registerModule('inventory-check', {
             showNotification('Item added successfully!', 'success');
         }
 
-        // Public method to open modal
-        this.openModal = function(item = null) {
+        function openModal(item = null) {
             editingId = item ? item.id : null;
             
             // Create modal HTML
             const modalHTML = `
-                <div class="modal" id="inventory-modal" style="display: block;">
+                <div class="modal active" id="inventory-modal">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h3>${item ? 'Edit Inventory Item' : 'Add Inventory Item'}</h3>
@@ -518,7 +527,7 @@ FarmModules.registerModule('inventory-check', {
                 e.stopPropagation();
                 const itemId = $(this).closest('.inventory-item').data('id');
                 const item = inventory.find(i => i.id === itemId);
-                if (item) FarmModules.getModule('inventory-check').openModal(item);
+                if (item) openModal(item);
             });
 
             $('.use-inventory-item').on('click', function(e) {
@@ -531,7 +540,7 @@ FarmModules.registerModule('inventory-check', {
                 if (!$(e.target).closest('.inventory-item-actions').length) {
                     const itemId = $(this).data('id');
                     const item = inventory.find(i => i.id === itemId);
-                    if (item) FarmModules.getModule('inventory-check').openModal(item);
+                    if (item) openModal(item);
                 }
             });
         }
