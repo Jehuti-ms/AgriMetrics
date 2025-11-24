@@ -9,7 +9,7 @@ FarmModules.registerModule('inventory-check', {
                 <h1>Inventory Management</h1>
                 <p>Track and manage your farm inventory</p>
                 <div class="header-actions">
-                    <button class="btn btn-primary" id="add-inventory-item">
+                    <button class="btn btn-primary" id="open-inventory-modal">
                         ➕ Add Item
                     </button>
                 </div>
@@ -36,7 +36,7 @@ FarmModules.registerModule('inventory-check', {
                         </div>
                         <div class="form-group">
                             <button type="submit" class="btn btn-primary btn-compact">Add</button>
-                            <button type="button" class="btn btn-text btn-compact" id="show-detailed-inventory">
+                            <button type="button" class="btn btn-text btn-compact" id="open-detailed-modal">
                                 Detailed ➔
                             </button>
                         </div>
@@ -75,6 +75,90 @@ FarmModules.registerModule('inventory-check', {
                         <h4>No inventory items yet</h4>
                         <p>Start by adding your first inventory item</p>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Structure (same as income-expenses) -->
+        <div class="modal hidden" id="inventory-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="inventory-modal-title">Add Inventory Item</h3>
+                    <button class="btn-icon" id="close-inventory-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="inventory-form">
+                        <input type="hidden" id="inventory-id">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="inventory-name">Item Name *</label>
+                                <input type="text" id="inventory-name" required placeholder="Enter item name">
+                            </div>
+                            <div class="form-group">
+                                <label for="inventory-category">Category *</label>
+                                <select id="inventory-category" required>
+                                    <option value="">Select Category</option>
+                                    <option value="seeds">Seeds</option>
+                                    <option value="feed">Animal Feed</option>
+                                    <option value="fertilizer">Fertilizer</option>
+                                    <option value="equipment">Equipment</option>
+                                    <option value="tools">Tools</option>
+                                    <option value="medical">Medical Supplies</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="inventory-description">Description</label>
+                            <textarea id="inventory-description" placeholder="Enter item description..." rows="2"></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="inventory-quantity">Quantity *</label>
+                                <input type="number" id="inventory-quantity" min="0" required placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="inventory-unit">Unit *</label>
+                                <select id="inventory-unit" required>
+                                    <option value="units">Units</option>
+                                    <option value="kg">Kilograms (kg)</option>
+                                    <option value="lbs">Pounds (lbs)</option>
+                                    <option value="liters">Liters</option>
+                                    <option value="gallons">Gallons</option>
+                                    <option value="bags">Bags</option>
+                                    <option value="boxes">Boxes</option>
+                                    <option value="packs">Packs</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="inventory-cost">Unit Cost ($)</label>
+                                <input type="number" id="inventory-cost" step="0.01" min="0" placeholder="0.00">
+                            </div>
+                            <div class="form-group">
+                                <label for="inventory-minstock">Minimum Stock</label>
+                                <input type="number" id="inventory-minstock" min="0" placeholder="10">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="inventory-location">Storage Location</label>
+                            <input type="text" id="inventory-location" placeholder="e.g., Storage Shed A">
+                        </div>
+                        <div class="form-group">
+                            <label for="inventory-supplier">Supplier (Optional)</label>
+                            <input type="text" id="inventory-supplier" placeholder="Supplier name">
+                        </div>
+                        <div class="form-group">
+                            <label for="inventory-expiry">Expiry Date (Optional)</label>
+                            <input type="date" id="inventory-expiry">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-text" id="cancel-inventory-modal">Cancel</button>
+                    <button type="button" class="btn btn-danger hidden" id="delete-inventory-item">Delete</button>
+                    <button type="submit" form="inventory-form" class="btn btn-primary">Save Item</button>
                 </div>
             </div>
         </div>
@@ -230,7 +314,6 @@ FarmModules.registerModule('inventory-check', {
     `,
 
     scripts: function() {
-        const self = this;
         let inventory = JSON.parse(localStorage.getItem('farmos_inventory') || '[]');
         let editingId = null;
 
@@ -245,13 +328,25 @@ FarmModules.registerModule('inventory-check', {
             // Quick add form
             $('#quick-inventory-form').on('submit', handleQuickAdd);
             
-            // Modal buttons - use event delegation
-            $(document).on('click', '#add-inventory-item', function() {
-                openModal();
-            });
+            // Modal open buttons
+            $('#open-inventory-modal').on('click', openInventoryModal);
+            $('#open-detailed-modal').on('click', openInventoryModal);
             
-            $(document).on('click', '#show-detailed-inventory', function() {
-                openModal();
+            // Modal close buttons
+            $('#close-inventory-modal').on('click', closeInventoryModal);
+            $('#cancel-inventory-modal').on('click', closeInventoryModal);
+            
+            // Form submission
+            $('#inventory-form').on('submit', handleInventorySubmit);
+            
+            // Delete button
+            $('#delete-inventory-item').on('click', handleDeleteItem);
+            
+            // Close modal when clicking outside
+            $('#inventory-modal').on('click', function(e) {
+                if (e.target === this) {
+                    closeInventoryModal();
+                }
             });
         }
 
@@ -269,7 +364,6 @@ FarmModules.registerModule('inventory-check', {
                 location: '',
                 supplier: '',
                 expiry: '',
-                documents: [],
                 createdAt: new Date().toISOString(),
                 id: Date.now().toString()
             };
@@ -289,120 +383,40 @@ FarmModules.registerModule('inventory-check', {
             showNotification('Item added successfully!', 'success');
         }
 
-        function openModal(item = null) {
+        function openInventoryModal(item = null) {
             editingId = item ? item.id : null;
             
-            // Create modal HTML
-            const modalHTML = `
-                <div class="modal active" id="inventory-modal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h3>${item ? 'Edit Inventory Item' : 'Add Inventory Item'}</h3>
-                            <button class="btn-icon close-modal">&times;</button>
-                        </div>
-                        <div class="modal-body">
-                            <form id="inventory-form">
-                                <input type="hidden" id="inventory-id" value="${item ? item.id : ''}">
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="inventory-name">Item Name *</label>
-                                        <input type="text" id="inventory-name" required placeholder="Enter item name" value="${item ? item.name : ''}">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inventory-category">Category *</label>
-                                        <select id="inventory-category" required>
-                                            <option value="">Select Category</option>
-                                            <option value="seeds" ${item && item.category === 'seeds' ? 'selected' : ''}>Seeds</option>
-                                            <option value="feed" ${item && item.category === 'feed' ? 'selected' : ''}>Animal Feed</option>
-                                            <option value="fertilizer" ${item && item.category === 'fertilizer' ? 'selected' : ''}>Fertilizer</option>
-                                            <option value="equipment" ${item && item.category === 'equipment' ? 'selected' : ''}>Equipment</option>
-                                            <option value="tools" ${item && item.category === 'tools' ? 'selected' : ''}>Tools</option>
-                                            <option value="medical" ${item && item.category === 'medical' ? 'selected' : ''}>Medical Supplies</option>
-                                            <option value="other" ${item && item.category === 'other' ? 'selected' : ''}>Other</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="inventory-description">Description</label>
-                                    <textarea id="inventory-description" placeholder="Enter item description..." rows="2">${item ? item.description : ''}</textarea>
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="inventory-quantity">Quantity *</label>
-                                        <input type="number" id="inventory-quantity" min="0" required placeholder="0" value="${item ? item.quantity : ''}">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inventory-unit">Unit *</label>
-                                        <select id="inventory-unit" required>
-                                            <option value="units" ${item && item.unit === 'units' ? 'selected' : ''}>Units</option>
-                                            <option value="kg" ${item && item.unit === 'kg' ? 'selected' : ''}>Kilograms (kg)</option>
-                                            <option value="lbs" ${item && item.unit === 'lbs' ? 'selected' : ''}>Pounds (lbs)</option>
-                                            <option value="liters" ${item && item.unit === 'liters' ? 'selected' : ''}>Liters</option>
-                                            <option value="gallons" ${item && item.unit === 'gallons' ? 'selected' : ''}>Gallons</option>
-                                            <option value="bags" ${item && item.unit === 'bags' ? 'selected' : ''}>Bags</option>
-                                            <option value="boxes" ${item && item.unit === 'boxes' ? 'selected' : ''}>Boxes</option>
-                                            <option value="packs" ${item && item.unit === 'packs' ? 'selected' : ''}>Packs</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="inventory-cost">Unit Cost ($)</label>
-                                        <input type="number" id="inventory-cost" step="0.01" min="0" placeholder="0.00" value="${item ? item.cost : ''}">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inventory-minstock">Minimum Stock</label>
-                                        <input type="number" id="inventory-minstock" min="0" placeholder="10" value="${item ? item.minStock : ''}">
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="inventory-location">Storage Location</label>
-                                    <input type="text" id="inventory-location" placeholder="e.g., Storage Shed A" value="${item ? item.location : ''}">
-                                </div>
-                                <div class="form-group">
-                                    <label for="inventory-supplier">Supplier (Optional)</label>
-                                    <input type="text" id="inventory-supplier" placeholder="Supplier name" value="${item ? item.supplier : ''}">
-                                </div>
-                                <div class="form-group">
-                                    <label for="inventory-expiry">Expiry Date (Optional)</label>
-                                    <input type="date" id="inventory-expiry" value="${item ? item.expiry : ''}">
-                                </div>
-                            </form>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-text close-modal">Cancel</button>
-                            ${item ? '<button type="button" class="btn btn-danger" id="delete-inventory-item">Delete</button>' : ''}
-                            <button type="button" class="btn btn-primary" id="save-inventory-item">Save Item</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Add modal to body
-            $('body').append(modalHTML);
-
-            // Bind modal events
-            $('.close-modal').on('click', closeModal);
-            $('#save-inventory-item').on('click', handleInventorySubmit);
-            
             if (item) {
-                $('#delete-inventory-item').on('click', handleDeleteItem);
+                $('#inventory-modal-title').text('Edit Inventory Item');
+                $('#inventory-id').val(item.id);
+                $('#inventory-name').val(item.name);
+                $('#inventory-category').val(item.category);
+                $('#inventory-description').val(item.description);
+                $('#inventory-quantity').val(item.quantity);
+                $('#inventory-unit').val(item.unit);
+                $('#inventory-cost').val(item.cost);
+                $('#inventory-minstock').val(item.minStock);
+                $('#inventory-location').val(item.location);
+                $('#inventory-supplier').val(item.supplier);
+                $('#inventory-expiry').val(item.expiry);
+                $('#delete-inventory-item').removeClass('hidden');
+            } else {
+                $('#inventory-modal-title').text('Add Inventory Item');
+                $('#inventory-form')[0].reset();
+                $('#delete-inventory-item').addClass('hidden');
             }
 
-            // Close modal when clicking outside
-            $('#inventory-modal').on('click', function(e) {
-                if (e.target === this) {
-                    closeModal();
-                }
-            });
+            $('#inventory-modal').removeClass('hidden');
         }
 
-        function closeModal() {
-            $('#inventory-modal').remove();
+        function closeInventoryModal() {
+            $('#inventory-modal').addClass('hidden');
             editingId = null;
         }
 
-        function handleInventorySubmit() {
+        function handleInventorySubmit(e) {
+            e.preventDefault();
+            
             const itemData = {
                 name: $('#inventory-name').val().trim(),
                 category: $('#inventory-category').val(),
@@ -414,7 +428,6 @@ FarmModules.registerModule('inventory-check', {
                 location: $('#inventory-location').val().trim(),
                 supplier: $('#inventory-supplier').val().trim(),
                 expiry: $('#inventory-expiry').val(),
-                documents: [],
                 updatedAt: new Date().toISOString()
             };
 
@@ -441,7 +454,7 @@ FarmModules.registerModule('inventory-check', {
             saveInventory();
             renderInventory();
             updateSummary();
-            closeModal();
+            closeInventoryModal();
         }
 
         function handleDeleteItem() {
@@ -452,7 +465,7 @@ FarmModules.registerModule('inventory-check', {
                 saveInventory();
                 renderInventory();
                 updateSummary();
-                closeModal();
+                closeInventoryModal();
                 showNotification('Item deleted successfully', 'success');
             }
         }
@@ -527,7 +540,7 @@ FarmModules.registerModule('inventory-check', {
                 e.stopPropagation();
                 const itemId = $(this).closest('.inventory-item').data('id');
                 const item = inventory.find(i => i.id === itemId);
-                if (item) openModal(item);
+                if (item) openInventoryModal(item);
             });
 
             $('.use-inventory-item').on('click', function(e) {
@@ -540,7 +553,7 @@ FarmModules.registerModule('inventory-check', {
                 if (!$(e.target).closest('.inventory-item-actions').length) {
                     const itemId = $(this).data('id');
                     const item = inventory.find(i => i.id === itemId);
-                    if (item) openModal(item);
+                    if (item) openInventoryModal(item);
                 }
             });
         }
