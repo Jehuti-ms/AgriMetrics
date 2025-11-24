@@ -1,170 +1,198 @@
-// modules/auth.js - Authentication module
+// modules/auth.js
+console.log('Loading auth module...');
+
 class AuthModule {
     constructor() {
-        this.app = window.app;
-        this.core = window.coreModule;
         this.init();
     }
 
     init() {
-        console.log('Auth module initialized');
+        console.log('✅ Auth module initialized');
         this.setupAuthForms();
-        this.setupAuthListeners();
     }
 
     setupAuthForms() {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.attachFormHandlers();
+            });
+        } else {
+            this.attachFormHandlers();
+        }
+    }
+
+    attachFormHandlers() {
         // Sign up form
-        document.getElementById('signup-form-element').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await this.handleSignUp();
-        });
+        const signupForm = document.getElementById('signup-form-element');
+        if (signupForm) {
+            signupForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await this.handleSignUp();
+            });
+        }
 
         // Sign in form
-        document.getElementById('signin-form-element').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await this.handleSignIn();
-        });
+        const signinForm = document.getElementById('signin-form-element');
+        if (signinForm) {
+            signinForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await this.handleSignIn();
+            });
+        }
 
         // Forgot password form
-        document.getElementById('forgot-password-form-element').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await this.handleForgotPassword();
-        });
+        const forgotForm = document.getElementById('forgot-password-form-element');
+        if (forgotForm) {
+            forgotForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await this.handleForgotPassword();
+            });
+        }
 
         // Google sign in
-        document.getElementById('google-signin').addEventListener('click', async (e) => {
-            e.preventDefault();
-            await this.handleGoogleSignIn();
-        });
+        const googleBtn = document.getElementById('google-signin');
+        if (googleBtn) {
+            googleBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await this.handleGoogleSignIn();
+            });
+        }
+
+        this.setupAuthListeners();
     }
 
     setupAuthListeners() {
         // Form switching
-        document.getElementById('show-signup').addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showAuthForm('signup');
-        });
+        const showSignup = document.getElementById('show-signup');
+        if (showSignup) {
+            showSignup.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showAuthForm('signup');
+            });
+        }
 
-        document.getElementById('show-signin').addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showAuthForm('signin');
-        });
+        const showSignin = document.getElementById('show-signin');
+        if (showSignin) {
+            showSignin.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showAuthForm('signin');
+            });
+        }
 
-        document.getElementById('show-forgot-password').addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showAuthForm('forgot-password');
-        });
+        const showForgot = document.getElementById('show-forgot-password');
+        if (showForgot) {
+            showForgot.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showAuthForm('forgot-password');
+            });
+        }
 
-        document.getElementById('show-signin-from-forgot').addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showAuthForm('signin');
-        });
+        const showSigninFromForgot = document.getElementById('show-signin-from-forgot');
+        if (showSigninFromForgot) {
+            showSigninFromForgot.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showAuthForm('signin');
+            });
+        }
     }
 
     async handleSignUp() {
         const form = document.getElementById('signup-form-element');
-        const submitBtn = form.querySelector('button[type="submit"]');
-        
-        const name = document.getElementById('signup-name').value;
-        const email = document.getElementById('signup-email').value;
-        const password = document.getElementById('signup-password').value;
-        const confirmPassword = document.getElementById('signup-confirm-password').value;
-        const farmName = document.getElementById('farm-name').value;
+        if (!form) return;
 
-        // Validation
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const name = document.getElementById('signup-name')?.value || '';
+        const email = document.getElementById('signup-email')?.value || '';
+        const password = document.getElementById('signup-password')?.value || '';
+        const confirmPassword = document.getElementById('signup-confirm-password')?.value || '';
+        const farmName = document.getElementById('farm-name')?.value || '';
+
         if (password !== confirmPassword) {
-            this.core.showNotification('Passwords do not match', 'error');
+            this.showNotification('Passwords do not match', 'error');
             return;
         }
 
         if (password.length < 6) {
-            this.core.showNotification('Password must be at least 6 characters', 'error');
+            this.showNotification('Password must be at least 6 characters', 'error');
             return;
         }
 
-        submitBtn.innerHTML = '<div class="spinner"></div>Creating Account...';
-        submitBtn.disabled = true;
+        if (submitBtn) {
+            submitBtn.innerHTML = 'Creating Account...';
+            submitBtn.disabled = true;
+        }
 
         try {
-            const result = await window.authManager.signUp(email, password, {
+            const result = await window.authManager?.signUp(email, password, {
                 name: name,
                 email: email,
-                farmName: farmName,
-                createdAt: new Date().toISOString()
+                farmName: farmName
             });
 
-            if (result.success) {
-                this.core.showNotification('Account created successfully!', 'success');
-                // User will be automatically redirected via auth state listener
+            if (result?.success) {
+                this.showNotification('Account created successfully!', 'success');
             } else {
-                this.core.showNotification(result.error, 'error');
+                this.showNotification(result?.error || 'Error creating account', 'error');
             }
         } catch (error) {
-            this.core.showNotification('Error creating account', 'error');
+            this.showNotification('Error creating account', 'error');
         } finally {
-            submitBtn.innerHTML = 'Create Account';
-            submitBtn.disabled = false;
+            if (submitBtn) {
+                submitBtn.innerHTML = 'Create Account';
+                submitBtn.disabled = false;
+            }
         }
     }
 
     async handleSignIn() {
         const form = document.getElementById('signin-form-element');
-        const submitBtn = form.querySelector('button[type="submit"]');
-        
-        const email = document.getElementById('signin-email').value;
-        const password = document.getElementById('signin-password').value;
+        if (!form) return;
 
-        submitBtn.innerHTML = '<div class="spinner"></div>Signing In...';
-        submitBtn.disabled = true;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const email = document.getElementById('signin-email')?.value || '';
+        const password = document.getElementById('signin-password')?.value || '';
+
+        if (submitBtn) {
+            submitBtn.innerHTML = 'Signing In...';
+            submitBtn.disabled = true;
+        }
 
         try {
-            const result = await window.authManager.signIn(email, password);
+            const result = await window.authManager?.signIn(email, password);
 
-            if (result.success) {
-                this.core.showNotification('Welcome back!', 'success');
+            if (result?.success) {
+                this.showNotification('Welcome back!', 'success');
             } else {
-                this.core.showNotification(result.error, 'error');
+                this.showNotification(result?.error || 'Error signing in', 'error');
             }
         } catch (error) {
-            this.core.showNotification('Error signing in', 'error');
+            this.showNotification('Error signing in', 'error');
         } finally {
-            submitBtn.innerHTML = 'Sign In';
-            submitBtn.disabled = false;
+            if (submitBtn) {
+                submitBtn.innerHTML = 'Sign In';
+                submitBtn.disabled = false;
+            }
         }
     }
 
     async handleGoogleSignIn() {
         const button = document.getElementById('google-signin');
-        const originalText = button.innerHTML;
+        if (!button) return;
 
-        button.innerHTML = '<div class="spinner"></div>Signing in with Google...';
+        const originalText = button.innerHTML;
+        button.innerHTML = 'Signing in with Google...';
         button.disabled = true;
 
         try {
-            const result = await window.authManager.signInWithGoogle();
+            const result = await window.authManager?.signInWithGoogle();
 
-            if (result.success) {
-                this.core.showNotification('Signed in with Google!', 'success');
-                
-                // Check if it's a new user and create user document if needed
-                const userDoc = await firebase.firestore()
-                    .collection('users')
-                    .doc(result.user.uid)
-                    .get();
-
-                if (!userDoc.exists) {
-                    await window.authManager.saveUserData(result.user.uid, {
-                        name: result.user.displayName,
-                        email: result.user.email,
-                        farmName: `${result.user.displayName}'s Farm`,
-                        createdAt: new Date().toISOString()
-                    });
-                }
+            if (result?.success) {
+                this.showNotification('Signed in with Google!', 'success');
             } else {
-                this.core.showNotification(result.error, 'error');
+                this.showNotification(result?.error || 'Error signing in with Google', 'error');
             }
         } catch (error) {
-            this.core.showNotification('Error signing in with Google', 'error');
+            this.showNotification('Error signing in with Google', 'error');
         } finally {
             button.innerHTML = originalText;
             button.disabled = false;
@@ -173,27 +201,32 @@ class AuthModule {
 
     async handleForgotPassword() {
         const form = document.getElementById('forgot-password-form-element');
-        const submitBtn = form.querySelector('button[type="submit"]');
-        
-        const email = document.getElementById('forgot-email').value;
+        if (!form) return;
 
-        submitBtn.innerHTML = '<div class="spinner"></div>Sending Reset Link...';
-        submitBtn.disabled = true;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const email = document.getElementById('forgot-email')?.value || '';
+
+        if (submitBtn) {
+            submitBtn.innerHTML = 'Sending Reset Link...';
+            submitBtn.disabled = true;
+        }
 
         try {
-            const result = await window.authManager.resetPassword(email);
+            const result = await window.authManager?.resetPassword(email);
 
-            if (result.success) {
-                this.core.showNotification('Password reset email sent! Check your inbox.', 'success');
+            if (result?.success) {
+                this.showNotification('Password reset email sent!', 'success');
                 this.showAuthForm('signin');
             } else {
-                this.core.showNotification(result.error, 'error');
+                this.showNotification(result?.error || 'Error sending reset email', 'error');
             }
         } catch (error) {
-            this.core.showNotification('Error sending reset email', 'error');
+            this.showNotification('Error sending reset email', 'error');
         } finally {
-            submitBtn.innerHTML = 'Send Reset Link';
-            submitBtn.disabled = false;
+            if (submitBtn) {
+                submitBtn.innerHTML = 'Send Reset Link';
+                submitBtn.disabled = false;
+            }
         }
     }
 
@@ -201,18 +234,20 @@ class AuthModule {
         document.querySelectorAll('.auth-form').forEach(form => {
             form.classList.remove('active');
         });
-        document.getElementById(`${formName}-form`).classList.add('active');
         
-        // Clear forms when switching
-        if (formName === 'signin') {
-            document.getElementById('signin-form-element').reset();
-        } else if (formName === 'signup') {
-            document.getElementById('signup-form-element').reset();
+        const targetForm = document.getElementById(`${formName}-form`);
+        if (targetForm) {
+            targetForm.classList.add('active');
+        }
+    }
+
+    showNotification(message, type) {
+        if (window.coreModule && window.coreModule.showNotification) {
+            window.coreModule.showNotification(message, type);
+        } else {
+            alert(message);
         }
     }
 }
 
-// Initialize auth module when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    window.authModule = new AuthModule();
-});
+window.authModule = new AuthModule();
