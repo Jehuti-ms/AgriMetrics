@@ -15,6 +15,35 @@ FarmModules.registerModule('inventory-check', {
                 </div>
             </div>
 
+            <!-- Quick Add Form -->
+            <div class="quick-add-form card">
+                <h3>Quick Add Item</h3>
+                <form id="quick-inventory-form" class="form-inline">
+                    <div class="form-row compact">
+                        <div class="form-group">
+                            <input type="text" id="quick-name" placeholder="Item Name" required class="form-compact">
+                        </div>
+                        <div class="form-group">
+                            <select id="quick-category" required class="form-compact">
+                                <option value="seeds">Seeds</option>
+                                <option value="feed">Feed</option>
+                                <option value="equipment">Equipment</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <input type="number" id="quick-quantity" placeholder="Qty" required class="form-compact">
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-compact">Add</button>
+                            <button type="button" class="btn btn-text btn-compact" id="show-detailed-inventory">
+                                Detailed ➔
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
             <div class="inventory-summary">
                 <div class="summary-card">
                     <div class="summary-icon">📦</div>
@@ -123,414 +152,583 @@ FarmModules.registerModule('inventory-check', {
                                 <label for="inventory-expiry">Expiry Date (Optional):</label>
                                 <input type="date" id="inventory-expiry">
                             </div>
+                            
+                            <!-- Documentation Upload Section -->
+                            <div class="form-group">
+                                <label for="inventory-documents">Attach Documents (Optional):</label>
+                                <div class="file-upload-area" id="inventory-upload-area">
+                                    <div class="file-upload-placeholder">
+                                        <span class="upload-icon">📎</span>
+                                        <p>Drop documentation files here or click to browse</p>
+                                                                               <small>Supports: JPG, PNG, PDF, DOC (Max: 5MB each)</small>
+                                    </div>
+                                    <input type="file" id="inventory-documents" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" style="display: none;">
+                                </div>
+                                <div class="uploaded-files" id="uploaded-files-list"></div>
+                            </div>
                         </form>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-text close-inventory-modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="save-inventory">Save Item</button>
+                        <button type="button" class="btn btn-danger" id="delete-inventory-item" style="display: none;">Delete</button>
+                        <button type="submit" form="inventory-form" class="btn btn-primary">Save Item</button>
                     </div>
                 </div>
             </div>
         </div>
     `,
 
-    initialize: function() {
-        console.log('Inventory Check module initializing...');
-        this.loadInventoryData();
-        this.attachEventListeners();
-        this.updateSummary();
-    },
-
-    loadInventoryData: function() {
-        const inventory = FarmModules.appData.inventory || [];
-        this.renderInventoryGrid(inventory);
-    },
-
-    renderInventoryGrid: function(inventory) {
-        const grid = document.getElementById('inventory-grid');
-        if (!grid) return;
-
-        if (inventory.length === 0) {
-            grid.innerHTML = `
-                <div class="empty-inventory">
-                    <div class="empty-content">
-                        <span class="empty-icon">📦</span>
-                        <h4>No inventory items yet</h4>
-                        <p>Start by adding your first inventory item</p>
-                    </div>
-                </div>
-            `;
-            return;
+    styles: `
+        .inventory-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
         }
 
-        grid.innerHTML = inventory.map(item => `
-            <div class="inventory-item">
-                <div class="item-header">
-                    <div class="item-category">
-                        <span class="category-icon">${this.getCategoryIcon(item.category)}</span>
-                        <span class="category-name">${this.formatCategory(item.category)}</span>
-                    </div>
-                    <div class="item-actions">
-                        <button class="btn-icon edit-inventory" data-id="${item.id}" title="Edit">✏️</button>
-                        <button class="btn-icon delete-inventory" data-id="${item.id}" title="Delete">🗑️</button>
-                    </div>
-                </div>
-                
-                <div class="item-content">
-                    <h4 class="item-name">${item.name || 'Unnamed Item'}</h4>
-                    <p class="item-description">${item.description || 'No description'}</p>
-                    
-                    <div class="item-details">
-                        <div class="detail-row">
-                            <span class="detail-label">Quantity:</span>
-                            <span class="detail-value">
-                                <span class="quantity ${this.getQuantityStatus(item)}">${item.quantity || 0}</span>
-                                <span class="unit">${item.unit || 'units'}</span>
-                            </span>
-                        </div>
-                        
-                        ${item.cost ? `
-                        <div class="detail-row">
-                            <span class="detail-label">Unit Cost:</span>
-                            <span class="detail-value cost">${this.formatCurrency(item.cost)}</span>
-                        </div>
-                        ` : ''}
-                        
-                        ${item.location ? `
-                        <div class="detail-row">
-                            <span class="detail-label">Location:</span>
-                            <span class="detail-value location">${item.location}</span>
-                        </div>
-                        ` : ''}
-                        
-                        ${item.supplier ? `
-                        <div class="detail-row">
-                            <span class="detail-label">Supplier:</span>
-                            <span class="detail-value supplier">${item.supplier}</span>
-                        </div>
-                        ` : ''}
-                        
-                        ${item.expiryDate ? `
-                        <div class="detail-row">
-                            <span class="detail-label">Expires:</span>
-                            <span class="detail-value expiry ${this.getExpiryStatus(item)}">${this.formatDate(item.expiryDate)}</span>
-                        </div>
-                        ` : ''}
-                        
-                        ${item.minStock ? `
-                        <div class="detail-row">
-                            <span class="detail-label">Min Stock:</span>
-                            <span class="detail-value">${item.minStock}</span>
-                        </div>
-                        ` : ''}
-                    </div>
-                </div>
-                
-                <div class="item-footer">
-                    <div class="stock-status">
-                        <span class="status-badge ${this.getStockStatusClass(item)}">
-                            ${this.getStockStatusText(item)}
-                        </span>
-                    </div>
-                    <div class="item-value">
-                        ${item.cost && item.quantity ? this.formatCurrency(item.cost * item.quantity) : ''}
-                    </div>
-                </div>
-            </div>
-        `).join('');
-    },
-
-    updateSummary: function() {
-        const inventory = FarmModules.appData.inventory || [];
-        
-        const totalItems = inventory.length;
-        const lowStockCount = inventory.filter(item => this.isLowStock(item)).length;
-        const totalValue = inventory.reduce((sum, item) => {
-            const quantity = parseInt(item.quantity) || 0;
-            const cost = parseFloat(item.cost) || 0;
-            return sum + (quantity * cost);
-        }, 0);
-
-        this.updateElement('total-items-count', totalItems);
-        this.updateElement('low-stock-count', lowStockCount);
-        this.updateElement('total-inventory-value', this.formatCurrency(totalValue));
-    },
-
-    attachEventListeners: function() {
-        // Add item button
-        const addItemBtn = document.getElementById('add-inventory-item');
-        if (addItemBtn) {
-            addItemBtn.addEventListener('click', () => this.showInventoryModal());
+        .summary-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border: 1px solid var(--border-color);
         }
 
-        // Modal events
-        const closeButtons = document.querySelectorAll('.close-inventory-modal');
-        closeButtons.forEach(btn => {
-            btn.addEventListener('click', () => this.hideInventoryModal());
-        });
-
-        // Save inventory
-        const saveBtn = document.getElementById('save-inventory');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', () => this.saveInventory());
+        .summary-icon {
+            font-size: 2rem;
+            opacity: 0.8;
         }
 
-        // Edit and delete inventory items
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.edit-inventory')) {
-                const itemId = e.target.closest('.edit-inventory').dataset.id;
-                this.editInventory(itemId);
+        .summary-content h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .inventory-item {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .inventory-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .inventory-item.low-stock {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .inventory-item-header {
+            display: flex;
+            justify-content: between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .inventory-item-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .inventory-item-category {
+            background: var(--primary-light);
+            color: var(--primary-color);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .inventory-item-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .detail-item label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-item .value {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .inventory-item-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        .quick-add-form {
+            margin: 1.5rem 0;
+        }
+
+        .form-row.compact {
+            display: flex;
+            gap: 0.75rem;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        .form-compact {
+            height: 38px;
+            padding: 0.5rem 0.75rem;
+        }
+
+        .btn-compact {
+            height: 38px;
+            padding: 0.5rem 1rem;
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary-color);
+        }
+
+        .file-upload-area.dragover {
+            border-color: var(--primary-color);
+            background: var(--primary-light);
+        }
+
+        .upload-icon {
+            font-size: 2rem;
+            opacity: 0.7;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .uploaded-file {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: var(--bg-color);
+            border-radius: 6px;
+            margin-top: 0.5rem;
+        }
+
+        .uploaded-file-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .file-remove {
+            color: var(--danger-color);
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+    `,
+
+    scripts: function() {
+        let inventory = JSON.parse(localStorage.getItem('farmos_inventory') || '[]');
+        let editingId = null;
+
+        // Initialize the module
+        this.init = function() {
+            bindEvents();
+            renderInventory();
+            updateSummary();
+        };
+
+        function bindEvents() {
+            // Quick add form
+            $('#quick-inventory-form').on('submit', handleQuickAdd);
+            
+            // Detailed form
+            $('#inventory-form').on('submit', handleInventorySubmit);
+            
+            // Modal controls
+            $('#add-inventory-item').on('click', () => openInventoryModal());
+            $('.close-inventory-modal').on('click', closeInventoryModal);
+            $('#show-detailed-inventory').on('click', () => openInventoryModal());
+            
+            // Delete item
+            $('#delete-inventory-item').on('click', handleDeleteItem);
+            
+            // File upload handling
+            setupFileUpload();
+        }
+
+        function handleQuickAdd(e) {
+            e.preventDefault();
+            
+            const item = {
+                name: $('#quick-name').val().trim(),
+                category: $('#quick-category').val(),
+                quantity: parseInt($('#quick-quantity').val()) || 0,
+                unit: 'units',
+                cost: 0,
+                minStock: 10,
+                description: '',
+                location: '',
+                supplier: '',
+                expiry: '',
+                documents: [],
+                createdAt: new Date().toISOString(),
+                id: Date.now().toString()
+            };
+
+            if (!item.name) {
+                showNotification('Please enter an item name', 'error');
+                return;
             }
-            if (e.target.closest('.delete-inventory')) {
-                const itemId = e.target.closest('.delete-inventory').dataset.id;
-                this.deleteInventory(itemId);
-            }
-        });
 
-        // Close modal on backdrop click
-        const modal = document.getElementById('inventory-modal');
-        if (modal) {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    this.hideInventoryModal();
+            inventory.push(item);
+            saveInventory();
+            renderInventory();
+            updateSummary();
+            
+            // Reset form
+            $('#quick-inventory-form')[0].reset();
+            showNotification('Item added successfully!', 'success');
+        }
+
+        function handleInventorySubmit(e) {
+            e.preventDefault();
+            
+            const itemData = {
+                name: $('#inventory-name').val().trim(),
+                category: $('#inventory-category').val(),
+                description: $('#inventory-description').val().trim(),
+                quantity: parseInt($('#inventory-quantity').val()) || 0,
+                unit: $('#inventory-unit').val(),
+                cost: parseFloat($('#inventory-cost').val()) || 0,
+                minStock: parseInt($('#inventory-minstock').val()) || 0,
+                location: $('#inventory-location').val().trim(),
+                supplier: $('#inventory-supplier').val().trim(),
+                expiry: $('#inventory-expiry').val(),
+                documents: getUploadedDocuments(),
+                updatedAt: new Date().toISOString()
+            };
+
+            if (!itemData.name || !itemData.category) {
+                showNotification('Please fill in all required fields', 'error');
+                return;
+            }
+
+            if (editingId) {
+                // Update existing item
+                const index = inventory.findIndex(item => item.id === editingId);
+                if (index !== -1) {
+                    inventory[index] = { ...inventory[index], ...itemData };
+                    showNotification('Item updated successfully!', 'success');
                 }
+            } else {
+                // Add new item
+                itemData.createdAt = new Date().toISOString();
+                itemData.id = Date.now().toString();
+                inventory.push(itemData);
+                showNotification('Item added successfully!', 'success');
+            }
+
+            saveInventory();
+            renderInventory();
+            updateSummary();
+            closeInventoryModal();
+        }
+
+        function openInventoryModal(item = null) {
+            editingId = item ? item.id : null;
+            
+            if (item) {
+                $('#inventory-modal-title').text('Edit Inventory Item');
+                $('#inventory-id').val(item.id);
+                $('#inventory-name').val(item.name);
+                $('#inventory-category').val(item.category);
+                $('#inventory-description').val(item.description);
+                $('#inventory-quantity').val(item.quantity);
+                $('#inventory-unit').val(item.unit);
+                $('#inventory-cost').val(item.cost);
+                $('#inventory-minstock').val(item.minStock);
+                $('#inventory-location').val(item.location);
+                $('#inventory-supplier').val(item.supplier);
+                $('#inventory-expiry').val(item.expiry);
+                setUploadedDocuments(item.documents || []);
+                $('#delete-inventory-item').show();
+            } else {
+                $('#inventory-modal-title').text('Add Inventory Item');
+                $('#inventory-form')[0].reset();
+                setUploadedDocuments([]);
+                $('#delete-inventory-item').hide();
+            }
+
+            $('#inventory-modal').removeClass('hidden');
+        }
+
+        function closeInventoryModal() {
+            $('#inventory-modal').addClass('hidden');
+            editingId = null;
+        }
+
+        function handleDeleteItem() {
+            if (!editingId) return;
+
+            if (confirm('Are you sure you want to delete this inventory item?')) {
+                inventory = inventory.filter(item => item.id !== editingId);
+                saveInventory();
+                renderInventory();
+                updateSummary();
+                closeInventoryModal();
+                showNotification('Item deleted successfully', 'success');
+            }
+        }
+
+        function setupFileUpload() {
+            const uploadArea = $('#inventory-upload-area');
+            const fileInput = $('#inventory-documents');
+
+            uploadArea.on('click', () => fileInput.click());
+            
+            uploadArea.on('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.addClass('dragover');
+            });
+            
+            uploadArea.on('dragleave', () => {
+                uploadArea.removeClass('dragover');
+            });
+            
+            uploadArea.on('drop', (e) => {
+                e.preventDefault();
+                uploadArea.removeClass('dragover');
+                handleFiles(e.originalEvent.dataTransfer.files);
+            });
+            
+            fileInput.on('change', (e) => {
+                handleFiles(e.target.files);
             });
         }
-    },
 
-    showInventoryModal: function() {
-        const modal = document.getElementById('inventory-modal');
-        const title = document.getElementById('inventory-modal-title');
-        const form = document.getElementById('inventory-form');
-
-        if (modal && title && form) {
-            // Reset form
-            form.reset();
-            document.getElementById('inventory-id').value = '';
+        function handleFiles(files) {
+            const uploadedFiles = getUploadedDocuments();
             
-            // Set default values
-            document.getElementById('inventory-unit').value = 'units';
-            document.getElementById('inventory-minstock').value = '10';
-            document.getElementById('inventory-category').value = '';
+            for (let file of files) {
+                if (file.size > 5 * 1024 * 1024) {
+                    showNotification(`File ${file.name} is too large (max 5MB)`, 'error');
+                    continue;
+                }
+
+                const fileData = {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    uploadedAt: new Date().toISOString(),
+                    id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+                };
+
+                // In a real app, you would upload the file to a server
+                // For now, we'll just store the file info
+                uploadedFiles.push(fileData);
+            }
+
+            setUploadedDocuments(uploadedFiles);
+        }
+
+        function getUploadedDocuments() {
+            return JSON.parse($('#uploaded-files-list').attr('data-files') || '[]');
+        }
+
+        function setUploadedDocuments(files) {
+            $('#uploaded-files-list').attr('data-files', JSON.stringify(files));
             
-            title.textContent = 'Add Inventory Item';
-            modal.classList.remove('hidden');
-        }
-    },
+            if (files.length === 0) {
+                $('#uploaded-files-list').html('');
+                return;
+            }
 
-    hideInventoryModal: function() {
-        const modal = document.getElementById('inventory-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
-    },
+            const filesHtml = files.map(file => `
+                <div class="uploaded-file">
+                    <div class="uploaded-file-info">
+                        <span class="file-icon">📎</span>
+                        <span>${file.name}</span>
+                        <small>(${(file.size / 1024 / 1024).toFixed(2)} MB)</small>
+                    </div>
+                    <span class="file-remove" data-file-id="${file.id}">🗑️</span>
+                </div>
+            `).join('');
 
-    saveInventory: function() {
-        const form = document.getElementById('inventory-form');
-        if (!form) return;
+            $('#uploaded-files-list').html(filesHtml);
 
-        const itemId = document.getElementById('inventory-id').value;
-        const name = document.getElementById('inventory-name').value;
-        const category = document.getElementById('inventory-category').value;
-        const description = document.getElementById('inventory-description').value;
-        const quantity = parseInt(document.getElementById('inventory-quantity').value);
-        const unit = document.getElementById('inventory-unit').value;
-        const cost = parseFloat(document.getElementById('inventory-cost').value) || 0;
-        const minStock = parseInt(document.getElementById('inventory-minstock').value) || 0;
-        const location = document.getElementById('inventory-location').value;
-        const supplier = document.getElementById('inventory-supplier').value;
-        const expiryDate = document.getElementById('inventory-expiry').value;
-
-        // Validation
-        if (!name || !category || isNaN(quantity)) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
+            // Add remove handlers
+            $('.file-remove').on('click', function() {
+                const fileId = $(this).data('file-id');
+                const updatedFiles = files.filter(f => f.id !== fileId);
+                setUploadedDocuments(updatedFiles);
+            });
         }
 
-        if (quantity < 0) {
-            this.showNotification('Quantity cannot be negative', 'error');
-            return;
-        }
-
-        const inventoryData = {
-            name: name,
-            category: category,
-            description: description,
-            quantity: quantity,
-            unit: unit,
-            cost: cost,
-            minStock: minStock,
-            location: location,
-            supplier: supplier,
-            expiryDate: expiryDate,
-            lastUpdated: new Date().toISOString()
-        };
-
-        if (itemId) {
-            // Update existing item
-            this.updateInventory(itemId, inventoryData);
-        } else {
-            // Add new item
-            inventoryData.dateAdded = new Date().toISOString();
-            this.addInventory(inventoryData);
-        }
-
-        this.hideInventoryModal();
-    },
-
-    addInventory: function(inventoryData) {
-        if (!FarmModules.appData.inventory) {
-            FarmModules.appData.inventory = [];
-        }
-
-        const newItem = {
-            id: 'inv-' + Date.now(),
-            ...inventoryData
-        };
-
-        FarmModules.appData.inventory.push(newItem);
-
-        this.loadInventoryData();
-        this.updateSummary();
-
-        this.showNotification('Inventory item added successfully!', 'success');
-    },
-
-    editInventory: function(itemId) {
-        const inventory = FarmModules.appData.inventory || [];
-        const item = inventory.find(i => i.id === itemId);
-        
-        if (!item) return;
-
-        const modal = document.getElementById('inventory-modal');
-        const title = document.getElementById('inventory-modal-title');
-
-        if (modal && title) {
-            // Fill form with item data
-            document.getElementById('inventory-id').value = item.id;
-            document.getElementById('inventory-name').value = item.name || '';
-            document.getElementById('inventory-category').value = item.category || '';
-            document.getElementById('inventory-description').value = item.description || '';
-            document.getElementById('inventory-quantity').value = item.quantity || '';
-            document.getElementById('inventory-unit').value = item.unit || 'units';
-            document.getElementById('inventory-cost').value = item.cost || '';
-            document.getElementById('inventory-minstock').value = item.minStock || '';
-            document.getElementById('inventory-location').value = item.location || '';
-            document.getElementById('inventory-supplier').value = item.supplier || '';
-            document.getElementById('inventory-expiry').value = item.expiryDate || '';
+        function renderInventory() {
+            const grid = $('#inventory-grid');
             
-            title.textContent = 'Edit Inventory Item';
-            modal.classList.remove('hidden');
-        }
-    },
+            if (inventory.length === 0) {
+                grid.html(`
+                    <div class="empty-inventory">
+                        <div class="empty-content">
+                            <span class="empty-icon">📦</span>
+                            <h4>No inventory items yet</h4>
+                            <p>Start by adding your first inventory item</p>
+                        </div>
+                    </div>
+                `);
+                return;
+            }
 
-    updateInventory: function(itemId, inventoryData) {
-        const inventory = FarmModules.appData.inventory || [];
-        const index = inventory.findIndex(i => i.id === itemId);
-        
-        if (index !== -1) {
-            inventory[index] = {
-                ...inventory[index],
-                ...inventoryData
+            const inventoryHtml = inventory.map(item => {
+                const isLowStock = item.quantity <= item.minStock;
+                const totalValue = (item.quantity * item.cost).toFixed(2);
+                
+                return `
+                    <div class="inventory-item ${isLowStock ? 'low-stock' : ''}" data-id="${item.id}">
+                        <div class="inventory-item-header">
+                            <h4 class="inventory-item-name">${escapeHtml(item.name)}</h4>
+                            <span class="inventory-item-category">${getCategoryLabel(item.category)}</span>
+                        </div>
+                        
+                        <div class="inventory-item-details">
+                            <div class="detail-item">
+                                <label>Quantity</label>
+                                <div class="value">${item.quantity} ${item.unit}</div>
+                            </div>
+                            <div class="detail-item">
+                                <label>Value</label>
+                                <div class="value">$${totalValue}</div>
+                            </div>
+                            <div class="detail-item">
+                                <label>Location</label>
+                                <div class="value">${item.location || 'Not specified'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <label>Status</label>
+                                <div class="value ${isLowStock ? 'text-danger' : ''}">
+                                    ${isLowStock ? 'Low Stock' : 'In Stock'}
+                                </div>
+                            </div>
+                        </div>
+
+                        ${item.description ? `
+                            <div class="inventory-item-description">
+                                <label>Description:</label>
+                                <p>${escapeHtml(item.description)}</p>
+                            </div>
+                        ` : ''}
+
+                        <div class="inventory-item-actions">
+                            <button class="btn btn-text btn-sm edit-inventory-item">Edit</button>
+                            <button class="btn btn-primary btn-sm use-inventory-item">Use</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            grid.html(inventoryHtml);
+
+            // Add event listeners to inventory items
+            $('.inventory-item').on('click', function(e) {
+                if (!$(e.target).closest('.inventory-item-actions').length) {
+                    const itemId = $(this).data('id');
+                    const item = inventory.find(i => i.id === itemId);
+                    if (item) openInventoryModal(item);
+                }
+            });
+
+            $('.edit-inventory-item').on('click', function(e) {
+                e.stopPropagation();
+                const itemId = $(this).closest('.inventory-item').data('id');
+                const item = inventory.find(i => i.id === itemId);
+                if (item) openInventoryModal(item);
+            });
+
+            $('.use-inventory-item').on('click', function(e) {
+                e.stopPropagation();
+                const itemId = $(this).closest('.inventory-item').data('id');
+                // Implement inventory usage functionality
+                showNotification('Use inventory functionality coming soon!', 'info');
+            });
+        }
+
+        function updateSummary() {
+            const totalItems = inventory.length;
+            const lowStockCount = inventory.filter(item => item.quantity <= item.minStock).length;
+            const totalValue = inventory.reduce((sum, item) => sum + (item.quantity * item.cost), 0);
+
+            $('#total-items-count').text(totalItems);
+            $('#low-stock-count').text(lowStockCount);
+            $('#total-inventory-value').text('$' + totalValue.toFixed(2));
+        }
+
+        function getCategoryLabel(category) {
+            const labels = {
+                'seeds': 'Seeds',
+                'feed': 'Animal Feed',
+                'fertilizer': 'Fertilizer',
+                'equipment': 'Equipment',
+                'tools': 'Tools',
+                'medical': 'Medical Supplies',
+                'other': 'Other'
             };
-            
-            this.loadInventoryData();
-            this.updateSummary();
-            this.showNotification('Inventory item updated successfully!', 'success');
+            return labels[category] || category;
         }
-    },
 
-    deleteInventory: function(itemId) {
-        if (confirm('Are you sure you want to delete this inventory item?')) {
-            FarmModules.appData.inventory = FarmModules.appData.inventory.filter(i => i.id !== itemId);
-            this.loadInventoryData();
-            this.updateSummary();
-            this.showNotification('Inventory item deleted successfully', 'success');
+        function saveInventory() {
+            localStorage.setItem('farmos_inventory', JSON.stringify(inventory));
         }
-    },
 
-    getStockStatusClass: function(item) {
-        if (this.isOutOfStock(item)) return 'out-of-stock';
-        if (this.isLowStock(item)) return 'low-stock';
-        return 'adequate-stock';
-    },
-
-    getStockStatusText: function(item) {
-        if (this.isOutOfStock(item)) return 'Out of Stock';
-        if (this.isLowStock(item)) return 'Low Stock';
-        return 'Adequate';
-    },
-
-    getQuantityStatus: function(item) {
-        if (this.isOutOfStock(item)) return 'critical';
-        if (this.isLowStock(item)) return 'warning';
-        return 'good';
-    },
-
-    getExpiryStatus: function(item) {
-        if (!item.expiryDate) return '';
-        const expiryDate = new Date(item.expiryDate);
-        const today = new Date();
-        const diffTime = expiryDate - today;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays < 0) return 'expired';
-        if (diffDays < 7) return 'expiring-soon';
-        return '';
-    },
-
-    isLowStock: function(item) {
-        const quantity = parseInt(item.quantity) || 0;
-        const minStock = parseInt(item.minStock) || 10;
-        return quantity > 0 && quantity <= minStock;
-    },
-
-    isOutOfStock: function(item) {
-        const quantity = parseInt(item.quantity) || 0;
-        return quantity === 0;
-    },
-
-    getCategoryIcon: function(category) {
-        const icons = {
-            seeds: '🌱',
-            feed: '🌾',
-            fertilizer: '🧪',
-            equipment: '🚜',
-            tools: '🛠️',
-            medical: '💊',
-            other: '📦'
-        };
-        return icons[category] || '📦';
-    },
-
-    formatCategory: function(category) {
-        if (!category) return 'Other';
-        return category.charAt(0).toUpperCase() + category.slice(1);
-    },
-
-    updateElement: function(id, value) {
-        const element = document.getElementById(id);
-        if (element) element.textContent = value;
-    },
-
-    formatCurrency: function(amount) {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount);
-    },
-
-    formatDate: function(dateString) {
-        try {
-            return new Date(dateString).toLocaleDateString();
-        } catch (e) {
-            return 'Invalid date';
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
-    },
 
-    showNotification: function(message, type) {
-        if (window.coreModule && window.coreModule.showNotification) {
-            window.coreModule.showNotification(message, type);
+        function showNotification(message, type = 'info') {
+            // Use the farm OS notification system
+            if (window.showFarmNotification) {
+                window.showFarmNotification(message, type);
+            } else {
+                alert(message);
+            }
         }
+
+        // Initialize the module
+        this.init();
     }
 });
