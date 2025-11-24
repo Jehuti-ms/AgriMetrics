@@ -84,7 +84,7 @@ class FarmManagementApp {
         this.showApp();
     }
 
-   setupNavigation() {
+setupNavigation() {
     const navElement = document.getElementById('main-nav');
     if (!navElement) {
         console.error('❌ Navigation element not found');
@@ -97,8 +97,8 @@ class FarmManagementApp {
         { id: 'inventory-check', label: 'Inventory', icon: '📦' },
         { id: 'feed-record', label: 'Feed Records', icon: '🌾' },
         { id: 'reports', label: 'Reports', icon: '📈' },
-        { id: 'profile', label: 'Profile', icon: '👤' } // Make sure there's no comma after this last item
-    ]; // <-- This closing bracket and semicolon are important
+        { id: 'profile', label: 'Profile', icon: '👤' }
+    ];
 
     const navList = document.createElement('ul');
     navList.className = 'nav-list';
@@ -117,25 +117,19 @@ class FarmManagementApp {
         navList.appendChild(li);
     });
 
-    // Add user info
+    // Add user info WITHOUT logout button
     const userLi = document.createElement('li');
     userLi.className = 'nav-item';
     userLi.innerHTML = `
         <div class="user-info">
             <span id="user-name">${this.isDemoMode ? 'Demo Farmer' : 'User'}</span>
-            ${this.isDemoMode ? '<span class="demo-badge">Demo</span>' : '<button class="btn btn-secondary logout-btn">Logout</button>'}
+            ${this.isDemoMode ? '<span class="demo-badge">Demo</span>' : ''}
+            <!-- Removed the logout button from here -->
         </div>
     `;
     navList.appendChild(userLi);
 
     navElement.appendChild(navList);
-
-    if (!this.isDemoMode) {
-        const logoutBtn = navElement.querySelector('.logout-btn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => this.logout());
-        }
-    }
 
     console.log('✅ Navigation setup complete');
 }
