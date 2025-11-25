@@ -83,8 +83,9 @@ class FarmManagementApp {
     }
 
     setupEventListeners() {
-        // Listen for top navigation clicks
+        // Listen for navigation clicks
         document.addEventListener('click', (e) => {
+            // Handle nav item clicks
             if (e.target.closest('.nav-item')) {
                 const navItem = e.target.closest('.nav-item');
                 const view = navItem.getAttribute('data-view');
@@ -94,6 +95,21 @@ class FarmManagementApp {
                 } else {
                     this.showSection(view);
                 }
+            }
+            
+            // Handle more menu item clicks
+            if (e.target.closest('.more-menu-item')) {
+                const menuItem = e.target.closest('.more-menu-item');
+                const view = menuItem.getAttribute('data-view');
+                this.hideMoreMenu();
+                this.showSection(view);
+            }
+        });
+
+        // Close more menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.more-menu') && !e.target.closest('[data-view="more"]')) {
+                this.hideMoreMenu();
             }
         });
 
@@ -125,102 +141,273 @@ class FarmManagementApp {
         const appContainer = document.getElementById('app-container');
         if (!appContainer) return;
 
-        const existingNav = appContainer.querySelector('.top-nav');
-        if (existingNav) existingNav.remove();
-
-        // Get header element or create one
+        // Get or create header
         let header = appContainer.querySelector('header');
         if (!header) {
             header = document.createElement('header');
             appContainer.insertBefore(header, appContainer.firstChild);
         }
 
-        // STANDARD PWA: 4 primary navigation items at top
-        const primaryNav = [
-            { view: 'dashboard', label: 'Home', icon: this.dashboardIcon },
-            { view: 'income-expenses', label: 'Finance', icon: this.moneyIcon },
-            { view: 'inventory-check', label: 'Inventory', icon: this.inventoryIcon },
-            { view: 'more', label: 'More', icon: this.moreIcon }
-        ];
+        // Clear existing header content
+        header.innerHTML = '';
 
-        // All other features in dropdown menu
-        const secondaryNav = [
-            { view: 'feed-record', label: 'Feed Record', icon: this.feedIcon },
-            { view: 'broiler-mortality', label: 'Health', icon: this.healthIcon },
-            { view: 'production', label: 'Production', icon: this.productionIcon },
-            { view: 'sales-record', label: 'Sales', icon: this.salesIcon },
-            { view: 'orders', label: 'Orders', icon: this.ordersIcon },
-            { view: 'reports', label: 'Reports', icon: this.reportsIcon },
-            { view: 'profile', label: 'Profile', icon: this.profileIcon }
-        ];
-
+        // Create top navigation
         const navHTML = `
-            <nav class="top-nav" style="${this.objectToStyleString(this.navStyle)}">
+            <nav class="top-nav" style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 60px;
+                background-color: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 20px;
+                z-index: 1000;
+            ">
                 <div class="nav-brand" style="display: flex; align-items: center; gap: 8px;">
                     <span style="font-size: 20px;">🌱</span>
                     <span style="font-weight: 600; font-size: 18px;">Farm Management</span>
                 </div>
                 
                 <div class="nav-items" style="display: flex; align-items: center; gap: 8px;">
-                    ${primaryNav.map(item => `
-                        <button class="nav-item" data-view="${item.view}" style="${this.objectToStyleString(this.navItemStyle)}">
-                            <div style="font-size: 18px; margin-right: 4px;">${item.icon}</div>
-                            <span style="font-size: 14px; font-weight: 500;">${item.label}</span>
-                        </button>
-                    `).join('')}
+                    <button class="nav-item" data-view="dashboard" style="
+                        display: flex;
+                        align-items: center;
+                        background: none;
+                        border: none;
+                        padding: 8px 16px;
+                        border-radius: 8px;
+                        transition: all 0.2s ease;
+                        cursor: pointer;
+                        color: #666;
+                        gap: 6px;
+                    ">
+                        <span style="font-size: 18px;">📊</span>
+                        <span style="font-size: 14px; font-weight: 500;">Home</span>
+                    </button>
+
+                    <button class="nav-item" data-view="income-expenses" style="
+                        display: flex;
+                        align-items: center;
+                        background: none;
+                        border: none;
+                        padding: 8px 16px;
+                        border-radius: 8px;
+                        transition: all 0.2s ease;
+                        cursor: pointer;
+                        color: #666;
+                        gap: 6px;
+                    ">
+                        <span style="font-size: 18px;">💰</span>
+                        <span style="font-size: 14px; font-weight: 500;">Finance</span>
+                    </button>
+
+                    <button class="nav-item" data-view="inventory-check" style="
+                        display: flex;
+                        align-items: center;
+                        background: none;
+                        border: none;
+                        padding: 8px 16px;
+                        border-radius: 8px;
+                        transition: all 0.2s ease;
+                        cursor: pointer;
+                        color: #666;
+                        gap: 6px;
+                    ">
+                        <span style="font-size: 18px;">📦</span>
+                        <span style="font-size: 14px; font-weight: 500;">Inventory</span>
+                    </button>
+
+                    <button class="nav-item" data-view="more" style="
+                        display: flex;
+                        align-items: center;
+                        background: none;
+                        border: none;
+                        padding: 8px 16px;
+                        border-radius: 8px;
+                        transition: all 0.2s ease;
+                        cursor: pointer;
+                        color: #666;
+                        gap: 6px;
+                    ">
+                        <span style="font-size: 18px;">⋮</span>
+                        <span style="font-size: 14px; font-weight: 500;">More</span>
+                    </button>
                 </div>
             </nav>
 
-            <!-- Dropdown Menu -->
-            <div id="more-menu" class="more-menu hidden" style="position: absolute; top: 70px; right: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); padding: 16px; z-index: 1001; min-width: 200px; border: 1px solid rgba(0,0,0,0.1);">
-                <div class="more-menu-items" style="display: flex; flex-direction: column; gap: 8px;">
-                    ${secondaryNav.map(item => `
-                        <button class="more-menu-item" data-view="${item.view}" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: none; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; width: 100%; text-align: left;">
-                            <div style="font-size: 18px; width: 24px;">${item.icon}</div>
-                            <span style="font-size: 14px; font-weight: 500;">${item.label}</span>
-                        </button>
-                    `).join('')}
+            <!-- More Menu Dropdown -->
+            <div id="more-menu" class="more-menu hidden" style="
+                position: fixed;
+                top: 65px;
+                right: 20px;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                padding: 16px;
+                z-index: 1001;
+                min-width: 200px;
+                border: 1px solid rgba(0,0,0,0.1);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+            ">
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button class="more-menu-item" data-view="feed-record" style="
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        padding: 12px;
+                        background: none;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        width: 100%;
+                        text-align: left;
+                    ">
+                        <span style="font-size: 18px; width: 24px;">🌾</span>
+                        <span style="font-size: 14px; font-weight: 500;">Feed Record</span>
+                    </button>
+
+                    <button class="more-menu-item" data-view="broiler-mortality" style="
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        padding: 12px;
+                        background: none;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        width: 100%;
+                        text-align: left;
+                    ">
+                        <span style="font-size: 18px; width: 24px;">🐔</span>
+                        <span style="font-size: 14px; font-weight: 500;">Health</span>
+                    </button>
+
+                    <button class="more-menu-item" data-view="production" style="
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        padding: 12px;
+                        background: none;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        width: 100%;
+                        text-align: left;
+                    ">
+                        <span style="font-size: 18px; width: 24px;">🚜</span>
+                        <span style="font-size: 14px; font-weight: 500;">Production</span>
+                    </button>
+
+                    <button class="more-menu-item" data-view="sales-record" style="
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        padding: 12px;
+                        background: none;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        width: 100%;
+                        text-align: left;
+                    ">
+                        <span style="font-size: 18px; width: 24px;">💰</span>
+                        <span style="font-size: 14px; font-weight: 500;">Sales</span>
+                    </button>
+
+                    <button class="more-menu-item" data-view="orders" style="
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        padding: 12px;
+                        background: none;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        width: 100%;
+                        text-align: left;
+                    ">
+                        <span style="font-size: 18px; width: 24px;">📋</span>
+                        <span style="font-size: 14px; font-weight: 500;">Orders</span>
+                    </button>
+
+                    <button class="more-menu-item" data-view="reports" style="
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        padding: 12px;
+                        background: none;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        width: 100%;
+                        text-align: left;
+                    ">
+                        <span style="font-size: 18px; width: 24px;">📈</span>
+                        <span style="font-size: 14px; font-weight: 500;">Reports</span>
+                    </button>
+
+                    <button class="more-menu-item" data-view="profile" style="
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        padding: 12px;
+                        background: none;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        width: 100%;
+                        text-align: left;
+                    ">
+                        <span style="font-size: 18px; width: 24px;">👤</span>
+                        <span style="font-size: 14px; font-weight: 500;">Profile</span>
+                    </button>
                 </div>
             </div>
         `;
 
         header.innerHTML = navHTML;
-        this.setupMoreMenu();
-    }
-
-    setupMoreMenu() {
-        const moreMenu = document.getElementById('more-menu');
-        const moreButton = document.querySelector('[data-view="more"]');
-
-        // Close menu when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('#more-menu') && !e.target.closest('[data-view="more"]')) {
-                this.hideMoreMenu();
-            }
-        });
-
-        // Handle more menu item clicks
-        document.querySelectorAll('.more-menu-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const view = item.getAttribute('data-view');
-                this.hideMoreMenu();
-                this.showSection(view);
-            });
-        });
+        
+        // Add padding to main content to account for fixed header
+        const main = appContainer.querySelector('main');
+        if (main) {
+            main.style.paddingTop = '80px';
+        }
+        
+        console.log('✅ Top navigation created');
     }
 
     toggleMoreMenu() {
         const moreMenu = document.getElementById('more-menu');
-        if (moreMenu.classList.contains('hidden')) {
-            moreMenu.classList.remove('hidden');
-        } else {
-            moreMenu.classList.add('hidden');
+        if (moreMenu) {
+            if (moreMenu.classList.contains('hidden')) {
+                moreMenu.classList.remove('hidden');
+                console.log('📋 More menu opened');
+            } else {
+                moreMenu.classList.add('hidden');
+                console.log('📋 More menu closed');
+            }
         }
     }
 
     hideMoreMenu() {
         const moreMenu = document.getElementById('more-menu');
-        moreMenu.classList.add('hidden');
+        if (moreMenu) {
+            moreMenu.classList.add('hidden');
+        }
     }
 
     showSection(sectionId) {
@@ -240,7 +427,7 @@ class FarmManagementApp {
 
         this.currentSection = sectionId;
         
-        // Load the module - MAKE SURE THIS WORKS
+        // Load the module
         if (window.FarmModules && typeof window.FarmModules.initializeModule === 'function') {
             console.log(`📦 Loading module: ${sectionId}`);
             window.FarmModules.initializeModule(sectionId);
@@ -268,61 +455,14 @@ class FarmManagementApp {
         };
 
         contentArea.innerHTML = `
-            <div style="padding: 20px; text-align: center;">
+            <div style="padding: 40px; text-align: center;">
                 <h2>${sectionTitles[sectionId] || sectionId}</h2>
-                <p>This section is loading...</p>
-                <p><small>If this doesn't load, check the browser console for errors.</small></p>
+                <p style="color: #666; margin-top: 10px;">This section is loading...</p>
+                <p style="color: #999; font-size: 14px; margin-top: 20px;">
+                    If this doesn't load, check the browser console for errors.
+                </p>
             </div>
         `;
-    }
-
-    // Navigation styles for TOP navigation
-    navStyle = {
-        position: 'fixed',
-        top: '0',
-        left: '0',
-        right: '0',
-        height: '60px',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 20px',
-        zIndex: 1000
-    };
-
-    navItemStyle = {
-        display: 'flex',
-        alignItems: 'center',
-        background: 'none',
-        border: 'none',
-        padding: '8px 16px',
-        borderRadius: '8px',
-        transition: 'all 0.2s ease',
-        cursor: 'pointer',
-        color: '#666'
-    };
-
-    // Icons
-    dashboardIcon = '📊';
-    moneyIcon = '💰';
-    inventoryIcon = '📦';
-    moreIcon = '⋮';
-    feedIcon = '🌾';
-    healthIcon = '🐔';
-    productionIcon = '🚜';
-    salesIcon = '💰';
-    ordersIcon = '📋';
-    reportsIcon = '📈';
-    profileIcon = '👤';
-
-    objectToStyleString(styleObj) {
-        return Object.entries(styleObj)
-            .map(([key, value]) => `${key}: ${value};`)
-            .join(' ');
     }
 
     async loadUserData() {
