@@ -246,6 +246,7 @@ FarmModules.registerModule('dashboard', {
             justify-content: center;
             position: relative;
             transition: all 0.2s ease;
+            cursor: pointer;
         }
 
         .btn-icon:hover {
@@ -407,6 +408,7 @@ FarmModules.registerModule('dashboard', {
             transition: all 0.3s ease;
             text-align: left;
             width: 100%;
+            border: none;
         }
 
         .action-card:hover {
@@ -469,6 +471,21 @@ FarmModules.registerModule('dashboard', {
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
+        }
+
+        .btn-text {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            font-weight: 500;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: background 0.2s ease;
+        }
+
+        .btn-text:hover {
+            background: var(--primary-light);
         }
 
         .activity-feed {
@@ -649,13 +666,15 @@ FarmModules.registerModule('dashboard', {
         this.updateFinancialData();
         this.updateRecentActivity();
         this.updatePerformanceMetrics();
+        this.updateNotifications();
         this.attachEventListeners();
         
         // Set up periodic updates
-        setInterval(() => {
+        this.updateInterval = setInterval(() => {
             this.updateFinancialData();
             this.updateRecentActivity();
             this.updatePerformanceMetrics();
+            this.updateNotifications();
         }, 30000);
     },
 
@@ -697,25 +716,71 @@ FarmModules.registerModule('dashboard', {
             .reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
         this.updateElement('monthly-sales', this.formatCurrency(monthlySales));
         
-        // Calculate inventory value
+        // Calculate inventory value and count
         const inventoryValue = inventory.reduce((sum, item) => {
             const quantity = item.quantity || 0;
             const price = item.price || item.unitPrice || 0;
             return sum + (quantity * price);
         }, 0);
         this.updateElement('inventory-value', this.formatCurrency(inventoryValue));
+        this.updateElement('inventory-items', inventory.length);
         
         // Calculate net profit (simplified: revenue - cost of goods sold)
-        // For now, using monthly sales as profit (simplified calculation)
         const netProfit = monthlySales; // In a real app, you'd subtract costs
         this.updateElement('net-profit', this.formatCurrency(netProfit));
         
-        // Update periods
+        // Update periods and trends
         const monthNames = ["January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"];
         const currentMonthName = monthNames[currentMonth];
-        this.updateElement('sales-period', currentMonthName);
-        this.updateElement('profit-period', currentMonthName);
+        this.updateElement('sales-subtitle', currentMonthName);
+        this.updateElement('profit-subtitle', currentMonthName);
+        
+        // Calculate trends (simplified - compare with previous month)
+        const prevMonthSales = this.getPreviousMonthSales(sales);
+        const salesTrend = prevMonthSales > 0 ? ((monthlySales - prevMonthSales) / prevMonthSales * 100) : 0;
+        this.updateTrend('sales-trend', salesTrend);
+        
+        const profitTrend = salesTrend; // Simplified
+        this.updateTrend('profit-trend', profitTrend);
+    },
+
+    getPreviousMonthSales: function(sales) {
+        const now = new Date();
+        const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+        const prevYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+        
+        return sales
+            .filter(sale => {
+                const saleDate = new Date(sale.date);
+                return saleDate.getMonth() === prevMonth && saleDate.getFullYear() === prevYear;
+            })
+            .reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
+    },
+
+    updateTrend: function(elementId, trend) {
+        const element = document.getElementById(elementId);
+        if (!element) return;
+        
+        const trendIcon = element.querySelector('.trend-icon');
+        const trendValue = element.querySelector('.trend-value');
+        
+        if (trend > 0) {
+            trendIcon.textContent = '↗️';
+            trendValue.textContent = `${Math.abs(trend).toFixed(1)}%`;
+            element.style.background = 'rgba(16, 185, 129, 0.1)';
+            element.style.color = '#059669';
+        } else if (trend < 0) {
+            trendIcon.textContent = '↘️';
+            trendValue.textContent = `${Math.abs(trend).toFixed(1)}%`;
+            element.style.background = 'rgba(239, 68, 68, 0.1)';
+            element.style.color = '#dc2626';
+        } else {
+            trendIcon.textContent = '➡️';
+            trendValue.textContent = '0%';
+            element.style.background = 'rgba(107, 114, 128, 0.1)';
+            element.style.color = '#6b7280';
+        }
     },
 
     updateRecentActivity: function() {
@@ -731,10 +796,11 @@ FarmModules.registerModule('dashboard', {
             allActivities.push({
                 type: 'sale',
                 title: `Sale: ${this.formatProductName(sale.product)}`,
-                details: `${sale.quantity} ${sale.unit} sold`,
+                details: `${sale.quantity} ${sale.unit} sold to ${sale.customer || 'Walk-in'}`,
                 amount: sale.totalAmount,
                 date: sale.date,
-                icon: '💰'
+                icon: '💰',
+                time: this.formatTimeAgo(sale.date)
             });
         });
         
@@ -746,7 +812,8 @@ FarmModules.registerModule('dashboard', {
                 details: `${item.quantity} ${item.unit} in stock`,
                 amount: item.quantity * (item.price || 0),
                 date: item.lastUpdated || new Date().toISOString(),
-                icon: '📦'
+                icon: '📦',
+                time: this.formatTimeAgo(item.lastUpdated)
             });
         });
         
@@ -758,30 +825,31 @@ FarmModules.registerModule('dashboard', {
                 details: `${record.quantity} ${record.unit} distributed`,
                 amount: null,
                 date: record.date,
-                icon: '🌾'
+                icon: '🌾',
+                time: this.formatTimeAgo(record.date)
             });
         });
         
-        // Sort by date (most recent first) and take top 8
+        // Sort by date (most recent first) and take top 6
         const recentActivities = allActivities
             .sort((a, b) => new Date(b.date) - new Date(a.date))
-            .slice(0, 8);
+            .slice(0, 6);
         
-        const activityList = document.getElementById('activity-list');
-        if (!activityList) return;
+        const activityFeed = document.getElementById('activity-feed');
+        if (!activityFeed) return;
         
         if (recentActivities.length === 0) {
-            activityList.innerHTML = `
+            activityFeed.innerHTML = `
                 <div class="empty-state">
-                    <span class="empty-icon">📊</span>
-                    <h4>No recent activity</h4>
-                    <p>Start recording sales and inventory to see activity here</p>
+                    <div class="empty-icon">📊</div>
+                    <h3>No Recent Activity</h3>
+                    <p>Start recording transactions to see activity here</p>
                 </div>
             `;
             return;
         }
         
-        activityList.innerHTML = recentActivities.map(activity => `
+        activityFeed.innerHTML = recentActivities.map(activity => `
             <div class="activity-item">
                 <div class="activity-icon ${activity.type}">
                     ${activity.icon}
@@ -790,6 +858,7 @@ FarmModules.registerModule('dashboard', {
                     <div class="activity-title">${activity.title}</div>
                     <div class="activity-details">${activity.details}</div>
                 </div>
+                <div class="activity-time">${activity.time}</div>
                 ${activity.amount ? `<div class="activity-amount">${this.formatCurrency(activity.amount)}</div>` : ''}
             </div>
         `).join('');
@@ -821,102 +890,163 @@ FarmModules.registerModule('dashboard', {
         this.updateElement('avg-sale-value', this.formatCurrency(avgSaleValue));
     },
 
-   // Updated attachEventListeners method
-attachEventListeners: function() {
-    console.log('🔗 Attaching dashboard event listeners...');
-    
-    // Quick action buttons
-    const actionButtons = document.querySelectorAll('.action-btn');
-    console.log('🔧 Found action buttons:', actionButtons.length);
-    
-    actionButtons.forEach(btn => {
-        const action = btn.dataset.action;
-        console.log('🔧 Setting up button for action:', action);
+    updateNotifications: function() {
+        const inventory = FarmModules.appData.inventory || [];
+        const lowStockItems = inventory.filter(item => {
+            const quantity = item.quantity || 0;
+            const lowStockThreshold = item.lowStockThreshold || 10;
+            return quantity <= lowStockThreshold;
+        });
         
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            console.log('🎯 Action button clicked:', action);
-            this.handleQuickAction(action);
-        });
-    });
-    
-    // Refresh activity button
-    const refreshBtn = document.getElementById('refresh-activity');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', () => {
-            console.log('🔄 Refresh button clicked');
-            this.updateFinancialData();
-            this.updateRecentActivity();
-            this.updatePerformanceMetrics();
-            this.showNotification('Dashboard updated', 'success');
-        });
-        console.log('✅ Refresh button listener attached');
-    } else {
-        console.warn('❌ Refresh button not found');
-    }
-    
-    console.log('✅ All dashboard event listeners attached');
-},
+        const badge = document.getElementById('notification-badge');
+        if (badge) {
+            badge.textContent = lowStockItems.length;
+            badge.style.display = lowStockItems.length > 0 ? 'block' : 'none';
+        }
+    },
 
-    // modules/dashboard.js - Updated handleQuickAction method
-handleQuickAction: function(action) {
-    console.log('🔧 Quick action clicked:', action);
-    
-    switch(action) {
-        case 'record-sale':
-            // Navigate to sales module
-            if (typeof FarmModules !== 'undefined' && FarmModules.showSection) {
-                FarmModules.showSection('sales-record');
-            } else if (window.farmModules && window.farmModules.showSection) {
-                window.farmModules.showSection('sales-record');
-            } else {
-                // Fallback: change URL hash
-                window.location.hash = 'sales-record';
-                this.showNotification('Opening Sales Records...', 'info');
-            }
-            break;
+    attachEventListeners: function() {
+        console.log('🔗 Attaching dashboard event listeners...');
+        
+        // Quick action buttons
+        const actionButtons = document.querySelectorAll('.action-card');
+        console.log('🔧 Found action buttons:', actionButtons.length);
+        
+        actionButtons.forEach(btn => {
+            const action = btn.dataset.action;
+            console.log('🔧 Setting up button for action:', action);
             
-        case 'add-inventory':
-            // Navigate to inventory module
-            if (typeof FarmModules !== 'undefined' && FarmModules.showSection) {
-                FarmModules.showSection('inventory-check');
-            } else if (window.farmModules && window.farmModules.showSection) {
-                window.farmModules.showSection('inventory-check');
-            } else {
-                window.location.hash = 'inventory-check';
-                this.showNotification('Opening Inventory...', 'info');
-            }
-            break;
-            
-        case 'record-feed':
-            // Navigate to feed module
-            if (typeof FarmModules !== 'undefined' && FarmModules.showSection) {
-                FarmModules.showSection('feed-record');
-            } else if (window.farmModules && window.farmModules.showSection) {
-                window.farmModules.showSection('feed-record');
-            } else {
-                window.location.hash = 'feed-record';
-                this.showNotification('Opening Feed Records...', 'info');
-            }
-            break;
-            
-        case 'view-reports':
-            // Navigate to reports module
-            if (typeof FarmModules !== 'undefined' && FarmModules.showSection) {
-                FarmModules.showSection('reports');
-            } else if (window.farmModules && window.farmModules.showSection) {
-                window.farmModules.showSection('reports');
-            } else {
-                window.location.hash = 'reports';
-                this.showNotification('Opening Reports...', 'info');
-            }
-            break;
-            
-        default:
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('🎯 Action button clicked:', action);
+                this.handleQuickAction(action);
+            });
+        });
+        
+        // Refresh dashboard button
+        const refreshBtn = document.getElementById('refresh-dashboard');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                console.log('🔄 Refresh dashboard clicked');
+                this.refreshDashboard();
+            });
+            console.log('✅ Refresh dashboard button listener attached');
+        } else {
+            console.warn('❌ Refresh dashboard button not found');
+        }
+        
+        // Notifications button
+        const notificationsBtn = document.getElementById('notifications-btn');
+        if (notificationsBtn) {
+            notificationsBtn.addEventListener('click', () => {
+                console.log('🔔 Notifications button clicked');
+                this.showNotifications();
+            });
+            console.log('✅ Notifications button listener attached');
+        }
+        
+        // View all activity button
+        const viewAllBtn = document.getElementById('view-all-activity');
+        if (viewAllBtn) {
+            viewAllBtn.addEventListener('click', () => {
+                console.log('📋 View all activity clicked');
+                this.viewAllActivity();
+            });
+            console.log('✅ View all activity button listener attached');
+        }
+        
+        console.log('✅ All dashboard event listeners attached');
+    },
+
+    handleQuickAction: function(action) {
+        console.log('🔧 Quick action clicked:', action);
+        
+        const routes = {
+            'record-sale': 'sales-record',
+            'add-inventory': 'inventory-check', 
+            'record-feed': 'feed-record',
+            'view-reports': 'reports'
+        };
+        
+        const route = routes[action];
+        if (route) {
+            // Always work - change URL hash
+            window.location.hash = route;
+            console.log('📍 Navigating to:', route);
+            this.showNotification(`Opening ${this.getModuleName(route)}...`, 'info');
+        } else {
             console.warn('Unknown action:', action);
             this.showNotification('Action not available', 'warning');
-    }
-},
+        }
+    },
+
+    refreshDashboard: function() {
+        console.log('🔄 Refreshing dashboard data...');
+        
+        // Show loading state
+        this.showNotification('Refreshing dashboard...', 'info');
+        
+        // Update all data
+        this.updateFinancialData();
+        this.updateRecentActivity();
+        this.updatePerformanceMetrics();
+        this.updateNotifications();
+        
+        // Show success message
+        setTimeout(() => {
+            this.showNotification('Dashboard updated successfully!', 'success');
+        }, 500);
+    },
+
+    showNotifications: function() {
+        const inventory = FarmModules.appData.inventory || [];
+        const lowStockItems = inventory.filter(item => {
+            const quantity = item.quantity || 0;
+            const lowStockThreshold = item.lowStockThreshold || 10;
+            return quantity <= lowStockThreshold;
+        });
+        
+        if (lowStockItems.length === 0) {
+            this.showNotification('No notifications', 'info');
+        } else {
+            const message = `You have ${lowStockItems.length} item(s) with low stock`;
+            this.showNotification(message, 'warning');
+        }
+    },
+
+    viewAllActivity: function() {
+        // Navigate to reports or show all activity
+        window.location.hash = 'reports';
+        this.showNotification('Opening Reports...', 'info');
+    },
+
+    formatTimeAgo: function(dateString) {
+        if (!dateString) return 'Recently';
+        
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+        
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+        
+        return date.toLocaleDateString();
+    },
+
+    getModuleName: function(route) {
+        const names = {
+            'sales-record': 'Sales Records',
+            'inventory-check': 'Inventory',
+            'feed-record': 'Feed Records', 
+            'reports': 'Reports'
+        };
+        return names[route] || route;
+    },
 
     formatCurrency: function(amount) {
         return new Intl.NumberFormat('en-US', {
@@ -965,6 +1095,13 @@ handleQuickAction: function(action) {
             window.coreModule.showNotification(message, type);
         } else {
             alert(message);
+        }
+    },
+
+    // Clean up on destroy
+    destroy: function() {
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
         }
     }
 });
