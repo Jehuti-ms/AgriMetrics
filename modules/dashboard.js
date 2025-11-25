@@ -962,7 +962,7 @@ FarmModules.registerModule('dashboard', {
         console.log('✅ All dashboard event listeners attached');
     },
 
-    // Updated handleQuickAction method in dashboard.js
+   // Updated handleQuickAction method in dashboard.js
 handleQuickAction: function(action) {
     console.log('🔧 Quick action clicked:', action);
     
@@ -975,51 +975,125 @@ handleQuickAction: function(action) {
     
     const route = routes[action];
     if (route) {
-        console.log('📍 Attempting navigation to:', route);
+        console.log('📍 Navigating to:', route);
         
-        // Method 1: Try FarmModules framework navigation
-        if (typeof FarmModules !== 'undefined' && FarmModules.showSection) {
-            console.log('✅ Using FarmModules.showSection');
-            FarmModules.showSection(route);
+        // Method 1: Try to find and use the framework's navigation directly
+        if (this.triggerFrameworkNavigation(route)) {
             this.showNotification(`Opening ${this.getModuleName(route)}...`, 'success');
             return;
         }
         
-        // Method 2: Try window.farmModules navigation
-        if (window.farmModules && window.farmModules.showSection) {
-            console.log('✅ Using window.farmModules.showSection');
-            window.farmModules.showSection(route);
-            this.showNotification(`Opening ${this.getModuleName(route)}...`, 'success');
-            return;
-        }
-        
-        // Method 3: Try triggering hash change event
-        console.log('🔄 Trying hash change navigation');
-        window.location.hash = route;
-        
-        // Force a hash change event if needed
-        setTimeout(() => {
-            if (window.location.hash !== `#${route}`) {
-                console.log('🔄 Forcing hash change');
-                window.location.hash = route;
-            }
-            
-            // Check if navigation worked
-            setTimeout(() => {
-                if (window.location.hash === `#${route}`) {
-                    console.log('✅ Hash navigation successful');
-                    this.showNotification(`Opened ${this.getModuleName(route)}`, 'success');
-                } else {
-                    console.warn('❌ Hash navigation failed');
-                    this.showNotification(`Could not open ${this.getModuleName(route)}. Please try again.`, 'error');
-                }
-            }, 100);
-        }, 50);
+        // Method 2: Use the same navigation method as your navbar
+        this.useNavbarNavigation(route);
         
     } else {
         console.warn('❌ Unknown action:', action);
         this.showNotification('Action not available', 'warning');
     }
+},
+
+// Try to trigger the framework navigation directly
+triggerFrameworkNavigation: function(route) {
+    console.log('🔄 Attempting framework navigation...');
+    
+    // Look for the framework's showSection method in various possible locations
+    const frameworkMethods = [
+        window.farmModules?.showSection,
+        window.FarmModules?.showSection,
+        window.app?.showSection,
+        window.coreModule?.showSection
+    ];
+    
+    for (const method of frameworkMethods) {
+        if (typeof method === 'function') {
+            try {
+                method(route);
+                console.log('✅ Framework navigation triggered');
+                return true;
+            } catch (error) {
+                console.error('❌ Framework navigation failed:', error);
+            }
+        }
+    }
+    
+    return false;
+},
+
+// Use the same method as your navbar links
+useNavbarNavigation: function(route) {
+    console.log('🔄 Using navbar-style navigation...');
+    
+    // Method 1: Simulate a navbar click
+    const navLink = document.querySelector(`[href="#${route}"], [data-section="${route}"]`);
+    if (navLink) {
+        console.log('✅ Found nav link, triggering click');
+        navLink.click();
+        this.showNotification(`Opening ${this.getModuleName(route)}...`, 'success');
+        return;
+    }
+    
+    // Method 2: Manually trigger section change
+    if (this.manualSectionChange(route)) {
+        this.showNotification(`Opening ${this.getModuleName(route)}...`, 'success');
+        return;
+    }
+    
+    // Method 3: Last resort - reload the page with the hash
+    console.log('🔄 Falling back to page reload');
+    this.showNotification(`Opening ${this.getModuleName(route)}...`, 'info');
+    setTimeout(() => {
+        window.location.href = `#${route}`;
+    }, 500);
+},
+
+// Manual section change - mimics what the framework should do
+manualSectionChange: function(route) {
+    console.log('🔄 Attempting manual section change...');
+    
+    try {
+        // Hide all sections
+        const sections = document.querySelectorAll('.section');
+        sections.forEach(section => {
+            section.classList.remove('active');
+        });
+        
+        // Show the target section
+        const targetSection = document.querySelector(`[data-section="${route}"], #${route}`);
+        if (targetSection) {
+            targetSection.classList.add('active');
+            console.log('✅ Manual section change successful');
+            
+            // Update URL hash without triggering navigation
+            window.history.replaceState(null, null, `#${route}`);
+            
+            // Trigger any framework events
+            this.dispatchFrameworkEvent('sectionchange', route);
+            
+            return true;
+        }
+    } catch (error) {
+        console.error('❌ Manual section change failed:', error);
+    }
+    
+    return false;
+},
+
+// Dispatch framework events if they exist
+dispatchFrameworkEvent: function(eventName, route) {
+    const events = [
+        new CustomEvent(`${eventName}`, { detail: { section: route } }),
+        new CustomEvent('hashchange'),
+        new Event('sectionchange')
+    ];
+    
+    events.forEach(event => {
+        try {
+            window.dispatchEvent(event);
+            document.dispatchEvent(event);
+        } catch (error) {
+            // Ignore errors for events that aren't supported
+        }
+    });
 },
 
     refreshDashboard: function() {
@@ -1147,21 +1221,49 @@ handleQuickAction: function(action) {
         }
     },
 
-    // Add this method to debug navigation
-debugNavigation: function() {
-    console.log('🔍 Navigation Debug Info:');
-    console.log('FarmModules:', typeof FarmModules !== 'undefined' ? 'Available' : 'Not Available');
-    console.log('FarmModules.showSection:', FarmModules?.showSection ? 'Available' : 'Not Available');
-    console.log('window.farmModules:', window.farmModules ? 'Available' : 'Not Available');
-    console.log('window.farmModules.showSection:', window.farmModules?.showSection ? 'Available' : 'Not Available');
-    console.log('Current hash:', window.location.hash);
-    console.log('Available modules:', Object.keys(FarmModules?.modules || window.farmModules?.modules || {}));
+   // Add this debug method
+debugCurrentState: function() {
+    console.log('🔍 Current Application State:');
+    console.log('URL:', window.location.href);
+    console.log('Hash:', window.location.hash);
+    console.log('Active sections:', document.querySelectorAll('.section.active').length);
+    console.log('Visible sections:');
+    document.querySelectorAll('.section').forEach(section => {
+        if (section.classList.contains('active')) {
+            console.log('  -', section.id || section.dataset.section || 'unknown');
+        }
+    });
     
-    // Test if the framework is properly initialized
-    if (window.farmModules) {
-        console.log('Framework initialized:', window.farmModules.initialized);
-        console.log('Active section:', window.farmModules.activeSection);
+    // Check if target module exists
+    const targetRoute = 'inventory-check';
+    const targetElement = document.querySelector(`[data-section="${targetRoute}"], #${targetRoute}`);
+    console.log('Target module exists:', !!targetElement);
+    
+    if (targetElement) {
+        console.log('Target module visibility:', targetElement.classList.contains('active'));
     }
+},
+
+// Call this when navigation fails to see what's wrong
+testNavigation: function() {
+    console.log('🧪 Testing navigation to inventory-check...');
+    this.debugCurrentState();
+    
+    // Test different navigation methods
+    setTimeout(() => {
+        console.log('Testing method 1: Hash change');
+        window.location.hash = 'inventory-check';
+        setTimeout(() => this.debugCurrentState(), 100);
+    }, 1000);
+    
+    setTimeout(() => {
+        console.log('Testing method 2: Navbar click simulation');
+        const navLink = document.querySelector('[href="#inventory-check"], [data-section="inventory-check"]');
+        if (navLink) {
+            navLink.click();
+            setTimeout(() => this.debugCurrentState(), 100);
+        }
+    }, 2000);
 },
     
 });
