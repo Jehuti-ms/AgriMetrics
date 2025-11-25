@@ -83,7 +83,7 @@ class FarmManagementApp {
     }
 
     setupEventListeners() {
-        // Listen for bottom navigation clicks
+        // Listen for top navigation clicks
         document.addEventListener('click', (e) => {
             if (e.target.closest('.nav-item')) {
                 const navItem = e.target.closest('.nav-item');
@@ -115,20 +115,27 @@ class FarmManagementApp {
         if (authContainer) authContainer.classList.add('hidden');
         if (appContainer) appContainer.classList.remove('hidden');
         
-        // Add bottom navigation
-        this.createBottomNavigation();
+        // Add top navigation
+        this.createTopNavigation();
         
         this.showSection(this.currentSection);
     }
 
-    createBottomNavigation() {
+    createTopNavigation() {
         const appContainer = document.getElementById('app-container');
         if (!appContainer) return;
 
-        const existingNav = appContainer.querySelector('.bottom-nav');
+        const existingNav = appContainer.querySelector('.top-nav');
         if (existingNav) existingNav.remove();
 
-        // STANDARD PWA: 4 primary navigation items
+        // Get header element or create one
+        let header = appContainer.querySelector('header');
+        if (!header) {
+            header = document.createElement('header');
+            appContainer.insertBefore(header, appContainer.firstChild);
+        }
+
+        // STANDARD PWA: 4 primary navigation items at top
         const primaryNav = [
             { view: 'dashboard', label: 'Home', icon: this.dashboardIcon },
             { view: 'income-expenses', label: 'Finance', icon: this.moneyIcon },
@@ -136,7 +143,7 @@ class FarmManagementApp {
             { view: 'more', label: 'More', icon: this.moreIcon }
         ];
 
-        // All other features in secondary menu
+        // All other features in dropdown menu
         const secondaryNav = [
             { view: 'feed-record', label: 'Feed Record', icon: this.feedIcon },
             { view: 'broiler-mortality', label: 'Health', icon: this.healthIcon },
@@ -147,55 +154,47 @@ class FarmManagementApp {
             { view: 'profile', label: 'Profile', icon: this.profileIcon }
         ];
 
-        let navHTML = `
-            <div class="bottom-nav" style="${this.objectToStyleString(this.navStyle)}">
-        `;
+        const navHTML = `
+            <nav class="top-nav" style="${this.objectToStyleString(this.navStyle)}">
+                <div class="nav-brand" style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 20px;">🌱</span>
+                    <span style="font-weight: 600; font-size: 18px;">Farm Management</span>
+                </div>
+                
+                <div class="nav-items" style="display: flex; align-items: center; gap: 8px;">
+                    ${primaryNav.map(item => `
+                        <button class="nav-item" data-view="${item.view}" style="${this.objectToStyleString(this.navItemStyle)}">
+                            <div style="font-size: 18px; margin-right: 4px;">${item.icon}</div>
+                            <span style="font-size: 14px; font-weight: 500;">${item.label}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            </nav>
 
-        primaryNav.forEach(item => {
-            navHTML += `
-                <button class="nav-item" data-view="${item.view}" style="${this.objectToStyleString(this.navItemStyle)}">
-                    <div style="font-size: 20px; margin-bottom: 4px;">${item.icon}</div>
-                    <span style="font-size: 12px; font-weight: 500; margin-top: 2px;">${item.label}</span>
-                </button>
-            `;
-        });
-
-        navHTML += `</div>`;
-
-        // More menu (standard bottom sheet pattern)
-        navHTML += `
-            <div id="more-menu" class="more-menu hidden">
-                <div class="more-menu-content">
-                    <div class="more-menu-header">
-                        <h3>Menu</h3>
-                        <button class="close-more-menu" style="background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
-                    </div>
-                    <div class="more-menu-items">
-                        ${secondaryNav.map(item => `
-                            <button class="more-menu-item" data-view="${item.view}">
-                                <div style="font-size: 20px; margin-bottom: 8px;">${item.icon}</div>
-                                <span style="font-size: 12px; font-weight: 500;">${item.label}</span>
-                            </button>
-                        `).join('')}
-                    </div>
+            <!-- Dropdown Menu -->
+            <div id="more-menu" class="more-menu hidden" style="position: absolute; top: 70px; right: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); padding: 16px; z-index: 1001; min-width: 200px; border: 1px solid rgba(0,0,0,0.1);">
+                <div class="more-menu-items" style="display: flex; flex-direction: column; gap: 8px;">
+                    ${secondaryNav.map(item => `
+                        <button class="more-menu-item" data-view="${item.view}" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: none; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; width: 100%; text-align: left;">
+                            <div style="font-size: 18px; width: 24px;">${item.icon}</div>
+                            <span style="font-size: 14px; font-weight: 500;">${item.label}</span>
+                        </button>
+                    `).join('')}
                 </div>
             </div>
         `;
 
-        appContainer.insertAdjacentHTML('beforeend', navHTML);
+        header.innerHTML = navHTML;
         this.setupMoreMenu();
     }
 
     setupMoreMenu() {
         const moreMenu = document.getElementById('more-menu');
-        const closeButton = document.querySelector('.close-more-menu');
+        const moreButton = document.querySelector('[data-view="more"]');
 
-        closeButton?.addEventListener('click', () => {
-            this.hideMoreMenu();
-        });
-
-        moreMenu?.addEventListener('click', (e) => {
-            if (e.target === moreMenu) {
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#more-menu') && !e.target.closest('[data-view="more"]')) {
                 this.hideMoreMenu();
             }
         });
@@ -227,9 +226,8 @@ class FarmManagementApp {
     showSection(sectionId) {
         console.log(`🔄 Switching to section: ${sectionId}`);
         
-        // Update bottom nav active state
+        // Update nav active state
         document.querySelectorAll('.nav-item').forEach(item => {
-            const style = this.navItemStyle;
             item.style.backgroundColor = '';
             item.style.color = '#666';
         });
@@ -242,47 +240,73 @@ class FarmManagementApp {
 
         this.currentSection = sectionId;
         
-        // Load the module
-        if (window.FarmModules) {
+        // Load the module - MAKE SURE THIS WORKS
+        if (window.FarmModules && typeof window.FarmModules.initializeModule === 'function') {
+            console.log(`📦 Loading module: ${sectionId}`);
             window.FarmModules.initializeModule(sectionId);
+        } else {
+            console.log(`⚠️ FarmModules not available, loading fallback for: ${sectionId}`);
+            this.loadFallbackContent(sectionId);
         }
     }
 
-    // Navigation styles
+    loadFallbackContent(sectionId) {
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
+
+        const sectionTitles = {
+            'dashboard': 'Dashboard',
+            'income-expenses': 'Income & Expenses',
+            'inventory-check': 'Inventory Check',
+            'feed-record': 'Feed Record',
+            'broiler-mortality': 'Broiler Mortality',
+            'production': 'Production Records',
+            'sales-record': 'Sales Record',
+            'orders': 'Orders',
+            'reports': 'Reports',
+            'profile': 'Profile'
+        };
+
+        contentArea.innerHTML = `
+            <div style="padding: 20px; text-align: center;">
+                <h2>${sectionTitles[sectionId] || sectionId}</h2>
+                <p>This section is loading...</p>
+                <p><small>If this doesn't load, check the browser console for errors.</small></p>
+            </div>
+        `;
+    }
+
+    // Navigation styles for TOP navigation
     navStyle = {
         position: 'fixed',
-        bottom: '0',
+        top: '0',
         left: '0',
         right: '0',
-        height: '80px',
+        height: '60px',
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
-        borderTop: '1px solid rgba(0, 0, 0, 0.1)',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-around',
-        padding: '8px 0',
+        justifyContent: 'space-between',
+        padding: '0 20px',
         zIndex: 1000
     };
 
     navItemStyle = {
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
         background: 'none',
         border: 'none',
-        padding: '12px 16px',
-        borderRadius: '16px',
+        padding: '8px 16px',
+        borderRadius: '8px',
         transition: 'all 0.2s ease',
         cursor: 'pointer',
-        color: '#666',
-        minWidth: '60px',
-        flex: '1'
+        color: '#666'
     };
 
-    // Standard PWA Icons (using emoji for simplicity - replace with SVG if preferred)
+    // Icons
     dashboardIcon = '📊';
     moneyIcon = '💰';
     inventoryIcon = '📦';
