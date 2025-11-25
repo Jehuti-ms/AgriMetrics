@@ -1219,52 +1219,6 @@ dispatchFrameworkEvent: function(eventName, route) {
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
         }
-    },
-
-   // Add this debug method
-debugCurrentState: function() {
-    console.log('🔍 Current Application State:');
-    console.log('URL:', window.location.href);
-    console.log('Hash:', window.location.hash);
-    console.log('Active sections:', document.querySelectorAll('.section.active').length);
-    console.log('Visible sections:');
-    document.querySelectorAll('.section').forEach(section => {
-        if (section.classList.contains('active')) {
-            console.log('  -', section.id || section.dataset.section || 'unknown');
-        }
-    });
-    
-    // Check if target module exists
-    const targetRoute = 'inventory-check';
-    const targetElement = document.querySelector(`[data-section="${targetRoute}"], #${targetRoute}`);
-    console.log('Target module exists:', !!targetElement);
-    
-    if (targetElement) {
-        console.log('Target module visibility:', targetElement.classList.contains('active'));
-    }
-},
-
-// Call this when navigation fails to see what's wrong
-testNavigation: function() {
-    console.log('🧪 Testing navigation to inventory-check...');
-    this.debugCurrentState();
-    
-    // Test different navigation methods
-    setTimeout(() => {
-        console.log('Testing method 1: Hash change');
-        window.location.hash = 'inventory-check';
-        setTimeout(() => this.debugCurrentState(), 100);
-    }, 1000);
-    
-    setTimeout(() => {
-        console.log('Testing method 2: Navbar click simulation');
-        const navLink = document.querySelector('[href="#inventory-check"], [data-section="inventory-check"]');
-        if (navLink) {
-            navLink.click();
-            setTimeout(() => this.debugCurrentState(), 100);
-        }
-    }, 2000);
-},
-    
+    }   
 });
 
