@@ -502,51 +502,102 @@ FarmModules.registerModule('dashboard', {
         this.updateElement('avg-sale-value', this.formatCurrency(avgSaleValue));
     },
 
-    attachEventListeners: function() {
-        // Quick action buttons
-        document.querySelectorAll('.action-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const action = e.currentTarget.dataset.action;
-                this.handleQuickAction(action);
-            });
-        });
+   // Updated attachEventListeners method
+attachEventListeners: function() {
+    console.log('🔗 Attaching dashboard event listeners...');
+    
+    // Quick action buttons
+    const actionButtons = document.querySelectorAll('.action-btn');
+    console.log('🔧 Found action buttons:', actionButtons.length);
+    
+    actionButtons.forEach(btn => {
+        const action = btn.dataset.action;
+        console.log('🔧 Setting up button for action:', action);
         
-        // Refresh activity button
-        const refreshBtn = document.getElementById('refresh-activity');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => {
-                this.updateFinancialData();
-                this.updateRecentActivity();
-                this.updatePerformanceMetrics();
-                this.showNotification('Dashboard updated', 'success');
-            });
-        }
-    },
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('🎯 Action button clicked:', action);
+            this.handleQuickAction(action);
+        });
+    });
+    
+    // Refresh activity button
+    const refreshBtn = document.getElementById('refresh-activity');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            console.log('🔄 Refresh button clicked');
+            this.updateFinancialData();
+            this.updateRecentActivity();
+            this.updatePerformanceMetrics();
+            this.showNotification('Dashboard updated', 'success');
+        });
+        console.log('✅ Refresh button listener attached');
+    } else {
+        console.warn('❌ Refresh button not found');
+    }
+    
+    console.log('✅ All dashboard event listeners attached');
+},
 
-    handleQuickAction: function(action) {
-        switch(action) {
-            case 'record-sale':
-                if (window.farmModules && window.farmModules.showSection) {
-                    window.farmModules.showSection('sales-record');
-                }
-                break;
-            case 'add-inventory':
-                if (window.farmModules && window.farmModules.showSection) {
-                    window.farmModules.showSection('inventory-check');
-                }
-                break;
-            case 'record-feed':
-                if (window.farmModules && window.farmModules.showSection) {
-                    window.farmModules.showSection('feed-record');
-                }
-                break;
-            case 'view-reports':
-                if (window.farmModules && window.farmModules.showSection) {
-                    window.farmModules.showSection('reports');
-                }
-                break;
-        }
-    },
+    // modules/dashboard.js - Updated handleQuickAction method
+handleQuickAction: function(action) {
+    console.log('🔧 Quick action clicked:', action);
+    
+    switch(action) {
+        case 'record-sale':
+            // Navigate to sales module
+            if (typeof FarmModules !== 'undefined' && FarmModules.showSection) {
+                FarmModules.showSection('sales-record');
+            } else if (window.farmModules && window.farmModules.showSection) {
+                window.farmModules.showSection('sales-record');
+            } else {
+                // Fallback: change URL hash
+                window.location.hash = 'sales-record';
+                this.showNotification('Opening Sales Records...', 'info');
+            }
+            break;
+            
+        case 'add-inventory':
+            // Navigate to inventory module
+            if (typeof FarmModules !== 'undefined' && FarmModules.showSection) {
+                FarmModules.showSection('inventory-check');
+            } else if (window.farmModules && window.farmModules.showSection) {
+                window.farmModules.showSection('inventory-check');
+            } else {
+                window.location.hash = 'inventory-check';
+                this.showNotification('Opening Inventory...', 'info');
+            }
+            break;
+            
+        case 'record-feed':
+            // Navigate to feed module
+            if (typeof FarmModules !== 'undefined' && FarmModules.showSection) {
+                FarmModules.showSection('feed-record');
+            } else if (window.farmModules && window.farmModules.showSection) {
+                window.farmModules.showSection('feed-record');
+            } else {
+                window.location.hash = 'feed-record';
+                this.showNotification('Opening Feed Records...', 'info');
+            }
+            break;
+            
+        case 'view-reports':
+            // Navigate to reports module
+            if (typeof FarmModules !== 'undefined' && FarmModules.showSection) {
+                FarmModules.showSection('reports');
+            } else if (window.farmModules && window.farmModules.showSection) {
+                window.farmModules.showSection('reports');
+            } else {
+                window.location.hash = 'reports';
+                this.showNotification('Opening Reports...', 'info');
+            }
+            break;
+            
+        default:
+            console.warn('Unknown action:', action);
+            this.showNotification('Action not available', 'warning');
+    }
+},
 
     formatCurrency: function(amount) {
         return new Intl.NumberFormat('en-US', {
@@ -597,4 +648,19 @@ FarmModules.registerModule('dashboard', {
             alert(message);
         }
     }
+
+    // Add this test method to debug navigation
+testNavigation: function() {
+    console.log('🧪 Testing navigation methods...');
+    console.log('FarmModules:', typeof FarmModules);
+    console.log('FarmModules.showSection:', FarmModules?.showSection);
+    console.log('window.farmModules:', window.farmModules);
+    console.log('window.farmModules.showSection:', window.farmModules?.showSection);
+    console.log('Current hash:', window.location.hash);
+    
+    // Test if modules are registered
+    if (window.farmModules) {
+        console.log('Registered modules:', Object.keys(window.farmModules.modules || {}));
+    }
+},
 });
