@@ -1,4 +1,4 @@
-// app.js
+// app.js - Simplified working version
 console.log('Loading main app...');
 
 class FarmManagementApp {
@@ -10,115 +10,67 @@ class FarmManagementApp {
     }
 
     async init() {
-        try {
-            console.log('🚀 Starting Farm Management App...');
-            
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', () => {
-                    this.initializeApp();
-                });
-            } else {
+        console.log('🚀 Starting Farm Management App...');
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
                 this.initializeApp();
-            }
-        } catch (error) {
-            console.error('Failed to initialize app:', error);
+            });
+        } else {
+            this.initializeApp();
         }
     }
 
     async initializeApp() {
-        try {
-            if (this.isFirebaseAvailable()) {
-                console.log('✅ Firebase is available');
-                this.setupAuthListener();
-            } else {
-                console.log('🔄 Running in demo mode');
-                this.isDemoMode = true;
-                this.setupDemoMode();
-            }
-            
-            this.setupEventListeners();
-            console.log('✅ Farm Management App initialized');
-        } catch (error) {
-            console.error('Failed to initialize app:', error);
-            this.isDemoMode = true;
-            this.setupDemoMode();
-            this.setupEventListeners();
-        }
-    }
-
-    isFirebaseAvailable() {
-        return typeof firebase !== 'undefined' && 
-               firebase.apps && 
-               firebase.apps.length > 0 &&
-               firebase.auth;
-    }
-
-    setupAuthListener() {
-        if (!this.isFirebaseAvailable()) {
-            this.setupDemoMode();
-            return;
-        }
-
-        firebase.auth().onAuthStateChanged((user) => {
-            if (user) {
-                this.currentUser = user;
-                this.showApp();
-                this.loadUserData();
-            } else {
-                this.currentUser = null;
-                this.showAuth();
-            }
-        }, (error) => {
-            console.error('Auth state change error:', error);
-            this.setupDemoMode();
-        });
-    }
-
-    setupDemoMode() {
-        console.log('🏠 Setting up demo mode');
+        console.log('✅ Initializing app...');
+        
+        // Skip Firebase for now - just show the app
         this.isDemoMode = true;
         this.showApp();
+        this.setupEventListeners();
     }
 
     setupEventListeners() {
+        console.log('Setting up event listeners...');
+        
+        // Use event delegation for dynamic elements
         document.addEventListener('click', (e) => {
-            if (e.target.closest('.nav-item')) {
-                const navItem = e.target.closest('.nav-item');
+            console.log('Click detected on:', e.target);
+            
+            // Check if click is on nav item
+            const navItem = e.target.closest('.nav-item');
+            if (navItem) {
                 const view = navItem.getAttribute('data-view');
+                console.log('Nav item clicked:', view);
                 
                 if (view === 'more') {
                     this.toggleMoreMenu();
                 } else {
                     this.showSection(view);
                 }
+                return;
             }
             
-            if (e.target.closest('.more-menu-item')) {
-                const menuItem = e.target.closest('.more-menu-item');
+            // Check if click is on more menu item
+            const menuItem = e.target.closest('.more-menu-item');
+            if (menuItem) {
                 const view = menuItem.getAttribute('data-view');
+                console.log('Menu item clicked:', view);
                 this.hideMoreMenu();
                 this.showSection(view);
+                return;
             }
-        });
-
-        document.addEventListener('click', (e) => {
+            
+            // Close more menu when clicking outside
             if (!e.target.closest('.more-menu') && !e.target.closest('[data-view="more"]')) {
                 this.hideMoreMenu();
             }
         });
-
-        console.log('✅ Event listeners setup complete');
-    }
-
-    showAuth() {
-        const authContainer = document.getElementById('auth-container');
-        const appContainer = document.getElementById('app-container');
-        
-        if (authContainer) authContainer.classList.remove('hidden');
-        if (appContainer) appContainer.classList.add('hidden');
     }
 
     showApp() {
+        console.log('Showing app...');
+        
         const authContainer = document.getElementById('auth-container');
         const appContainer = document.getElementById('app-container');
         
@@ -130,151 +82,173 @@ class FarmManagementApp {
     }
 
     createTopNavigation() {
+        console.log('Creating top navigation...');
+        
         const appContainer = document.getElementById('app-container');
-        if (!appContainer) return;
-
-        let header = appContainer.querySelector('header');
-        if (!header) {
-            header = document.createElement('header');
-            appContainer.insertBefore(header, appContainer.firstChild);
+        if (!appContainer) {
+            console.error('App container not found!');
+            return;
         }
 
-        header.innerHTML = '';
+        // Clear existing header
+        let header = appContainer.querySelector('header');
+        if (header) {
+            header.remove();
+        }
+        
+        // Create new header
+        header = document.createElement('header');
+        appContainer.insertBefore(header, appContainer.firstChild);
 
-        const navHTML = `
-            <nav class="top-nav" style="position: fixed; top: 0; left: 0; right: 0; height: 60px; background-color: #ffffff; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        // Create simple, visible navigation
+        header.innerHTML = `
+            <nav class="top-nav" style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 60px;
+                background: #ffffff;
+                border-bottom: 2px solid #333;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 20px;
+                z-index: 1000;
+            ">
                 <div class="nav-brand" style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 24px;">🌱</span>
-                    <span style="font-weight: 600; font-size: 18px; color: #2d3748;">Farm Management</span>
+                    <span style="font-size: 24px; color: black;">🌱</span>
+                    <span style="font-weight: bold; font-size: 18px; color: black;">Farm Management</span>
                 </div>
                 
-                <div class="nav-items" style="display: flex; align-items: center; gap: 4px;">
-                    <button class="nav-item" data-view="dashboard" style="display: flex; align-items: center; background: none; border: none; padding: 10px 16px; border-radius: 8px; transition: all 0.2s ease; cursor: pointer; color: #4a5568; gap: 6px; font-size: 14px; font-weight: 500;">
-                        <span style="font-size: 20px;">📊</span>
+                <div class="nav-items" style="display: flex; align-items: center; gap: 10px;">
+                    <button class="nav-item" data-view="dashboard" style="
+                        display: flex;
+                        align-items: center;
+                        background: #f0f0f0;
+                        border: 1px solid #ccc;
+                        padding: 8px 12px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        color: black;
+                        gap: 6px;
+                        font-size: 14px;
+                    ">
+                        <span style="font-size: 16px;">📊</span>
                         <span>Home</span>
                     </button>
 
-                    <button class="nav-item" data-view="income-expenses" style="display: flex; align-items: center; background: none; border: none; padding: 10px 16px; border-radius: 8px; transition: all 0.2s ease; cursor: pointer; color: #4a5568; gap: 6px; font-size: 14px; font-weight: 500;">
-                        <span style="font-size: 20px;">💰</span>
+                    <button class="nav-item" data-view="income-expenses" style="
+                        display: flex;
+                        align-items: center;
+                        background: #f0f0f0;
+                        border: 1px solid #ccc;
+                        padding: 8px 12px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        color: black;
+                        gap: 6px;
+                        font-size: 14px;
+                    ">
+                        <span style="font-size: 16px;">💰</span>
                         <span>Finance</span>
                     </button>
 
-                    <button class="nav-item" data-view="inventory-check" style="display: flex; align-items: center; background: none; border: none; padding: 10px 16px; border-radius: 8px; transition: all 0.2s ease; cursor: pointer; color: #4a5568; gap: 6px; font-size: 14px; font-weight: 500;">
-                        <span style="font-size: 20px;">📦</span>
+                    <button class="nav-item" data-view="inventory-check" style="
+                        display: flex;
+                        align-items: center;
+                        background: #f0f0f0;
+                        border: 1px solid #ccc;
+                        padding: 8px 12px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        color: black;
+                        gap: 6px;
+                        font-size: 14px;
+                    ">
+                        <span style="font-size: 16px;">📦</span>
                         <span>Inventory</span>
                     </button>
 
-                    <button class="nav-item" data-view="more" style="display: flex; align-items: center; background: none; border: none; padding: 10px 16px; border-radius: 8px; transition: all 0.2s ease; cursor: pointer; color: #4a5568; gap: 6px; font-size: 14px; font-weight: 500;">
-                        <span style="font-size: 20px;">⋮</span>
+                    <button class="nav-item" data-view="more" style="
+                        display: flex;
+                        align-items: center;
+                        background: #f0f0f0;
+                        border: 1px solid #ccc;
+                        padding: 8px 12px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        color: black;
+                        gap: 6px;
+                        font-size: 14px;
+                    ">
+                        <span style="font-size: 16px;">⋮</span>
                         <span>More</span>
                     </button>
                 </div>
             </nav>
 
-            <div id="more-menu" class="more-menu hidden" style="position: fixed; top: 65px; right: 20px; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); padding: 16px; z-index: 1001; min-width: 220px; border: 1px solid #e2e8f0;">
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <button class="more-menu-item" data-view="feed-record" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: none; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; width: 100%; text-align: left; color: #4a5568; font-size: 14px; font-weight: 500;">
-                        <span style="font-size: 18px; width: 24px;">🌾</span>
-                        <span>Feed Record</span>
+            <div id="more-menu" class="more-menu hidden" style="
+                position: fixed;
+                top: 65px;
+                right: 20px;
+                background: white;
+                border: 2px solid #333;
+                border-radius: 4px;
+                padding: 10px;
+                z-index: 1001;
+                min-width: 150px;
+            ">
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <button class="more-menu-item" data-view="feed-record" style="display: flex; align-items: center; gap: 8px; padding: 8px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; color: black;">
+                        <span>🌾</span>
+                        <span>Feed</span>
                     </button>
-
-                    <button class="more-menu-item" data-view="broiler-mortality" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: none; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; width: 100%; text-align: left; color: #4a5568; font-size: 14px; font-weight: 500;">
-                        <span style="font-size: 18px; width: 24px;">🐔</span>
-                        <span>Health</span>
-                    </button>
-
-                    <button class="more-menu-item" data-view="production" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: none; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; width: 100%; text-align: left; color: #4a5568; font-size: 14px; font-weight: 500;">
-                        <span style="font-size: 18px; width: 24px;">🚜</span>
-                        <span>Production</span>
-                    </button>
-
-                    <button class="more-menu-item" data-view="sales-record" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: none; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; width: 100%; text-align: left; color: #4a5568; font-size: 14px; font-weight: 500;">
-                        <span style="font-size: 18px; width: 24px;">💰</span>
-                        <span>Sales</span>
-                    </button>
-
-                    <button class="more-menu-item" data-view="orders" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: none; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; width: 100%; text-align: left; color: #4a5568; font-size: 14px; font-weight: 500;">
-                        <span style="font-size: 18px; width: 24px;">📋</span>
-                        <span>Orders</span>
-                    </button>
-
-                    <button class="more-menu-item" data-view="reports" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: none; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; width: 100%; text-align: left; color: #4a5568; font-size: 14px; font-weight: 500;">
-                        <span style="font-size: 18px; width: 24px;">📈</span>
-                        <span>Reports</span>
-                    </button>
-
-                    <button class="more-menu-item" data-view="profile" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: none; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; width: 100%; text-align: left; color: #4a5568; font-size: 14px; font-weight: 500;">
-                        <span style="font-size: 18px; width: 24px;">👤</span>
+                    <button class="more-menu-item" data-view="profile" style="display: flex; align-items: center; gap: 8px; padding: 8px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; color: black;">
+                        <span>👤</span>
                         <span>Profile</span>
                     </button>
                 </div>
             </div>
         `;
 
-        header.innerHTML = navHTML;
-        
+        // Add padding to main content
         const main = appContainer.querySelector('main');
         if (main) {
             main.style.paddingTop = '70px';
-            main.style.minHeight = 'calc(100vh - 70px)';
         }
         
-        const contentArea = document.getElementById('content-area');
-        if (contentArea) {
-            contentArea.style.paddingTop = '20px';
-        }
-        
-        console.log('✅ Top navigation created');
+        console.log('✅ Navigation created - should be visible now');
+        console.log('Header element:', header);
+        console.log('Nav items found:', document.querySelectorAll('.nav-item').length);
     }
 
     showSection(sectionId) {
         console.log('Switching to section: ' + sectionId);
         
+        // Update active state
         document.querySelectorAll('.nav-item').forEach(item => {
-            item.style.backgroundColor = '';
-            item.style.color = '#4a5568';
-            item.style.fontWeight = '500';
+            item.style.background = '#f0f0f0';
+            item.style.color = 'black';
         });
         
         const activeNavItem = document.querySelector('.nav-item[data-view="' + sectionId + '"]');
         if (activeNavItem) {
-            activeNavItem.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
-            activeNavItem.style.color = '#3b82f6';
-            activeNavItem.style.fontWeight = '600';
+            activeNavItem.style.background = '#007bff';
+            activeNavItem.style.color = 'white';
         }
 
         this.currentSection = sectionId;
         
-        if (window.FarmModules && typeof window.FarmModules.initializeModule === 'function') {
-            console.log('Loading module: ' + sectionId);
-            window.FarmModules.initializeModule(sectionId);
-        } else {
-            console.log('FarmModules not available, loading fallback for: ' + sectionId);
-            this.loadFallbackContent(sectionId);
+        // Show content
+        const contentArea = document.getElementById('content-area');
+        if (contentArea) {
+            contentArea.innerHTML = '<div style="padding: 20px;"><h2>' + sectionId + '</h2><p>Content for ' + sectionId + '</p></div>';
         }
     }
 
-    loadFallbackContent(sectionId) {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
-
-        const sectionTitles = {
-            'dashboard': 'Dashboard',
-            'income-expenses': 'Income & Expenses',
-            'inventory-check': 'Inventory Check',
-            'feed-record': 'Feed Record',
-            'broiler-mortality': 'Broiler Mortality',
-            'production': 'Production Records',
-            'sales-record': 'Sales Record',
-            'orders': 'Orders',
-            'reports': 'Reports',
-            'profile': 'Profile'
-        };
-
-        contentArea.innerHTML = '<div style="padding: 40px; text-align: center;"><h2>' + (sectionTitles[sectionId] || sectionId) + '</h2><p style="color: #666; margin-top: 10px;">This section is loading...</p><p style="color: #999; font-size: 14px; margin-top: 20px;">If this doesn\'t load, check the browser console for errors.</p></div>';
-    }
-
     toggleMoreMenu() {
+        console.log('Toggle more menu');
         const moreMenu = document.getElementById('more-menu');
         if (moreMenu) {
             if (moreMenu.classList.contains('hidden')) {
@@ -284,6 +258,8 @@ class FarmManagementApp {
                 moreMenu.classList.add('hidden');
                 console.log('More menu closed');
             }
+        } else {
+            console.error('More menu not found!');
         }
     }
 
@@ -293,52 +269,17 @@ class FarmManagementApp {
             moreMenu.classList.add('hidden');
         }
     }
-
-    async loadUserData() {
-        if (this.isDemoMode || !firebase.firestore || !this.currentUser) return;
-
-        try {
-            const userDoc = await firebase.firestore().collection('users').doc(this.currentUser.uid).get();
-            
-            if (userDoc.exists) {
-                const userData = userDoc.data();
-                console.log('User data loaded:', userData);
-                
-                if (window.FarmModules) {
-                    window.FarmModules.updateAppData({
-                        user: userData,
-                        farmName: userData.farmName,
-                    });
-                }
-            }
-        } catch (error) {
-            console.error('Error loading user data:', error);
-        }
-    }
-
-    async logout() {
-        try {
-            if (firebase.auth) {
-                await firebase.auth().signOut();
-            }
-            if (window.coreModule) {
-                window.coreModule.showNotification('Logged out successfully', 'success');
-            }
-        } catch (error) {
-            console.error('Error signing out:', error);
-            if (window.coreModule) {
-                window.coreModule.showNotification('Error signing out', 'error');
-            }
-        }
-    }
 }
 
+// Initialize app
 window.FarmManagementApp = FarmManagementApp;
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('DOM loaded - initializing app');
         window.app = new FarmManagementApp();
     });
 } else {
+    console.log('DOM already loaded - initializing app');
     window.app = new FarmManagementApp();
 }
