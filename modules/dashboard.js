@@ -660,12 +660,221 @@ FarmModules.registerModule('dashboard', {
         }
     `,
 
+   // modules/dashboard.js - Fixed version
+FarmModules.registerModule('dashboard', {
+    name: 'Dashboard',
+    icon: '📊',
+    
+    template: `
+        <div class="section active">
+            <!-- Header with Welcome -->
+            <div class="dashboard-header">
+                <div class="welcome-section">
+                    <h1 id="welcome-message">Good Morning</h1>
+                    <p id="current-date">Loading...</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-icon" id="notifications-btn">
+                        <span class="icon">🔔</span>
+                        <span class="badge" id="notification-badge">0</span>
+                    </button>
+                    <button class="btn-icon" id="refresh-dashboard">
+                        <span class="icon">🔄</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Financial Overview Cards -->
+            <div class="financial-grid">
+                <div class="finance-card revenue">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <div class="icon-wrapper">
+                                💰
+                            </div>
+                        </div>
+                        <div class="card-trend" id="revenue-trend">
+                            <span class="trend-icon">↗️</span>
+                            <span class="trend-value">0%</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <h3 class="card-label">Total Revenue</h3>
+                        <div class="card-amount" id="total-revenue">$0</div>
+                        <div class="card-subtitle" id="revenue-subtitle">All Time</div>
+                    </div>
+                </div>
+
+                <div class="finance-card sales">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <div class="icon-wrapper">
+                                📈
+                            </div>
+                        </div>
+                        <div class="card-trend" id="sales-trend">
+                            <span class="trend-icon">↗️</span>
+                            <span class="trend-value">0%</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <h3 class="card-label">Monthly Sales</h3>
+                        <div class="card-amount" id="monthly-sales">$0</div>
+                        <div class="card-subtitle" id="sales-subtitle">This Month</div>
+                    </div>
+                </div>
+
+                <div class="finance-card inventory">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <div class="icon-wrapper">
+                                📦
+                            </div>
+                        </div>
+                        <div class="card-stock">
+                            <span class="stock-value" id="inventory-items">0</span>
+                            <span class="stock-label">items</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <h3 class="card-label">Inventory Value</h3>
+                        <div class="card-amount" id="inventory-value">$0</div>
+                        <div class="card-subtitle">Current Stock</div>
+                    </div>
+                </div>
+
+                <div class="finance-card profit">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <div class="icon-wrapper">
+                                💹
+                            </div>
+                        </div>
+                        <div class="card-trend" id="profit-trend">
+                            <span class="trend-icon">↗️</span>
+                            <span class="trend-value">0%</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <h3 class="card-label">Net Profit</h3>
+                        <div class="card-amount" id="net-profit">$0</div>
+                        <div class="card-subtitle" id="profit-subtitle">This Month</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions Grid -->
+            <div class="quick-actions-section">
+                <h2 class="section-title">Quick Actions</h2>
+                <div class="actions-grid">
+                    <button class="action-card" data-action="record-sale">
+                        <div class="action-icon sale">
+                            💰
+                        </div>
+                        <div class="action-content">
+                            <h3>Record Sale</h3>
+                            <p>Add new sales transaction</p>
+                        </div>
+                        <div class="action-arrow">→</div>
+                    </button>
+
+                    <button class="action-card" data-action="add-inventory">
+                        <div class="action-icon inventory">
+                            📦
+                        </div>
+                        <div class="action-content">
+                            <h3>Manage Inventory</h3>
+                            <p>Update stock levels</p>
+                        </div>
+                        <div class="action-arrow">→</div>
+                    </button>
+
+                    <button class="action-card" data-action="record-feed">
+                        <div class="action-icon feed">
+                            🌾
+                        </div>
+                        <div class="action-content">
+                            <h3>Feed Records</h3>
+                            <p>Track animal feeding</p>
+                        </div>
+                        <div class="action-arrow">→</div>
+                    </button>
+
+                    <button class="action-card" data-action="view-reports">
+                        <div class="action-icon reports">
+                            📊
+                        </div>
+                        <div class="action-content">
+                            <h3>View Reports</h3>
+                            <p>Analytics & insights</p>
+                        </div>
+                        <div class="action-arrow">→</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="recent-activity-section">
+                <div class="section-header">
+                    <h2 class="section-title">Recent Activity</h2>
+                    <button class="btn-text" id="view-all-activity">
+                        View All
+                    </button>
+                </div>
+                <div class="activity-feed" id="activity-feed">
+                    <div class="empty-state">
+                        <div class="empty-icon">📊</div>
+                        <h3>No Recent Activity</h3>
+                        <p>Start recording transactions to see activity here</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="metrics-section">
+                <h2 class="section-title">Performance Metrics</h2>
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-icon">🛒</div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="sales-count">0</div>
+                            <div class="metric-label">Total Sales</div>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-icon">📋</div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="inventory-count">0</div>
+                            <div class="metric-label">Products</div>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-icon">🌾</div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="feed-records-count">0</div>
+                            <div class="metric-label">Feed Records</div>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-icon">⭐</div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="avg-sale-value">$0</div>
+                            <div class="metric-label">Avg. Sale</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `,
+
+    styles: `
+        /* ... keep all the existing styles exactly as they are ... */
+    `,
+
     initialize: function() {
         console.log('📊 Dashboard module initializing...');
-
-            // Debug navigation
-        this.debugNavigation();
         
+        // Remove the debugNavigation call that was causing the error
         this.updateWelcomeMessage();
         this.updateFinancialData();
         this.updateRecentActivity();
@@ -962,139 +1171,34 @@ FarmModules.registerModule('dashboard', {
         console.log('✅ All dashboard event listeners attached');
     },
 
-   // Updated handleQuickAction method in dashboard.js
-handleQuickAction: function(action) {
-    console.log('🔧 Quick action clicked:', action);
-    
-    const routes = {
-        'record-sale': 'sales-record',
-        'add-inventory': 'inventory-check', 
-        'record-feed': 'feed-record',
-        'view-reports': 'reports'
-    };
-    
-    const route = routes[action];
-    if (route) {
-        console.log('📍 Navigating to:', route);
+    handleQuickAction: function(action) {
+        console.log('🔧 Quick action clicked:', action);
         
-        // Method 1: Try to find and use the framework's navigation directly
-        if (this.triggerFrameworkNavigation(route)) {
-            this.showNotification(`Opening ${this.getModuleName(route)}...`, 'success');
-            return;
-        }
+        const routes = {
+            'record-sale': 'sales-record',
+            'add-inventory': 'inventory-check', 
+            'record-feed': 'feed-record',
+            'view-reports': 'reports'
+        };
         
-        // Method 2: Use the same navigation method as your navbar
-        this.useNavbarNavigation(route);
-        
-    } else {
-        console.warn('❌ Unknown action:', action);
-        this.showNotification('Action not available', 'warning');
-    }
-},
-
-// Try to trigger the framework navigation directly
-triggerFrameworkNavigation: function(route) {
-    console.log('🔄 Attempting framework navigation...');
-    
-    // Look for the framework's showSection method in various possible locations
-    const frameworkMethods = [
-        window.farmModules?.showSection,
-        window.FarmModules?.showSection,
-        window.app?.showSection,
-        window.coreModule?.showSection
-    ];
-    
-    for (const method of frameworkMethods) {
-        if (typeof method === 'function') {
-            try {
-                method(route);
-                console.log('✅ Framework navigation triggered');
-                return true;
-            } catch (error) {
-                console.error('❌ Framework navigation failed:', error);
+        const route = routes[action];
+        if (route) {
+            // Simply find and click the corresponding navbar link
+            const navLink = document.querySelector(`a[href="#${route}"], [data-section="${route}"]`);
+            if (navLink) {
+                console.log('✅ Found nav link, clicking it');
+                navLink.click();
+                this.showNotification(`Opening ${this.getModuleName(route)}...`, 'success');
+            } else {
+                console.log('🔄 No nav link found, using hash change');
+                // Fallback to hash change
+                window.location.hash = route;
+                this.showNotification(`Opening ${this.getModuleName(route)}...`, 'info');
             }
+        } else {
+            this.showNotification('Action not available', 'warning');
         }
-    }
-    
-    return false;
-},
-
-// Use the same method as your navbar links
-useNavbarNavigation: function(route) {
-    console.log('🔄 Using navbar-style navigation...');
-    
-    // Method 1: Simulate a navbar click
-    const navLink = document.querySelector(`[href="#${route}"], [data-section="${route}"]`);
-    if (navLink) {
-        console.log('✅ Found nav link, triggering click');
-        navLink.click();
-        this.showNotification(`Opening ${this.getModuleName(route)}...`, 'success');
-        return;
-    }
-    
-    // Method 2: Manually trigger section change
-    if (this.manualSectionChange(route)) {
-        this.showNotification(`Opening ${this.getModuleName(route)}...`, 'success');
-        return;
-    }
-    
-    // Method 3: Last resort - reload the page with the hash
-    console.log('🔄 Falling back to page reload');
-    this.showNotification(`Opening ${this.getModuleName(route)}...`, 'info');
-    setTimeout(() => {
-        window.location.href = `#${route}`;
-    }, 500);
-},
-
-// Manual section change - mimics what the framework should do
-manualSectionChange: function(route) {
-    console.log('🔄 Attempting manual section change...');
-    
-    try {
-        // Hide all sections
-        const sections = document.querySelectorAll('.section');
-        sections.forEach(section => {
-            section.classList.remove('active');
-        });
-        
-        // Show the target section
-        const targetSection = document.querySelector(`[data-section="${route}"], #${route}`);
-        if (targetSection) {
-            targetSection.classList.add('active');
-            console.log('✅ Manual section change successful');
-            
-            // Update URL hash without triggering navigation
-            window.history.replaceState(null, null, `#${route}`);
-            
-            // Trigger any framework events
-            this.dispatchFrameworkEvent('sectionchange', route);
-            
-            return true;
-        }
-    } catch (error) {
-        console.error('❌ Manual section change failed:', error);
-    }
-    
-    return false;
-},
-
-// Dispatch framework events if they exist
-dispatchFrameworkEvent: function(eventName, route) {
-    const events = [
-        new CustomEvent(`${eventName}`, { detail: { section: route } }),
-        new CustomEvent('hashchange'),
-        new Event('sectionchange')
-    ];
-    
-    events.forEach(event => {
-        try {
-            window.dispatchEvent(event);
-            document.dispatchEvent(event);
-        } catch (error) {
-            // Ignore errors for events that aren't supported
-        }
-    });
-},
+    },
 
     refreshDashboard: function() {
         console.log('🔄 Refreshing dashboard data...');
@@ -1219,6 +1323,5 @@ dispatchFrameworkEvent: function(eventName, route) {
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
         }
-    }   
+    }
 });
-
