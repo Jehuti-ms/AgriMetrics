@@ -124,6 +124,18 @@ FarmModules.registerModule('profile', {
                     </div>
                 </div>
 
+                <!-- Session Management -->
+                <div class="session-management card">
+                    <h3>Session</h3>
+                    <div class="session-actions">
+                        <div class="session-info">
+                            <h4>Log Out</h4>
+                            <p>Sign out of your account on this device</p>
+                        </div>
+                        <button class="btn btn-warning" id="logout-button">Log Out</button>
+                    </div>
+                </div>
+
                 <!-- Danger Zone -->
                 <div class="danger-zone card">
                     <h3>Danger Zone</h3>
@@ -147,6 +159,26 @@ FarmModules.registerModule('profile', {
 
         .profile-card {
             margin-bottom: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.1);
+            z-index: 1;
+        }
+
+        .profile-card > * {
+            position: relative;
+            z-index: 2;
         }
 
         .profile-header {
@@ -164,32 +196,39 @@ FarmModules.registerModule('profile', {
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 2rem;
             font-weight: bold;
             color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
         }
 
         .profile-info h2 {
             margin: 0 0 0.5rem 0;
             font-size: 1.5rem;
-            color: var(--text-color);
+            color: white;
+            font-weight: 600;
         }
 
         .profile-email {
             margin: 0 0 0.25rem 0;
-            color: var(--text-muted);
+            color: rgba(255, 255, 255, 0.8);
             font-size: 0.9rem;
         }
 
         .profile-role {
             margin: 0;
-            color: var(--primary-color);
+            color: rgba(255, 255, 255, 0.9);
             font-weight: 500;
             font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            display: inline-block;
         }
 
         .profile-stats {
@@ -197,7 +236,7 @@ FarmModules.registerModule('profile', {
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             gap: 1rem;
             padding-top: 1.5rem;
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .stat-item {
@@ -207,13 +246,13 @@ FarmModules.registerModule('profile', {
         .stat-value {
             font-size: 1.5rem;
             font-weight: 700;
-            color: var(--primary-color);
+            color: white;
             margin-bottom: 0.25rem;
         }
 
         .stat-label {
             font-size: 0.8rem;
-            color: var(--text-muted);
+            color: rgba(255, 255, 255, 0.8);
         }
 
         .profile-form {
@@ -259,8 +298,31 @@ FarmModules.registerModule('profile', {
             color: var(--text-muted);
         }
 
+        .session-management {
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .session-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .session-info h4 {
+            margin: 0 0 0.25rem 0;
+            color: var(--warning-dark);
+        }
+
+        .session-info p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
         .danger-zone {
             border: 1px solid var(--error-color);
+            border-left: 4px solid var(--error-color);
         }
 
         .danger-zone h3 {
@@ -284,12 +346,24 @@ FarmModules.registerModule('profile', {
             color: var(--text-muted);
         }
 
+        .btn-warning {
+            background: var(--warning-color);
+            color: var(--warning-dark);
+            border: 1px solid var(--warning-dark);
+        }
+
+        .btn-warning:hover {
+            background: var(--warning-dark);
+            color: white;
+        }
+
         @media (max-width: 768px) {
             .profile-header {
                 flex-direction: column;
                 text-align: center;
             }
 
+            .session-actions,
             .danger-actions {
                 flex-direction: column;
                 gap: 1rem;
@@ -483,6 +557,7 @@ FarmModules.registerModule('profile', {
             { id: 'notification-settings', method: 'showNotificationSettings' },
             { id: 'privacy-settings', method: 'showPrivacySettings' },
             { id: 'change-password', method: 'showChangePassword' },
+            { id: 'logout-button', method: 'logout' },
             { id: 'delete-account', method: 'confirmDeleteAccount' }
         ];
         
@@ -544,6 +619,37 @@ FarmModules.registerModule('profile', {
         this.updateProfileStats();
         
         this.showNotification('Profile updated successfully!', 'success');
+    },
+
+    logout: function() {
+        if (confirm('Are you sure you want to log out?')) {
+            console.log('🚪 Logging out...');
+            
+            // Try Firebase logout first
+            if (typeof firebase !== 'undefined' && firebase.auth) {
+                firebase.auth().signOut().then(() => {
+                    this.handleLogoutSuccess();
+                }).catch(error => {
+                    console.error('Firebase logout error:', error);
+                    this.handleLogoutSuccess();
+                });
+            } else {
+                this.handleLogoutSuccess();
+            }
+        }
+    },
+
+    handleLogoutSuccess: function() {
+        // Clear app data
+        FarmModules.appData = {};
+        
+        // Show logout message
+        this.showNotification('You have been logged out successfully', 'success');
+        
+        // Redirect to login or reload page
+        setTimeout(() => {
+            window.location.href = '/'; // or your login page
+        }, 1500);
     },
 
     showNotificationSettings: function() {
