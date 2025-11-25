@@ -15,8 +15,8 @@ FarmModules.registerModule('profile', {
                 <div class="profile-card card">
                     <div class="profile-header">
                         <div class="profile-avatar">
-                            <div class="avatar-placeholder">
-                                ${this.getUserInitials()}
+                            <div class="avatar-placeholder" id="profile-avatar">
+                                FM
                             </div>
                         </div>
                         <div class="profile-info">
@@ -59,8 +59,8 @@ FarmModules.registerModule('profile', {
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="profile-email">Email Address *</label>
-                                <input type="email" id="profile-email" required placeholder="your.email@example.com">
+                                <label for="profile-email-input">Email Address *</label>
+                                <input type="email" id="profile-email-input" required placeholder="your.email@example.com">
                             </div>
                             <div class="form-group">
                                 <label for="profile-phone">Phone Number</label>
@@ -79,8 +79,8 @@ FarmModules.registerModule('profile', {
                                 <input type="text" id="profile-location" placeholder="City, State">
                             </div>
                             <div class="form-group">
-                                <label for="profile-farm-size">Farm Size (acres)</label>
-                                <input type="number" id="profile-farm-size" min="0" placeholder="0">
+                                <label for="profile-farm-size-input">Farm Size (acres)</label>
+                                <input type="number" id="profile-farm-size-input" min="0" placeholder="0">
                             </div>
                         </div>
 
@@ -329,7 +329,7 @@ FarmModules.registerModule('profile', {
         }
         
         // Check Firebase auth directly
-        if (firebase?.auth?.().currentUser) {
+        if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
             return firebase.auth().currentUser;
         }
         
@@ -355,17 +355,15 @@ FarmModules.registerModule('profile', {
 
     populateFormFields: function(user) {
         const displayName = user.displayName || '';
-        const [firstName, lastName] = displayName.split(' ') || ['', ''];
+        const names = displayName.split(' ');
+        const firstName = names[0] || '';
+        const lastName = names.slice(1).join(' ') || '';
         const email = user.email || '';
         
         // Set form values
-        const firstNameField = document.getElementById('profile-first-name');
-        const lastNameField = document.getElementById('profile-last-name');
-        const emailField = document.getElementById('profile-email');
-        
-        if (firstNameField) firstNameField.value = firstName;
-        if (lastNameField) lastNameField.value = lastName;
-        if (emailField) emailField.value = email;
+        this.setInputValue('profile-first-name', firstName);
+        this.setInputValue('profile-last-name', lastName);
+        this.setInputValue('profile-email-input', email);
         
         // Load additional profile data from storage
         this.loadAdditionalProfileData();
@@ -375,17 +373,11 @@ FarmModules.registerModule('profile', {
         // Load farm-specific data from localStorage or appData
         const profileData = FarmModules.appData.profile || {};
         
-        const farmNameField = document.getElementById('profile-farm-name');
-        const phoneField = document.getElementById('profile-phone');
-        const locationField = document.getElementById('profile-location');
-        const farmSizeField = document.getElementById('profile-farm-size');
-        const bioField = document.getElementById('profile-bio');
-        
-        if (farmNameField) farmNameField.value = profileData.farmName || '';
-        if (phoneField) phoneField.value = profileData.phone || '';
-        if (locationField) locationField.value = profileData.location || '';
-        if (farmSizeField) farmSizeField.value = profileData.farmSize || '';
-        if (bioField) bioField.value = profileData.bio || '';
+        this.setInputValue('profile-farm-name', profileData.farmName || '');
+        this.setInputValue('profile-phone', profileData.phone || '');
+        this.setInputValue('profile-location', profileData.location || '');
+        this.setInputValue('profile-farm-size-input', profileData.farmSize || '');
+        this.setInputValue('profile-bio', profileData.bio || '');
     },
 
     loadStoredProfile: function() {
@@ -409,39 +401,29 @@ FarmModules.registerModule('profile', {
         this.updateElement('profile-email', email);
         
         // Update form fields
-        const firstNameField = document.getElementById('profile-first-name');
-        const lastNameField = document.getElementById('profile-last-name');
-        const emailField = document.getElementById('profile-email');
-        const farmNameField = document.getElementById('profile-farm-name');
-        const phoneField = document.getElementById('profile-phone');
-        const locationField = document.getElementById('profile-location');
-        const farmSizeField = document.getElementById('profile-farm-size');
-        const bioField = document.getElementById('profile-bio');
-        
-        if (firstNameField) firstNameField.value = profileData.firstName || '';
-        if (lastNameField) lastNameField.value = profileData.lastName || '';
-        if (emailField) emailField.value = email;
-        if (farmNameField) farmNameField.value = profileData.farmName || '';
-        if (phoneField) phoneField.value = profileData.phone || '';
-        if (locationField) locationField.value = profileData.location || '';
-        if (farmSizeField) farmSizeField.value = profileData.farmSize || '';
-        if (bioField) bioField.value = profileData.bio || '';
+        this.setInputValue('profile-first-name', profileData.firstName || '');
+        this.setInputValue('profile-last-name', profileData.lastName || '');
+        this.setInputValue('profile-email-input', email);
+        this.setInputValue('profile-farm-name', profileData.farmName || '');
+        this.setInputValue('profile-phone', profileData.phone || '');
+        this.setInputValue('profile-location', profileData.location || '');
+        this.setInputValue('profile-farm-size-input', profileData.farmSize || '');
+        this.setInputValue('profile-bio', profileData.bio || '');
         
         // Update avatar
         this.updateUserAvatar(displayName);
     },
 
     updateUserAvatar: function(displayName) {
-        const avatarElement = document.querySelector('.avatar-placeholder');
+        const avatarElement = document.getElementById('profile-avatar');
         if (avatarElement) {
             avatarElement.textContent = this.getUserInitials(displayName);
         }
     },
 
-    getUserInitials: function(displayName = '') {
-        if (!displayName) {
-            const user = this.getCurrentUser();
-            displayName = user?.displayName || 'Farm Manager';
+    getUserInitials: function(displayName) {
+        if (!displayName || displayName === 'Farm Manager') {
+            return 'FM';
         }
         
         return displayName
@@ -449,12 +431,11 @@ FarmModules.registerModule('profile', {
             .map(name => name.charAt(0))
             .join('')
             .toUpperCase()
-            .substring(0, 2) || 'FM';
+            .substring(0, 2);
     },
 
     updateProfileStats: function() {
         // Calculate stats from app data
-        const sales = FarmModules.appData.sales || [];
         const production = FarmModules.appData.production || [];
         const profile = FarmModules.appData.profile || {};
         
@@ -462,7 +443,7 @@ FarmModules.registerModule('profile', {
         const farmSize = profile.farmSize || 0;
         this.updateElement('profile-farm-size', farmSize);
         
-        // Livestock count (placeholder - would need livestock data)
+        // Livestock count (placeholder)
         const livestockCount = production
             .filter(record => record.type === 'livestock')
             .reduce((sum, record) => sum + (record.animalCount || 0), 0);
@@ -471,7 +452,10 @@ FarmModules.registerModule('profile', {
         // Monthly production
         const currentMonth = new Date().getMonth();
         const monthlyProduction = production
-            .filter(record => new Date(record.date).getMonth() === currentMonth)
+            .filter(record => {
+                const recordDate = new Date(record.date);
+                return recordDate.getMonth() === currentMonth;
+            })
             .reduce((sum, record) => sum + (record.amount || 0), 0);
         this.updateElement('profile-production', this.formatAmount(monthlyProduction));
     },
@@ -495,34 +479,21 @@ FarmModules.registerModule('profile', {
         }
         
         // Settings buttons
-        const notificationBtn = document.getElementById('notification-settings');
-        if (notificationBtn) {
-            notificationBtn.addEventListener('click', () => {
-                this.showNotificationSettings();
-            });
-        }
+        const buttons = [
+            { id: 'notification-settings', method: 'showNotificationSettings' },
+            { id: 'privacy-settings', method: 'showPrivacySettings' },
+            { id: 'change-password', method: 'showChangePassword' },
+            { id: 'delete-account', method: 'confirmDeleteAccount' }
+        ];
         
-        const privacyBtn = document.getElementById('privacy-settings');
-        if (privacyBtn) {
-            privacyBtn.addEventListener('click', () => {
-                this.showPrivacySettings();
-            });
-        }
-        
-        const passwordBtn = document.getElementById('change-password');
-        if (passwordBtn) {
-            passwordBtn.addEventListener('click', () => {
-                this.showChangePassword();
-            });
-        }
-        
-        // Delete account
-        const deleteBtn = document.getElementById('delete-account');
-        if (deleteBtn) {
-            deleteBtn.addEventListener('click', () => {
-                this.confirmDeleteAccount();
-            });
-        }
+        buttons.forEach(({ id, method }) => {
+            const button = document.getElementById(id);
+            if (button) {
+                button.addEventListener('click', () => {
+                    this[method]();
+                });
+            }
+        });
         
         // Real-time display name update
         const firstNameField = document.getElementById('profile-first-name');
@@ -546,14 +517,14 @@ FarmModules.registerModule('profile', {
         console.log('💾 Saving profile...');
         
         const formData = {
-            firstName: document.getElementById('profile-first-name').value,
-            lastName: document.getElementById('profile-last-name').value,
-            email: document.getElementById('profile-email').value,
-            phone: document.getElementById('profile-phone').value,
-            farmName: document.getElementById('profile-farm-name').value,
-            location: document.getElementById('profile-location').value,
-            farmSize: parseInt(document.getElementById('profile-farm-size').value) || 0,
-            bio: document.getElementById('profile-bio').value
+            firstName: this.getInputValue('profile-first-name'),
+            lastName: this.getInputValue('profile-last-name'),
+            email: this.getInputValue('profile-email-input'),
+            phone: this.getInputValue('profile-phone'),
+            farmName: this.getInputValue('profile-farm-name'),
+            location: this.getInputValue('profile-location'),
+            farmSize: parseInt(this.getInputValue('profile-farm-size-input')) || 0,
+            bio: this.getInputValue('profile-bio')
         };
         
         // Validate required fields
@@ -569,28 +540,10 @@ FarmModules.registerModule('profile', {
         
         FarmModules.appData.profile = { ...FarmModules.appData.profile, ...formData };
         
-        // Update Firebase user if available
-        this.updateFirebaseProfile(formData);
-        
         // Update stats
         this.updateProfileStats();
         
         this.showNotification('Profile updated successfully!', 'success');
-    },
-
-    updateFirebaseProfile: function(profileData) {
-        const user = this.getCurrentUser();
-        if (user && user.updateProfile) {
-            const displayName = `${profileData.firstName} ${profileData.lastName}`.trim();
-            
-            user.updateProfile({
-                displayName: displayName
-            }).then(() => {
-                console.log('✅ Firebase profile updated');
-            }).catch(error => {
-                console.error('❌ Error updating Firebase profile:', error);
-            });
-        }
     },
 
     showNotificationSettings: function() {
@@ -612,10 +565,10 @@ FarmModules.registerModule('profile', {
     },
 
     deleteAccount: function() {
-        // Implementation would depend on your auth system
         this.showNotification('Account deletion would be processed here', 'warning');
     },
 
+    // Utility methods
     formatAmount: function(amount) {
         if (amount >= 1000) {
             return (amount / 1000).toFixed(1) + 'k';
@@ -630,6 +583,18 @@ FarmModules.registerModule('profile', {
         }
     },
 
+    setInputValue: function(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.value = value;
+        }
+    },
+
+    getInputValue: function(id) {
+        const element = document.getElementById(id);
+        return element ? element.value : '';
+    },
+
     showNotification: function(message, type) {
         if (window.coreModule && window.coreModule.showNotification) {
             window.coreModule.showNotification(message, type);
@@ -638,3 +603,5 @@ FarmModules.registerModule('profile', {
         }
     }
 });
+
+console.log('✅ Profile module loaded and registered');
