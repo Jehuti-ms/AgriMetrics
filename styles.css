@@ -877,3 +877,47 @@ main {
         padding: 12px;
     }
 }
+
+/* Ensure proper spacing for top navigation */
+#app-container main {
+    padding-top: 80px !important;
+}
+
+/* More menu hover effects */
+.more-menu-item:hover {
+    background: rgba(59, 130, 246, 0.1) !important;
+    color: #3b82f6 !important;
+}
+
+.nav-item:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .nav-item span:last-child {
+        display: none;
+    }
+    
+    .nav-brand span:last-child {
+        display: none;
+    }
+    
+    .nav-item {
+        padding: 8px 12px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .top-nav {
+        padding: 0 12px !important;
+    }
+    
+    .nav-item {
+        padding: 8px !important;
+    }
+}
