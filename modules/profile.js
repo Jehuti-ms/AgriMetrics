@@ -409,12 +409,14 @@ FarmModules.registerModule('profile', {
     },
 
     loadRealData: function() {
-        // Initialize profile with real data from app
+        // Get actual user data from Firebase or auth system
+        const currentUser = this.getCurrentUser();
+        
         if (!FarmModules.appData.profile) {
             FarmModules.appData.profile = {
                 farmName: FarmModules.appData.farmName || 'My Farm',
-                farmerName: FarmModules.appData.user?.displayName || 'Farmer',
-                email: FarmModules.appData.user?.email || 'No email',
+                farmerName: currentUser?.displayName || 'Farmer',
+                email: currentUser?.email || 'No email',
                 farmType: '',
                 farmSize: '',
                 farmLocation: '',
@@ -427,6 +429,25 @@ FarmModules.registerModule('profile', {
         }
     },
 
+    getCurrentUser: function() {
+        // Try to get user from Firebase auth
+        if (window.farmModules?.firebase?.getCurrentUser) {
+            return window.farmModules.firebase.getCurrentUser();
+        }
+        
+        // Fallback to auth module
+        if (window.authModule?.getCurrentUser) {
+            return window.authModule.getCurrentUser();
+        }
+        
+        // Check Firebase auth directly
+        if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+            return firebase.auth().currentUser;
+        }
+        
+        return null;
+    },
+
     updateAllDisplays: function() {
         this.updateProfileInfo();
         this.updateStatsOverview();
@@ -436,12 +457,12 @@ FarmModules.registerModule('profile', {
 
     updateProfileInfo: function() {
         const profile = FarmModules.appData.profile;
-        const user = FarmModules.appData.user;
+        const currentUser = this.getCurrentUser();
         
-        // Use real user data
-        const farmName = profile.farmName || user?.farmName || 'My Farm';
-        const farmerName = profile.farmerName || user?.displayName || 'Farmer';
-        const email = profile.email || user?.email || 'No email';
+        // Use actual user data instead of hardcoded values
+        const farmName = profile.farmName || currentUser?.farmName || 'My Farm';
+        const farmerName = profile.farmerName || currentUser?.displayName || 'Farmer';
+        const email = profile.email || currentUser?.email || 'No email';
         
         this.updateElement('profile-farm-name', farmName);
         this.updateElement('profile-farmer-name', farmerName);
@@ -462,35 +483,33 @@ FarmModules.registerModule('profile', {
 
     updateStatsOverview: function() {
         // Real data from other modules
-        const transactions = FarmModules.appData.transactions || [];
+        const sales = FarmModules.appData.sales || [];
         const inventory = FarmModules.appData.inventory || [];
-        const feedTransactions = FarmModules.appData.feedTransactions || [];
+        const feedRecords = FarmModules.appData.feedRecords || [];
         
-        // Calculate farm value (inventory value + cash flow)
-        const inventoryValue = inventory.reduce((sum, item) => sum + (item.quantity * (item.cost || 0)), 0);
-        const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0);
-        const expenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.amount || 0), 0);
-        const netProfit = income - expenses;
-        const farmValue = inventoryValue + netProfit;
+        // Calculate farm value (inventory value + sales revenue)
+        const inventoryValue = inventory.reduce((sum, item) => sum + (item.quantity * (item.price || 0)), 0);
+        const salesRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
+        const farmValue = inventoryValue + salesRevenue;
         
-        this.updateElement('total-transactions', transactions.length);
+        this.updateElement('total-transactions', sales.length);
         this.updateElement('total-inventory', inventory.length);
-        this.updateElement('total-feed-records', feedTransactions.length);
+        this.updateElement('total-feed-records', feedRecords.length);
         this.updateElement('farm-value', this.formatCurrency(farmValue));
         
         // Update data entries count
-        const totalEntries = transactions.length + inventory.length + feedTransactions.length;
+        const totalEntries = sales.length + inventory.length + feedRecords.length;
         this.updateElement('data-entries', `Data entries: ${totalEntries}`);
     },
 
     updateDataManagement: function() {
-        const transactions = FarmModules.appData.transactions || [];
+        const sales = FarmModules.appData.sales || [];
         const inventory = FarmModules.appData.inventory || [];
-        const feedTransactions = FarmModules.appData.feedTransactions || [];
+        const feedRecords = FarmModules.appData.feedRecords || [];
         
-        this.updateElement('transactions-count', `${transactions.length} records`);
+        this.updateElement('transactions-count', `${sales.length} records`);
         this.updateElement('inventory-count', `${inventory.length} items`);
-        this.updateElement('feed-records-count', `${feedTransactions.length} entries`);
+        this.updateElement('feed-records-count', `${feedRecords.length} entries`);
         
         // Calculate approximate data size
         const dataSize = JSON.stringify(FarmModules.appData).length;
@@ -508,42 +527,66 @@ FarmModules.registerModule('profile', {
 
     attachEventListeners: function() {
         // Profile form
-        document.getElementById('profile-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.saveProfile();
-        });
+        const profileForm = document.getElementById('profile-form');
+        if (profileForm) {
+            profileForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveProfile();
+            });
+        }
 
         // Reset button
-        document.getElementById('reset-profile').addEventListener('click', () => {
-            this.updateAllDisplays();
-            this.showNotification('Profile form reset to current values', 'info');
-        });
+        const resetBtn = document.getElementById('reset-profile');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                this.updateAllDisplays();
+                this.showNotification('Profile form reset to current values', 'info');
+            });
+        }
 
         // Settings changes
-        document.getElementById('default-currency').addEventListener('change', (e) => {
-            this.saveSetting('currency', e.target.value);
-        });
+        const currencySelect = document.getElementById('default-currency');
+        if (currencySelect) {
+            currencySelect.addEventListener('change', (e) => {
+                this.saveSetting('currency', e.target.value);
+            });
+        }
 
-        document.getElementById('low-stock-threshold').addEventListener('change', (e) => {
-            this.saveSetting('lowStockThreshold', parseInt(e.target.value));
-        });
+        const thresholdInput = document.getElementById('low-stock-threshold');
+        if (thresholdInput) {
+            thresholdInput.addEventListener('change', (e) => {
+                this.saveSetting('lowStockThreshold', parseInt(e.target.value));
+            });
+        }
 
-        document.getElementById('auto-backup').addEventListener('change', (e) => {
-            this.saveSetting('autoBackup', e.target.checked);
-        });
+        const backupCheckbox = document.getElementById('auto-backup');
+        if (backupCheckbox) {
+            backupCheckbox.addEventListener('change', (e) => {
+                this.saveSetting('autoBackup', e.target.checked);
+            });
+        }
 
         // Data management
-        document.getElementById('export-data').addEventListener('click', () => {
-            this.exportData();
-        });
+        const exportBtn = document.getElementById('export-data');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                this.exportData();
+            });
+        }
 
-        document.getElementById('clear-transactions').addEventListener('click', () => {
-            this.clearTransactions();
-        });
+        const clearTransBtn = document.getElementById('clear-transactions');
+        if (clearTransBtn) {
+            clearTransBtn.addEventListener('click', () => {
+                this.clearTransactions();
+            });
+        }
 
-        document.getElementById('clear-all-data').addEventListener('click', () => {
-            this.clearAllData();
-        });
+        const clearAllBtn = document.getElementById('clear-all-data');
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', () => {
+                this.clearAllData();
+            });
+        }
 
         // Account actions
         const logoutBtn = document.getElementById('logout-profile');
@@ -552,7 +595,7 @@ FarmModules.registerModule('profile', {
         
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
-                if (window.app) window.app.logout();
+                this.logout();
             });
         }
         
@@ -573,19 +616,15 @@ FarmModules.registerModule('profile', {
     saveProfile: function() {
         const profile = FarmModules.appData.profile;
         
-        profile.farmName = document.getElementById('farm-name').value;
-        profile.farmerName = document.getElementById('farmer-name').value;
-        profile.farmType = document.getElementById('farm-type').value;
-        profile.farmSize = document.getElementById('farm-size').value;
-        profile.farmLocation = document.getElementById('farm-location').value;
-        profile.farmDescription = document.getElementById('farm-description').value;
+        profile.farmName = this.getValue('farm-name');
+        profile.farmerName = this.getValue('farmer-name');
+        profile.farmType = this.getValue('farm-type');
+        profile.farmSize = this.getValue('farm-size');
+        profile.farmLocation = this.getValue('farm-location');
+        profile.farmDescription = this.getValue('farm-description');
 
         // Also update main app data
         FarmModules.appData.farmName = profile.farmName;
-        if (FarmModules.appData.user) {
-            FarmModules.appData.user.farmName = profile.farmName;
-            FarmModules.appData.user.displayName = profile.farmerName;
-        }
 
         this.updateAllDisplays();
         this.showNotification('Profile saved successfully!', 'success');
@@ -594,6 +633,37 @@ FarmModules.registerModule('profile', {
     saveSetting: function(setting, value) {
         FarmModules.appData.profile[setting] = value;
         this.showNotification('Setting updated', 'info');
+    },
+
+    logout: function() {
+        if (confirm('Are you sure you want to log out?')) {
+            console.log('🚪 Logging out...');
+            
+            // Try Firebase logout first
+            if (typeof firebase !== 'undefined' && firebase.auth) {
+                firebase.auth().signOut().then(() => {
+                    this.handleLogoutSuccess();
+                }).catch(error => {
+                    console.error('Firebase logout error:', error);
+                    this.handleLogoutSuccess();
+                });
+            } else {
+                this.handleLogoutSuccess();
+            }
+        }
+    },
+
+    handleLogoutSuccess: function() {
+        // Clear app data
+        FarmModules.appData = {};
+        
+        // Show logout message
+        this.showNotification('You have been logged out successfully', 'success');
+        
+        // Redirect to login or reload page
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 1500);
     },
 
     exportData: function() {
@@ -610,18 +680,17 @@ FarmModules.registerModule('profile', {
 
     clearTransactions: function() {
         if (confirm('Are you sure you want to clear all transactions? This cannot be undone.')) {
-            FarmModules.appData.transactions = [];
+            FarmModules.appData.sales = [];
             this.showNotification('All transactions cleared', 'success');
             this.updateAllDisplays();
         }
     },
 
     clearAllData: function() {
-        if (confirm('ARE YOU SURE? This will delete ALL your farm data including transactions, inventory, and feed records. This cannot be undone!')) {
-            FarmModules.appData.transactions = [];
+        if (confirm('ARE YOU SURE? This will delete ALL your farm data including sales, inventory, and feed records. This cannot be undone!')) {
+            FarmModules.appData.sales = [];
             FarmModules.appData.inventory = [];
-            FarmModules.appData.feedTransactions = [];
-            FarmModules.appData.feedStock = { current: 0, unit: 'kg', lowStockThreshold: 100 };
+            FarmModules.appData.feedRecords = [];
             
             this.showNotification('All data cleared successfully', 'success');
             this.updateAllDisplays();
@@ -633,6 +702,11 @@ FarmModules.registerModule('profile', {
             style: 'currency',
             currency: FarmModules.appData.profile?.currency || 'USD'
         }).format(amount);
+    },
+
+    getValue: function(id) {
+        const element = document.getElementById(id);
+        return element ? element.value : '';
     },
 
     setValue: function(id, value) {
