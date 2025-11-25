@@ -648,19 +648,4 @@ handleQuickAction: function(action) {
             alert(message);
         }
     }
-
-    // Add this test method to debug navigation
-testNavigation: function() {
-    console.log('🧪 Testing navigation methods...');
-    console.log('FarmModules:', typeof FarmModules);
-    console.log('FarmModules.showSection:', FarmModules?.showSection);
-    console.log('window.farmModules:', window.farmModules);
-    console.log('window.farmModules.showSection:', window.farmModules?.showSection);
-    console.log('Current hash:', window.location.hash);
-    
-    // Test if modules are registered
-    if (window.farmModules) {
-        console.log('Registered modules:', Object.keys(window.farmModules.modules || {}));
-    }
-},
 });
