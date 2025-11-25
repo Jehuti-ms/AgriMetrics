@@ -662,6 +662,10 @@ FarmModules.registerModule('dashboard', {
 
     initialize: function() {
         console.log('📊 Dashboard module initializing...');
+
+            // Debug navigation
+        this.debugNavigation();
+        
         this.updateWelcomeMessage();
         this.updateFinancialData();
         this.updateRecentActivity();
