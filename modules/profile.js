@@ -5,146 +5,105 @@ FarmModules.registerModule('profile', {
     
     template: `
         <div class="section active">
+            <!-- Profile will be shown as a modal, so this section can be minimal -->
             <div class="module-header">
                 <h1>User Profile</h1>
-                <p>Manage your account settings and preferences</p>
+                <p>Manage your account settings</p>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="open-profile-modal">
+                        👤 Edit Profile
+                    </button>
+                </div>
             </div>
 
-            <div class="profile-container">
-                <!-- Profile Card -->
-                <div class="profile-card card">
-                    <div class="profile-header">
-                        <div class="profile-avatar">
-                            <div class="avatar-placeholder" id="profile-avatar">
-                                FM
-                            </div>
-                        </div>
-                        <div class="profile-info">
-                            <h2 id="profile-display-name">Loading...</h2>
-                            <p id="profile-email" class="profile-email">Loading email...</p>
-                            <p id="profile-role" class="profile-role">Farm Manager</p>
-                        </div>
+            <!-- Quick Profile Preview -->
+            <div class="profile-preview card">
+                <div class="preview-header">
+                    <div class="preview-avatar">
+                        <div class="avatar" id="preview-avatar">FM</div>
                     </div>
-                    
-                    <div class="profile-stats">
-                        <div class="stat-item">
-                            <div class="stat-value" id="profile-farm-size">0</div>
-                            <div class="stat-label">Farm Size (acres)</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="profile-livestock">0</div>
-                            <div class="stat-label">Livestock Count</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="profile-production">0</div>
-                            <div class="stat-label">Monthly Production</div>
-                        </div>
+                    <div class="preview-info">
+                        <h3 id="preview-name">Farm Manager</h3>
+                        <p id="preview-email">user@example.com</p>
+                        <p id="preview-farm">My Farm</p>
                     </div>
                 </div>
-
-                <!-- Profile Form -->
-                <div class="profile-form card">
-                    <h3>Profile Information</h3>
-                    <form id="profile-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="profile-first-name">First Name *</label>
-                                <input type="text" id="profile-first-name" required placeholder="Enter your first name">
-                            </div>
-                            <div class="form-group">
-                                <label for="profile-last-name">Last Name *</label>
-                                <input type="text" id="profile-last-name" required placeholder="Enter your last name">
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="profile-email-input">Email Address *</label>
-                                <input type="email" id="profile-email-input" required placeholder="your.email@example.com">
-                            </div>
-                            <div class="form-group">
-                                <label for="profile-phone">Phone Number</label>
-                                <input type="tel" id="profile-phone" placeholder="+1 (555) 000-0000">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="profile-farm-name">Farm Name</label>
-                            <input type="text" id="profile-farm-name" placeholder="Enter your farm name">
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="profile-location">Location</label>
-                                <input type="text" id="profile-location" placeholder="City, State">
-                            </div>
-                            <div class="form-group">
-                                <label for="profile-farm-size-input">Farm Size (acres)</label>
-                                <input type="number" id="profile-farm-size-input" min="0" placeholder="0">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="profile-bio">Bio</label>
-                            <textarea id="profile-bio" placeholder="Tell us about your farm and experience..." rows="4"></textarea>
-                        </div>
-
-                        <div class="form-actions">
-                            <button type="button" class="btn btn-text" id="cancel-profile">Cancel</button>
-                            <button type="submit" class="btn btn-primary" id="save-profile">Save Changes</button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Account Settings -->
-                <div class="account-settings card">
-                    <h3>Account Settings</h3>
-                    <div class="settings-list">
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <h4>Notification Preferences</h4>
-                                <p>Manage how you receive notifications</p>
-                            </div>
-                            <button class="btn btn-text" id="notification-settings">Configure</button>
-                        </div>
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <h4>Privacy Settings</h4>
-                                <p>Control your privacy and data sharing</p>
-                            </div>
-                            <button class="btn btn-text" id="privacy-settings">Manage</button>
-                        </div>
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <h4>Change Password</h4>
-                                <p>Update your account password</p>
-                            </div>
-                            <button class="btn btn-text" id="change-password">Change</button>
-                        </div>
+                <div class="preview-stats">
+                    <div class="stat">
+                        <div class="stat-value" id="preview-farm-size">0</div>
+                        <div class="stat-label">Acres</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="preview-livestock">0</div>
+                        <div class="stat-label">Animals</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="preview-production">0</div>
+                        <div class="stat-label">Production</div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Session Management -->
-                <div class="session-management card">
-                    <h3>Session</h3>
-                    <div class="session-actions">
-                        <div class="session-info">
-                            <h4>Log Out</h4>
-                            <p>Sign out of your account on this device</p>
-                        </div>
-                        <button class="btn btn-warning" id="logout-button">Log Out</button>
+            <!-- Profile Modal -->
+            <div id="profile-modal" class="modal hidden">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>User Profile</h3>
+                        <button class="btn-icon close-modal">&times;</button>
                     </div>
-                </div>
+                    <div class="modal-body">
+                        <form id="profile-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="profile-first-name">First Name *</label>
+                                    <input type="text" id="profile-first-name" required placeholder="Enter your first name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="profile-last-name">Last Name *</label>
+                                    <input type="text" id="profile-last-name" required placeholder="Enter your last name">
+                                </div>
+                            </div>
 
-                <!-- Danger Zone -->
-                <div class="danger-zone card">
-                    <h3>Danger Zone</h3>
-                    <div class="danger-actions">
-                        <div class="danger-info">
-                            <h4>Delete Account</h4>
-                            <p>Permanently delete your account and all data</p>
-                        </div>
-                        <button class="btn btn-danger" id="delete-account">Delete Account</button>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="profile-email">Email Address *</label>
+                                    <input type="email" id="profile-email" required placeholder="your.email@example.com">
+                                </div>
+                                <div class="form-group">
+                                    <label for="profile-phone">Phone Number</label>
+                                    <input type="tel" id="profile-phone" placeholder="+1 (555) 000-0000">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="profile-farm-name">Farm Name</label>
+                                <input type="text" id="profile-farm-name" placeholder="Enter your farm name">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="profile-location">Location</label>
+                                    <input type="text" id="profile-location" placeholder="City, State">
+                                </div>
+                                <div class="form-group">
+                                    <label for="profile-farm-size">Farm Size (acres)</label>
+                                    <input type="number" id="profile-farm-size" min="0" placeholder="0">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="profile-bio">Bio</label>
+                                <textarea id="profile-bio" placeholder="Tell us about your farm and experience..." rows="3"></textarea>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-text" id="logout-btn">Log Out</button>
+                                <div>
+                                    <button type="button" class="btn btn-text close-modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -152,223 +111,90 @@ FarmModules.registerModule('profile', {
     `,
 
     styles: `
-        .profile-container {
-            max-width: 800px;
-            margin: 0 auto;
+        .profile-preview {
+            max-width: 500px;
+            margin: 2rem auto;
         }
 
-        .profile-card {
-            margin-bottom: 2rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .profile-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.1);
-            z-index: 1;
-        }
-
-        .profile-card > * {
-            position: relative;
-            z-index: 2;
-        }
-
-        .profile-header {
+        .preview-header {
             display: flex;
             align-items: center;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
 
-        .profile-avatar {
+        .preview-avatar {
             flex-shrink: 0;
         }
 
-        .avatar-placeholder {
-            width: 80px;
-            height: 80px;
+        .avatar {
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
+            background: var(--primary-color);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: bold;
             color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
         }
 
-        .profile-info h2 {
-            margin: 0 0 0.5rem 0;
-            font-size: 1.5rem;
-            color: white;
-            font-weight: 600;
-        }
-
-        .profile-email {
+        .preview-info h3 {
             margin: 0 0 0.25rem 0;
-            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.25rem;
+            color: var(--text-color);
+        }
+
+        .preview-info p {
+            margin: 0 0 0.25rem 0;
+            color: var(--text-muted);
             font-size: 0.9rem;
         }
 
-        .profile-role {
-            margin: 0;
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 500;
-            font-size: 0.9rem;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            display: inline-block;
-        }
-
-        .profile-stats {
+        .preview-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 1rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
         }
 
-        .stat-item {
+        .stat {
             text-align: center;
         }
 
         .stat-value {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
-            color: white;
+            color: var(--primary-color);
             margin-bottom: 0.25rem;
         }
 
         .stat-label {
             font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .profile-form {
-            margin-bottom: 2rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .form-actions {
             display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: center;
             margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
         }
 
-        .account-settings {
-            margin-bottom: 2rem;
+        #logout-btn {
+            color: var(--warning-color);
+            border-color: var(--warning-color);
         }
 
-        .settings-list {
-            space-y: 0.5rem;
-        }
-
-        .setting-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .setting-item:last-child {
-            border-bottom: none;
-        }
-
-        .setting-info h4 {
-            margin: 0 0 0.25rem 0;
-            font-size: 1rem;
-            color: var(--text-color);
-        }
-
-        .setting-info p {
-            margin: 0;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
-
-        .session-management {
-            margin-bottom: 2rem;
-            border-left: 4px solid var(--warning-color);
-        }
-
-        .session-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .session-info h4 {
-            margin: 0 0 0.25rem 0;
-            color: var(--warning-dark);
-        }
-
-        .session-info p {
-            margin: 0;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
-
-        .danger-zone {
-            border: 1px solid var(--error-color);
-            border-left: 4px solid var(--error-color);
-        }
-
-        .danger-zone h3 {
-            color: var(--error-color);
-        }
-
-        .danger-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .danger-info h4 {
-            margin: 0 0 0.25rem 0;
-            color: var(--error-color);
-        }
-
-        .danger-info p {
-            margin: 0;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
-
-        .btn-warning {
+        #logout-btn:hover {
             background: var(--warning-color);
-            color: var(--warning-dark);
-            border: 1px solid var(--warning-dark);
-        }
-
-        .btn-warning:hover {
-            background: var(--warning-dark);
             color: white;
-        }
-
-        @media (max-width: 768px) {
-            .profile-header {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .session-actions,
-            .danger-actions {
-                flex-direction: column;
-                gap: 1rem;
-                align-items: flex-start;
-            }
         }
     `,
 
@@ -376,7 +202,7 @@ FarmModules.registerModule('profile', {
         console.log('👤 Profile module initializing...');
         this.loadUserProfile();
         this.attachEventListeners();
-        this.updateProfileStats();
+        this.updatePreview();
     },
 
     loadUserProfile: function() {
@@ -414,17 +240,15 @@ FarmModules.registerModule('profile', {
         console.log('👤 Loading profile from auth:', user);
         
         const displayName = user.displayName || 'Farm Manager';
-        const email = user.email || 'No email';
+        const email = user.email || 'user@example.com';
         
-        // Update profile header
-        this.updateElement('profile-display-name', displayName);
-        this.updateElement('profile-email', email);
+        // Update preview
+        this.updateElement('preview-name', displayName);
+        this.updateElement('preview-email', email);
+        this.updateAvatar(displayName);
         
-        // Update form fields
+        // Update modal form fields
         this.populateFormFields(user);
-        
-        // Update avatar with user initials
-        this.updateUserAvatar(displayName);
     },
 
     populateFormFields: function(user) {
@@ -437,7 +261,7 @@ FarmModules.registerModule('profile', {
         // Set form values
         this.setInputValue('profile-first-name', firstName);
         this.setInputValue('profile-last-name', lastName);
-        this.setInputValue('profile-email-input', email);
+        this.setInputValue('profile-email', email);
         
         // Load additional profile data from storage
         this.loadAdditionalProfileData();
@@ -450,8 +274,11 @@ FarmModules.registerModule('profile', {
         this.setInputValue('profile-farm-name', profileData.farmName || '');
         this.setInputValue('profile-phone', profileData.phone || '');
         this.setInputValue('profile-location', profileData.location || '');
-        this.setInputValue('profile-farm-size-input', profileData.farmSize || '');
+        this.setInputValue('profile-farm-size', profileData.farmSize || '');
         this.setInputValue('profile-bio', profileData.bio || '');
+        
+        // Update preview
+        this.updateElement('preview-farm', profileData.farmName || 'My Farm');
     },
 
     loadStoredProfile: function() {
@@ -470,26 +297,51 @@ FarmModules.registerModule('profile', {
         const displayName = `${profileData.firstName} ${profileData.lastName}`.trim() || 'Farm Manager';
         const email = profileData.email || 'user@example.com';
         
-        // Update profile header
-        this.updateElement('profile-display-name', displayName);
-        this.updateElement('profile-email', email);
+        // Update preview
+        this.updateElement('preview-name', displayName);
+        this.updateElement('preview-email', email);
+        this.updateElement('preview-farm', profileData.farmName || 'My Farm');
+        this.updateAvatar(displayName);
         
         // Update form fields
         this.setInputValue('profile-first-name', profileData.firstName || '');
         this.setInputValue('profile-last-name', profileData.lastName || '');
-        this.setInputValue('profile-email-input', email);
+        this.setInputValue('profile-email', email);
         this.setInputValue('profile-farm-name', profileData.farmName || '');
         this.setInputValue('profile-phone', profileData.phone || '');
         this.setInputValue('profile-location', profileData.location || '');
-        this.setInputValue('profile-farm-size-input', profileData.farmSize || '');
+        this.setInputValue('profile-farm-size', profileData.farmSize || '');
         this.setInputValue('profile-bio', profileData.bio || '');
-        
-        // Update avatar
-        this.updateUserAvatar(displayName);
     },
 
-    updateUserAvatar: function(displayName) {
-        const avatarElement = document.getElementById('profile-avatar');
+    updatePreview: function() {
+        // Calculate stats from app data
+        const production = FarmModules.appData.production || [];
+        const profile = FarmModules.appData.profile || {};
+        
+        // Farm size
+        const farmSize = profile.farmSize || 0;
+        this.updateElement('preview-farm-size', farmSize);
+        
+        // Livestock count
+        const livestockCount = production
+            .filter(record => record.type === 'livestock')
+            .reduce((sum, record) => sum + (record.animalCount || 0), 0);
+        this.updateElement('preview-livestock', livestockCount);
+        
+        // Monthly production
+        const currentMonth = new Date().getMonth();
+        const monthlyProduction = production
+            .filter(record => {
+                const recordDate = new Date(record.date);
+                return recordDate.getMonth() === currentMonth;
+            })
+            .reduce((sum, record) => sum + (record.amount || 0), 0);
+        this.updateElement('preview-production', this.formatAmount(monthlyProduction));
+    },
+
+    updateAvatar: function(displayName) {
+        const avatarElement = document.getElementById('preview-avatar');
         if (avatarElement) {
             avatarElement.textContent = this.getUserInitials(displayName);
         }
@@ -508,33 +360,15 @@ FarmModules.registerModule('profile', {
             .substring(0, 2);
     },
 
-    updateProfileStats: function() {
-        // Calculate stats from app data
-        const production = FarmModules.appData.production || [];
-        const profile = FarmModules.appData.profile || {};
-        
-        // Farm size
-        const farmSize = profile.farmSize || 0;
-        this.updateElement('profile-farm-size', farmSize);
-        
-        // Livestock count (placeholder)
-        const livestockCount = production
-            .filter(record => record.type === 'livestock')
-            .reduce((sum, record) => sum + (record.animalCount || 0), 0);
-        this.updateElement('profile-livestock', livestockCount);
-        
-        // Monthly production
-        const currentMonth = new Date().getMonth();
-        const monthlyProduction = production
-            .filter(record => {
-                const recordDate = new Date(record.date);
-                return recordDate.getMonth() === currentMonth;
-            })
-            .reduce((sum, record) => sum + (record.amount || 0), 0);
-        this.updateElement('profile-production', this.formatAmount(monthlyProduction));
-    },
-
     attachEventListeners: function() {
+        // Open modal button
+        const openBtn = document.getElementById('open-profile-modal');
+        if (openBtn) {
+            openBtn.addEventListener('click', () => {
+                this.showModal();
+            });
+        }
+
         // Profile form submission
         const profileForm = document.getElementById('profile-form');
         if (profileForm) {
@@ -544,47 +378,68 @@ FarmModules.registerModule('profile', {
             });
         }
         
-        // Cancel button
-        const cancelBtn = document.getElementById('cancel-profile');
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', () => {
-                this.loadUserProfile(); // Reload original data
+        // Logout button
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                this.logout();
             });
         }
         
-        // Settings buttons
-        const buttons = [
-            { id: 'notification-settings', method: 'showNotificationSettings' },
-            { id: 'privacy-settings', method: 'showPrivacySettings' },
-            { id: 'change-password', method: 'showChangePassword' },
-            { id: 'logout-button', method: 'logout' },
-            { id: 'delete-account', method: 'confirmDeleteAccount' }
-        ];
-        
-        buttons.forEach(({ id, method }) => {
-            const button = document.getElementById(id);
-            if (button) {
-                button.addEventListener('click', () => {
-                    this[method]();
-                });
-            }
+        // Modal close events
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.hideModal();
+            });
         });
-        
-        // Real-time display name update
+
+        // Modal backdrop
+        const modal = document.getElementById('profile-modal');
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) {
+                    this.hideModal();
+                }
+            });
+        }
+
+        // Real-time preview updates
         const firstNameField = document.getElementById('profile-first-name');
         const lastNameField = document.getElementById('profile-last-name');
+        const farmNameField = document.getElementById('profile-farm-name');
         
         if (firstNameField && lastNameField) {
-            const updateDisplayName = () => {
+            const updatePreviewName = () => {
                 const firstName = firstNameField.value || '';
                 const lastName = lastNameField.value || '';
                 const displayName = `${firstName} ${lastName}`.trim() || 'Farm Manager';
-                this.updateElement('profile-display-name', displayName);
-                this.updateUserAvatar(displayName);
+                this.updateElement('preview-name', displayName);
+                this.updateAvatar(displayName);
             };
             
-            firstNameField.addEventListener('input', updateDisplayName);
-            lastNameField.addEventListener('input', updateDisplayName);
+            firstNameField.addEventListener('input', updatePreviewName);
+            lastNameField.addEventListener('input', updatePreviewName);
+        }
+
+        if (farmNameField) {
+            farmNameField.addEventListener('input', () => {
+                const farmName = farmNameField.value || 'My Farm';
+                this.updateElement('preview-farm', farmName);
+            });
+        }
+    },
+
+    showModal: function() {
+        const modal = document.getElementById('profile-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    },
+
+    hideModal: function() {
+        const modal = document.getElementById('profile-modal');
+        if (modal) {
+            modal.classList.add('hidden');
         }
     },
 
@@ -594,11 +449,11 @@ FarmModules.registerModule('profile', {
         const formData = {
             firstName: this.getInputValue('profile-first-name'),
             lastName: this.getInputValue('profile-last-name'),
-            email: this.getInputValue('profile-email-input'),
+            email: this.getInputValue('profile-email'),
             phone: this.getInputValue('profile-phone'),
             farmName: this.getInputValue('profile-farm-name'),
             location: this.getInputValue('profile-location'),
-            farmSize: parseInt(this.getInputValue('profile-farm-size-input')) || 0,
+            farmSize: parseInt(this.getInputValue('profile-farm-size')) || 0,
             bio: this.getInputValue('profile-bio')
         };
         
@@ -615,10 +470,11 @@ FarmModules.registerModule('profile', {
         
         FarmModules.appData.profile = { ...FarmModules.appData.profile, ...formData };
         
-        // Update stats
-        this.updateProfileStats();
+        // Update preview
+        this.updatePreview();
         
         this.showNotification('Profile updated successfully!', 'success');
+        this.hideModal();
     },
 
     logout: function() {
@@ -648,30 +504,8 @@ FarmModules.registerModule('profile', {
         
         // Redirect to login or reload page
         setTimeout(() => {
-            window.location.href = '/'; // or your login page
+            window.location.href = '/';
         }, 1500);
-    },
-
-    showNotificationSettings: function() {
-        this.showNotification('Notification settings would open here', 'info');
-    },
-
-    showPrivacySettings: function() {
-        this.showNotification('Privacy settings would open here', 'info');
-    },
-
-    showChangePassword: function() {
-        this.showNotification('Password change would open here', 'info');
-    },
-
-    confirmDeleteAccount: function() {
-        if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-            this.deleteAccount();
-        }
-    },
-
-    deleteAccount: function() {
-        this.showNotification('Account deletion would be processed here', 'warning');
     },
 
     // Utility methods
