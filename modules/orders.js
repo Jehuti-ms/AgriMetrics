@@ -1,125 +1,144 @@
-// modules/orders.js
-FarmModules.registerModule('orders', {
-    name: 'Orders',
-    icon: '📋',
+// modules/sales-record.js
+FarmModules.registerModule('sales-record', {
+    name: 'Sales Records',
+    icon: '💰',
     
     template: `
         <div class="section active">
             <div class="module-header">
-                <h1>Produce Orders</h1>
-                <p>Manage customer orders and track order fulfillment</p>
+                <h1>Sales Records</h1>
+                <p>Track product sales and revenue</p>
                 <div class="header-actions">
-                    <button class="btn btn-primary" id="add-order">
-                        ➕ New Order
+                    <button class="btn btn-primary" id="add-sale">
+                        ➕ Record Sale
                     </button>
                 </div>
             </div>
 
-            <!-- Order Summary -->
-            <div class="orders-summary">
+            <!-- Sales Summary -->
+            <div class="sales-summary">
                 <div class="summary-card">
-                    <div class="summary-icon">📥</div>
+                    <div class="summary-icon">📈</div>
                     <div class="summary-content">
-                        <h3>Pending Orders</h3>
-                        <div class="summary-value" id="pending-orders">0</div>
-                        <div class="summary-period">Awaiting fulfillment</div>
+                        <h3>Today's Sales</h3>
+                        <div class="summary-value" id="today-sales">$0</div>
+                        <div class="summary-period" id="today-date">Today</div>
                     </div>
                 </div>
                 <div class="summary-card">
-                    <div class="summary-icon">🚚</div>
+                    <div class="summary-icon">📊</div>
                     <div class="summary-content">
-                        <h3>In Progress</h3>
-                        <div class="summary-value" id="progress-orders">0</div>
-                        <div class="summary-period">Being processed</div>
-                    </div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-icon">✅</div>
-                    <div class="summary-content">
-                        <h3>Completed</h3>
-                        <div class="summary-value" id="completed-orders">0</div>
-                        <div class="summary-period">This month</div>
+                        <h3>This Week</h3>
+                        <div class="summary-value" id="week-sales">$0</div>
+                        <div class="summary-period">7 days</div>
                     </div>
                 </div>
                 <div class="summary-card">
                     <div class="summary-icon">💰</div>
                     <div class="summary-content">
-                        <h3>Revenue</h3>
-                        <div class="summary-value" id="total-revenue">$0</div>
-                        <div class="summary-period">This month</div>
+                        <h3>This Month</h3>
+                        <div class="summary-value" id="month-sales">$0</div>
+                        <div class="summary-period">30 days</div>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon">🎯</div>
+                    <div class="summary-content">
+                        <h3>Top Product</h3>
+                        <div class="summary-value" id="top-product">-</div>
+                        <div class="summary-period" id="top-product-revenue">$0</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Order Form -->
-            <div class="quick-order card">
-                <h3>Quick Order</h3>
-                <form id="quick-order-form" class="form-inline">
+            <!-- Quick Sale Form -->
+            <div class="quick-sale card">
+                <h3>Quick Sale</h3>
+                <form id="quick-sale-form" class="form-inline">
                     <div class="form-row compact">
-                        <div class="form-group">
-                            <input type="text" id="quick-customer" placeholder="Customer name" required class="form-compact">
-                        </div>
                         <div class="form-group">
                             <select id="quick-product" required class="form-compact">
                                 <option value="">Select Product</option>
-                                <option value="broilers">Broilers</option>
-                                <option value="eggs">Eggs</option>
-                                <option value="vegetables">Vegetables</option>
-                                <option value="fruits">Fruits</option>
-                                <option value="dairy">Dairy</option>
-                                <option value="other">Other</option>
+                                <optgroup label="Livestock">
+                                    <option value="broilers-live">Broilers (Live)</option>
+                                    <option value="broilers-dressed">Broilers (Dressed)</option>
+                                    <option value="eggs">Eggs</option>
+                                    <option value="pork">Pork</option>
+                                    <option value="beef">Beef</option>
+                                </optgroup>
+                                <optgroup label="Produce">
+                                    <option value="tomatoes">Tomatoes</option>
+                                    <option value="peppers">Peppers</option>
+                                    <option value="cucumbers">Cucumbers</option>
+                                    <option value="lettuce">Lettuce</option>
+                                    <option value="carrots">Carrots</option>
+                                    <option value="potatoes">Potatoes</option>
+                                </optgroup>
+                                <optgroup label="Other">
+                                    <option value="honey">Honey</option>
+                                    <option value="milk">Milk</option>
+                                    <option value="cheese">Cheese</option>
+                                    <option value="other">Other</option>
+                                </optgroup>
                             </select>
                         </div>
                         <div class="form-group">
                             <input type="number" id="quick-quantity" placeholder="Qty" required class="form-compact" min="1">
                         </div>
                         <div class="form-group">
-                            <input type="number" id="quick-price" placeholder="Price" step="0.01" class="form-compact" min="0">
+                            <select id="quick-unit" class="form-compact">
+                                <option value="kg">kg</option>
+                                <option value="lbs">lbs</option>
+                                <option value="units">units</option>
+                                <option value="dozen">dozen</option>
+                                <option value="case">case</option>
+                            </select>
                         </div>
                         <div class="form-group">
-                            <button type="submit" class="btn btn-primary btn-compact">Create Order</button>
+                            <input type="number" id="quick-price" placeholder="Price" step="0.01" required class="form-compact" min="0">
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-compact">Record Sale</button>
                         </div>
                     </div>
                 </form>
             </div>
 
-            <!-- Orders List -->
-            <div class="orders-list card">
+            <!-- Sales Records -->
+            <div class="sales-records card">
                 <div class="card-header">
-                    <h3>Recent Orders</h3>
+                    <h3>Recent Sales</h3>
                     <div class="filter-controls">
-                        <select id="status-filter">
-                            <option value="all">All Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="confirmed">Confirmed</option>
-                            <option value="in-progress">In Progress</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
+                        <select id="period-filter">
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="all">All Time</option>
                         </select>
-                        <button class="btn btn-text" id="export-orders">Export</button>
+                        <button class="btn btn-text" id="export-sales">Export</button>
                     </div>
                 </div>
                 <div class="table-container">
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Order ID</th>
-                                <th>Customer</th>
+                                <th>Date</th>
                                 <th>Product</th>
+                                <th>Customer</th>
                                 <th>Quantity</th>
+                                <th>Unit Price</th>
                                 <th>Total</th>
-                                <th>Status</th>
-                                <th>Due Date</th>
+                                <th>Payment</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="orders-body">
+                        <tbody id="sales-body">
                             <tr>
                                 <td colspan="8" class="empty-state">
                                     <div class="empty-content">
-                                        <span class="empty-icon">📋</span>
-                                        <h4>No orders yet</h4>
-                                        <p>Start by creating your first order</p>
+                                        <span class="empty-icon">💰</span>
+                                        <h4>No sales recorded yet</h4>
+                                        <p>Start recording your product sales</p>
                                     </div>
                                 </td>
                             </tr>
@@ -128,39 +147,40 @@ FarmModules.registerModule('orders', {
                 </div>
             </div>
 
-            <!-- Order Modal -->
-            <div id="order-modal" class="modal hidden">
+            <!-- Sales Modal -->
+            <div id="sale-modal" class="modal hidden">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h3 id="order-modal-title">New Order</h3>
+                        <h3 id="sale-modal-title">Record Sale</h3>
                         <button class="btn-icon close-modal">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <form id="order-form">
-                            <input type="hidden" id="order-id">
+                        <form id="sale-form">
+                            <input type="hidden" id="sale-id">
                             
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="order-customer">Customer Name *</label>
-                                    <input type="text" id="order-customer" required placeholder="Enter customer name">
+                                    <label for="sale-date">Sale Date *</label>
+                                    <input type="date" id="sale-date" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="order-phone">Phone Number</label>
-                                    <input type="tel" id="order-phone" placeholder="Enter phone number">
+                                    <label for="sale-customer">Customer Name</label>
+                                    <input type="text" id="sale-customer" placeholder="Customer name (optional)">
                                 </div>
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="order-product">Product *</label>
-                                    <select id="order-product" required>
+                                    <label for="sale-product">Product *</label>
+                                    <select id="sale-product" required>
                                         <option value="">Select Product</option>
                                         <optgroup label="Livestock">
-                                            <option value="broilers">Broilers (Live)</option>
+                                            <option value="broilers-live">Broilers (Live)</option>
                                             <option value="broilers-dressed">Broilers (Dressed)</option>
                                             <option value="eggs">Eggs</option>
                                             <option value="pork">Pork</option>
                                             <option value="beef">Beef</option>
+                                            <option value="chicken-parts">Chicken Parts</option>
                                         </optgroup>
                                         <optgroup label="Produce">
                                             <option value="tomatoes">Tomatoes</option>
@@ -169,18 +189,26 @@ FarmModules.registerModule('orders', {
                                             <option value="lettuce">Lettuce</option>
                                             <option value="carrots">Carrots</option>
                                             <option value="potatoes">Potatoes</option>
+                                            <option value="onions">Onions</option>
+                                            <option value="cabbage">Cabbage</option>
+                                        </optgroup>
+                                        <optgroup label="Dairy">
+                                            <option value="milk">Milk</option>
+                                            <option value="cheese">Cheese</option>
+                                            <option value="yogurt">Yogurt</option>
+                                            <option value="butter">Butter</option>
                                         </optgroup>
                                         <optgroup label="Other">
                                             <option value="honey">Honey</option>
-                                            <option value="milk">Milk</option>
-                                            <option value="cheese">Cheese</option>
+                                            <option value="jam">Jam/Preserves</option>
+                                            <option value="bread">Bread</option>
                                             <option value="other">Other</option>
                                         </optgroup>
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label for="order-unit">Unit *</label>
-                                    <select id="order-unit" required>
+                                    <label for="sale-unit">Unit *</label>
+                                    <select id="sale-unit" required>
                                         <option value="kg">Kilograms (kg)</option>
                                         <option value="lbs">Pounds (lbs)</option>
                                         <option value="units">Units</option>
@@ -188,52 +216,59 @@ FarmModules.registerModule('orders', {
                                         <option value="case">Case</option>
                                         <option value="crate">Crate</option>
                                         <option value="bag">Bag</option>
+                                        <option value="bottle">Bottle</option>
+                                        <option value="jar">Jar</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="order-quantity">Quantity *</label>
-                                    <input type="number" id="order-quantity" min="1" required placeholder="0">
+                                    <label for="sale-quantity">Quantity *</label>
+                                    <input type="number" id="sale-quantity" min="0.01" step="0.01" required placeholder="0.00">
                                 </div>
                                 <div class="form-group">
-                                    <label for="order-price">Price per Unit ($) *</label>
-                                    <input type="number" id="order-price" step="0.01" min="0" required placeholder="0.00">
+                                    <label for="sale-price">Unit Price ($) *</label>
+                                    <input type="number" id="sale-price" step="0.01" min="0" required placeholder="0.00">
                                 </div>
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="order-status">Status *</label>
-                                    <select id="order-status" required>
+                                    <label for="sale-payment">Payment Method *</label>
+                                    <select id="sale-payment" required>
+                                        <option value="cash">Cash</option>
+                                        <option value="card">Credit/Debit Card</option>
+                                        <option value="transfer">Bank Transfer</option>
+                                        <option value="check">Check</option>
+                                        <option value="mobile">Mobile Payment</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="sale-status">Payment Status</label>
+                                    <select id="sale-status">
+                                        <option value="paid">Paid</option>
                                         <option value="pending">Pending</option>
-                                        <option value="confirmed">Confirmed</option>
-                                        <option value="in-progress">In Progress</option>
-                                        <option value="completed">Completed</option>
-                                        <option value="cancelled">Cancelled</option>
+                                        <option value="partial">Partial Payment</option>
                                     </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="order-due-date">Due Date *</label>
-                                    <input type="date" id="order-due-date" required>
                                 </div>
                             </div>
 
                             <div class="form-group">
-                                <label for="order-notes">Order Notes (Optional)</label>
-                                <textarea id="order-notes" placeholder="Special instructions, delivery notes, etc." rows="3"></textarea>
+                                <label for="sale-notes">Notes (Optional)</label>
+                                <textarea id="sale-notes" placeholder="Sale notes, customer details, etc." rows="3"></textarea>
                             </div>
 
-                            <div class="order-total">
-                                <h4>Order Total: <span id="order-total-amount">$0.00</span></h4>
+                            <div class="sale-total">
+                                <h4>Sale Total: <span id="sale-total-amount">$0.00</span></h4>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-text close-modal">Cancel</button>
-                        <button type="button" class="btn btn-danger" id="delete-order" style="display: none;">Delete</button>
-                        <button type="button" class="btn btn-primary" id="save-order">Save Order</button>
+                        <button type="button" class="btn btn-danger" id="delete-sale" style="display: none;">Delete</button>
+                        <button type="button" class="btn btn-primary" id="save-sale">Save Sale</button>
                     </div>
                 </div>
             </div>
@@ -241,7 +276,7 @@ FarmModules.registerModule('orders', {
     `,
 
     styles: `
-        .orders-summary {
+        .sales-summary {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 1rem;
@@ -280,15 +315,15 @@ FarmModules.registerModule('orders', {
             color: var(--text-muted);
         }
 
-        .quick-order {
+        .quick-sale {
             margin: 1.5rem 0;
         }
 
-        .quick-order .form-row.compact {
+        .quick-sale .form-row.compact {
             margin-bottom: 0;
         }
 
-        .orders-list .card-header {
+        .sales-records .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -301,7 +336,7 @@ FarmModules.registerModule('orders', {
             align-items: center;
         }
 
-        .order-total {
+        .sale-total {
             background: var(--bg-color);
             padding: 1rem;
             border-radius: 8px;
@@ -309,17 +344,17 @@ FarmModules.registerModule('orders', {
             text-align: center;
         }
 
-        .order-total h4 {
+        .sale-total h4 {
             margin: 0;
             color: var(--text-color);
         }
 
-        #order-total-amount {
+        #sale-total-amount {
             color: var(--success-color);
             font-weight: 700;
         }
 
-        .status-badge {
+        .payment-badge {
             padding: 0.25rem 0.75rem;
             border-radius: 20px;
             font-size: 0.8rem;
@@ -327,29 +362,19 @@ FarmModules.registerModule('orders', {
             text-transform: capitalize;
         }
 
-        .status-pending {
-            background: var(--warning-light);
-            color: var(--warning-dark);
-        }
-
-        .status-confirmed {
-            background: var(--info-light);
-            color: var(--info-dark);
-        }
-
-        .status-in-progress {
-            background: var(--primary-light);
-            color: var(--primary-color);
-        }
-
-        .status-completed {
+        .payment-paid {
             background: var(--success-light);
             color: var(--success-color);
         }
 
-        .status-cancelled {
-            background: var(--danger-light);
-            color: var(--danger-color);
+        .payment-pending {
+            background: var(--warning-light);
+            color: var(--warning-dark);
+        }
+
+        .payment-partial {
+            background: var(--info-light);
+            color: var(--info-dark);
         }
 
         .empty-state {
@@ -377,62 +402,93 @@ FarmModules.registerModule('orders', {
     `,
 
     initialize: function() {
-        console.log('Orders module initializing...');
-        this.loadOrdersData();
+        console.log('Sales Records module initializing...');
+        this.loadSalesData();
         this.attachEventListeners();
         this.updateSummary();
-        this.renderOrdersTable();
+        this.renderSalesTable();
     },
 
-    loadOrdersData: function() {
-        if (!FarmModules.appData.orders) {
-            FarmModules.appData.orders = [];
+    loadSalesData: function() {
+        if (!FarmModules.appData.sales) {
+            FarmModules.appData.sales = [];
         }
     },
 
     updateSummary: function() {
-        const orders = FarmModules.appData.orders || [];
-        const currentDate = new Date();
-        const currentMonth = currentDate.getMonth();
-        const currentYear = currentDate.getFullYear();
+        const sales = FarmModules.appData.sales || [];
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Update today's date display
+        document.getElementById('today-date').textContent = new Date().toLocaleDateString();
 
-        const monthlyOrders = orders.filter(order => {
-            const orderDate = new Date(order.orderDate);
-            return orderDate.getMonth() === currentMonth && 
-                   orderDate.getFullYear() === currentYear;
+        // Calculate sales for different periods
+        const todaySales = sales
+            .filter(sale => sale.date === today)
+            .reduce((sum, sale) => sum + sale.totalAmount, 0);
+
+        const weekSales = this.getSalesForPeriod(sales, 7);
+        const monthSales = this.getSalesForPeriod(sales, 30);
+
+        // Find top product
+        const productSales = {};
+        sales.forEach(sale => {
+            if (!productSales[sale.product]) {
+                productSales[sale.product] = 0;
+            }
+            productSales[sale.product] += sale.totalAmount;
         });
 
-        const pendingOrders = orders.filter(order => order.status === 'pending').length;
-        const progressOrders = orders.filter(order => order.status === 'in-progress').length;
-        const completedOrders = monthlyOrders.filter(order => order.status === 'completed').length;
-        
-        const totalRevenue = monthlyOrders
-            .filter(order => order.status === 'completed')
-            .reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+        let topProduct = '-';
+        let topRevenue = 0;
+        Object.entries(productSales).forEach(([product, revenue]) => {
+            if (revenue > topRevenue) {
+                topProduct = this.formatProductName(product);
+                topRevenue = revenue;
+            }
+        });
 
-        this.updateElement('pending-orders', pendingOrders);
-        this.updateElement('progress-orders', progressOrders);
-        this.updateElement('completed-orders', completedOrders);
-        this.updateElement('total-revenue', this.formatCurrency(totalRevenue));
+        this.updateElement('today-sales', this.formatCurrency(todaySales));
+        this.updateElement('week-sales', this.formatCurrency(weekSales));
+        this.updateElement('month-sales', this.formatCurrency(monthSales));
+        this.updateElement('top-product', topProduct);
+        this.updateElement('top-product-revenue', this.formatCurrency(topRevenue));
     },
 
-    renderOrdersTable: function(filterStatus = 'all') {
-        const tbody = document.getElementById('orders-body');
-        const orders = FarmModules.appData.orders || [];
+    getSalesForPeriod: function(sales, days) {
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - days);
+        
+        return sales
+            .filter(sale => new Date(sale.date) >= cutoffDate)
+            .reduce((sum, sale) => sum + sale.totalAmount, 0);
+    },
 
-        let filteredOrders = orders;
-        if (filterStatus !== 'all') {
-            filteredOrders = orders.filter(order => order.status === filterStatus);
+    renderSalesTable: function(period = 'today') {
+        const tbody = document.getElementById('sales-body');
+        const sales = FarmModules.appData.sales || [];
+
+        let filteredSales = sales;
+        if (period !== 'all') {
+            const cutoffDate = new Date();
+            if (period === 'today') {
+                cutoffDate.setDate(cutoffDate.getDate() - 1);
+            } else if (period === 'week') {
+                cutoffDate.setDate(cutoffDate.getDate() - 7);
+            } else if (period === 'month') {
+                cutoffDate.setDate(cutoffDate.getDate() - 30);
+            }
+            filteredSales = sales.filter(sale => new Date(sale.date) >= cutoffDate);
         }
 
-        if (filteredOrders.length === 0) {
+        if (filteredSales.length === 0) {
             tbody.innerHTML = `
                 <tr>
                     <td colspan="8" class="empty-state">
                         <div class="empty-content">
-                            <span class="empty-icon">📋</span>
-                            <h4>No orders found</h4>
-                            <p>${filterStatus === 'all' ? 'Start by creating your first order' : `No ${filterStatus} orders`}</p>
+                            <span class="empty-icon">💰</span>
+                            <h4>No sales found</h4>
+                            <p>${period === 'all' ? 'Start recording your sales' : `No sales in the ${period}`}</p>
                         </div>
                     </td>
                 </tr>
@@ -440,27 +496,24 @@ FarmModules.registerModule('orders', {
             return;
         }
 
-        // Show most recent orders first
-        const sortedOrders = filteredOrders.slice().reverse();
+        // Show most recent sales first
+        const sortedSales = filteredSales.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        tbody.innerHTML = sortedOrders.map(order => {
-            const statusClass = `status-badge status-${order.status.replace(' ', '-')}`;
+        tbody.innerHTML = sortedSales.map(sale => {
+            const paymentClass = `payment-badge payment-${sale.paymentStatus || 'paid'}`;
             
             return `
                 <tr>
-                    <td><strong>${order.id}</strong></td>
-                    <td>${order.customerName}</td>
-                    <td>${this.formatProductName(order.product)}</td>
-                    <td>${order.quantity} ${order.unit}</td>
-                    <td>${this.formatCurrency(order.totalAmount)}</td>
-                    <td><span class="${statusClass}">${order.status}</span></td>
-                    <td>${this.formatDate(order.dueDate)}</td>
-                    <td class="order-actions">
-                        <button class="btn-icon edit-order" data-id="${order.id}" title="Edit">✏️</button>
-                        <button class="btn-icon view-order" data-id="${order.id}" title="View">👁️</button>
-                        ${order.status !== 'completed' && order.status !== 'cancelled' ? 
-                            `<button class="btn-icon complete-order" data-id="${order.id}" title="Complete">✅</button>` : ''
-                        }
+                    <td>${this.formatDate(sale.date)}</td>
+                    <td>${this.formatProductName(sale.product)}</td>
+                    <td>${sale.customer || 'Walk-in'}</td>
+                    <td>${sale.quantity} ${sale.unit}</td>
+                    <td>${this.formatCurrency(sale.unitPrice)}</td>
+                    <td><strong>${this.formatCurrency(sale.totalAmount)}</strong></td>
+                    <td><span class="${paymentClass}">${sale.paymentStatus || 'paid'}</span></td>
+                    <td class="sale-actions">
+                        <button class="btn-icon edit-sale" data-id="${sale.id}" title="Edit">✏️</button>
+                        <button class="btn-icon delete-sale" data-id="${sale.id}" title="Delete">🗑️</button>
                     </td>
                 </tr>
             `;
@@ -468,16 +521,16 @@ FarmModules.registerModule('orders', {
     },
 
     attachEventListeners: function() {
-        // Quick order form
-        document.getElementById('quick-order-form').addEventListener('submit', (e) => {
+        // Quick sale form
+        document.getElementById('quick-sale-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            this.handleQuickOrder();
+            this.handleQuickSale();
         });
 
         // Modal buttons
-        document.getElementById('add-order').addEventListener('click', () => this.showOrderModal());
-        document.getElementById('save-order').addEventListener('click', () => this.saveOrder());
-        document.getElementById('delete-order').addEventListener('click', () => this.deleteOrder());
+        document.getElementById('add-sale').addEventListener('click', () => this.showSaleModal());
+        document.getElementById('save-sale').addEventListener('click', () => this.saveSale());
+        document.getElementById('delete-sale').addEventListener('click', () => this.deleteSale());
 
         // Modal events
         document.querySelectorAll('.close-modal').forEach(btn => {
@@ -485,120 +538,116 @@ FarmModules.registerModule('orders', {
         });
 
         // Real-time total calculation
-        document.getElementById('order-quantity').addEventListener('input', () => this.calculateTotal());
-        document.getElementById('order-price').addEventListener('input', () => this.calculateTotal());
+        document.getElementById('sale-quantity').addEventListener('input', () => this.calculateSaleTotal());
+        document.getElementById('sale-price').addEventListener('input', () => this.calculateSaleTotal());
 
         // Filter
-        document.getElementById('status-filter').addEventListener('change', (e) => {
-            this.renderOrdersTable(e.target.value);
+        document.getElementById('period-filter').addEventListener('change', (e) => {
+            this.renderSalesTable(e.target.value);
         });
 
         // Export
-        document.getElementById('export-orders').addEventListener('click', () => {
-            this.exportOrders();
+        document.getElementById('export-sales').addEventListener('click', () => {
+            this.exportSales();
         });
 
-        // Order actions
+        // Sale actions
         document.addEventListener('click', (e) => {
-            if (e.target.closest('.edit-order')) {
-                const orderId = e.target.closest('.edit-order').dataset.id;
-                this.editOrder(orderId);
+            if (e.target.closest('.edit-sale')) {
+                const saleId = e.target.closest('.edit-sale').dataset.id;
+                this.editSale(saleId);
             }
-            if (e.target.closest('.view-order')) {
-                const orderId = e.target.closest('.view-order').dataset.id;
-                this.viewOrder(orderId);
-            }
-            if (e.target.closest('.complete-order')) {
-                const orderId = e.target.closest('.complete-order').dataset.id;
-                this.completeOrder(orderId);
+            if (e.target.closest('.delete-sale')) {
+                const saleId = e.target.closest('.delete-sale').dataset.id;
+                this.deleteSaleRecord(saleId);
             }
         });
 
         // Modal backdrop
-        document.getElementById('order-modal').addEventListener('click', (e) => {
+        document.getElementById('sale-modal').addEventListener('click', (e) => {
             if (e.target === e.currentTarget) {
                 this.hideModal();
             }
         });
     },
 
-    handleQuickOrder: function() {
-        const customer = document.getElementById('quick-customer').value;
+    handleQuickSale: function() {
         const product = document.getElementById('quick-product').value;
-        const quantity = parseInt(document.getElementById('quick-quantity').value);
-        const price = parseFloat(document.getElementById('quick-price').value) || 0;
+        const quantity = parseFloat(document.getElementById('quick-quantity').value);
+        const unit = document.getElementById('quick-unit').value;
+        const price = parseFloat(document.getElementById('quick-price').value);
 
-        if (!customer || !product || !quantity) {
+        if (!product || !quantity || !price) {
             this.showNotification('Please fill in all required fields', 'error');
             return;
         }
 
-        const orderData = {
-            customerName: customer,
+        const saleData = {
             product: product,
             quantity: quantity,
-            unit: 'units',
-            pricePerUnit: price,
+            unit: unit,
+            unitPrice: price,
             totalAmount: quantity * price,
-            status: 'pending',
-            dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
-            orderDate: new Date().toISOString().split('T')[0]
+            date: new Date().toISOString().split('T')[0],
+            paymentMethod: 'cash',
+            paymentStatus: 'paid',
+            customer: 'Walk-in'
         };
 
-        this.addOrder(orderData);
+        this.addSale(saleData);
         
         // Reset form
-        document.getElementById('quick-order-form').reset();
-        this.showNotification('Order created successfully!', 'success');
+        document.getElementById('quick-sale-form').reset();
+        this.showNotification('Sale recorded successfully!', 'success');
     },
 
-    showOrderModal: function() {
-        const modal = document.getElementById('order-modal');
-        const title = document.getElementById('order-modal-title');
-        const form = document.getElementById('order-form');
+    showSaleModal: function() {
+        const modal = document.getElementById('sale-modal');
+        const title = document.getElementById('sale-modal-title');
+        const form = document.getElementById('sale-form');
 
         if (modal && title && form) {
             form.reset();
-            document.getElementById('order-id').value = '';
-            document.getElementById('order-due-date').value = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            document.getElementById('delete-order').style.display = 'none';
-            document.getElementById('order-total-amount').textContent = '$0.00';
+            document.getElementById('sale-id').value = '';
+            document.getElementById('sale-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('delete-sale').style.display = 'none';
+            document.getElementById('sale-total-amount').textContent = '$0.00';
             
             modal.classList.remove('hidden');
         }
     },
 
     hideModal: function() {
-        const modal = document.getElementById('order-modal');
+        const modal = document.getElementById('sale-modal');
         if (modal) {
             modal.classList.add('hidden');
         }
     },
 
-    calculateTotal: function() {
-        const quantity = parseInt(document.getElementById('order-quantity').value) || 0;
-        const price = parseFloat(document.getElementById('order-price').value) || 0;
+    calculateSaleTotal: function() {
+        const quantity = parseFloat(document.getElementById('sale-quantity').value) || 0;
+        const price = parseFloat(document.getElementById('sale-price').value) || 0;
         const total = quantity * price;
         
-        document.getElementById('order-total-amount').textContent = this.formatCurrency(total);
+        document.getElementById('sale-total-amount').textContent = this.formatCurrency(total);
     },
 
-    saveOrder: function() {
-        const form = document.getElementById('order-form');
+    saveSale: function() {
+        const form = document.getElementById('sale-form');
         if (!form) return;
 
-        const orderId = document.getElementById('order-id').value;
-        const customerName = document.getElementById('order-customer').value;
-        const phone = document.getElementById('order-phone').value;
-        const product = document.getElementById('order-product').value;
-        const unit = document.getElementById('order-unit').value;
-        const quantity = parseInt(document.getElementById('order-quantity').value);
-        const pricePerUnit = parseFloat(document.getElementById('order-price').value);
-        const status = document.getElementById('order-status').value;
-        const dueDate = document.getElementById('order-due-date').value;
-        const notes = document.getElementById('order-notes').value;
+        const saleId = document.getElementById('sale-id').value;
+        const date = document.getElementById('sale-date').value;
+        const customer = document.getElementById('sale-customer').value;
+        const product = document.getElementById('sale-product').value;
+        const unit = document.getElementById('sale-unit').value;
+        const quantity = parseFloat(document.getElementById('sale-quantity').value);
+        const unitPrice = parseFloat(document.getElementById('sale-price').value);
+        const paymentMethod = document.getElementById('sale-payment').value;
+        const paymentStatus = document.getElementById('sale-status').value;
+        const notes = document.getElementById('sale-notes').value;
 
-        if (!customerName || !product || !quantity || !pricePerUnit || !dueDate) {
+        if (!date || !product || !quantity || !unitPrice || !paymentMethod) {
             this.showNotification('Please fill in all required fields', 'error');
             return;
         }
@@ -608,192 +657,140 @@ FarmModules.registerModule('orders', {
             return;
         }
 
-        if (pricePerUnit < 0) {
+        if (unitPrice < 0) {
             this.showNotification('Price cannot be negative', 'error');
             return;
         }
 
-        const orderData = {
-            customerName: customerName,
-            phone: phone,
+        const saleData = {
+            date: date,
+            customer: customer || 'Walk-in',
             product: product,
             unit: unit,
             quantity: quantity,
-            pricePerUnit: pricePerUnit,
-            totalAmount: quantity * pricePerUnit,
-            status: status,
-            dueDate: dueDate,
-            notes: notes,
-            orderDate: new Date().toISOString().split('T')[0]
+            unitPrice: unitPrice,
+            totalAmount: quantity * unitPrice,
+            paymentMethod: paymentMethod,
+            paymentStatus: paymentStatus,
+            notes: notes
         };
 
-        if (orderId) {
-            this.updateOrder(orderId, orderData);
+        if (saleId) {
+            this.updateSale(saleId, saleData);
         } else {
-            this.addOrder(orderData);
+            this.addSale(saleData);
         }
 
         this.hideModal();
     },
 
-    addOrder: function(orderData) {
-        if (!FarmModules.appData.orders) {
-            FarmModules.appData.orders = [];
+    addSale: function(saleData) {
+        if (!FarmModules.appData.sales) {
+            FarmModules.appData.sales = [];
         }
 
-        const newOrder = {
-            id: 'ORD-' + Date.now().toString().slice(-6),
-            ...orderData
+        const newSale = {
+            id: 'SALE-' + Date.now().toString().slice(-6),
+            ...saleData
         };
 
-        FarmModules.appData.orders.push(newOrder);
+        FarmModules.appData.sales.push(newSale);
         
         this.updateSummary();
-        this.renderOrdersTable();
+        this.renderSalesTable();
         
-        this.showNotification('Order created successfully!', 'success');
+        this.showNotification('Sale recorded successfully!', 'success');
     },
 
-    editOrder: function(orderId) {
-        const orders = FarmModules.appData.orders || [];
-        const order = orders.find(o => o.id === orderId);
+    editSale: function(saleId) {
+        const sales = FarmModules.appData.sales || [];
+        const sale = sales.find(s => s.id === saleId);
         
-        if (!order) return;
+        if (!sale) return;
 
-        const modal = document.getElementById('order-modal');
-        const title = document.getElementById('order-modal-title');
+        const modal = document.getElementById('sale-modal');
+        const title = document.getElementById('sale-modal-title');
 
         if (modal && title) {
-            document.getElementById('order-id').value = order.id;
-            document.getElementById('order-customer').value = order.customerName;
-            document.getElementById('order-phone').value = order.phone || '';
-            document.getElementById('order-product').value = order.product;
-            document.getElementById('order-unit').value = order.unit;
-            document.getElementById('order-quantity').value = order.quantity;
-            document.getElementById('order-price').value = order.pricePerUnit;
-            document.getElementById('order-status').value = order.status;
-            document.getElementById('order-due-date').value = order.dueDate;
-            document.getElementById('order-notes').value = order.notes || '';
-            document.getElementById('delete-order').style.display = 'block';
+            document.getElementById('sale-id').value = sale.id;
+            document.getElementById('sale-date').value = sale.date;
+            document.getElementById('sale-customer').value = sale.customer || '';
+            document.getElementById('sale-product').value = sale.product;
+            document.getElementById('sale-unit').value = sale.unit;
+            document.getElementById('sale-quantity').value = sale.quantity;
+            document.getElementById('sale-price').value = sale.unitPrice;
+            document.getElementById('sale-payment').value = sale.paymentMethod;
+            document.getElementById('sale-status').value = sale.paymentStatus || 'paid';
+            document.getElementById('sale-notes').value = sale.notes || '';
+            document.getElementById('delete-sale').style.display = 'block';
             
-            this.calculateTotal();
+            this.calculateSaleTotal();
             
-            title.textContent = 'Edit Order';
+            title.textContent = 'Edit Sale';
             modal.classList.remove('hidden');
         }
     },
 
-    viewOrder: function(orderId) {
-        const orders = FarmModules.appData.orders || [];
-        const order = orders.find(o => o.id === orderId);
+    updateSale: function(saleId, saleData) {
+        const sales = FarmModules.appData.sales || [];
+        const saleIndex = sales.findIndex(s => s.id === saleId);
         
-        if (!order) return;
-
-        const modal = document.getElementById('order-modal');
-        const title = document.getElementById('order-modal-title');
-
-        if (modal && title) {
-            document.getElementById('order-id').value = order.id;
-            document.getElementById('order-customer').value = order.customerName;
-            document.getElementById('order-phone').value = order.phone || '';
-            document.getElementById('order-product').value = order.product;
-            document.getElementById('order-unit').value = order.unit;
-            document.getElementById('order-quantity').value = order.quantity;
-            document.getElementById('order-price').value = order.pricePerUnit;
-            document.getElementById('order-status').value = order.status;
-            document.getElementById('order-due-date').value = order.dueDate;
-            document.getElementById('order-notes').value = order.notes || '';
-            document.getElementById('delete-order').style.display = 'block';
-            
-            // Make fields read-only for viewing
-            const inputs = modal.querySelectorAll('input, select, textarea');
-            inputs.forEach(input => input.disabled = true);
-            document.getElementById('save-order').style.display = 'none';
-            
-            this.calculateTotal();
-            
-            title.textContent = 'View Order';
-            modal.classList.remove('hidden');
-
-            // Re-enable fields when modal closes
-            modal.addEventListener('hidden', () => {
-                inputs.forEach(input => input.disabled = false);
-                document.getElementById('save-order').style.display = 'block';
-            }, { once: true });
-        }
-    },
-
-    completeOrder: function(orderId) {
-        if (confirm('Mark this order as completed?')) {
-            const orders = FarmModules.appData.orders || [];
-            const orderIndex = orders.findIndex(o => o.id === orderId);
-            
-            if (orderIndex !== -1) {
-                orders[orderIndex].status = 'completed';
-                orders[orderIndex].completedDate = new Date().toISOString().split('T')[0];
-                
-                this.updateSummary();
-                this.renderOrdersTable();
-                this.showNotification('Order marked as completed!', 'success');
-            }
-        }
-    },
-
-    updateOrder: function(orderId, orderData) {
-        const orders = FarmModules.appData.orders || [];
-        const orderIndex = orders.findIndex(o => o.id === orderId);
-        
-        if (orderIndex !== -1) {
-            orders[orderIndex] = {
-                ...orders[orderIndex],
-                ...orderData
+        if (saleIndex !== -1) {
+            sales[saleIndex] = {
+                ...sales[saleIndex],
+                ...saleData
             };
             
             this.updateSummary();
-            this.renderOrdersTable();
-            this.showNotification('Order updated successfully!', 'success');
+            this.renderSalesTable();
+            this.showNotification('Sale updated successfully!', 'success');
         }
     },
 
-    deleteOrder: function() {
-        const orderId = document.getElementById('order-id').value;
+    deleteSale: function() {
+        const saleId = document.getElementById('sale-id').value;
         
-        if (confirm('Are you sure you want to delete this order?')) {
-            FarmModules.appData.orders = FarmModules.appData.orders.filter(o => o.id !== orderId);
+        if (confirm('Are you sure you want to delete this sale?')) {
+            this.deleteSaleRecord(saleId);
+            this.hideModal();
+        }
+    },
+
+    deleteSaleRecord: function(saleId) {
+        if (confirm('Are you sure you want to delete this sale?')) {
+            FarmModules.appData.sales = FarmModules.appData.sales.filter(s => s.id !== saleId);
             
             this.updateSummary();
-            this.renderOrdersTable();
-            this.hideModal();
-            this.showNotification('Order deleted successfully', 'success');
+            this.renderSalesTable();
+            this.showNotification('Sale deleted successfully', 'success');
         }
     },
 
-    exportOrders: function() {
-        const orders = FarmModules.appData.orders || [];
-        const csv = this.convertToCSV(orders);
+    exportSales: function() {
+        const sales = FarmModules.appData.sales || [];
+        const csv = this.convertToCSV(sales);
         const blob = new Blob([csv], { type: 'text/csv' });
         
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `orders-export-${new Date().toISOString().split('T')[0]}.csv`;
+        link.download = `sales-export-${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
         
-        this.showNotification('Orders exported successfully!', 'success');
+        this.showNotification('Sales exported successfully!', 'success');
     },
 
-    convertToCSV: function(orders) {
-        const headers = ['Order ID', 'Customer', 'Product', 'Quantity', 'Unit', 'Price', 'Total', 'Status', 'Order Date', 'Due Date'];
-        const rows = orders.map(order => [
-            order.id,
-            order.customerName,
-            this.formatProductName(order.product),
-            order.quantity,
-            order.unit,
-            this.formatCurrency(order.pricePerUnit),
-            this.formatCurrency(order.totalAmount),
-            order.status,
-            order.orderDate,
-            order.dueDate
+    convertToCSV: function(sales) {
+        const headers = ['Date', 'Product', 'Customer', 'Quantity', 'Unit', 'Unit Price', 'Total', 'Payment Method', 'Payment Status'];
+        const rows = sales.map(sale => [
+            sale.date,
+            this.formatProductName(sale.product),
+            sale.customer,
+            sale.quantity,
+            sale.unit,
+            this.formatCurrency(sale.unitPrice),
+            this.formatCurrency(sale.totalAmount),
+            sale.paymentMethod,
+            sale.paymentStatus || 'paid'
         ]);
         
         return [headers, ...rows].map(row => row.join(',')).join('\n');
@@ -801,20 +798,27 @@ FarmModules.registerModule('orders', {
 
     formatProductName: function(product) {
         const productNames = {
-            'broilers': 'Broilers (Live)',
+            'broilers-live': 'Broilers (Live)',
             'broilers-dressed': 'Broilers (Dressed)',
             'eggs': 'Eggs',
             'pork': 'Pork',
             'beef': 'Beef',
+            'chicken-parts': 'Chicken Parts',
             'tomatoes': 'Tomatoes',
             'peppers': 'Peppers',
             'cucumbers': 'Cucumbers',
             'lettuce': 'Lettuce',
             'carrots': 'Carrots',
             'potatoes': 'Potatoes',
-            'honey': 'Honey',
+            'onions': 'Onions',
+            'cabbage': 'Cabbage',
             'milk': 'Milk',
             'cheese': 'Cheese',
+            'yogurt': 'Yogurt',
+            'butter': 'Butter',
+            'honey': 'Honey',
+            'jam': 'Jam/Preserves',
+            'bread': 'Bread',
             'other': 'Other'
         };
         return productNames[product] || product;
