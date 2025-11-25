@@ -5,286 +5,536 @@ FarmModules.registerModule('dashboard', {
     
     template: `
         <div class="section active">
-            <div class="module-header">
-                <h1>Farm Dashboard</h1>
-                <p>Overview of your farm operations and performance</p>
-            </div>
-
-            <!-- Financial Overview -->
-            <div class="financial-overview">
-                <div class="overview-card income">
-                    <div class="overview-icon">💰</div>
-                    <div class="overview-content">
-                        <h3>Total Revenue</h3>
-                        <div class="overview-amount" id="total-revenue">$0</div>
-                        <div class="overview-period" id="revenue-period">All Time</div>
-                    </div>
+            <!-- Header with Welcome -->
+            <div class="dashboard-header">
+                <div class="welcome-section">
+                    <h1 id="welcome-message">Good Morning</h1>
+                    <p id="current-date">Loading...</p>
                 </div>
-                <div class="overview-card sales">
-                    <div class="overview-icon">📈</div>
-                    <div class="overview-content">
-                        <h3>Monthly Sales</h3>
-                        <div class="overview-amount" id="monthly-sales">$0</div>
-                        <div class="overview-period" id="sales-period">This Month</div>
-                    </div>
-                </div>
-                <div class="overview-card inventory">
-                    <div class="overview-icon">📦</div>
-                    <div class="overview-content">
-                        <h3>Inventory Value</h3>
-                        <div class="overview-amount" id="inventory-value">$0</div>
-                        <div class="overview-period">Current Stock</div>
-                    </div>
-                </div>
-                <div class="overview-card profit">
-                    <div class="overview-icon">💹</div>
-                    <div class="overview-content">
-                        <h3>Net Profit</h3>
-                        <div class="overview-amount" id="net-profit">$0</div>
-                        <div class="overview-period" id="profit-period">This Month</div>
-                    </div>
+                <div class="header-actions">
+                    <button class="btn-icon" id="notifications-btn">
+                        <span class="icon">🔔</span>
+                        <span class="badge" id="notification-badge">0</span>
+                    </button>
+                    <button class="btn-icon" id="refresh-dashboard">
+                        <span class="icon">🔄</span>
+                    </button>
                 </div>
             </div>
 
-            <!-- Quick Actions -->
-            <div class="quick-actions">
-                <h3>Quick Actions</h3>
-                <div class="action-grid">
-                    <button class="action-btn" data-action="record-sale">
-                        <span class="action-icon">💰</span>
-                        <span class="action-text">Record Sale</span>
+            <!-- Financial Overview Cards -->
+            <div class="financial-grid">
+                <div class="finance-card revenue">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <div class="icon-wrapper">
+                                💰
+                            </div>
+                        </div>
+                        <div class="card-trend" id="revenue-trend">
+                            <span class="trend-icon">↗️</span>
+                            <span class="trend-value">0%</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <h3 class="card-label">Total Revenue</h3>
+                        <div class="card-amount" id="total-revenue">$0</div>
+                        <div class="card-subtitle" id="revenue-subtitle">All Time</div>
+                    </div>
+                </div>
+
+                <div class="finance-card sales">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <div class="icon-wrapper">
+                                📈
+                            </div>
+                        </div>
+                        <div class="card-trend" id="sales-trend">
+                            <span class="trend-icon">↗️</span>
+                            <span class="trend-value">0%</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <h3 class="card-label">Monthly Sales</h3>
+                        <div class="card-amount" id="monthly-sales">$0</div>
+                        <div class="card-subtitle" id="sales-subtitle">This Month</div>
+                    </div>
+                </div>
+
+                <div class="finance-card inventory">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <div class="icon-wrapper">
+                                📦
+                            </div>
+                        </div>
+                        <div class="card-stock">
+                            <span class="stock-value" id="inventory-items">0</span>
+                            <span class="stock-label">items</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <h3 class="card-label">Inventory Value</h3>
+                        <div class="card-amount" id="inventory-value">$0</div>
+                        <div class="card-subtitle">Current Stock</div>
+                    </div>
+                </div>
+
+                <div class="finance-card profit">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <div class="icon-wrapper">
+                                💹
+                            </div>
+                        </div>
+                        <div class="card-trend" id="profit-trend">
+                            <span class="trend-icon">↗️</span>
+                            <span class="trend-value">0%</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <h3 class="card-label">Net Profit</h3>
+                        <div class="card-amount" id="net-profit">$0</div>
+                        <div class="card-subtitle" id="profit-subtitle">This Month</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions Grid -->
+            <div class="quick-actions-section">
+                <h2 class="section-title">Quick Actions</h2>
+                <div class="actions-grid">
+                    <button class="action-card" data-action="record-sale">
+                        <div class="action-icon sale">
+                            💰
+                        </div>
+                        <div class="action-content">
+                            <h3>Record Sale</h3>
+                            <p>Add new sales transaction</p>
+                        </div>
+                        <div class="action-arrow">→</div>
                     </button>
-                    <button class="action-btn" data-action="add-inventory">
-                        <span class="action-icon">📦</span>
-                        <span class="action-text">Add Inventory</span>
+
+                    <button class="action-card" data-action="add-inventory">
+                        <div class="action-icon inventory">
+                            📦
+                        </div>
+                        <div class="action-content">
+                            <h3>Manage Inventory</h3>
+                            <p>Update stock levels</p>
+                        </div>
+                        <div class="action-arrow">→</div>
                     </button>
-                    <button class="action-btn" data-action="record-feed">
-                        <span class="action-icon">🌾</span>
-                        <span class="action-text">Record Feed</span>
+
+                    <button class="action-card" data-action="record-feed">
+                        <div class="action-icon feed">
+                            🌾
+                        </div>
+                        <div class="action-content">
+                            <h3>Feed Records</h3>
+                            <p>Track animal feeding</p>
+                        </div>
+                        <div class="action-arrow">→</div>
                     </button>
-                    <button class="action-btn" data-action="view-reports">
-                        <span class="action-icon">📊</span>
-                        <span class="action-text">View Reports</span>
+
+                    <button class="action-card" data-action="view-reports">
+                        <div class="action-icon reports">
+                            📊
+                        </div>
+                        <div class="action-content">
+                            <h3>View Reports</h3>
+                            <p>Analytics & insights</p>
+                        </div>
+                        <div class="action-arrow">→</div>
                     </button>
                 </div>
             </div>
 
             <!-- Recent Activity -->
-            <div class="recent-activity card">
-                <div class="card-header">
-                    <h3>Recent Activity</h3>
-                    <button class="btn btn-text" id="refresh-activity">Refresh</button>
+            <div class="recent-activity-section">
+                <div class="section-header">
+                    <h2 class="section-title">Recent Activity</h2>
+                    <button class="btn-text" id="view-all-activity">
+                        View All
+                    </button>
                 </div>
-                <div class="activity-list" id="activity-list">
+                <div class="activity-feed" id="activity-feed">
                     <div class="empty-state">
-                        <span class="empty-icon">📊</span>
-                        <h4>No recent activity</h4>
-                        <p>Start recording sales and inventory to see activity here</p>
+                        <div class="empty-icon">📊</div>
+                        <h3>No Recent Activity</h3>
+                        <p>Start recording transactions to see activity here</p>
                     </div>
                 </div>
             </div>
 
             <!-- Performance Metrics -->
-            <div class="performance-metrics">
-                <div class="metric-card">
-                    <h4>Sales Performance</h4>
-                    <div class="metric-value" id="sales-count">0</div>
-                    <div class="metric-label">Total Sales</div>
-                </div>
-                <div class="metric-card">
-                    <h4>Inventory Items</h4>
-                    <div class="metric-value" id="inventory-count">0</div>
-                    <div class="metric-label">Active Products</div>
-                </div>
-                <div class="metric-card">
-                    <h4>Feed Records</h4>
-                    <div class="metric-value" id="feed-records-count">0</div>
-                    <div class="metric-label">This Month</div>
-                </div>
-                <div class="metric-card">
-                    <h4>Avg. Sale Value</h4>
-                    <div class="metric-value" id="avg-sale-value">$0</div>
-                    <div class="metric-label">Per Transaction</div>
+            <div class="metrics-section">
+                <h2 class="section-title">Performance Metrics</h2>
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-icon">🛒</div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="sales-count">0</div>
+                            <div class="metric-label">Total Sales</div>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-icon">📋</div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="inventory-count">0</div>
+                            <div class="metric-label">Products</div>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-icon">🌾</div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="feed-records-count">0</div>
+                            <div class="metric-label">Feed Records</div>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-icon">⭐</div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="avg-sale-value">$0</div>
+                            <div class="metric-label">Avg. Sale</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     `,
 
     styles: `
-        .financial-overview {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 2rem;
         }
 
-        .overview-card {
-            background: var(--card-bg);
+        .welcome-section h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-section p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-icon {
+            width: 44px;
+            height: 44px;
             border-radius: 12px;
-            padding: 1.5rem;
             border: 1px solid var(--border-color);
+            background: var(--card-bg);
             display: flex;
             align-items: center;
-            gap: 1rem;
-            transition: transform 0.2s ease;
+            justify-content: center;
+            position: relative;
+            transition: all 0.2s ease;
         }
 
-        .overview-card:hover {
-            transform: translateY(-2px);
+        .btn-icon:hover {
+            background: var(--primary-light);
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
         }
 
-        .overview-card.income {
-            border-left: 4px solid var(--success-color);
+        .badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: var(--error-color);
+            color: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            min-width: 18px;
+            text-align: center;
         }
 
-        .overview-card.sales {
-            border-left: 4px solid var(--primary-color);
+        /* Financial Grid */
+        .financial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
         }
 
-        .overview-card.inventory {
-            border-left: 4px solid var(--warning-color);
+        .finance-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
         }
 
-        .overview-card.profit {
-            border-left: 4px solid var(--info-color);
+        .finance-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
         }
 
-        .overview-icon {
-            font-size: 2.5rem;
-            opacity: 0.8;
+        .finance-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
-        .overview-content h3 {
+        .finance-card.revenue::before { background: linear-gradient(90deg, #10b981, #059669); }
+        .finance-card.sales::before { background: linear-gradient(90deg, #3b82f6, #1d4ed8); }
+        .finance-card.inventory::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .finance-card.profit::before { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .icon-wrapper {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            background: rgba(59, 130, 246, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .finance-card.revenue .icon-wrapper { background: rgba(16, 185, 129, 0.1); }
+        .finance-card.sales .icon-wrapper { background: rgba(59, 130, 246, 0.1); }
+        .finance-card.inventory .icon-wrapper { background: rgba(245, 158, 11, 0.1); }
+        .finance-card.profit .icon-wrapper { background: rgba(139, 92, 246, 0.1); }
+
+        .card-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            background: rgba(16, 185, 129, 0.1);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #059669;
+        }
+
+        .card-stock {
+            text-align: right;
+        }
+
+        .stock-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        .stock-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: block;
+        }
+
+        .card-label {
             margin: 0 0 0.5rem 0;
             font-size: 0.9rem;
             color: var(--text-muted);
             font-weight: 500;
         }
 
-        .overview-amount {
+        .card-amount {
             font-size: 1.8rem;
             font-weight: 700;
             color: var(--text-color);
             margin-bottom: 0.25rem;
         }
 
-        .overview-period {
+        .card-subtitle {
             font-size: 0.8rem;
             color: var(--text-muted);
         }
 
-        .quick-actions {
-            margin-bottom: 2rem;
+        /* Quick Actions */
+        .quick-actions-section {
+            margin-bottom: 2.5rem;
         }
 
-        .quick-actions h3 {
-            margin-bottom: 1rem;
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
             color: var(--text-color);
+            margin-bottom: 1.5rem;
         }
 
-        .action-grid {
+        .actions-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 1rem;
         }
 
-        .action-btn {
+        .action-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1.5rem 1rem;
+            border-radius: 16px;
+            padding: 1.5rem;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 0.5rem;
+            gap: 1rem;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
+            text-align: left;
+            width: 100%;
         }
 
-        .action-btn:hover {
-            background: var(--primary-light);
-            border-color: var(--primary-color);
+        .action-card:hover {
             transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
         }
 
         .action-icon {
-            font-size: 2rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
         }
 
-        .action-text {
-            font-weight: 500;
+        .action-icon.sale { background: rgba(16, 185, 129, 0.1); color: #059669; }
+        .action-icon.inventory { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+        .action-icon.feed { background: rgba(59, 130, 246, 0.1); color: #1d4ed8; }
+        .action-icon.reports { background: rgba(139, 92, 246, 0.1); color: #7c3aed; }
+
+        .action-content {
+            flex: 1;
+        }
+
+        .action-content h3 {
+            margin: 0 0 0.25rem 0;
+            font-size: 1rem;
+            font-weight: 600;
             color: var(--text-color);
         }
 
-        .recent-activity {
-            margin-bottom: 2rem;
+        .action-content p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: var(--text-muted);
         }
 
-        .card-header {
+        .action-arrow {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            transition: transform 0.2s ease;
+        }
+
+        .action-card:hover .action-arrow {
+            transform: translateX(4px);
+            color: var(--primary-color);
+        }
+
+        /* Recent Activity */
+        .recent-activity-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
         }
 
-        .activity-list {
-            min-height: 200px;
+        .activity-feed {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
         }
 
         .activity-item {
             display: flex;
             align-items: center;
             gap: 1rem;
-            padding: 1rem;
+            padding: 1.25rem;
             border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s ease;
         }
 
         .activity-item:last-child {
             border-bottom: none;
         }
 
+        .activity-item:hover {
+            background: var(--bg-color);
+        }
+
         .activity-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.2rem;
+            flex-shrink: 0;
         }
 
-        .activity-icon.sale {
-            background: var(--success-light);
-            color: var(--success-color);
-        }
-
-        .activity-icon.inventory {
-            background: var(--warning-light);
-            color: var(--warning-dark);
-        }
-
-        .activity-icon.feed {
-            background: var(--info-light);
-            color: var(--info-dark);
-        }
+        .activity-icon.sale { background: rgba(16, 185, 129, 0.1); color: #059669; }
+        .activity-icon.inventory { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+        .activity-icon.feed { background: rgba(59, 130, 246, 0.1); color: #1d4ed8; }
 
         .activity-content {
             flex: 1;
         }
 
         .activity-title {
-            font-weight: 500;
+            font-weight: 600;
             margin-bottom: 0.25rem;
+            color: var(--text-color);
         }
 
         .activity-details {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--text-muted);
         }
 
         .activity-amount {
-            font-weight: 600;
+            font-weight: 700;
             color: var(--text-color);
+            font-size: 1rem;
+        }
+
+        .activity-time {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: right;
         }
 
         .empty-state {
@@ -297,12 +547,11 @@ FarmModules.registerModule('dashboard', {
             font-size: 3rem;
             opacity: 0.5;
             margin-bottom: 1rem;
-            display: block;
         }
 
-        .empty-state h4 {
+        .empty-state h3 {
             margin: 0 0 0.5rem 0;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
         }
 
         .empty-state p {
@@ -310,42 +559,93 @@ FarmModules.registerModule('dashboard', {
             opacity: 0.8;
         }
 
-        .performance-metrics {
+        /* Metrics Section */
+        .metrics-section {
+            margin-bottom: 2rem;
+        }
+
+        .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 1rem;
         }
 
-        .metric-card {
+        .metric-item {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 16px;
             padding: 1.5rem;
-            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: transform 0.2s ease;
         }
 
-        .metric-card h4 {
-            margin: 0 0 1rem 0;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            font-weight: 500;
+        .metric-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .metric-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(59, 130, 246, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
         }
 
         .metric-value {
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: 700;
             color: var(--text-color);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
         }
 
         .metric-label {
             font-size: 0.8rem;
             color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                align-self: flex-end;
+            }
+
+            .financial-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
         }
     `,
 
     initialize: function() {
         console.log('📊 Dashboard module initializing...');
+        this.updateWelcomeMessage();
         this.updateFinancialData();
         this.updateRecentActivity();
         this.updatePerformanceMetrics();
@@ -356,7 +656,26 @@ FarmModules.registerModule('dashboard', {
             this.updateFinancialData();
             this.updateRecentActivity();
             this.updatePerformanceMetrics();
-        }, 30000); // Update every 30 seconds
+        }, 30000);
+    },
+
+    updateWelcomeMessage: function() {
+        const now = new Date();
+        const hour = now.getHours();
+        let greeting = 'Good Morning';
+        
+        if (hour >= 12 && hour < 17) {
+            greeting = 'Good Afternoon';
+        } else if (hour >= 17) {
+            greeting = 'Good Evening';
+        }
+        
+        this.updateElement('welcome-message', greeting);
+        
+        // Format date
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dateString = now.toLocaleDateString('en-US', options);
+        this.updateElement('current-date', dateString);
     },
 
     updateFinancialData: function() {
