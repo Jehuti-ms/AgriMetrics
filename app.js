@@ -99,6 +99,12 @@ setupNavigation() {
         { id: 'broiler-mortality', label: 'Broiler Mortality', icon: '🐔' },
         { id: 'orders', label: 'Orders', icon: '📋' },
         { id: 'sales-record', label: 'Sales Records', icon: '💰' },
+        { id: 'crop-production', label: 'Crop Production', icon: '🌾' },
+        { id: 'livestock-production', label: 'Livestock Production', icon: '🐄' },
+        { id: 'aquaculture-production', label: 'Aquaculture Production', icon: '🐟' },
+        { id: 'agroforestry-production', label: 'Agroforestry Production', icon: '🌳' },
+        { id: 'production-analytics', label: 'Production Analytics', icon: '📈' },
+        { id: 'resource-tracking', label: 'Resource Tracking', icon: '⚡' }
         { id: 'reports', label: 'Reports', icon: '📈' },
         { id: 'profile', label: 'Profile', icon: '👤' }
     ];
