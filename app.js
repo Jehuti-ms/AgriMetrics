@@ -104,7 +104,7 @@ setupNavigation() {
         { id: 'aquaculture-production', label: 'Aquaculture Production', icon: '🐟' },
         { id: 'agroforestry-production', label: 'Agroforestry Production', icon: '🌳' },
         { id: 'production-analytics', label: 'Production Analytics', icon: '📈' },
-        { id: 'resource-tracking', label: 'Resource Tracking', icon: '⚡' }
+        { id: 'resource-tracking', label: 'Resource Tracking', icon: '⚡' },
         { id: 'reports', label: 'Reports', icon: '📈' },
         { id: 'profile', label: 'Profile', icon: '👤' }
     ];
