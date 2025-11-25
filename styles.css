@@ -980,3 +980,33 @@ body {
     }
 }
 
+/* FORCE NAVIGATION TO BE VISIBLE */
+header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 10000 !important;
+    background: white !important;
+}
+
+.top-nav {
+    z-index: 10000 !important;
+    position: fixed !important;
+    top: 0 !important;
+}
+
+/* Ensure nothing is hiding the navigation */
+body {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#app-container {
+    position: relative !important;
+}
+
+/* Remove any transforms that might push navigation off-screen */
+header, .top-nav {
+    transform: none !important;
+}
