@@ -404,15 +404,21 @@ FarmModules.registerModule('sales-record', {
     initialize: function() {
         console.log('💰 Sales Records module initializing...');
         this.loadSalesData();
-        this.attachEventListeners();
         this.updateSummary();
         this.renderSalesTable();
+        
+        // Use setTimeout to ensure DOM is ready
+        setTimeout(() => {
+            this.attachEventListeners();
+            console.log('✅ Sales event listeners attached');
+        }, 100);
     },
 
     loadSalesData: function() {
         if (!FarmModules.appData.sales) {
             FarmModules.appData.sales = [];
         }
+        console.log('📊 Loaded sales data:', FarmModules.appData.sales.length, 'records');
     },
 
     updateSummary: function() {
@@ -420,7 +426,10 @@ FarmModules.registerModule('sales-record', {
         const today = new Date().toISOString().split('T')[0];
         
         // Update today's date display
-        document.getElementById('today-date').textContent = new Date().toLocaleDateString();
+        const todayElement = document.getElementById('today-date');
+        if (todayElement) {
+            todayElement.textContent = new Date().toLocaleDateString();
+        }
 
         // Calculate sales for different periods
         const todaySales = sales
@@ -466,6 +475,11 @@ FarmModules.registerModule('sales-record', {
 
     renderSalesTable: function(period = 'today') {
         const tbody = document.getElementById('sales-body');
+        if (!tbody) {
+            console.error('❌ Sales table body not found');
+            return;
+        }
+
         const sales = FarmModules.appData.sales || [];
 
         let filteredSales = sales;
@@ -518,19 +532,41 @@ FarmModules.registerModule('sales-record', {
                 </tr>
             `;
         }).join('');
+
+        console.log('📋 Rendered sales table with', filteredSales.length, 'records');
     },
 
     attachEventListeners: function() {
+        console.log('🔗 Attaching sales event listeners...');
+
         // Quick sale form
-        document.getElementById('quick-sale-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleQuickSale();
-        });
+        const quickForm = document.getElementById('quick-sale-form');
+        if (quickForm) {
+            quickForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleQuickSale();
+            });
+            console.log('✅ Quick sale form listener attached');
+        }
 
         // Modal buttons
-        document.getElementById('add-sale').addEventListener('click', () => this.showSaleModal());
-        document.getElementById('save-sale').addEventListener('click', () => this.saveSale());
-        document.getElementById('delete-sale').addEventListener('click', () => this.deleteSale());
+        const addSaleBtn = document.getElementById('add-sale');
+        if (addSaleBtn) {
+            addSaleBtn.addEventListener('click', () => this.showSaleModal());
+            console.log('✅ Add sale button listener attached');
+        }
+
+        const saveSaleBtn = document.getElementById('save-sale');
+        if (saveSaleBtn) {
+            saveSaleBtn.addEventListener('click', () => this.saveSale());
+            console.log('✅ Save sale button listener attached');
+        }
+
+        const deleteSaleBtn = document.getElementById('delete-sale');
+        if (deleteSaleBtn) {
+            deleteSaleBtn.addEventListener('click', () => this.deleteSale());
+            console.log('✅ Delete sale button listener attached');
+        }
 
         // Modal events
         document.querySelectorAll('.close-modal').forEach(btn => {
@@ -538,40 +574,64 @@ FarmModules.registerModule('sales-record', {
         });
 
         // Real-time total calculation
-        document.getElementById('sale-quantity').addEventListener('input', () => this.calculateSaleTotal());
-        document.getElementById('sale-price').addEventListener('input', () => this.calculateSaleTotal());
+        const quantityInput = document.getElementById('sale-quantity');
+        const priceInput = document.getElementById('sale-price');
+        
+        if (quantityInput) {
+            quantityInput.addEventListener('input', () => this.calculateSaleTotal());
+        }
+        if (priceInput) {
+            priceInput.addEventListener('input', () => this.calculateSaleTotal());
+        }
 
         // Filter
-        document.getElementById('period-filter').addEventListener('change', (e) => {
-            this.renderSalesTable(e.target.value);
-        });
+        const periodFilter = document.getElementById('period-filter');
+        if (periodFilter) {
+            periodFilter.addEventListener('change', (e) => {
+                this.renderSalesTable(e.target.value);
+            });
+            console.log('✅ Period filter listener attached');
+        }
 
         // Export
-        document.getElementById('export-sales').addEventListener('click', () => {
-            this.exportSales();
-        });
+        const exportBtn = document.getElementById('export-sales');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                this.exportSales();
+            });
+            console.log('✅ Export button listener attached');
+        }
 
-        // Sale actions
+        // Sale actions (delegated event listeners)
         document.addEventListener('click', (e) => {
             if (e.target.closest('.edit-sale')) {
                 const saleId = e.target.closest('.edit-sale').dataset.id;
+                console.log('✏️ Edit sale clicked:', saleId);
                 this.editSale(saleId);
             }
             if (e.target.closest('.delete-sale')) {
                 const saleId = e.target.closest('.delete-sale').dataset.id;
+                console.log('🗑️ Delete sale clicked:', saleId);
                 this.deleteSaleRecord(saleId);
             }
         });
 
         // Modal backdrop
-        document.getElementById('sale-modal').addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) {
-                this.hideModal();
-            }
-        });
+        const modal = document.getElementById('sale-modal');
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) {
+                    this.hideModal();
+                }
+            });
+        }
+
+        console.log('✅ All sales event listeners attached successfully');
     },
 
     handleQuickSale: function() {
+        console.log('🔄 Handling quick sale...');
+        
         const product = document.getElementById('quick-product').value;
         const quantity = parseFloat(document.getElementById('quick-quantity').value);
         const unit = document.getElementById('quick-unit').value;
@@ -603,6 +663,8 @@ FarmModules.registerModule('sales-record', {
     },
 
     showSaleModal: function() {
+        console.log('📱 Showing sale modal...');
+        
         const modal = document.getElementById('sale-modal');
         const title = document.getElementById('sale-modal-title');
         const form = document.getElementById('sale-form');
@@ -615,6 +677,9 @@ FarmModules.registerModule('sales-record', {
             document.getElementById('sale-total-amount').textContent = '$0.00';
             
             modal.classList.remove('hidden');
+            console.log('✅ Sale modal shown');
+        } else {
+            console.error('❌ Sale modal elements not found');
         }
     },
 
@@ -622,6 +687,7 @@ FarmModules.registerModule('sales-record', {
         const modal = document.getElementById('sale-modal');
         if (modal) {
             modal.classList.add('hidden');
+            console.log('✅ Sale modal hidden');
         }
     },
 
@@ -630,12 +696,20 @@ FarmModules.registerModule('sales-record', {
         const price = parseFloat(document.getElementById('sale-price').value) || 0;
         const total = quantity * price;
         
-        document.getElementById('sale-total-amount').textContent = this.formatCurrency(total);
+        const totalElement = document.getElementById('sale-total-amount');
+        if (totalElement) {
+            totalElement.textContent = this.formatCurrency(total);
+        }
     },
 
     saveSale: function() {
+        console.log('💾 Saving sale...');
+        
         const form = document.getElementById('sale-form');
-        if (!form) return;
+        if (!form) {
+            console.error('❌ Sale form not found');
+            return;
+        }
 
         const saleId = document.getElementById('sale-id').value;
         const date = document.getElementById('sale-date').value;
@@ -696,13 +770,19 @@ FarmModules.registerModule('sales-record', {
         this.renderSalesTable();
         
         this.showNotification('Sale recorded successfully!', 'success');
+        console.log('✅ Sale added:', saleData);
     },
 
     editSale: function(saleId) {
+        console.log('✏️ Editing sale:', saleId);
+        
         const sales = FarmModules.appData.sales || [];
         const sale = sales.find(s => s.id === saleId);
         
-        if (!sale) return;
+        if (!sale) {
+            console.error('❌ Sale not found:', saleId);
+            return;
+        }
 
         const modal = document.getElementById('sale-modal');
         const title = document.getElementById('sale-modal-title');
@@ -724,6 +804,8 @@ FarmModules.registerModule('sales-record', {
             
             title.textContent = 'Edit Sale';
             modal.classList.remove('hidden');
+            
+            console.log('✅ Sale modal populated for editing');
         }
     },
 
@@ -740,6 +822,7 @@ FarmModules.registerModule('sales-record', {
             this.updateSummary();
             this.renderSalesTable();
             this.showNotification('Sale updated successfully!', 'success');
+            console.log('✅ Sale updated:', saleId);
         }
     },
 
@@ -759,6 +842,7 @@ FarmModules.registerModule('sales-record', {
             this.updateSummary();
             this.renderSalesTable();
             this.showNotification('Sale deleted successfully', 'success');
+            console.log('✅ Sale deleted:', saleId);
         }
     },
 
@@ -773,6 +857,7 @@ FarmModules.registerModule('sales-record', {
         link.click();
         
         this.showNotification('Sales exported successfully!', 'success');
+        console.log('✅ Sales exported');
     },
 
     convertToCSV: function(sales) {
@@ -837,7 +922,11 @@ FarmModules.registerModule('sales-record', {
 
     updateElement: function(id, value) {
         const element = document.getElementById(id);
-        if (element) element.textContent = value;
+        if (element) {
+            element.textContent = value;
+        } else {
+            console.warn('❌ Element not found:', id);
+        }
     },
 
     showNotification: function(message, type) {
