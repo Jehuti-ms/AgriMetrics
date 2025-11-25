@@ -88,14 +88,12 @@ class FarmManagementApp {
             if (e.target.closest('.nav-item')) {
                 const navItem = e.target.closest('.nav-item');
                 const view = navItem.getAttribute('data-view');
-                this.showSection(view);
-            }
-            
-            // Also handle sidebar navigation if you keep it
-            if (e.target.classList.contains('nav-link')) {
-                e.preventDefault();
-                const section = e.target.dataset.section;
-                this.showSection(section);
+                
+                if (view === 'more') {
+                    this.toggleMoreMenu();
+                } else {
+                    this.showSection(view);
+                }
             }
         });
 
@@ -120,16 +118,6 @@ class FarmManagementApp {
         // Add bottom navigation
         this.createBottomNavigation();
         
-        // Update user info
-        const userNameElement = document.getElementById('user-name');
-        if (userNameElement) {
-            if (this.currentUser) {
-                userNameElement.textContent = this.currentUser.displayName || this.currentUser.email;
-            } else if (this.isDemoMode) {
-                userNameElement.textContent = 'Demo Farmer';
-            }
-        }
-        
         this.showSection(this.currentSection);
     }
 
@@ -137,57 +125,103 @@ class FarmManagementApp {
         const appContainer = document.getElementById('app-container');
         if (!appContainer) return;
 
-        // Remove existing bottom nav if any
         const existingNav = appContainer.querySelector('.bottom-nav');
-        if (existingNav) {
-            existingNav.remove();
-        }
+        if (existingNav) existingNav.remove();
 
-        const navHTML = `
+        // STANDARD PWA: 4 primary navigation items
+        const primaryNav = [
+            { view: 'dashboard', label: 'Home', icon: this.dashboardIcon },
+            { view: 'income-expenses', label: 'Finance', icon: this.moneyIcon },
+            { view: 'inventory-check', label: 'Inventory', icon: this.inventoryIcon },
+            { view: 'more', label: 'More', icon: this.moreIcon }
+        ];
+
+        // All other features in secondary menu
+        const secondaryNav = [
+            { view: 'feed-record', label: 'Feed Record', icon: this.feedIcon },
+            { view: 'broiler-mortality', label: 'Health', icon: this.healthIcon },
+            { view: 'production', label: 'Production', icon: this.productionIcon },
+            { view: 'sales-record', label: 'Sales', icon: this.salesIcon },
+            { view: 'orders', label: 'Orders', icon: this.ordersIcon },
+            { view: 'reports', label: 'Reports', icon: this.reportsIcon },
+            { view: 'profile', label: 'Profile', icon: this.profileIcon }
+        ];
+
+        let navHTML = `
             <div class="bottom-nav" style="${this.objectToStyleString(this.navStyle)}">
-                <button class="nav-item" data-view="dashboard" style="${this.objectToStyleString(this.navItemStyle)}">
-                    <svg style="width: 24px; height: 24px; margin-bottom: 4px;" viewBox="0 0 24 24" fill="none">
-                        <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" 
-                              stroke="currentColor" stroke-width="2"/>
-                        <path d="M9 22V12H15V22" stroke="currentColor" stroke-width="2"/>
-                    </svg>
-                    <span style="font-size: 12px; font-weight: 500; margin-top: 2px;">Dashboard</span>
-                </button>
+        `;
 
-                <button class="nav-item" data-view="analytics" style="${this.objectToStyleString(this.navItemStyle)}">
-                    <svg style="width: 24px; height: 24px; margin-bottom: 4px;" viewBox="0 0 24 24" fill="none">
-                        <path d="M18 20V10" stroke="currentColor" stroke-width="2"/>
-                        <path d="M12 20V4" stroke="currentColor" stroke-width="2"/>
-                        <path d="M6 20V14" stroke="currentColor" stroke-width="2"/>
-                    </svg>
-                    <span style="font-size: 12px; font-weight: 500; margin-top: 2px;">Analytics</span>
+        primaryNav.forEach(item => {
+            navHTML += `
+                <button class="nav-item" data-view="${item.view}" style="${this.objectToStyleString(this.navItemStyle)}">
+                    <div style="font-size: 20px; margin-bottom: 4px;">${item.icon}</div>
+                    <span style="font-size: 12px; font-weight: 500; margin-top: 2px;">${item.label}</span>
                 </button>
+            `;
+        });
 
-                <button class="nav-item" data-view="reports" style="${this.objectToStyleString(this.navItemStyle)}">
-                    <svg style="width: 24px; height: 24px; margin-bottom: 4px;" viewBox="0 0 24 24" fill="none">
-                        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" 
-                              stroke="currentColor" stroke-width="2"/>
-                        <path d="M14 2V8H20" stroke="currentColor" stroke-width="2"/>
-                        <path d="M16 13H8" stroke="currentColor" stroke-width="2"/>
-                        <path d="M16 17H8" stroke="currentColor" stroke-width="2"/>
-                        <path d="M10 9H9H8" stroke="currentColor" stroke-width="2"/>
-                    </svg>
-                    <span style="font-size: 12px; font-weight: 500; margin-top: 2px;">Reports</span>
-                </button>
+        navHTML += `</div>`;
 
-                <button class="nav-item" data-view="profile" style="${this.objectToStyleString(this.navItemStyle)}">
-                    <svg style="width: 24px; height: 24px; margin-bottom: 4px;" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" 
-                              stroke="currentColor" stroke-width="2"/>
-                        <path d="M19.4 15C19.2669 15.3044 19.201 15.6343 19.2 16C19.2 16.7956 19.5161 17.5587 20.075 18.125C20.6339 18.6913 21.3913 19.0098 22.18 19.0098C22.5182 19.0098 22.8529 18.947 23.1666 18.8245C23.4803 18.702 23.7673 18.5222 24.0116 18.2945C24.2559 18.0668 24.4529 17.7956 24.5918 17.4959C24.7307 17.1962 24.8088 16.8737 24.8216 16.5453C24.8344 16.2169 24.7817 15.8888 24.6666 15.58L23.1666 12.58C23.0335 12.2756 22.9676 11.9457 22.9686 11.58C22.9686 10.7844 22.6525 10.0213 22.0936 9.45501C21.5347 8.88873 20.7773 8.57018 19.9886 8.57018C19.6504 8.57018 19.3157 8.63302 19.002 8.75551C18.6883 8.878 18.4013 9.05778 18.157 9.28548C17.9127 9.51318 17.7157 9.78441 17.5768 10.0841C17.4379 10.3838 17.3598 10.7063 17.347 11.0347C17.3342 11.3631 17.3869 11.6912 17.502 12L19.002 15Z" 
-                              stroke="currentColor" stroke-width="2"/>
-                    </svg>
-                    <span style="font-size: 12px; font-weight: 500; margin-top: 2px;">Profile</span>
-                </button>
+        // More menu (standard bottom sheet pattern)
+        navHTML += `
+            <div id="more-menu" class="more-menu hidden">
+                <div class="more-menu-content">
+                    <div class="more-menu-header">
+                        <h3>Menu</h3>
+                        <button class="close-more-menu" style="background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
+                    </div>
+                    <div class="more-menu-items">
+                        ${secondaryNav.map(item => `
+                            <button class="more-menu-item" data-view="${item.view}">
+                                <div style="font-size: 20px; margin-bottom: 8px;">${item.icon}</div>
+                                <span style="font-size: 12px; font-weight: 500;">${item.label}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
             </div>
         `;
 
         appContainer.insertAdjacentHTML('beforeend', navHTML);
+        this.setupMoreMenu();
+    }
+
+    setupMoreMenu() {
+        const moreMenu = document.getElementById('more-menu');
+        const closeButton = document.querySelector('.close-more-menu');
+
+        closeButton?.addEventListener('click', () => {
+            this.hideMoreMenu();
+        });
+
+        moreMenu?.addEventListener('click', (e) => {
+            if (e.target === moreMenu) {
+                this.hideMoreMenu();
+            }
+        });
+
+        // Handle more menu item clicks
+        document.querySelectorAll('.more-menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const view = item.getAttribute('data-view');
+                this.hideMoreMenu();
+                this.showSection(view);
+            });
+        });
+    }
+
+    toggleMoreMenu() {
+        const moreMenu = document.getElementById('more-menu');
+        if (moreMenu.classList.contains('hidden')) {
+            moreMenu.classList.remove('hidden');
+        } else {
+            moreMenu.classList.add('hidden');
+        }
+    }
+
+    hideMoreMenu() {
+        const moreMenu = document.getElementById('more-menu');
+        moreMenu.classList.add('hidden');
     }
 
     showSection(sectionId) {
@@ -195,6 +229,7 @@ class FarmManagementApp {
         
         // Update bottom nav active state
         document.querySelectorAll('.nav-item').forEach(item => {
+            const style = this.navItemStyle;
             item.style.backgroundColor = '';
             item.style.color = '#666';
         });
@@ -204,14 +239,6 @@ class FarmManagementApp {
             activeNavItem.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
             activeNavItem.style.color = '#3b82f6';
         }
-
-        // Update sidebar nav active state (if you keep it)
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('active');
-        });
-        
-        const activeLink = document.querySelector(`[data-section="${sectionId}"]`);
-        if (activeLink) activeLink.classList.add('active');
 
         this.currentSection = sectionId;
         
@@ -251,8 +278,22 @@ class FarmManagementApp {
         transition: 'all 0.2s ease',
         cursor: 'pointer',
         color: '#666',
-        minWidth: '60px'
+        minWidth: '60px',
+        flex: '1'
     };
+
+    // Standard PWA Icons (using emoji for simplicity - replace with SVG if preferred)
+    dashboardIcon = '📊';
+    moneyIcon = '💰';
+    inventoryIcon = '📦';
+    moreIcon = '⋮';
+    feedIcon = '🌾';
+    healthIcon = '🐔';
+    productionIcon = '🚜';
+    salesIcon = '💰';
+    ordersIcon = '📋';
+    reportsIcon = '📈';
+    profileIcon = '👤';
 
     objectToStyleString(styleObj) {
         return Object.entries(styleObj)
