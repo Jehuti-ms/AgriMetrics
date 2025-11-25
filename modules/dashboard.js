@@ -5,145 +5,121 @@ FarmModules.registerModule('dashboard', {
     
     template: `
         <div class="section active">
-            <!-- Header with Welcome -->
+            <!-- Header Section -->
             <div class="dashboard-header">
                 <div class="welcome-section">
-                    <h1 id="welcome-message">Good Morning</h1>
-                    <p id="current-date">Loading...</p>
+                    <h1 id="welcome-message">Welcome Back</h1>
+                    <p id="current-date">Loading farm data...</p>
                 </div>
                 <div class="header-actions">
-                    <button class="btn-icon" id="notifications-btn">
+                    <button class="btn-icon" id="notifications-btn" title="Notifications">
                         <span class="icon">🔔</span>
                         <span class="badge" id="notification-badge">0</span>
                     </button>
-                    <button class="btn-icon" id="refresh-dashboard">
+                    <button class="btn-icon" id="refresh-dashboard" title="Refresh Data">
                         <span class="icon">🔄</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Financial Overview Cards -->
-            <div class="financial-grid">
-                <div class="finance-card revenue">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <div class="icon-wrapper">
-                                💰
-                            </div>
-                        </div>
-                        <div class="card-trend" id="revenue-trend">
-                            <span class="trend-icon">↗️</span>
+            <!-- Key Metrics Grid -->
+            <div class="metrics-grid">
+                <div class="metric-card revenue">
+                    <div class="metric-header">
+                        <div class="metric-icon">💰</div>
+                        <div class="metric-trend" id="revenue-trend">
+                            <span class="trend-icon">→</span>
                             <span class="trend-value">0%</span>
                         </div>
                     </div>
-                    <div class="card-content">
-                        <h3 class="card-label">Total Revenue</h3>
-                        <div class="card-amount" id="total-revenue">$0</div>
-                        <div class="card-subtitle" id="revenue-subtitle">All Time</div>
+                    <div class="metric-content">
+                        <h3>Total Revenue</h3>
+                        <div class="metric-value" id="total-revenue">$0.00</div>
+                        <p class="metric-subtitle">All Time Sales</p>
                     </div>
                 </div>
 
-                <div class="finance-card sales">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <div class="icon-wrapper">
-                                📈
-                            </div>
-                        </div>
-                        <div class="card-trend" id="sales-trend">
-                            <span class="trend-icon">↗️</span>
+                <div class="metric-card sales">
+                    <div class="metric-header">
+                        <div class="metric-icon">📈</div>
+                        <div class="metric-trend" id="sales-trend">
+                            <span class="trend-icon">→</span>
                             <span class="trend-value">0%</span>
                         </div>
                     </div>
-                    <div class="card-content">
-                        <h3 class="card-label">Monthly Sales</h3>
-                        <div class="card-amount" id="monthly-sales">$0</div>
-                        <div class="card-subtitle" id="sales-subtitle">This Month</div>
+                    <div class="metric-content">
+                        <h3>Monthly Sales</h3>
+                        <div class="metric-value" id="monthly-sales">$0.00</div>
+                        <p class="metric-subtitle" id="sales-period">This Month</p>
                     </div>
                 </div>
 
-                <div class="finance-card inventory">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <div class="icon-wrapper">
-                                📦
-                            </div>
-                        </div>
-                        <div class="card-stock">
-                            <span class="stock-value" id="inventory-items">0</span>
-                            <span class="stock-label">items</span>
+                <div class="metric-card inventory">
+                    <div class="metric-header">
+                        <div class="metric-icon">📦</div>
+                        <div class="metric-count">
+                            <span id="inventory-count">0</span>
+                            <span>items</span>
                         </div>
                     </div>
-                    <div class="card-content">
-                        <h3 class="card-label">Inventory Value</h3>
-                        <div class="card-amount" id="inventory-value">$0</div>
-                        <div class="card-subtitle">Current Stock</div>
+                    <div class="metric-content">
+                        <h3>Inventory Value</h3>
+                        <div class="metric-value" id="inventory-value">$0.00</div>
+                        <p class="metric-subtitle">Current Stock</p>
                     </div>
                 </div>
 
-                <div class="finance-card profit">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <div class="icon-wrapper">
-                                💹
-                            </div>
-                        </div>
-                        <div class="card-trend" id="profit-trend">
-                            <span class="trend-icon">↗️</span>
+                <div class="metric-card profit">
+                    <div class="metric-header">
+                        <div class="metric-icon">💹</div>
+                        <div class="metric-trend" id="profit-trend">
+                            <span class="trend-icon">→</span>
                             <span class="trend-value">0%</span>
                         </div>
                     </div>
-                    <div class="card-content">
-                        <h3 class="card-label">Net Profit</h3>
-                        <div class="card-amount" id="net-profit">$0</div>
-                        <div class="card-subtitle" id="profit-subtitle">This Month</div>
+                    <div class="metric-content">
+                        <h3>Net Profit</h3>
+                        <div class="metric-value" id="net-profit">$0.00</div>
+                        <p class="metric-subtitle" id="profit-period">This Month</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Actions Grid -->
+            <!-- Quick Actions -->
             <div class="quick-actions-section">
                 <h2 class="section-title">Quick Actions</h2>
                 <div class="actions-grid">
-                    <button class="action-card" data-action="record-sale">
-                        <div class="action-icon sale">
-                            💰
-                        </div>
-                        <div class="action-content">
-                            <h3>Record Sale</h3>
-                            <p>Add new sales transaction</p>
+                    <button class="action-btn" data-action="sales-record">
+                        <div class="action-icon">💰</div>
+                        <div class="action-text">
+                            <h4>Record Sale</h4>
+                            <p>Add sales transaction</p>
                         </div>
                         <div class="action-arrow">→</div>
                     </button>
 
-                    <button class="action-card" data-action="add-inventory">
-                        <div class="action-icon inventory">
-                            📦
-                        </div>
-                        <div class="action-content">
-                            <h3>Manage Inventory</h3>
+                    <button class="action-btn" data-action="inventory-check">
+                        <div class="action-icon">📦</div>
+                        <div class="action-text">
+                            <h4>Manage Inventory</h4>
                             <p>Update stock levels</p>
                         </div>
                         <div class="action-arrow">→</div>
                     </button>
 
-                    <button class="action-card" data-action="record-feed">
-                        <div class="action-icon feed">
-                            🌾
-                        </div>
-                        <div class="action-content">
-                            <h3>Feed Records</h3>
+                    <button class="action-btn" data-action="feed-record">
+                        <div class="action-icon">🌾</div>
+                        <div class="action-text">
+                            <h4>Feed Records</h4>
                             <p>Track animal feeding</p>
                         </div>
                         <div class="action-arrow">→</div>
                     </button>
 
-                    <button class="action-card" data-action="view-reports">
-                        <div class="action-icon reports">
-                            📊
-                        </div>
-                        <div class="action-content">
-                            <h3>View Reports</h3>
+                    <button class="action-btn" data-action="reports">
+                        <div class="action-icon">📊</div>
+                        <div class="action-text">
+                            <h4>View Reports</h4>
                             <p>Analytics & insights</p>
                         </div>
                         <div class="action-arrow">→</div>
@@ -155,11 +131,9 @@ FarmModules.registerModule('dashboard', {
             <div class="recent-activity-section">
                 <div class="section-header">
                     <h2 class="section-title">Recent Activity</h2>
-                    <button class="btn-text" id="view-all-activity">
-                        View All
-                    </button>
+                    <button class="btn-text" id="view-all-activity">View All</button>
                 </div>
-                <div class="activity-feed" id="activity-feed">
+                <div class="activity-list" id="activity-list">
                     <div class="empty-state">
                         <div class="empty-icon">📊</div>
                         <h3>No Recent Activity</h3>
@@ -168,36 +142,36 @@ FarmModules.registerModule('dashboard', {
                 </div>
             </div>
 
-            <!-- Performance Metrics -->
-            <div class="metrics-section">
-                <h2 class="section-title">Performance Metrics</h2>
-                <div class="metrics-grid">
-                    <div class="metric-item">
-                        <div class="metric-icon">🛒</div>
-                        <div class="metric-content">
-                            <div class="metric-value" id="sales-count">0</div>
-                            <div class="metric-label">Total Sales</div>
+            <!-- Performance Summary -->
+            <div class="performance-section">
+                <h2 class="section-title">Performance Summary</h2>
+                <div class="performance-grid">
+                    <div class="performance-card">
+                        <div class="performance-icon">🛒</div>
+                        <div class="performance-content">
+                            <div class="performance-value" id="total-sales-count">0</div>
+                            <div class="performance-label">Total Sales</div>
                         </div>
                     </div>
-                    <div class="metric-item">
-                        <div class="metric-icon">📋</div>
-                        <div class="metric-content">
-                            <div class="metric-value" id="inventory-count">0</div>
-                            <div class="metric-label">Products</div>
+                    <div class="performance-card">
+                        <div class="performance-icon">📋</div>
+                        <div class="performance-content">
+                            <div class="performance-value" id="total-products">0</div>
+                            <div class="performance-label">Products</div>
                         </div>
                     </div>
-                    <div class="metric-item">
-                        <div class="metric-icon">🌾</div>
-                        <div class="metric-content">
-                            <div class="metric-value" id="feed-records-count">0</div>
-                            <div class="metric-label">Feed Records</div>
+                    <div class="performance-card">
+                        <div class="performance-icon">🌾</div>
+                        <div class="performance-content">
+                            <div class="performance-value" id="monthly-feed">0</div>
+                            <div class="performance-label">Feed Records</div>
                         </div>
                     </div>
-                    <div class="metric-item">
-                        <div class="metric-icon">⭐</div>
-                        <div class="metric-content">
-                            <div class="metric-value" id="avg-sale-value">$0</div>
-                            <div class="metric-label">Avg. Sale</div>
+                    <div class="performance-card">
+                        <div class="performance-icon">⭐</div>
+                        <div class="performance-content">
+                            <div class="performance-value" id="avg-sale">$0.00</div>
+                            <div class="performance-label">Avg. Sale</div>
                         </div>
                     </div>
                 </div>
@@ -218,10 +192,6 @@ FarmModules.registerModule('dashboard', {
             font-size: 1.8rem;
             font-weight: 700;
             color: var(--text-color);
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
 
         .welcome-section p {
@@ -244,9 +214,9 @@ FarmModules.registerModule('dashboard', {
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
-            transition: all 0.2s ease;
             cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
         }
 
         .btn-icon:hover {
@@ -267,58 +237,57 @@ FarmModules.registerModule('dashboard', {
             font-weight: 600;
             min-width: 18px;
             text-align: center;
+            display: none;
         }
 
-        /* Financial Grid */
-        .financial-grid {
+        /* Metrics Grid */
+        .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2.5rem;
         }
 
-        .finance-card {
+        .metric-card {
             background: var(--card-bg);
-            border-radius: 20px;
-            padding: 1.5rem;
             border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
             position: relative;
             overflow: hidden;
             transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
         }
 
-        .finance-card::before {
+        .metric-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
         }
 
-        .finance-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        .metric-card.revenue::before { background: linear-gradient(90deg, #10b981, #059669); }
+        .metric-card.sales::before { background: linear-gradient(90deg, #3b82f6, #1d4ed8); }
+        .metric-card.inventory::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .metric-card.profit::before { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
         }
 
-        .finance-card.revenue::before { background: linear-gradient(90deg, #10b981, #059669); }
-        .finance-card.sales::before { background: linear-gradient(90deg, #3b82f6, #1d4ed8); }
-        .finance-card.inventory::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
-        .finance-card.profit::before { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
-
-        .card-header {
+        .metric-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 1rem;
         }
 
-        .icon-wrapper {
-            width: 50px;
-            height: 50px;
-            border-radius: 14px;
+        .metric-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
             background: rgba(59, 130, 246, 0.1);
             display: flex;
             align-items: center;
@@ -326,12 +295,12 @@ FarmModules.registerModule('dashboard', {
             font-size: 1.5rem;
         }
 
-        .finance-card.revenue .icon-wrapper { background: rgba(16, 185, 129, 0.1); }
-        .finance-card.sales .icon-wrapper { background: rgba(59, 130, 246, 0.1); }
-        .finance-card.inventory .icon-wrapper { background: rgba(245, 158, 11, 0.1); }
-        .finance-card.profit .icon-wrapper { background: rgba(139, 92, 246, 0.1); }
+        .metric-card.revenue .metric-icon { background: rgba(16, 185, 129, 0.1); }
+        .metric-card.sales .metric-icon { background: rgba(59, 130, 246, 0.1); }
+        .metric-card.inventory .metric-icon { background: rgba(245, 158, 11, 0.1); }
+        .metric-card.profit .metric-icon { background: rgba(139, 92, 246, 0.1); }
 
-        .card-trend {
+        .metric-trend {
             display: flex;
             align-items: center;
             gap: 0.25rem;
@@ -343,37 +312,35 @@ FarmModules.registerModule('dashboard', {
             color: #059669;
         }
 
-        .card-stock {
+        .metric-count {
             text-align: right;
+            font-size: 0.9rem;
+            color: var(--text-muted);
         }
 
-        .stock-value {
+        .metric-count span:first-child {
             font-size: 1.2rem;
             font-weight: 700;
             color: var(--text-color);
-        }
-
-        .stock-label {
-            font-size: 0.8rem;
-            color: var(--text-muted);
             display: block;
         }
 
-        .card-label {
+        .metric-content h3 {
             margin: 0 0 0.5rem 0;
             font-size: 0.9rem;
             color: var(--text-muted);
             font-weight: 500;
         }
 
-        .card-amount {
+        .metric-value {
             font-size: 1.8rem;
             font-weight: 700;
             color: var(--text-color);
             margin-bottom: 0.25rem;
         }
 
-        .card-subtitle {
+        .metric-subtitle {
+            margin: 0;
             font-size: 0.8rem;
             color: var(--text-muted);
         }
@@ -396,10 +363,10 @@ FarmModules.registerModule('dashboard', {
             gap: 1rem;
         }
 
-        .action-card {
+        .action-btn {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 16px;
+            border-radius: 12px;
             padding: 1.5rem;
             display: flex;
             align-items: center;
@@ -411,16 +378,17 @@ FarmModules.registerModule('dashboard', {
             border: none;
         }
 
-        .action-card:hover {
+        .action-btn:hover {
             transform: translateY(-2px);
             border-color: var(--primary-color);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
         .action-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: rgba(59, 130, 246, 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -428,23 +396,18 @@ FarmModules.registerModule('dashboard', {
             flex-shrink: 0;
         }
 
-        .action-icon.sale { background: rgba(16, 185, 129, 0.1); color: #059669; }
-        .action-icon.inventory { background: rgba(245, 158, 11, 0.1); color: #d97706; }
-        .action-icon.feed { background: rgba(59, 130, 246, 0.1); color: #1d4ed8; }
-        .action-icon.reports { background: rgba(139, 92, 246, 0.1); color: #7c3aed; }
-
-        .action-content {
+        .action-text {
             flex: 1;
         }
 
-        .action-content h3 {
+        .action-text h4 {
             margin: 0 0 0.25rem 0;
             font-size: 1rem;
             font-weight: 600;
             color: var(--text-color);
         }
 
-        .action-content p {
+        .action-text p {
             margin: 0;
             font-size: 0.85rem;
             color: var(--text-muted);
@@ -456,7 +419,7 @@ FarmModules.registerModule('dashboard', {
             transition: transform 0.2s ease;
         }
 
-        .action-card:hover .action-arrow {
+        .action-btn:hover .action-arrow {
             transform: translateX(4px);
             color: var(--primary-color);
         }
@@ -488,10 +451,10 @@ FarmModules.registerModule('dashboard', {
             background: var(--primary-light);
         }
 
-        .activity-feed {
+        .activity-list {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 16px;
+            border-radius: 12px;
             overflow: hidden;
         }
 
@@ -513,19 +476,16 @@ FarmModules.registerModule('dashboard', {
         }
 
         .activity-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(16, 185, 129, 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             flex-shrink: 0;
         }
-
-        .activity-icon.sale { background: rgba(16, 185, 129, 0.1); color: #059669; }
-        .activity-icon.inventory { background: rgba(245, 158, 11, 0.1); color: #d97706; }
-        .activity-icon.feed { background: rgba(59, 130, 246, 0.1); color: #1d4ed8; }
 
         .activity-content {
             flex: 1;
@@ -551,7 +511,6 @@ FarmModules.registerModule('dashboard', {
         .activity-time {
             font-size: 0.8rem;
             color: var(--text-muted);
-            text-align: right;
         }
 
         .empty-state {
@@ -576,71 +535,68 @@ FarmModules.registerModule('dashboard', {
             opacity: 0.8;
         }
 
-        /* Metrics Section */
-        .metrics-section {
+        /* Performance Section */
+        .performance-section {
             margin-bottom: 2rem;
         }
 
-        .metrics-grid {
+        .performance-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 1rem;
         }
 
-        .metric-item {
+        .performance-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 16px;
+            border-radius: 12px;
             padding: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+            text-align: center;
             transition: transform 0.2s ease;
         }
 
-        .metric-item:hover {
+        .performance-card:hover {
             transform: translateY(-2px);
         }
 
-        .metric-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
+        .performance-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
             background: rgba(59, 130, 246, 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.2rem;
-            flex-shrink: 0;
+            margin: 0 auto 1rem;
         }
 
-        .metric-value {
+        .performance-value {
             font-size: 1.5rem;
             font-weight: 700;
             color: var(--text-color);
             margin-bottom: 0.25rem;
         }
 
-        .metric-label {
+        .performance-label {
             font-size: 0.8rem;
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        /* Responsive Design */
+        /* Responsive */
         @media (max-width: 768px) {
             .dashboard-header {
                 flex-direction: column;
                 gap: 1rem;
-                align-items: flex-start;
             }
 
             .header-actions {
                 align-self: flex-end;
             }
 
-            .financial-grid {
+            .metrics-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -648,411 +604,187 @@ FarmModules.registerModule('dashboard', {
                 grid-template-columns: 1fr;
             }
 
-            .metrics-grid {
+            .performance-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
 
         @media (max-width: 480px) {
-            .metrics-grid {
+            .performance-grid {
                 grid-template-columns: 1fr;
             }
         }
     `,
 
-   // modules/dashboard.js - Fixed version
-FarmModules.registerModule('dashboard', {
-    name: 'Dashboard',
-    icon: '📊',
-    
-    template: `
-        <div class="section active">
-            <!-- Header with Welcome -->
-            <div class="dashboard-header">
-                <div class="welcome-section">
-                    <h1 id="welcome-message">Good Morning</h1>
-                    <p id="current-date">Loading...</p>
-                </div>
-                <div class="header-actions">
-                    <button class="btn-icon" id="notifications-btn">
-                        <span class="icon">🔔</span>
-                        <span class="badge" id="notification-badge">0</span>
-                    </button>
-                    <button class="btn-icon" id="refresh-dashboard">
-                        <span class="icon">🔄</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Financial Overview Cards -->
-            <div class="financial-grid">
-                <div class="finance-card revenue">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <div class="icon-wrapper">
-                                💰
-                            </div>
-                        </div>
-                        <div class="card-trend" id="revenue-trend">
-                            <span class="trend-icon">↗️</span>
-                            <span class="trend-value">0%</span>
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <h3 class="card-label">Total Revenue</h3>
-                        <div class="card-amount" id="total-revenue">$0</div>
-                        <div class="card-subtitle" id="revenue-subtitle">All Time</div>
-                    </div>
-                </div>
-
-                <div class="finance-card sales">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <div class="icon-wrapper">
-                                📈
-                            </div>
-                        </div>
-                        <div class="card-trend" id="sales-trend">
-                            <span class="trend-icon">↗️</span>
-                            <span class="trend-value">0%</span>
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <h3 class="card-label">Monthly Sales</h3>
-                        <div class="card-amount" id="monthly-sales">$0</div>
-                        <div class="card-subtitle" id="sales-subtitle">This Month</div>
-                    </div>
-                </div>
-
-                <div class="finance-card inventory">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <div class="icon-wrapper">
-                                📦
-                            </div>
-                        </div>
-                        <div class="card-stock">
-                            <span class="stock-value" id="inventory-items">0</span>
-                            <span class="stock-label">items</span>
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <h3 class="card-label">Inventory Value</h3>
-                        <div class="card-amount" id="inventory-value">$0</div>
-                        <div class="card-subtitle">Current Stock</div>
-                    </div>
-                </div>
-
-                <div class="finance-card profit">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <div class="icon-wrapper">
-                                💹
-                            </div>
-                        </div>
-                        <div class="card-trend" id="profit-trend">
-                            <span class="trend-icon">↗️</span>
-                            <span class="trend-value">0%</span>
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <h3 class="card-label">Net Profit</h3>
-                        <div class="card-amount" id="net-profit">$0</div>
-                        <div class="card-subtitle" id="profit-subtitle">This Month</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Actions Grid -->
-            <div class="quick-actions-section">
-                <h2 class="section-title">Quick Actions</h2>
-                <div class="actions-grid">
-                    <button class="action-card" data-action="record-sale">
-                        <div class="action-icon sale">
-                            💰
-                        </div>
-                        <div class="action-content">
-                            <h3>Record Sale</h3>
-                            <p>Add new sales transaction</p>
-                        </div>
-                        <div class="action-arrow">→</div>
-                    </button>
-
-                    <button class="action-card" data-action="add-inventory">
-                        <div class="action-icon inventory">
-                            📦
-                        </div>
-                        <div class="action-content">
-                            <h3>Manage Inventory</h3>
-                            <p>Update stock levels</p>
-                        </div>
-                        <div class="action-arrow">→</div>
-                    </button>
-
-                    <button class="action-card" data-action="record-feed">
-                        <div class="action-icon feed">
-                            🌾
-                        </div>
-                        <div class="action-content">
-                            <h3>Feed Records</h3>
-                            <p>Track animal feeding</p>
-                        </div>
-                        <div class="action-arrow">→</div>
-                    </button>
-
-                    <button class="action-card" data-action="view-reports">
-                        <div class="action-icon reports">
-                            📊
-                        </div>
-                        <div class="action-content">
-                            <h3>View Reports</h3>
-                            <p>Analytics & insights</p>
-                        </div>
-                        <div class="action-arrow">→</div>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="recent-activity-section">
-                <div class="section-header">
-                    <h2 class="section-title">Recent Activity</h2>
-                    <button class="btn-text" id="view-all-activity">
-                        View All
-                    </button>
-                </div>
-                <div class="activity-feed" id="activity-feed">
-                    <div class="empty-state">
-                        <div class="empty-icon">📊</div>
-                        <h3>No Recent Activity</h3>
-                        <p>Start recording transactions to see activity here</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Performance Metrics -->
-            <div class="metrics-section">
-                <h2 class="section-title">Performance Metrics</h2>
-                <div class="metrics-grid">
-                    <div class="metric-item">
-                        <div class="metric-icon">🛒</div>
-                        <div class="metric-content">
-                            <div class="metric-value" id="sales-count">0</div>
-                            <div class="metric-label">Total Sales</div>
-                        </div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-icon">📋</div>
-                        <div class="metric-content">
-                            <div class="metric-value" id="inventory-count">0</div>
-                            <div class="metric-label">Products</div>
-                        </div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-icon">🌾</div>
-                        <div class="metric-content">
-                            <div class="metric-value" id="feed-records-count">0</div>
-                            <div class="metric-label">Feed Records</div>
-                        </div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-icon">⭐</div>
-                        <div class="metric-content">
-                            <div class="metric-value" id="avg-sale-value">$0</div>
-                            <div class="metric-label">Avg. Sale</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `,
-
-    styles: `
-        /* ... keep all the existing styles exactly as they are ... */
-    `,
-
     initialize: function() {
-        console.log('📊 Dashboard module initializing...');
+        console.log('📊 Dashboard initializing...');
+        this.updateWelcome();
+        this.updateMetrics();
+        this.updateActivity();
+        this.updatePerformance();
+        this.attachEvents();
         
-        // Remove the debugNavigation call that was causing the error
-        this.updateWelcomeMessage();
-        this.updateFinancialData();
-        this.updateRecentActivity();
-        this.updatePerformanceMetrics();
-        this.updateNotifications();
-        this.attachEventListeners();
-        
-        // Set up periodic updates
-        this.updateInterval = setInterval(() => {
-            this.updateFinancialData();
-            this.updateRecentActivity();
-            this.updatePerformanceMetrics();
-            this.updateNotifications();
+        // Auto-refresh every 30 seconds
+        this.refreshInterval = setInterval(() => {
+            this.updateMetrics();
+            this.updateActivity();
+            this.updatePerformance();
         }, 30000);
     },
 
-    updateWelcomeMessage: function() {
-        const now = new Date();
-        const hour = now.getHours();
+    updateWelcome: function() {
+        const hour = new Date().getHours();
         let greeting = 'Good Morning';
-        
-        if (hour >= 12 && hour < 17) {
-            greeting = 'Good Afternoon';
-        } else if (hour >= 17) {
-            greeting = 'Good Evening';
-        }
-        
-        this.updateElement('welcome-message', greeting);
-        
-        // Format date
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const dateString = now.toLocaleDateString('en-US', options);
-        this.updateElement('current-date', dateString);
+        if (hour >= 12 && hour < 17) greeting = 'Good Afternoon';
+        else if (hour >= 17) greeting = 'Good Evening';
+
+        this.setText('welcome-message', greeting);
+        this.setText('current-date', new Date().toLocaleDateString('en-US', { 
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+        }));
     },
 
-    updateFinancialData: function() {
+    updateMetrics: function() {
         const sales = FarmModules.appData.sales || [];
         const inventory = FarmModules.appData.inventory || [];
         
-        // Calculate total revenue (all time)
+        // Total Revenue
         const totalRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
-        this.updateElement('total-revenue', this.formatCurrency(totalRevenue));
+        this.setText('total-revenue', this.formatCurrency(totalRevenue));
         
-        // Calculate monthly sales
-        const currentMonth = new Date().getMonth();
-        const currentYear = new Date().getFullYear();
+        // Monthly Sales
+        const now = new Date();
         const monthlySales = sales
+            .filter(sale => {
+                const saleDate = new Date(sale.date);
+                return saleDate.getMonth() === now.getMonth() && saleDate.getFullYear() === now.getFullYear();
+            })
+            .reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
+        this.setText('monthly-sales', this.formatCurrency(monthlySales));
+        
+        // Inventory
+        const inventoryValue = inventory.reduce((sum, item) => sum + ((item.quantity || 0) * (item.price || 0)), 0);
+        this.setText('inventory-value', this.formatCurrency(inventoryValue));
+        this.setText('inventory-count', inventory.length);
+        
+        // Net Profit (simplified)
+        this.setText('net-profit', this.formatCurrency(monthlySales));
+        
+        // Update periods
+        const monthName = now.toLocaleDateString('en-US', { month: 'long' });
+        this.setText('sales-period', monthName);
+        this.setText('profit-period', monthName);
+        
+        // Update trends
+        this.updateTrends(sales);
+    },
+
+    updateTrends: function(sales) {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        const currentSales = sales
             .filter(sale => {
                 const saleDate = new Date(sale.date);
                 return saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear;
             })
             .reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
-        this.updateElement('monthly-sales', this.formatCurrency(monthlySales));
+            
+        const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
         
-        // Calculate inventory value and count
-        const inventoryValue = inventory.reduce((sum, item) => {
-            const quantity = item.quantity || 0;
-            const price = item.price || item.unitPrice || 0;
-            return sum + (quantity * price);
-        }, 0);
-        this.updateElement('inventory-value', this.formatCurrency(inventoryValue));
-        this.updateElement('inventory-items', inventory.length);
-        
-        // Calculate net profit (simplified: revenue - cost of goods sold)
-        const netProfit = monthlySales; // In a real app, you'd subtract costs
-        this.updateElement('net-profit', this.formatCurrency(netProfit));
-        
-        // Update periods and trends
-        const monthNames = ["January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"];
-        const currentMonthName = monthNames[currentMonth];
-        this.updateElement('sales-subtitle', currentMonthName);
-        this.updateElement('profit-subtitle', currentMonthName);
-        
-        // Calculate trends (simplified - compare with previous month)
-        const prevMonthSales = this.getPreviousMonthSales(sales);
-        const salesTrend = prevMonthSales > 0 ? ((monthlySales - prevMonthSales) / prevMonthSales * 100) : 0;
-        this.updateTrend('sales-trend', salesTrend);
-        
-        const profitTrend = salesTrend; // Simplified
-        this.updateTrend('profit-trend', profitTrend);
-    },
-
-    getPreviousMonthSales: function(sales) {
-        const now = new Date();
-        const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
-        const prevYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
-        
-        return sales
+        const prevSales = sales
             .filter(sale => {
                 const saleDate = new Date(sale.date);
                 return saleDate.getMonth() === prevMonth && saleDate.getFullYear() === prevYear;
             })
             .reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
+            
+        const trend = prevSales > 0 ? ((currentSales - prevSales) / prevSales * 100) : 0;
+        
+        this.updateTrendElement('sales-trend', trend);
+        this.updateTrendElement('profit-trend', trend);
+        this.updateTrendElement('revenue-trend', trend);
     },
 
-    updateTrend: function(elementId, trend) {
+    updateTrendElement: function(elementId, trend) {
         const element = document.getElementById(elementId);
         if (!element) return;
         
-        const trendIcon = element.querySelector('.trend-icon');
-        const trendValue = element.querySelector('.trend-value');
+        const icon = element.querySelector('.trend-icon');
+        const value = element.querySelector('.trend-value');
         
         if (trend > 0) {
-            trendIcon.textContent = '↗️';
-            trendValue.textContent = `${Math.abs(trend).toFixed(1)}%`;
+            icon.textContent = '↗️';
+            value.textContent = `${Math.abs(trend).toFixed(1)}%`;
             element.style.background = 'rgba(16, 185, 129, 0.1)';
             element.style.color = '#059669';
         } else if (trend < 0) {
-            trendIcon.textContent = '↘️';
-            trendValue.textContent = `${Math.abs(trend).toFixed(1)}%`;
+            icon.textContent = '↘️';
+            value.textContent = `${Math.abs(trend).toFixed(1)}%`;
             element.style.background = 'rgba(239, 68, 68, 0.1)';
             element.style.color = '#dc2626';
         } else {
-            trendIcon.textContent = '➡️';
-            trendValue.textContent = '0%';
+            icon.textContent = '→';
+            value.textContent = '0%';
             element.style.background = 'rgba(107, 114, 128, 0.1)';
             element.style.color = '#6b7280';
         }
     },
 
-    updateRecentActivity: function() {
+    updateActivity: function() {
         const sales = FarmModules.appData.sales || [];
         const inventory = FarmModules.appData.inventory || [];
         const feedRecords = FarmModules.appData.feedRecords || [];
         
-        // Combine and sort all activities by date (most recent first)
-        const allActivities = [];
+        const activities = [];
         
-        // Add sales activities
-        sales.slice(-10).forEach(sale => {
-            allActivities.push({
+        // Sales activities
+        sales.slice(-5).forEach(sale => {
+            activities.push({
                 type: 'sale',
-                title: `Sale: ${this.formatProductName(sale.product)}`,
-                details: `${sale.quantity} ${sale.unit} sold to ${sale.customer || 'Walk-in'}`,
-                amount: sale.totalAmount,
-                date: sale.date,
                 icon: '💰',
-                time: this.formatTimeAgo(sale.date)
+                title: `Sale: ${this.getProductName(sale.product)}`,
+                details: `${sale.quantity} ${sale.unit} • ${sale.customer || 'Walk-in'}`,
+                amount: sale.totalAmount,
+                time: this.getTimeAgo(sale.date)
             });
         });
         
-        // Add inventory activities
-        inventory.slice(-5).forEach(item => {
-            allActivities.push({
+        // Inventory activities
+        inventory.slice(-3).forEach(item => {
+            activities.push({
                 type: 'inventory',
-                title: `Inventory: ${item.name}`,
-                details: `${item.quantity} ${item.unit} in stock`,
-                amount: item.quantity * (item.price || 0),
-                date: item.lastUpdated || new Date().toISOString(),
                 icon: '📦',
-                time: this.formatTimeAgo(item.lastUpdated)
-            });
-        });
-        
-        // Add feed record activities
-        feedRecords.slice(-5).forEach(record => {
-            allActivities.push({
-                type: 'feed',
-                title: 'Feed Distribution',
-                details: `${record.quantity} ${record.unit} distributed`,
+                title: `Stock: ${item.name}`,
+                details: `${item.quantity} ${item.unit} available`,
                 amount: null,
-                date: record.date,
-                icon: '🌾',
-                time: this.formatTimeAgo(record.date)
+                time: this.getTimeAgo(item.lastUpdated)
             });
         });
         
-        // Sort by date (most recent first) and take top 6
-        const recentActivities = allActivities
-            .sort((a, b) => new Date(b.date) - new Date(a.date))
-            .slice(0, 6);
+        // Feed activities
+        feedRecords.slice(-2).forEach(record => {
+            activities.push({
+                type: 'feed',
+                icon: '🌾',
+                title: 'Feed Distributed',
+                details: `${record.quantity} ${record.unit}`,
+                amount: null,
+                time: this.getTimeAgo(record.date)
+            });
+        });
         
-        const activityFeed = document.getElementById('activity-feed');
-        if (!activityFeed) return;
+        this.renderActivity(activities.slice(0, 6));
+    },
+
+    renderActivity: function(activities) {
+        const container = document.getElementById('activity-list');
+        if (!container) return;
         
-        if (recentActivities.length === 0) {
-            activityFeed.innerHTML = `
+        if (activities.length === 0) {
+            container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">📊</div>
                     <h3>No Recent Activity</h3>
@@ -1062,11 +794,9 @@ FarmModules.registerModule('dashboard', {
             return;
         }
         
-        activityFeed.innerHTML = recentActivities.map(activity => `
+        container.innerHTML = activities.map(activity => `
             <div class="activity-item">
-                <div class="activity-icon ${activity.type}">
-                    ${activity.icon}
-                </div>
+                <div class="activity-icon">${activity.icon}</div>
                 <div class="activity-content">
                     <div class="activity-title">${activity.title}</div>
                     <div class="activity-details">${activity.details}</div>
@@ -1077,172 +807,115 @@ FarmModules.registerModule('dashboard', {
         `).join('');
     },
 
-    updatePerformanceMetrics: function() {
+    updatePerformance: function() {
         const sales = FarmModules.appData.sales || [];
         const inventory = FarmModules.appData.inventory || [];
         const feedRecords = FarmModules.appData.feedRecords || [];
         
-        // Sales count
-        this.updateElement('sales-count', sales.length);
-        
-        // Inventory count
-        this.updateElement('inventory-count', inventory.length);
-        
-        // Feed records count (this month)
-        const currentMonth = new Date().getMonth();
-        const currentYear = new Date().getFullYear();
-        const monthlyFeedRecords = feedRecords.filter(record => {
+        const now = new Date();
+        const monthlyFeed = feedRecords.filter(record => {
             const recordDate = new Date(record.date);
-            return recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear;
+            return recordDate.getMonth() === now.getMonth() && recordDate.getFullYear() === now.getFullYear();
         }).length;
-        this.updateElement('feed-records-count', monthlyFeedRecords);
         
-        // Average sale value
-        const avgSaleValue = sales.length > 0 ? 
+        const avgSale = sales.length > 0 ? 
             sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0) / sales.length : 0;
-        this.updateElement('avg-sale-value', this.formatCurrency(avgSaleValue));
-    },
-
-    updateNotifications: function() {
-        const inventory = FarmModules.appData.inventory || [];
-        const lowStockItems = inventory.filter(item => {
-            const quantity = item.quantity || 0;
-            const lowStockThreshold = item.lowStockThreshold || 10;
-            return quantity <= lowStockThreshold;
-        });
         
+        this.setText('total-sales-count', sales.length);
+        this.setText('total-products', inventory.length);
+        this.setText('monthly-feed', monthlyFeed);
+        this.setText('avg-sale', this.formatCurrency(avgSale));
+        
+        // Update notifications
+        const lowStock = inventory.filter(item => (item.quantity || 0) <= (item.lowStockThreshold || 10)).length;
         const badge = document.getElementById('notification-badge');
         if (badge) {
-            badge.textContent = lowStockItems.length;
-            badge.style.display = lowStockItems.length > 0 ? 'block' : 'none';
+            badge.textContent = lowStock;
+            badge.style.display = lowStock > 0 ? 'block' : 'none';
         }
     },
 
-    attachEventListeners: function() {
-        console.log('🔗 Attaching dashboard event listeners...');
-        
-        // Quick action buttons
-        const actionButtons = document.querySelectorAll('.action-card');
-        console.log('🔧 Found action buttons:', actionButtons.length);
-        
-        actionButtons.forEach(btn => {
-            const action = btn.dataset.action;
-            console.log('🔧 Setting up button for action:', action);
-            
+    attachEvents: function() {
+        // Action buttons
+        document.querySelectorAll('.action-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
-                console.log('🎯 Action button clicked:', action);
-                this.handleQuickAction(action);
+                const action = btn.dataset.action;
+                this.navigateTo(action);
             });
         });
         
-        // Refresh dashboard button
+        // Refresh button
         const refreshBtn = document.getElementById('refresh-dashboard');
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => {
-                console.log('🔄 Refresh dashboard clicked');
-                this.refreshDashboard();
+                this.refreshData();
             });
-            console.log('✅ Refresh dashboard button listener attached');
-        } else {
-            console.warn('❌ Refresh dashboard button not found');
         }
         
         // Notifications button
-        const notificationsBtn = document.getElementById('notifications-btn');
-        if (notificationsBtn) {
-            notificationsBtn.addEventListener('click', () => {
-                console.log('🔔 Notifications button clicked');
+        const notifyBtn = document.getElementById('notifications-btn');
+        if (notifyBtn) {
+            notifyBtn.addEventListener('click', () => {
                 this.showNotifications();
             });
-            console.log('✅ Notifications button listener attached');
         }
         
-        // View all activity button
+        // View all activity
         const viewAllBtn = document.getElementById('view-all-activity');
         if (viewAllBtn) {
             viewAllBtn.addEventListener('click', () => {
-                console.log('📋 View all activity clicked');
-                this.viewAllActivity();
+                this.navigateTo('reports');
             });
-            console.log('✅ View all activity button listener attached');
         }
-        
-        console.log('✅ All dashboard event listeners attached');
     },
 
-    handleQuickAction: function(action) {
-        console.log('🔧 Quick action clicked:', action);
-        
-        const routes = {
-            'record-sale': 'sales-record',
-            'add-inventory': 'inventory-check', 
-            'record-feed': 'feed-record',
-            'view-reports': 'reports'
-        };
-        
-        const route = routes[action];
-        if (route) {
-            // Simply find and click the corresponding navbar link
-            const navLink = document.querySelector(`a[href="#${route}"], [data-section="${route}"]`);
-            if (navLink) {
-                console.log('✅ Found nav link, clicking it');
-                navLink.click();
-                this.showNotification(`Opening ${this.getModuleName(route)}...`, 'success');
-            } else {
-                console.log('🔄 No nav link found, using hash change');
-                // Fallback to hash change
-                window.location.hash = route;
-                this.showNotification(`Opening ${this.getModuleName(route)}...`, 'info');
-            }
+    navigateTo: function(section) {
+        // Find and click the corresponding nav link
+        const navLink = document.querySelector(`a[href="#${section}"], [data-section="${section}"]`);
+        if (navLink) {
+            navLink.click();
         } else {
-            this.showNotification('Action not available', 'warning');
+            // Fallback to hash change
+            window.location.hash = section;
         }
+        this.showNotification(`Opening ${this.getSectionName(section)}...`);
     },
 
-    refreshDashboard: function() {
-        console.log('🔄 Refreshing dashboard data...');
-        
-        // Show loading state
-        this.showNotification('Refreshing dashboard...', 'info');
-        
-        // Update all data
-        this.updateFinancialData();
-        this.updateRecentActivity();
-        this.updatePerformanceMetrics();
-        this.updateNotifications();
-        
-        // Show success message
-        setTimeout(() => {
-            this.showNotification('Dashboard updated successfully!', 'success');
-        }, 500);
+    refreshData: function() {
+        this.showNotification('Refreshing data...');
+        this.updateMetrics();
+        this.updateActivity();
+        this.updatePerformance();
+        setTimeout(() => this.showNotification('Data updated!'), 500);
     },
 
     showNotifications: function() {
         const inventory = FarmModules.appData.inventory || [];
-        const lowStockItems = inventory.filter(item => {
-            const quantity = item.quantity || 0;
-            const lowStockThreshold = item.lowStockThreshold || 10;
-            return quantity <= lowStockThreshold;
-        });
+        const lowStock = inventory.filter(item => (item.quantity || 0) <= (item.lowStockThreshold || 10)).length;
         
-        if (lowStockItems.length === 0) {
-            this.showNotification('No notifications', 'info');
+        if (lowStock > 0) {
+            this.showNotification(`${lowStock} items have low stock`, 'warning');
         } else {
-            const message = `You have ${lowStockItems.length} item(s) with low stock`;
-            this.showNotification(message, 'warning');
+            this.showNotification('No notifications', 'info');
         }
     },
 
-    viewAllActivity: function() {
-        // Navigate to reports or show all activity
-        window.location.hash = 'reports';
-        this.showNotification('Opening Reports...', 'info');
+    // Utility methods
+    setText: function(id, text) {
+        const element = document.getElementById(id);
+        if (element) element.textContent = text;
     },
 
-    formatTimeAgo: function(dateString) {
+    formatCurrency: function(amount) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(amount);
+    },
+
+    getTimeAgo: function(dateString) {
         if (!dateString) return 'Recently';
-        
         const date = new Date(dateString);
         const now = new Date();
         const diffMs = now - date;
@@ -1254,74 +927,47 @@ FarmModules.registerModule('dashboard', {
         if (diffMins < 60) return `${diffMins}m ago`;
         if (diffHours < 24) return `${diffHours}h ago`;
         if (diffDays < 7) return `${diffDays}d ago`;
-        
         return date.toLocaleDateString();
     },
 
-    getModuleName: function(route) {
-        const names = {
-            'sales-record': 'Sales Records',
-            'inventory-check': 'Inventory',
-            'feed-record': 'Feed Records', 
-            'reports': 'Reports'
-        };
-        return names[route] || route;
-    },
-
-    formatCurrency: function(amount) {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount);
-    },
-
-    formatProductName: function(product) {
-        const productNames = {
+    getProductName: function(productKey) {
+        const products = {
             'broilers-live': 'Broilers (Live)',
             'broilers-dressed': 'Broilers (Dressed)',
             'eggs': 'Eggs',
             'pork': 'Pork',
             'beef': 'Beef',
-            'chicken-parts': 'Chicken Parts',
             'tomatoes': 'Tomatoes',
             'peppers': 'Peppers',
             'cucumbers': 'Cucumbers',
-            'lettuce': 'Lettuce',
-            'carrots': 'Carrots',
-            'potatoes': 'Potatoes',
-            'onions': 'Onions',
-            'cabbage': 'Cabbage',
             'milk': 'Milk',
             'cheese': 'Cheese',
-            'yogurt': 'Yogurt',
-            'butter': 'Butter',
-            'honey': 'Honey',
-            'jam': 'Jam/Preserves',
-            'bread': 'Bread',
             'other': 'Other'
         };
-        return productNames[product] || product;
+        return products[productKey] || productKey;
     },
 
-    updateElement: function(id, value) {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value;
-        }
+    getSectionName: function(section) {
+        const names = {
+            'sales-record': 'Sales Records',
+            'inventory-check': 'Inventory',
+            'feed-record': 'Feed Records',
+            'reports': 'Reports'
+        };
+        return names[section] || section;
     },
 
-    showNotification: function(message, type) {
-        if (window.coreModule && window.coreModule.showNotification) {
+    showNotification: function(message, type = 'info') {
+        if (window.coreModule?.showNotification) {
             window.coreModule.showNotification(message, type);
         } else {
             alert(message);
         }
     },
 
-    // Clean up on destroy
     destroy: function() {
-        if (this.updateInterval) {
-            clearInterval(this.updateInterval);
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
         }
     }
 });
