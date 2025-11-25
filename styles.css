@@ -921,3 +921,62 @@ main {
         padding: 8px !important;
     }
 }
+
+/* Ensure everything is visible */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #f8f9fa;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Navigation hover effects */
+.nav-item:hover {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    color: #3b82f6 !important;
+}
+
+.more-menu-item:hover {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    color: #3b82f6 !important;
+}
+
+/* Make sure content is visible below fixed header */
+#app-container main {
+    padding-top: 70px !important;
+    min-height: calc(100vh - 70px) !important;
+}
+
+#content-area {
+    padding: 20px !important;
+    background: white;
+    margin: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Remove any backdrop filters that might cause visibility issues */
+.top-nav {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Responsive - show icons only on mobile */
+@media (max-width: 768px) {
+    .nav-item span:last-child {
+        display: none;
+    }
+    
+    .nav-brand span:last-child {
+        display: none;
+    }
+    
+    .nav-item {
+        padding: 12px !important;
+    }
+}
+
