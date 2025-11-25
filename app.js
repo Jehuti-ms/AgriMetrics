@@ -97,6 +97,7 @@ setupNavigation() {
         { id: 'inventory-check', label: 'Inventory', icon: '📦' },
         { id: 'feed-record', label: 'Feed Record', icon: '🌾' },
         { id: 'broiler-mortality', label: 'Broiler Mortality', icon: '🐔' },
+        { id: 'orders', label: 'Orders', icon: '📋' },
         { id: 'reports', label: 'Reports', icon: '📈' },
         { id: 'profile', label: 'Profile', icon: '👤' }
     ];
