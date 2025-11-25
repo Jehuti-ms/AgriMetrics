@@ -98,7 +98,7 @@ setupNavigation() {
         { id: 'feed-record', label: 'Feed Record', icon: '🌾' },
         { id: 'broiler-mortality', label: 'Broiler Mortality', icon: '🐔' },
         { id: 'orders', label: 'Orders', icon: '📋' },
-        { id: 'sales-record', label: 'Sales Records', icon: '💰' },
+        { id: 'sales-record', label: 'Sales Record', icon: '💰' },
         { id: 'production', label: 'Production Records', icon: '🚜' },
         { id: 'reports', label: 'Reports', icon: '📈' },
         { id: 'profile', label: 'Profile', icon: '👤' }
