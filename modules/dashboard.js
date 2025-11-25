@@ -958,27 +958,65 @@ FarmModules.registerModule('dashboard', {
         console.log('✅ All dashboard event listeners attached');
     },
 
-    handleQuickAction: function(action) {
-        console.log('🔧 Quick action clicked:', action);
+    // Updated handleQuickAction method in dashboard.js
+handleQuickAction: function(action) {
+    console.log('🔧 Quick action clicked:', action);
+    
+    const routes = {
+        'record-sale': 'sales-record',
+        'add-inventory': 'inventory-check', 
+        'record-feed': 'feed-record',
+        'view-reports': 'reports'
+    };
+    
+    const route = routes[action];
+    if (route) {
+        console.log('📍 Attempting navigation to:', route);
         
-        const routes = {
-            'record-sale': 'sales-record',
-            'add-inventory': 'inventory-check', 
-            'record-feed': 'feed-record',
-            'view-reports': 'reports'
-        };
-        
-        const route = routes[action];
-        if (route) {
-            // Always work - change URL hash
-            window.location.hash = route;
-            console.log('📍 Navigating to:', route);
-            this.showNotification(`Opening ${this.getModuleName(route)}...`, 'info');
-        } else {
-            console.warn('Unknown action:', action);
-            this.showNotification('Action not available', 'warning');
+        // Method 1: Try FarmModules framework navigation
+        if (typeof FarmModules !== 'undefined' && FarmModules.showSection) {
+            console.log('✅ Using FarmModules.showSection');
+            FarmModules.showSection(route);
+            this.showNotification(`Opening ${this.getModuleName(route)}...`, 'success');
+            return;
         }
-    },
+        
+        // Method 2: Try window.farmModules navigation
+        if (window.farmModules && window.farmModules.showSection) {
+            console.log('✅ Using window.farmModules.showSection');
+            window.farmModules.showSection(route);
+            this.showNotification(`Opening ${this.getModuleName(route)}...`, 'success');
+            return;
+        }
+        
+        // Method 3: Try triggering hash change event
+        console.log('🔄 Trying hash change navigation');
+        window.location.hash = route;
+        
+        // Force a hash change event if needed
+        setTimeout(() => {
+            if (window.location.hash !== `#${route}`) {
+                console.log('🔄 Forcing hash change');
+                window.location.hash = route;
+            }
+            
+            // Check if navigation worked
+            setTimeout(() => {
+                if (window.location.hash === `#${route}`) {
+                    console.log('✅ Hash navigation successful');
+                    this.showNotification(`Opened ${this.getModuleName(route)}`, 'success');
+                } else {
+                    console.warn('❌ Hash navigation failed');
+                    this.showNotification(`Could not open ${this.getModuleName(route)}. Please try again.`, 'error');
+                }
+            }, 100);
+        }, 50);
+        
+    } else {
+        console.warn('❌ Unknown action:', action);
+        this.showNotification('Action not available', 'warning');
+    }
+},
 
     refreshDashboard: function() {
         console.log('🔄 Refreshing dashboard data...');
@@ -1103,5 +1141,24 @@ FarmModules.registerModule('dashboard', {
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
         }
+    },
+
+    // Add this method to debug navigation
+debugNavigation: function() {
+    console.log('🔍 Navigation Debug Info:');
+    console.log('FarmModules:', typeof FarmModules !== 'undefined' ? 'Available' : 'Not Available');
+    console.log('FarmModules.showSection:', FarmModules?.showSection ? 'Available' : 'Not Available');
+    console.log('window.farmModules:', window.farmModules ? 'Available' : 'Not Available');
+    console.log('window.farmModules.showSection:', window.farmModules?.showSection ? 'Available' : 'Not Available');
+    console.log('Current hash:', window.location.hash);
+    console.log('Available modules:', Object.keys(FarmModules?.modules || window.farmModules?.modules || {}));
+    
+    // Test if the framework is properly initialized
+    if (window.farmModules) {
+        console.log('Framework initialized:', window.farmModules.initialized);
+        console.log('Active section:', window.farmModules.activeSection);
     }
+},
+    
 });
+
