@@ -1,855 +1,490 @@
 // modules/sales-record.js
-FarmModules.registerModule('sales-record', {
-    name: 'Sales Records',
-    icon: '💰',
-    
-    template: `
-        <div class="section active">
-            <div class="module-header">
-                <h1>Sales Records</h1>
-                <p>Track product sales and revenue</p>
-                <div class="header-actions">
-                    <button class="btn btn-primary" id="add-sale">
-                        ➕ Record Sale
-                    </button>
-                </div>
-            </div>
+class SalesModule {
+    constructor() {
+        this.salesRecords = new Map();
+        this.customers = new Map();
+        this.products = new Map();
+        this.init();
+    }
 
-            <!-- Sales Summary -->
-            <div class="sales-summary">
-                <div class="summary-card">
-                    <div class="summary-icon">📈</div>
-                    <div class="summary-content">
-                        <h3>Today's Sales</h3>
-                        <div class="summary-value" id="today-sales">$0</div>
-                        <div class="summary-period" id="today-date">Today</div>
-                    </div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-icon">📊</div>
-                    <div class="summary-content">
-                        <h3>This Week</h3>
-                        <div class="summary-value" id="week-sales">$0</div>
-                        <div class="summary-period">7 days</div>
-                    </div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-icon">💰</div>
-                    <div class="summary-content">
-                        <h3>This Month</h3>
-                        <div class="summary-value" id="month-sales">$0</div>
-                        <div class="summary-period">30 days</div>
-                    </div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-icon">🎯</div>
-                    <div class="summary-content">
-                        <h3>Top Product</h3>
-                        <div class="summary-value" id="top-product">-</div>
-                        <div class="summary-period" id="top-product-revenue">$0</div>
-                    </div>
-                </div>
-            </div>
+    init() {
+        console.log('💰 Sales module initialized');
+        this.loadInitialData();
+        this.setupDefaultProducts();
+    }
 
-            <!-- Quick Sale Form -->
-            <div class="quick-sale card">
-                <h3>Quick Sale</h3>
-                <form id="quick-sale-form" class="form-inline">
-                    <div class="form-row compact">
-                        <div class="form-group">
-                            <select id="quick-product" required class="form-compact">
-                                <option value="">Select Product</option>
-                                <optgroup label="Livestock">
-                                    <option value="broilers-live">Broilers (Live)</option>
-                                    <option value="broilers-dressed">Broilers (Dressed)</option>
-                                    <option value="eggs">Eggs</option>
-                                    <option value="pork">Pork</option>
-                                    <option value="beef">Beef</option>
-                                </optgroup>
-                                <optgroup label="Produce">
-                                    <option value="tomatoes">Tomatoes</option>
-                                    <option value="peppers">Peppers</option>
-                                    <option value="cucumbers">Cucumbers</option>
-                                    <option value="lettuce">Lettuce</option>
-                                    <option value="carrots">Carrots</option>
-                                    <option value="potatoes">Potatoes</option>
-                                </optgroup>
-                                <optgroup label="Other">
-                                    <option value="honey">Honey</option>
-                                    <option value="milk">Milk</option>
-                                    <option value="cheese">Cheese</option>
-                                    <option value="other">Other</option>
-                                </optgroup>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <input type="number" id="quick-quantity" placeholder="Qty" required class="form-compact" min="1">
-                        </div>
-                        <div class="form-group">
-                            <select id="quick-unit" class="form-compact">
-                                <option value="kg">kg</option>
-                                <option value="lbs">lbs</option>
-                                <option value="units">units</option>
-                                <option value="dozen">dozen</option>
-                                <option value="case">case</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <input type="number" id="quick-price" placeholder="Price" step="0.01" required class="form-compact" min="0">
-                        </div>
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary btn-compact">Record Sale</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
+    // ==================== SALES RECORDS MANAGEMENT ====================
 
-            <!-- Sales Records -->
-            <div class="sales-records card">
-                <div class="card-header">
-                    <h3>Recent Sales</h3>
-                    <div class="filter-controls">
-                        <select id="period-filter">
-                            <option value="today">Today</option>
-                            <option value="week">This Week</option>
-                            <option value="month">This Month</option>
-                            <option value="all">All Time</option>
-                        </select>
-                        <button class="btn btn-text" id="export-sales">Export</button>
-                    </div>
-                </div>
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Product</th>
-                                <th>Customer</th>
-                                <th>Quantity</th>
-                                <th>Unit Price</th>
-                                <th>Total</th>
-                                <th>Payment</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="sales-body">
-                            <tr>
-                                <td colspan="8" class="empty-state">
-                                    <div class="empty-content">
-                                        <span class="empty-icon">💰</span>
-                                        <h4>No sales recorded yet</h4>
-                                        <p>Start recording your product sales</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Sales Modal -->
-            <div id="sale-modal" class="modal hidden">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 id="sale-modal-title">Record Sale</h3>
-                        <button class="btn-icon close-modal">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="sale-form">
-                            <input type="hidden" id="sale-id">
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="sale-date">Sale Date *</label>
-                                    <input type="date" id="sale-date" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="sale-customer">Customer Name</label>
-                                    <input type="text" id="sale-customer" placeholder="Customer name (optional)">
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="sale-product">Product *</label>
-                                    <select id="sale-product" required>
-                                        <option value="">Select Product</option>
-                                        <optgroup label="Livestock">
-                                            <option value="broilers-live">Broilers (Live)</option>
-                                            <option value="broilers-dressed">Broilers (Dressed)</option>
-                                            <option value="eggs">Eggs</option>
-                                            <option value="pork">Pork</option>
-                                            <option value="beef">Beef</option>
-                                            <option value="chicken-parts">Chicken Parts</option>
-                                        </optgroup>
-                                        <optgroup label="Produce">
-                                            <option value="tomatoes">Tomatoes</option>
-                                            <option value="peppers">Peppers</option>
-                                            <option value="cucumbers">Cucumbers</option>
-                                            <option value="lettuce">Lettuce</option>
-                                            <option value="carrots">Carrots</option>
-                                            <option value="potatoes">Potatoes</option>
-                                            <option value="onions">Onions</option>
-                                            <option value="cabbage">Cabbage</option>
-                                        </optgroup>
-                                        <optgroup label="Dairy">
-                                            <option value="milk">Milk</option>
-                                            <option value="cheese">Cheese</option>
-                                            <option value="yogurt">Yogurt</option>
-                                            <option value="butter">Butter</option>
-                                        </optgroup>
-                                        <optgroup label="Other">
-                                            <option value="honey">Honey</option>
-                                            <option value="jam">Jam/Preserves</option>
-                                            <option value="bread">Bread</option>
-                                            <option value="other">Other</option>
-                                        </optgroup>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="sale-unit">Unit *</label>
-                                    <select id="sale-unit" required>
-                                        <option value="kg">Kilograms (kg)</option>
-                                        <option value="lbs">Pounds (lbs)</option>
-                                        <option value="units">Units</option>
-                                        <option value="dozen">Dozen</option>
-                                        <option value="case">Case</option>
-                                        <option value="crate">Crate</option>
-                                        <option value="bag">Bag</option>
-                                        <option value="bottle">Bottle</option>
-                                        <option value="jar">Jar</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="sale-quantity">Quantity *</label>
-                                    <input type="number" id="sale-quantity" min="0.01" step="0.01" required placeholder="0.00">
-                                </div>
-                                <div class="form-group">
-                                    <label for="sale-price">Unit Price ($) *</label>
-                                    <input type="number" id="sale-price" step="0.01" min="0" required placeholder="0.00">
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="sale-payment">Payment Method *</label>
-                                    <select id="sale-payment" required>
-                                        <option value="cash">Cash</option>
-                                        <option value="card">Credit/Debit Card</option>
-                                        <option value="transfer">Bank Transfer</option>
-                                        <option value="check">Check</option>
-                                        <option value="mobile">Mobile Payment</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="sale-status">Payment Status</label>
-                                    <select id="sale-status">
-                                        <option value="paid">Paid</option>
-                                        <option value="pending">Pending</option>
-                                        <option value="partial">Partial Payment</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="sale-notes">Notes (Optional)</label>
-                                <textarea id="sale-notes" placeholder="Sale notes, customer details, etc." rows="3"></textarea>
-                            </div>
-
-                            <div class="sale-total">
-                                <h4>Sale Total: <span id="sale-total-amount">$0.00</span></h4>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-text close-modal">Cancel</button>
-                        <button type="button" class="btn btn-danger" id="delete-sale" style="display: none;">Delete</button>
-                        <button type="button" class="btn btn-primary" id="save-sale">Save Sale</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `,
-
-    styles: `
-        .sales-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
-            margin: 1.5rem 0;
+    async addSale(saleData) {
+        if (!this.validateSaleData(saleData)) {
+            throw new Error('Invalid sale data');
         }
 
-        .summary-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
-            border: 1px solid var(--border-color);
-        }
-
-        .summary-icon {
-            font-size: 2rem;
-            opacity: 0.8;
-            margin-bottom: 0.5rem;
-        }
-
-        .summary-content h3 {
-            margin: 0 0 0.5rem 0;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .summary-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-color);
-            margin-bottom: 0.25rem;
-        }
-
-        .summary-period {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .quick-sale {
-            margin: 1.5rem 0;
-        }
-
-        .quick-sale .form-row.compact {
-            margin-bottom: 0;
-        }
-
-        .sales-records .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .filter-controls {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .sale-total {
-            background: var(--bg-color);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-            text-align: center;
-        }
-
-        .sale-total h4 {
-            margin: 0;
-            color: var(--text-color);
-        }
-
-        #sale-total-amount {
-            color: var(--success-color);
-            font-weight: 700;
-        }
-
-        .payment-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: capitalize;
-        }
-
-        .payment-paid {
-            background: var(--success-light);
-            color: var(--success-color);
-        }
-
-        .payment-pending {
-            background: var(--warning-light);
-            color: var(--warning-dark);
-        }
-
-        .payment-partial {
-            background: var(--info-light);
-            color: var(--info-dark);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-muted);
-        }
-
-        .empty-icon {
-            font-size: 3rem;
-            opacity: 0.5;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .empty-content h4 {
-            margin: 0 0 0.5rem 0;
-            font-size: 1.2rem;
-        }
-
-        .empty-content p {
-            margin: 0;
-            opacity: 0.8;
-        }
-    `,
-
-    initialize: function() {
-        console.log('Sales Records module initializing...');
-        this.loadSalesData();
-        this.attachEventListeners();
-        this.updateSummary();
-        this.renderSalesTable();
-    },
-
-    loadSalesData: function() {
-        if (!FarmModules.appData.sales) {
-            FarmModules.appData.sales = [];
-        }
-    },
-
-    updateSummary: function() {
-        const sales = FarmModules.appData.sales || [];
-        const today = new Date().toISOString().split('T')[0];
-        
-        // Update today's date display
-        document.getElementById('today-date').textContent = new Date().toLocaleDateString();
-
-        // Calculate sales for different periods
-        const todaySales = sales
-            .filter(sale => sale.date === today)
-            .reduce((sum, sale) => sum + sale.totalAmount, 0);
-
-        const weekSales = this.getSalesForPeriod(sales, 7);
-        const monthSales = this.getSalesForPeriod(sales, 30);
-
-        // Find top product
-        const productSales = {};
-        sales.forEach(sale => {
-            if (!productSales[sale.product]) {
-                productSales[sale.product] = 0;
-            }
-            productSales[sale.product] += sale.totalAmount;
-        });
-
-        let topProduct = '-';
-        let topRevenue = 0;
-        Object.entries(productSales).forEach(([product, revenue]) => {
-            if (revenue > topRevenue) {
-                topProduct = this.formatProductName(product);
-                topRevenue = revenue;
-            }
-        });
-
-        this.updateElement('today-sales', this.formatCurrency(todaySales));
-        this.updateElement('week-sales', this.formatCurrency(weekSales));
-        this.updateElement('month-sales', this.formatCurrency(monthSales));
-        this.updateElement('top-product', topProduct);
-        this.updateElement('top-product-revenue', this.formatCurrency(topRevenue));
-    },
-
-    getSalesForPeriod: function(sales, days) {
-        const cutoffDate = new Date();
-        cutoffDate.setDate(cutoffDate.getDate() - days);
-        
-        return sales
-            .filter(sale => new Date(sale.date) >= cutoffDate)
-            .reduce((sum, sale) => sum + sale.totalAmount, 0);
-    },
-
-    renderSalesTable: function(period = 'today') {
-        const tbody = document.getElementById('sales-body');
-        const sales = FarmModules.appData.sales || [];
-
-        let filteredSales = sales;
-        if (period !== 'all') {
-            const cutoffDate = new Date();
-            if (period === 'today') {
-                cutoffDate.setDate(cutoffDate.getDate() - 1);
-            } else if (period === 'week') {
-                cutoffDate.setDate(cutoffDate.getDate() - 7);
-            } else if (period === 'month') {
-                cutoffDate.setDate(cutoffDate.getDate() - 30);
-            }
-            filteredSales = sales.filter(sale => new Date(sale.date) >= cutoffDate);
-        }
-
-        if (filteredSales.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="8" class="empty-state">
-                        <div class="empty-content">
-                            <span class="empty-icon">💰</span>
-                            <h4>No sales found</h4>
-                            <p>${period === 'all' ? 'Start recording your sales' : `No sales in the ${period}`}</p>
-                        </div>
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        // Show most recent sales first
-        const sortedSales = filteredSales.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        tbody.innerHTML = sortedSales.map(sale => {
-            const paymentClass = `payment-badge payment-${sale.paymentStatus || 'paid'}`;
-            
-            return `
-                <tr>
-                    <td>${this.formatDate(sale.date)}</td>
-                    <td>${this.formatProductName(sale.product)}</td>
-                    <td>${sale.customer || 'Walk-in'}</td>
-                    <td>${sale.quantity} ${sale.unit}</td>
-                    <td>${this.formatCurrency(sale.unitPrice)}</td>
-                    <td><strong>${this.formatCurrency(sale.totalAmount)}</strong></td>
-                    <td><span class="${paymentClass}">${sale.paymentStatus || 'paid'}</span></td>
-                    <td class="sale-actions">
-                        <button class="btn-icon edit-sale" data-id="${sale.id}" title="Edit">✏️</button>
-                        <button class="btn-icon delete-sale" data-id="${sale.id}" title="Delete">🗑️</button>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-    },
-
-    attachEventListeners: function() {
-        // Quick sale form
-        document.getElementById('quick-sale-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleQuickSale();
-        });
-
-        // Modal buttons
-        document.getElementById('add-sale').addEventListener('click', () => this.showSaleModal());
-        document.getElementById('save-sale').addEventListener('click', () => this.saveSale());
-        document.getElementById('delete-sale').addEventListener('click', () => this.deleteSale());
-
-        // Modal events
-        document.querySelectorAll('.close-modal').forEach(btn => {
-            btn.addEventListener('click', () => this.hideModal());
-        });
-
-        // Real-time total calculation
-        document.getElementById('sale-quantity').addEventListener('input', () => this.calculateSaleTotal());
-        document.getElementById('sale-price').addEventListener('input', () => this.calculateSaleTotal());
-
-        // Filter
-        document.getElementById('period-filter').addEventListener('change', (e) => {
-            this.renderSalesTable(e.target.value);
-        });
-
-        // Export
-        document.getElementById('export-sales').addEventListener('click', () => {
-            this.exportSales();
-        });
-
-        // Sale actions
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.edit-sale')) {
-                const saleId = e.target.closest('.edit-sale').dataset.id;
-                this.editSale(saleId);
-            }
-            if (e.target.closest('.delete-sale')) {
-                const saleId = e.target.closest('.delete-sale').dataset.id;
-                this.deleteSaleRecord(saleId);
-            }
-        });
-
-        // Modal backdrop
-        document.getElementById('sale-modal').addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) {
-                this.hideModal();
-            }
-        });
-    },
-
-    handleQuickSale: function() {
-        const product = document.getElementById('quick-product').value;
-        const quantity = parseFloat(document.getElementById('quick-quantity').value);
-        const unit = document.getElementById('quick-unit').value;
-        const price = parseFloat(document.getElementById('quick-price').value);
-
-        if (!product || !quantity || !price) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
-        }
-
-        const saleData = {
-            product: product,
-            quantity: quantity,
-            unit: unit,
-            unitPrice: price,
-            totalAmount: quantity * price,
-            date: new Date().toISOString().split('T')[0],
-            paymentMethod: 'cash',
-            paymentStatus: 'paid',
-            customer: 'Walk-in'
+        const saleRecord = {
+            id: this.generateId('sale'),
+            timestamp: new Date().toISOString(),
+            customerId: saleData.customerId,
+            customerName: saleData.customerName,
+            items: saleData.items || [],
+            totalAmount: this.calculateTotal(saleData.items),
+            paymentStatus: saleData.paymentStatus || 'pending',
+            paymentMethod: saleData.paymentMethod || 'cash',
+            notes: saleData.notes || '',
+            status: 'completed'
         };
 
-        this.addSale(saleData);
+        // Update inventory if items are being sold
+        await this.updateInventoryOnSale(saleRecord.items);
+
+        this.salesRecords.set(saleRecord.id, saleRecord);
+        await this.saveToStorage('sales', saleRecord);
         
-        // Reset form
-        document.getElementById('quick-sale-form').reset();
-        this.showNotification('Sale recorded successfully!', 'success');
-    },
+        console.log(`✅ Sale recorded: ${saleRecord.id}`);
+        return saleRecord.id;
+    }
 
-    showSaleModal: function() {
-        const modal = document.getElementById('sale-modal');
-        const title = document.getElementById('sale-modal-title');
-        const form = document.getElementById('sale-form');
-
-        if (modal && title && form) {
-            form.reset();
-            document.getElementById('sale-id').value = '';
-            document.getElementById('sale-date').value = new Date().toISOString().split('T')[0];
-            document.getElementById('delete-sale').style.display = 'none';
-            document.getElementById('sale-total-amount').textContent = '$0.00';
-            
-            modal.classList.remove('hidden');
-        }
-    },
-
-    hideModal: function() {
-        const modal = document.getElementById('sale-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
-    },
-
-    calculateSaleTotal: function() {
-        const quantity = parseFloat(document.getElementById('sale-quantity').value) || 0;
-        const price = parseFloat(document.getElementById('sale-price').value) || 0;
-        const total = quantity * price;
-        
-        document.getElementById('sale-total-amount').textContent = this.formatCurrency(total);
-    },
-
-    saveSale: function() {
-        const form = document.getElementById('sale-form');
-        if (!form) return;
-
-        const saleId = document.getElementById('sale-id').value;
-        const date = document.getElementById('sale-date').value;
-        const customer = document.getElementById('sale-customer').value;
-        const product = document.getElementById('sale-product').value;
-        const unit = document.getElementById('sale-unit').value;
-        const quantity = parseFloat(document.getElementById('sale-quantity').value);
-        const unitPrice = parseFloat(document.getElementById('sale-price').value);
-        const paymentMethod = document.getElementById('sale-payment').value;
-        const paymentStatus = document.getElementById('sale-status').value;
-        const notes = document.getElementById('sale-notes').value;
-
-        if (!date || !product || !quantity || !unitPrice || !paymentMethod) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
+    async updateSale(saleId, updateData) {
+        const existingSale = this.salesRecords.get(saleId);
+        if (!existingSale) {
+            throw new Error('Sale record not found');
         }
 
-        if (quantity <= 0) {
-            this.showNotification('Quantity must be greater than 0', 'error');
-            return;
-        }
-
-        if (unitPrice < 0) {
-            this.showNotification('Price cannot be negative', 'error');
-            return;
-        }
-
-        const saleData = {
-            date: date,
-            customer: customer || 'Walk-in',
-            product: product,
-            unit: unit,
-            quantity: quantity,
-            unitPrice: unitPrice,
-            totalAmount: quantity * unitPrice,
-            paymentMethod: paymentMethod,
-            paymentStatus: paymentStatus,
-            notes: notes
+        const updatedSale = {
+            ...existingSale,
+            ...updateData,
+            updatedAt: new Date().toISOString()
         };
 
-        if (saleId) {
-            this.updateSale(saleId, saleData);
-        } else {
-            this.addSale(saleData);
+        // Recalculate total if items changed
+        if (updateData.items) {
+            updatedSale.totalAmount = this.calculateTotal(updateData.items);
         }
 
-        this.hideModal();
-    },
+        this.salesRecords.set(saleId, updatedSale);
+        await this.saveToStorage('sales', updatedSale);
+        
+        return saleId;
+    }
 
-    addSale: function(saleData) {
-        if (!FarmModules.appData.sales) {
-            FarmModules.appData.sales = [];
+    async deleteSale(saleId) {
+        const sale = this.salesRecords.get(saleId);
+        if (!sale) {
+            throw new Error('Sale record not found');
         }
 
-        const newSale = {
-            id: 'SALE-' + Date.now().toString().slice(-6),
-            ...saleData
+        // Restore inventory if needed
+        await this.restoreInventoryOnDelete(sale.items);
+
+        this.salesRecords.delete(saleId);
+        await this.deleteFromStorage('sales', saleId);
+        
+        return true;
+    }
+
+    getSale(saleId) {
+        return this.salesRecords.get(saleId);
+    }
+
+    getSales(filters = {}) {
+        let records = Array.from(this.salesRecords.values());
+        
+        // Date filter
+        if (filters.startDate && filters.endDate) {
+            records = records.filter(record => {
+                const recordDate = new Date(record.timestamp);
+                return recordDate >= new Date(filters.startDate) && 
+                       recordDate <= new Date(filters.endDate);
+            });
+        }
+        
+        // Customer filter
+        if (filters.customerId) {
+            records = records.filter(record => record.customerId === filters.customerId);
+        }
+        
+        // Payment status filter
+        if (filters.paymentStatus) {
+            records = records.filter(record => record.paymentStatus === filters.paymentStatus);
+        }
+        
+        // Product type filter
+        if (filters.productType) {
+            records = records.filter(record => 
+                record.items.some(item => item.productType === filters.productType)
+            );
+        }
+
+        return records.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    }
+
+    // ==================== CUSTOMER MANAGEMENT ====================
+
+    async addCustomer(customerData) {
+        const customer = {
+            id: this.generateId('cust'),
+            ...customerData,
+            createdAt: new Date().toISOString(),
+            totalPurchases: 0,
+            lastPurchase: null
         };
 
-        FarmModules.appData.sales.push(newSale);
+        this.customers.set(customer.id, customer);
+        await this.saveToStorage('customers', customer);
         
-        this.updateSummary();
-        this.renderSalesTable();
-        
-        this.showNotification('Sale recorded successfully!', 'success');
-    },
+        return customer.id;
+    }
 
-    editSale: function(saleId) {
-        const sales = FarmModules.appData.sales || [];
-        const sale = sales.find(s => s.id === saleId);
-        
-        if (!sale) return;
+    getCustomer(customerId) {
+        return this.customers.get(customerId);
+    }
 
-        const modal = document.getElementById('sale-modal');
-        const title = document.getElementById('sale-modal-title');
+    getCustomers() {
+        return Array.from(this.customers.values()).sort((a, b) => 
+            a.name.localeCompare(b.name)
+        );
+    }
 
-        if (modal && title) {
-            document.getElementById('sale-id').value = sale.id;
-            document.getElementById('sale-date').value = sale.date;
-            document.getElementById('sale-customer').value = sale.customer || '';
-            document.getElementById('sale-product').value = sale.product;
-            document.getElementById('sale-unit').value = sale.unit;
-            document.getElementById('sale-quantity').value = sale.quantity;
-            document.getElementById('sale-price').value = sale.unitPrice;
-            document.getElementById('sale-payment').value = sale.paymentMethod;
-            document.getElementById('sale-status').value = sale.paymentStatus || 'paid';
-            document.getElementById('sale-notes').value = sale.notes || '';
-            document.getElementById('delete-sale').style.display = 'block';
-            
-            this.calculateSaleTotal();
-            
-            title.textContent = 'Edit Sale';
-            modal.classList.remove('hidden');
+    async updateCustomer(customerId, updateData) {
+        const customer = this.customers.get(customerId);
+        if (!customer) {
+            throw new Error('Customer not found');
         }
-    },
 
-    updateSale: function(saleId, saleData) {
-        const sales = FarmModules.appData.sales || [];
-        const saleIndex = sales.findIndex(s => s.id === saleId);
+        const updatedCustomer = { ...customer, ...updateData };
+        this.customers.set(customerId, updatedCustomer);
+        await this.saveToStorage('customers', updatedCustomer);
         
-        if (saleIndex !== -1) {
-            sales[saleIndex] = {
-                ...sales[saleIndex],
-                ...saleData
-            };
-            
-            this.updateSummary();
-            this.renderSalesTable();
-            this.showNotification('Sale updated successfully!', 'success');
-        }
-    },
+        return customerId;
+    }
 
-    deleteSale: function() {
-        const saleId = document.getElementById('sale-id').value;
-        
-        if (confirm('Are you sure you want to delete this sale?')) {
-            this.deleteSaleRecord(saleId);
-            this.hideModal();
-        }
-    },
+    // ==================== PRODUCT MANAGEMENT ====================
 
-    deleteSaleRecord: function(saleId) {
-        if (confirm('Are you sure you want to delete this sale?')) {
-            FarmModules.appData.sales = FarmModules.appData.sales.filter(s => s.id !== saleId);
-            
-            this.updateSummary();
-            this.renderSalesTable();
-            this.showNotification('Sale deleted successfully', 'success');
-        }
-    },
-
-    exportSales: function() {
-        const sales = FarmModules.appData.sales || [];
-        const csv = this.convertToCSV(sales);
-        const blob = new Blob([csv], { type: 'text/csv' });
-        
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `sales-export-${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
-        
-        this.showNotification('Sales exported successfully!', 'success');
-    },
-
-    convertToCSV: function(sales) {
-        const headers = ['Date', 'Product', 'Customer', 'Quantity', 'Unit', 'Unit Price', 'Total', 'Payment Method', 'Payment Status'];
-        const rows = sales.map(sale => [
-            sale.date,
-            this.formatProductName(sale.product),
-            sale.customer,
-            sale.quantity,
-            sale.unit,
-            this.formatCurrency(sale.unitPrice),
-            this.formatCurrency(sale.totalAmount),
-            sale.paymentMethod,
-            sale.paymentStatus || 'paid'
-        ]);
-        
-        return [headers, ...rows].map(row => row.join(',')).join('\n');
-    },
-
-    formatProductName: function(product) {
-        const productNames = {
-            'broilers-live': 'Broilers (Live)',
-            'broilers-dressed': 'Broilers (Dressed)',
-            'eggs': 'Eggs',
-            'pork': 'Pork',
-            'beef': 'Beef',
-            'chicken-parts': 'Chicken Parts',
-            'tomatoes': 'Tomatoes',
-            'peppers': 'Peppers',
-            'cucumbers': 'Cucumbers',
-            'lettuce': 'Lettuce',
-            'carrots': 'Carrots',
-            'potatoes': 'Potatoes',
-            'onions': 'Onions',
-            'cabbage': 'Cabbage',
-            'milk': 'Milk',
-            'cheese': 'Cheese',
-            'yogurt': 'Yogurt',
-            'butter': 'Butter',
-            'honey': 'Honey',
-            'jam': 'Jam/Preserves',
-            'bread': 'Bread',
-            'other': 'Other'
+    async addProduct(productData) {
+        const product = {
+            id: this.generateId('prod'),
+            ...productData,
+            createdAt: new Date().toISOString(),
+            totalSold: 0,
+            inStock: productData.initialStock || 0
         };
-        return productNames[product] || product;
-    },
 
-    formatCurrency: function(amount) {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount);
-    },
+        this.products.set(product.id, product);
+        await this.saveToStorage('products', product);
+        
+        return product.id;
+    }
 
-    formatDate: function(dateString) {
-        try {
-            return new Date(dateString).toLocaleDateString();
-        } catch (e) {
-            return 'Invalid date';
+    getProducts() {
+        return Array.from(this.products.values());
+    }
+
+    getProduct(productId) {
+        return this.products.get(productId);
+    }
+
+    async updateProductStock(productId, quantityChange) {
+        const product = this.products.get(productId);
+        if (!product) {
+            throw new Error('Product not found');
         }
-    },
 
-    updateElement: function(id, value) {
-        const element = document.getElementById(id);
-        if (element) element.textContent = value;
-    },
+        product.inStock += quantityChange;
+        if (product.inStock < 0) product.inStock = 0;
 
-    showNotification: function(message, type) {
-        if (window.coreModule && window.coreModule.showNotification) {
-            window.coreModule.showNotification(message, type);
-        } else {
-            alert(message);
+        this.products.set(productId, product);
+        await this.saveToStorage('products', product);
+        
+        return product.inStock;
+    }
+
+    // ==================== ANALYTICS & REPORTING ====================
+
+    getSalesAnalytics(period = 'month') {
+        const records = this.getSales();
+        const analytics = {
+            totalRevenue: 0,
+            totalUnits: 0,
+            totalTransactions: records.length,
+            salesByProduct: {},
+            salesByCustomer: {},
+            salesByPaymentMethod: {},
+            dailySales: {},
+            averageSale: 0,
+            inventoryValue: 0
+        };
+
+        records.forEach(record => {
+            analytics.totalRevenue += record.totalAmount;
+            
+            // Sales by product
+            record.items.forEach(item => {
+                analytics.totalUnits += item.quantity;
+                
+                const productType = item.productType;
+                if (!analytics.salesByProduct[productType]) {
+                    analytics.salesByProduct[productType] = { revenue: 0, units: 0 };
+                }
+                analytics.salesByProduct[productType].revenue += item.totalPrice;
+                analytics.salesByProduct[productType].units += item.quantity;
+            });
+
+            // Sales by customer
+            if (!analytics.salesByCustomer[record.customerId]) {
+                analytics.salesByCustomer[record.customerId] = {
+                    name: record.customerName,
+                    revenue: 0,
+                    transactions: 0
+                };
+            }
+            analytics.salesByCustomer[record.customerId].revenue += record.totalAmount;
+            analytics.salesByCustomer[record.customerId].transactions += 1;
+
+            // Sales by payment method
+            if (!analytics.salesByPaymentMethod[record.paymentMethod]) {
+                analytics.salesByPaymentMethod[record.paymentMethod] = 0;
+            }
+            analytics.salesByPaymentMethod[record.paymentMethod] += record.totalAmount;
+
+            // Daily sales
+            const date = record.timestamp.split('T')[0];
+            if (!analytics.dailySales[date]) {
+                analytics.dailySales[date] = 0;
+            }
+            analytics.dailySales[date] += record.totalAmount;
+        });
+
+        // Calculate inventory value
+        this.products.forEach(product => {
+            analytics.inventoryValue += product.inStock * (product.price || 0);
+        });
+
+        analytics.averageSale = records.length > 0 ? analytics.totalRevenue / records.length : 0;
+        
+        return analytics;
+    }
+
+    getSalesReport(startDate, endDate, reportType = 'summary') {
+        const sales = this.getSales({ startDate, endDate });
+        const analytics = this.getSalesAnalytics();
+
+        const report = {
+            period: { startDate, endDate },
+            summary: {
+                totalRevenue: analytics.totalRevenue,
+                totalTransactions: analytics.totalTransactions,
+                averageSale: analytics.averageSale,
+                topProducts: Object.entries(analytics.salesByProduct)
+                    .sort(([,a], [,b]) => b.revenue - a.revenue)
+                    .slice(0, 5),
+                topCustomers: Object.entries(analytics.salesByCustomer)
+                    .sort(([,a], [,b]) => b.revenue - a.revenue)
+                    .slice(0, 5)
+            },
+            detailedSales: reportType === 'detailed' ? sales : undefined
+        };
+
+        return report;
+    }
+
+    // ==================== PAYMENT MANAGEMENT ====================
+
+    async updatePaymentStatus(saleId, paymentStatus, paymentMethod = null) {
+        const updateData = { paymentStatus };
+        if (paymentMethod) {
+            updateData.paymentMethod = paymentMethod;
+        }
+
+        return await this.updateSale(saleId, updateData);
+    }
+
+    getPendingPayments() {
+        return this.getSales({ paymentStatus: 'pending' });
+    }
+
+    // ==================== INVENTORY INTEGRATION ====================
+
+    async updateInventoryOnSale(items) {
+        for (const item of items) {
+            if (item.productId) {
+                await this.updateProductStock(item.productId, -item.quantity);
+                
+                // Update product sales stats
+                const product = this.products.get(item.productId);
+                if (product) {
+                    product.totalSold += item.quantity;
+                    this.products.set(item.productId, product);
+                    await this.saveToStorage('products', product);
+                }
+            }
         }
     }
-});
 
+    async restoreInventoryOnDelete(items) {
+        for (const item of items) {
+            if (item.productId) {
+                await this.updateProductStock(item.productId, item.quantity);
+            }
+        }
+    }
+
+    // ==================== VALIDATION & UTILITIES ====================
+
+    validateSaleData(saleData) {
+        return saleData.customerId &&
+               saleData.items && 
+               saleData.items.length > 0 &&
+               saleData.items.every(item => 
+                   item.productType && 
+                   item.quantity > 0 && 
+                   item.unitPrice > 0
+               );
+    }
+
+    calculateTotal(items) {
+        return items.reduce((total, item) => {
+            return total + (item.quantity * item.unitPrice);
+        }, 0);
+    }
+
+    generateId(prefix) {
+        return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+
+    // ==================== STORAGE MANAGEMENT ====================
+
+    async saveToStorage(collection, record) {
+        if (window.farmModules?.firebase) {
+            try {
+                await window.farmModules.firebase.saveRecord(collection, record);
+            } catch (error) {
+                console.warn(`Failed to save ${collection} to Firebase:`, error);
+                this.saveToLocalStorage(collection, record);
+            }
+        } else {
+            this.saveToLocalStorage(collection, record);
+        }
+    }
+
+    async deleteFromStorage(collection, recordId) {
+        if (window.farmModules?.firebase) {
+            try {
+                await window.farmModules.firebase.deleteRecord(collection, recordId);
+            } catch (error) {
+                console.warn(`Failed to delete ${collection} from Firebase:`, error);
+                this.deleteFromLocalStorage(collection, recordId);
+            }
+        } else {
+            this.deleteFromLocalStorage(collection, recordId);
+        }
+    }
+
+    saveToLocalStorage(collection, record) {
+        const key = `${collection}_${record.id}`;
+        localStorage.setItem(key, JSON.stringify(record));
+        
+        // Update collection index
+        const indexKey = `${collection}_index`;
+        let index = JSON.parse(localStorage.getItem(indexKey) || '[]');
+        if (!index.includes(record.id)) {
+            index.push(record.id);
+            localStorage.setItem(indexKey, JSON.stringify(index));
+        }
+    }
+
+    deleteFromLocalStorage(collection, recordId) {
+        const key = `${collection}_${recordId}`;
+        localStorage.removeItem(key);
+        
+        // Update collection index
+        const indexKey = `${collection}_index`;
+        let index = JSON.parse(localStorage.getItem(indexKey) || '[]');
+        index = index.filter(id => id !== recordId);
+        localStorage.setItem(indexKey, JSON.stringify(index));
+    }
+
+    async loadInitialData() {
+        // Load data from storage on initialization
+        // This would typically load from Firebase or local storage
+        console.log('📦 Loading sales data...');
+    }
+
+    setupDefaultProducts() {
+        // Add default agricultural products if none exist
+        if (this.products.size === 0) {
+            const defaultProducts = [
+                {
+                    name: 'Maize',
+                    productType: 'crop',
+                    category: 'grains',
+                    unit: 'kg',
+                    price: 0.30,
+                    initialStock: 1000
+                },
+                {
+                    name: 'Tomatoes',
+                    productType: 'crop', 
+                    category: 'vegetables',
+                    unit: 'kg',
+                    price: 1.20,
+                    initialStock: 500
+                },
+                {
+                    name: 'Chicken',
+                    productType: 'livestock',
+                    category: 'poultry', 
+                    unit: 'each',
+                    price: 8.50,
+                    initialStock: 100
+                },
+                {
+                    name: 'Fish',
+                    productType: 'aquaculture',
+                    category: 'seafood',
+                    unit: 'kg',
+                    price: 6.00,
+                    initialStock: 200
+                }
+            ];
+
+            defaultProducts.forEach(product => {
+                this.addProduct(product);
+            });
+        }
+    }
+
+    // ==================== MODULE REGISTRATION ====================
+
+    static getModuleInfo() {
+        return {
+            id: 'sales-record',
+            name: 'Sales Records',
+            routes: ['sales-record'],
+            menuItems: [
+                { id: 'sales-record', label: 'Sales Records', icon: '💰' }
+            ]
+        };
+    }
+}
+
+// PROPER REGISTRATION FIX
+try {
+    if (typeof FarmModules !== 'undefined') {
+        // Register with FarmModules framework
+        FarmModules.registerModule('sales-record', SalesModule);
+        console.log('✅ Sales module registered with FarmModules');
+    } else if (window.farmModules) {
+        // Register with farmModules framework
+        window.farmModules.registerModule('sales-record', SalesModule);
+        console.log('✅ Sales module registered with farmModules');
+    } else {
+        // Fallback registration
+        console.warn('⚠️ Framework not found, using fallback registration');
+        if (!window.salesModule) {
+            window.salesModule = new SalesModule();
+        }
+    }
+} catch (error) {
+    console.error('❌ Sales module registration failed:', error);
+}
+
+console.log('💰 Sales Records module loaded successfully');
