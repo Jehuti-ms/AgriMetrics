@@ -1,15 +1,15 @@
-/* styles.css - MODERN PWA ENHANCEMENT */
+/* styles.css - MODERN PWA ENHANCEMENT WITH GREEN THEME */
 :root {
   /* Enhanced GREEN Color System */
   --primary-color: #22c55e;
   --primary-dark: #16a34a;
   --primary-light: #4ade80;
-  --secondary-color: #f59e0b; /* Keep orange as accent */
-  --accent-color: #22c55e; /* Changed from blue to green */
+  --secondary-color: #f59e0b;
+  --accent-color: #22c55e;
   
   /* Modern Background System */
   --bg-primary: #ffffff;
-  --bg-secondary: #f8faf9; /* Light green tint */
+  --bg-secondary: #f8faf9;
   --bg-tertiary: #f0f7f4;
   
   /* Text Colors */
@@ -145,14 +145,14 @@ body {
 }
 
 .nav-item:hover {
-  background: rgba(59, 130, 246, 0.1);
-  color: var(--accent-color);
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--primary-color);
   transform: translateY(-1px);
 }
 
 .nav-item.active {
-  background: rgba(59, 130, 246, 0.1);
-  color: var(--accent-color);
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--primary-color);
 }
 
 .nav-item.active::after {
@@ -163,7 +163,7 @@ body {
   transform: translateX(-50%);
   width: 4px;
   height: 4px;
-  background: var(--accent-color);
+  background: var(--primary-color);
   border-radius: var(--radius-full);
 }
 
@@ -212,8 +212,8 @@ body {
 }
 
 .more-menu-item:hover {
-  background: rgba(59, 130, 246, 0.1);
-  color: var(--accent-color);
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--primary-color);
   transform: translateX(4px);
 }
 
@@ -375,10 +375,16 @@ body {
   background: var(--surface-01);
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%234a5568' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
   background-position: right var(--space-3) center;
   background-repeat: no-repeat;
   background-size: 1.5em 1.5em;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
 }
 
 /* Enhanced Grid System */
@@ -423,6 +429,7 @@ body {
 .stat-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
+  border-color: var(--primary-color);
 }
 
 .stat-icon {
@@ -580,6 +587,39 @@ body {
   }
 }
 
+/* Auth Styles */
+#auth-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  padding: 1rem;
+}
+
+.auth-forms {
+  background: var(--surface-01);
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  width: 100%;
+  max-width: 400px;
+}
+
+.auth-form {
+  display: none;
+}
+
+.auth-form.active {
+  display: block;
+}
+
+.auth-form h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: var(--primary-color);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .top-nav {
@@ -681,19 +721,80 @@ body {
 .p-4 { padding: var(--space-4); }
 .p-6 { padding: var(--space-6); }
 
-/* Dark mode support */
+/* Dark mode support - Green themed */
 @media (prefers-color-scheme: dark) {
   :root {
     --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --bg-tertiary: #334155;
+    --bg-secondary: #1a2a2a;
+    --bg-tertiary: #1e3a3a;
     --text-primary: #f1f5f9;
     --text-secondary: #cbd5e1;
-    --text-tertiary: #64748b;
-    --border-light: #334155;
-    --border-medium: #475569;
+    --text-tertiary: #94a3b8;
+    --border-light: #2d4a4a;
+    --border-medium: #3a5a5a;
     --surface-01: #1e293b;
-    --surface-02: #334155;
-    --surface-03: #475569;
+    --surface-02: #1a2a2a;
+    --surface-03: #2d4a4a;
   }
+}
+
+/* Ensure your existing app styles are preserved */
+#main-nav {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.nav-list {
+  display: flex;
+  list-style: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.demo-badge {
+  background: var(--warning-color);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+/* Make sure nothing is hiding the navigation */
+header {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 10000 !important;
+  background: white !important;
+}
+
+.top-nav {
+  z-index: 10000 !important;
+  position: fixed !important;
+  top: 0 !important;
+}
+
+/* Ensure everything is visible */
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+#app-container {
+  position: relative !important;
+}
+
+/* Remove any transforms that might push navigation off-screen */
+header, .top-nav {
+  transform: none !important;
 }
