@@ -98,7 +98,7 @@
         </div>
     </div>
 
-    <!-- App Container - SIDEBAR VERSION (KEEP THIS ONE) -->
+    <!-- App Container - SIDEBAR VERSION -->
     <div id="app-container" class="hidden">
         <!-- Sidebar Navigation -->
         <aside class="sidebar" id="sidebar">
@@ -134,10 +134,19 @@
                 <h1 class="page-title" id="page-title">Dashboard</h1>
             </div>
             
-            <!-- Content Area -->
-            <main>
+            <!-- Content Area - FIXED WITH ALL REQUIRED CONTAINERS -->
+            <main id="mainContent">
                 <div id="content-area">
-                    <!-- Content will be populated by JavaScript -->
+                    <!-- All module containers - initially hidden except dashboard -->
+                    <div id="dashboardContainer"></div>
+                    <div id="incomeExpensesContainer" class="module-container" style="display: none;"></div>
+                    <div id="inventoryContainer" class="module-container" style="display: none;"></div>
+                    <div id="feedRecordContainer" class="module-container" style="display: none;"></div>
+                    <div id="broilerMortalityContainer" class="module-container" style="display: none;"></div>
+                    <div id="ordersContainer" class="module-container" style="display: none;"></div>
+                    <div id="salesRecordContainer" class="module-container" style="display: none;"></div>
+                    <div id="reportsContainer" class="module-container" style="display: none;"></div>
+                    <div id="profileContainer" class="module-container" style="display: none;"></div>
                 </div>
             </main>
         </div>
