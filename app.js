@@ -1,150 +1,113 @@
-// app.js - Updated for your Firebase setup
-console.log('🚜 Initializing Farm Management PWA...');
+// modules/auth.js
+console.log('Loading auth module...');
 
-class FarmManagementApp {
+class AuthModule {
     constructor() {
-        this.currentModule = null;
+        this.authInitialized = false;
         this.init();
     }
 
     init() {
-        console.log('📱 Initializing PWA...');
-        this.setupNavigation();
-        this.checkAuthAndLoad();
-        console.log('✅ Farm Management PWA Ready!');
+        console.log('✅ Auth module initialized');
+        this.setupAuthForms();
+        this.waitForFirebase();
     }
 
-    checkAuthAndLoad() {
-        const isAuthenticated = localStorage.getItem('farm-authenticated') === 'true';
-        console.log('Authentication check:', isAuthenticated);
-        
-        if (isAuthenticated) {
-            this.showApp();
-            this.loadModule('dashboard');
-        } else {
-            this.showAuth();
-        }
-    }
-
-    showApp() {
-        const appContainer = document.getElementById('app-container');
-        const authContainer = document.getElementById('auth-container');
-        
-        if (appContainer) appContainer.classList.remove('hidden');
-        if (authContainer) authContainer.classList.add('hidden');
-    }
-
-    showAuth() {
-        const appContainer = document.getElementById('app-container');
-        const authContainer = document.getElementById('auth-container');
-        
-        if (appContainer) appContainer.classList.add('hidden');
-        if (authContainer) authContainer.classList.remove('hidden');
-    }
-
-    setupNavigation() {
-        // Your existing navigation setup
-        document.addEventListener('click', (e) => {
-            const navItem = e.target.closest('.nav-item');
-            if (navItem) {
-                e.preventDefault();
-                const moduleName = navItem.getAttribute('data-module');
-                
-                if (localStorage.getItem('farm-authenticated') === 'true') {
-                    this.loadModule(moduleName);
-                }
+    waitForFirebase() {
+        // Wait for Firebase to be fully loaded
+        const checkFirebase = () => {
+            if (window.authManager && window.authManager.auth) {
+                this.setupAuthStateListener();
+                this.authInitialized = true;
+            } else {
+                console.log('⏳ Waiting for Firebase auth...');
+                setTimeout(checkFirebase, 100);
             }
-        });
+        };
+        checkFirebase();
     }
 
-    async loadModule(moduleName) {
-        console.log('Loading module:', moduleName);
-        
-        if (!window.FarmModules || !(window.FarmModules instanceof Map)) {
-            console.error('❌ FarmModules registry not available');
+    setupAuthStateListener() {
+        if (!window.authManager || !window.authManager.auth) {
+            console.error('Firebase Auth not available for state listener');
             return;
         }
         
         try {
-            // Don't load modules if not authenticated
-            if (localStorage.getItem('farm-authenticated') !== 'true') {
-                console.log('Not authenticated, showing auth');
-                this.showAuth();
-                return;
-            }
-
-            // Unload current module
-            if (this.currentModule && this.currentModule.cleanup) {
-                console.log('Cleaning up current module');
-                await this.currentModule.cleanup();
-            }
-
-            // Load new module
-            const module = window.FarmModules.get(moduleName);
-            if (module) {
-                console.log('Module found, initializing...');
-                if (!module.initialized) {
-                    await module.initialize();
+            console.log('🔐 Setting up auth state listener...');
+            window.authManager.auth.onAuthStateChanged((user) => {
+                console.log('🔄 Auth state changed:', user ? 'User signed in' : 'User signed out');
+                if (user) {
+                    this.onUserSignedIn(user);
+                } else {
+                    this.onUserSignedOut();
                 }
-                this.currentModule = module;
-                
-                this.updateActiveNav(moduleName);
-                this.updatePageTitle(moduleName);
-                
-                console.log(`✅ Loaded module: ${moduleName}`);
-            } else {
-                console.error(`❌ Module not found: ${moduleName}`);
-            }
+            }, (error) => {
+                console.error('Auth state listener error:', error);
+            });
         } catch (error) {
-            console.error(`❌ Error loading module ${moduleName}:`, error);
+            console.error('Failed to setup auth state listener:', error);
         }
     }
 
-    updateActiveNav(activeModule) {
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.toggle('active', item.getAttribute('data-module') === activeModule);
-        });
-    }
-
-    updatePageTitle(moduleName) {
-        const titles = {
-            dashboard: 'Dashboard',
-            'sales-record': 'Sales Records',
-            'broiler-mortality': 'Broiler Mortality',
-            orders: 'Orders',
-            production: 'Production',
-            reports: 'Reports',
-            profile: 'Profile'
-        };
-        document.title = `${titles[moduleName] || 'Farm Management'} - FarmPWA`;
-    }
-
-    handleLogout() {
-        console.log('App: Handling logout');
-        
-        // Call auth module logout
-        const authModule = window.FarmModules?.get('auth');
-        if (authModule && authModule.logout) {
-            authModule.logout();
+    setupAuthForms() {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.attachFormHandlers();
+            });
         } else {
-            // Fallback
-            localStorage.removeItem('farm-authenticated');
-            localStorage.removeItem('farm-user-email');
-            this.showAuth();
+            this.attachFormHandlers();
         }
     }
+
+    // ... rest of your existing methods (handleSignUp, handleSignIn, etc.)
+
+    onUserSignedIn(user) {
+        console.log('👤 User signed in:', user.email);
+        this.updateUIForAuthState(true);
+        
+        // Initialize auto-sync if available
+        if (window.AutoSyncManager) {
+            window.AutoSyncManager.setupAutoSync(user.uid);
+        }
+        
+        // Load user data from Firestore
+        this.loadUserData(user.uid);
+    }
+
+    onUserSignedOut() {
+        console.log('👤 User signed out');
+        this.updateUIForAuthState(false);
+        this.showAuthForm('signin');
+    }
+
+    updateUIForAuthState(isSignedIn) {
+        const authForms = document.querySelector('.auth-forms');
+        const appContent = document.querySelector('.app-content');
+        
+        if (authForms) {
+            authForms.style.display = isSignedIn ? 'none' : 'block';
+        }
+        if (appContent) {
+            appContent.style.display = isSignedIn ? 'block' : 'none';
+        }
+        
+        // Update user info if signed in
+        if (isSignedIn) {
+            const user = window.authManager?.auth?.currentUser;
+            if (user) {
+                const userDisplay = document.querySelector('.user-display');
+                if (userDisplay) {
+                    userDisplay.textContent = user.displayName || user.email;
+                }
+            }
+        }
+    }
+
+    // ... rest of your existing methods
 }
 
-// Make logout available globally
-window.handleAppLogout = function() {
-    console.log('Global logout function called');
-    if (window.farmApp && window.farmApp.handleLogout) {
-        window.farmApp.handleLogout();
-    }
-};
-
-// Initialize app
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing app...');
-    window.farmApp = new FarmManagementApp();
-});
+// Initialize auth module with delay to ensure Firebase is loaded
+setTimeout(() => {
+    window.authModule = new AuthModule();
+}, 500);
