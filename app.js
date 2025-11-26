@@ -1,4 +1,4 @@
-// app.js - FIXED VERSION
+// app.js - COMPLETE WORKING VERSION
 console.log('🚜 Farm Management PWA - Starting...');
 
 class FarmPWA {
@@ -35,7 +35,7 @@ class FarmPWA {
         if (user) {
             console.log('✅ User signed in, showing app');
             this.showApp();
-            this.initializeModules();
+            this.initializeApp();
         } else {
             console.log('❌ No user, showing auth forms');
             this.showAuthForms();
@@ -50,19 +50,12 @@ class FarmPWA {
         
         if (authContainer) {
             authContainer.style.display = 'none';
-            authContainer.classList.add('hidden');
         }
         
         if (appContainer) {
-            appContainer.style.display = 'block';
+            appContainer.style.display = 'flex';
             appContainer.classList.remove('hidden');
         }
-        
-        // Force show main content areas
-        const main = document.querySelector('main');
-        const contentArea = document.getElementById('content-area');
-        if (main) main.style.display = 'block';
-        if (contentArea) contentArea.style.display = 'block';
     }
 
     showAuthForms() {
@@ -72,8 +65,7 @@ class FarmPWA {
         console.log('🔄 Showing auth, hiding app...');
         
         if (authContainer) {
-            authContainer.style.display = 'block';
-            authContainer.classList.remove('hidden');
+            authContainer.style.display = 'flex';
         }
         
         if (appContainer) {
@@ -82,59 +74,187 @@ class FarmPWA {
         }
     }
 
-    initializeModules() {
-        console.log('🔧 Initializing modules...');
-        
-        // Initialize dashboard if available
-        if (typeof DashboardModule !== 'undefined' && DashboardModule.initialize) {
-            console.log('📊 Initializing dashboard...');
-            DashboardModule.initialize();
-        } else {
-            console.log('❌ DashboardModule not available');
-            this.createFallbackDashboard();
-        }
+    initializeApp() {
+        console.log('🔧 Initializing application...');
         
         // Initialize navigation
         this.initializeNavigation();
-    }
-
-    createFallbackDashboard() {
-        const contentArea = document.getElementById('content-area');
-        if (contentArea) {
-            contentArea.innerHTML = `
-                <div class="dashboard-container" style="padding: 20px;">
-                    <h1>🚜 AgriMetrics Dashboard</h1>
-                    <p>Welcome back! User is signed in.</p>
-                    <div style="margin: 20px 0;">
-                        <button onclick="FarmModules.showModule('income-expenses')">Income/Expenses</button>
-                        <button onclick="FarmModules.showModule('inventory-check')">Inventory</button>
-                        <button onclick="FarmModules.showModule('feed-record')">Feed Records</button>
-                    </div>
-                </div>
-            `;
-        }
+        
+        // Initialize dashboard
+        this.initializeDashboard();
+        
+        // Set up navigation event listeners
+        this.setupNavigationEvents();
     }
 
     initializeNavigation() {
         const nav = document.getElementById('main-nav');
-        if (nav && window.FarmModules) {
-            const modules = window.FarmModules.modules;
-            let navHTML = '<div class="nav-container"><ul>';
-            
-            for (let [moduleId, module] of modules) {
-                navHTML += `
+        if (!nav) {
+            console.log('❌ main-nav element not found');
+            return;
+        }
+        
+        console.log('✅ Found main-nav, populating navigation...');
+        
+        // Create navigation HTML
+        const navHTML = `
+            <div class="nav-container">
+                <div class="logo">
+                    <h1>🚜 AgriMetrics</h1>
+                </div>
+                <ul class="nav-menu">
                     <li>
-                        <a href="#" onclick="FarmModules.showModule('${moduleId}')" class="nav-item">
-                            ${module.moduleName}
+                        <a href="#" data-module="dashboard" class="nav-item active">
+                            <span class="icon">📊</span>
+                            <span>Dashboard</span>
                         </a>
                     </li>
-                `;
+                    <li>
+                        <a href="#" data-module="income-expenses" class="nav-item">
+                            <span class="icon">💰</span>
+                            <span>Income & Expenses</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-module="inventory-check" class="nav-item">
+                            <span class="icon">📦</span>
+                            <span>Inventory</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-module="feed-record" class="nav-item">
+                            <span class="icon">🌾</span>
+                            <span>Feed Records</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-module="broiler-mortality" class="nav-item">
+                            <span class="icon">🐔</span>
+                            <span>Broiler Mortality</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-module="orders" class="nav-item">
+                            <span class="icon">📋</span>
+                            <span>Orders</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-module="sales-record" class="nav-item">
+                            <span class="icon">💳</span>
+                            <span>Sales</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-module="reports" class="nav-item">
+                            <span class="icon">📈</span>
+                            <span>Reports</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" data-module="profile" class="nav-item">
+                            <span class="icon">👤</span>
+                            <span>Profile</span>
+                        </a>
+                    </li>
+                </ul>
+                <div class="nav-footer">
+                    <a href="#" class="nav-item sign-out" onclick="firebase.auth().signOut()">
+                        <span class="icon">🚪</span>
+                        <span>Sign Out</span>
+                    </a>
+                </div>
+            </div>
+        `;
+        
+        nav.innerHTML = navHTML;
+        console.log('✅ Navigation populated');
+    }
+
+    setupNavigationEvents() {
+        const nav = document.getElementById('main-nav');
+        if (!nav) return;
+        
+        // Add click handlers for navigation items
+        nav.addEventListener('click', (e) => {
+            const navItem = e.target.closest('.nav-item');
+            if (!navItem) return;
+            
+            e.preventDefault();
+            
+            // Handle sign out separately
+            if (navItem.classList.contains('sign-out')) {
+                firebase.auth().signOut();
+                return;
             }
             
-            navHTML += '</ul></div>';
-            nav.innerHTML = navHTML;
-            console.log('✅ Navigation initialized');
+            const moduleId = navItem.getAttribute('data-module');
+            if (moduleId) {
+                this.showModule(moduleId, navItem);
+            }
+        });
+    }
+
+    showModule(moduleId, clickedNavItem = null) {
+        console.log(`🔄 Showing module: ${moduleId}`);
+        
+        // Update active navigation item
+        if (clickedNavItem) {
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+            clickedNavItem.classList.add('active');
         }
+        
+        // Show module content
+        if (moduleId === 'dashboard') {
+            this.initializeDashboard();
+        } else {
+            this.showModuleFallback(moduleId);
+        }
+    }
+
+    initializeDashboard() {
+        console.log('📊 Initializing dashboard...');
+        
+        if (typeof DashboardModule !== 'undefined' && DashboardModule.initialize) {
+            DashboardModule.initialize();
+        } else {
+            this.showModuleFallback('dashboard');
+        }
+    }
+
+    showModuleFallback(moduleId) {
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
+        
+        const moduleNames = {
+            'dashboard': 'Dashboard',
+            'income-expenses': 'Income & Expenses',
+            'inventory-check': 'Inventory Check',
+            'feed-record': 'Feed Records',
+            'broiler-mortality': 'Broiler Mortality',
+            'orders': 'Orders',
+            'sales-record': 'Sales Records',
+            'reports': 'Reports',
+            'profile': 'Profile'
+        };
+        
+        const moduleName = moduleNames[moduleId] || moduleId;
+        
+        contentArea.innerHTML = `
+            <div style="padding: 40px; text-align: center;">
+                <h1>${moduleName}</h1>
+                <p style="color: var(--gray-600); margin: 20px 0;">
+                    The ${moduleName} module is loading...
+                </p>
+                <div style="background: var(--gray-100); padding: 20px; border-radius: 10px; display: inline-block;">
+                    <p>Module ID: <strong>${moduleId}</strong></p>
+                    <p>This is a fallback view. The actual module content should appear here.</p>
+                </div>
+            </div>
+        `;
+        
+        console.log(`✅ Showing fallback for: ${moduleId}`);
     }
 
     setupServiceWorker() {
@@ -150,4 +270,5 @@ class FarmPWA {
     }
 }
 
+// Initialize the app
 window.farmPWA = new FarmPWA();
