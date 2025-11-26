@@ -1,836 +1,585 @@
-// modules/broiler-mortality.js
-FarmModules.registerModule('broiler-mortality', {
-    name: 'Broiler Mortality',
-    icon: '🐔',
-    
-    template: `
-        <div class="section active">
-            <div class="module-header">
-                <h1>Broiler Mortality Tracking</h1>
-                <p>Track broiler purchases, mortality, and available stock</p>
-                <div class="header-actions">
-                    <button class="btn btn-primary" id="add-broiler-transaction">
-                        ➕ Add Record
+// modules/broiler-mortality.js - FULLY WORKING
+console.log('Loading broiler-mortality module...');
+
+const BroilerMortalityModule = {
+    name: 'broiler-mortality',
+    initialized: false,
+    mortalityRecords: [],
+    currentStock: 1000, // Starting stock
+
+    initialize() {
+        console.log('🐔 Initializing broiler mortality...');
+        this.loadData();
+        this.renderModule();
+        this.initialized = true;
+        return true;
+    },
+
+    loadData() {
+        const savedRecords = localStorage.getItem('farm-mortality-records');
+        const savedStock = localStorage.getItem('farm-current-stock');
+        
+        this.mortalityRecords = savedRecords ? JSON.parse(savedRecords) : this.getDemoData();
+        this.currentStock = savedStock ? parseInt(savedStock) : 1000;
+    },
+
+    getDemoData() {
+        return [
+            { id: 1, date: '2024-03-15', quantity: 2, cause: 'natural', age: 28, notes: 'Found during morning check' },
+            { id: 2, date: '2024-03-14', quantity: 1, cause: 'disease', age: 27, notes: 'Respiratory issues' },
+            { id: 3, date: '2024-03-13', quantity: 3, cause: 'predator', age: 26, notes: 'Security breach' }
+        ];
+    },
+
+    renderModule() {
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
+
+        const stats = this.calculateStats();
+
+        contentArea.innerHTML = `
+            <div class="module-container">
+                <div class="module-header">
+                    <h1 class="module-title">Broiler Health & Mortality</h1>
+                    <p class="module-subtitle">Track bird health and losses</p>
+                </div>
+
+                <!-- Health Overview -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">🐔</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.currentStock.toLocaleString()}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Current Stock</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">😔</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.totalLosses}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Losses</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                        <div style="font-size: 24px; font-weight: bold; color: ${stats.mortalityRate < 2 ? '#22c55e' : stats.mortalityRate < 5 ? '#f59e0b' : '#ef4444'}; margin-bottom: 4px;">${stats.mortalityRate}%</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Mortality Rate</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-action-grid">
+                    <button class="quick-action-btn" id="record-mortality-btn">
+                        <div style="font-size: 32px;">😔</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Record Loss</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record mortality</span>
+                    </button>
+                    <button class="quick-action-btn" id="add-stock-btn">
+                        <div style="font-size: 32px;">➕</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Birds</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Add new stock</span>
+                    </button>
+                    <button class="quick-action-btn" id="health-report-btn">
+                        <div style="font-size: 32px;">📈</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Health Report</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View health analytics</span>
                     </button>
                 </div>
-            </div>
 
-            <!-- Quick Actions -->
-            <div class="quick-actions card">
-                <h3>Quick Actions</h3>
-                <div class="form-row compact">
-                    <div class="form-group">
-                        <input type="number" id="quick-purchase-chicks" placeholder="Chicks bought" class="form-compact" min="0">
-                    </div>
-                    <div class="form-group">
-                        <input type="number" id="quick-purchase-cost" placeholder="Total cost" class="form-compact" step="0.01" min="0">
-                    </div>
-                    <div class="form-group">
-                        <button type="button" class="btn btn-primary btn-compact" id="quick-purchase">Record Purchase</button>
-                    </div>
-                </div>
-                <div class="form-row compact">
-                    <div class="form-group">
-                        <input type="number" id="quick-mortality-count" placeholder="Deaths recorded" class="form-compact" min="0">
-                    </div>
-                    <div class="form-group">
-                        <input type="text" id="quick-mortality-cause" placeholder="Cause of death" class="form-compact">
-                    </div>
-                    <div class="form-group">
-                        <button type="button" class="btn btn-secondary btn-compact" id="quick-mortality">Record Mortality</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Broiler Summary -->
-            <div class="broiler-summary">
-                <div class="summary-card">
-                    <div class="summary-icon">🐣</div>
-                    <div class="summary-content">
-                        <h3>Total Purchased</h3>
-                        <div class="summary-value" id="total-purchased">0</div>
-                        <div class="summary-period">Chicks</div>
-                    </div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-icon">⚰️</div>
-                    <div class="summary-content">
-                        <h3>Total Mortality</h3>
-                        <div class="summary-value" id="total-mortality">0</div>
-                        <div class="summary-period">Deaths</div>
-                    </div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-icon">🐔</div>
-                    <div class="summary-content">
-                        <h3>Available for Slaughter</h3>
-                        <div class="summary-value" id="available-broilers">0</div>
-                        <div class="summary-period">Live broilers</div>
-                    </div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-icon">📊</div>
-                    <div class="summary-content">
-                        <h3>Mortality Rate</h3>
-                        <div class="summary-value" id="mortality-rate">0%</div>
-                        <div class="summary-period">Loss percentage</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Batch Overview -->
-            <div class="batch-overview card">
-                <div class="card-header">
-                    <h3>Current Batches</h3>
-                    <button class="btn btn-text" id="view-batch-history">View History</button>
-                </div>
-                <div id="batch-container">
-                    <div class="empty-state">
-                        <div class="empty-content">
-                            <span class="empty-icon">🐔</span>
-                            <h4>No broiler batches yet</h4>
-                            <p>Start by recording your first broiler purchase</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="recent-activity card">
-                <div class="card-header">
-                    <h3>Recent Activity</h3>
-                    <button class="btn btn-text" id="view-all-activity">View All</button>
-                </div>
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Type</th>
-                                <th>Batch ID</th>
-                                <th>Count</th>
-                                <th>Details</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="broiler-activity-body">
-                            <tr>
-                                <td colspan="6" class="empty-state">
-                                    <div class="empty-content">
-                                        <span class="empty-icon">📝</span>
-                                        <h4>No activity yet</h4>
-                                        <p>Broiler transactions will appear here</p>
+                <!-- Record Mortality Form -->
+                <div id="mortality-form-container" class="hidden">
+                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                        <h3 style="color: var(--text-primary); margin-bottom: 20px;">Record Mortality</h3>
+                        <form id="mortality-form">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Date</label>
+                                    <input type="date" class="form-input" id="mortality-date" required>
+                                </div>
+                                <div>
+                                    <label class="form-label">Number of Birds</label>
+                                    <input type="number" class="form-input" id="mortality-quantity" min="1" max="${this.currentStock}" required>
+                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                        Current stock: ${this.currentStock} birds
                                     </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Broiler Transaction Modal -->
-            <div id="broiler-modal" class="modal hidden">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 id="broiler-modal-title">Add Broiler Record</h3>
-                        <button class="btn-icon close-modal">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="broiler-form">
-                            <input type="hidden" id="broiler-id">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="broiler-type">Record Type:</label>
-                                    <select id="broiler-type" required>
-                                        <option value="">Select Type</option>
-                                        <option value="purchase">Chick Purchase</option>
-                                        <option value="mortality">Mortality</option>
-                                        <option value="slaughter">Slaughter</option>
-                                        <option value="adjustment">Stock Adjustment</option>
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Cause</label>
+                                    <select class="form-input" id="mortality-cause" required>
+                                        <option value="natural">Natural Causes</option>
+                                        <option value="disease">Disease</option>
+                                        <option value="predator">Predator</option>
+                                        <option value="accident">Accident</option>
+                                        <option value="heat-stress">Heat Stress</option>
+                                        <option value="other">Other</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label for="broiler-date">Date:</label>
-                                    <input type="date" id="broiler-date" required>
+                                <div>
+                                    <label class="form-label">Age (days)</label>
+                                    <input type="number" class="form-input" id="mortality-age" min="1" max="60" required>
                                 </div>
                             </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="broiler-batch">Batch ID:</label>
-                                    <input type="text" id="broiler-batch" placeholder="e.g., BATCH-001" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="broiler-count">Count:</label>
-                                    <input type="number" id="broiler-count" min="0" required placeholder="0">
-                                </div>
+                            <div style="margin-bottom: 20px;">
+                                <label class="form-label">Notes</label>
+                                <textarea class="form-input" id="mortality-notes" rows="3" placeholder="Any observations, symptoms, or additional information..."></textarea>
                             </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="broiler-cost">Total Cost ($):</label>
-                                    <input type="number" id="broiler-cost" step="0.01" min="0" placeholder="0.00">
-                                </div>
-                                <div class="form-group">
-                                    <label for="broiler-supplier">Supplier (Optional):</label>
-                                    <input type="text" id="broiler-supplier" placeholder="Supplier name">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="broiler-notes">Notes (Optional):</label>
-                                <textarea id="broiler-notes" placeholder="Add any additional notes..." rows="3"></textarea>
-                            </div>
-                            <div class="form-group" id="mortality-details" style="display: none;">
-                                <label for="broiler-cause">Cause of Death (Optional):</label>
-                                <input type="text" id="broiler-cause" placeholder="e.g., Disease, Accident, etc.">
-                            </div>
-                            <div class="form-group" id="slaughter-details" style="display: none;">
-                                <label for="broiler-weight">Average Weight (kg):</label>
-                                <input type="number" id="broiler-weight" step="0.01" min="0" placeholder="0.00">
+                            <div style="display: flex; gap: 12px;">
+                                <button type="submit" class="btn-primary">Record Loss</button>
+                                <button type="button" class="btn-outline" id="cancel-mortality-form">Cancel</button>
                             </div>
                         </form>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-text close-modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="save-broiler">Save Record</button>
+                </div>
+
+                <!-- Add Stock Form -->
+                <div id="stock-form-container" class="hidden">
+                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                        <h3 style="color: var(--text-primary); margin-bottom: 20px;">Add Birds to Stock</h3>
+                        <form id="stock-form">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Date</label>
+                                    <input type="date" class="form-input" id="stock-date" required>
+                                </div>
+                                <div>
+                                    <label class="form-label">Number of Birds</label>
+                                    <input type="number" class="form-input" id="stock-quantity" min="1" required>
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 16px;">
+                                <label class="form-label">Source</label>
+                                <select class="form-input" id="stock-source" required>
+                                    <option value="hatchery">Hatchery</option>
+                                    <option value="farm-bred">Farm Bred</option>
+                                    <option value="purchase">Purchase</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <label class="form-label">Notes</label>
+                                <input type="text" class="form-input" id="stock-notes" placeholder="Batch number, supplier, etc.">
+                            </div>
+                            <div style="display: flex; gap: 12px;">
+                                <button type="submit" class="btn-primary">Add Birds</button>
+                                <button type="button" class="btn-outline" id="cancel-stock-form">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Recent Mortality & Health Alerts -->
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;">
+                    <!-- Recent Mortality -->
+                    <div class="glass-card" style="padding: 24px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="color: var(--text-primary); font-size: 20px;">Recent Mortality Records</h3>
+                            <button class="btn-primary" id="show-mortality-form">Record Loss</button>
+                        </div>
+                        <div id="mortality-records-list">
+                            ${this.renderMortalityList()}
+                        </div>
+                    </div>
+
+                    <!-- Health Alerts -->
+                    <div class="glass-card" style="padding: 24px;">
+                        <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Health Alerts</h3>
+                        <div id="health-alerts">
+                            ${this.renderHealthAlerts()}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mortality Trends -->
+                <div class="glass-card" style="padding: 24px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Weekly Mortality Trends</h3>
+                    <div id="mortality-trends">
+                        ${this.renderMortalityTrends()}
                     </div>
                 </div>
             </div>
-        </div>
-    `,
+        `;
 
-    styles: `
-        .broiler-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
-            margin: 1.5rem 0;
-        }
-
-        .summary-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
-            border: 1px solid var(--border-color);
-        }
-
-        .summary-icon {
-            font-size: 2rem;
-            opacity: 0.8;
-            margin-bottom: 0.5rem;
-        }
-
-        .summary-content h3 {
-            margin: 0 0 0.5rem 0;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .summary-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-color);
-            margin-bottom: 0.25rem;
-        }
-
-        .summary-period {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .quick-actions {
-            margin: 1.5rem 0;
-        }
-
-        .quick-actions .form-row.compact {
-            margin-bottom: 0.75rem;
-        }
-
-        .quick-actions .form-row.compact:last-child {
-            margin-bottom: 0;
-        }
-
-        .batch-overview, .recent-activity {
-            margin-bottom: 1.5rem;
-        }
-
-        .batch-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .batch-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-
-        .batch-id {
-            font-weight: 600;
-            color: var(--text-color);
-        }
-
-        .batch-date {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .batch-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 1rem;
-            margin-top: 0.5rem;
-        }
-
-        .batch-stat {
-            text-align: center;
-        }
-
-        .batch-stat-label {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-bottom: 0.25rem;
-        }
-
-        .batch-stat-value {
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .mortality-high {
-            color: var(--danger-color);
-        }
-
-        .mortality-medium {
-            color: var(--warning-color);
-        }
-
-        .mortality-low {
-            color: var(--success-color);
-        }
-
-        .transaction-type.purchase {
-            color: var(--success-color);
-            font-weight: 600;
-        }
-
-        .transaction-type.mortality {
-            color: var(--danger-color);
-            font-weight: 600;
-        }
-
-        .transaction-type.slaughter {
-            color: var(--info-color);
-            font-weight: 600;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-muted);
-        }
-
-        .empty-icon {
-            font-size: 3rem;
-            opacity: 0.5;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .empty-content h4 {
-            margin: 0 0 0.5rem 0;
-            font-size: 1.2rem;
-        }
-
-        .empty-content p {
-            margin: 0;
-            opacity: 0.8;
-        }
-    `,
-
-    initialize: function() {
-        console.log('Broiler Mortality module initializing...');
-        this.loadBroilerData();
-        this.attachEventListeners();
-        this.updateSummary();
-        this.renderBatchOverview();
-        this.renderActivityTable();
+        this.setupEventListeners();
     },
 
-    loadBroilerData: function() {
-        if (!FarmModules.appData.broilerBatches) {
-            FarmModules.appData.broilerBatches = [];
-        }
-        if (!FarmModules.appData.broilerTransactions) {
-            FarmModules.appData.broilerTransactions = [];
-        }
+    calculateStats() {
+        const totalLosses = this.mortalityRecords.reduce((sum, record) => sum + record.quantity, 0);
+        const mortalityRate = this.currentStock > 0 ? ((totalLosses / (this.currentStock + totalLosses)) * 100).toFixed(1) : 0;
+        
+        return { totalLosses, mortalityRate };
     },
 
-    updateSummary: function() {
-        const batches = FarmModules.appData.broilerBatches || [];
-        const transactions = FarmModules.appData.broilerTransactions || [];
-
-        const totalPurchased = batches.reduce((sum, batch) => sum + batch.initialCount, 0);
-        const totalMortality = transactions
-            .filter(t => t.type === 'mortality')
-            .reduce((sum, t) => sum + t.count, 0);
-        const totalSlaughtered = transactions
-            .filter(t => t.type === 'slaughter')
-            .reduce((sum, t) => sum + t.count, 0);
-
-        const availableBroilers = totalPurchased - totalMortality - totalSlaughtered;
-        const mortalityRate = totalPurchased > 0 ? (totalMortality / totalPurchased * 100) : 0;
-
-        this.updateElement('total-purchased', totalPurchased);
-        this.updateElement('total-mortality', totalMortality);
-        this.updateElement('available-broilers', availableBroilers);
-        this.updateElement('mortality-rate', mortalityRate.toFixed(1) + '%');
-    },
-
-    renderBatchOverview: function() {
-        const container = document.getElementById('batch-container');
-        const batches = FarmModules.appData.broilerBatches || [];
-
-        if (batches.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-content">
-                        <span class="empty-icon">🐔</span>
-                        <h4>No broiler batches yet</h4>
-                        <p>Start by recording your first broiler purchase</p>
-                    </div>
-                </div>
-            `;
-            return;
-        }
-
-        // Show only active batches (with remaining broilers)
-        const activeBatches = batches.filter(batch => {
-            const batchTransactions = FarmModules.appData.broilerTransactions.filter(t => t.batchId === batch.id);
-            const mortality = batchTransactions.filter(t => t.type === 'mortality').reduce((sum, t) => sum + t.count, 0);
-            const slaughtered = batchTransactions.filter(t => t.type === 'slaughter').reduce((sum, t) => sum + t.count, 0);
-            return (batch.initialCount - mortality - slaughtered) > 0;
-        });
-
-        if (activeBatches.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-content">
-                        <span class="empty-icon">✅</span>
-                        <h4>All batches completed</h4>
-                        <p>All broilers have been processed. Start a new batch!</p>
-                    </div>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = activeBatches.map(batch => {
-            const batchTransactions = FarmModules.appData.broilerTransactions.filter(t => t.batchId === batch.id);
-            const mortality = batchTransactions.filter(t => t.type === 'mortality').reduce((sum, t) => sum + t.count, 0);
-            const slaughtered = batchTransactions.filter(t => t.type === 'slaughter').reduce((sum, t) => sum + t.count, 0);
-            const remaining = batch.initialCount - mortality - slaughtered;
-            const mortalityRate = (mortality / batch.initialCount * 100).toFixed(1);
-
-            let mortalityClass = 'mortality-low';
-            if (mortalityRate > 10) mortalityClass = 'mortality-medium';
-            if (mortalityRate > 20) mortalityClass = 'mortality-high';
-
+    renderMortalityList() {
+        if (this.mortalityRecords.length === 0) {
             return `
-                <div class="batch-card">
-                    <div class="batch-header">
-                        <span class="batch-id">${batch.id}</span>
-                        <span class="batch-date">Started: ${this.formatDate(batch.purchaseDate)}</span>
-                    </div>
-                    <div class="batch-stats">
-                        <div class="batch-stat">
-                            <div class="batch-stat-label">Initial</div>
-                            <div class="batch-stat-value">${batch.initialCount}</div>
-                        </div>
-                        <div class="batch-stat">
-                            <div class="batch-stat-label">Deaths</div>
-                            <div class="batch-stat-value mortality">${mortality}</div>
-                        </div>
-                        <div class="batch-stat">
-                            <div class="batch-stat-label">Slaughtered</div>
-                            <div class="batch-stat-value">${slaughtered}</div>
-                        </div>
-                        <div class="batch-stat">
-                            <div class="batch-stat-label">Remaining</div>
-                            <div class="batch-stat-value">${remaining}</div>
-                        </div>
-                        <div class="batch-stat">
-                            <div class="batch-stat-label">Mortality Rate</div>
-                            <div class="batch-stat-value ${mortalityClass}">${mortalityRate}%</div>
-                        </div>
-                    </div>
+                <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">😔</div>
+                    <div style="font-size: 14px;">No mortality records</div>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Great job keeping your birds healthy!</div>
                 </div>
             `;
-        }).join('');
-    },
+        }
 
-    renderActivityTable: function() {
-        const tbody = document.getElementById('broiler-activity-body');
-        const transactions = FarmModules.appData.broilerTransactions || [];
-
-        if (transactions.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="empty-state">
-                        <div class="empty-content">
-                            <span class="empty-icon">📝</span>
-                            <h4>No activity yet</h4>
-                            <p>Broiler transactions will appear here</p>
+        return `
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                ${this.mortalityRecords.slice(0, 6).map(record => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <div>
+                            <div style="font-weight: 600; color: var(--text-primary);">
+                                ${record.quantity} bird${record.quantity > 1 ? 's' : ''} • ${this.formatCause(record.cause)}
+                            </div>
+                            <div style="font-size: 14px; color: var(--text-secondary);">
+                                ${record.date} • Age: ${record.age} days
+                            </div>
+                            ${record.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${record.notes}</div>` : ''}
                         </div>
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        const recentTransactions = transactions.slice(-10).reverse();
-
-        tbody.innerHTML = recentTransactions.map(transaction => {
-            const typeClass = `transaction-type ${transaction.type}`;
-            const typeLabel = transaction.type === 'purchase' ? 'Purchase' : 
-                            transaction.type === 'mortality' ? 'Mortality' : 
-                            transaction.type === 'slaughter' ? 'Slaughter' : 'Adjustment';
-            
-            return `
-                <tr>
-                    <td>${this.formatDate(transaction.date)}</td>
-                    <td><span class="${typeClass}">${typeLabel}</span></td>
-                    <td>${transaction.batchId}</td>
-                    <td>${transaction.count}</td>
-                    <td>${transaction.cause || transaction.notes || '—'}</td>
-                    <td class="transaction-actions">
-                        <button class="btn-icon edit-transaction" data-id="${transaction.id}" title="Edit">✏️</button>
-                        <button class="btn-icon delete-transaction" data-id="${transaction.id}" title="Delete">🗑️</button>
-                    </td>
-                </tr>
-            `;
-        }).join('');
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-icon delete-mortality" data-id="${record.id}" style="background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; color: var(--text-secondary);">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
     },
 
-    attachEventListeners: function() {
-        document.getElementById('quick-purchase').addEventListener('click', () => this.handleQuickPurchase());
-        document.getElementById('quick-mortality').addEventListener('click', () => this.handleQuickMortality());
-        document.getElementById('add-broiler-transaction').addEventListener('click', () => this.showBroilerModal());
-        document.getElementById('save-broiler').addEventListener('click', () => this.saveBroilerTransaction());
+    renderHealthAlerts() {
+        const alerts = [];
+        const stats = this.calculateStats();
 
-        document.querySelectorAll('.close-modal').forEach(btn => {
-            btn.addEventListener('click', () => this.hideModal());
-        });
-
-        document.getElementById('broiler-type').addEventListener('change', (e) => this.handleTypeChange(e.target.value));
-
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.edit-transaction')) {
-                const transactionId = e.target.closest('.edit-transaction').dataset.id;
-                this.editTransaction(transactionId);
-            }
-            if (e.target.closest('.delete-transaction')) {
-                const transactionId = e.target.closest('.delete-transaction').dataset.id;
-                this.deleteTransaction(transactionId);
-            }
-        });
-
-        document.getElementById('broiler-modal').addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) {
-                this.hideModal();
-            }
-        });
-    },
-
-    handleQuickPurchase: function() {
-        const count = parseInt(document.getElementById('quick-purchase-chicks').value);
-        const cost = parseFloat(document.getElementById('quick-purchase-cost').value) || 0;
-
-        if (!count || count <= 0) {
-            this.showNotification('Please enter a valid number of chicks', 'error');
-            return;
-        }
-
-        const batchId = 'BATCH-' + Date.now().toString().slice(-6);
-        
-        this.recordBroilerTransaction('purchase', count, batchId, 'Quick purchase', cost);
-        
-        // Create batch record
-        FarmModules.appData.broilerBatches.push({
-            id: batchId,
-            initialCount: count,
-            purchaseDate: new Date().toISOString().split('T')[0],
-            cost: cost
-        });
-
-        document.getElementById('quick-purchase-chicks').value = '';
-        document.getElementById('quick-purchase-cost').value = '';
-        this.showNotification('Broiler purchase recorded successfully!', 'success');
-    },
-
-    handleQuickMortality: function() {
-        const count = parseInt(document.getElementById('quick-mortality-count').value);
-        const cause = document.getElementById('quick-mortality-cause').value;
-
-        if (!count || count <= 0) {
-            this.showNotification('Please enter a valid number of deaths', 'error');
-            return;
-        }
-
-        const batches = FarmModules.appData.broilerBatches || [];
-        if (batches.length === 0) {
-            this.showNotification('No broiler batches found. Please record a purchase first.', 'error');
-            return;
-        }
-
-        // Use the most recent batch
-        const latestBatch = batches[batches.length - 1];
-        
-        // Check if we have enough broilers
-        const batchTransactions = FarmModules.appData.broilerTransactions.filter(t => t.batchId === latestBatch.id);
-        const currentMortality = batchTransactions.filter(t => t.type === 'mortality').reduce((sum, t) => sum + t.count, 0);
-        const currentSlaughter = batchTransactions.filter(t => t.type === 'slaughter').reduce((sum, t) => sum + t.count, 0);
-        const available = latestBatch.initialCount - currentMortality - currentSlaughter;
-
-        if (count > available) {
-            this.showNotification(`Only ${available} broilers available in batch ${latestBatch.id}`, 'error');
-            return;
-        }
-
-        this.recordBroilerTransaction('mortality', count, latestBatch.id, 'Quick mortality record', 0, cause);
-        
-        document.getElementById('quick-mortality-count').value = '';
-        document.getElementById('quick-mortality-cause').value = '';
-        this.showNotification('Mortality recorded successfully!', 'success');
-    },
-
-    recordBroilerTransaction: function(type, count, batchId, notes = '', cost = 0, cause = '') {
-        const transaction = {
-            id: 'broiler-' + Date.now(),
-            type: type,
-            count: count,
-            batchId: batchId,
-            date: new Date().toISOString().split('T')[0],
-            notes: notes,
-            cost: cost,
-            cause: cause
-        };
-
-        FarmModules.appData.broilerTransactions.push(transaction);
-        
-        this.updateSummary();
-        this.renderBatchOverview();
-        this.renderActivityTable();
-    },
-
-    showBroilerModal: function() {
-        const modal = document.getElementById('broiler-modal');
-        const title = document.getElementById('broiler-modal-title');
-        const form = document.getElementById('broiler-form');
-
-        if (modal && title && form) {
-            form.reset();
-            document.getElementById('broiler-id').value = '';
-            document.getElementById('broiler-date').value = new Date().toISOString().split('T')[0];
-            document.getElementById('mortality-details').style.display = 'none';
-            document.getElementById('slaughter-details').style.display = 'none';
-            
-            // Generate default batch ID
-            document.getElementById('broiler-batch').value = 'BATCH-' + Date.now().toString().slice(-6);
-            
-            modal.classList.remove('hidden');
-        }
-    },
-
-    hideModal: function() {
-        const modal = document.getElementById('broiler-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
-    },
-
-    handleTypeChange: function(type) {
-        const mortalityDetails = document.getElementById('mortality-details');
-        const slaughterDetails = document.getElementById('slaughter-details');
-        
-        mortalityDetails.style.display = type === 'mortality' ? 'block' : 'none';
-        slaughterDetails.style.display = type === 'slaughter' ? 'block' : 'none';
-    },
-
-    saveBroilerTransaction: function() {
-        const form = document.getElementById('broiler-form');
-        if (!form) return;
-
-        const transactionId = document.getElementById('broiler-id').value;
-        const type = document.getElementById('broiler-type').value;
-        const batchId = document.getElementById('broiler-batch').value;
-        const count = parseInt(document.getElementById('broiler-count').value);
-        const date = document.getElementById('broiler-date').value;
-        const cost = parseFloat(document.getElementById('broiler-cost').value) || 0;
-        const supplier = document.getElementById('broiler-supplier').value;
-        const notes = document.getElementById('broiler-notes').value;
-        const cause = document.getElementById('broiler-cause').value;
-        const weight = document.getElementById('broiler-weight').value;
-
-        if (!type || !batchId || !count || !date) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
-        }
-
-        if (count <= 0) {
-            this.showNotification('Count must be greater than 0', 'error');
-            return;
-        }
-
-        // For mortality and slaughter, check available stock
-        if (type === 'mortality' || type === 'slaughter') {
-            const batches = FarmModules.appData.broilerBatches || [];
-            const batch = batches.find(b => b.id === batchId);
-            
-            if (!batch) {
-                this.showNotification('Batch not found. Please check the Batch ID.', 'error');
-                return;
-            }
-
-            const batchTransactions = FarmModules.appData.broilerTransactions.filter(t => t.batchId === batchId);
-            const currentMortality = batchTransactions.filter(t => t.type === 'mortality').reduce((sum, t) => sum + t.count, 0);
-            const currentSlaughter = batchTransactions.filter(t => t.type === 'slaughter').reduce((sum, t) => sum + t.count, 0);
-            const available = batch.initialCount - currentMortality - currentSlaughter;
-
-            if (count > available) {
-                this.showNotification(`Only ${available} broilers available in batch ${batchId}`, 'error');
-                return;
-            }
-        }
-
-        // For purchases, create batch record
-        if (type === 'purchase' && !transactionId) {
-            FarmModules.appData.broilerBatches.push({
-                id: batchId,
-                initialCount: count,
-                purchaseDate: date,
-                cost: cost,
-                supplier: supplier
+        // Check mortality rate
+        if (stats.mortalityRate > 5) {
+            alerts.push({
+                type: 'high-mortality',
+                message: 'High mortality rate detected',
+                severity: 'high',
+                icon: '⚠️'
+            });
+        } else if (stats.mortalityRate > 2) {
+            alerts.push({
+                type: 'moderate-mortality',
+                message: 'Moderate mortality rate',
+                severity: 'medium',
+                icon: '📊'
             });
         }
 
-        const transactionData = {
-            type: type,
-            batchId: batchId,
-            count: count,
-            date: date,
-            cost: cost,
-            supplier: supplier,
-            notes: notes,
-            cause: cause,
-            weight: weight
+        // Check for disease patterns
+        const diseaseCases = this.mortalityRecords.filter(record => record.cause === 'disease').length;
+        if (diseaseCases > 2) {
+            alerts.push({
+                type: 'disease-pattern',
+                message: 'Multiple disease cases reported',
+                severity: 'high',
+                icon: '🦠'
+            });
+        }
+
+        // Check stock levels
+        if (this.currentStock < 100) {
+            alerts.push({
+                type: 'low-stock',
+                message: 'Low bird stock',
+                severity: 'medium',
+                icon: '📉'
+            });
+        }
+
+        if (alerts.length === 0) {
+            return `
+                <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">✅</div>
+                    <div style="font-size: 14px;">No health alerts</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">All systems normal</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                ${alerts.map(alert => `
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: ${this.getAlertColor(alert.severity)}20; border-radius: 8px; border-left: 4px solid ${this.getAlertColor(alert.severity)};">
+                        <div style="font-size: 20px;">${alert.icon}</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: var(--text-primary); font-size: 14px;">${alert.message}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    },
+
+    renderMortalityTrends() {
+        // Group by week for simple trend analysis
+        const weeklyData = {};
+        this.mortalityRecords.forEach(record => {
+            const week = this.getWeekNumber(new Date(record.date));
+            if (!weeklyData[week]) {
+                weeklyData[week] = 0;
+            }
+            weeklyData[week] += record.quantity;
+        });
+
+        const weeks = Object.keys(weeklyData).slice(-4); // Last 4 weeks
+
+        if (weeks.length === 0) {
+            return `
+                <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">📊</div>
+                    <div style="font-size: 14px;">No trend data available</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">Record more data to see trends</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div style="display: flex; align-items: end; gap: 16px; height: 120px; padding: 20px 0;">
+                ${weeks.map(week => {
+                    const value = weeklyData[week];
+                    const maxValue = Math.max(...Object.values(weeklyData));
+                    const height = maxValue > 0 ? (value / maxValue) * 80 : 0;
+                    
+                    return `
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                            <div style="width: 30px; background: #ef4444; border-radius: 4px; height: ${height}px;"></div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">Week ${week}</div>
+                            <div style="font-size: 11px; color: var(--text-primary); font-weight: 600;">${value}</div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    },
+
+    getWeekNumber(date) {
+        const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+        const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+        return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+    },
+
+    formatCause(cause) {
+        const causes = {
+            'natural': 'Natural Causes',
+            'disease': 'Disease',
+            'predator': 'Predator',
+            'accident': 'Accident',
+            'heat-stress': 'Heat Stress',
+            'other': 'Other'
+        };
+        return causes[cause] || cause;
+    },
+
+    getAlertColor(severity) {
+        const colors = {
+            'high': '#ef4444',
+            'medium': '#f59e0b',
+            'low': '#3b82f6'
+        };
+        return colors[severity] || '#6b7280';
+    },
+
+    setupEventListeners() {
+        // Form buttons
+        document.getElementById('show-mortality-form')?.addEventListener('click', () => this.showMortalityForm());
+        document.getElementById('record-mortality-btn')?.addEventListener('click', () => this.showMortalityForm());
+        document.getElementById('add-stock-btn')?.addEventListener('click', () => this.showStockForm());
+        document.getElementById('health-report-btn')?.addEventListener('click', () => this.generateHealthReport());
+        
+        // Form handlers
+        document.getElementById('mortality-form')?.addEventListener('submit', (e) => this.handleMortalitySubmit(e));
+        document.getElementById('stock-form')?.addEventListener('submit', (e) => this.handleStockSubmit(e));
+        document.getElementById('cancel-mortality-form')?.addEventListener('click', () => this.hideMortalityForm());
+        document.getElementById('cancel-stock-form')?.addEventListener('click', () => this.hideStockForm());
+        
+        // Action buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.delete-mortality')) {
+                const id = parseInt(e.target.closest('.delete-mortality').dataset.id);
+                this.deleteMortalityRecord(id);
+            }
+        });
+
+        // Set today's date
+        const today = new Date().toISOString().split('T')[0];
+        const mortalityDate = document.getElementById('mortality-date');
+        const stockDate = document.getElementById('stock-date');
+        if (mortalityDate) mortalityDate.value = today;
+        if (stockDate) stockDate.value = today;
+
+        // Update quantity max based on current stock
+        const quantityInput = document.getElementById('mortality-quantity');
+        if (quantityInput) {
+            quantityInput.max = this.currentStock;
+            quantityInput.addEventListener('input', (e) => {
+                if (parseInt(e.target.value) > this.currentStock) {
+                    e.target.value = this.currentStock;
+                }
+            });
+        }
+
+        // Hover effects
+        const buttons = document.querySelectorAll('.quick-action-btn');
+        buttons.forEach(button => {
+            button.addEventListener('mouseenter', (e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+            });
+            button.addEventListener('mouseleave', (e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+            });
+        });
+    },
+
+    showMortalityForm() {
+        document.getElementById('mortality-form-container').classList.remove('hidden');
+        document.getElementById('mortality-form').reset();
+        
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('mortality-date').value = today;
+        
+        // Update max quantity
+        const quantityInput = document.getElementById('mortality-quantity');
+        if (quantityInput) {
+            quantityInput.max = this.currentStock;
+            quantityInput.placeholder = `Max: ${this.currentStock} birds`;
+        }
+        
+        document.getElementById('mortality-form-container').scrollIntoView({ behavior: 'smooth' });
+    },
+
+    hideMortalityForm() {
+        document.getElementById('mortality-form-container').classList.add('hidden');
+    },
+
+    showStockForm() {
+        document.getElementById('stock-form-container').classList.remove('hidden');
+        document.getElementById('stock-form').reset();
+        
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('stock-date').value = today;
+        
+        document.getElementById('stock-form-container').scrollIntoView({ behavior: 'smooth' });
+    },
+
+    hideStockForm() {
+        document.getElementById('stock-form-container').classList.add('hidden');
+    },
+
+    handleMortalitySubmit(e) {
+        e.preventDefault();
+        
+        const quantity = parseInt(document.getElementById('mortality-quantity').value);
+        
+        if (quantity > this.currentStock) {
+            alert(`Cannot record ${quantity} losses. Current stock is only ${this.currentStock} birds.`);
+            return;
+        }
+
+        const formData = {
+            id: Date.now(),
+            date: document.getElementById('mortality-date').value,
+            quantity: quantity,
+            cause: document.getElementById('mortality-cause').value,
+            age: parseInt(document.getElementById('mortality-age').value),
+            notes: document.getElementById('mortality-notes').value
         };
 
-        if (transactionId) {
-            this.updateTransaction(transactionId, transactionData);
-        } else {
-            this.addTransaction(transactionData);
-        }
+        // Update current stock
+        this.currentStock -= quantity;
 
-        this.hideModal();
+        this.mortalityRecords.unshift(formData);
+        this.saveData();
+        this.renderModule();
+        
+        if (window.coreModule) {
+            window.coreModule.showNotification(`Recorded ${quantity} bird loss. Stock updated.`, 'success');
+        }
     },
 
-    addTransaction: function(transactionData) {
-        if (!FarmModules.appData.broilerTransactions) {
-            FarmModules.appData.broilerTransactions = [];
-        }
-
-        const newTransaction = {
-            id: 'broiler-' + Date.now(),
-            ...transactionData
+    handleStockSubmit(e) {
+        e.preventDefault();
+        
+        const quantity = parseInt(document.getElementById('stock-quantity').value);
+        
+        const formData = {
+            id: Date.now(),
+            date: document.getElementById('stock-date').value,
+            quantity: quantity,
+            source: document.getElementById('stock-source').value,
+            notes: document.getElementById('stock-notes').value
         };
 
-        FarmModules.appData.broilerTransactions.push(newTransaction);
+        // Update current stock
+        this.currentStock += quantity;
+
+        this.saveData();
+        this.renderModule();
         
-        this.updateSummary();
-        this.renderBatchOverview();
-        this.renderActivityTable();
+        if (window.coreModule) {
+            window.coreModule.showNotification(`Added ${quantity} birds to stock.`, 'success');
+        }
+    },
+
+    deleteMortalityRecord(id) {
+        const record = this.mortalityRecords.find(record => record.id === id);
+        if (!record) return;
+
+        if (confirm(`Are you sure you want to delete this mortality record? This will restore ${record.quantity} birds to your stock.`)) {
+            // Restore birds to stock
+            this.currentStock += record.quantity;
+            
+            this.mortalityRecords = this.mortalityRecords.filter(record => record.id !== id);
+            this.saveData();
+            this.renderModule();
+            
+            if (window.coreModule) {
+                window.coreModule.showNotification('Mortality record deleted. Stock updated.', 'success');
+            }
+        }
+    },
+
+    generateHealthReport() {
+        const stats = this.calculateStats();
+        const totalLosses = this.mortalityRecords.reduce((sum, record) => sum + record.quantity, 0);
         
-        this.showNotification('Transaction recorded successfully!', 'success');
-    },
+        // Calculate causes breakdown
+        const causes = {};
+        this.mortalityRecords.forEach(record => {
+            if (!causes[record.cause]) {
+                causes[record.cause] = 0;
+            }
+            causes[record.cause] += record.quantity;
+        });
 
-    editTransaction: function(transactionId) {
-        const transactions = FarmModules.appData.broilerTransactions || [];
-        const transaction = transactions.find(t => t.id === transactionId);
-        
-        if (!transaction) return;
+        let report = `🐔 Broiler Health Report\n\n`;
+        report += `Current Stock: ${this.currentStock} birds\n`;
+        report += `Total Losses: ${totalLosses} birds\n`;
+        report += `Mortality Rate: ${stats.mortalityRate}%\n\n`;
+        report += `Losses by Cause:\n`;
 
-        const modal = document.getElementById('broiler-modal');
-        const title = document.getElementById('broiler-modal-title');
+        Object.entries(causes).forEach(([cause, count]) => {
+            const percentage = ((count / totalLosses) * 100).toFixed(1);
+            report += `• ${this.formatCause(cause)}: ${count} birds (${percentage}%)\n`;
+        });
 
-        if (modal && title) {
-            document.getElementById('broiler-id').value = transaction.id;
-            document.getElementById('broiler-type').value = transaction.type;
-            document.getElementById('broiler-batch').value = transaction.batchId;
-            document.getElementById('broiler-count').value = transaction.count;
-            document.getElementById('broiler-date').value = transaction.date;
-            document.getElementById('broiler-cost').value = transaction.cost || '';
-            document.getElementById('broiler-supplier').value = transaction.supplier || '';
-            document.getElementById('broiler-notes').value = transaction.notes || '';
-            document.getElementById('broiler-cause').value = transaction.cause || '';
-            document.getElementById('broiler-weight').value = transaction.weight || '';
-            
-            this.handleTypeChange(transaction.type);
-            
-            title.textContent = 'Edit Broiler Record';
-            modal.classList.remove('hidden');
+        report += `\nRecommendations:\n`;
+        if (stats.mortalityRate > 5) {
+            report += `⚠️ High mortality - review management practices\n`;
         }
-    },
-
-    updateTransaction: function(transactionId, transactionData) {
-        const transactions = FarmModules.appData.broilerTransactions || [];
-        const index = transactions.findIndex(t => t.id === transactionId);
-        
-        if (index !== -1) {
-            transactions[index] = {
-                ...transactions[index],
-                ...transactionData
-            };
-            
-            this.updateSummary();
-            this.renderBatchOverview();
-            this.renderActivityTable();
-            this.showNotification('Transaction updated successfully!', 'success');
+        if (causes['disease'] > 0) {
+            report += `🦠 Disease cases detected - consider veterinary consultation\n`;
         }
-    },
-
-    deleteTransaction: function(transactionId) {
-        if (confirm('Are you sure you want to delete this transaction?')) {
-            FarmModules.appData.broilerTransactions = FarmModules.appData.broilerTransactions.filter(t => t.id !== transactionId);
-            
-            this.updateSummary();
-            this.renderBatchOverview();
-            this.renderActivityTable();
-            this.showNotification('Transaction deleted successfully', 'success');
+        if (causes['predator'] > 0) {
+            report += `🐺 Predator losses - improve security measures\n`;
         }
+
+        alert(report);
     },
 
-    formatDate: function(dateString) {
-        try {
-            return new Date(dateString).toLocaleDateString();
-        } catch (e) {
-            return 'Invalid date';
-        }
-    },
-
-    updateElement: function(id, value) {
-        const element = document.getElementById(id);
-        if (element) element.textContent = value;
-    },
-
-    showNotification: function(message, type) {
-        if (window.coreModule && window.coreModule.showNotification) {
-            window.coreModule.showNotification(message, type);
-        } else {
-            alert(message);
-        }
+    saveData() {
+        localStorage.setItem('farm-mortality-records', JSON.stringify(this.mortalityRecords));
+        localStorage.setItem('farm-current-stock', this.currentStock.toString());
     }
-});
+};
+
+if (window.FarmModules) {
+    window.FarmModules.registerModule('broiler-mortality', BroilerMortalityModule);
+}
