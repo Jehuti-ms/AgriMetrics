@@ -1,661 +1,627 @@
-// modules/production.js
-console.log('Loading production module...');
+// modules/reports.js
+console.log('Loading reports module...');
 
-class ProductionModule {
-    constructor() {
-        this.name = 'production';
-        this.initialized = false;
-        this.productionData = [];
-        this.container = null;
-    }
+const ReportsModule = {
+    name: 'reports',
+    initialized: false,
 
-    async initialize() {
-        console.log('🏭 Initializing production tracking...');
-        await this.loadProductionData();
-        this.render();
+    initialize() {
+        console.log('📊 Initializing reports...');
+        this.renderReports();
         this.initialized = true;
         return true;
-    }
+    },
 
-    async loadProductionData() {
-        try {
-            if (window.db) {
-                this.productionData = await window.db.getAll('production');
-            } else {
-                const savedData = localStorage.getItem('farm-production');
-                this.productionData = savedData ? JSON.parse(savedData) : this.getSampleData();
-            }
-        } catch (error) {
-            console.error('Error loading production data:', error);
-            this.productionData = this.getSampleData();
-        }
-    }
-
-    getSampleData() {
-        return [
-            {
-                id: 'prod_1',
-                product: 'Eggs',
-                quantity: 1200,
-                unit: 'pieces',
-                date: new Date().toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                }),
-                batch: 'BATCH-001',
-                quality: 'Grade A',
-                notes: 'Normal production',
-                timestamp: new Date().toISOString()
-            },
-            {
-                id: 'prod_2',
-                product: 'Broiler Chickens',
-                quantity: 500,
-                unit: 'birds',
-                date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                }),
-                batch: 'BATCH-002',
-                quality: 'Grade A',
-                notes: 'Ready for market',
-                timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-            }
-        ];
-    }
-
-    async saveProductionData() {
-        try {
-            if (window.db) {
-                await window.db.clear('production');
-                for (const record of this.productionData) {
-                    await window.db.put('production', record);
-                }
-            } else {
-                localStorage.setItem('farm-production', JSON.stringify(this.productionData));
-            }
-        } catch (error) {
-            console.error('Error saving production data:', error);
-        }
-    }
-
-    async addProductionRecord(recordData) {
-        const record = {
-            id: `prod_${Date.now()}`,
-            timestamp: new Date().toISOString(),
-            date: new Date().toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            }),
-            product: recordData.product,
-            quantity: parseInt(recordData.quantity),
-            unit: recordData.unit,
-            batch: recordData.batch,
-            quality: recordData.quality,
-            notes: recordData.notes || '',
-            productionType: recordData.productionType || 'regular'
-        };
-
-        this.productionData.unshift(record);
-        await this.saveProductionData();
-        await this.updateDisplay();
-        this.showToast('Production record added!', 'success');
-    }
-
-    async updateProductionRecord(recordId, updates) {
-        const index = this.productionData.findIndex(record => record.id === recordId);
-        if (index !== -1) {
-            this.productionData[index] = {
-                ...this.productionData[index],
-                ...updates,
-                updatedAt: new Date().toISOString()
-            };
-            await this.saveProductionData();
-            await this.updateDisplay();
-            this.showToast('Production record updated!', 'success');
-        }
-    }
-
-    async deleteProductionRecord(recordId) {
-        this.productionData = this.productionData.filter(record => record.id !== recordId);
-        await this.saveProductionData();
-        await this.updateDisplay();
-        this.showToast('Production record deleted!', 'success');
-    }
-
-    calculateStats() {
-        const today = new Date().toDateString();
-        const todayProduction = this.productionData.filter(record => 
-            new Date(record.timestamp).toDateString() === today
-        );
-        
-        const totalToday = todayProduction.reduce((sum, record) => sum + record.quantity, 0);
-        const totalAllTime = this.productionData.reduce((sum, record) => sum + record.quantity, 0);
-        
-        // Group by product type
-        const productStats = {};
-        this.productionData.forEach(record => {
-            if (!productStats[record.product]) {
-                productStats[record.product] = 0;
-            }
-            productStats[record.product] += record.quantity;
-        });
-
-        const topProduct = Object.entries(productStats).sort((a, b) => b[1] - a[1])[0];
+    loadAllData() {
+        // Load data from all modules
+        const salesData = JSON.parse(localStorage.getItem('farm-sales-data') || '[]');
+        const productionData = JSON.parse(localStorage.getItem('farm-production-data') || '[]');
+        const mortalityData = JSON.parse(localStorage.getItem('farm-mortality-data') || '[]');
+        const ordersData = JSON.parse(localStorage.getItem('farm-orders-data') || '[]');
 
         return {
-            today: totalToday,
-            allTime: totalAllTime,
-            todayRecords: todayProduction.length,
-            topProduct: topProduct ? `${topProduct[0]} (${topProduct[1]})` : 'None',
-            uniqueProducts: Object.keys(productStats).length
+            sales: salesData,
+            production: productionData,
+            mortality: mortalityData,
+            orders: ordersData
         };
-    }
+    },
 
-    render() {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
+    generateSalesReport() {
+        const data = this.loadAllData();
+        const sales = data.sales;
 
-        contentArea.innerHTML = this.getTemplate();
-        this.container = contentArea.querySelector('.production-container');
-        this.setupEventListeners();
-        this.updateDisplay();
-    }
-
-    getTemplate() {
-        return `
-            <div class="production-container">
-                <!-- Header -->
-                <div class="module-header">
-                    <div class="header-content">
-                        <h1 class="header-title">Production</h1>
-                        <p class="header-subtitle">Track farm production and yields</p>
-                    </div>
-                    <div class="header-actions">
-                        <button class="btn-primary" id="add-production-btn">
-                            <i class="icon">➕</i>
-                            Add Record
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Stats Grid -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon today">📅</div>
-                        <div class="stat-content">
-                            <div class="stat-value" id="today-production">0</div>
-                            <div class="stat-label">Today's Production</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon total">🏭</div>
-                        <div class="stat-content">
-                            <div class="stat-value" id="total-production">0</div>
-                            <div class="stat-label">Total Production</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon product">⭐</div>
-                        <div class="stat-content">
-                            <div class="stat-value" id="top-product">None</div>
-                            <div class="stat-label">Top Product</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon items">📦</div>
-                        <div class="stat-content">
-                            <div class="stat-value" id="unique-products">0</div>
-                            <div class="stat-label">Products</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="quick-actions">
-                    <div class="action-buttons-grid">
-                        <button class="action-card" data-action="eggs">
-                            <div class="action-icon">🥚</div>
-                            <div class="action-text">Egg Production</div>
-                        </button>
-                        <button class="action-card" data-action="broilers">
-                            <div class="action-icon">🐔</div>
-                            <div class="action-text">Broiler Production</div>
-                        </button>
-                        <button class="action-card" data-action="crops">
-                            <div class="action-icon">🌱</div>
-                            <div class="action-text">Crop Harvest</div>
-                        </button>
-                        <button class="action-card" data-action="daily">
-                            <div class="action-icon">📊</div>
-                            <div class="action-text">Daily Summary</div>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Production Records -->
-                <div class="table-container">
-                    <div class="table-header">
-                        <h3>Recent Production Records</h3>
-                        <div class="table-actions">
-                            <button class="btn-text" id="export-production-btn">
-                                <i class="icon">📤</i>
-                                Export
-                            </button>
-                        </div>
-                    </div>
-                    <div class="table-content" id="production-table-content">
-                        <!-- Records will be rendered here -->
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    async updateDisplay() {
-        if (!this.container) return;
-
-        const stats = this.calculateStats();
-        
-        // Update stats
-        this.updateElement('#today-production', stats.today);
-        this.updateElement('#total-production', stats.allTime);
-        this.updateElement('#top-product', stats.topProduct);
-        this.updateElement('#unique-products', stats.uniqueProducts);
-
-        // Update table
-        await this.renderProductionTable();
-    }
-
-    updateElement(selector, content) {
-        const element = this.container?.querySelector(selector);
-        if (element) element.textContent = content;
-    }
-
-    async renderProductionTable() {
-        const tableContent = this.container?.querySelector('#production-table-content');
-        if (!tableContent) return;
-
-        if (this.productionData.length === 0) {
-            tableContent.innerHTML = this.getEmptyState();
+        if (sales.length === 0) {
+            this.showNotification('No sales data available for report', 'info');
             return;
         }
 
-        tableContent.innerHTML = this.getProductionTable();
-        this.setupTableEventListeners();
-    }
+        const totalRevenue = sales.reduce((sum, sale) => sum + sale.total, 0);
+        const totalItems = sales.reduce((sum, sale) => sum + sale.quantity, 0);
+        const avgSale = sales.length > 0 ? totalRevenue / sales.length : 0;
 
-    getEmptyState() {
-        return `
-            <div class="empty-state">
-                <div class="empty-icon">🏭</div>
-                <h3>No Production Records</h3>
-                <p>Start tracking your farm's production output</p>
-                <button class="btn-primary" id="add-first-production-btn">
-                    Add First Record
-                </button>
-            </div>
-        `;
-    }
+        const today = new Date().toDateString();
+        const todaySales = sales.filter(sale => new Date(sale.date).toDateString() === today);
+        const todayRevenue = todaySales.reduce((sum, sale) => sum + sale.total, 0);
 
-    getProductionTable() {
-        const recentRecords = this.productionData.slice(0, 15);
-        
-        return `
-            <div class="table-wrapper">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Product</th>
-                            <th>Batch</th>
-                            <th class="text-right">Quantity</th>
-                            <th>Unit</th>
-                            <th>Quality</th>
-                            <th class="text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${recentRecords.map(record => `
-                            <tr class="production-row" data-record-id="${record.id}">
-                                <td>
-                                    <div class="date-primary">${record.date}</div>
-                                </td>
-                                <td class="product-cell">
-                                    <div class="product-name">${record.product}</div>
-                                    <div class="product-type">${record.productionType}</div>
-                                </td>
-                                <td class="batch-cell">${record.batch}</td>
-                                <td class="text-right">
-                                    <div class="quantity">${record.quantity.toLocaleString()}</div>
-                                </td>
-                                <td class="unit-cell">${record.unit}</td>
-                                <td>
-                                    <span class="quality-badge quality-${record.quality.toLowerCase().replace(' ', '-')}">${record.quality}</span>
-                                </td>
-                                <td class="text-center">
-                                    <div class="action-buttons">
-                                        <button class="btn-icon danger delete-production-btn" data-record-id="${record.id}" title="Delete record">
-                                            <i class="icon">🗑️</i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
-    }
+        const report = `
+📊 SALES REPORT
+Generated: ${new Date().toLocaleDateString()}
 
-    setupEventListeners() {
-        if (!this.container) return;
+💰 Revenue Summary:
+• Total Revenue: $${totalRevenue.toFixed(2)}
+• Today's Revenue: $${todayRevenue.toFixed(2)}
+• Average Sale: $${avgSale.toFixed(2)}
 
-        // Add production record button
-        this.container.querySelector('#add-production-btn')?.addEventListener('click', () => {
-            this.showAddProductionModal();
-        });
+📦 Sales Statistics:
+• Total Items Sold: ${totalItems}
+• Total Transactions: ${sales.length}
+• Today's Transactions: ${todaySales.length}
 
-        // Add first record button (empty state)
-        this.container.querySelector('#add-first-production-btn')?.addEventListener('click', () => {
-            this.showAddProductionModal();
-        });
-
-        // Export button
-        this.container.querySelector('#export-production-btn')?.addEventListener('click', () => {
-            this.exportProductionData();
-        });
-
-        // Quick action buttons
-        this.container.querySelectorAll('.action-card').forEach(card => {
-            card.addEventListener('click', (e) => {
-                const action = e.currentTarget.getAttribute('data-action');
-                this.handleQuickAction(action);
-            });
-        });
-    }
-
-    setupTableEventListeners() {
-        // Delete production record buttons
-        this.container?.querySelectorAll('.delete-production-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const recordId = e.currentTarget.getAttribute('data-record-id');
-                this.confirmDeleteRecord(recordId);
-            });
-        });
-    }
-
-    showAddProductionModal() {
-        const modal = document.createElement('div');
-        modal.className = 'modal-overlay';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Add Production Record</h3>
-                    <button class="modal-close">&times;</button>
-                </div>
-                <form id="add-production-form" class="modal-form">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="production-product">Product *</label>
-                            <select id="production-product" name="product" required>
-                                <option value="">Select product...</option>
-                                <option value="Eggs">Eggs</option>
-                                <option value="Broiler Chickens">Broiler Chickens</option>
-                                <option value="Layers">Layers</option>
-                                <option value="Tomatoes">Tomatoes</option>
-                                <option value="Potatoes">Potatoes</option>
-                                <option value="Carrots">Carrots</option>
-                                <option value="Lettuce">Lettuce</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="production-type">Production Type</label>
-                            <select id="production-type" name="productionType">
-                                <option value="regular">Regular</option>
-                                <option value="harvest">Harvest</option>
-                                <option value="processing">Processing</option>
-                                <option value="packaging">Packaging</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="production-quantity">Quantity *</label>
-                            <input type="number" id="production-quantity" name="quantity" min="1" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="production-unit">Unit *</label>
-                            <select id="production-unit" name="unit" required>
-                                <option value="pieces">Pieces</option>
-                                <option value="kg">Kilograms</option>
-                                <option value="g">Grams</option>
-                                <option value="lb">Pounds</option>
-                                <option value="dozen">Dozen</option>
-                                <option value="crate">Crate</option>
-                                <option value="box">Box</option>
-                                <option value="birds">Birds</option>
-                                <option value="liters">Liters</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="production-batch">Batch ID *</label>
-                            <input type="text" id="production-batch" name="batch" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="production-quality">Quality Grade</label>
-                            <select id="production-quality" name="quality">
-                                <option value="Grade A">Grade A</option>
-                                <option value="Grade B">Grade B</option>
-                                <option value="Grade C">Grade C</option>
-                                <option value="Organic">Organic</option>
-                                <option value="Premium">Premium</option>
-                            </select>
-                        </div>
-                        <div class="form-group full-width">
-                            <label for="production-notes">Notes</label>
-                            <textarea id="production-notes" name="notes" rows="3" placeholder="Additional production notes..."></textarea>
-                        </div>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn-secondary cancel-btn">Cancel</button>
-                        <button type="submit" class="btn-primary">Add Record</button>
-                    </div>
-                </form>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-
-        // Modal event listeners
-        const closeModal = () => document.body.removeChild(modal);
-        
-        modal.querySelector('.modal-close').addEventListener('click', closeModal);
-        modal.querySelector('.cancel-btn').addEventListener('click', closeModal);
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
-
-        // Form submission
-        modal.querySelector('#add-production-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const recordData = Object.fromEntries(formData);
-            
-            await this.addProductionRecord(recordData);
-            closeModal();
-        });
-    }
-
-    handleQuickAction(action) {
-        switch (action) {
-            case 'eggs':
-                this.showQuickEggProductionModal();
-                break;
-            case 'broilers':
-                this.showQuickBroilerProductionModal();
-                break;
-            case 'crops':
-                this.showQuickCropProductionModal();
-                break;
-            case 'daily':
-                this.generateDailySummary();
-                break;
-        }
-    }
-
-    showQuickEggProductionModal() {
-        const modal = document.createElement('div');
-        modal.className = 'modal-overlay';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Quick Egg Production</h3>
-                    <button class="modal-close">&times;</button>
-                </div>
-                <form id="egg-production-form" class="modal-form">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="egg-quantity">Eggs Collected *</label>
-                            <input type="number" id="egg-quantity" name="quantity" min="1" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="egg-batch">Batch/House *</label>
-                            <input type="text" id="egg-batch" name="batch" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="egg-quality">Quality</label>
-                            <select id="egg-quality" name="quality">
-                                <option value="Grade A">Grade A</option>
-                                <option value="Grade B">Grade B</option>
-                                <option value="Grade C">Grade C</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn-secondary cancel-btn">Cancel</button>
-                        <button type="submit" class="btn-primary">Record Eggs</button>
-                    </div>
-                </form>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-
-        const closeModal = () => document.body.removeChild(modal);
-        
-        modal.querySelector('.modal-close').addEventListener('click', closeModal);
-        modal.querySelector('.cancel-btn').addEventListener('click', closeModal);
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
-
-        modal.querySelector('#egg-production-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const recordData = {
-                product: 'Eggs',
-                quantity: formData.get('quantity'),
-                unit: 'pieces',
-                batch: formData.get('batch'),
-                quality: formData.get('quality'),
-                productionType: 'regular',
-                notes: 'Egg collection'
-            };
-            
-            await this.addProductionRecord(recordData);
-            closeModal();
-        });
-    }
-
-    showQuickBroilerProductionModal() {
-        // Similar implementation for broiler production
-        this.showToast('Broiler production feature coming soon!', 'info');
-    }
-
-    showQuickCropProductionModal() {
-        // Similar implementation for crop production
-        this.showToast('Crop production feature coming soon!', 'info');
-    }
-
-    generateDailySummary() {
-        const stats = this.calculateStats();
-        const today = new Date().toLocaleDateString();
-        
-        const summary = `
-📊 Daily Production Summary - ${today}
-
-🏭 Total Today: ${stats.today} units
-📦 Products: ${stats.uniqueProducts}
-⭐ Top Product: ${stats.topProduct}
-📝 Records Today: ${stats.todayRecords}
-
-Keep up the great work! 🚜
+Top Products:
+${this.getTopProducts(sales).map(([product, data]) => 
+    `• ${product}: ${data.quantity} sold, $${data.revenue.toFixed(2)} revenue`
+).join('\n')}
         `.trim();
 
-        alert(summary);
-    }
+        this.showReportModal('Sales Report', report);
+    },
 
-    confirmDeleteRecord(recordId) {
-        if (confirm('Are you sure you want to delete this production record?')) {
-            this.deleteProductionRecord(recordId);
-        }
-    }
+    generateProductionReport() {
+        const data = this.loadAllData();
+        const production = data.production;
 
-    async exportProductionData() {
-        if (this.productionData.length === 0) {
-            this.showToast('No production data to export', 'warning');
+        if (production.length === 0) {
+            this.showNotification('No production data available for report', 'info');
             return;
         }
 
-        const csvContent = this.convertToCSV();
-        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const totalProduction = production.reduce((sum, record) => sum + record.quantity, 0);
+        
+        const today = new Date().toDateString();
+        const todayProduction = production.filter(record => new Date(record.date).toDateString() === today)
+            .reduce((sum, record) => sum + record.quantity, 0);
+
+        const report = `
+🏭 PRODUCTION REPORT
+Generated: ${new Date().toLocaleDateString()}
+
+📈 Production Summary:
+• Total Production: ${totalProduction} units
+• Today's Production: ${todayProduction} units
+• Total Records: ${production.length}
+
+Product Breakdown:
+${this.getProductBreakdown(production).map(([product, quantity]) => 
+    `• ${product}: ${quantity} units`
+).join('\n')}
+
+Quality Distribution:
+${this.getQualityDistribution(production).map(([quality, count]) => 
+    `• ${quality}: ${count} records`
+).join('\n')}
+        `.trim();
+
+        this.showReportModal('Production Report', report);
+    },
+
+    generateMortalityReport() {
+        const data = this.loadAllData();
+        const mortality = data.mortality;
+
+        if (mortality.length === 0) {
+            this.showNotification('No mortality data available for report', 'info');
+            return;
+        }
+
+        const totalMortality = mortality.reduce((sum, record) => sum + record.quantity, 0);
+        
+        const today = new Date().toDateString();
+        const todayMortality = mortality.filter(record => new Date(record.date).toDateString() === today)
+            .reduce((sum, record) => sum + record.quantity, 0);
+
+        const report = `
+🐔 MORTALITY REPORT
+Generated: ${new Date().toLocaleDateString()}
+
+📊 Mortality Summary:
+• Total Mortality: ${totalMortality} birds
+• Today's Mortality: ${todayMortality} birds
+• Total Records: ${mortality.length}
+
+Cause Analysis:
+${this.getCauseBreakdown(mortality).map(([cause, count]) => 
+    `• ${cause}: ${count} birds`
+).join('\n')}
+
+Batch Analysis:
+${this.getBatchAnalysis(mortality).slice(0, 5).map(([batch, data]) => 
+    `• ${batch}: ${data.total} birds across ${data.records} records`
+).join('\n')}
+        `.trim();
+
+        this.showReportModal('Mortality Report', report);
+    },
+
+    generateOrdersReport() {
+        const data = this.loadAllData();
+        const orders = data.orders;
+
+        if (orders.length === 0) {
+            this.showNotification('No orders data available for report', 'info');
+            return;
+        }
+
+        const pendingOrders = orders.filter(order => order.status === 'pending').length;
+        const completedOrders = orders.filter(order => order.status === 'completed').length;
+        const totalRevenue = orders.filter(order => order.status === 'completed')
+            .reduce((sum, order) => sum + order.total, 0);
+
+        const report = `
+📋 ORDERS REPORT
+Generated: ${new Date().toLocaleDateString()}
+
+📈 Order Statistics:
+• Total Orders: ${orders.length}
+• Pending Orders: ${pendingOrders}
+• Completed Orders: ${completedOrders}
+• Completion Rate: ${orders.length > 0 ? ((completedOrders / orders.length) * 100).toFixed(1) : 0}%
+• Total Revenue: $${totalRevenue.toFixed(2)}
+
+Customer Analysis:
+${this.getCustomerAnalysis(orders).slice(0, 5).map(([customer, data]) => 
+    `• ${customer}: ${data.orders} orders, $${data.revenue.toFixed(2)} revenue`
+).join('\n')}
+        `.trim();
+
+        this.showReportModal('Orders Report', report);
+    },
+
+    generateComprehensiveReport() {
+        const data = this.loadAllData();
+        
+        const salesRevenue = data.sales.reduce((sum, sale) => sum + sale.total, 0);
+        const totalProduction = data.production.reduce((sum, record) => sum + record.quantity, 0);
+        const totalMortality = data.mortality.reduce((sum, record) => sum + record.quantity, 0);
+        const pendingOrders = data.orders.filter(order => order.status === 'pending').length;
+
+        const report = `
+🏆 COMPREHENSIVE FARM REPORT
+Generated: ${new Date().toLocaleString()}
+
+EXECUTIVE SUMMARY:
+• Total Revenue: $${salesRevenue.toFixed(2)}
+• Total Production: ${totalProduction} units
+• Total Mortality: ${totalMortality} birds
+• Pending Orders: ${pendingOrders}
+
+MODULE OVERVIEW:
+• Sales Records: ${data.sales.length}
+• Production Records: ${data.production.length}
+• Mortality Records: ${data.mortality.length}
+• Order Records: ${data.orders.length}
+
+RECOMMENDATIONS:
+${this.generateRecommendations(data)}
+        `.trim();
+
+        this.showReportModal('Comprehensive Farm Report', report);
+    },
+
+    // Helper methods
+    getTopProducts(sales) {
+        const productMap = {};
+        sales.forEach(sale => {
+            if (!productMap[sale.product]) {
+                productMap[sale.product] = { quantity: 0, revenue: 0 };
+            }
+            productMap[sale.product].quantity += sale.quantity;
+            productMap[sale.product].revenue += sale.total;
+        });
+        
+        return Object.entries(productMap)
+            .sort((a, b) => b[1].revenue - a[1].revenue)
+            .slice(0, 5);
+    },
+
+    getProductBreakdown(production) {
+        const productMap = {};
+        production.forEach(record => {
+            productMap[record.product] = (productMap[record.product] || 0) + record.quantity;
+        });
+        
+        return Object.entries(productMap)
+            .sort((a, b) => b[1] - a[1]);
+    },
+
+    getQualityDistribution(production) {
+        const qualityMap = {};
+        production.forEach(record => {
+            qualityMap[record.quality] = (qualityMap[record.quality] || 0) + 1;
+        });
+        
+        return Object.entries(qualityMap)
+            .sort((a, b) => b[1] - a[1]);
+    },
+
+    getCauseBreakdown(mortality) {
+        const causeMap = {};
+        mortality.forEach(record => {
+            causeMap[record.cause] = (causeMap[record.cause] || 0) + record.quantity;
+        });
+        
+        return Object.entries(causeMap)
+            .sort((a, b) => b[1] - a[1]);
+    },
+
+    getBatchAnalysis(mortality) {
+        const batchMap = {};
+        mortality.forEach(record => {
+            if (!batchMap[record.batch]) {
+                batchMap[record.batch] = { total: 0, records: 0 };
+            }
+            batchMap[record.batch].total += record.quantity;
+            batchMap[record.batch].records++;
+        });
+        
+        return Object.entries(batchMap)
+            .sort((a, b) => b[1].total - a[1].total);
+    },
+
+    getCustomerAnalysis(orders) {
+        const customerMap = {};
+        orders.forEach(order => {
+            if (!customerMap[order.customer]) {
+                customerMap[order.customer] = { orders: 0, revenue: 0 };
+            }
+            customerMap[order.customer].orders++;
+            if (order.status === 'completed') {
+                customerMap[order.customer].revenue += order.total;
+            }
+        });
+        
+        return Object.entries(customerMap)
+            .sort((a, b) => b[1].revenue - a[1].revenue);
+    },
+
+    generateRecommendations(data) {
+        const recommendations = [];
+        
+        if (data.mortality.length > 0) {
+            const avgMortality = data.mortality.reduce((sum, record) => sum + record.quantity, 0) / data.mortality.length;
+            if (avgMortality > 5) {
+                recommendations.push('• High mortality rate detected - review flock health and conditions');
+            }
+        }
+        
+        if (data.orders.filter(order => order.status === 'pending').length > 10) {
+            recommendations.push('• High number of pending orders - consider increasing production capacity');
+        }
+        
+        if (data.sales.length === 0) {
+            recommendations.push('• No sales recorded - focus on marketing and customer acquisition');
+        }
+        
+        if (recommendations.length === 0) {
+            recommendations.push('• Farm operations are running smoothly - keep up the good work!');
+        }
+        
+        return recommendations.join('\n');
+    },
+
+    showReportModal(title, content) {
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        `;
+
+        modal.innerHTML = `
+            <div style="
+                background: white;
+                border-radius: 16px;
+                padding: 30px;
+                width: 90%;
+                max-width: 600px;
+                max-height: 80vh;
+                overflow-y: auto;
+            ">
+                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 24px;">
+                    <h3 style="font-size: 20px; font-weight: 600; color: #1a1a1a;">${title}</h3>
+                    <button class="close-modal" style="
+                        background: none;
+                        border: none;
+                        font-size: 24px;
+                        cursor: pointer;
+                        color: #666;
+                    ">×</button>
+                </div>
+
+                <div style="
+                    background: #f8fafc;
+                    border-radius: 8px;
+                    padding: 20px;
+                    font-family: 'Courier New', monospace;
+                    font-size: 14px;
+                    line-height: 1.5;
+                    white-space: pre-wrap;
+                    max-height: 400px;
+                    overflow-y: auto;
+                ">${content}</div>
+
+                <div style="display: flex; gap: 12px; margin-top: 24px;">
+                    <button class="export-report-btn" style="
+                        flex: 1;
+                        background: #10b981;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        padding: 12px 24px;
+                        font-size: 14px;
+                        font-weight: 600;
+                        cursor: pointer;
+                    ">Export as Text</button>
+                    <button class="close-modal" style="
+                        flex: 1;
+                        background: #6b7280;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        padding: 12px 24px;
+                        font-size: 14px;
+                        font-weight: 600;
+                        cursor: pointer;
+                    ">Close</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Event listeners for modal
+        const closeModal = () => document.body.removeChild(modal);
+        
+        modal.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', closeModal);
+        });
+
+        modal.querySelector('.export-report-btn').addEventListener('click', () => {
+            this.exportReport(title, content);
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+    },
+
+    exportReport(title, content) {
+        const blob = new Blob([content], { type: 'text/plain' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `production-export-${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `${title.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.txt`;
         a.click();
         window.URL.revokeObjectURL(url);
         
-        this.showToast('Production data exported!', 'success');
+        this.showNotification('Report exported successfully!', 'success');
+    },
+
+    renderReports() {
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
+
+        contentArea.innerHTML = `
+            <div class="module-container" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
+                <!-- Header -->
+                <div class="module-header" style="margin-bottom: 30px;">
+                    <h1 style="color: #1a1a1a; font-size: 28px; margin-bottom: 8px;">Reports & Analytics</h1>
+                    <p style="color: #666; font-size: 16px;">Comprehensive farm performance insights</p>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions" style="margin-bottom: 30px;">
+                    <div class="actions-grid" style="
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                        gap: 16px;
+                    ">
+                        <button class="action-btn" data-action="comprehensive-report" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 20px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                        ">
+                            <div style="font-size: 28px;">🏆</div>
+                            <div style="text-align: left;">
+                                <div style="font-size: 16px; font-weight: 600; color: #1a1a1a;">Comprehensive Report</div>
+                                <div style="font-size: 12px; color: #666;">Full farm overview</div>
+                            </div>
+                        </button>
+
+                        <button class="action-btn" data-action="sales-report" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 20px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                        ">
+                            <div style="font-size: 28px;">💰</div>
+                            <div style="text-align: left;">
+                                <div style="font-size: 16px; font-weight: 600; color: #1a1a1a;">Sales Report</div>
+                                <div style="font-size: 12px; color: #666;">Revenue analysis</div>
+                            </div>
+                        </button>
+
+                        <button class="action-btn" data-action="production-report" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 20px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                        ">
+                            <div style="font-size: 28px;">🏭</div>
+                            <div style="text-align: left;">
+                                <div style="font-size: 16px; font-weight: 600; color: #1a1a1a;">Production Report</div>
+                                <div style="font-size: 12px; color: #666;">Output analysis</div>
+                            </div>
+                        </button>
+
+                        <button class="action-btn" data-action="mortality-report" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 20px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                        ">
+                            <div style="font-size: 28px;">🐔</div>
+                            <div style="text-align: left;">
+                                <div style="font-size: 16px; font-weight: 600; color: #1a1a1a;">Mortality Report</div>
+                                <div style="font-size: 12px; color: #666;">Health analysis</div>
+                            </div>
+                        </button>
+
+                        <button class="action-btn" data-action="orders-report" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 20px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                        ">
+                            <div style="font-size: 28px;">📋</div>
+                            <div style="text-align: left;">
+                                <div style="font-size: 16px; font-weight: 600; color: #1a1a1a;">Orders Report</div>
+                                <div style="font-size: 12px; color: #666;">Customer analysis</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Report Output Area -->
+                <div style="
+                    background: rgba(255, 255, 255, 0.9);
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    border: 1px solid rgba(0, 0, 0, 0.1);
+                    border-radius: 16px;
+                    padding: 30px;
+                    text-align: center;
+                    color: #666;
+                ">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                    <div style="font-size: 18px; margin-bottom: 8px; font-weight: 600;">No Report Generated</div>
+                    <div style="font-size: 14px; color: #999;">Select a report type above to generate insights</div>
+                </div>
+            </div>
+        `;
+
+        this.setupReportsEventListeners();
+    },
+
+    setupReportsEventListeners() {
+        const actionButtons = document.querySelectorAll('.action-btn');
+        
+        actionButtons.forEach(button => {
+            button.addEventListener('mouseenter', (e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.1)';
+            });
+
+            button.addEventListener('mouseleave', (e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+            });
+
+            // Add click handlers for action buttons
+            button.addEventListener('click', (e) => {
+                const action = e.currentTarget.getAttribute('data-action');
+                switch (action) {
+                    case 'comprehensive-report':
+                        this.generateComprehensiveReport();
+                        break;
+                    case 'sales-report':
+                        this.generateSalesReport();
+                        break;
+                    case 'production-report':
+                        this.generateProductionReport();
+                        break;
+                    case 'mortality-report':
+                        this.generateMortalityReport();
+                        break;
+                    case 'orders-report':
+                        this.generateOrdersReport();
+                        break;
+                }
+            });
+        });
+    },
+
+    showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'success' ? '#10b981' : '#3b82f6'};
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1001;
+            animation: slideIn 0.3s ease;
+        `;
+        
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+            }
+        }, 3000);
     }
+};
 
-    convertToCSV() {
-        const headers = ['Date', 'Product', 'Production Type', 'Batch', 'Quantity', 'Unit', 'Quality', 'Notes'];
-        const rows = this.productionData.map(record => [
-            record.date,
-            record.product,
-            record.productionType,
-            record.batch,
-            record.quantity,
-            record.unit,
-            record.quality,
-            record.notes
-        ]);
-
-        return [headers, ...rows].map(row => 
-            row.map(field => `"${field}"`).join(',')
-        ).join('\n');
-    }
-
-    showToast(message, type = 'info') {
-        if (window.showToast) {
-            window.showToast(message, type);
-        } else {
-            alert(message);
-        }
-    }
-
-    async cleanup() {
-        this.initialized = false;
-        this.container = null;
-    }
-}
-
-// Register module
 if (window.FarmModules) {
-    window.FarmModules.registerModule('production', new ProductionModule());
-    console.log('✅ Production module registered');
+    window.FarmModules.registerModule('reports', ReportsModule);
+    console.log('✅ Reports module registered');
 }
