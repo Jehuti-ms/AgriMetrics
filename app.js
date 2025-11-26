@@ -160,69 +160,82 @@ class FarmPWA {
     }
 
     initializeNavigation() {
-        const nav = document.getElementById('main-nav');
-        if (!nav) {
-            console.log('❌ main-nav element not found');
-            return;
-        }
-        
-        console.log('✅ Setting up PWA navigation...');
-        
-        const navHTML = `
-            <div class="nav-container">
-                <div class="logo">
-                    <h1>🚜 AgriMetrics</h1>
-                </div>
-                <ul class="nav-menu">
-                    <li>
-                        <button data-module="dashboard" class="nav-item ${this.currentModule === 'dashboard' ? 'active' : ''}">
-                            <span class="icon">📊</span>
-                            <span class="label">Dashboard</span>
-                        </button>
-                    </li>
-                    <li>
-                        <button data-module="income-expenses" class="nav-item ${this.currentModule === 'income-expenses' ? 'active' : ''}">
-                            <span class="icon">💰</span>
-                            <span class="label">Finance</span>
-                        </button>
-                    </li>
-                    <li>
-                        <button data-module="inventory-check" class="nav-item ${this.currentModule === 'inventory-check' ? 'active' : ''}">
-                            <span class="icon">📦</span>
-                            <span class="label">Inventory</span>
-                        </button>
-                    </li>
-                    <li>
-                        <button data-module="feed-record" class="nav-item ${this.currentModule === 'feed-record' ? 'active' : ''}">
-                            <span class="icon">🌾</span>
-                            <span class="label">Feed</span>
-                        </button>
-                    </li>
-                    <li>
-                        <button data-module="sales-record" class="nav-item ${this.currentModule === 'sales-record' ? 'active' : ''}">
-                            <span class="icon">💳</span>
-                            <span class="label">Sales</span>
-                        </button>
-                    </li>
-                    <li>
-                        <button data-module="reports" class="nav-item ${this.currentModule === 'reports' ? 'active' : ''}">
-                            <span class="icon">📈</span>
-                            <span class="label">Reports</span>
-                        </button>
-                    </li>
-                </ul>
-                <div class="nav-footer">
-                    <button class="nav-item sign-out" onclick="farmPWA.signOut()">
-                        <span class="icon">🚪</span>
-                        <span class="label">Exit</span>
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        nav.innerHTML = navHTML;
-        console.log('✅ PWA Navigation ready');
+    const nav = document.getElementById('main-nav');
+    if (!nav) {
+        console.log('❌ main-nav element not found');
+        return;
     }
+    
+    console.log('✅ Setting up PWA top navigation...');
+    
+    const navHTML = `
+        <div class="nav-container">
+            <div class="logo">
+                <div style="font-size: 24px;">🚜</div>
+                <h1>AgriMetrics</h1>
+            </div>
+            <ul class="nav-menu">
+                <li>
+                    <button data-module="dashboard" class="nav-item ${this.currentModule === 'dashboard' ? 'active' : ''}">
+                        <span class="icon">📊</span>
+                        <span class="label">Dashboard</span>
+                    </button>
+                </li>
+                <li>
+                    <button data-module="income-expenses" class="nav-item ${this.currentModule === 'income-expenses' ? 'active' : ''}">
+                        <span class="icon">💰</span>
+                        <span class="label">Finance</span>
+                    </button>
+                </li>
+                <li>
+                    <button data-module="inventory-check" class="nav-item ${this.currentModule === 'inventory-check' ? 'active' : ''}">
+                        <span class="icon">📦</span>
+                        <span class="label">Inventory</span>
+                    </button>
+                </li>
+                <li>
+                    <button data-module="feed-record" class="nav-item ${this.currentModule === 'feed-record' ? 'active' : ''}">
+                        <span class="icon">🌾</span>
+                        <span class="label">Feed</span>
+                    </button>
+                </li>
+                <li>
+                    <button data-module="broiler-mortality" class="nav-item ${this.currentModule === 'broiler-mortality' ? 'active' : ''}">
+                        <span class="icon">🐔</span>
+                        <span class="label">Poultry</span>
+                    </button>
+                </li>
+                <li>
+                    <button data-module="sales-record" class="nav-item ${this.currentModule === 'sales-record' ? 'active' : ''}">
+                        <span class="icon">💳</span>
+                        <span class="label">Sales</span>
+                    </button>
+                </li>
+                <li>
+                    <button data-module="reports" class="nav-item ${this.currentModule === 'reports' ? 'active' : ''}">
+                        <span class="icon">📈</span>
+                        <span class="label">Reports</span>
+                    </button>
+                </li>
+                <li>
+                    <button data-module="profile" class="nav-item ${this.currentModule === 'profile' ? 'active' : ''}">
+                        <span class="icon">👤</span>
+                        <span class="label">Profile</span>
+                    </button>
+                </li>
+            </ul>
+            <div class="nav-footer">
+                <button class="nav-item sign-out" onclick="farmPWA.signOut()">
+                    <span class="icon">🚪</span>
+                    <span class="label">Sign Out</span>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    nav.innerHTML = navHTML;
+    console.log('✅ PWA Top Navigation ready');
+}
 
     setupNavigationEvents() {
         const nav = document.getElementById('main-nav');
