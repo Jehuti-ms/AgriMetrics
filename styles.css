@@ -602,3 +602,22 @@ body {
     font-size: 14px;
     color: var(--text-secondary);
 }
+
+/* Ensure sidebar can be properly hidden */
+.sidebar {
+    transition: all 0.3s ease;
+}
+
+.main-content {
+    transition: margin-left 0.3s ease;
+}
+
+/* When sidebar is hidden, ensure it doesn't take space */
+.sidebar[style*="display: none"] {
+    display: none !important;
+}
+
+.sidebar[style*="visibility: hidden"] {
+    visibility: hidden !important;
+    display: none !important;
+}
