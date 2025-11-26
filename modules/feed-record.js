@@ -1,950 +1,779 @@
-// modules/feed-record.js - Enhanced Feed Management
-console.log('🌾 Loading enhanced feed records module...');
-
-class FeedRecordModule {
-    constructor() {
-        this.moduleId = 'feed-record';
-        this.moduleName = 'Feed Management';
-        this.feedRecords = [];
-        this.filter = 'all';
-        this.selectedBatch = 'all';
-        this.currentView = 'list';
-        this.editingRecord = null;
-        this.feedTypes = {
-            'starter': { name: 'Starter Feed', protein: '20-22%', age: '0-3 weeks' },
-            'grower': { name: 'Grower Feed', protein: '18-20%', age: '3-6 weeks' },
-            'finisher': { name: 'Finisher Feed', protein: '16-18%', age: '6-8 weeks' },
-            'layer': { name: 'Layer Feed', protein: '16-18%', age: '18+ weeks' },
-            'broiler': { name: 'Broiler Feed', protein: '20-22%', age: 'All stages' },
-            'organic': { name: 'Organic Feed', protein: '16-18%', age: 'All stages' },
-            'custom': { name: 'Custom Mix', protein: 'Varies', age: 'Varies' }
-        };
-    }
-
-    init() {
-        console.log('🌾 Initializing enhanced feed management...');
-        this.loadFeedRecords();
-        this.setupDefaultData();
-        return true;
-    }
-
-    setupDefaultData() {
-        // Add sample data if no records exist
-        if (this.feedRecords.length === 0) {
-            const sampleRecords = [
-                {
-                    id: 'sample-1',
-                    type: 'purchase',
-                    date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                    batch: 'Broiler Batch A',
-                    feedType: 'starter',
-                    quantity: 500,
-                    unitCost: 0.85,
-                    notes: 'Initial stock purchase',
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                },
-                {
-                    id: 'sample-2',
-                    type: 'usage',
-                    date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                    batch: 'Broiler Batch A',
-                    feedType: 'starter',
-                    quantity: 45,
-                    unitCost: 0,
-                    notes: 'Daily feeding',
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                }
-            ];
-            this.feedRecords.push(...sampleRecords);
-            this.saveFeedRecords();
-        }
-    }
-
-    render(container) {
-        console.log('🎨 Rendering enhanced feed management interface...');
-        
-        container.innerHTML = this.getModuleHTML();
-        this.attachEventListeners();
-        this.renderFeedRecords();
-        this.updateFeedSummary();
-        this.updateBatchFilter();
-        this.animateContent();
-        
-        // Initialize charts if needed
-        if (this.currentView === 'chart') {
-            setTimeout(() => this.renderFeedChart(), 500);
-        }
-    }
-
-    getModuleHTML() {
-        return `
-            <div class="module-container">
-                <!-- Enhanced Header with Quick Stats -->
-                <div class="module-header enhanced-header">
-                    <div class="header-content">
-                        <div class="header-badge">🌾 FEED MANAGEMENT</div>
-                        <h1>Feed Tracking & Analytics</h1>
-                        <p>Monitor consumption, costs, and inventory in real-time</p>
-                    </div>
-                    <div class="header-actions">
-                        <div class="quick-stats">
-                            <div class="quick-stat">
-                                <span class="stat-label">Stock Level</span>
-                                <span class="stat-value" id="quick-stock">0 kg</span>
-                            </div>
-                            <div class="quick-stat">
-                                <span class="stat-label">Weekly Use</span>
-                                <span class="stat-value" id="quick-usage">0 kg</span>
-                            </div>
-                        </div>
-                        <button class="btn btn-primary with-icon" id="add-feed-record-btn">
-                            <span class="btn-icon">📝</span>
-                            Record Usage
-                        </button>
-                        <button class="btn btn-secondary with-icon" id="add-feed-purchase-btn">
-                            <span class="btn-icon">📦</span>
-                            Add Stock
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Enhanced Summary Cards -->
-                <div class="feed-summary enhanced-summary">
-                    <div class="summary-card stock-card">
-                        <div class="summary-header">
-                            <div class="summary-icon">📊</div>
-                            <div class="summary-trend" id="stock-trend">→</div>
-                        </div>
-                        <div class="summary-content">
-                            <div class="summary-label">Current Inventory</div>
-                            <div class="summary-value" id="current-stock">0 kg</div>
-                            <div class="summary-subtext" id="stock-status">Loading...</div>
-                        </div>
-                    </div>
-                    
-                    <div class="summary-card usage-card">
-                        <div class="summary-header">
-                            <div class="summary-icon">⚡</div>
-                            <div class="summary-trend" id="usage-trend">→</div>
-                        </div>
-                        <div class="summary-content">
-                            <div class="summary-label">7-Day Consumption</div>
-                            <div class="summary-value" id="weekly-usage">0 kg</div>
-                            <div class="summary-subtext" id="usage-comparison">vs last week</div>
-                        </div>
-                    </div>
-                    
-                    <div class="summary-card cost-card">
-                        <div class="summary-header">
-                            <div class="summary-icon">💰</div>
-                            <div class="summary-trend" id="cost-trend">→</div>
-                        </div>
-                        <div class="summary-content">
-                            <div class="summary-label">Feed Cost</div>
-                            <div class="summary-value" id="feed-cost">$0.00</div>
-                            <div class="summary-subtext" id="cost-per-bird">$0.00/bird</div>
-                        </div>
-                    </div>
-                    
-                    <div class="summary-card efficiency-card">
-                        <div class="summary-header">
-                            <div class="summary-icon">📈</div>
-                            <div class="summary-trend" id="efficiency-trend">→</div>
-                        </div>
-                        <div class="summary-content">
-                            <div class="summary-label">Feed Efficiency</div>
-                            <div class="summary-value" id="feed-efficiency">0.0</div>
-                            <div class="summary-subtext">FCR (Feed Conversion Ratio)</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Smart Alerts Section -->
-                <div class="alerts-container" id="alerts-container">
-                    <!-- Alerts will be dynamically generated -->
-                </div>
-
-                <!-- Enhanced Controls -->
-                <div class="feed-controls enhanced-controls">
-                    <div class="control-group left-controls">
-                        <div class="filter-group">
-                            <label>Batch Filter</label>
-                            <select id="batch-filter" class="enhanced-select">
-                                <option value="all">All Batches</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label>Time Period</label>
-                            <select id="time-filter" class="enhanced-select">
-                                <option value="today">Today</option>
-                                <option value="week" selected>This Week</option>
-                                <option value="month">This Month</option>
-                                <option value="quarter">This Quarter</option>
-                                <option value="all">All Time</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label>Feed Type</label>
-                            <select id="feed-type-filter" class="enhanced-select">
-                                <option value="all">All Types</option>
-                                ${Object.entries(this.feedTypes).map(([key, type]) => 
-                                    `<option value="${key}">${type.name}</option>`
-                                ).join('')}
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="control-group right-controls">
-                        <div class="search-box">
-                            <input type="text" id="feed-search" placeholder="Search records..." class="search-input">
-                            <span class="search-icon">🔍</span>
-                        </div>
-                        <div class="view-toggle enhanced-toggle">
-                            <button class="view-btn ${this.currentView === 'list' ? 'active' : ''}" data-view="list">
-                                <span class="btn-icon">📋</span>
-                                List
-                            </button>
-                            <button class="view-btn ${this.currentView === 'chart' ? 'active' : ''}" data-view="chart">
-                                <span class="btn-icon">📊</span>
-                                Analytics
-                            </button>
-                            <button class="view-btn" data-view="insights">
-                                <span class="btn-icon">💡</span>
-                                Insights
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Main Content Area -->
-                <div class="feed-content enhanced-content">
-                    <!-- List View -->
-                    <div class="content-view ${this.currentView === 'list' ? 'active' : ''}" id="list-view">
-                        <div class="records-table enhanced-table">
-                            <div class="table-header sticky-header">
-                                <div class="table-row">
-                                    <div class="table-cell">Date</div>
-                                    <div class="table-cell">Type</div>
-                                    <div class="table-cell">Batch</div>
-                                    <div class="table-cell">Feed Details</div>
-                                    <div class="table-cell">Quantity</div>
-                                    <div class="table-cell">Cost</div>
-                                    <div class="table-cell">Status</div>
-                                    <div class="table-cell actions-cell">Actions</div>
-                                </div>
-                            </div>
-                            <div class="table-body" id="feed-records-table">
-                                <!-- Records will be populated here -->
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Chart View -->
-                    <div class="content-view ${this.currentView === 'chart' ? 'active' : ''}" id="chart-view">
-                        <div class="charts-grid">
-                            <div class="chart-card full-width">
-                                <div class="chart-header">
-                                    <h4>Feed Consumption Trend</h4>
-                                    <select id="chart-period" class="chart-control">
-                                        <option value="7">Last 7 Days</option>
-                                        <option value="30">Last 30 Days</option>
-                                        <option value="90">Last 90 Days</option>
-                                    </select>
-                                </div>
-                                <div class="chart-container">
-                                    <canvas id="consumption-trend-chart"></canvas>
-                                </div>
-                            </div>
-                            <div class="chart-card">
-                                <div class="chart-header">
-                                    <h4>Feed Type Distribution</h4>
-                                </div>
-                                <div class="chart-container">
-                                    <canvas id="feed-type-chart"></canvas>
-                                </div>
-                            </div>
-                            <div class="chart-card">
-                                <div class="chart-header">
-                                    <h4>Cost Analysis</h4>
-                                </div>
-                                <div class="chart-container">
-                                    <canvas id="cost-analysis-chart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Insights View -->
-                    <div class="content-view" id="insights-view">
-                        <div class="insights-grid">
-                            <div class="insight-card">
-                                <div class="insight-icon">💡</div>
-                                <h4>Optimization Tips</h4>
-                                <div class="insight-content" id="optimization-tips">
-                                    <!-- Tips will be generated dynamically -->
-                                </div>
-                            </div>
-                            <div class="insight-card">
-                                <div class="insight-icon">📋</div>
-                                <h4>Feed Schedule</h4>
-                                <div class="insight-content" id="feed-schedule">
-                                    <!-- Schedule will be generated dynamically -->
-                                </div>
-                            </div>
-                            <div class="insight-card">
-                                <div class="insight-icon">🎯</div>
-                                <h4>Performance Metrics</h4>
-                                <div class="insight-content" id="performance-metrics">
-                                    <!-- Metrics will be generated dynamically -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Action Footer -->
-                <div class="quick-actions-footer">
-                    <button class="quick-action" data-action="quick-usage">
-                        <span class="action-icon">⚡</span>
-                        Quick Usage
-                    </button>
-                    <button class="quick-action" data-action="inventory-check">
-                        <span class="action-icon">📦</span>
-                        Check Stock
-                    </button>
-                    <button class="quick-action" data-action="generate-report">
-                        <span class="action-icon">📄</span>
-                        Export Report
+// modules/feed-record.js
+FarmModules.registerModule('feed-record', {
+    name: 'Feed Records',
+    icon: '🌾',
+    
+    template: `
+        <div class="section active">
+            <div class="module-header">
+                <h1>Feed Management</h1>
+                <p>Track feed purchases, usage, and inventory</p>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="add-feed-transaction">
+                        ➕ Add Transaction
                     </button>
                 </div>
             </div>
 
-            <!-- Enhanced Feed Record Modal -->
-            <div class="modal-overlay enhanced-modal hidden" id="feed-record-modal">
-                <div class="modal-content large-modal">
-                    <div class="modal-header">
-                        <h3 id="feed-modal-title">Record Feed Activity</h3>
-                        <button class="modal-close" id="feed-modal-close">×</button>
+            <!-- Quick Actions -->
+            <div class="quick-actions card">
+                <h3>Quick Actions</h3>
+                <div class="form-row compact">
+                    <div class="form-group">
+                        <input type="number" id="quick-purchase-amount" placeholder="Amount bought" class="form-compact">
                     </div>
-                    <form class="modal-form enhanced-form" id="feed-record-form">
-                        <input type="hidden" id="record-id">
-                        
-                        <div class="form-section">
-                            <h4>Basic Information</h4>
-                            <div class="form-grid triple">
-                                <div class="form-group">
-                                    <label for="record-type">Activity Type *</label>
-                                    <select id="record-type" required class="enhanced-select">
-                                        <option value="usage">📝 Feed Usage</option>
-                                        <option value="purchase">📦 Feed Purchase</option>
-                                        <option value="adjustment">⚖️ Stock Adjustment</option>
-                                        <option value="waste">🗑️ Feed Waste</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="record-date">Date *</label>
-                                    <input type="date" id="record-date" required class="enhanced-input">
-                                </div>
-                                <div class="form-group">
-                                    <label for="batch-name">Batch/Group *</label>
-                                    <input type="text" id="batch-name" required 
-                                           list="batch-suggestions"
-                                           placeholder="e.g., Broiler Batch A, Layers Group 1"
-                                           class="enhanced-input">
-                                    <datalist id="batch-suggestions"></datalist>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-section">
-                            <h4>Feed Details</h4>
-                            <div class="form-grid triple">
-                                <div class="form-group">
-                                    <label for="feed-type">Feed Type *</label>
-                                    <select id="feed-type" required class="enhanced-select">
-                                        <option value="">Select feed type...</option>
-                                        ${Object.entries(this.feedTypes).map(([key, type]) => 
-                                            `<option value="${key}" data-protein="${type.protein}" data-age="${type.age}">
-                                                ${type.name} (${type.protein})
-                                            </option>`
-                                        ).join('')}
-                                    </select>
-                                    <div class="field-info" id="feed-type-info"></div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="quantity">Quantity (kg) *</label>
-                                    <input type="number" id="quantity" required 
-                                           step="0.1" min="0.1" placeholder="0.0"
-                                           class="enhanced-input">
-                                </div>
-                                <div class="form-group">
-                                    <label for="unit-cost">Cost per kg ($)</label>
-                                    <input type="number" id="unit-cost" step="0.001" 
-                                           min="0" placeholder="0.000"
-                                           class="enhanced-input">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-section" id="additional-fields">
-                            <!-- Additional fields based on record type -->
-                        </div>
-
-                        <div class="form-section">
-                            <label for="feed-notes">Notes & Observations</label>
-                            <textarea id="feed-notes" rows="3" 
-                                      placeholder="Any additional information, observations, or special instructions..."
-                                      class="enhanced-textarea"></textarea>
-                        </div>
-
-                        <div class="form-preview" id="form-preview">
-                            <!-- Preview of the record will be shown here -->
-                        </div>
-
-                        <div class="form-actions enhanced-actions">
-                            <button type="button" class="btn btn-secondary" id="feed-cancel-btn">
-                                Cancel
-                            </button>
-                            <div class="action-group">
-                                <button type="button" class="btn btn-outline" id="save-draft-btn">
-                                    Save Draft
-                                </button>
-                                <button type="submit" class="btn btn-primary with-icon">
-                                    <span class="btn-icon">💾</span>
-                                    Save Record
-                                </button>
-                            </div>
-                        </div>
-                    </form>
+                    <div class="form-group">
+                        <select id="quick-purchase-unit" class="form-compact">
+                            <option value="kg">kg</option>
+                            <option value="lbs">lbs</option>
+                            <option value="bags">bags</option>
+                            <option value="tons">tons</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn btn-primary btn-compact" id="quick-purchase">Record Purchase</button>
+                    </div>
+                </div>
+                <div class="form-row compact">
+                    <div class="form-group">
+                        <input type="number" id="quick-usage-amount" placeholder="Amount used" class="form-compact">
+                    </div>
+                    <div class="form-group">
+                        <select id="quick-usage-unit" class="form-compact">
+                            <option value="kg">kg</option>
+                            <option value="lbs">lbs</option>
+                            <option value="bags">bags</option>
+                            <option value="tons">tons</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn btn-secondary btn-compact" id="quick-usage">Record Usage</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Quick Usage Modal -->
-            <div class="modal-overlay quick-modal hidden" id="quick-usage-modal">
+            <!-- Feed Summary -->
+            <div class="feed-summary">
+                <div class="summary-card">
+                    <div class="summary-icon">📦</div>
+                    <div class="summary-content">
+                        <h3>Current Stock</h3>
+                        <div class="summary-value" id="current-stock">0 kg</div>
+                        <div class="summary-trend" id="stock-trend">No change</div>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon">🛒</div>
+                    <div class="summary-content">
+                        <h3>Total Purchased</h3>
+                        <div class="summary-value" id="total-purchased">0 kg</div>
+                        <div class="summary-period">This month</div>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon">🐄</div>
+                    <div class="summary-content">
+                        <h3>Total Used</h3>
+                        <div class="summary-value" id="total-used">0 kg</div>
+                        <div class="summary-period">This month</div>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon">⚠️</div>
+                    <div class="summary-content">
+                        <h3>Low Stock Alert</h3>
+                        <div class="summary-value" id="low-stock-alert">OK</div>
+                        <div class="summary-period" id="stock-status">Adequate stock</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="recent-transactions card">
+                <div class="card-header">
+                    <h3>Recent Feed Transactions</h3>
+                    <button class="btn btn-text" id="view-all-transactions">View All</button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Feed Type</th>
+                                <th>Amount</th>
+                                <th>Remaining Stock</th>
+                                <th>Notes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="feed-transactions-body">
+                            <tr>
+                                <td colspan="7" class="empty-state">
+                                    <div class="empty-content">
+                                        <span class="empty-icon">🌾</span>
+                                        <h4>No feed transactions yet</h4>
+                                        <p>Start recording your feed purchases and usage</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Feed Transaction Modal -->
+            <div id="feed-modal" class="modal hidden">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h3>Quick Feed Usage</h3>
-                        <button class="modal-close" id="quick-modal-close">×</button>
+                        <h3 id="feed-modal-title">Add Feed Transaction</h3>
+                        <button class="btn-icon close-modal">&times;</button>
                     </div>
-                    <div class="quick-form" id="quick-usage-form">
-                        <!-- Quick form will be populated dynamically -->
+                    <div class="modal-body">
+                        <form id="feed-form">
+                            <input type="hidden" id="feed-id">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="feed-type">Transaction Type:</label>
+                                    <select id="feed-type" required>
+                                        <option value="">Select Type</option>
+                                        <option value="purchase">Purchase</option>
+                                        <option value="usage">Usage</option>
+                                        <option value="adjustment">Stock Adjustment</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="feed-date">Date:</label>
+                                    <input type="date" id="feed-date" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="feed-category">Feed Category:</label>
+                                    <select id="feed-category" required>
+                                        <option value="">Select Category</option>
+                                        <option value="poultry">Poultry Feed</option>
+                                        <option value="cattle">Cattle Feed</option>
+                                        <option value="swine">Swine Feed</option>
+                                        <option value="sheep">Sheep Feed</option>
+                                        <option value="horse">Horse Feed</option>
+                                        <option value="fish">Fish Feed</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="feed-brand">Brand (Optional):</label>
+                                    <input type="text" id="feed-brand" placeholder="Feed brand">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="feed-amount">Amount:</label>
+                                    <input type="number" id="feed-amount" step="0.01" min="0" required placeholder="0.00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="feed-unit">Unit:</label>
+                                    <select id="feed-unit" required>
+                                        <option value="kg">Kilograms (kg)</option>
+                                        <option value="lbs">Pounds (lbs)</option>
+                                        <option value="bags">Bags</option>
+                                        <option value="tons">Tons</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="feed-cost">Cost per Unit ($):</label>
+                                    <input type="number" id="feed-cost" step="0.01" min="0" placeholder="0.00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="feed-supplier">Supplier (Optional):</label>
+                                    <input type="text" id="feed-supplier" placeholder="Supplier name">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="feed-notes">Notes (Optional):</label>
+                                <textarea id="feed-notes" placeholder="Add any additional notes..." rows="3"></textarea>
+                            </div>
+                            <div class="form-group" id="animal-group" style="display: none;">
+                                <label for="feed-animals">Animals Fed (For Usage):</label>
+                                <input type="text" id="feed-animals" placeholder="e.g., Chickens, Cows, etc.">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-text close-modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="save-feed">Save Transaction</button>
                     </div>
                 </div>
             </div>
-        `;
-    }
+        </div>
+    `,
 
-    attachEventListeners() {
-        // Action buttons
-        document.getElementById('add-feed-record-btn').addEventListener('click', () => {
-            this.showFeedModal('usage');
-        });
-
-        document.getElementById('add-feed-purchase-btn').addEventListener('click', () => {
-            this.showFeedModal('purchase');
-        });
-
-        // Enhanced filters
-        document.getElementById('batch-filter').addEventListener('change', (e) => {
-            this.selectedBatch = e.target.value;
-            this.renderFeedRecords();
-            this.updateFeedSummary();
-        });
-
-        document.getElementById('time-filter').addEventListener('change', (e) => {
-            this.filter = e.target.value;
-            this.renderFeedRecords();
-            this.updateFeedSummary();
-        });
-
-        document.getElementById('feed-type-filter').addEventListener('change', () => {
-            this.renderFeedRecords();
-        });
-
-        // Search functionality
-        document.getElementById('feed-search').addEventListener('input', (e) => {
-            this.handleSearch(e.target.value);
-        });
-
-        // View toggle
-        document.querySelectorAll('.view-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const view = e.currentTarget.dataset.view;
-                this.switchView(view);
-            });
-        });
-
-        // Quick actions
-        document.querySelectorAll('.quick-action').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                this.handleQuickAction(e.currentTarget.dataset.action);
-            });
-        });
-
-        // Chart controls
-        const chartPeriod = document.getElementById('chart-period');
-        if (chartPeriod) {
-            chartPeriod.addEventListener('change', () => {
-                this.renderFeedChart();
-            });
+    styles: `
+        .feed-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
         }
 
-        // Modal events
-        this.setupModalEvents();
-        this.setupQuickModalEvents();
-    }
-
-    setupModalEvents() {
-        const modal = document.getElementById('feed-record-modal');
-        const form = document.getElementById('feed-record-form');
-        const closeBtn = document.getElementById('feed-modal-close');
-        const cancelBtn = document.getElementById('feed-cancel-btn');
-        const recordType = document.getElementById('record-type');
-        const feedType = document.getElementById('feed-type');
-        const quantity = document.getElementById('quantity');
-        const unitCost = document.getElementById('unit-cost');
-
-        // Close events
-        closeBtn.addEventListener('click', () => this.hideFeedModal());
-        cancelBtn.addEventListener('click', () => this.hideFeedModal());
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) this.hideFeedModal();
-        });
-
-        // Form submission
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.saveFeedRecord();
-        });
-
-        // Dynamic form updates
-        recordType.addEventListener('change', (e) => {
-            this.updateModalForType(e.target.value);
-            this.updateFormPreview();
-        });
-
-        feedType.addEventListener('change', (e) => {
-            this.updateFeedTypeInfo(e.target.value);
-            this.updateFormPreview();
-        });
-
-        quantity.addEventListener('input', () => this.updateFormPreview());
-        unitCost.addEventListener('input', () => this.updateFormPreview());
-
-        // Set default date
-        document.getElementById('record-date').value = new Date().toISOString().split('T')[0];
-
-        // Load batch suggestions
-        this.updateBatchSuggestions();
-    }
-
-    setupQuickModalEvents() {
-        const modal = document.getElementById('quick-usage-modal');
-        const closeBtn = document.getElementById('quick-modal-close');
-
-        closeBtn.addEventListener('click', () => this.hideQuickModal());
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) this.hideQuickModal();
-        });
-    }
-
-    showFeedModal(type = 'usage', record = null) {
-        const modal = document.getElementById('feed-record-modal');
-        const title = document.getElementById('feed-modal-title');
-        const form = document.getElementById('feed-record-form');
-        const recordType = document.getElementById('record-type');
-
-        this.editingRecord = record;
-
-        if (record) {
-            title.textContent = 'Edit Feed Record';
-            this.populateFeedForm(record);
-        } else {
-            title.textContent = this.getModalTitle(type);
-            form.reset();
-            recordType.value = type;
-            document.getElementById('record-date').value = new Date().toISOString().split('T')[0];
+        .summary-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
         }
 
-        this.updateModalForType(type);
-        this.updateFormPreview();
-        modal.classList.remove('hidden');
-        
-        // Focus on first field
-        setTimeout(() => {
-            document.getElementById('batch-name').focus();
-        }, 100);
-    }
-
-    getModalTitle(type) {
-        const titles = {
-            'usage': '📝 Record Feed Usage',
-            'purchase': '📦 Add Feed Purchase',
-            'adjustment': '⚖️ Stock Adjustment',
-            'waste': '🗑️ Record Feed Waste'
-        };
-        return titles[type] || 'Record Feed Activity';
-    }
-
-    updateModalForType(type) {
-        const additionalFields = document.getElementById('additional-fields');
-        const unitCostField = document.getElementById('unit-cost').closest('.form-group');
-
-        switch (type) {
-            case 'purchase':
-                unitCostField.style.display = 'block';
-                additionalFields.innerHTML = `
-                    <h4>Purchase Details</h4>
-                    <div class="form-grid double">
-                        <div class="form-group">
-                            <label for="supplier">Supplier</label>
-                            <input type="text" id="supplier" placeholder="Supplier name" class="enhanced-input">
-                        </div>
-                        <div class="form-group">
-                            <label for="delivery-date">Delivery Date</label>
-                            <input type="date" id="delivery-date" class="enhanced-input">
-                        </div>
-                    </div>
-                `;
-                break;
-
-            case 'usage':
-                unitCostField.style.display = 'none';
-                additionalFields.innerHTML = `
-                    <h4>Usage Details</h4>
-                    <div class="form-grid double">
-                        <div class="form-group">
-                            <label for="feeding-time">Feeding Time</label>
-                            <select id="feeding-time" class="enhanced-select">
-                                <option value="morning">Morning</option>
-                                <option value="afternoon">Afternoon</option>
-                                <option value="evening">Evening</option>
-                                <option value="full-day">Full Day</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="birds-count">Number of Birds</label>
-                            <input type="number" id="birds-count" placeholder="Approximate count" class="enhanced-input">
-                        </div>
-                    </div>
-                `;
-                break;
-
-            case 'waste':
-                unitCostField.style.display = 'none';
-                additionalFields.innerHTML = `
-                    <h4>Waste Details</h4>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="waste-reason">Reason for Waste</label>
-                            <select id="waste-reason" class="enhanced-select">
-                                <option value="spoilage">Spoilage</option>
-                                <option value="contamination">Contamination</option>
-                                <option value="overfeeding">Overfeeding</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                    </div>
-                `;
-                break;
-
-            default:
-                unitCostField.style.display = 'block';
-                additionalFields.innerHTML = '';
+        .summary-icon {
+            font-size: 2rem;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
         }
 
-        // Set delivery date to today for purchases
-        if (type === 'purchase') {
-            const deliveryDate = document.getElementById('delivery-date');
-            if (deliveryDate && !deliveryDate.value) {
-                deliveryDate.value = new Date().toISOString().split('T')[0];
-            }
+        .summary-content h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
         }
-    }
 
-    updateFeedTypeInfo(feedType) {
-        const infoElement = document.getElementById('feed-type-info');
-        if (this.feedTypes[feedType]) {
-            const type = this.feedTypes[feedType];
-            infoElement.innerHTML = `
-                <span class="info-badge">Protein: ${type.protein}</span>
-                <span class="info-badge">Age: ${type.age}</span>
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-trend, .summary-period {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .summary-trend.positive {
+            color: var(--success-color);
+        }
+
+        .summary-trend.negative {
+            color: var(--danger-color);
+        }
+
+        .quick-actions {
+            margin: 1.5rem 0;
+        }
+
+        .quick-actions .form-row.compact {
+            margin-bottom: 0.75rem;
+        }
+
+        .quick-actions .form-row.compact:last-child {
+            margin-bottom: 0;
+        }
+
+        .recent-transactions .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .transaction-type.purchase {
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
+        .transaction-type.usage {
+            color: var(--danger-color);
+            font-weight: 600;
+        }
+
+        .transaction-type.adjustment {
+            color: var(--warning-color);
+            font-weight: 600;
+        }
+
+        .stock-low {
+            color: var(--danger-color);
+            font-weight: 600;
+        }
+
+        .stock-adequate {
+            color: var(--success-color);
+        }
+
+        .stock-warning {
+            color: var(--warning-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            opacity: 0.5;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .empty-content h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.2rem;
+        }
+
+        .empty-content p {
+            margin: 0;
+            opacity: 0.8;
+        }
+    `,
+
+    initialize: function() {
+        console.log('Feed Records module initializing...');
+        this.loadFeedData();
+        this.attachEventListeners();
+        this.updateSummary();
+    },
+
+    loadFeedData: function() {
+        if (!FarmModules.appData.feedTransactions) {
+            FarmModules.appData.feedTransactions = [];
+        }
+        if (!FarmModules.appData.feedStock) {
+            FarmModules.appData.feedStock = {
+                current: 0,
+                unit: 'kg',
+                lowStockThreshold: 100
+            };
+        }
+        this.renderTransactionsTable();
+    },
+
+    renderTransactionsTable: function() {
+        const tbody = document.getElementById('feed-transactions-body');
+        if (!tbody) return;
+
+        const transactions = FarmModules.appData.feedTransactions || [];
+
+        if (transactions.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="empty-state">
+                        <div class="empty-content">
+                            <span class="empty-icon">🌾</span>
+                            <h4>No feed transactions yet</h4>
+                            <p>Start recording your feed purchases and usage</p>
+                        </div>
+                    </td>
+                </tr>
             `;
-            infoElement.style.display = 'block';
-        } else {
-            infoElement.style.display = 'none';
-        }
-    }
-
-    updateFormPreview() {
-        const preview = document.getElementById('form-preview');
-        const formData = new FormData(document.getElementById('feed-record-form'));
-        
-        const recordType = formData.get('record-type');
-        const quantity = parseFloat(formData.get('quantity') || 0);
-        const unitCost = parseFloat(formData.get('unit-cost') || 0);
-        const feedType = formData.get('feed-type');
-        
-        if (quantity > 0 && feedType) {
-            const feedTypeName = this.feedTypes[feedType]?.name || feedType;
-            const totalCost = quantity * unitCost;
-            
-            preview.innerHTML = `
-                <div class="preview-header">Record Preview</div>
-                <div class="preview-content">
-                    <div class="preview-item">
-                        <span class="preview-label">Activity:</span>
-                        <span class="preview-value">${this.getModalTitle(recordType)}</span>
-                    </div>
-                    <div class="preview-item">
-                        <span class="preview-label">Feed Type:</span>
-                        <span class="preview-value">${feedTypeName}</span>
-                    </div>
-                    <div class="preview-item">
-                        <span class="preview-label">Quantity:</span>
-                        <span class="preview-value ${recordType === 'usage' || recordType === 'waste' ? 'negative' : 'positive'}">
-                            ${recordType === 'usage' || recordType === 'waste' ? '-' : '+'}${quantity} kg
-                        </span>
-                    </div>
-                    ${totalCost > 0 ? `
-                    <div class="preview-item">
-                        <span class="preview-label">Total Cost:</span>
-                        <span class="preview-value">$${totalCost.toFixed(2)}</span>
-                    </div>
-                    ` : ''}
-                </div>
-            `;
-            preview.style.display = 'block';
-        } else {
-            preview.style.display = 'none';
-        }
-    }
-
-    populateFeedForm(record) {
-        document.getElementById('record-id').value = record.id;
-        document.getElementById('record-type').value = record.type;
-        document.getElementById('record-date').value = record.date;
-        document.getElementById('batch-name').value = record.batch;
-        document.getElementById('feed-type').value = record.feedType;
-        document.getElementById('quantity').value = record.quantity;
-        document.getElementById('unit-cost').value = record.unitCost || '';
-        document.getElementById('feed-notes').value = record.notes || '';
-
-        // Populate additional fields based on record type
-        if (record.supplier) {
-            document.getElementById('supplier').value = record.supplier;
-        }
-        if (record.deliveryDate) {
-            document.getElementById('delivery-date').value = record.deliveryDate;
-        }
-        if (record.feedingTime) {
-            document.getElementById('feeding-time').value = record.feedingTime;
-        }
-        if (record.birdsCount) {
-            document.getElementById('birds-count').value = record.birdsCount;
-        }
-        if (record.wasteReason) {
-            document.getElementById('waste-reason').value = record.wasteReason;
-        }
-
-        this.updateFeedTypeInfo(record.feedType);
-    }
-
-    hideFeedModal() {
-        document.getElementById('feed-record-modal').classList.add('hidden');
-        this.editingRecord = null;
-    }
-
-    saveFeedRecord() {
-        const formData = new FormData(document.getElementById('feed-record-form'));
-        const record = {
-            id: this.editingRecord ? this.editingRecord.id : this.generateId(),
-            type: formData.get('record-type'),
-            date: formData.get('record-date'),
-            batch: formData.get('batch-name'),
-            feedType: formData.get('feed-type'),
-            quantity: parseFloat(formData.get('quantity')),
-            unitCost: parseFloat(formData.get('unit-cost')) || 0,
-            notes: formData.get('feed-notes'),
-            createdAt: this.editingRecord ? this.editingRecord.createdAt : new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-
-        // Additional fields based on record type
-        if (record.type === 'purchase') {
-            record.supplier = formData.get('supplier');
-            record.deliveryDate = formData.get('delivery-date');
-        } else if (record.type === 'usage') {
-            record.feedingTime = formData.get('feeding-time');
-            record.birdsCount = parseInt(formData.get('birds-count')) || 0;
-        } else if (record.type === 'waste') {
-            record.wasteReason = formData.get('waste-reason');
-        }
-
-        if (this.editingRecord) {
-            // Update existing record
-            const index = this.feedRecords.findIndex(r => r.id === this.editingRecord.id);
-            if (index !== -1) {
-                this.feedRecords[index] = { ...this.feedRecords[index], ...record };
-            }
-        } else {
-            // Add new record
-            this.feedRecords.unshift(record);
-        }
-
-        this.saveFeedRecords();
-        this.renderFeedRecords();
-        this.updateFeedSummary();
-        this.updateBatchFilter();
-        this.updateAlerts();
-        this.hideFeedModal();
-
-        this.showNotification(
-            `Feed record ${this.editingRecord ? 'updated' : 'added'} successfully`,
-            'success'
-        );
-    }
-
-    deleteFeedRecord(id) {
-        if (confirm('Are you sure you want to delete this feed record? This action cannot be undone.')) {
-            this.feedRecords = this.feedRecords.filter(record => record.id !== id);
-            this.saveFeedRecords();
-            this.renderFeedRecords();
-            this.updateFeedSummary();
-            this.updateBatchFilter();
-            this.updateAlerts();
-            this.showNotification('Feed record deleted successfully', 'success');
-        }
-    }
-
-    renderFeedRecords() {
-        const container = document.getElementById('feed-records-table');
-        if (!container) return;
-
-        let filteredRecords = this.getFilteredRecords();
-
-        if (filteredRecords.length === 0) {
-            container.innerHTML = this.getEmptyStateHTML();
             return;
         }
 
-        container.innerHTML = filteredRecords.map(record => this.getRecordHTML(record)).join('');
+        const recentTransactions = transactions.slice(-10).reverse();
 
-        // Add event listeners for action buttons
-        this.attachRecordEventListeners();
-    }
+        tbody.innerHTML = recentTransactions.map(transaction => {
+            const typeClass = `transaction-type ${transaction.type}`;
+            const typeLabel = transaction.type === 'purchase' ? 'Purchase' : 
+                            transaction.type === 'usage' ? 'Usage' : 'Adjustment';
+            
+            return `
+                <tr>
+                    <td>${this.formatDate(transaction.date)}</td>
+                    <td><span class="${typeClass}">${typeLabel}</span></td>
+                    <td>${this.formatCategory(transaction.category)}</td>
+                    <td>${transaction.amount} ${transaction.unit}</td>
+                    <td>${transaction.remainingStock || FarmModules.appData.feedStock.current} ${FarmModules.appData.feedStock.unit}</td>
+                    <td>${transaction.notes || '—'}</td>
+                    <td class="transaction-actions">
+                        <button class="btn-icon edit-transaction" data-id="${transaction.id}" title="Edit">✏️</button>
+                        <button class="btn-icon delete-transaction" data-id="${transaction.id}" title="Delete">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    },
 
-    getFilteredRecords() {
-        let filteredRecords = [...this.feedRecords];
+    updateSummary: function() {
+        const transactions = FarmModules.appData.feedTransactions || [];
+        const stock = FarmModules.appData.feedStock || { current: 0, unit: 'kg' };
 
-        // Apply batch filter
-        if (this.selectedBatch && this.selectedBatch !== 'all') {
-            filteredRecords = filteredRecords.filter(record => record.batch === this.selectedBatch);
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth();
+        const currentYear = currentDate.getFullYear();
+
+        const monthlyTransactions = transactions.filter(transaction => {
+            const transactionDate = new Date(transaction.date);
+            return transactionDate.getMonth() === currentMonth && 
+                   transactionDate.getFullYear() === currentYear;
+        });
+
+        const totalPurchased = monthlyTransactions
+            .filter(t => t.type === 'purchase')
+            .reduce((sum, t) => sum + this.convertToKg(t.amount, t.unit), 0);
+
+        const totalUsed = monthlyTransactions
+            .filter(t => t.type === 'usage')
+            .reduce((sum, t) => sum + this.convertToKg(t.amount, t.unit), 0);
+
+        const currentStockKg = this.convertToKg(stock.current, stock.unit);
+
+        this.updateElement('current-stock', `${stock.current.toFixed(1)} ${stock.unit}`);
+        this.updateElement('total-purchased', `${totalPurchased.toFixed(1)} kg`);
+        this.updateElement('total-used', `${totalUsed.toFixed(1)} kg`);
+
+        const trendElement = document.getElementById('stock-trend');
+        if (trendElement && transactions.length > 0) {
+            const lastTransaction = transactions[transactions.length - 1];
+            if (lastTransaction) {
+                const change = lastTransaction.type === 'purchase' ? '↗ Increase' : 
+                             lastTransaction.type === 'usage' ? '↘ Decrease' : '→ Adjustment';
+                trendElement.textContent = change;
+                trendElement.className = 'summary-trend ' + 
+                    (lastTransaction.type === 'purchase' ? 'positive' : 
+                     lastTransaction.type === 'usage' ? 'negative' : '');
+            }
         }
 
-        // Apply time filter
-        filteredRecords = this.applyTimeFilter(filteredRecords);
+        const alertElement = document.getElementById('low-stock-alert');
+        const statusElement = document.getElementById('stock-status');
+        if (alertElement && statusElement) {
+            if (currentStockKg <= stock.lowStockThreshold * 0.2) {
+                alertElement.textContent = 'CRITICAL';
+                alertElement.className = 'summary-value stock-low';
+                statusElement.textContent = 'Very low stock!';
+            } else if (currentStockKg <= stock.lowStockThreshold) {
+                alertElement.textContent = 'LOW';
+                alertElement.className = 'summary-value stock-warning';
+                statusElement.textContent = 'Time to reorder';
+            } else {
+                alertElement.textContent = 'OK';
+                alertElement.className = 'summary-value stock-adequate';
+                statusElement.textContent = 'Adequate stock';
+            }
+        }
+    },
 
-        // Apply feed type filter
-        const feedTypeFilter = document.getElementById('feed-type-filter').value;
-        if (feedTypeFilter && feedTypeFilter !== 'all') {
-            filteredRecords = filteredRecords.filter(record => record.feedType === feedTypeFilter);
+    convertToKg: function(amount, unit) {
+        const conversions = {
+            'kg': 1,
+            'lbs': 0.453592,
+            'bags': 25,
+            'tons': 1000
+        };
+        return amount * (conversions[unit] || 1);
+    },
+
+    attachEventListeners: function() {
+        document.getElementById('quick-purchase').addEventListener('click', () => this.handleQuickPurchase());
+        document.getElementById('quick-usage').addEventListener('click', () => this.handleQuickUsage());
+        document.getElementById('add-feed-transaction').addEventListener('click', () => this.showFeedModal());
+        document.getElementById('save-feed').addEventListener('click', () => this.saveFeedTransaction());
+
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', () => this.hideModal());
+        });
+
+        document.getElementById('feed-type').addEventListener('change', (e) => this.handleTypeChange(e.target.value));
+
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.edit-transaction')) {
+                const transactionId = e.target.closest('.edit-transaction').dataset.id;
+                this.editTransaction(transactionId);
+            }
+            if (e.target.closest('.delete-transaction')) {
+                const transactionId = e.target.closest('.delete-transaction').dataset.id;
+                this.deleteTransaction(transactionId);
+            }
+        });
+
+        document.getElementById('feed-modal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                this.hideModal();
+            }
+        });
+    },
+
+    handleQuickPurchase: function() {
+        const amount = parseFloat(document.getElementById('quick-purchase-amount').value);
+        const unit = document.getElementById('quick-purchase-unit').value;
+
+        if (!amount || amount <= 0) {
+            this.showNotification('Please enter a valid amount', 'error');
+            return;
         }
 
-        return filteredRecords;
-    }
+        this.recordFeedTransaction('purchase', amount, unit, 'Quick purchase');
+        document.getElementById('quick-purchase-amount').value = '';
+        this.showNotification('Purchase recorded successfully!', 'success');
+    },
 
-    applyTimeFilter(records) {
-        const now = new Date();
-        switch (this.filter) {
-            case 'today':
-                const today = now.toISOString().split('T')[0];
-                return records.filter(record => record.date === today);
-            case 'week':
-                const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                return records.filter(record => new Date(record.date) >= weekAgo);
-            case 'month':
-                const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-                return records.filter(record => new Date(record.date) >= monthAgo);
-            case 'quarter':
-                const quarterAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
-                return records.filter(record => new Date(record.date) >= quarterAgo);
-            default:
-                return records;
+    handleQuickUsage: function() {
+        const amount = parseFloat(document.getElementById('quick-usage-amount').value);
+        const unit = document.getElementById('quick-usage-unit').value;
+
+        if (!amount || amount <= 0) {
+            this.showNotification('Please enter a valid amount', 'error');
+            return;
+        }
+
+        const currentStock = FarmModules.appData.feedStock.current;
+        const usageInStockUnit = this.convertUnits(amount, unit, FarmModules.appData.feedStock.unit);
+        
+        if (usageInStockUnit > currentStock) {
+            this.showNotification(`Not enough stock. Only ${currentStock} ${FarmModules.appData.feedStock.unit} available.`, 'error');
+            return;
+        }
+
+        this.recordFeedTransaction('usage', amount, unit, 'Quick usage');
+        document.getElementById('quick-usage-amount').value = '';
+        this.showNotification('Usage recorded successfully!', 'success');
+    },
+
+    recordFeedTransaction: function(type, amount, unit, notes = '') {
+        const transaction = {
+            id: 'feed-' + Date.now(),
+            type: type,
+            amount: amount,
+            unit: unit,
+            category: 'other',
+            date: new Date().toISOString().split('T')[0],
+            notes: notes,
+            cost: 0,
+            supplier: ''
+        };
+
+        this.updateStock(transaction);
+        transaction.remainingStock = FarmModules.appData.feedStock.current;
+
+        FarmModules.appData.feedTransactions.push(transaction);
+        
+        this.renderTransactionsTable();
+        this.updateSummary();
+    },
+
+    updateStock: function(transaction) {
+        const stock = FarmModules.appData.feedStock;
+        const amountInStockUnit = this.convertUnits(transaction.amount, transaction.unit, stock.unit);
+
+        if (transaction.type === 'purchase') {
+            stock.current += amountInStockUnit;
+        } else if (transaction.type === 'usage') {
+            stock.current -= amountInStockUnit;
+        }
+    },
+
+    convertUnits: function(amount, fromUnit, toUnit) {
+        const conversions = {
+            'kg': { 'kg': 1, 'lbs': 2.20462, 'bags': 0.04, 'tons': 0.001 },
+            'lbs': { 'kg': 0.453592, 'lbs': 1, 'bags': 0.0181437, 'tons': 0.000453592 },
+            'bags': { 'kg': 25, 'lbs': 55.1156, 'bags': 1, 'tons': 0.025 },
+            'tons': { 'kg': 1000, 'lbs': 2204.62, 'bags': 40, 'tons': 1 }
+        };
+
+        return amount * (conversions[fromUnit][toUnit] || 1);
+    },
+
+    showFeedModal: function() {
+        const modal = document.getElementById('feed-modal');
+        const title = document.getElementById('feed-modal-title');
+        const form = document.getElementById('feed-form');
+
+        if (modal && title && form) {
+            form.reset();
+            document.getElementById('feed-id').value = '';
+            document.getElementById('feed-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('animal-group').style.display = 'none';
+            
+            modal.classList.remove('hidden');
+        }
+    },
+
+    hideModal: function() {
+        const modal = document.getElementById('feed-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    },
+
+    handleTypeChange: function(type) {
+        const animalGroup = document.getElementById('animal-group');
+        if (animalGroup) {
+            animalGroup.style.display = type === 'usage' ? 'block' : 'none';
+        }
+    },
+
+    saveFeedTransaction: function() {
+        const form = document.getElementById('feed-form');
+        if (!form) return;
+
+        const transactionId = document.getElementById('feed-id').value;
+        const type = document.getElementById('feed-type').value;
+        const category = document.getElementById('feed-category').value;
+        const amount = parseFloat(document.getElementById('feed-amount').value);
+        const unit = document.getElementById('feed-unit').value;
+        const date = document.getElementById('feed-date').value;
+        const cost = parseFloat(document.getElementById('feed-cost').value) || 0;
+        const supplier = document.getElementById('feed-supplier').value;
+        const notes = document.getElementById('feed-notes').value;
+        const brand = document.getElementById('feed-brand').value;
+        const animals = document.getElementById('feed-animals').value;
+
+        if (!type || !category || !amount || !date) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+
+        if (amount <= 0) {
+            this.showNotification('Amount must be greater than 0', 'error');
+            return;
+        }
+
+        if (type === 'usage') {
+            const currentStock = FarmModules.appData.feedStock.current;
+            const usageInStockUnit = this.convertUnits(amount, unit, FarmModules.appData.feedStock.unit);
+            
+            if (usageInStockUnit > currentStock) {
+                this.showNotification(`Not enough stock. Only ${currentStock} ${FarmModules.appData.feedStock.unit} available.`, 'error');
+                return;
+            }
+        }
+
+        const transactionData = {
+            type: type,
+            category: category,
+            amount: amount,
+            unit: unit,
+            date: date,
+            cost: cost,
+            supplier: supplier,
+            notes: notes,
+            brand: brand,
+            animals: type === 'usage' ? animals : ''
+        };
+
+        if (transactionId) {
+            this.updateTransaction(transactionId, transactionData);
+        } else {
+            this.addTransaction(transactionData);
+        }
+
+        this.hideModal();
+    },
+
+    addTransaction: function(transactionData) {
+        if (!FarmModules.appData.feedTransactions) {
+            FarmModules.appData.feedTransactions = [];
+        }
+
+        const newTransaction = {
+            id: 'feed-' + Date.now(),
+            ...transactionData
+        };
+
+        this.updateStock(newTransaction);
+        newTransaction.remainingStock = FarmModules.appData.feedStock.current;
+
+        FarmModules.appData.feedTransactions.push(newTransaction);
+        
+        this.renderTransactionsTable();
+        this.updateSummary();
+        
+        this.showNotification('Transaction recorded successfully!', 'success');
+    },
+
+    editTransaction: function(transactionId) {
+        const transactions = FarmModules.appData.feedTransactions || [];
+        const transaction = transactions.find(t => t.id === transactionId);
+        
+        if (!transaction) return;
+
+        const modal = document.getElementById('feed-modal');
+        const title = document.getElementById('feed-modal-title');
+
+        if (modal && title) {
+            document.getElementById('feed-id').value = transaction.id;
+            document.getElementById('feed-type').value = transaction.type;
+            document.getElementById('feed-category').value = transaction.category;
+            document.getElementById('feed-amount').value = transaction.amount;
+            document.getElementById('feed-unit').value = transaction.unit;
+            document.getElementById('feed-date').value = transaction.date;
+            document.getElementById('feed-cost').value = transaction.cost || '';
+            document.getElementById('feed-supplier').value = transaction.supplier || '';
+            document.getElementById('feed-notes').value = transaction.notes || '';
+            document.getElementById('feed-brand').value = transaction.brand || '';
+            document.getElementById('feed-animals').value = transaction.animals || '';
+            
+            this.handleTypeChange(transaction.type);
+            
+            title.textContent = 'Edit Feed Transaction';
+            modal.classList.remove('hidden');
+        }
+    },
+
+    updateTransaction: function(transactionId, transactionData) {
+        const transactions = FarmModules.appData.feedTransactions || [];
+        const index = transactions.findIndex(t => t.id === transactionId);
+        
+        if (index !== -1) {
+            const oldTransaction = transactions[index];
+            
+            const reverseTransaction = { ...oldTransaction };
+            reverseTransaction.type = reverseTransaction.type === 'purchase' ? 'usage' : 'purchase';
+            this.updateStock(reverseTransaction);
+            
+            transactions.splice(index, 1);
+            
+            this.addTransaction(transactionData);
+        }
+    },
+
+    deleteTransaction: function(transactionId) {
+        if (confirm('Are you sure you want to delete this transaction?')) {
+            const transactions = FarmModules.appData.feedTransactions || [];
+            const transaction = transactions.find(t => t.id === transactionId);
+            
+            if (transaction) {
+                const reverseTransaction = { ...transaction };
+                reverseTransaction.type = reverseTransaction.type === 'purchase' ? 'usage' : 'purchase';
+                this.updateStock(reverseTransaction);
+                
+                FarmModules.appData.feedTransactions = transactions.filter(t => t.id !== transactionId);
+                
+                this.renderTransactionsTable();
+                this.updateSummary();
+                this.showNotification('Transaction deleted successfully', 'success');
+            }
+        }
+    },
+
+    formatCategory: function(category) {
+        if (!category) return 'Uncategorized';
+        return category.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+    },
+
+    formatDate: function(dateString) {
+        try {
+            return new Date(dateString).toLocaleDateString();
+        } catch (e) {
+            return 'Invalid date';
+        }
+    },
+
+    updateElement: function(id, value) {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    },
+
+    showNotification: function(message, type) {
+        if (window.coreModule && window.coreModule.showNotification) {
+            window.coreModule.showNotification(message, type);
+        } else {
+            alert(message);
         }
     }
+});
 
-    getEmptyStateHTML() {
-        return `
-            <div class="table-row empty-row">
-                <div class="table-cell" colspan="8">
-                    <div class="empty-state enhanced-empty">
-                        <div class="empty-icon">🌾</div>
-                        <h4>No Feed Records Found</h4>
-                        <p>Get started by recording your first feed activity</p>
-                        <button class="btn btn-primary" onclick="feedRecordModule.showFeedModal('usage')">
-                            Record First Usage
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    getRecordHTML(record) {
-        const feedTypeInfo = this.feedTypes[record.feedType];
-        const feedTypeName = feedTypeInfo ? feedTypeInfo.name : record.feedType;
-        const totalCost = record.quantity * record.unitCost;
-        const isNegative = record.type === 'usage' || record.type === 'waste';
-
-        return `
-            <div class="table-row record-${record.type}" data-id="${record.id}">
-                <div class="table-cell">
-                    <div class="date-display">
-                        <div class="date-main">${this.formatDate(record.date)}</div>
-                        <div class="date-sub">${this.formatTime(record.createdAt)}</div>
-                    </div>
-                </div>
-                <div class="table-cell">
-                    <span class="type-badge type-${record.type}">
-                        ${this.getTypeIcon(record.type)} ${record.type}
-                    </span>
-                </div>
-                <div class="table-cell">
-                    <div class="batch-info">
-                        <div class="batch-name">${record.batch}</div>
-                        ${record.birdsCount ? `<div class="batch-meta">${record.birdsCount} birds</div>` : ''}
-                    </div>
-                </div>
-                <div class="table-cell">
-                    <div class="feed-details">
-                        <div class="feed-type">${feedTypeName}</div>
-                        ${feedTypeInfo ? `
-                        <div class="feed-specs">
-                            <span class="spec">${feedTypeInfo.protein}</span>
-                            <span class="spec">${feedTypeInfo.age}</span>
-                        </div>
-                        ` : ''}
-                    </div>
-                </div>
-                <div class="table-cell">
-                    <span class="quantity ${isNegative ? 'negative' : 'positive'}">
-                        ${isNegative ? '-' : '+'}${record.quantity} kg
-                    </span>
-                </div>
-                <div class="table-cell">
-                    <div class="cost-display">
-                        ${totalCost > 0 ? `
-                        <div class="cost-main">$${totalCost.toFixed(2)}</div>
-                        <div class="cost-sub">@ $${record.unitCost}/kg</div>
-                        ` : '<div class="cost-main">-</div>'}
-                    </div>
-                </div>
-                <div class="table-cell">
-                    <span class="status-badge status-${this.getRecordStatus(record)}">
-                        ${this.getRecordStatus(record)}
-                    </span>
-                </div>
-                <div class
