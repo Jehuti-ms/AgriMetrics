@@ -1,253 +1,174 @@
-// modules/auth.js
+// modules/auth.js - Fixed to hide sidebar
 console.log('Loading auth module...');
 
-class AuthModule {
-    constructor() {
-        this.init();
-    }
+const AuthModule = {
+    name: 'auth',
+    initialized: false,
 
-    init() {
-        console.log('✅ Auth module initialized');
-        this.setupAuthForms();
-    }
+    initialize() {
+        console.log('🔐 Initializing auth...');
+        this.hideSidebar();
+        this.render();
+        this.initialized = true;
+        return true;
+    },
 
-    setupAuthForms() {
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                this.attachFormHandlers();
-            });
-        } else {
-            this.attachFormHandlers();
-        }
-    }
+    hideSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        const mainContent = document.querySelector('.main-content');
+        if (sidebar) sidebar.style.display = 'none';
+        if (mainContent) mainContent.style.marginLeft = '0';
+    },
 
-    attachFormHandlers() {
-        // Sign up form
-        const signupForm = document.getElementById('signup-form-element');
-        if (signupForm) {
-            signupForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                await this.handleSignUp();
-            });
-        }
+    showSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        const mainContent = document.querySelector('.main-content');
+        if (sidebar) sidebar.style.display = 'block';
+        if (mainContent) mainContent.style.marginLeft = '260px';
+    },
 
-        // Sign in form
-        const signinForm = document.getElementById('signin-form-element');
-        if (signinForm) {
-            signinForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                await this.handleSignIn();
-            });
-        }
+    render() {
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
 
-        // Forgot password form
-        const forgotForm = document.getElementById('forgot-password-form-element');
-        if (forgotForm) {
-            forgotForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                await this.handleForgotPassword();
-            });
-        }
-
-        // Google sign in
-        const googleBtn = document.getElementById('google-signin');
-        if (googleBtn) {
-            googleBtn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                await this.handleGoogleSignIn();
-            });
-        }
-
-        this.setupAuthListeners();
-    }
-
-    setupAuthListeners() {
-        // Form switching
-        const showSignup = document.getElementById('show-signup');
-        if (showSignup) {
-            showSignup.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.showAuthForm('signup');
-            });
-        }
-
-        const showSignin = document.getElementById('show-signin');
-        if (showSignin) {
-            showSignin.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.showAuthForm('signin');
-            });
-        }
-
-        const showForgot = document.getElementById('show-forgot-password');
-        if (showForgot) {
-            showForgot.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.showAuthForm('forgot-password');
-            });
-        }
-
-        const showSigninFromForgot = document.getElementById('show-signin-from-forgot');
-        if (showSigninFromForgot) {
-            showSigninFromForgot.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.showAuthForm('signin');
-            });
-        }
-    }
-
-    async handleSignUp() {
-        const form = document.getElementById('signup-form-element');
-        if (!form) return;
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const name = document.getElementById('signup-name')?.value || '';
-        const email = document.getElementById('signup-email')?.value || '';
-        const password = document.getElementById('signup-password')?.value || '';
-        const confirmPassword = document.getElementById('signup-confirm-password')?.value || '';
-        const farmName = document.getElementById('farm-name')?.value || '';
-
-        if (password !== confirmPassword) {
-            this.showNotification('Passwords do not match', 'error');
+        // Check if already authenticated
+        if (localStorage.getItem('farm-authenticated') === 'true') {
+            this.showSidebar();
+            if (window.farmApp) {
+                window.farmApp.loadModule('dashboard');
+            }
             return;
         }
 
-        if (password.length < 6) {
-            this.showNotification('Password must be at least 6 characters', 'error');
-            return;
+        this.hideSidebar();
+        contentArea.innerHTML = this.getTemplate();
+        this.setupEventListeners();
+    },
+
+    getTemplate() {
+        return `
+            <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px;">
+                <div style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border-radius: 20px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);">
+                    <!-- Logo -->
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <div style="font-size: 64px; margin-bottom: 10px;">🚜</div>
+                        <h1 style="color: #1a1a1a; font-size: 28px; margin-bottom: 8px;">Farm Management</h1>
+                        <p style="color: #666; font-size: 16px;">Sign in to your account</p>
+                    </div>
+
+                    <!-- Sign In Form -->
+                    <form id="signin-form">
+                        <div style="display: grid; gap: 20px; margin-bottom: 30px;">
+                            <div>
+                                <input 
+                                    type="text" 
+                                    id="username" 
+                                    placeholder="Username"
+                                    required 
+                                    style="width: 100%; padding: 12px 16px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 16px; box-sizing: border-box;"
+                                    autocomplete="username"
+                                >
+                            </div>
+
+                            <div>
+                                <input 
+                                    type="password" 
+                                    id="password" 
+                                    placeholder="Password"
+                                    required 
+                                    style="width: 100%; padding: 12px 16px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 16px; box-sizing: border-box;"
+                                    autocomplete="current-password"
+                                >
+                            </div>
+
+                            <button type="submit" style="width: 100%; background: #10b981; color: white; border: none; border-radius: 10px; padding: 14px 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                                Sign In
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Demo Info -->
+                    <div style="background: #f8fafc; border-radius: 10px; padding: 20px; border: 1px solid #e5e7eb;">
+                        <h3 style="color: #374151; font-size: 14px; font-weight: 600; margin-bottom: 12px; text-align: center;">Demo Credentials</h3>
+                        <div style="font-size: 13px; color: #6b7280; text-align: left; line-height: 1.5;">
+                            <div>👤 <strong>admin</strong> / admin123</div>
+                            <div>👤 <strong>farm</strong> / farm123</div>
+                            <div>👤 <strong>user</strong> / user123</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    setupEventListeners() {
+        const form = document.getElementById('signin-form');
+        if (form) {
+            form.addEventListener('submit', (e) => this.handleSignIn(e));
         }
 
-        if (submitBtn) {
-            submitBtn.innerHTML = 'Creating Account...';
-            submitBtn.disabled = true;
-        }
-
-        try {
-            const result = await window.authManager?.signUp(email, password, {
-                name: name,
-                email: email,
-                farmName: farmName
-            });
-
-            if (result?.success) {
-                this.showNotification('Account created successfully!', 'success');
-            } else {
-                this.showNotification(result?.error || 'Error creating account', 'error');
+        // Auto-focus username field
+        setTimeout(() => {
+            const usernameInput = document.getElementById('username');
+            if (usernameInput) {
+                usernameInput.focus();
             }
-        } catch (error) {
-            this.showNotification('Error creating account', 'error');
-        } finally {
-            if (submitBtn) {
-                submitBtn.innerHTML = 'Create Account';
-                submitBtn.disabled = false;
-            }
-        }
-    }
+        }, 100);
+    },
 
-    async handleSignIn() {
-        const form = document.getElementById('signin-form-element');
-        if (!form) return;
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const email = document.getElementById('signin-email')?.value || '';
-        const password = document.getElementById('signin-password')?.value || '';
-
-        if (submitBtn) {
-            submitBtn.innerHTML = 'Signing In...';
-            submitBtn.disabled = true;
-        }
-
-        try {
-            const result = await window.authManager?.signIn(email, password);
-
-            if (result?.success) {
-                this.showNotification('Welcome back!', 'success');
-            } else {
-                this.showNotification(result?.error || 'Error signing in', 'error');
-            }
-        } catch (error) {
-            this.showNotification('Error signing in', 'error');
-        } finally {
-            if (submitBtn) {
-                submitBtn.innerHTML = 'Sign In';
-                submitBtn.disabled = false;
-            }
-        }
-    }
-
-    async handleGoogleSignIn() {
-        const button = document.getElementById('google-signin');
-        if (!button) return;
-
-        const originalText = button.innerHTML;
-        button.innerHTML = 'Signing in with Google...';
-        button.disabled = true;
-
-        try {
-            const result = await window.authManager?.signInWithGoogle();
-
-            if (result?.success) {
-                this.showNotification('Signed in with Google!', 'success');
-            } else {
-                this.showNotification(result?.error || 'Error signing in with Google', 'error');
-            }
-        } catch (error) {
-            this.showNotification('Error signing in with Google', 'error');
-        } finally {
-            button.innerHTML = originalText;
-            button.disabled = false;
-        }
-    }
-
-    async handleForgotPassword() {
-        const form = document.getElementById('forgot-password-form-element');
-        if (!form) return;
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const email = document.getElementById('forgot-email')?.value || '';
-
-        if (submitBtn) {
-            submitBtn.innerHTML = 'Sending Reset Link...';
-            submitBtn.disabled = true;
-        }
-
-        try {
-            const result = await window.authManager?.resetPassword(email);
-
-            if (result?.success) {
-                this.showNotification('Password reset email sent!', 'success');
-                this.showAuthForm('signin');
-            } else {
-                this.showNotification(result?.error || 'Error sending reset email', 'error');
-            }
-        } catch (error) {
-            this.showNotification('Error sending reset email', 'error');
-        } finally {
-            if (submitBtn) {
-                submitBtn.innerHTML = 'Send Reset Link';
-                submitBtn.disabled = false;
-            }
-        }
-    }
-
-    showAuthForm(formName) {
-        document.querySelectorAll('.auth-form').forEach(form => {
-            form.classList.remove('active');
-        });
+    handleSignIn(event) {
+        event.preventDefault();
         
-        const targetForm = document.getElementById(`${formName}-form`);
-        if (targetForm) {
-            targetForm.classList.add('active');
-        }
-    }
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
 
-    showNotification(message, type) {
-        if (window.coreModule && window.coreModule.showNotification) {
-            window.coreModule.showNotification(message, type);
-        } else {
-            alert(message);
+        if (!username || !password) {
+            alert('Please enter both username and password');
+            return;
         }
+
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Signing in...';
+        submitBtn.disabled = true;
+
+        setTimeout(() => {
+            if (this.authenticate(username, password)) {
+                localStorage.setItem('farm-authenticated', 'true');
+                localStorage.setItem('farm-username', username);
+                
+                // Show sidebar and redirect
+                this.showSidebar();
+                if (window.farmApp) {
+                    window.farmApp.loadModule('dashboard');
+                }
+            } else {
+                alert('Invalid username or password');
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        }, 1000);
+    },
+
+    authenticate(username, password) {
+        const validUsers = {
+            'admin': 'admin123',
+            'farm': 'farm123', 
+            'user': 'user123'
+        };
+        return validUsers[username] === password;
+    },
+
+    logout() {
+        localStorage.removeItem('farm-authenticated');
+        localStorage.removeItem('farm-username');
+        this.hideSidebar();
+        this.render();
     }
+};
+
+// Register module
+if (window.FarmModules) {
+    window.FarmModules.registerModule('auth', AuthModule);
+    console.log('✅ Auth module registered');
 }
-
-window.authModule = new AuthModule();
