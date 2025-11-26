@@ -334,41 +334,63 @@ class AuthModule {
         }
     }
 
-    async loadUserData(userId) {
-        try {
-            // Load user profile
-            const profileDoc = await FirestoreService.getUserProfile(userId);
-            if (profileDoc.exists) {
-                const userData = profileDoc.data();
-                console.log('User profile loaded:', userData);
-                
-                // Update UI with user data
-                this.updateUserProfileUI(userData);
+   // In modules/auth.js - update the loadUserData method
+async loadUserData(userId) {
+    try {
+        // Check if FirestoreService is available
+        if (!window.firestoreService) {
+            console.log('FirestoreService not available yet');
+            return;
+        }
+
+        // Load user profile
+        const profileDoc = await window.firestoreService.getUserProfile(userId);
+        if (profileDoc.exists) {
+            const userData = profileDoc.data();
+            console.log('User profile loaded:', userData);
+            
+            // Update UI with user data
+            this.updateUserProfileUI(userData);
+        } else {
+            // Create user profile if it doesn't exist
+            const user = window.authManager?.auth?.currentUser;
+            if (user) {
+                await window.firestoreService.createUserProfile(userId, {
+                    name: user.displayName || '',
+                    email: user.email,
+                    farmName: '',
+                    createdAt: new Date().toISOString()
+                });
             }
-            
-            // Load farm data for all modules
-            const dataTypes = ['inventory', 'transactions', 'production', 'orders', 'sales', 'projects', 'feedRecords'];
-            
-            for (const dataType of dataTypes) {
-                const data = await FirestoreService.loadFarmData(userId, dataType);
+        }
+        
+        // Load farm data for all modules
+        const dataTypes = ['inventory', 'transactions', 'production', 'orders', 'sales', 'projects', 'feedRecords'];
+        
+        for (const dataType of dataTypes) {
+            try {
+                const data = await window.firestoreService.loadFarmData(userId, dataType);
                 if (data.length > 0 && window.FarmModules) {
                     window.FarmModules.appData[dataType] = data;
                     window.FarmModules.saveDataToStorage();
                 }
+            } catch (error) {
+                console.error(`Error loading ${dataType}:`, error);
             }
-            
-            // Refresh current module view
-            if (window.FarmModules) {
-                const activeModule = document.querySelector('.section.active')?.id;
-                if (activeModule && window.FarmModules.modules[activeModule]) {
-                    window.FarmModules.modules[activeModule].renderHistory();
-                }
-            }
-            
-        } catch (error) {
-            console.error('Error loading user data:', error);
         }
+        
+        // Refresh current module view
+        if (window.FarmModules) {
+            const activeModule = document.querySelector('.section.active')?.id;
+            if (activeModule && window.FarmModules.modules[activeModule]) {
+                window.FarmModules.modules[activeModule].renderHistory();
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error loading user data:', error);
     }
+}
 
     updateUserProfileUI(userData) {
         // Update any profile-related UI elements
