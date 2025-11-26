@@ -1,113 +1,115 @@
-// modules/auth.js
-console.log('Loading auth module...');
+// app.js - Remove any AuthModule declaration, keep only this:
+console.log('🚜 Initializing Farm Management PWA...');
 
-class AuthModule {
+class FarmPWA {
     constructor() {
-        this.authInitialized = false;
         this.init();
     }
 
     init() {
-        console.log('✅ Auth module initialized');
-        this.setupAuthForms();
-        this.waitForFirebase();
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, initializing app...');
+            this.initializePWA();
+            this.checkAuthState();
+            this.setupServiceWorker();
+        });
     }
 
-    waitForFirebase() {
-        // Wait for Firebase to be fully loaded
-        const checkFirebase = () => {
-            if (window.authManager && window.authManager.auth) {
-                this.setupAuthStateListener();
-                this.authInitialized = true;
+    initializePWA() {
+        console.log('📱 Initializing PWA...');
+        this.setupPWAInstall();
+        this.setupOfflineHandler();
+        console.log('✅ Farm Management PWA Ready!');
+    }
+
+    checkAuthState() {
+        // Wait for auth to be initialized
+        setTimeout(() => {
+            if (window.authManager?.auth?.currentUser) {
+                console.log('User already signed in:', window.authManager.auth.currentUser.email);
+                this.showAppContent();
             } else {
-                console.log('⏳ Waiting for Firebase auth...');
-                setTimeout(checkFirebase, 100);
+                console.log('No user signed in');
+                this.showAuthForms();
             }
-        };
-        checkFirebase();
+        }, 1000);
     }
 
-    setupAuthStateListener() {
-        if (!window.authManager || !window.authManager.auth) {
-            console.error('Firebase Auth not available for state listener');
-            return;
-        }
-        
-        try {
-            console.log('🔐 Setting up auth state listener...');
-            window.authManager.auth.onAuthStateChanged((user) => {
-                console.log('🔄 Auth state changed:', user ? 'User signed in' : 'User signed out');
-                if (user) {
-                    this.onUserSignedIn(user);
-                } else {
-                    this.onUserSignedOut();
-                }
-            }, (error) => {
-                console.error('Auth state listener error:', error);
-            });
-        } catch (error) {
-            console.error('Failed to setup auth state listener:', error);
-        }
-    }
-
-    setupAuthForms() {
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                this.attachFormHandlers();
-            });
-        } else {
-            this.attachFormHandlers();
-        }
-    }
-
-    // ... rest of your existing methods (handleSignUp, handleSignIn, etc.)
-
-    onUserSignedIn(user) {
-        console.log('👤 User signed in:', user.email);
-        this.updateUIForAuthState(true);
-        
-        // Initialize auto-sync if available
-        if (window.AutoSyncManager) {
-            window.AutoSyncManager.setupAutoSync(user.uid);
-        }
-        
-        // Load user data from Firestore
-        this.loadUserData(user.uid);
-    }
-
-    onUserSignedOut() {
-        console.log('👤 User signed out');
-        this.updateUIForAuthState(false);
-        this.showAuthForm('signin');
-    }
-
-    updateUIForAuthState(isSignedIn) {
+    showAppContent() {
         const authForms = document.querySelector('.auth-forms');
         const appContent = document.querySelector('.app-content');
-        
-        if (authForms) {
-            authForms.style.display = isSignedIn ? 'none' : 'block';
-        }
-        if (appContent) {
-            appContent.style.display = isSignedIn ? 'block' : 'none';
-        }
-        
-        // Update user info if signed in
-        if (isSignedIn) {
-            const user = window.authManager?.auth?.currentUser;
-            if (user) {
-                const userDisplay = document.querySelector('.user-display');
-                if (userDisplay) {
-                    userDisplay.textContent = user.displayName || user.email;
-                }
-            }
+        if (authForms) authForms.style.display = 'none';
+        if (appContent) appContent.style.display = 'block';
+    }
+
+    showAuthForms() {
+        const authForms = document.querySelector('.auth-forms');
+        const appContent = document.querySelector('.app-content');
+        if (authForms) authForms.style.display = 'block';
+        if (appContent) appContent.style.display = 'none';
+    }
+
+    setupServiceWorker() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/AgriMetrics/sw.js')
+                .then(registration => {
+                    console.log('✅ Service Worker registered:', registration);
+                })
+                .catch(error => {
+                    console.log('❌ Service Worker registration failed:', error);
+                });
         }
     }
 
-    // ... rest of your existing methods
+    setupPWAInstall() {
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            console.log('PWA installation available');
+        });
+
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA installed successfully');
+            deferredPrompt = null;
+        });
+    }
+
+    setupOfflineHandler() {
+        window.addEventListener('online', () => {
+            console.log('App is online');
+            this.showNotification('Back online - syncing data...', 'success');
+        });
+
+        window.addEventListener('offline', () => {
+            console.log('App is offline');
+            this.showNotification('You are offline - working locally', 'warning');
+        });
+    }
+
+    showNotification(message, type) {
+        // Simple notification fallback
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            z-index: 1000;
+            font-weight: 500;
+            background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#ff9800'};
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
 }
 
-// Initialize auth module with delay to ensure Firebase is loaded
-setTimeout(() => {
-    window.authModule = new AuthModule();
-}, 500);
+// Initialize the app
+window.farmPWA = new FarmPWA();
