@@ -1,5 +1,5 @@
-// app.js - Remove any AuthModule declaration, keep only this:
-console.log('🚜 Initializing Farm Management PWA...');
+// app.js - FIXED VERSION
+console.log('🚜 Farm Management PWA - Starting...');
 
 class FarmPWA {
     constructor() {
@@ -8,36 +8,33 @@ class FarmPWA {
 
     init() {
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM loaded, initializing app...');
-            this.initializePWA();
+            console.log('DOM loaded, checking auth state...');
             this.checkAuthState();
             this.setupServiceWorker();
         });
     }
 
-    initializePWA() {
-        console.log('📱 Initializing PWA...');
-        this.setupPWAInstall();
-        this.setupOfflineHandler();
-        console.log('✅ Farm Management PWA Ready!');
-    }
-
     checkAuthState() {
-        // Wait for auth to be initialized
+        // Wait a bit for auth to initialize
         setTimeout(() => {
-            if (window.authManager?.auth?.currentUser) {
-                console.log('User already signed in:', window.authManager.auth.currentUser.email);
+            const user = window.authManager?.auth?.currentUser;
+            console.log('Auth check - User:', user ? user.email : 'No user');
+            
+            if (user) {
+                console.log('✅ User is signed in, showing app content');
                 this.showAppContent();
             } else {
-                console.log('No user signed in');
+                console.log('❌ No user signed in, showing auth forms');
                 this.showAuthForms();
             }
-        }, 1000);
+        }, 500);
     }
 
     showAppContent() {
         const authForms = document.querySelector('.auth-forms');
         const appContent = document.querySelector('.app-content');
+        
+        console.log('Showing app content, hiding auth forms');
         if (authForms) authForms.style.display = 'none';
         if (appContent) appContent.style.display = 'block';
     }
@@ -45,6 +42,8 @@ class FarmPWA {
     showAuthForms() {
         const authForms = document.querySelector('.auth-forms');
         const appContent = document.querySelector('.app-content');
+        
+        console.log('Showing auth forms, hiding app content');
         if (authForms) authForms.style.display = 'block';
         if (appContent) appContent.style.display = 'none';
     }
@@ -53,63 +52,14 @@ class FarmPWA {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/AgriMetrics/sw.js')
                 .then(registration => {
-                    console.log('✅ Service Worker registered:', registration);
+                    console.log('✅ Service Worker registered');
                 })
                 .catch(error => {
-                    console.log('❌ Service Worker registration failed:', error);
+                    console.log('❌ Service Worker failed:', error);
                 });
         }
     }
-
-    setupPWAInstall() {
-        let deferredPrompt;
-        
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            console.log('PWA installation available');
-        });
-
-        window.addEventListener('appinstalled', () => {
-            console.log('PWA installed successfully');
-            deferredPrompt = null;
-        });
-    }
-
-    setupOfflineHandler() {
-        window.addEventListener('online', () => {
-            console.log('App is online');
-            this.showNotification('Back online - syncing data...', 'success');
-        });
-
-        window.addEventListener('offline', () => {
-            console.log('App is offline');
-            this.showNotification('You are offline - working locally', 'warning');
-        });
-    }
-
-    showNotification(message, type) {
-        // Simple notification fallback
-        const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 20px;
-            border-radius: 8px;
-            color: white;
-            z-index: 1000;
-            font-weight: 500;
-            background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#ff9800'};
-        `;
-        notification.textContent = message;
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.remove();
-        }, 3000);
-    }
 }
 
-// Initialize the app
+// Initialize
 window.farmPWA = new FarmPWA();
