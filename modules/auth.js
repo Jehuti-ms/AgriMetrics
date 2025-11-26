@@ -9,6 +9,7 @@ class AuthModule {
     init() {
         console.log('✅ Auth module initialized');
         this.setupAuthForms();
+        this.setupAuthStateListener();
     }
 
     setupAuthForms() {
@@ -18,6 +19,19 @@ class AuthModule {
             });
         } else {
             this.attachFormHandlers();
+        }
+    }
+
+    setupAuthStateListener() {
+        // Listen for auth state changes
+        if (window.authManager && window.authManager.auth) {
+            window.authManager.auth.onAuthStateChanged((user) => {
+                if (user) {
+                    this.onUserSignedIn(user);
+                } else {
+                    this.onUserSignedOut();
+                }
+            });
         }
     }
 
@@ -55,6 +69,15 @@ class AuthModule {
             googleBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
                 await this.handleGoogleSignIn();
+            });
+        }
+
+        // Sign out button
+        const signoutBtn = document.getElementById('signout-btn');
+        if (signoutBtn) {
+            signoutBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await this.handleSignOut();
             });
         }
 
@@ -126,15 +149,23 @@ class AuthModule {
             const result = await window.authManager?.signUp(email, password, {
                 name: name,
                 email: email,
-                farmName: farmName
+                farmName: farmName,
+                createdAt: new Date().toISOString()
             });
 
             if (result?.success) {
                 this.showNotification('Account created successfully!', 'success');
+                // Clear form
+                form.reset();
+                // Auto sign-in after successful registration
+                if (typeof window.onAuthSuccess === 'function') {
+                    window.onAuthSuccess();
+                }
             } else {
                 this.showNotification(result?.error || 'Error creating account', 'error');
             }
         } catch (error) {
+            console.error('Sign up error:', error);
             this.showNotification('Error creating account', 'error');
         } finally {
             if (submitBtn) {
@@ -162,10 +193,21 @@ class AuthModule {
 
             if (result?.success) {
                 this.showNotification('Welcome back!', 'success');
+                // Clear form
+                form.reset();
+                // Initialize auto-sync if available
+                if (window.AutoSyncManager) {
+                    window.AutoSyncManager.setupAutoSync(result.user.uid);
+                }
+                // Trigger auth success callback
+                if (typeof window.onAuthSuccess === 'function') {
+                    window.onAuthSuccess();
+                }
             } else {
                 this.showNotification(result?.error || 'Error signing in', 'error');
             }
         } catch (error) {
+            console.error('Sign in error:', error);
             this.showNotification('Error signing in', 'error');
         } finally {
             if (submitBtn) {
@@ -188,10 +230,19 @@ class AuthModule {
 
             if (result?.success) {
                 this.showNotification('Signed in with Google!', 'success');
+                // Initialize auto-sync if available
+                if (window.AutoSyncManager && result.user) {
+                    window.AutoSyncManager.setupAutoSync(result.user.uid);
+                }
+                // Trigger auth success callback
+                if (typeof window.onAuthSuccess === 'function') {
+                    window.onAuthSuccess();
+                }
             } else {
                 this.showNotification(result?.error || 'Error signing in with Google', 'error');
             }
         } catch (error) {
+            console.error('Google sign in error:', error);
             this.showNotification('Error signing in with Google', 'error');
         } finally {
             button.innerHTML = originalText;
@@ -215,12 +266,14 @@ class AuthModule {
             const result = await window.authManager?.resetPassword(email);
 
             if (result?.success) {
-                this.showNotification('Password reset email sent!', 'success');
+                this.showNotification('Password reset email sent! Check your inbox.', 'success');
                 this.showAuthForm('signin');
+                form.reset();
             } else {
                 this.showNotification(result?.error || 'Error sending reset email', 'error');
             }
         } catch (error) {
+            console.error('Forgot password error:', error);
             this.showNotification('Error sending reset email', 'error');
         } finally {
             if (submitBtn) {
@@ -228,6 +281,104 @@ class AuthModule {
                 submitBtn.disabled = false;
             }
         }
+    }
+
+    async handleSignOut() {
+        try {
+            await window.authManager?.auth.signOut();
+            this.showNotification('Signed out successfully', 'success');
+        } catch (error) {
+            console.error('Sign out error:', error);
+            this.showNotification('Error signing out', 'error');
+        }
+    }
+
+    onUserSignedIn(user) {
+        console.log('User signed in:', user);
+        // Update UI for signed-in state
+        this.updateUIForAuthState(true);
+        
+        // Initialize auto-sync
+        if (window.AutoSyncManager) {
+            window.AutoSyncManager.setupAutoSync(user.uid);
+        }
+        
+        // Load user data from Firestore
+        this.loadUserData(user.uid);
+    }
+
+    onUserSignedOut() {
+        console.log('User signed out');
+        // Update UI for signed-out state
+        this.updateUIForAuthState(false);
+        
+        // Show auth forms
+        this.showAuthForm('signin');
+    }
+
+    updateUIForAuthState(isSignedIn) {
+        const authForms = document.querySelector('.auth-forms');
+        const appContent = document.querySelector('.app-content');
+        const userProfile = document.querySelector('.user-profile');
+        
+        if (authForms) authForms.style.display = isSignedIn ? 'none' : 'block';
+        if (appContent) appContent.style.display = isSignedIn ? 'block' : 'none';
+        
+        // Update user profile info if available
+        if (isSignedIn && userProfile) {
+            const user = window.authManager?.auth.currentUser;
+            if (user) {
+                const userName = user.displayName || user.email;
+                userProfile.querySelector('.user-name').textContent = userName;
+            }
+        }
+    }
+
+    async loadUserData(userId) {
+        try {
+            // Load user profile
+            const profileDoc = await FirestoreService.getUserProfile(userId);
+            if (profileDoc.exists) {
+                const userData = profileDoc.data();
+                console.log('User profile loaded:', userData);
+                
+                // Update UI with user data
+                this.updateUserProfileUI(userData);
+            }
+            
+            // Load farm data for all modules
+            const dataTypes = ['inventory', 'transactions', 'production', 'orders', 'sales', 'projects', 'feedRecords'];
+            
+            for (const dataType of dataTypes) {
+                const data = await FirestoreService.loadFarmData(userId, dataType);
+                if (data.length > 0 && window.FarmModules) {
+                    window.FarmModules.appData[dataType] = data;
+                    window.FarmModules.saveDataToStorage();
+                }
+            }
+            
+            // Refresh current module view
+            if (window.FarmModules) {
+                const activeModule = document.querySelector('.section.active')?.id;
+                if (activeModule && window.FarmModules.modules[activeModule]) {
+                    window.FarmModules.modules[activeModule].renderHistory();
+                }
+            }
+            
+        } catch (error) {
+            console.error('Error loading user data:', error);
+        }
+    }
+
+    updateUserProfileUI(userData) {
+        // Update any profile-related UI elements
+        const profileElements = document.querySelectorAll('[data-user-profile]');
+        profileElements.forEach(element => {
+            const field = element.getAttribute('data-user-profile');
+            if (userData[field]) {
+                element.textContent = userData[field];
+            }
+        });
     }
 
     showAuthForm(formName) {
@@ -245,9 +396,27 @@ class AuthModule {
         if (window.coreModule && window.coreModule.showNotification) {
             window.coreModule.showNotification(message, type);
         } else {
-            alert(message);
+            // Fallback notification
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
         }
     }
 }
 
+// Initialize auth module
 window.authModule = new AuthModule();
+
+// Global auth success callback
+window.onAuthSuccess = function() {
+    console.log('Authentication successful');
+    // You can add any post-auth logic here
+    if (window.FarmModules) {
+        window.FarmModules.loadData();
+    }
+};
