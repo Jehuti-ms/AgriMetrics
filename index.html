@@ -20,10 +20,13 @@
     <!-- Modern CSS -->
     <link rel="stylesheet" href="styles.css">
     
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Chart.js for dashboard charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
     <!-- Auth Container -->
@@ -98,66 +101,24 @@
         </div>
     </div>
 
-    <!-- App Container - SIDEBAR VERSION -->
+    <!-- App Container -->
     <div id="app-container" class="hidden">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-logo">🚜</div>
-                <h1>AgriMetrics</h1>
-            </div>
-            <nav class="sidebar-nav">
-                <ul class="sidebar-menu" id="sidebar-menu">
-                    <!-- Navigation will be populated by JavaScript -->
-                </ul>
+        <header>
+            <nav id="main-nav">
+                <!-- Navigation will be populated by JavaScript -->
             </nav>
-            <div class="sidebar-footer">
-                <button class="sidebar-item sign-out" onclick="farmPWA.signOut()">
-                    <span class="icon">🚪</span>
-                    <span class="label">Sign Out</span>
-                </button>
+        </header>
+        
+        <main>
+            <div id="content-area">
+                <!-- Content will be populated by JavaScript -->
             </div>
-        </aside>
-
-        <!-- Overlay for mobile -->
-        <div class="sidebar-overlay" id="sidebar-overlay"></div>
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Top Bar with Hamburger -->
-            <div class="top-bar">
-                <button class="menu-button" id="menu-button">
-                    <span class="menu-line"></span>
-                    <span class="menu-line"></span>
-                    <span class="menu-line"></span>
-                </button>
-                <h1 class="page-title" id="page-title">Dashboard</h1>
-            </div>
-            
-            <!-- Content Area - FIXED WITH ALL REQUIRED CONTAINERS -->
-            <main id="mainContent">
-                <div id="content-area">
-                    <!-- All module containers - initially hidden except dashboard -->
-                    <div id="dashboardContainer"></div>
-                    <div id="incomeExpensesContainer" class="module-container" style="display: none;"></div>
-                    <div id="inventoryContainer" class="module-container" style="display: none;"></div>
-                    <div id="feedRecordContainer" class="module-container" style="display: none;"></div>
-                    <div id="broilerMortalityContainer" class="module-container" style="display: none;"></div>
-                    <div id="ordersContainer" class="module-container" style="display: none;"></div>
-                    <div id="salesRecordContainer" class="module-container" style="display: none;"></div>
-                    <div id="reportsContainer" class="module-container" style="display: none;"></div>
-                    <div id="profileContainer" class="module-container" style="display: none;"></div>
-                </div>
-            </main>
-        </div>
+        </main>
     </div>
 
     <!-- Load scripts in correct order -->
     <script src="firebase/firebase-config.js"></script>
     <script src="firebase/firebase-auth.js"></script>
-    <script src="firebase/firebase-firestore.js"></script>
-    
-    <!-- All modules from modules folder -->
     <script src="modules/framework.js"></script>
     <script src="modules/core.js"></script>
     <script src="modules/auth.js"></script>
@@ -168,11 +129,10 @@
     <script src="modules/broiler-mortality.js"></script>
     <script src="modules/orders.js"></script>
     <script src="modules/sales-record.js"></script>
+    <script src="modules/production.js"></script>
     <script src="modules/reports.js"></script>
     <script src="modules/profile.js"></script>
-    
-    <!-- app.js from root folder -->
-    <script src="app.js"></script>
 
+     <script src="app.js"></script>
 </body>
 </html>
