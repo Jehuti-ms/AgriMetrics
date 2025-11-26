@@ -1,5 +1,5 @@
-// app.js - SIMPLE VERSION
-console.log('🚜 Farm Management PWA - Simple version');
+// app.js - UPDATED VERSION
+console.log('🚜 Farm Management PWA - Starting...');
 
 class FarmPWA {
     constructor() {
@@ -8,9 +8,48 @@ class FarmPWA {
 
     init() {
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM loaded');
+            console.log('DOM loaded, checking auth state...');
+            this.checkAuthState();
             this.setupServiceWorker();
         });
+    }
+
+    checkAuthState() {
+        // Wait for auth to initialize
+        setTimeout(() => {
+            const user = window.authManager?.auth?.currentUser;
+            console.log('Auth check - User:', user ? user.email : 'No user');
+            
+            if (user) {
+                console.log('✅ User signed in, showing app');
+                this.showApp();
+            } else {
+                console.log('❌ No user, showing auth forms');
+                this.showAuthForms();
+            }
+        }, 1000);
+    }
+
+    showApp() {
+        const authForms = document.querySelector('.auth-forms');
+        const appContainer = document.getElementById('app-container');
+        
+        if (authForms) authForms.style.display = 'none';
+        if (appContainer) {
+            appContainer.style.display = 'block';
+            appContainer.classList.remove('hidden');
+        }
+    }
+
+    showAuthForms() {
+        const authForms = document.querySelector('.auth-forms');
+        const appContainer = document.getElementById('app-container');
+        
+        if (authForms) authForms.style.display = 'block';
+        if (appContainer) {
+            appContainer.style.display = 'none';
+            appContainer.classList.add('hidden');
+        }
     }
 
     setupServiceWorker() {
