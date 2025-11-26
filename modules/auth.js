@@ -300,21 +300,39 @@ class AuthModule {
         this.showAuthForm('signin');
     }
 
-    updateUIForAuthState(isSignedIn) {
-        console.log('🔄 Updating UI for auth state:', isSignedIn);
-        
-        const authForms = document.querySelector('.auth-forms');
-        const appContent = document.querySelector('.app-content');
-        
-        if (authForms) {
-            authForms.style.display = isSignedIn ? 'none' : 'block';
-        }
-        
-        if (appContent) {
-            appContent.style.display = isSignedIn ? 'block' : 'none';
-        }
+    // In modules/auth.js - UPDATE THIS METHOD
+updateUIForAuthState(isSignedIn) {
+    console.log('🔄 Updating UI for auth state:', isSignedIn);
+    
+    const authForms = document.querySelector('.auth-forms');
+    const appContainer = document.getElementById('app-container');
+    
+    if (authForms) {
+        authForms.style.display = isSignedIn ? 'none' : 'block';
+        console.log('Auth forms display:', authForms.style.display);
     }
-
+    
+    if (appContainer) {
+        if (isSignedIn) {
+            appContainer.style.display = 'block';
+            appContainer.classList.remove('hidden');
+        } else {
+            appContainer.style.display = 'none';
+            appContainer.classList.add('hidden');
+        }
+        console.log('App container display:', appContainer.style.display);
+    }
+    
+    // Also update main content areas
+    const mainContent = document.querySelector('main');
+    const header = document.querySelector('header');
+    const nav = document.querySelector('nav');
+    
+    if (mainContent) mainContent.style.display = isSignedIn ? 'block' : 'none';
+    if (header) header.style.display = isSignedIn ? 'block' : 'none';
+    if (nav) nav.style.display = isSignedIn ? 'block' : 'none';
+}
+    
     showAuthForm(formName) {
         document.querySelectorAll('.auth-form').forEach(form => {
             form.classList.remove('active');
