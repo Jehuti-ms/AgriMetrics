@@ -1,4 +1,4 @@
-// app.js - Fixed sidebar handling
+// app.js - Updated for your Firebase setup
 console.log('🚜 Initializing Farm Management PWA...');
 
 class FarmManagementApp {
@@ -16,37 +16,34 @@ class FarmManagementApp {
 
     checkAuthAndLoad() {
         const isAuthenticated = localStorage.getItem('farm-authenticated') === 'true';
+        console.log('Authentication check:', isAuthenticated);
         
         if (isAuthenticated) {
-            this.showSidebar();
+            this.showApp();
             this.loadModule('dashboard');
         } else {
-            this.hideSidebar();
-            this.loadModule('auth');
+            this.showAuth();
         }
     }
 
-    showSidebar() {
-        const sidebar = document.querySelector('.sidebar');
-        const mainContent = document.querySelector('.main-content');
-        if (sidebar) {
-            sidebar.style.display = 'block';
-            sidebar.style.visibility = 'visible';
-        }
-        if (mainContent) mainContent.style.marginLeft = '260px';
+    showApp() {
+        const appContainer = document.getElementById('app-container');
+        const authContainer = document.getElementById('auth-container');
+        
+        if (appContainer) appContainer.classList.remove('hidden');
+        if (authContainer) authContainer.classList.add('hidden');
     }
 
-    hideSidebar() {
-        const sidebar = document.querySelector('.sidebar');
-        const mainContent = document.querySelector('.main-content');
-        if (sidebar) {
-            sidebar.style.display = 'none';
-            sidebar.style.visibility = 'hidden';
-        }
-        if (mainContent) mainContent.style.marginLeft = '0';
+    showAuth() {
+        const appContainer = document.getElementById('app-container');
+        const authContainer = document.getElementById('auth-container');
+        
+        if (appContainer) appContainer.classList.add('hidden');
+        if (authContainer) authContainer.classList.remove('hidden');
     }
 
     setupNavigation() {
+        // Your existing navigation setup
         document.addEventListener('click', (e) => {
             const navItem = e.target.closest('.nav-item');
             if (navItem) {
@@ -55,55 +52,51 @@ class FarmManagementApp {
                 
                 if (localStorage.getItem('farm-authenticated') === 'true') {
                     this.loadModule(moduleName);
-                } else {
-                    this.hideSidebar();
-                    this.loadModule('auth');
                 }
             }
         });
     }
 
     async loadModule(moduleName) {
+        console.log('Loading module:', moduleName);
+        
+        if (!window.FarmModules || !(window.FarmModules instanceof Map)) {
+            console.error('❌ FarmModules registry not available');
+            return;
+        }
+        
         try {
-            // Don't load modules if not authenticated (except auth)
-            if (moduleName !== 'auth' && localStorage.getItem('farm-authenticated') !== 'true') {
-                this.hideSidebar();
-                this.loadModule('auth');
+            // Don't load modules if not authenticated
+            if (localStorage.getItem('farm-authenticated') !== 'true') {
+                console.log('Not authenticated, showing auth');
+                this.showAuth();
                 return;
             }
 
             // Unload current module
             if (this.currentModule && this.currentModule.cleanup) {
+                console.log('Cleaning up current module');
                 await this.currentModule.cleanup();
             }
 
             // Load new module
-            const module = window.FarmModules?.get(moduleName);
+            const module = window.FarmModules.get(moduleName);
             if (module) {
+                console.log('Module found, initializing...');
                 if (!module.initialized) {
                     await module.initialize();
                 }
                 this.currentModule = module;
                 
-                // Update UI
-                if (moduleName !== 'auth') {
-                    this.updateActiveNav(moduleName);
-                    this.updatePageTitle(moduleName);
-                    this.showSidebar();
-                } else {
-                    this.hideSidebar();
-                }
+                this.updateActiveNav(moduleName);
+                this.updatePageTitle(moduleName);
                 
                 console.log(`✅ Loaded module: ${moduleName}`);
             } else {
                 console.error(`❌ Module not found: ${moduleName}`);
-                this.hideSidebar();
-                this.loadModule('auth');
             }
         } catch (error) {
             console.error(`❌ Error loading module ${moduleName}:`, error);
-            this.hideSidebar();
-            this.loadModule('auth');
         }
     }
 
@@ -126,17 +119,25 @@ class FarmManagementApp {
         document.title = `${titles[moduleName] || 'Farm Management'} - FarmPWA`;
     }
 
-    // Method for profile module to call when logging out
     handleLogout() {
-        localStorage.removeItem('farm-authenticated');
-        localStorage.removeItem('farm-username');
-        this.hideSidebar();
-        this.loadModule('auth');
+        console.log('App: Handling logout');
+        
+        // Call auth module logout
+        const authModule = window.FarmModules?.get('auth');
+        if (authModule && authModule.logout) {
+            authModule.logout();
+        } else {
+            // Fallback
+            localStorage.removeItem('farm-authenticated');
+            localStorage.removeItem('farm-user-email');
+            this.showAuth();
+        }
     }
 }
 
-// Make logout available globally for profile module
+// Make logout available globally
 window.handleAppLogout = function() {
+    console.log('Global logout function called');
     if (window.farmApp && window.farmApp.handleLogout) {
         window.farmApp.handleLogout();
     }
@@ -144,5 +145,6 @@ window.handleAppLogout = function() {
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing app...');
     window.farmApp = new FarmManagementApp();
 });
