@@ -3,50 +3,12 @@ console.log('Loading auth module...');
 
 class AuthModule {
     constructor() {
-        this.authInitialized = false;
         this.init();
     }
 
     init() {
         console.log('✅ Auth module initialized');
         this.setupAuthForms();
-        this.waitForFirebase();
-    }
-
-    waitForFirebase() {
-        const checkFirebase = () => {
-            if (window.authManager && window.authManager.auth) {
-                this.setupAuthStateListener();
-                this.authInitialized = true;
-            } else {
-                console.log('⏳ Waiting for Firebase auth...');
-                setTimeout(checkFirebase, 100);
-            }
-        };
-        checkFirebase();
-    }
-
-    setupAuthStateListener() {
-        if (!window.authManager || !window.authManager.auth) {
-            console.error('Firebase Auth not available for state listener');
-            return;
-        }
-        
-        try {
-            console.log('🔐 Setting up auth state listener...');
-            window.authManager.auth.onAuthStateChanged((user) => {
-                console.log('🔄 Auth state changed:', user ? 'User signed in' : 'User signed out');
-                if (user) {
-                    this.onUserSignedIn(user);
-                } else {
-                    this.onUserSignedOut();
-                }
-            }, (error) => {
-                console.error('Auth state listener error:', error);
-            });
-        } catch (error) {
-            console.error('Failed to setup auth state listener:', error);
-        }
     }
 
     setupAuthForms() {
@@ -60,6 +22,7 @@ class AuthModule {
     }
 
     attachFormHandlers() {
+        // Sign up form
         const signupForm = document.getElementById('signup-form-element');
         if (signupForm) {
             signupForm.addEventListener('submit', async (e) => {
@@ -68,6 +31,7 @@ class AuthModule {
             });
         }
 
+        // Sign in form
         const signinForm = document.getElementById('signin-form-element');
         if (signinForm) {
             signinForm.addEventListener('submit', async (e) => {
@@ -76,6 +40,7 @@ class AuthModule {
             });
         }
 
+        // Forgot password form
         const forgotForm = document.getElementById('forgot-password-form-element');
         if (forgotForm) {
             forgotForm.addEventListener('submit', async (e) => {
@@ -84,6 +49,7 @@ class AuthModule {
             });
         }
 
+        // Google sign in
         const googleBtn = document.getElementById('google-signin');
         if (googleBtn) {
             googleBtn.addEventListener('click', async (e) => {
@@ -92,18 +58,11 @@ class AuthModule {
             });
         }
 
-        const signoutBtn = document.getElementById('signout-btn');
-        if (signoutBtn) {
-            signoutBtn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                await this.handleSignOut();
-            });
-        }
-
         this.setupAuthListeners();
     }
 
     setupAuthListeners() {
+        // Form switching
         const showSignup = document.getElementById('show-signup');
         if (showSignup) {
             showSignup.addEventListener('click', (e) => {
@@ -167,18 +126,15 @@ class AuthModule {
             const result = await window.authManager?.signUp(email, password, {
                 name: name,
                 email: email,
-                farmName: farmName,
-                createdAt: new Date().toISOString()
+                farmName: farmName
             });
 
             if (result?.success) {
                 this.showNotification('Account created successfully!', 'success');
-                form.reset();
             } else {
                 this.showNotification(result?.error || 'Error creating account', 'error');
             }
         } catch (error) {
-            console.error('Sign up error:', error);
             this.showNotification('Error creating account', 'error');
         } finally {
             if (submitBtn) {
@@ -206,12 +162,10 @@ class AuthModule {
 
             if (result?.success) {
                 this.showNotification('Welcome back!', 'success');
-                form.reset();
             } else {
                 this.showNotification(result?.error || 'Error signing in', 'error');
             }
         } catch (error) {
-            console.error('Sign in error:', error);
             this.showNotification('Error signing in', 'error');
         } finally {
             if (submitBtn) {
@@ -238,7 +192,6 @@ class AuthModule {
                 this.showNotification(result?.error || 'Error signing in with Google', 'error');
             }
         } catch (error) {
-            console.error('Google sign in error:', error);
             this.showNotification('Error signing in with Google', 'error');
         } finally {
             button.innerHTML = originalText;
@@ -262,14 +215,12 @@ class AuthModule {
             const result = await window.authManager?.resetPassword(email);
 
             if (result?.success) {
-                this.showNotification('Password reset email sent! Check your inbox.', 'success');
+                this.showNotification('Password reset email sent!', 'success');
                 this.showAuthForm('signin');
-                form.reset();
             } else {
                 this.showNotification(result?.error || 'Error sending reset email', 'error');
             }
         } catch (error) {
-            console.error('Forgot password error:', error);
             this.showNotification('Error sending reset email', 'error');
         } finally {
             if (submitBtn) {
@@ -279,60 +230,6 @@ class AuthModule {
         }
     }
 
-    async handleSignOut() {
-        try {
-            await window.authManager?.auth.signOut();
-            this.showNotification('Signed out successfully', 'success');
-        } catch (error) {
-            console.error('Sign out error:', error);
-            this.showNotification('Error signing out', 'error');
-        }
-    }
-
-    onUserSignedIn(user) {
-        console.log('👤 User signed in:', user.email);
-        this.updateUIForAuthState(true);
-    }
-
-    onUserSignedOut() {
-        console.log('👤 User signed out');
-        this.updateUIForAuthState(false);
-        this.showAuthForm('signin');
-    }
-
-    // In modules/auth.js - UPDATE THIS METHOD
-updateUIForAuthState(isSignedIn) {
-    console.log('🔄 Updating UI for auth state:', isSignedIn);
-    
-    const authForms = document.querySelector('.auth-forms');
-    const appContainer = document.getElementById('app-container');
-    
-    if (authForms) {
-        authForms.style.display = isSignedIn ? 'none' : 'block';
-        console.log('Auth forms display:', authForms.style.display);
-    }
-    
-    if (appContainer) {
-        if (isSignedIn) {
-            appContainer.style.display = 'block';
-            appContainer.classList.remove('hidden');
-        } else {
-            appContainer.style.display = 'none';
-            appContainer.classList.add('hidden');
-        }
-        console.log('App container display:', appContainer.style.display);
-    }
-    
-    // Also update main content areas
-    const mainContent = document.querySelector('main');
-    const header = document.querySelector('header');
-    const nav = document.querySelector('nav');
-    
-    if (mainContent) mainContent.style.display = isSignedIn ? 'block' : 'none';
-    if (header) header.style.display = isSignedIn ? 'block' : 'none';
-    if (nav) nav.style.display = isSignedIn ? 'block' : 'none';
-}
-    
     showAuthForm(formName) {
         document.querySelectorAll('.auth-form').forEach(form => {
             form.classList.remove('active');
@@ -348,18 +245,9 @@ updateUIForAuthState(isSignedIn) {
         if (window.coreModule && window.coreModule.showNotification) {
             window.coreModule.showNotification(message, type);
         } else {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
+            alert(message);
         }
     }
 }
 
-setTimeout(() => {
-    window.authModule = new AuthModule();
-}, 500);
+window.authModule = new AuthModule();
