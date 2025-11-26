@@ -1,5 +1,5 @@
-// sw.js - Update with correct paths for modules folder
-const CACHE_NAME = 'agrimetrics-v1.4';
+// sw.js - Update with correct paths
+const CACHE_NAME = 'agrimetrics-v1.5';
 const urlsToCache = [
   '/AgriMetrics/',
   '/AgriMetrics/index.html',
@@ -10,7 +10,7 @@ const urlsToCache = [
   '/AgriMetrics/firebase/firebase-auth.js',
   '/AgriMetrics/firebase/firebase-firestore.js',
   
-  // ALL modules from modules folder
+  // All modules from modules folder
   '/AgriMetrics/modules/framework.js',
   '/AgriMetrics/modules/core.js',
   '/AgriMetrics/modules/auth.js',
@@ -23,7 +23,9 @@ const urlsToCache = [
   '/AgriMetrics/modules/sales-record.js',
   '/AgriMetrics/modules/reports.js',
   '/AgriMetrics/modules/profile.js',
-  '/AgriMetrics/modules/app.js',
+  
+  // app.js from root
+  '/AgriMetrics/app.js',
   
   // Manifest
   '/AgriMetrics/manifest.json'
