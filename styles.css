@@ -1010,3 +1010,64 @@ body {
 header, .top-nav {
     transform: none !important;
 }
+
+/*==================================
+  Income & Expenses Module Styles
+===================================*/
+
+/* Income & Expenses Specific Styles */
+.income-expenses-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.transaction-form-container {
+  background: var(--glass-bg);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.transaction-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.transaction-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: var(--glass-bg);
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+}
+
+.transaction-amount.income {
+  color: var(--success-color);
+  font-weight: bold;
+}
+
+.transaction-amount.expense {
+  color: var(--error-color);
+  font-weight: bold;
+}
+
+.type-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.type-badge.income {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.type-badge.expense {
+  background: #fef2f2;
+  color: #991b1b;
+}
