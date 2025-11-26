@@ -1,285 +1,144 @@
 // modules/broiler-mortality.js
 console.log('Loading broiler-mortality module...');
 
-class BroilerMortalityModule {
-    constructor() {
-        this.name = 'broiler-mortality';
-        this.initialized = false;
-        this.mortalityData = [];
-        this.container = null;
-    }
+const BroilerMortalityModule = {
+    name: 'broiler-mortality',
+    initialized: false,
+    mortalityData: [],
 
-    async initialize() {
+    initialize() {
         console.log('🐔 Initializing broiler mortality tracking...');
-        await this.loadMortalityData();
-        this.render();
+        this.loadMortalityData();
+        this.renderMortality();
         this.initialized = true;
         return true;
-    }
+    },
 
-    async loadMortalityData() {
-        try {
-            if (window.db) {
-                this.mortalityData = await window.db.getAll('broiler-mortality');
-            } else {
-                const savedData = localStorage.getItem('farm-broiler-mortality');
-                this.mortalityData = savedData ? JSON.parse(savedData) : [];
-            }
-        } catch (error) {
-            console.error('Error loading mortality data:', error);
-            this.mortalityData = [];
+    loadMortalityData() {
+        // Try to load from localStorage
+        const savedData = localStorage.getItem('farm-mortality-data');
+        if (savedData) {
+            this.mortalityData = JSON.parse(savedData);
         }
-    }
+    },
 
-    async saveMortalityData() {
-        try {
-            if (window.db) {
-                await window.db.clear('broiler-mortality');
-                for (const record of this.mortalityData) {
-                    await window.db.put('broiler-mortality', record);
-                }
-            } else {
-                localStorage.setItem('farm-broiler-mortality', JSON.stringify(this.mortalityData));
-            }
-        } catch (error) {
-            console.error('Error saving mortality data:', error);
-        }
-    }
+    saveMortalityData() {
+        localStorage.setItem('farm-mortality-data', JSON.stringify(this.mortalityData));
+    },
 
-    async addMortalityRecord(recordData) {
+    addMortalityRecord(recordData) {
         const record = {
-            id: `mortality_${Date.now()}`,
-            timestamp: new Date().toISOString(),
-            date: new Date().toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            }),
+            id: Date.now().toString(),
+            date: new Date().toISOString(),
             batch: recordData.batch,
             house: recordData.house,
             quantity: parseInt(recordData.quantity),
             cause: recordData.cause,
             age: parseInt(recordData.age),
-            notes: recordData.notes || '',
-            totalBirds: parseInt(recordData.totalBirds) || 0
+            notes: recordData.notes || ''
         };
-
+        
         this.mortalityData.unshift(record);
-        await this.saveMortalityData();
-        await this.updateDisplay();
-        this.showToast('Mortality record added!', 'success');
-    }
+        this.saveMortalityData();
+        this.updateMortalityDisplay();
+        this.showNotification('Mortality record added successfully!', 'success');
+    },
 
-    async deleteRecord(recordId) {
+    deleteMortalityRecord(recordId) {
         this.mortalityData = this.mortalityData.filter(record => record.id !== recordId);
-        await this.saveMortalityData();
-        await this.updateDisplay();
-        this.showToast('Record deleted!', 'success');
-    }
+        this.saveMortalityData();
+        this.updateMortalityDisplay();
+        this.showNotification('Mortality record deleted!', 'success');
+    },
 
-    calculateStats() {
+    calculateMortalityStats() {
+        const totalMortality = this.mortalityData.reduce((sum, record) => sum + record.quantity, 0);
         const today = new Date().toDateString();
-        const todayRecords = this.mortalityData.filter(record => 
-            new Date(record.timestamp).toDateString() === today
-        );
-        
-        const totalToday = todayRecords.reduce((sum, record) => sum + record.quantity, 0);
-        const totalAllTime = this.mortalityData.reduce((sum, record) => sum + record.quantity, 0);
-        
-        // Calculate mortality rate if we have total birds data
-        const recordsWithTotal = this.mortalityData.filter(record => record.totalBirds > 0);
-        const avgMortalityRate = recordsWithTotal.length > 0 
-            ? (recordsWithTotal.reduce((sum, record) => sum + (record.quantity / record.totalBirds * 100), 0) / recordsWithTotal.length).toFixed(2)
-            : 0;
+        const todayMortality = this.mortalityData.filter(record => 
+            new Date(record.date).toDateString() === today
+        ).reduce((sum, record) => sum + record.quantity, 0);
+
+        // Calculate by cause
+        const causeBreakdown = {};
+        this.mortalityData.forEach(record => {
+            causeBreakdown[record.cause] = (causeBreakdown[record.cause] || 0) + record.quantity;
+        });
 
         return {
-            today: totalToday,
-            allTime: totalAllTime,
-            mortalityRate: avgMortalityRate,
-            todayRecords: todayRecords.length
+            totalMortality,
+            todayMortality,
+            totalRecords: this.mortalityData.length,
+            causeBreakdown
         };
-    }
+    },
 
-    render() {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
-
-        contentArea.innerHTML = this.getTemplate();
-        this.container = contentArea.querySelector('.broiler-mortality-container');
-        this.setupEventListeners();
-        this.updateDisplay();
-    }
-
-    getTemplate() {
-        return `
-            <div class="broiler-mortality-container">
-                <!-- Header -->
-                <div class="module-header">
-                    <div class="header-content">
-                        <h1 class="header-title">Broiler Mortality</h1>
-                        <p class="header-subtitle">Track and manage bird mortality</p>
-                    </div>
-                    <div class="header-actions">
-                        <button class="btn-primary" id="add-mortality-btn">
-                            <i class="icon">➕</i>
-                            Add Record
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Stats Grid -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon today">📅</div>
-                        <div class="stat-content">
-                            <div class="stat-value" id="today-mortality">0</div>
-                            <div class="stat-label">Today's Loss</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon total">🐔</div>
-                        <div class="stat-content">
-                            <div class="stat-value" id="total-mortality">0</div>
-                            <div class="stat-label">Total Loss</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon rate">📊</div>
-                        <div class="stat-content">
-                            <div class="stat-value" id="mortality-rate">0%</div>
-                            <div class="stat-label">Avg. Rate</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon records">📝</div>
-                        <div class="stat-content">
-                            <div class="stat-value" id="today-records">0</div>
-                            <div class="stat-label">Today's Records</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Actions Bar -->
-                <div class="actions-bar">
-                    <div class="search-box">
-                        <i class="icon">🔍</i>
-                        <input type="text" id="mortality-search" placeholder="Search records...">
-                    </div>
-                    <div class="action-buttons">
-                        <button class="btn-secondary" id="export-mortality-btn">
-                            <i class="icon">📤</i>
-                            Export
-                        </button>
-                        <button class="btn-secondary" id="mortality-report-btn">
-                            <i class="icon">📈</i>
-                            Report
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Mortality Records Table -->
-                <div class="table-container">
-                    <div class="table-header">
-                        <h3>Recent Mortality Records</h3>
-                        <div class="table-actions">
-                            <button class="btn-text" id="filter-mortality-btn">
-                                <i class="icon">🔧</i>
-                                Filter
-                            </button>
-                        </div>
-                    </div>
-                    <div class="table-content" id="mortality-table-content">
-                        <!-- Records will be rendered here -->
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    async updateDisplay() {
-        if (!this.container) return;
-
-        const stats = this.calculateStats();
+    updateMortalityDisplay() {
+        const stats = this.calculateMortalityStats();
         
-        // Update stats
-        this.updateElement('#today-mortality', stats.today);
-        this.updateElement('#total-mortality', stats.allTime);
-        this.updateElement('#mortality-rate', `${stats.mortalityRate}%`);
-        this.updateElement('#today-records', stats.todayRecords);
+        // Update summary cards
+        const totalMortalityEl = document.querySelector('.mortality-summary-card:nth-child(1) div:nth-child(3)');
+        const todayMortalityEl = document.querySelector('.mortality-summary-card:nth-child(2) div:nth-child(3)');
+        const totalRecordsEl = document.querySelector('.mortality-summary-card:nth-child(3) div:nth-child(3)');
+        
+        if (totalMortalityEl) totalMortalityEl.textContent = stats.totalMortality;
+        if (todayMortalityEl) todayMortalityEl.textContent = stats.todayMortality;
+        if (totalRecordsEl) totalRecordsEl.textContent = stats.totalRecords;
 
-        // Update table
-        await this.renderMortalityTable();
-    }
+        // Update recent records table
+        this.renderMortalityTable();
+    },
 
-    updateElement(selector, content) {
-        const element = this.container?.querySelector(selector);
-        if (element) element.textContent = content;
-    }
-
-    async renderMortalityTable() {
-        const tableContent = this.container?.querySelector('#mortality-table-content');
-        if (!tableContent) return;
+    renderMortalityTable() {
+        const mortalityContainer = document.querySelector('.mortality-container');
+        if (!mortalityContainer) return;
 
         if (this.mortalityData.length === 0) {
-            tableContent.innerHTML = this.getEmptyState();
+            mortalityContainer.innerHTML = `
+                <div style="text-align: center; color: #666; padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">🐔</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No mortality records yet</div>
+                    <div style="font-size: 14px; color: #999;">Record your first mortality incident</div>
+                </div>
+            `;
             return;
         }
 
-        tableContent.innerHTML = this.getMortalityTable();
-        this.setupTableEventListeners();
-    }
-
-    getEmptyState() {
-        return `
-            <div class="empty-state">
-                <div class="empty-icon">🐔</div>
-                <h3>No Mortality Records</h3>
-                <p>Start tracking broiler mortality to monitor flock health</p>
-                <button class="btn-primary" id="add-first-record-btn">
-                    Add First Record
-                </button>
-            </div>
-        `;
-    }
-
-    getMortalityTable() {
-        const recentRecords = this.mortalityData.slice(0, 20);
+        const recentRecords = this.mortalityData.slice(0, 10);
         
-        return `
-            <div class="table-wrapper">
-                <table class="data-table">
+        mortalityContainer.innerHTML = `
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
                     <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Batch</th>
-                            <th>House</th>
-                            <th class="text-right">Age (days)</th>
-                            <th class="text-right">Quantity</th>
-                            <th>Cause</th>
-                            <th class="text-center">Actions</th>
+                        <tr style="border-bottom: 1px solid rgba(0,0,0,0.1);">
+                            <th style="text-align: left; padding: 12px 16px; font-weight: 600; color: #666;">Date</th>
+                            <th style="text-align: left; padding: 12px 16px; font-weight: 600; color: #666;">Batch</th>
+                            <th style="text-align: left; padding: 12px 16px; font-weight: 600; color: #666;">House</th>
+                            <th style="text-align: right; padding: 12px 16px; font-weight: 600; color: #666;">Qty</th>
+                            <th style="text-align: left; padding: 12px 16px; font-weight: 600; color: #666;">Cause</th>
+                            <th style="text-align: right; padding: 12px 16px; font-weight: 600; color: #666;">Age (days)</th>
+                            <th style="text-align: center; padding: 12px 16px; font-weight: 600; color: #666;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${recentRecords.map(record => `
-                            <tr class="mortality-row" data-record-id="${record.id}">
-                                <td>
-                                    <div class="date-primary">${record.date}</div>
-                                </td>
-                                <td class="batch-cell">${record.batch}</td>
-                                <td class="house-cell">${record.house}</td>
-                                <td class="text-right">${record.age}</td>
-                                <td class="text-right">
-                                    <div class="quantity ${record.quantity > 10 ? 'high-mortality' : ''}">${record.quantity}</div>
-                                </td>
-                                <td class="cause-cell">
-                                    <span class="cause-tag cause-${record.cause.toLowerCase().replace(' ', '-')}">${record.cause}</span>
-                                </td>
-                                <td class="text-center">
-                                    <div class="action-buttons">
-                                        <button class="btn-icon danger delete-record-btn" data-record-id="${record.id}" title="Delete record">
-                                            <i class="icon">🗑️</i>
-                                        </button>
-                                    </div>
+                            <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                                <td style="padding: 12px 16px; color: #666;">${new Date(record.date).toLocaleDateString()}</td>
+                                <td style="padding: 12px 16px; font-weight: 500;">${record.batch}</td>
+                                <td style="padding: 12px 16px; color: #666;">${record.house}</td>
+                                <td style="padding: 12px 16px; text-align: right; color: #666;">${record.quantity}</td>
+                                <td style="padding: 12px 16px; color: #666;">${record.cause}</td>
+                                <td style="padding: 12px 16px; text-align: right; color: #666;">${record.age}</td>
+                                <td style="padding: 12px 16px; text-align: center;">
+                                    <button class="delete-mortality-btn" data-record-id="${record.id}" style="
+                                        background: rgba(239, 68, 68, 0.1);
+                                        border: 1px solid rgba(239, 68, 68, 0.2);
+                                        border-radius: 8px;
+                                        padding: 6px 12px;
+                                        color: #ef4444;
+                                        font-size: 12px;
+                                        cursor: pointer;
+                                        transition: all 0.2s ease;
+                                    ">Delete</button>
                                 </td>
                             </tr>
                         `).join('')}
@@ -287,80 +146,120 @@ class BroilerMortalityModule {
                 </table>
             </div>
         `;
-    }
 
-    setupEventListeners() {
-        if (!this.container) return;
+        this.setupMortalityTableListeners();
+    },
 
-        // Add record button
-        this.container.querySelector('#add-mortality-btn')?.addEventListener('click', () => {
-            this.showAddRecordModal();
-        });
-
-        // Add first record button (empty state)
-        this.container.querySelector('#add-first-record-btn')?.addEventListener('click', () => {
-            this.showAddRecordModal();
-        });
-
-        // Export button
-        this.container.querySelector('#export-mortality-btn')?.addEventListener('click', () => {
-            this.exportMortalityData();
-        });
-
-        // Report button
-        this.container.querySelector('#mortality-report-btn')?.addEventListener('click', () => {
-            this.generateMortalityReport();
-        });
-
-        // Search functionality
-        const searchInput = this.container.querySelector('#mortality-search');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                this.filterRecords(e.target.value);
-            });
-        }
-    }
-
-    setupTableEventListeners() {
-        // Delete record buttons
-        this.container?.querySelectorAll('.delete-record-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const recordId = e.currentTarget.getAttribute('data-record-id');
-                this.confirmDeleteRecord(recordId);
+    setupMortalityTableListeners() {
+        const deleteButtons = document.querySelectorAll('.delete-mortality-btn');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const recordId = e.target.getAttribute('data-record-id');
+                if (confirm('Are you sure you want to delete this mortality record?')) {
+                    this.deleteMortalityRecord(recordId);
+                }
             });
         });
-    }
+    },
 
-    showAddRecordModal() {
+    showAddMortalityModal() {
         const modal = document.createElement('div');
-        modal.className = 'modal-overlay';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        `;
+
         modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Add Mortality Record</h3>
-                    <button class="modal-close">&times;</button>
+            <div style="
+                background: white;
+                border-radius: 16px;
+                padding: 30px;
+                width: 90%;
+                max-width: 500px;
+                max-height: 90vh;
+                overflow-y: auto;
+            ">
+                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 24px;">
+                    <h3 style="font-size: 20px; font-weight: 600; color: #1a1a1a;">Add Mortality Record</h3>
+                    <button class="close-modal" style="
+                        background: none;
+                        border: none;
+                        font-size: 24px;
+                        cursor: pointer;
+                        color: #666;
+                    ">×</button>
                 </div>
-                <form id="add-mortality-form" class="modal-form">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="mortality-batch">Batch ID *</label>
-                            <input type="text" id="mortality-batch" name="batch" required>
+
+                <form id="add-mortality-form">
+                    <div style="display: grid; gap: 16px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Batch ID *</label>
+                            <input type="text" name="batch" required style="
+                                width: 100%;
+                                padding: 12px 16px;
+                                border: 1px solid #d1d5db;
+                                border-radius: 8px;
+                                font-size: 14px;
+                                box-sizing: border-box;
+                            " placeholder="Enter batch ID">
                         </div>
-                        <div class="form-group">
-                            <label for="mortality-house">House Number *</label>
-                            <input type="text" id="mortality-house" name="house" required>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">House Number *</label>
+                            <input type="text" name="house" required style="
+                                width: 100%;
+                                padding: 12px 16px;
+                                border: 1px solid #d1d5db;
+                                border-radius: 8px;
+                                font-size: 14px;
+                                box-sizing: border-box;
+                            " placeholder="Enter house number">
                         </div>
-                        <div class="form-group">
-                            <label for="mortality-quantity">Quantity *</label>
-                            <input type="number" id="mortality-quantity" name="quantity" min="1" required>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Quantity *</label>
+                                <input type="number" name="quantity" min="1" required style="
+                                    width: 100%;
+                                    padding: 12px 16px;
+                                    border: 1px solid #d1d5db;
+                                    border-radius: 8px;
+                                    font-size: 14px;
+                                    box-sizing: border-box;
+                                " placeholder="0">
+                            </div>
+
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Age (days) *</label>
+                                <input type="number" name="age" min="1" required style="
+                                    width: 100%;
+                                    padding: 12px 16px;
+                                    border: 1px solid #d1d5db;
+                                    border-radius: 8px;
+                                    font-size: 14px;
+                                    box-sizing: border-box;
+                                " placeholder="0">
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="mortality-age">Age (days) *</label>
-                            <input type="number" id="mortality-age" name="age" min="1" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="mortality-cause">Cause of Death *</label>
-                            <select id="mortality-cause" name="cause" required>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Cause of Death *</label>
+                            <select name="cause" required style="
+                                width: 100%;
+                                padding: 12px 16px;
+                                border: 1px solid #d1d5db;
+                                border-radius: 8px;
+                                font-size: 14px;
+                                box-sizing: border-box;
+                            ">
                                 <option value="">Select cause...</option>
                                 <option value="Disease">Disease</option>
                                 <option value="Heat Stress">Heat Stress</option>
@@ -370,18 +269,47 @@ class BroilerMortalityModule {
                                 <option value="Other">Other</option>
                             </select>
                         </div>
-                        <div class="form-group full-width">
-                            <label for="mortality-notes">Notes</label>
-                            <textarea id="mortality-notes" name="notes" rows="3" placeholder="Additional details..."></textarea>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Notes</label>
+                            <textarea name="notes" style="
+                                width: 100%;
+                                padding: 12px 16px;
+                                border: 1px solid #d1d5db;
+                                border-radius: 8px;
+                                font-size: 14px;
+                                box-sizing: border-box;
+                                resize: vertical;
+                                min-height: 80px;
+                            " placeholder="Additional details..."></textarea>
                         </div>
-                        <div class="form-group">
-                            <label for="mortality-total-birds">Total Birds in Batch (optional)</label>
-                            <input type="number" id="mortality-total-birds" name="totalBirds" min="0">
+
+                        <div style="display: flex; gap: 12px; margin-top: 24px;">
+                            <button type="submit" style="
+                                flex: 1;
+                                background: #10b981;
+                                color: white;
+                                border: none;
+                                border-radius: 8px;
+                                padding: 12px 24px;
+                                font-size: 14px;
+                                font-weight: 600;
+                                cursor: pointer;
+                                transition: background 0.2s ease;
+                            ">Add Record</button>
+                            <button type="button" class="cancel-modal" style="
+                                flex: 1;
+                                background: #6b7280;
+                                color: white;
+                                border: none;
+                                border-radius: 8px;
+                                padding: 12px 24px;
+                                font-size: 14px;
+                                font-weight: 600;
+                                cursor: pointer;
+                                transition: background 0.2s ease;
+                            ">Cancel</button>
                         </div>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn-secondary cancel-btn">Cancel</button>
-                        <button type="submit" class="btn-primary">Add Record</button>
                     </div>
                 </form>
             </div>
@@ -389,123 +317,270 @@ class BroilerMortalityModule {
 
         document.body.appendChild(modal);
 
-        // Modal event listeners
+        // Event listeners for modal
         const closeModal = () => document.body.removeChild(modal);
         
-        modal.querySelector('.modal-close').addEventListener('click', closeModal);
-        modal.querySelector('.cancel-btn').addEventListener('click', closeModal);
+        modal.querySelector('.close-modal').addEventListener('click', closeModal);
+        modal.querySelector('.cancel-modal').addEventListener('click', closeModal);
         modal.addEventListener('click', (e) => {
             if (e.target === modal) closeModal();
         });
 
         // Form submission
-        modal.querySelector('#add-mortality-form').addEventListener('submit', async (e) => {
+        modal.querySelector('#add-mortality-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
-            const recordData = Object.fromEntries(formData);
+            const recordData = {
+                batch: formData.get('batch'),
+                house: formData.get('house'),
+                quantity: formData.get('quantity'),
+                age: formData.get('age'),
+                cause: formData.get('cause'),
+                notes: formData.get('notes')
+            };
             
-            await this.addMortalityRecord(recordData);
+            this.addMortalityRecord(recordData);
             closeModal();
         });
-    }
+    },
 
-    confirmDeleteRecord(recordId) {
-        if (confirm('Are you sure you want to delete this mortality record?')) {
-            this.deleteRecord(recordId);
-        }
-    }
+    renderMortality() {
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
 
-    filterRecords(searchTerm) {
-        const rows = this.container?.querySelectorAll('.mortality-row');
-        if (!rows) return;
+        contentArea.innerHTML = `
+            <div class="module-container" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
+                <!-- Header -->
+                <div class="module-header" style="margin-bottom: 30px;">
+                    <h1 style="color: #1a1a1a; font-size: 28px; margin-bottom: 8px;">Broiler Mortality</h1>
+                    <p style="color: #666; font-size: 16px;">Track and manage bird mortality records</p>
+                </div>
 
-        const term = searchTerm.toLowerCase();
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(term) ? '' : 'none';
-        });
-    }
+                <!-- Quick Actions -->
+                <div class="quick-actions" style="margin-bottom: 30px;">
+                    <div class="actions-grid" style="
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                        gap: 16px;
+                    ">
+                        <button class="action-btn" data-action="add-mortality" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 20px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                        ">
+                            <div style="font-size: 28px;">🐔</div>
+                            <div style="text-align: left;">
+                                <div style="font-size: 16px; font-weight: 600; color: #1a1a1a;">Add Record</div>
+                                <div style="font-size: 12px; color: #666;">Record mortality incident</div>
+                            </div>
+                        </button>
 
-    async exportMortalityData() {
-        if (this.mortalityData.length === 0) {
-            this.showToast('No mortality data to export', 'warning');
-            return;
-        }
+                        <button class="action-btn" data-action="mortality-report" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 20px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                        ">
+                            <div style="font-size: 28px;">📊</div>
+                            <div style="text-align: left;">
+                                <div style="font-size: 16px; font-weight: 600; color: #1a1a1a;">Mortality Report</div>
+                                <div style="font-size: 12px; color: #666;">Generate report</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
 
-        const csvContent = this.convertToCSV();
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `mortality-export-${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-        window.URL.revokeObjectURL(url);
+                <!-- Mortality Summary -->
+                <div class="mortality-summary" style="margin-bottom: 30px;">
+                    <div class="summary-grid" style="
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                        gap: 16px;
+                    ">
+                        <div class="mortality-summary-card" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px;
+                            text-align: center;
+                        ">
+                            <div style="font-size: 32px; color: #ef4444; margin-bottom: 12px;">🐔</div>
+                            <div style="font-size: 14px; color: #666; margin-bottom: 8px;">Total Mortality</div>
+                            <div style="font-size: 28px; font-weight: bold; color: #ef4444;">0</div>
+                        </div>
+
+                        <div class="mortality-summary-card" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px;
+                            text-align: center;
+                        ">
+                            <div style="font-size: 32px; color: #f59e0b; margin-bottom: 12px;">📅</div>
+                            <div style="font-size: 14px; color: #666; margin-bottom: 8px;">Today's Mortality</div>
+                            <div style="font-size: 28px; font-weight: bold; color: #f59e0b;">0</div>
+                        </div>
+
+                        <div class="mortality-summary-card" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px;
+                            text-align: center;
+                        ">
+                            <div style="font-size: 32px; color: #3b82f6; margin-bottom: 12px;">📝</div>
+                            <div style="font-size: 14px; color: #666; margin-bottom: 8px;">Total Records</div>
+                            <div style="font-size: 28px; font-weight: bold; color: #3b82f6;">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Mortality Records -->
+                <div class="recent-mortality">
+                    <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="color: #1a1a1a; font-size: 20px;">Recent Mortality Records</h2>
+                        <button style="
+                            background: rgba(59, 130, 246, 0.1);
+                            border: 1px solid rgba(59, 130, 246, 0.2);
+                            border-radius: 12px;
+                            padding: 10px 16px;
+                            color: #3b82f6;
+                            font-size: 14px;
+                            font-weight: 600;
+                            cursor: pointer;
+                        ">View All</button>
+                    </div>
+                    
+                    <div class="mortality-container" style="
+                        background: rgba(255, 255, 255, 0.9);
+                        backdrop-filter: blur(20px);
+                        -webkit-backdrop-filter: blur(20px);
+                        border: 1px solid rgba(0, 0, 0, 0.1);
+                        border-radius: 16px;
+                        padding: 20px;
+                    ">
+                        <div style="text-align: center; color: #666; padding: 40px 20px;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">🐔</div>
+                            <div style="font-size: 16px; margin-bottom: 8px;">No mortality records yet</div>
+                            <div style="font-size: 14px; color: #999;">Record your first mortality incident</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        this.setupMortalityEventListeners();
+        this.updateMortalityDisplay();
+    },
+
+    setupMortalityEventListeners() {
+        const actionButtons = document.querySelectorAll('.action-btn');
         
-        this.showToast('Mortality data exported!', 'success');
-    }
+        actionButtons.forEach(button => {
+            button.addEventListener('mouseenter', (e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.1)';
+            });
 
-    convertToCSV() {
-        const headers = ['Date', 'Batch', 'House', 'Age', 'Quantity', 'Cause', 'Notes', 'Total Birds'];
-        const rows = this.mortalityData.map(record => [
-            record.date,
-            record.batch,
-            record.house,
-            record.age,
-            record.quantity,
-            record.cause,
-            record.notes,
-            record.totalBirds || ''
-        ]);
+            button.addEventListener('mouseleave', (e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+            });
 
-        return [headers, ...rows].map(row => 
-            row.map(field => `"${field}"`).join(',')
-        ).join('\n');
-    }
+            // Add click handlers for action buttons
+            button.addEventListener('click', (e) => {
+                const action = e.currentTarget.getAttribute('data-action');
+                switch (action) {
+                    case 'add-mortality':
+                        this.showAddMortalityModal();
+                        break;
+                    case 'mortality-report':
+                        this.generateMortalityReport();
+                        break;
+                }
+            });
+        });
+    },
 
     generateMortalityReport() {
         if (this.mortalityData.length === 0) {
-            this.showToast('No mortality data available for report', 'warning');
+            this.showNotification('No mortality data available for report', 'info');
             return;
         }
 
-        const stats = this.calculateStats();
-        const recentRecords = this.mortalityData.slice(0, 10);
-        
+        const stats = this.calculateMortalityStats();
         const report = `
-🐔 Broiler Mortality Report - ${new Date().toLocaleDateString()}
+Broiler Mortality Report - ${new Date().toLocaleDateString()}
 
-📊 Statistics:
-• Today's Loss: ${stats.today} birds
-• Total Loss: ${stats.allTime} birds  
-• Average Mortality Rate: ${stats.mortalityRate}%
-• Records Today: ${stats.todayRecords}
+Total Mortality: ${stats.totalMortality} birds
+Today's Mortality: ${stats.todayMortality} birds
+Total Records: ${stats.totalRecords}
+
+Cause Breakdown:
+${Object.entries(stats.causeBreakdown).map(([cause, count]) => 
+    `• ${cause}: ${count} birds`
+).join('\n')}
 
 Recent Records:
-${recentRecords.map(record => 
-    `• ${record.date} - Batch ${record.batch} - ${record.quantity} birds - ${record.cause}`
+${this.mortalityData.slice(0, 10).map(record => 
+    `${new Date(record.date).toLocaleDateString()} - Batch ${record.batch} - ${record.quantity} birds - ${record.cause}`
 ).join('\n')}
-        `.trim();
+        `;
 
         alert(report);
-        this.showToast('Mortality report generated!', 'success');
-    }
+        this.showNotification('Mortality report generated!', 'success');
+    },
 
-    showToast(message, type = 'info') {
-        if (window.showToast) {
-            window.showToast(message, type);
-        } else {
-            alert(message);
-        }
-    }
+    showNotification(message, type = 'info') {
+        // Simple notification implementation
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'success' ? '#10b981' : '#3b82f6'};
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1001;
+            animation: slideIn 0.3s ease;
+        `;
+        
+        notification.textContent = message;
+        document.body.appendChild(notification);
 
-    async cleanup() {
-        this.initialized = false;
-        this.container = null;
+        setTimeout(() => {
+            if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+            }
+        }, 3000);
     }
-}
+};
 
-// Register module
 if (window.FarmModules) {
-    window.FarmModules.registerModule('broiler-mortality', new BroilerMortalityModule());
+    window.FarmModules.registerModule('broiler-mortality', BroilerMortalityModule);
     console.log('✅ Broiler Mortality module registered');
 }
