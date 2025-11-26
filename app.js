@@ -1,4 +1,4 @@
-// app.js - MOBILE-RESPONSIVE NAVIGATION
+// app.js - PROPER MOBILE PWA NAVIGATION
 console.log('Loading main app...');
 
 class FarmManagementApp {
@@ -77,210 +77,178 @@ class FarmManagementApp {
         header = document.createElement('header');
         appContainer.insertBefore(header, appContainer.firstChild);
 
-        // MOBILE-FIRST NAVIGATION
+        // MODERN PWA NAVIGATION - CLEAN AND VISIBLE
         header.innerHTML = `
             <nav class="top-nav" style="
                 position: fixed;
                 top: 0;
                 left: 0;
                 right: 0;
-                height: 60px;
-                background: white;
-                border-bottom: 2px solid #2c5aa0;
+                height: 70px;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border-bottom: 1px solid rgba(0, 0, 0, 0.1);
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                padding: 0 15px;
+                padding: 0 16px;
                 z-index: 10000;
                 box-sizing: border-box;
             ">
-                <!-- MOBILE BRAND - SIMPLIFIED -->
-                <div class="nav-brand" style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 24px; color: #2c5aa0;">🌱</span>
-                    <span style="font-size: 18px; color: #2c5aa0; font-weight: bold; white-space: nowrap;">Farm Mgmt</span>
+                <!-- CLEAN BRAND -->
+                <div class="nav-brand" style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 28px;">🌱</span>
+                    <span style="font-size: 20px; font-weight: 600; color: #1a1a1a;">Farm</span>
                 </div>
                 
-                <!-- MOBILE NAV ITEMS - ICONS ONLY ON SMALL SCREENS -->
+                <!-- CLEAN NAV ITEMS - ALWAYS VISIBLE -->
                 <div class="nav-items" style="display: flex; align-items: center; gap: 8px;">
-                    <button class="nav-item" data-view="dashboard" title="Dashboard" style="
-                        background: none;
+                    <button class="nav-item" data-view="dashboard" style="
+                        background: transparent;
                         border: none;
                         cursor: pointer;
-                        color: #2c5aa0;
-                        font-size: 20px;
+                        color: #666;
+                        font-size: 24px;
                         padding: 12px;
-                        border-radius: 8px;
-                        min-width: 44px;
-                        min-height: 44px;
+                        border-radius: 12px;
+                        min-width: 50px;
+                        min-height: 50px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                    ">
-                        <span class="nav-icon">📊</span>
-                        <span class="nav-text" style="display: none;">Home</span>
+                        transition: all 0.2s ease;
+                    " title="Dashboard">
+                        📊
                     </button>
 
-                    <button class="nav-item" data-view="income-expenses" title="Finance" style="
-                        background: none;
+                    <button class="nav-item" data-view="income-expenses" style="
+                        background: transparent;
                         border: none;
                         cursor: pointer;
-                        color: #2c5aa0;
-                        font-size: 20px;
+                        color: #666;
+                        font-size: 24px;
                         padding: 12px;
-                        border-radius: 8px;
-                        min-width: 44px;
-                        min-height: 44px;
+                        border-radius: 12px;
+                        min-width: 50px;
+                        min-height: 50px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                    ">
-                        <span class="nav-icon">💰</span>
-                        <span class="nav-text" style="display: none;">Finance</span>
+                        transition: all 0.2s ease;
+                    " title="Finance">
+                        💰
                     </button>
 
-                    <button class="nav-item" data-view="inventory-check" title="Inventory" style="
-                        background: none;
+                    <button class="nav-item" data-view="inventory-check" style="
+                        background: transparent;
                         border: none;
                         cursor: pointer;
-                        color: #2c5aa0;
-                        font-size: 20px;
+                        color: #666;
+                        font-size: 24px;
                         padding: 12px;
-                        border-radius: 8px;
-                        min-width: 44px;
-                        min-height: 44px;
+                        border-radius: 12px;
+                        min-width: 50px;
+                        min-height: 50px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                    ">
-                        <span class="nav-icon">📦</span>
-                        <span class="nav-text" style="display: none;">Inventory</span>
+                        transition: all 0.2s ease;
+                    " title="Inventory">
+                        📦
                     </button>
 
-                    <button class="nav-item" data-view="more" title="More Options" style="
-                        background: none;
+                    <button class="nav-item" data-view="more" style="
+                        background: transparent;
                         border: none;
                         cursor: pointer;
-                        color: #2c5aa0;
-                        font-size: 20px;
+                        color: #666;
+                        font-size: 24px;
                         padding: 12px;
-                        border-radius: 8px;
-                        min-width: 44px;
-                        min-height: 44px;
+                        border-radius: 12px;
+                        min-width: 50px;
+                        min-height: 50px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                    ">
-                        <span class="nav-icon">⚙️</span>
-                        <span class="nav-text" style="display: none;">More</span>
+                        transition: all 0.2s ease;
+                    " title="More">
+                        ⋮
                     </button>
                 </div>
             </nav>
 
-            <!-- MOBILE MORE MENU -->
+            <!-- MODERN MORE MENU -->
             <div id="more-menu" class="more-menu hidden" style="
                 position: fixed;
-                top: 65px;
-                right: 15px;
-                background: white;
-                border-radius: 12px;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-                padding: 15px;
+                top: 75px;
+                right: 16px;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border-radius: 16px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+                padding: 16px;
                 z-index: 10001;
-                min-width: 180px;
-                border: 2px solid #2c5aa0;
-                max-height: 70vh;
-                overflow-y: auto;
+                min-width: 200px;
+                border: 1px solid rgba(0, 0, 0, 0.1);
             ">
-                <div style="display: flex; flex-direction: column; gap: 5px;">
-                    <button class="more-menu-item" data-view="feed-record" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: none; border: none; cursor: pointer; width: 100%; text-align: left; color: #2c5aa0; font-size: 16px;">
-                        <span style="font-size: 18px;">🌾</span>
-                        <span>Feed Record</span>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <button class="more-menu-item" data-view="feed-record" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">🌾</span>
+                        <span>Feed</span>
                     </button>
-                    <button class="more-menu-item" data-view="broiler-mortality" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: none; border: none; cursor: pointer; width: 100%; text-align: left; color: #2c5aa0; font-size: 16px;">
-                        <span style="font-size: 18px;">🐔</span>
+                    <button class="more-menu-item" data-view="broiler-mortality" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">🐔</span>
                         <span>Health</span>
                     </button>
-                    <button class="more-menu-item" data-view="production" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: none; border: none; cursor: pointer; width: 100%; text-align: left; color: #2c5aa0; font-size: 16px;">
-                        <span style="font-size: 18px;">🚜</span>
+                    <button class="more-menu-item" data-view="production" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">🚜</span>
                         <span>Production</span>
                     </button>
-                    <button class="more-menu-item" data-view="sales-record" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: none; border: none; cursor: pointer; width: 100%; text-align: left; color: #2c5aa0; font-size: 16px;">
-                        <span style="font-size: 18px;">💰</span>
+                    <button class="more-menu-item" data-view="sales-record" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">💰</span>
                         <span>Sales</span>
                     </button>
-                    <button class="more-menu-item" data-view="orders" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: none; border: none; cursor: pointer; width: 100%; text-align: left; color: #2c5aa0; font-size: 16px;">
-                        <span style="font-size: 18px;">📋</span>
+                    <button class="more-menu-item" data-view="orders" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">📋</span>
                         <span>Orders</span>
                     </button>
-                    <button class="more-menu-item" data-view="reports" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: none; border: none; cursor: pointer; width: 100%; text-align: left; color: #2c5aa0; font-size: 16px;">
-                        <span style="font-size: 18px;">📈</span>
+                    <button class="more-menu-item" data-view="reports" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">📈</span>
                         <span>Reports</span>
                     </button>
-                    <button class="more-menu-item" data-view="profile" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: none; border: none; cursor: pointer; width: 100%; text-align: left; color: #2c5aa0; font-size: 16px;">
-                        <span style="font-size: 18px;">👤</span>
+                    <button class="more-menu-item" data-view="profile" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">👤</span>
                         <span>Profile</span>
                     </button>
                 </div>
             </div>
         `;
 
-        // Add responsive behavior
-        this.setupResponsiveNavigation();
-        
         // Add padding to main content
         const main = appContainer.querySelector('main');
         if (main) {
-            main.style.paddingTop = '70px';
-            main.style.minHeight = 'calc(100vh - 70px)';
+            main.style.paddingTop = '80px';
+            main.style.minHeight = 'calc(100vh - 80px)';
         }
         
-        console.log('✅ Mobile-responsive navigation created');
-    }
-
-    setupResponsiveNavigation() {
-        // Show text labels on larger screens
-        const checkScreenSize = () => {
-            const navTexts = document.querySelectorAll('.nav-text');
-            const navIcons = document.querySelectorAll('.nav-icon');
-            const brand = document.querySelector('.nav-brand span:last-child');
-            
-            if (window.innerWidth >= 768) {
-                // Desktop - show text labels
-                navTexts.forEach(text => text.style.display = 'inline');
-                navIcons.forEach(icon => {
-                    icon.style.marginRight = '5px';
-                    icon.style.fontSize = '18px';
-                });
-                if (brand) brand.textContent = 'Farm Management';
-            } else {
-                // Mobile - icons only
-                navTexts.forEach(text => text.style.display = 'none');
-                navIcons.forEach(icon => {
-                    icon.style.marginRight = '0';
-                    icon.style.fontSize = '20px';
-                });
-                if (brand) brand.textContent = 'Farm Mgmt';
-            }
-        };
-
-        // Check on load and resize
-        checkScreenSize();
-        window.addEventListener('resize', checkScreenSize);
+        console.log('✅ Modern PWA navigation created');
     }
 
     showSection(sectionId) {
         console.log(`🔄 Switching to section: ${sectionId}`);
         
-        // Update active state
+        // Clean active state
         document.querySelectorAll('.nav-item').forEach(item => {
-            item.style.background = 'none';
-            item.style.color = '#2c5aa0';
+            item.style.background = 'transparent';
+            item.style.color = '#666';
         });
         
         const activeNavItem = document.querySelector(`.nav-item[data-view="${sectionId}"]`);
         if (activeNavItem) {
-            activeNavItem.style.background = '#2c5aa0';
-            activeNavItem.style.color = 'white';
+            activeNavItem.style.background = 'rgba(59, 130, 246, 0.1)';
+            activeNavItem.style.color = '#3b82f6';
         }
 
         this.currentSection = sectionId;
@@ -311,8 +279,8 @@ class FarmManagementApp {
 
         contentArea.innerHTML = `
             <div style="padding: 20px;">
-                <h2 style="color: #2c5aa0;">${sectionTitles[sectionId] || sectionId}</h2>
-                <p>Content loading...</p>
+                <h2 style="color: #1a1a1a;">${sectionTitles[sectionId] || sectionId}</h2>
+                <p style="color: #666;">Content loading...</p>
             </div>
         `;
     }
