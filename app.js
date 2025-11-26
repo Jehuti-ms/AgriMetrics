@@ -1,24 +1,81 @@
-// app.js - COMPLETE WORKING VERSION
+// app.js - PWA OPTIMIZED VERSION
 console.log('🚜 Farm Management PWA - Starting...');
 
 class FarmPWA {
     constructor() {
+        this.currentModule = 'dashboard';
         this.init();
     }
 
     init() {
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM loaded, checking auth state...');
-            this.setupServiceWorker();
-            this.waitForAuthAndInitialize();
+        // PWA: Use DOMContentLoaded for faster startup
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.initializeApp());
+        } else {
+            this.initializeApp();
+        }
+    }
+
+    initializeApp() {
+        console.log('📱 PWA Initializing...');
+        
+        this.setupServiceWorker();
+        this.setupPWAFeatures();
+        this.waitForAuthAndInitialize();
+    }
+
+    setupPWAFeatures() {
+        // PWA: Prevent context menu on long press
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+        
+        // PWA: Handle back button (Android)
+        window.addEventListener('beforeunload', (e) => {
+            // Save state before app closes
+            this.saveAppState();
+        });
+        
+        // PWA: Handle visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                this.saveAppState();
+            }
         });
     }
 
+    saveAppState() {
+        // PWA: Save current state to localStorage
+        const state = {
+            currentModule: this.currentModule,
+            timestamp: Date.now()
+        };
+        localStorage.setItem('farmPWAState', JSON.stringify(state));
+    }
+
+    loadAppState() {
+        // PWA: Load saved state
+        try {
+            const saved = localStorage.getItem('farmPWAState');
+            if (saved) {
+                const state = JSON.parse(saved);
+                // Only restore if less than 1 hour old
+                if (Date.now() - state.timestamp < 3600000) {
+                    return state.currentModule;
+                }
+            }
+        } catch (e) {
+            console.log('❌ Failed to load app state:', e);
+        }
+        return 'dashboard';
+    }
+
     waitForAuthAndInitialize() {
-        // Wait for Firebase auth to be ready
+        // PWA: Progressive enhancement - show app immediately
+        this.showSplashScreen();
+        
         const checkAuth = () => {
             if (window.authManager && window.authManager.auth) {
                 console.log('✅ Auth manager ready');
+                this.hideSplashScreen();
                 this.checkAuthState();
             } else {
                 console.log('⏳ Waiting for auth manager...');
@@ -28,14 +85,31 @@ class FarmPWA {
         checkAuth();
     }
 
+    showSplashScreen() {
+        // PWA: Show immediate feedback
+        const contentArea = document.getElementById('content-area');
+        if (contentArea) {
+            contentArea.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; min-height: 60vh; flex-direction: column; gap: var(--spacing-4);">
+                    <div style="font-size: 48px;">🚜</div>
+                    <div style="font: var(--body-large); color: var(--on-surface-variant);">Loading AgriMetrics...</div>
+                </div>
+            `;
+        }
+    }
+
+    hideSplashScreen() {
+        // Content will be replaced by actual modules
+    }
+
     checkAuthState() {
         const user = window.authManager?.auth?.currentUser;
-        console.log('Auth check - User:', user ? user.email : 'No user');
+        console.log('🔐 Auth check - User:', user ? user.email : 'No user');
         
         if (user) {
             console.log('✅ User signed in, showing app');
             this.showApp();
-            this.initializeApp();
+            this.initializeAppModules();
         } else {
             console.log('❌ No user, showing auth forms');
             this.showAuthForms();
@@ -46,8 +120,7 @@ class FarmPWA {
         const authContainer = document.getElementById('auth-container');
         const appContainer = document.getElementById('app-container');
         
-        console.log('🔄 Showing app, hiding auth...');
-        
+        // PWA: Smooth transitions
         if (authContainer) {
             authContainer.style.display = 'none';
         }
@@ -62,8 +135,6 @@ class FarmPWA {
         const authContainer = document.getElementById('auth-container');
         const appContainer = document.getElementById('app-container');
         
-        console.log('🔄 Showing auth, hiding app...');
-        
         if (authContainer) {
             authContainer.style.display = 'flex';
         }
@@ -74,17 +145,18 @@ class FarmPWA {
         }
     }
 
-    initializeApp() {
-        console.log('🔧 Initializing application...');
+    initializeAppModules() {
+        console.log('🔧 Initializing PWA modules...');
         
-        // Initialize navigation
+        // PWA: Load saved state
+        this.currentModule = this.loadAppState();
+        
         this.initializeNavigation();
-        
-        // Initialize dashboard
-        this.initializeDashboard();
-        
-        // Set up navigation event listeners
+        this.initializeCurrentModule();
         this.setupNavigationEvents();
+        
+        // PWA: Preload other modules
+        this.preloadModules();
     }
 
     initializeNavigation() {
@@ -94,9 +166,8 @@ class FarmPWA {
             return;
         }
         
-        console.log('✅ Found main-nav, populating navigation...');
+        console.log('✅ Setting up PWA navigation...');
         
-        // Create navigation HTML
         const navHTML = `
             <div class="nav-container">
                 <div class="logo">
@@ -104,87 +175,68 @@ class FarmPWA {
                 </div>
                 <ul class="nav-menu">
                     <li>
-                        <a href="#" data-module="dashboard" class="nav-item active">
+                        <button data-module="dashboard" class="nav-item ${this.currentModule === 'dashboard' ? 'active' : ''}">
                             <span class="icon">📊</span>
-                            <span>Dashboard</span>
-                        </a>
+                            <span class="label">Dashboard</span>
+                        </button>
                     </li>
                     <li>
-                        <a href="#" data-module="income-expenses" class="nav-item">
+                        <button data-module="income-expenses" class="nav-item ${this.currentModule === 'income-expenses' ? 'active' : ''}">
                             <span class="icon">💰</span>
-                            <span>Income & Expenses</span>
-                        </a>
+                            <span class="label">Finance</span>
+                        </button>
                     </li>
                     <li>
-                        <a href="#" data-module="inventory-check" class="nav-item">
+                        <button data-module="inventory-check" class="nav-item ${this.currentModule === 'inventory-check' ? 'active' : ''}">
                             <span class="icon">📦</span>
-                            <span>Inventory</span>
-                        </a>
+                            <span class="label">Inventory</span>
+                        </button>
                     </li>
                     <li>
-                        <a href="#" data-module="feed-record" class="nav-item">
+                        <button data-module="feed-record" class="nav-item ${this.currentModule === 'feed-record' ? 'active' : ''}">
                             <span class="icon">🌾</span>
-                            <span>Feed Records</span>
-                        </a>
+                            <span class="label">Feed</span>
+                        </button>
                     </li>
                     <li>
-                        <a href="#" data-module="broiler-mortality" class="nav-item">
-                            <span class="icon">🐔</span>
-                            <span>Broiler Mortality</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" data-module="orders" class="nav-item">
-                            <span class="icon">📋</span>
-                            <span>Orders</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" data-module="sales-record" class="nav-item">
+                        <button data-module="sales-record" class="nav-item ${this.currentModule === 'sales-record' ? 'active' : ''}">
                             <span class="icon">💳</span>
-                            <span>Sales</span>
-                        </a>
+                            <span class="label">Sales</span>
+                        </button>
                     </li>
                     <li>
-                        <a href="#" data-module="reports" class="nav-item">
+                        <button data-module="reports" class="nav-item ${this.currentModule === 'reports' ? 'active' : ''}">
                             <span class="icon">📈</span>
-                            <span>Reports</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" data-module="profile" class="nav-item">
-                            <span class="icon">👤</span>
-                            <span>Profile</span>
-                        </a>
+                            <span class="label">Reports</span>
+                        </button>
                     </li>
                 </ul>
                 <div class="nav-footer">
-                    <a href="#" class="nav-item sign-out" onclick="firebase.auth().signOut()">
+                    <button class="nav-item sign-out" onclick="farmPWA.signOut()">
                         <span class="icon">🚪</span>
-                        <span>Sign Out</span>
-                    </a>
+                        <span class="label">Exit</span>
+                    </button>
                 </div>
             </div>
         `;
         
         nav.innerHTML = navHTML;
-        console.log('✅ Navigation populated');
+        console.log('✅ PWA Navigation ready');
     }
 
     setupNavigationEvents() {
         const nav = document.getElementById('main-nav');
         if (!nav) return;
         
-        // Add click handlers for navigation items
+        // PWA: Use event delegation for better performance
         nav.addEventListener('click', (e) => {
             const navItem = e.target.closest('.nav-item');
             if (!navItem) return;
             
             e.preventDefault();
             
-            // Handle sign out separately
             if (navItem.classList.contains('sign-out')) {
-                firebase.auth().signOut();
+                this.signOut();
                 return;
             }
             
@@ -193,24 +245,71 @@ class FarmPWA {
                 this.showModule(moduleId, navItem);
             }
         });
+        
+        // PWA: Add keyboard support
+        nav.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                const navItem = e.target.closest('.nav-item');
+                if (navItem) {
+                    e.preventDefault();
+                    navItem.click();
+                }
+            }
+        });
     }
 
     showModule(moduleId, clickedNavItem = null) {
         console.log(`🔄 Showing module: ${moduleId}`);
         
+        // PWA: Update current module
+        this.currentModule = moduleId;
+        this.saveAppState();
+        
         // Update active navigation item
         if (clickedNavItem) {
             const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(item => item.classList.remove('active'));
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                item.setAttribute('aria-current', 'false');
+            });
             clickedNavItem.classList.add('active');
+            clickedNavItem.setAttribute('aria-current', 'page');
         }
         
-        // Show module content
-        if (moduleId === 'dashboard') {
-            this.initializeDashboard();
-        } else {
-            this.showModuleFallback(moduleId);
+        // Show module content with PWA loading pattern
+        this.showModuleContent(moduleId);
+    }
+
+    showModuleContent(moduleId) {
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
+        
+        // PWA: Show loading state
+        contentArea.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; min-height: 40vh; flex-direction: column; gap: var(--spacing-4);">
+                <div style="font-size: 32px;">${this.getModuleIcon(moduleId)}</div>
+                <div style="font: var(--body-large); color: var(--on-surface-variant);">Loading ${this.getModuleName(moduleId)}...</div>
+            </div>
+        `;
+        
+        // PWA: Load module with slight delay for perceived performance
+        setTimeout(() => {
+            this.loadModule(moduleId);
+        }, 50);
+    }
+
+    loadModule(moduleId) {
+        switch(moduleId) {
+            case 'dashboard':
+                this.initializeDashboard();
+                break;
+            default:
+                this.showModuleFallback(moduleId);
         }
+    }
+
+    initializeCurrentModule() {
+        this.loadModule(this.currentModule);
     }
 
     initializeDashboard() {
@@ -223,38 +322,80 @@ class FarmPWA {
         }
     }
 
+    getModuleIcon(moduleId) {
+        const icons = {
+            'dashboard': '📊',
+            'income-expenses': '💰',
+            'inventory-check': '📦',
+            'feed-record': '🌾',
+            'sales-record': '💳',
+            'reports': '📈'
+        };
+        return icons[moduleId] || '📁';
+    }
+
+    getModuleName(moduleId) {
+        const names = {
+            'dashboard': 'Dashboard',
+            'income-expenses': 'Income & Expenses',
+            'inventory-check': 'Inventory',
+            'feed-record': 'Feed Records',
+            'sales-record': 'Sales',
+            'reports': 'Reports'
+        };
+        return names[moduleId] || moduleId;
+    }
+
     showModuleFallback(moduleId) {
         const contentArea = document.getElementById('content-area');
         if (!contentArea) return;
         
-        const moduleNames = {
-            'dashboard': 'Dashboard',
-            'income-expenses': 'Income & Expenses',
-            'inventory-check': 'Inventory Check',
-            'feed-record': 'Feed Records',
-            'broiler-mortality': 'Broiler Mortality',
-            'orders': 'Orders',
-            'sales-record': 'Sales Records',
-            'reports': 'Reports',
-            'profile': 'Profile'
-        };
-        
-        const moduleName = moduleNames[moduleId] || moduleId;
+        const moduleName = this.getModuleName(moduleId);
         
         contentArea.innerHTML = `
-            <div style="padding: 40px; text-align: center;">
-                <h1>${moduleName}</h1>
-                <p style="color: var(--gray-600); margin: 20px 0;">
-                    The ${moduleName} module is loading...
-                </p>
-                <div style="background: var(--gray-100); padding: 20px; border-radius: 10px; display: inline-block;">
-                    <p>Module ID: <strong>${moduleId}</strong></p>
-                    <p>This is a fallback view. The actual module content should appear here.</p>
+            <div class="dashboard-container">
+                <div class="welcome-section">
+                    <h1>${moduleName}</h1>
+                    <p>Manage your ${moduleName.toLowerCase()} efficiently</p>
+                </div>
+                
+                <div style="text-align: center; padding: var(--spacing-10);">
+                    <div style="font-size: 64px; margin-bottom: var(--spacing-4); opacity: 0.5;">
+                        ${this.getModuleIcon(moduleId)}
+                    </div>
+                    <h2 style="font: var(--title-large); margin-bottom: var(--spacing-2);">Module Coming Soon</h2>
+                    <p style="font: var(--body-large); color: var(--on-surface-variant); margin-bottom: var(--spacing-6);">
+                        The ${moduleName} module is under development.
+                    </p>
+                    <button onclick="farmPWA.showModule('dashboard')" class="btn btn-primary">
+                        Back to Dashboard
+                    </button>
                 </div>
             </div>
         `;
         
-        console.log(`✅ Showing fallback for: ${moduleId}`);
+        console.log(`✅ Showing PWA fallback for: ${moduleId}`);
+    }
+
+    preloadModules() {
+        // PWA: Preload other modules in background
+        console.log('🔮 Preloading modules...');
+        // Could use Service Worker for actual preloading
+    }
+
+    async signOut() {
+        try {
+            // PWA: Clear app state
+            localStorage.removeItem('farmPWAState');
+            
+            await firebase.auth().signOut();
+            console.log('✅ Signed out successfully');
+            
+            // PWA: Smooth transition back to auth
+            this.showAuthForms();
+        } catch (error) {
+            console.log('❌ Sign out error:', error);
+        }
     }
 
     setupServiceWorker() {
@@ -262,6 +403,11 @@ class FarmPWA {
             navigator.serviceWorker.register('/AgriMetrics/sw.js')
                 .then(registration => {
                     console.log('✅ Service Worker registered');
+                    
+                    // PWA: Check for updates
+                    registration.addEventListener('updatefound', () => {
+                        console.log('🔄 Service Worker update found');
+                    });
                 })
                 .catch(error => {
                     console.log('❌ Service Worker failed:', error);
@@ -270,5 +416,8 @@ class FarmPWA {
     }
 }
 
-// Initialize the app
+// PWA: Initialize app immediately
 window.farmPWA = new FarmPWA();
+
+// PWA: Make globally available for standalone use
+window.showModule = (moduleId) => window.farmPWA.showModule(moduleId);
