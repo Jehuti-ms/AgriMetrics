@@ -1,15 +1,14 @@
-// modules/dashboard.js - ENHANCED PWA STYLE
-console.log('Loading enhanced PWA dashboard module...');
+// modules/dashboard.js
+console.log('Loading dashboard module...');
 
 const DashboardModule = {
     name: 'dashboard',
     initialized: false,
 
     initialize() {
-        console.log('📊 Initializing enhanced dashboard...');
+        console.log('📊 Initializing dashboard...');
         this.renderDashboard();
         this.initialized = true;
-        this.setupServiceWorker();
         return true;
     },
 
@@ -18,185 +17,253 @@ const DashboardModule = {
         if (!contentArea) return;
 
         contentArea.innerHTML = `
-            <div class="dashboard-container">
+            <div class="dashboard-container" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
                 <!-- Welcome Section -->
-                <div class="welcome-section modern-card">
-                    <div class="welcome-content">
-                        <h1 class="welcome-title">Welcome to Farm Management</h1>
-                        <p class="welcome-subtitle">Manage your farm operations efficiently with modern tools</p>
-                        <div class="welcome-badges">
-                            <span class="badge online-badge">
-                                <span class="badge-dot"></span>
-                                Online
-                            </span>
-                            <span class="badge demo-badge">Demo Mode</span>
-                        </div>
+                <div class="welcome-section" style="margin-bottom: 30px;">
+                    <h1 style="color: #1a1a1a; font-size: 28px; margin-bottom: 8px;">Welcome to Farm Management</h1>
+                    <p style="color: #666; font-size: 16px;">Manage your farm operations efficiently</p>
+                </div>
+
+                <!-- Quick Actions Grid -->
+                <div class="quick-actions" style="margin-bottom: 40px;">
+                    <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 20px;">Quick Actions</h2>
+                    <div class="actions-grid" style="
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                        gap: 16px;
+                        margin-bottom: 30px;
+                    ">
+                        <button class="quick-action-btn" data-action="add-income" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 16px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 12px;
+                            min-height: 120px;
+                        ">
+                            <div style="font-size: 32px;">💰</div>
+                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Add Income</span>
+                            <span style="font-size: 12px; color: #666; text-align: center;">Record new income</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="add-expense" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 16px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 12px;
+                            min-height: 120px;
+                        ">
+                            <div style="font-size: 32px;">💸</div>
+                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Add Expense</span>
+                            <span style="font-size: 12px; color: #666; text-align: center;">Record new expense</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="check-inventory" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 16px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 12px;
+                            min-height: 120px;
+                        ">
+                            <div style="font-size: 32px;">📦</div>
+                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Check Inventory</span>
+                            <span style="font-size: 12px; color: #666; text-align: center;">View stock levels</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="record-feed" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 16px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 12px;
+                            min-height: 120px;
+                        ">
+                            <div style="font-size: 32px;">🌾</div>
+                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Record Feed</span>
+                            <span style="font-size: 12px; color: #666; text-align: center;">Log feed usage</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="add-production" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 16px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 12px;
+                            min-height: 120px;
+                        ">
+                            <div style="font-size: 32px;">🚜</div>
+                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Production</span>
+                            <span style="font-size: 12px; color: #666; text-align: center;">Record production</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="view-reports" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 16px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 12px;
+                            min-height: 120px;
+                        ">
+                            <div style="font-size: 32px;">📈</div>
+                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">View Reports</span>
+                            <span style="font-size: 12px; color: #666; text-align: center;">Analytics & insights</span>
+                        </button>
                     </div>
                 </div>
 
-                <!-- Quick Stats -->
-                <div class="stats-section">
-                    <h2 class="section-title">Quick Overview</h2>
-                    <div class="stats-grid">
-                        <div class="stat-card revenue-card">
-                            <div class="stat-icon">💰</div>
-                            <div class="stat-content">
-                                <h3 class="stat-label">Total Revenue</h3>
-                                <div class="stat-value" id="total-revenue">$0.00</div>
-                                <div class="stat-trend positive">+0% this month</div>
-                            </div>
+                <!-- Stats Overview -->
+                <div class="stats-overview" style="margin-bottom: 40px;">
+                    <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 20px;">Overview</h2>
+                    <div class="stats-grid" style="
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                        gap: 16px;
+                    ">
+                        <div class="stat-card" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 20px;
+                            text-align: center;
+                        ">
+                            <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;">$0.00</div>
+                            <div style="font-size: 14px; color: #666;">Total Revenue</div>
                         </div>
-                        
-                        <div class="stat-card expense-card">
-                            <div class="stat-icon">💸</div>
-                            <div class="stat-content">
-                                <h3 class="stat-label">Total Expenses</h3>
-                                <div class="stat-value" id="total-expenses">$0.00</div>
-                                <div class="stat-trend negative">+0% this month</div>
-                            </div>
+
+                        <div class="stat-card" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 20px;
+                            text-align: center;
+                        ">
+                            <div style="font-size: 24px; margin-bottom: 8px;">💸</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;">$0.00</div>
+                            <div style="font-size: 14px; color: #666;">Total Expenses</div>
                         </div>
-                        
-                        <div class="stat-card inventory-card">
-                            <div class="stat-icon">📦</div>
-                            <div class="stat-content">
-                                <h3 class="stat-label">Inventory Items</h3>
-                                <div class="stat-value" id="inventory-count">0</div>
-                                <div class="stat-trend">All categories</div>
-                            </div>
+
+                        <div class="stat-card" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 20px;
+                            text-align: center;
+                        ">
+                            <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;">0</div>
+                            <div style="font-size: 14px; color: #666;">Inventory Items</div>
                         </div>
-                        
-                        <div class="stat-card livestock-card">
-                            <div class="stat-icon">🐔</div>
-                            <div class="stat-content">
-                                <h3 class="stat-label">Active Birds</h3>
-                                <div class="stat-value" id="livestock-count">0</div>
-                                <div class="stat-trend">Healthy</div>
-                            </div>
+
+                        <div class="stat-card" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 20px;
+                            text-align: center;
+                        ">
+                            <div style="font-size: 24px; margin-bottom: 8px;">🐔</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;">0</div>
+                            <div style="font-size: 14px; color: #666;">Active Birds</div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="actions-section">
-                    <h2 class="section-title">Quick Actions</h2>
-                    <div class="quick-actions-grid">
-                        <button class="quick-action-btn" data-action="add-income">
-                            <div class="action-icon">💰</div>
-                            <div class="action-content">
-                                <div class="action-title">Add Income</div>
-                                <div class="action-desc">Record new revenue</div>
-                            </div>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="add-expense">
-                            <div class="action-icon">💸</div>
-                            <div class="action-content">
-                                <div class="action-title">Add Expense</div>
-                                <div class="action-desc">Log farm costs</div>
-                            </div>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="check-inventory">
-                            <div class="action-icon">📦</div>
-                            <div class="action-content">
-                                <div class="action-title">Inventory</div>
-                                <div class="action-desc">Check stock levels</div>
-                            </div>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="record-feed">
-                            <div class="action-icon">🌾</div>
-                            <div class="action-content">
-                                <div class="action-title">Feed Record</div>
-                                <div class="action-desc">Log feed usage</div>
-                            </div>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="add-production">
-                            <div class="action-icon">🚜</div>
-                            <div class="action-content">
-                                <div class="action-title">Production</div>
-                                <div class="action-desc">Record output</div>
-                            </div>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="view-reports">
-                            <div class="action-icon">📈</div>
-                            <div class="action-content">
-                                <div class="action-title">Reports</div>
-                                <div class="action-desc">View analytics</div>
-                            </div>
-                        </button>
                     </div>
                 </div>
 
                 <!-- Recent Activity -->
-                <div class="activity-section">
-                    <div class="section-header">
-                        <h2 class="section-title">Recent Activity</h2>
-                        <button class="btn-text" id="refresh-activity">Refresh</button>
-                    </div>
-                    <div class="activity-list modern-card">
-                        <div class="empty-activity">
-                            <div class="empty-icon">📊</div>
-                            <h3>No recent activity</h3>
-                            <p>Start by adding your first record to see activity here</p>
-                            <button class="btn btn-primary" data-action="add-income">
-                                Add First Record
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- PWA Features -->
-                <div class="pwa-features">
-                    <div class="feature-card modern-card">
-                        <h3>📱 PWA Ready</h3>
-                        <p>This app works offline and can be installed on your device</p>
-                        <div class="feature-badges">
-                            <span class="feature-badge">Offline Support</span>
-                            <span class="feature-badge">Fast Loading</span>
-                            <span class="feature-badge">Installable</span>
+                <div class="recent-activity">
+                    <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 20px;">Recent Activity</h2>
+                    <div class="activity-list" style="
+                        background: rgba(255, 255, 255, 0.9);
+                        backdrop-filter: blur(20px);
+                        -webkit-backdrop-filter: blur(20px);
+                        border: 1px solid rgba(0, 0, 0, 0.1);
+                        border-radius: 16px;
+                        padding: 20px;
+                    ">
+                        <div style="text-align: center; color: #666; padding: 40px 20px;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                            <div style="font-size: 16px; margin-bottom: 8px;">No recent activity</div>
+                            <div style="font-size: 14px; color: #999;">Start by adding your first record</div>
                         </div>
                     </div>
                 </div>
             </div>
         `;
 
-        this.setupDashboardInteractions();
-        this.updateDashboardStats();
+        // Add event listeners to quick action buttons
+        this.setupQuickActions();
     },
 
-    setupDashboardInteractions() {
-        // Quick action buttons
+    setupQuickActions() {
         const quickActionButtons = document.querySelectorAll('.quick-action-btn');
+        
         quickActionButtons.forEach(button => {
             button.addEventListener('click', (e) => {
                 const action = e.currentTarget.getAttribute('data-action');
                 this.handleQuickAction(action);
             });
-        });
 
-        // Refresh button
-        const refreshBtn = document.getElementById('refresh-activity');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => {
-                this.refreshActivity();
+            // Add hover effects
+            button.addEventListener('mouseenter', (e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
             });
-        }
 
-        // Add hover effects
-        this.setupHoverEffects();
-    },
-
-    setupHoverEffects() {
-        const cards = document.querySelectorAll('.modern-card, .quick-action-btn');
-        cards.forEach(card => {
-            card.addEventListener('mouseenter', () => {
-                card.style.transform = 'translateY(-2px)';
-            });
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = 'translateY(0)';
+            button.addEventListener('mouseleave', (e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
             });
         });
     },
@@ -215,191 +282,30 @@ const DashboardModule = {
 
         const targetModule = actionMap[action];
         if (targetModule && window.app) {
-            // Show loading feedback
-            this.showActionFeedback(action);
+            window.app.showSection(targetModule);
             
-            // Navigate to module
-            setTimeout(() => {
-                window.app.showSection(targetModule);
-            }, 300);
-        }
-    },
-
-    showActionFeedback(action) {
-        // You can add a small notification or loading state
-        console.log(`Opening ${action}...`);
-    },
-
-    updateDashboardStats() {
-        // Update with real data from your app
-        const revenue = this.calculateTotalRevenue();
-        const expenses = this.calculateTotalExpenses();
-        const inventoryCount = this.getInventoryCount();
-        const livestockCount = this.getLivestockCount();
-
-        this.updateElement('total-revenue', `$${revenue.toFixed(2)}`);
-        this.updateElement('total-expenses', `$${expenses.toFixed(2)}`);
-        this.updateElement('inventory-count', inventoryCount);
-        this.updateElement('livestock-count', livestockCount);
-    },
-
-    calculateTotalRevenue() {
-        // Replace with actual data calculation
-        const sales = FarmModules.appData.sales || [];
-        return sales.reduce((total, sale) => total + (sale.amount || 0), 0);
-    },
-
-    calculateTotalExpenses() {
-        // Replace with actual data calculation
-        const expenses = FarmModules.appData.expenses || [];
-        return expenses.reduce((total, expense) => total + (expense.amount || 0), 0);
-    },
-
-    getInventoryCount() {
-        const inventory = FarmModules.appData.inventory || [];
-        return inventory.length;
-    },
-
-    getLivestockCount() {
-        // Replace with actual livestock data
-        return 0;
-    },
-
-    refreshActivity() {
-        // Show loading state
-        const activityList = document.querySelector('.activity-list');
-        if (activityList) {
-            activityList.innerHTML = `
-                <div class="loading-activity">
-                    <div class="loading-spinner"></div>
-                    <p>Refreshing activity...</p>
-                </div>
-            `;
-        }
-
-        // Simulate API call
-        setTimeout(() => {
-            this.updateDashboardStats();
-            this.showNotification('Activity refreshed', 'success');
-            this.renderActivityList();
-        }, 1000);
-    },
-
-    renderActivityList() {
-        const activityList = document.querySelector('.activity-list');
-        if (!activityList) return;
-
-        // Get recent activity from app data
-        const recentActivity = this.getRecentActivity();
-        
-        if (recentActivity.length === 0) {
-            activityList.innerHTML = `
-                <div class="empty-activity">
-                    <div class="empty-icon">📊</div>
-                    <h3>No recent activity</h3>
-                    <p>Start by adding your first record</p>
-                    <button class="btn btn-primary" data-action="add-income">
-                        Add First Record
-                    </button>
-                </div>
-            `;
-            
-            // Re-attach event listener
-            const addRecordBtn = activityList.querySelector('button');
-            if (addRecordBtn) {
-                addRecordBtn.addEventListener('click', () => {
-                    this.handleQuickAction('add-income');
-                });
+            // Show notification
+            if (window.coreModule && window.coreModule.showNotification) {
+                window.coreModule.showNotification(`Opening ${this.getActionName(action)}...`, 'info');
             }
-            return;
-        }
-
-        // Render activity items
-        activityList.innerHTML = recentActivity.map(activity => `
-            <div class="activity-item">
-                <div class="activity-icon">${activity.icon}</div>
-                <div class="activity-content">
-                    <div class="activity-title">${activity.title}</div>
-                    <div class="activity-description">${activity.description}</div>
-                    <div class="activity-time">${activity.time}</div>
-                </div>
-                <div class="activity-amount ${activity.type}">${activity.amount}</div>
-            </div>
-        `).join('');
-    },
-
-    getRecentActivity() {
-        // Combine activity from different modules
-        const activities = [];
-        
-        // Add sales activities
-        const sales = FarmModules.appData.sales || [];
-        sales.slice(0, 5).forEach(sale => {
-            activities.push({
-                icon: '💰',
-                title: 'Sale Recorded',
-                description: `Sale of ${sale.item || 'product'}`,
-                time: this.formatTime(sale.date),
-                amount: `+$${sale.amount || 0}`,
-                type: 'income'
-            });
-        });
-
-        // Add expense activities
-        const expenses = FarmModules.appData.expenses || [];
-        expenses.slice(0, 5).forEach(expense => {
-            activities.push({
-                icon: '💸',
-                title: 'Expense Recorded',
-                description: expense.category || 'Farm expense',
-                time: this.formatTime(expense.date),
-                amount: `-$${expense.amount || 0}`,
-                type: 'expense'
-            });
-        });
-
-        // Sort by time and return latest 5
-        return activities
-            .sort((a, b) => new Date(b.time) - new Date(a.time))
-            .slice(0, 5);
-    },
-
-    formatTime(dateString) {
-        if (!dateString) return 'Recently';
-        const date = new Date(dateString);
-        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    },
-
-    updateElement(id, value) {
-        const element = document.getElementById(id);
-        if (element) element.textContent = value;
-    },
-
-    setupServiceWorker() {
-        // Register service worker for PWA functionality
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(registration => {
-                    console.log('✅ Service Worker registered:', registration);
-                })
-                .catch(error => {
-                    console.log('❌ Service Worker registration failed:', error);
-                });
         }
     },
 
-    showNotification(message, type) {
-        if (window.coreModule && window.coreModule.showNotification) {
-            window.coreModule.showNotification(message, type);
-        } else {
-            // Fallback notification
-            console.log(`${type}: ${message}`);
-        }
+    getActionName(action) {
+        const names = {
+            'add-income': 'Income',
+            'add-expense': 'Expenses',
+            'check-inventory': 'Inventory',
+            'record-feed': 'Feed Record',
+            'add-production': 'Production',
+            'view-reports': 'Reports'
+        };
+        return names[action] || action;
     }
 };
 
-// Register the enhanced module
+// Register the module
 if (window.FarmModules) {
     window.FarmModules.registerModule('dashboard', DashboardModule);
-    console.log('✅ Enhanced PWA dashboard module registered');
+    console.log('✅ Dashboard module registered');
 }
