@@ -1,436 +1,315 @@
-// app.js - PWA OPTIMIZED VERSION
-console.log('🚜 Farm Management PWA - Starting...');
+// app.js - PROPER MOBILE PWA NAVIGATION
+console.log('Loading main app...');
 
-class FarmPWA {
+class FarmManagementApp {
     constructor() {
-        this.currentModule = 'dashboard';
+        this.currentUser = null;
+        this.currentSection = 'dashboard';
+        this.isDemoMode = false;
         this.init();
     }
 
-    init() {
-        // PWA: Use DOMContentLoaded for faster startup
+    async init() {
+        console.log('🚀 Starting Farm Management App...');
+        
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this.initializeApp());
+            document.addEventListener('DOMContentLoaded', () => {
+                this.initializeApp();
+            });
         } else {
             this.initializeApp();
         }
     }
 
-    initializeApp() {
-        console.log('📱 PWA Initializing...');
-        
-        this.setupServiceWorker();
-        this.setupPWAFeatures();
-        this.waitForAuthAndInitialize();
+    async initializeApp() {
+        console.log('✅ Initializing app...');
+        this.isDemoMode = true;
+        this.showApp();
+        this.setupEventListeners();
     }
 
-    setupPWAFeatures() {
-        // PWA: Prevent context menu on long press
-        document.addEventListener('contextmenu', (e) => e.preventDefault());
-        
-        // PWA: Handle back button (Android)
-        window.addEventListener('beforeunload', (e) => {
-            // Save state before app closes
-            this.saveAppState();
-        });
-        
-        // PWA: Handle visibility changes
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                this.saveAppState();
-            }
-        });
-    }
-
-    saveAppState() {
-        // PWA: Save current state to localStorage
-        const state = {
-            currentModule: this.currentModule,
-            timestamp: Date.now()
-        };
-        localStorage.setItem('farmPWAState', JSON.stringify(state));
-    }
-
-    loadAppState() {
-        // PWA: Load saved state
-        try {
-            const saved = localStorage.getItem('farmPWAState');
-            if (saved) {
-                const state = JSON.parse(saved);
-                // Only restore if less than 1 hour old
-                if (Date.now() - state.timestamp < 3600000) {
-                    return state.currentModule;
+    setupEventListeners() {
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.nav-item')) {
+                const navItem = e.target.closest('.nav-item');
+                const view = navItem.getAttribute('data-view');
+                
+                if (view === 'more') {
+                    this.toggleMoreMenu();
+                } else {
+                    this.showSection(view);
                 }
             }
-        } catch (e) {
-            console.log('❌ Failed to load app state:', e);
-        }
-        return 'dashboard';
-    }
-
-    waitForAuthAndInitialize() {
-        // PWA: Progressive enhancement - show app immediately
-        this.showSplashScreen();
-        
-        const checkAuth = () => {
-            if (window.authManager && window.authManager.auth) {
-                console.log('✅ Auth manager ready');
-                this.hideSplashScreen();
-                this.checkAuthState();
-            } else {
-                console.log('⏳ Waiting for auth manager...');
-                setTimeout(checkAuth, 100);
+            
+            if (e.target.closest('.more-menu-item')) {
+                const menuItem = e.target.closest('.more-menu-item');
+                const view = menuItem.getAttribute('data-view');
+                this.hideMoreMenu();
+                this.showSection(view);
             }
-        };
-        checkAuth();
-    }
-
-    showSplashScreen() {
-        // PWA: Show immediate feedback
-        const contentArea = document.getElementById('content-area');
-        if (contentArea) {
-            contentArea.innerHTML = `
-                <div style="display: flex; align-items: center; justify-content: center; min-height: 60vh; flex-direction: column; gap: var(--spacing-4);">
-                    <div style="font-size: 48px;">🚜</div>
-                    <div style="font: var(--body-large); color: var(--on-surface-variant);">Loading AgriMetrics...</div>
-                </div>
-            `;
-        }
-    }
-
-    hideSplashScreen() {
-        // Content will be replaced by actual modules
-    }
-
-    checkAuthState() {
-        const user = window.authManager?.auth?.currentUser;
-        console.log('🔐 Auth check - User:', user ? user.email : 'No user');
-        
-        if (user) {
-            console.log('✅ User signed in, showing app');
-            this.showApp();
-            this.initializeAppModules();
-        } else {
-            console.log('❌ No user, showing auth forms');
-            this.showAuthForms();
-        }
+            
+            if (!e.target.closest('.more-menu') && !e.target.closest('[data-view="more"]')) {
+                this.hideMoreMenu();
+            }
+        });
     }
 
     showApp() {
         const authContainer = document.getElementById('auth-container');
         const appContainer = document.getElementById('app-container');
         
-        // PWA: Smooth transitions
-        if (authContainer) {
-            authContainer.style.display = 'none';
-        }
+        if (authContainer) authContainer.classList.add('hidden');
+        if (appContainer) appContainer.classList.remove('hidden');
         
-        if (appContainer) {
-            appContainer.style.display = 'flex';
-            appContainer.classList.remove('hidden');
-        }
+        this.createTopNavigation();
+        this.showSection(this.currentSection);
     }
 
-    showAuthForms() {
-        const authContainer = document.getElementById('auth-container');
+    createTopNavigation() {
         const appContainer = document.getElementById('app-container');
-        
-        if (authContainer) {
-            authContainer.style.display = 'flex';
+        if (!appContainer) return;
+
+        let header = appContainer.querySelector('header');
+        if (header) {
+            header.remove();
         }
         
-        if (appContainer) {
-            appContainer.style.display = 'none';
-            appContainer.classList.add('hidden');
-        }
-    }
+        header = document.createElement('header');
+        appContainer.insertBefore(header, appContainer.firstChild);
 
-    initializeAppModules() {
-        console.log('🔧 Initializing PWA modules...');
-        
-        // PWA: Load saved state
-        this.currentModule = this.loadAppState();
-        
-        this.initializeNavigation();
-        this.initializeCurrentModule();
-        this.setupNavigationEvents();
-        
-        // PWA: Preload other modules
-        this.preloadModules();
-    }
-
-    initializeNavigation() {
-    const nav = document.getElementById('main-nav');
-    if (!nav) {
-        console.log('❌ main-nav element not found');
-        return;
-    }
-    
-    console.log('✅ Setting up PWA top navigation...');
-    
-    const navHTML = `
-        <div class="nav-container">
-            <div class="logo">
-                <div style="font-size: 24px;">🚜</div>
-                <h1>AgriMetrics</h1>
-            </div>
-            <ul class="nav-menu">
-                <li>
-                    <button data-module="dashboard" class="nav-item ${this.currentModule === 'dashboard' ? 'active' : ''}">
-                        <span class="icon">📊</span>
-                        <span class="label">Dashboard</span>
-                    </button>
-                </li>
-                <li>
-                    <button data-module="income-expenses" class="nav-item ${this.currentModule === 'income-expenses' ? 'active' : ''}">
-                        <span class="icon">💰</span>
-                        <span class="label">Finance</span>
-                    </button>
-                </li>
-                <li>
-                    <button data-module="inventory-check" class="nav-item ${this.currentModule === 'inventory-check' ? 'active' : ''}">
-                        <span class="icon">📦</span>
-                        <span class="label">Inventory</span>
-                    </button>
-                </li>
-                <li>
-                    <button data-module="feed-record" class="nav-item ${this.currentModule === 'feed-record' ? 'active' : ''}">
-                        <span class="icon">🌾</span>
-                        <span class="label">Feed</span>
-                    </button>
-                </li>
-                <li>
-                    <button data-module="broiler-mortality" class="nav-item ${this.currentModule === 'broiler-mortality' ? 'active' : ''}">
-                        <span class="icon">🐔</span>
-                        <span class="label">Poultry</span>
-                    </button>
-                </li>
-                <li>
-                    <button data-module="sales-record" class="nav-item ${this.currentModule === 'sales-record' ? 'active' : ''}">
-                        <span class="icon">💳</span>
-                        <span class="label">Sales</span>
-                    </button>
-                </li>
-                <li>
-                    <button data-module="reports" class="nav-item ${this.currentModule === 'reports' ? 'active' : ''}">
-                        <span class="icon">📈</span>
-                        <span class="label">Reports</span>
-                    </button>
-                </li>
-                <li>
-                    <button data-module="profile" class="nav-item ${this.currentModule === 'profile' ? 'active' : ''}">
-                        <span class="icon">👤</span>
-                        <span class="label">Profile</span>
-                    </button>
-                </li>
-            </ul>
-            <div class="nav-footer">
-                <button class="nav-item sign-out" onclick="farmPWA.signOut()">
-                    <span class="icon">🚪</span>
-                    <span class="label">Sign Out</span>
-                </button>
-            </div>
-        </div>
-    `;
-    
-    nav.innerHTML = navHTML;
-    console.log('✅ PWA Top Navigation ready');
-}
-
-    setupNavigationEvents() {
-        const nav = document.getElementById('main-nav');
-        if (!nav) return;
-        
-        // PWA: Use event delegation for better performance
-        nav.addEventListener('click', (e) => {
-            const navItem = e.target.closest('.nav-item');
-            if (!navItem) return;
-            
-            e.preventDefault();
-            
-            if (navItem.classList.contains('sign-out')) {
-                this.signOut();
-                return;
-            }
-            
-            const moduleId = navItem.getAttribute('data-module');
-            if (moduleId) {
-                this.showModule(moduleId, navItem);
-            }
-        });
-        
-        // PWA: Add keyboard support
-        nav.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                const navItem = e.target.closest('.nav-item');
-                if (navItem) {
-                    e.preventDefault();
-                    navItem.click();
-                }
-            }
-        });
-    }
-
-    showModule(moduleId, clickedNavItem = null) {
-        console.log(`🔄 Showing module: ${moduleId}`);
-        
-        // PWA: Update current module
-        this.currentModule = moduleId;
-        this.saveAppState();
-        
-        // Update active navigation item
-        if (clickedNavItem) {
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(item => {
-                item.classList.remove('active');
-                item.setAttribute('aria-current', 'false');
-            });
-            clickedNavItem.classList.add('active');
-            clickedNavItem.setAttribute('aria-current', 'page');
-        }
-        
-        // Show module content with PWA loading pattern
-        this.showModuleContent(moduleId);
-    }
-
-    showModuleContent(moduleId) {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
-        
-        // PWA: Show loading state
-        contentArea.innerHTML = `
-            <div style="display: flex; align-items: center; justify-content: center; min-height: 40vh; flex-direction: column; gap: var(--spacing-4);">
-                <div style="font-size: 32px;">${this.getModuleIcon(moduleId)}</div>
-                <div style="font: var(--body-large); color: var(--on-surface-variant);">Loading ${this.getModuleName(moduleId)}...</div>
-            </div>
-        `;
-        
-        // PWA: Load module with slight delay for perceived performance
-        setTimeout(() => {
-            this.loadModule(moduleId);
-        }, 50);
-    }
-
-    loadModule(moduleId) {
-        switch(moduleId) {
-            case 'dashboard':
-                this.initializeDashboard();
-                break;
-            default:
-                this.showModuleFallback(moduleId);
-        }
-    }
-
-    initializeCurrentModule() {
-        this.loadModule(this.currentModule);
-    }
-
-    initializeDashboard() {
-        console.log('📊 Initializing dashboard...');
-        
-        if (typeof DashboardModule !== 'undefined' && DashboardModule.initialize) {
-            DashboardModule.initialize();
-        } else {
-            this.showModuleFallback('dashboard');
-        }
-    }
-
-    getModuleIcon(moduleId) {
-        const icons = {
-            'dashboard': '📊',
-            'income-expenses': '💰',
-            'inventory-check': '📦',
-            'feed-record': '🌾',
-            'sales-record': '💳',
-            'reports': '📈'
-        };
-        return icons[moduleId] || '📁';
-    }
-
-    getModuleName(moduleId) {
-        const names = {
-            'dashboard': 'Dashboard',
-            'income-expenses': 'Income & Expenses',
-            'inventory-check': 'Inventory',
-            'feed-record': 'Feed Records',
-            'sales-record': 'Sales',
-            'reports': 'Reports'
-        };
-        return names[moduleId] || moduleId;
-    }
-
-    showModuleFallback(moduleId) {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
-        
-        const moduleName = this.getModuleName(moduleId);
-        
-        contentArea.innerHTML = `
-            <div class="dashboard-container">
-                <div class="welcome-section">
-                    <h1>${moduleName}</h1>
-                    <p>Manage your ${moduleName.toLowerCase()} efficiently</p>
+        // MODERN PWA NAVIGATION - CLEAN AND VISIBLE
+        header.innerHTML = `
+            <nav class="top-nav" style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 70px;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 16px;
+                z-index: 10000;
+                box-sizing: border-box;
+            ">
+                <!-- CLEAN BRAND -->
+                <div class="nav-brand" style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 28px;">🌱</span>
+                    <span style="font-size: 20px; font-weight: 600; color: #1a1a1a;">Farm</span>
                 </div>
                 
-                <div style="text-align: center; padding: var(--spacing-10);">
-                    <div style="font-size: 64px; margin-bottom: var(--spacing-4); opacity: 0.5;">
-                        ${this.getModuleIcon(moduleId)}
-                    </div>
-                    <h2 style="font: var(--title-large); margin-bottom: var(--spacing-2);">Module Coming Soon</h2>
-                    <p style="font: var(--body-large); color: var(--on-surface-variant); margin-bottom: var(--spacing-6);">
-                        The ${moduleName} module is under development.
-                    </p>
-                    <button onclick="farmPWA.showModule('dashboard')" class="btn btn-primary">
-                        Back to Dashboard
+                <!-- CLEAN NAV ITEMS - ALWAYS VISIBLE -->
+                <div class="nav-items" style="display: flex; align-items: center; gap: 8px;">
+                    <button class="nav-item" data-view="dashboard" style="
+                        background: transparent;
+                        border: none;
+                        cursor: pointer;
+                        color: #666;
+                        font-size: 24px;
+                        padding: 12px;
+                        border-radius: 12px;
+                        min-width: 50px;
+                        min-height: 50px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        transition: all 0.2s ease;
+                    " title="Dashboard">
+                        📊
+                    </button>
+
+                    <button class="nav-item" data-view="income-expenses" style="
+                        background: transparent;
+                        border: none;
+                        cursor: pointer;
+                        color: #666;
+                        font-size: 24px;
+                        padding: 12px;
+                        border-radius: 12px;
+                        min-width: 50px;
+                        min-height: 50px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        transition: all 0.2s ease;
+                    " title="Finance">
+                        💰
+                    </button>
+
+                    <button class="nav-item" data-view="inventory-check" style="
+                        background: transparent;
+                        border: none;
+                        cursor: pointer;
+                        color: #666;
+                        font-size: 24px;
+                        padding: 12px;
+                        border-radius: 12px;
+                        min-width: 50px;
+                        min-height: 50px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        transition: all 0.2s ease;
+                    " title="Inventory">
+                        📦
+                    </button>
+
+                    <button class="nav-item" data-view="more" style="
+                        background: transparent;
+                        border: none;
+                        cursor: pointer;
+                        color: #666;
+                        font-size: 24px;
+                        padding: 12px;
+                        border-radius: 12px;
+                        min-width: 50px;
+                        min-height: 50px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        transition: all 0.2s ease;
+                    " title="More">
+                        ⋮
+                    </button>
+                </div>
+            </nav>
+
+            <!-- MODERN MORE MENU -->
+            <div id="more-menu" class="more-menu hidden" style="
+                position: fixed;
+                top: 75px;
+                right: 16px;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border-radius: 16px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+                padding: 16px;
+                z-index: 10001;
+                min-width: 200px;
+                border: 1px solid rgba(0, 0, 0, 0.1);
+            ">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <button class="more-menu-item" data-view="feed-record" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">🌾</span>
+                        <span>Feed</span>
+                    </button>
+                    <button class="more-menu-item" data-view="broiler-mortality" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">🐔</span>
+                        <span>Health</span>
+                    </button>
+                    <button class="more-menu-item" data-view="production" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">🚜</span>
+                        <span>Production</span>
+                    </button>
+                    <button class="more-menu-item" data-view="sales-record" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">💰</span>
+                        <span>Sales</span>
+                    </button>
+                    <button class="more-menu-item" data-view="orders" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">📋</span>
+                        <span>Orders</span>
+                    </button>
+                    <button class="more-menu-item" data-view="reports" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">📈</span>
+                        <span>Reports</span>
+                    </button>
+                    <button class="more-menu-item" data-view="profile" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">👤</span>
+                        <span>Profile</span>
                     </button>
                 </div>
             </div>
         `;
+
+        // Add padding to main content
+        const main = appContainer.querySelector('main');
+        if (main) {
+            main.style.paddingTop = '80px';
+            main.style.minHeight = 'calc(100vh - 80px)';
+        }
         
-        console.log(`✅ Showing PWA fallback for: ${moduleId}`);
+        console.log('✅ Modern PWA navigation created');
     }
 
-    preloadModules() {
-        // PWA: Preload other modules in background
-        console.log('🔮 Preloading modules...');
-        // Could use Service Worker for actual preloading
-    }
+    showSection(sectionId) {
+        console.log(`🔄 Switching to section: ${sectionId}`);
+        
+        // Clean active state
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.style.background = 'transparent';
+            item.style.color = '#666';
+        });
+        
+        const activeNavItem = document.querySelector(`.nav-item[data-view="${sectionId}"]`);
+        if (activeNavItem) {
+            activeNavItem.style.background = 'rgba(59, 130, 246, 0.1)';
+            activeNavItem.style.color = '#3b82f6';
+        }
 
-    async signOut() {
-        try {
-            // PWA: Clear app state
-            localStorage.removeItem('farmPWAState');
-            
-            await firebase.auth().signOut();
-            console.log('✅ Signed out successfully');
-            
-            // PWA: Smooth transition back to auth
-            this.showAuthForms();
-        } catch (error) {
-            console.log('❌ Sign out error:', error);
+        this.currentSection = sectionId;
+        
+        if (window.FarmModules && typeof window.FarmModules.initializeModule === 'function') {
+            window.FarmModules.initializeModule(sectionId);
+        } else {
+            this.loadFallbackContent(sectionId);
         }
     }
 
-    setupServiceWorker() {
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/AgriMetrics/sw.js')
-                .then(registration => {
-                    console.log('✅ Service Worker registered');
-                    
-                    // PWA: Check for updates
-                    registration.addEventListener('updatefound', () => {
-                        console.log('🔄 Service Worker update found');
-                    });
-                })
-                .catch(error => {
-                    console.log('❌ Service Worker failed:', error);
-                });
+    loadFallbackContent(sectionId) {
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
+
+        const sectionTitles = {
+            'dashboard': 'Dashboard',
+            'income-expenses': 'Income & Expenses',
+            'inventory-check': 'Inventory Check',
+            'feed-record': 'Feed Record',
+            'broiler-mortality': 'Broiler Mortality',
+            'production': 'Production Records',
+            'sales-record': 'Sales Record',
+            'orders': 'Orders',
+            'reports': 'Reports',
+            'profile': 'Profile'
+        };
+
+        contentArea.innerHTML = `
+            <div style="padding: 20px;">
+                <h2 style="color: #1a1a1a;">${sectionTitles[sectionId] || sectionId}</h2>
+                <p style="color: #666;">Content loading...</p>
+            </div>
+        `;
+    }
+
+    toggleMoreMenu() {
+        const moreMenu = document.getElementById('more-menu');
+        if (moreMenu) {
+            if (moreMenu.classList.contains('hidden')) {
+                moreMenu.classList.remove('hidden');
+            } else {
+                moreMenu.classList.add('hidden');
+            }
+        }
+    }
+
+    hideMoreMenu() {
+        const moreMenu = document.getElementById('more-menu');
+        if (moreMenu) {
+            moreMenu.classList.add('hidden');
         }
     }
 }
 
-// PWA: Initialize app immediately
-window.farmPWA = new FarmPWA();
+window.FarmManagementApp = FarmManagementApp;
 
-// PWA: Make globally available for standalone use
-window.showModule = (moduleId) => window.farmPWA.showModule(moduleId);
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.app = new FarmManagementApp();
+    });
+} else {
+    window.app = new FarmManagementApp();
+}
