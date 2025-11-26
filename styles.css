@@ -303,6 +303,87 @@ body {
   transform: rotate(-45deg) translate(5px, -5px);
 }
 
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-3) var(--spacing-6);
+  border: none;
+  border-radius: var(--radius-medium);
+  font: var(--label-large);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--motion-short);
+  gap: var(--spacing-2);
+  min-height: 44px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.btn-primary:hover {
+  background: color-mix(in srgb, var(--primary) 90%, black);
+}
+
+.btn-google {
+  background: var(--surface-container);
+  color: var(--on-surface);
+  border: 1px solid var(--outline);
+}
+
+.btn-google:hover {
+  background: var(--surface-container-high);
+}
+
+/* Form Styles */
+.form-group {
+  margin-bottom: var(--spacing-4);
+}
+
+.form-group label {
+  display: block;
+  font: var(--label-large);
+  color: var(--on-surface-variant);
+  margin-bottom: var(--spacing-2);
+  font-weight: 500;
+}
+
+.form-control {
+  width: 100%;
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-medium);
+  font: var(--body-large);
+  background: var(--surface-container);
+  color: var(--on-surface);
+  transition: border-color var(--motion-short);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.auth-links {
+  display: flex;
+  justify-content: space-between;
+  margin: var(--spacing-4) 0;
+}
+
+.auth-links a {
+  color: var(--primary);
+  text-decoration: none;
+  font: var(--label-medium);
+}
+
+.auth-links a:hover {
+  text-decoration: underline;
+}
+
 /* Page Title */
 .page-title {
   font: var(--headline-medium);
