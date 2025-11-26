@@ -1,315 +1,329 @@
-// app.js - PROPER MOBILE PWA NAVIGATION
-console.log('Loading main app...');
-
+// app.js - Main Application Framework
 class FarmManagementApp {
     constructor() {
-        this.currentUser = null;
-        this.currentSection = 'dashboard';
-        this.isDemoMode = false;
+        this.modules = new Map();
+        this.currentModule = null;
+        this.db = null;
         this.init();
     }
 
     async init() {
-        console.log('🚀 Starting Farm Management App...');
+        console.log('🚜 Initializing Farm Management PWA...');
         
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                this.initializeApp();
-            });
-        } else {
-            this.initializeApp();
-        }
+        // Initialize database
+        await this.initDatabase();
+        
+        // Initialize module system
+        await this.initModules();
+        
+        // Setup navigation
+        this.setupNavigation();
+        
+        // Load default module
+        this.loadModule('dashboard');
+        
+        console.log('✅ Farm Management PWA Ready!');
     }
 
-    async initializeApp() {
-        console.log('✅ Initializing app...');
-        this.isDemoMode = true;
-        this.showApp();
-        this.setupEventListeners();
-    }
-
-    setupEventListeners() {
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.nav-item')) {
-                const navItem = e.target.closest('.nav-item');
-                const view = navItem.getAttribute('data-view');
-                
-                if (view === 'more') {
-                    this.toggleMoreMenu();
-                } else {
-                    this.showSection(view);
-                }
-            }
+    async initDatabase() {
+        // Simple IndexedDB wrapper
+        this.db = {
+            db: null,
             
-            if (e.target.closest('.more-menu-item')) {
-                const menuItem = e.target.closest('.more-menu-item');
-                const view = menuItem.getAttribute('data-view');
-                this.hideMoreMenu();
-                this.showSection(view);
+            async open() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open('FarmManagementDB', 1);
+                    
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => {
+                        this.db = request.result;
+                        resolve(this.db);
+                    };
+                    
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        
+                        // Create object stores for all modules
+                        const stores = [
+                            'sales', 'production', 'broiler-mortality', 
+                            'orders', 'profile', 'inventory'
+                        ];
+                        
+                        stores.forEach(store => {
+                            if (!db.objectStoreNames.contains(store)) {
+                                db.createObjectStore(store, { keyPath: 'id' });
+                            }
+                        });
+                    };
+                });
+            },
+
+            async getAll(storeName) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([storeName], 'readonly');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.getAll();
+                    
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => resolve(request.result);
+                });
+            },
+
+            async get(storeName, key) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([storeName], 'readonly');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.get(key);
+                    
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => resolve(request.result);
+                });
+            },
+
+            async put(storeName, data) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([storeName], 'readwrite');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.put(data);
+                    
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => resolve(request.result);
+                });
+            },
+
+            async delete(storeName, key) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([storeName], 'readwrite');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.delete(key);
+                    
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => resolve(request.result);
+                });
+            },
+
+            async clear(storeName) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([storeName], 'readwrite');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.clear();
+                    
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => resolve(request.result);
+                });
             }
-            
-            if (!e.target.closest('.more-menu') && !e.target.closest('[data-view="more"]')) {
-                this.hideMoreMenu();
-            }
-        });
-    }
-
-    showApp() {
-        const authContainer = document.getElementById('auth-container');
-        const appContainer = document.getElementById('app-container');
-        
-        if (authContainer) authContainer.classList.add('hidden');
-        if (appContainer) appContainer.classList.remove('hidden');
-        
-        this.createTopNavigation();
-        this.showSection(this.currentSection);
-    }
-
-    createTopNavigation() {
-        const appContainer = document.getElementById('app-container');
-        if (!appContainer) return;
-
-        let header = appContainer.querySelector('header');
-        if (header) {
-            header.remove();
-        }
-        
-        header = document.createElement('header');
-        appContainer.insertBefore(header, appContainer.firstChild);
-
-        // MODERN PWA NAVIGATION - CLEAN AND VISIBLE
-        header.innerHTML = `
-            <nav class="top-nav" style="
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 70px;
-                background: rgba(255, 255, 255, 0.95);
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
-                border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 0 16px;
-                z-index: 10000;
-                box-sizing: border-box;
-            ">
-                <!-- CLEAN BRAND -->
-                <div class="nav-brand" style="display: flex; align-items: center; gap: 12px;">
-                    <span style="font-size: 28px;">🌱</span>
-                    <span style="font-size: 20px; font-weight: 600; color: #1a1a1a;">Farm</span>
-                </div>
-                
-                <!-- CLEAN NAV ITEMS - ALWAYS VISIBLE -->
-                <div class="nav-items" style="display: flex; align-items: center; gap: 8px;">
-                    <button class="nav-item" data-view="dashboard" style="
-                        background: transparent;
-                        border: none;
-                        cursor: pointer;
-                        color: #666;
-                        font-size: 24px;
-                        padding: 12px;
-                        border-radius: 12px;
-                        min-width: 50px;
-                        min-height: 50px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        transition: all 0.2s ease;
-                    " title="Dashboard">
-                        📊
-                    </button>
-
-                    <button class="nav-item" data-view="income-expenses" style="
-                        background: transparent;
-                        border: none;
-                        cursor: pointer;
-                        color: #666;
-                        font-size: 24px;
-                        padding: 12px;
-                        border-radius: 12px;
-                        min-width: 50px;
-                        min-height: 50px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        transition: all 0.2s ease;
-                    " title="Finance">
-                        💰
-                    </button>
-
-                    <button class="nav-item" data-view="inventory-check" style="
-                        background: transparent;
-                        border: none;
-                        cursor: pointer;
-                        color: #666;
-                        font-size: 24px;
-                        padding: 12px;
-                        border-radius: 12px;
-                        min-width: 50px;
-                        min-height: 50px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        transition: all 0.2s ease;
-                    " title="Inventory">
-                        📦
-                    </button>
-
-                    <button class="nav-item" data-view="more" style="
-                        background: transparent;
-                        border: none;
-                        cursor: pointer;
-                        color: #666;
-                        font-size: 24px;
-                        padding: 12px;
-                        border-radius: 12px;
-                        min-width: 50px;
-                        min-height: 50px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        transition: all 0.2s ease;
-                    " title="More">
-                        ⋮
-                    </button>
-                </div>
-            </nav>
-
-            <!-- MODERN MORE MENU -->
-            <div id="more-menu" class="more-menu hidden" style="
-                position: fixed;
-                top: 75px;
-                right: 16px;
-                background: rgba(255, 255, 255, 0.95);
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
-                border-radius: 16px;
-                box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-                padding: 16px;
-                z-index: 10001;
-                min-width: 200px;
-                border: 1px solid rgba(0, 0, 0, 0.1);
-            ">
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <button class="more-menu-item" data-view="feed-record" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
-                        <span style="font-size: 20px;">🌾</span>
-                        <span>Feed</span>
-                    </button>
-                    <button class="more-menu-item" data-view="broiler-mortality" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
-                        <span style="font-size: 20px;">🐔</span>
-                        <span>Health</span>
-                    </button>
-                    <button class="more-menu-item" data-view="production" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
-                        <span style="font-size: 20px;">🚜</span>
-                        <span>Production</span>
-                    </button>
-                    <button class="more-menu-item" data-view="sales-record" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
-                        <span style="font-size: 20px;">💰</span>
-                        <span>Sales</span>
-                    </button>
-                    <button class="more-menu-item" data-view="orders" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
-                        <span style="font-size: 20px;">📋</span>
-                        <span>Orders</span>
-                    </button>
-                    <button class="more-menu-item" data-view="reports" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
-                        <span style="font-size: 20px;">📈</span>
-                        <span>Reports</span>
-                    </button>
-                    <button class="more-menu-item" data-view="profile" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
-                        <span style="font-size: 20px;">👤</span>
-                        <span>Profile</span>
-                    </button>
-                </div>
-            </div>
-        `;
-
-        // Add padding to main content
-        const main = appContainer.querySelector('main');
-        if (main) {
-            main.style.paddingTop = '80px';
-            main.style.minHeight = 'calc(100vh - 80px)';
-        }
-        
-        console.log('✅ Modern PWA navigation created');
-    }
-
-    showSection(sectionId) {
-        console.log(`🔄 Switching to section: ${sectionId}`);
-        
-        // Clean active state
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.style.background = 'transparent';
-            item.style.color = '#666';
-        });
-        
-        const activeNavItem = document.querySelector(`.nav-item[data-view="${sectionId}"]`);
-        if (activeNavItem) {
-            activeNavItem.style.background = 'rgba(59, 130, 246, 0.1)';
-            activeNavItem.style.color = '#3b82f6';
-        }
-
-        this.currentSection = sectionId;
-        
-        if (window.FarmModules && typeof window.FarmModules.initializeModule === 'function') {
-            window.FarmModules.initializeModule(sectionId);
-        } else {
-            this.loadFallbackContent(sectionId);
-        }
-    }
-
-    loadFallbackContent(sectionId) {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
-
-        const sectionTitles = {
-            'dashboard': 'Dashboard',
-            'income-expenses': 'Income & Expenses',
-            'inventory-check': 'Inventory Check',
-            'feed-record': 'Feed Record',
-            'broiler-mortality': 'Broiler Mortality',
-            'production': 'Production Records',
-            'sales-record': 'Sales Record',
-            'orders': 'Orders',
-            'reports': 'Reports',
-            'profile': 'Profile'
         };
 
-        contentArea.innerHTML = `
-            <div style="padding: 20px;">
-                <h2 style="color: #1a1a1a;">${sectionTitles[sectionId] || sectionId}</h2>
-                <p style="color: #666;">Content loading...</p>
-            </div>
-        `;
+        try {
+            await this.db.open();
+            window.db = this.db; // Make available globally
+            console.log('✅ Database initialized');
+        } catch (error) {
+            console.error('❌ Database initialization failed:', error);
+            window.db = null; // Fallback to localStorage
+        }
     }
 
-    toggleMoreMenu() {
-        const moreMenu = document.getElementById('more-menu');
-        if (moreMenu) {
-            if (moreMenu.classList.contains('hidden')) {
-                moreMenu.classList.remove('hidden');
-            } else {
-                moreMenu.classList.add('hidden');
+    async initModules() {
+        // Module registry
+        window.FarmModules = {
+            modules: new Map(),
+            
+            registerModule(name, moduleInstance) {
+                this.modules.set(name, moduleInstance);
+                console.log(`✅ Module registered: ${name}`);
+            },
+            
+            getModule(name) {
+                return this.modules.get(name);
+            },
+            
+            async loadModule(name) {
+                const module = this.modules.get(name);
+                if (module && !module.initialized) {
+                    await module.initialize();
+                }
+                return module;
             }
+        };
+    }
+
+    setupNavigation() {
+        // Handle navigation clicks
+        document.addEventListener('click', (e) => {
+            const navItem = e.target.closest('.nav-item');
+            if (navItem) {
+                e.preventDefault();
+                const moduleName = navItem.getAttribute('data-module');
+                this.loadModule(moduleName);
+            }
+        });
+
+        // Handle browser back/forward
+        window.addEventListener('popstate', (e) => {
+            const moduleName = e.state?.module || 'dashboard';
+            this.loadModule(moduleName);
+        });
+    }
+
+    async loadModule(moduleName) {
+        try {
+            // Unload current module
+            if (this.currentModule && this.currentModule.cleanup) {
+                await this.currentModule.cleanup();
+            }
+
+            // Load new module
+            const module = await window.FarmModules.loadModule(moduleName);
+            if (module) {
+                this.currentModule = module;
+                
+                // Update UI
+                this.updateActiveNav(moduleName);
+                this.updatePageTitle(moduleName);
+                
+                // Update URL
+                history.pushState({ module: moduleName }, '', `#${moduleName}`);
+                
+                console.log(`✅ Loaded module: ${moduleName}`);
+            } else {
+                console.error(`❌ Module not found: ${moduleName}`);
+                this.loadModule('dashboard'); // Fallback
+            }
+        } catch (error) {
+            console.error(`❌ Error loading module ${moduleName}:`, error);
         }
     }
 
-    hideMoreMenu() {
-        const moreMenu = document.getElementById('more-menu');
-        if (moreMenu) {
-            moreMenu.classList.add('hidden');
-        }
+    updateActiveNav(activeModule) {
+        // Update navigation highlights
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.toggle('active', item.getAttribute('data-module') === activeModule);
+        });
+    }
+
+    updatePageTitle(moduleName) {
+        const titles = {
+            dashboard: 'Dashboard',
+            'sales-record': 'Sales Records',
+            'broiler-mortality': 'Broiler Mortality',
+            orders: 'Orders',
+            production: 'Production',
+            reports: 'Reports',
+            profile: 'Profile'
+        };
+        
+        document.title = `${titles[moduleName] || 'Farm Management'} - FarmPWA`;
     }
 }
 
-window.FarmManagementApp = FarmManagementApp;
+// Toast Notification System
+window.showToast = function(message, type = 'info', duration = 3000) {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <div class="toast-content">
+            <span class="toast-message">${message}</span>
+            <button class="toast-close">&times;</button>
+        </div>
+    `;
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.app = new FarmManagementApp();
+    // Add styles if not already added
+    if (!document.querySelector('#toast-styles')) {
+        const styles = document.createElement('style');
+        styles.id = 'toast-styles';
+        styles.textContent = `
+            .toast {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: white;
+                border-radius: 12px;
+                padding: 0;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+                border: 1px solid rgba(0,0,0,0.1);
+                z-index: 10000;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+                max-width: 400px;
+            }
+            .toast.show {
+                transform: translateX(0);
+            }
+            .toast-content {
+                padding: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: between;
+                gap: 12px;
+            }
+            .toast-message {
+                flex: 1;
+                font-size: 14px;
+                font-weight: 500;
+            }
+            .toast-close {
+                background: none;
+                border: none;
+                font-size: 18px;
+                cursor: pointer;
+                color: #666;
+                padding: 4px;
+            }
+            .toast-success { border-left: 4px solid #10b981; }
+            .toast-error { border-left: 4px solid #ef4444; }
+            .toast-warning { border-left: 4px solid #f59e0b; }
+            .toast-info { border-left: 4px solid #3b82f6; }
+        `;
+        document.head.appendChild(styles);
+    }
+
+    document.body.appendChild(toast);
+
+    // Animate in
+    setTimeout(() => toast.classList.add('show'), 100);
+
+    // Close button
+    toast.querySelector('.toast-close').addEventListener('click', () => {
+        toast.remove();
     });
-} else {
-    window.app = new FarmManagementApp();
-}
+
+    // Auto remove
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, duration);
+};
+
+// Utility functions
+window.formatCurrency = function(amount) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+    }).format(amount);
+};
+
+window.formatDate = function(dateString) {
+    return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+};
+
+window.formatDateTime = function(dateString) {
+    return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+};
+
+// Initialize app when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    window.farmApp = new FarmManagementApp();
+});
