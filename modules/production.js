@@ -1,919 +1,661 @@
 // modules/production.js
-FarmModules.registerModule('production', {
-    name: 'Production Records',
-    icon: '🌱',
-    
-    template: `
-        <div class="section active">
-            <div class="module-header">
-                <h1>Production Records</h1>
-                <p>Track crop, livestock, and aquaculture production</p>
-                <div class="header-actions">
-                    <button class="btn btn-primary" id="add-production">
-                        ➕ Record Production
-                    </button>
-                </div>
-            </div>
+console.log('Loading production module...');
 
-            <!-- Production Summary -->
-            <div class="production-summary">
-                <div class="summary-card">
-                    <div class="summary-icon">🌾</div>
-                    <div class="summary-content">
-                        <h3>Crop Production</h3>
-                        <div class="summary-value" id="crop-production">0 kg</div>
-                        <div class="summary-period">This Month</div>
-                    </div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-icon">🐄</div>
-                    <div class="summary-content">
-                        <h3>Livestock Production</h3>
-                        <div class="summary-value" id="livestock-production">0 kg</div>
-                        <div class="summary-period">This Month</div>
-                    </div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-icon">🐟</div>
-                    <div class="summary-content">
-                        <h3>Aquaculture</h3>
-                        <div class="summary-value" id="aquaculture-production">0 kg</div>
-                        <div class="summary-period">This Month</div>
-                    </div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-icon">📈</div>
-                    <div class="summary-content">
-                        <h3>Total Production</h3>
-                        <div class="summary-value" id="total-production">0 kg</div>
-                        <div class="summary-period">All Types</div>
-                    </div>
-                </div>
-            </div>
+class ProductionModule {
+    constructor() {
+        this.name = 'production';
+        this.initialized = false;
+        this.productionData = [];
+        this.container = null;
+    }
 
-            <!-- Quick Production Form -->
-            <div class="quick-production card">
-                <h3>Quick Production Entry</h3>
-                <form id="quick-production-form" class="form-inline">
-                    <div class="form-row compact">
-                        <div class="form-group">
-                            <select id="quick-production-type" required class="form-compact">
-                                <option value="">Select Type</option>
-                                <option value="crop">Crop</option>
-                                <option value="livestock">Livestock</option>
-                                <option value="aquaculture">Aquaculture</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <input type="number" id="quick-amount" placeholder="Amount" required class="form-compact" min="1">
-                        </div>
-                        <div class="form-group">
-                            <select id="quick-unit" class="form-compact">
-                                <option value="kg">kg</option>
-                                <option value="lbs">lbs</option>
-                                <option value="units">units</option>
-                                <option value="dozen">dozen</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary btn-compact">Record</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
+    async initialize() {
+        console.log('🏭 Initializing production tracking...');
+        await this.loadProductionData();
+        this.render();
+        this.initialized = true;
+        return true;
+    }
 
-            <!-- Production Records -->
-            <div class="production-records card">
-                <div class="card-header">
-                    <h3>Recent Production</h3>
-                    <div class="filter-controls">
-                        <select id="type-filter">
-                            <option value="all">All Types</option>
-                            <option value="crop">Crop</option>
-                            <option value="livestock">Livestock</option>
-                            <option value="aquaculture">Aquaculture</option>
-                        </select>
-                        <button class="btn btn-text" id="export-production">Export</button>
+    async loadProductionData() {
+        try {
+            if (window.db) {
+                this.productionData = await window.db.getAll('production');
+            } else {
+                const savedData = localStorage.getItem('farm-production');
+                this.productionData = savedData ? JSON.parse(savedData) : this.getSampleData();
+            }
+        } catch (error) {
+            console.error('Error loading production data:', error);
+            this.productionData = this.getSampleData();
+        }
+    }
+
+    getSampleData() {
+        return [
+            {
+                id: 'prod_1',
+                product: 'Eggs',
+                quantity: 1200,
+                unit: 'pieces',
+                date: new Date().toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                }),
+                batch: 'BATCH-001',
+                quality: 'Grade A',
+                notes: 'Normal production',
+                timestamp: new Date().toISOString()
+            },
+            {
+                id: 'prod_2',
+                product: 'Broiler Chickens',
+                quantity: 500,
+                unit: 'birds',
+                date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                }),
+                batch: 'BATCH-002',
+                quality: 'Grade A',
+                notes: 'Ready for market',
+                timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+            }
+        ];
+    }
+
+    async saveProductionData() {
+        try {
+            if (window.db) {
+                await window.db.clear('production');
+                for (const record of this.productionData) {
+                    await window.db.put('production', record);
+                }
+            } else {
+                localStorage.setItem('farm-production', JSON.stringify(this.productionData));
+            }
+        } catch (error) {
+            console.error('Error saving production data:', error);
+        }
+    }
+
+    async addProductionRecord(recordData) {
+        const record = {
+            id: `prod_${Date.now()}`,
+            timestamp: new Date().toISOString(),
+            date: new Date().toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            }),
+            product: recordData.product,
+            quantity: parseInt(recordData.quantity),
+            unit: recordData.unit,
+            batch: recordData.batch,
+            quality: recordData.quality,
+            notes: recordData.notes || '',
+            productionType: recordData.productionType || 'regular'
+        };
+
+        this.productionData.unshift(record);
+        await this.saveProductionData();
+        await this.updateDisplay();
+        this.showToast('Production record added!', 'success');
+    }
+
+    async updateProductionRecord(recordId, updates) {
+        const index = this.productionData.findIndex(record => record.id === recordId);
+        if (index !== -1) {
+            this.productionData[index] = {
+                ...this.productionData[index],
+                ...updates,
+                updatedAt: new Date().toISOString()
+            };
+            await this.saveProductionData();
+            await this.updateDisplay();
+            this.showToast('Production record updated!', 'success');
+        }
+    }
+
+    async deleteProductionRecord(recordId) {
+        this.productionData = this.productionData.filter(record => record.id !== recordId);
+        await this.saveProductionData();
+        await this.updateDisplay();
+        this.showToast('Production record deleted!', 'success');
+    }
+
+    calculateStats() {
+        const today = new Date().toDateString();
+        const todayProduction = this.productionData.filter(record => 
+            new Date(record.timestamp).toDateString() === today
+        );
+        
+        const totalToday = todayProduction.reduce((sum, record) => sum + record.quantity, 0);
+        const totalAllTime = this.productionData.reduce((sum, record) => sum + record.quantity, 0);
+        
+        // Group by product type
+        const productStats = {};
+        this.productionData.forEach(record => {
+            if (!productStats[record.product]) {
+                productStats[record.product] = 0;
+            }
+            productStats[record.product] += record.quantity;
+        });
+
+        const topProduct = Object.entries(productStats).sort((a, b) => b[1] - a[1])[0];
+
+        return {
+            today: totalToday,
+            allTime: totalAllTime,
+            todayRecords: todayProduction.length,
+            topProduct: topProduct ? `${topProduct[0]} (${topProduct[1]})` : 'None',
+            uniqueProducts: Object.keys(productStats).length
+        };
+    }
+
+    render() {
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
+
+        contentArea.innerHTML = this.getTemplate();
+        this.container = contentArea.querySelector('.production-container');
+        this.setupEventListeners();
+        this.updateDisplay();
+    }
+
+    getTemplate() {
+        return `
+            <div class="production-container">
+                <!-- Header -->
+                <div class="module-header">
+                    <div class="header-content">
+                        <h1 class="header-title">Production</h1>
+                        <p class="header-subtitle">Track farm production and yields</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn-primary" id="add-production-btn">
+                            <i class="icon">➕</i>
+                            Add Record
+                        </button>
                     </div>
                 </div>
+
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon today">📅</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="today-production">0</div>
+                            <div class="stat-label">Today's Production</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon total">🏭</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="total-production">0</div>
+                            <div class="stat-label">Total Production</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon product">⭐</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="top-product">None</div>
+                            <div class="stat-label">Top Product</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon items">📦</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="unique-products">0</div>
+                            <div class="stat-label">Products</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <div class="action-buttons-grid">
+                        <button class="action-card" data-action="eggs">
+                            <div class="action-icon">🥚</div>
+                            <div class="action-text">Egg Production</div>
+                        </button>
+                        <button class="action-card" data-action="broilers">
+                            <div class="action-icon">🐔</div>
+                            <div class="action-text">Broiler Production</div>
+                        </button>
+                        <button class="action-card" data-action="crops">
+                            <div class="action-icon">🌱</div>
+                            <div class="action-text">Crop Harvest</div>
+                        </button>
+                        <button class="action-card" data-action="daily">
+                            <div class="action-icon">📊</div>
+                            <div class="action-text">Daily Summary</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Production Records -->
                 <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Type</th>
-                                <th>Product</th>
-                                <th>Amount</th>
-                                <th>Resources Used</th>
-                                <th>Efficiency</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="production-body">
-                            <tr>
-                                <td colspan="7" class="empty-state">
-                                    <div class="empty-content">
-                                        <span class="empty-icon">🌱</span>
-                                        <h4>No production recorded yet</h4>
-                                        <p>Start recording your production data</p>
+                    <div class="table-header">
+                        <h3>Recent Production Records</h3>
+                        <div class="table-actions">
+                            <button class="btn-text" id="export-production-btn">
+                                <i class="icon">📤</i>
+                                Export
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-content" id="production-table-content">
+                        <!-- Records will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async updateDisplay() {
+        if (!this.container) return;
+
+        const stats = this.calculateStats();
+        
+        // Update stats
+        this.updateElement('#today-production', stats.today);
+        this.updateElement('#total-production', stats.allTime);
+        this.updateElement('#top-product', stats.topProduct);
+        this.updateElement('#unique-products', stats.uniqueProducts);
+
+        // Update table
+        await this.renderProductionTable();
+    }
+
+    updateElement(selector, content) {
+        const element = this.container?.querySelector(selector);
+        if (element) element.textContent = content;
+    }
+
+    async renderProductionTable() {
+        const tableContent = this.container?.querySelector('#production-table-content');
+        if (!tableContent) return;
+
+        if (this.productionData.length === 0) {
+            tableContent.innerHTML = this.getEmptyState();
+            return;
+        }
+
+        tableContent.innerHTML = this.getProductionTable();
+        this.setupTableEventListeners();
+    }
+
+    getEmptyState() {
+        return `
+            <div class="empty-state">
+                <div class="empty-icon">🏭</div>
+                <h3>No Production Records</h3>
+                <p>Start tracking your farm's production output</p>
+                <button class="btn-primary" id="add-first-production-btn">
+                    Add First Record
+                </button>
+            </div>
+        `;
+    }
+
+    getProductionTable() {
+        const recentRecords = this.productionData.slice(0, 15);
+        
+        return `
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Product</th>
+                            <th>Batch</th>
+                            <th class="text-right">Quantity</th>
+                            <th>Unit</th>
+                            <th>Quality</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${recentRecords.map(record => `
+                            <tr class="production-row" data-record-id="${record.id}">
+                                <td>
+                                    <div class="date-primary">${record.date}</div>
+                                </td>
+                                <td class="product-cell">
+                                    <div class="product-name">${record.product}</div>
+                                    <div class="product-type">${record.productionType}</div>
+                                </td>
+                                <td class="batch-cell">${record.batch}</td>
+                                <td class="text-right">
+                                    <div class="quantity">${record.quantity.toLocaleString()}</div>
+                                </td>
+                                <td class="unit-cell">${record.unit}</td>
+                                <td>
+                                    <span class="quality-badge quality-${record.quality.toLowerCase().replace(' ', '-')}">${record.quality}</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="action-buttons">
+                                        <button class="btn-icon danger delete-production-btn" data-record-id="${record.id}" title="Delete record">
+                                            <i class="icon">🗑️</i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
-                        </tbody>
-                    </table>
-                </div>
+                        `).join('')}
+                    </tbody>
+                </table>
             </div>
+        `;
+    }
 
-            <!-- Production Modal -->
-            <div id="production-modal" class="modal hidden">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 id="production-modal-title">Record Production</h3>
-                        <button class="btn-icon close-modal">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="production-form">
-                            <input type="hidden" id="production-id">
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="production-date">Production Date *</label>
-                                    <input type="date" id="production-date" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="production-type">Production Type *</label>
-                                    <select id="production-type" required>
-                                        <option value="">Select Type</option>
-                                        <option value="crop">Crop Production</option>
-                                        <option value="livestock">Livestock Production</option>
-                                        <option value="aquaculture">Aquaculture Production</option>
-                                    </select>
-                                </div>
-                            </div>
+    setupEventListeners() {
+        if (!this.container) return;
 
-                            <!-- Dynamic fields based on type -->
-                            <div id="crop-fields" class="production-fields" style="display: none;">
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="crop-area">Area (hectares) *</label>
-                                        <input type="number" id="crop-area" min="0.1" step="0.1" placeholder="0.0">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="crop-yield">Yield (kg/hectare) *</label>
-                                        <input type="number" id="crop-yield" min="1" placeholder="0">
-                                    </div>
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="crop-soil">Soil Quality</label>
-                                        <select id="crop-soil">
-                                            <option value="1.0">Excellent</option>
-                                            <option value="0.8" selected>Good</option>
-                                            <option value="0.6">Average</option>
-                                            <option value="0.4">Poor</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="crop-water">Water Availability</label>
-                                        <select id="crop-water">
-                                            <option value="1.0">Excellent</option>
-                                            <option value="0.8" selected>Good</option>
-                                            <option value="0.6">Average</option>
-                                            <option value="0.4">Poor</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div id="livestock-fields" class="production-fields" style="display: none;">
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="livestock-count">Animal Count *</label>
-                                        <input type="number" id="livestock-count" min="1" placeholder="0">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="livestock-productivity">Productivity (kg/animal) *</label>
-                                        <input type="number" id="livestock-productivity" min="0.1" step="0.1" placeholder="0.0">
-                                    </div>
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="livestock-health">Animal Health</label>
-                                        <select id="livestock-health">
-                                            <option value="1.0">Excellent</option>
-                                            <option value="0.8" selected>Good</option>
-                                            <option value="0.6">Average</option>
-                                            <option value="0.4">Poor</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="livestock-feed">Feed Quality</label>
-                                        <select id="livestock-feed">
-                                            <option value="1.0">Excellent</option>
-                                            <option value="0.8" selected>Good</option>
-                                            <option value="0.6">Average</option>
-                                            <option value="0.4">Poor</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div id="aquaculture-fields" class="production-fields" style="display: none;">
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="aquaculture-volume">Water Volume (m³) *</label>
-                                        <input type="number" id="aquaculture-volume" min="1" placeholder="0">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="aquaculture-density">Stocking Density (fish/m³) *</label>
-                                        <input type="number" id="aquaculture-density" min="1" placeholder="0">
-                                    </div>
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="aquaculture-productivity">Species Productivity (kg/fish) *</label>
-                                        <input type="number" id="aquaculture-productivity" min="0.1" step="0.1" placeholder="0.0">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="aquaculture-water">Water Quality</label>
-                                        <select id="aquaculture-water">
-                                            <option value="1.0">Excellent</option>
-                                            <option value="0.8" selected>Good</option>
-                                            <option value="0.6">Average</option>
-                                            <option value="0.4">Poor</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="production-notes">Notes (Optional)</label>
-                                <textarea id="production-notes" placeholder="Production notes, observations, etc." rows="3"></textarea>
-                            </div>
-
-                            <div class="production-results">
-                                <h4>Estimated Production: <span id="estimated-production">0 kg</span></h4>
-                                <div class="resource-usage">
-                                    <h5>Resource Requirements:</h5>
-                                    <div id="resource-details">-</div>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-text close-modal">Cancel</button>
-                        <button type="button" class="btn btn-danger" id="delete-production" style="display: none;">Delete</button>
-                        <button type="button" class="btn btn-primary" id="save-production">Save Production</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `,
-
-    styles: `
-        .production-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
-            margin: 1.5rem 0;
-        }
-
-        .summary-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
-            border: 1px solid var(--border-color);
-        }
-
-        .summary-icon {
-            font-size: 2rem;
-            opacity: 0.8;
-            margin-bottom: 0.5rem;
-        }
-
-        .summary-content h3 {
-            margin: 0 0 0.5rem 0;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .summary-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-color);
-            margin-bottom: 0.25rem;
-        }
-
-        .summary-period {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .quick-production {
-            margin: 1.5rem 0;
-        }
-
-        .quick-production .form-row.compact {
-            margin-bottom: 0;
-        }
-
-        .production-records .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .production-fields {
-            background: var(--bg-color);
-            padding: 1rem;
-            border-radius: 8px;
-            margin: 1rem 0;
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .production-results {
-            background: var(--success-light);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-        }
-
-        .production-results h4 {
-            margin: 0 0 0.5rem 0;
-            color: var(--text-color);
-        }
-
-        .production-results h5 {
-            margin: 0 0 0.5rem 0;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        #estimated-production {
-            color: var(--success-color);
-            font-weight: 700;
-        }
-
-        .resource-usage {
-            font-size: 0.9rem;
-        }
-
-        .type-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: capitalize;
-        }
-
-        .type-crop {
-            background: var(--success-light);
-            color: var(--success-color);
-        }
-
-        .type-livestock {
-            background: var(--warning-light);
-            color: var(--warning-dark);
-        }
-
-        .type-aquaculture {
-            background: var(--info-light);
-            color: var(--info-dark);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-muted);
-        }
-
-        .empty-icon {
-            font-size: 3rem;
-            opacity: 0.5;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .empty-content h4 {
-            margin: 0 0 0.5rem 0;
-            font-size: 1.2rem;
-        }
-
-        .empty-content p {
-            margin: 0;
-            opacity: 0.8;
-        }
-    `,
-
-    initialize: function() {
-        console.log('🌱 Production Records module initializing...');
-        this.loadProductionData();
-        this.attachEventListeners();
-        this.updateSummary();
-        this.renderProductionTable();
-    },
-
-    loadProductionData: function() {
-        if (!FarmModules.appData.production) {
-            FarmModules.appData.production = [];
-        }
-    },
-
-    updateSummary: function() {
-        const production = FarmModules.appData.production || [];
-        const thisMonth = new Date().getMonth();
-        const thisYear = new Date().getFullYear();
-
-        let cropTotal = 0;
-        let livestockTotal = 0;
-        let aquacultureTotal = 0;
-
-        production.forEach(record => {
-            const recordDate = new Date(record.date);
-            if (recordDate.getMonth() === thisMonth && recordDate.getFullYear() === thisYear) {
-                switch(record.type) {
-                    case 'crop':
-                        cropTotal += record.amount;
-                        break;
-                    case 'livestock':
-                        livestockTotal += record.amount;
-                        break;
-                    case 'aquaculture':
-                        aquacultureTotal += record.amount;
-                        break;
-                }
-            }
+        // Add production record button
+        this.container.querySelector('#add-production-btn')?.addEventListener('click', () => {
+            this.showAddProductionModal();
         });
 
-        this.updateElement('crop-production', this.formatAmount(cropTotal) + ' kg');
-        this.updateElement('livestock-production', this.formatAmount(livestockTotal) + ' kg');
-        this.updateElement('aquaculture-production', this.formatAmount(aquacultureTotal) + ' kg');
-        this.updateElement('total-production', this.formatAmount(cropTotal + livestockTotal + aquacultureTotal) + ' kg');
-    },
-
-    renderProductionTable: function(type = 'all') {
-        const tbody = document.getElementById('production-body');
-        const production = FarmModules.appData.production || [];
-
-        let filteredProduction = production;
-        if (type !== 'all') {
-            filteredProduction = production.filter(record => record.type === type);
-        }
-
-        if (filteredProduction.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="7" class="empty-state">
-                        <div class="empty-content">
-                            <span class="empty-icon">🌱</span>
-                            <h4>No production found</h4>
-                            <p>${type === 'all' ? 'Start recording your production' : `No ${type} production`}</p>
-                        </div>
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        // Show most recent production first
-        const sortedProduction = filteredProduction.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        tbody.innerHTML = sortedProduction.map(record => {
-            const typeClass = `type-badge type-${record.type}`;
-            
-            return `
-                <tr>
-                    <td>${this.formatDate(record.date)}</td>
-                    <td><span class="${typeClass}">${record.type}</span></td>
-                    <td>${this.formatProductName(record.product)}</td>
-                    <td>${this.formatAmount(record.amount)} ${record.unit}</td>
-                    <td>${this.formatResources(record.resources)}</td>
-                    <td>${this.formatEfficiency(record.efficiency)}</td>
-                    <td class="production-actions">
-                        <button class="btn-icon edit-production" data-id="${record.id}" title="Edit">✏️</button>
-                        <button class="btn-icon delete-production" data-id="${record.id}" title="Delete">🗑️</button>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-    },
-
-    attachEventListeners: function() {
-        // Quick production form
-        document.getElementById('quick-production-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleQuickProduction();
+        // Add first record button (empty state)
+        this.container.querySelector('#add-first-production-btn')?.addEventListener('click', () => {
+            this.showAddProductionModal();
         });
 
-        // Modal buttons
-        document.getElementById('add-production').addEventListener('click', () => this.showProductionModal());
-        document.getElementById('save-production').addEventListener('click', () => this.saveProduction());
-        document.getElementById('delete-production').addEventListener('click', () => this.deleteProduction());
-
-        // Type change handler
-        document.getElementById('production-type').addEventListener('change', (e) => {
-            this.showProductionFields(e.target.value);
+        // Export button
+        this.container.querySelector('#export-production-btn')?.addEventListener('click', () => {
+            this.exportProductionData();
         });
 
-        // Modal events
-        document.querySelectorAll('.close-modal').forEach(btn => {
-            btn.addEventListener('click', () => this.hideModal());
-        });
-
-        // Filter
-        document.getElementById('type-filter').addEventListener('change', (e) => {
-            this.renderProductionTable(e.target.value);
-        });
-
-        // Export
-        document.getElementById('export-production').addEventListener('click', () => {
-            this.exportProduction();
-        });
-
-        // Production actions
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.edit-production')) {
-                const productionId = e.target.closest('.edit-production').dataset.id;
-                this.editProduction(productionId);
-            }
-            if (e.target.closest('.delete-production')) {
-                const productionId = e.target.closest('.delete-production').dataset.id;
-                this.deleteProductionRecord(productionId);
-            }
-        });
-
-        // Modal backdrop
-        document.getElementById('production-modal').addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) {
-                this.hideModal();
-            }
-        });
-
-        // Real-time calculation for production fields
-        document.querySelectorAll('#production-form input').forEach(input => {
-            input.addEventListener('input', () => this.calculateProduction());
-        });
-    },
-
-    handleQuickProduction: function() {
-        const type = document.getElementById('quick-production-type').value;
-        const amount = parseFloat(document.getElementById('quick-amount').value);
-        const unit = document.getElementById('quick-unit').value;
-
-        if (!type || !amount) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
-        }
-
-        const productionData = {
-            id: 'PROD-' + Date.now().toString().slice(-6),
-            type: type,
-            amount: amount,
-            unit: unit,
-            date: new Date().toISOString().split('T')[0],
-            product: this.getDefaultProduct(type),
-            resources: this.calculateQuickResources(type, amount),
-            efficiency: 'Good'
-        };
-
-        this.addProduction(productionData);
-        
-        // Reset form
-        document.getElementById('quick-production-form').reset();
-        this.showNotification('Production recorded successfully!', 'success');
-    },
-
-    showProductionModal: function() {
-        const modal = document.getElementById('production-modal');
-        const title = document.getElementById('production-modal-title');
-        const form = document.getElementById('production-form');
-
-        if (modal && title && form) {
-            form.reset();
-            document.getElementById('production-id').value = '';
-            document.getElementById('production-date').value = new Date().toISOString().split('T')[0];
-            document.getElementById('delete-production').style.display = 'none';
-            document.getElementById('estimated-production').textContent = '0 kg';
-            document.getElementById('resource-details').textContent = '-';
-            
-            // Hide all production fields
-            document.querySelectorAll('.production-fields').forEach(field => {
-                field.style.display = 'none';
+        // Quick action buttons
+        this.container.querySelectorAll('.action-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                const action = e.currentTarget.getAttribute('data-action');
+                this.handleQuickAction(action);
             });
-            
-            modal.classList.remove('hidden');
-        }
-    },
+        });
+    }
 
-    hideModal: function() {
-        const modal = document.getElementById('production-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
-    },
+    setupTableEventListeners() {
+        // Delete production record buttons
+        this.container?.querySelectorAll('.delete-production-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const recordId = e.currentTarget.getAttribute('data-record-id');
+                this.confirmDeleteRecord(recordId);
+            });
+        });
+    }
 
-    showProductionFields: function(type) {
-        // Hide all fields first
-        document.querySelectorAll('.production-fields').forEach(field => {
-            field.style.display = 'none';
+    showAddProductionModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Add Production Record</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <form id="add-production-form" class="modal-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="production-product">Product *</label>
+                            <select id="production-product" name="product" required>
+                                <option value="">Select product...</option>
+                                <option value="Eggs">Eggs</option>
+                                <option value="Broiler Chickens">Broiler Chickens</option>
+                                <option value="Layers">Layers</option>
+                                <option value="Tomatoes">Tomatoes</option>
+                                <option value="Potatoes">Potatoes</option>
+                                <option value="Carrots">Carrots</option>
+                                <option value="Lettuce">Lettuce</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="production-type">Production Type</label>
+                            <select id="production-type" name="productionType">
+                                <option value="regular">Regular</option>
+                                <option value="harvest">Harvest</option>
+                                <option value="processing">Processing</option>
+                                <option value="packaging">Packaging</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="production-quantity">Quantity *</label>
+                            <input type="number" id="production-quantity" name="quantity" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="production-unit">Unit *</label>
+                            <select id="production-unit" name="unit" required>
+                                <option value="pieces">Pieces</option>
+                                <option value="kg">Kilograms</option>
+                                <option value="g">Grams</option>
+                                <option value="lb">Pounds</option>
+                                <option value="dozen">Dozen</option>
+                                <option value="crate">Crate</option>
+                                <option value="box">Box</option>
+                                <option value="birds">Birds</option>
+                                <option value="liters">Liters</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="production-batch">Batch ID *</label>
+                            <input type="text" id="production-batch" name="batch" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="production-quality">Quality Grade</label>
+                            <select id="production-quality" name="quality">
+                                <option value="Grade A">Grade A</option>
+                                <option value="Grade B">Grade B</option>
+                                <option value="Grade C">Grade C</option>
+                                <option value="Organic">Organic</option>
+                                <option value="Premium">Premium</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="production-notes">Notes</label>
+                            <textarea id="production-notes" name="notes" rows="3" placeholder="Additional production notes..."></textarea>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary cancel-btn">Cancel</button>
+                        <button type="submit" class="btn-primary">Add Record</button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Modal event listeners
+        const closeModal = () => document.body.removeChild(modal);
+        
+        modal.querySelector('.modal-close').addEventListener('click', closeModal);
+        modal.querySelector('.cancel-btn').addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
         });
 
-        // Show relevant fields
-        if (type) {
-            const fields = document.getElementById(`${type}-fields`);
-            if (fields) {
-                fields.style.display = 'block';
-            }
+        // Form submission
+        modal.querySelector('#add-production-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const recordData = Object.fromEntries(formData);
+            
+            await this.addProductionRecord(recordData);
+            closeModal();
+        });
+    }
+
+    handleQuickAction(action) {
+        switch (action) {
+            case 'eggs':
+                this.showQuickEggProductionModal();
+                break;
+            case 'broilers':
+                this.showQuickBroilerProductionModal();
+                break;
+            case 'crops':
+                this.showQuickCropProductionModal();
+                break;
+            case 'daily':
+                this.generateDailySummary();
+                break;
         }
+    }
 
-        // Recalculate production
-        this.calculateProduction();
-    },
+    showQuickEggProductionModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Quick Egg Production</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <form id="egg-production-form" class="modal-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="egg-quantity">Eggs Collected *</label>
+                            <input type="number" id="egg-quantity" name="quantity" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="egg-batch">Batch/House *</label>
+                            <input type="text" id="egg-batch" name="batch" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="egg-quality">Quality</label>
+                            <select id="egg-quality" name="quality">
+                                <option value="Grade A">Grade A</option>
+                                <option value="Grade B">Grade B</option>
+                                <option value="Grade C">Grade C</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary cancel-btn">Cancel</button>
+                        <button type="submit" class="btn-primary">Record Eggs</button>
+                    </div>
+                </form>
+            </div>
+        `;
 
-    calculateProduction: function() {
-        const type = document.getElementById('production-type').value;
-        let estimatedProduction = 0;
-        let resourceDetails = 'Not calculated';
+        document.body.appendChild(modal);
 
-        if (type === 'crop') {
-            const area = parseFloat(document.getElementById('crop-area').value) || 0;
-            const yieldPerHectare = parseFloat(document.getElementById('crop-yield').value) || 0;
-            const soilQuality = parseFloat(document.getElementById('crop-soil').value) || 0.8;
-            const waterAvailability = parseFloat(document.getElementById('crop-water').value) || 0.8;
+        const closeModal = () => document.body.removeChild(modal);
+        
+        modal.querySelector('.modal-close').addEventListener('click', closeModal);
+        modal.querySelector('.cancel-btn').addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
 
-            estimatedProduction = area * yieldPerHectare * soilQuality * waterAvailability;
-            resourceDetails = `Water: ${(estimatedProduction * 0.5).toFixed(0)}L, Fertilizer: ${(estimatedProduction * 0.1).toFixed(0)}kg`;
+        modal.querySelector('#egg-production-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const recordData = {
+                product: 'Eggs',
+                quantity: formData.get('quantity'),
+                unit: 'pieces',
+                batch: formData.get('batch'),
+                quality: formData.get('quality'),
+                productionType: 'regular',
+                notes: 'Egg collection'
+            };
+            
+            await this.addProductionRecord(recordData);
+            closeModal();
+        });
+    }
+
+    showQuickBroilerProductionModal() {
+        // Similar implementation for broiler production
+        this.showToast('Broiler production feature coming soon!', 'info');
+    }
+
+    showQuickCropProductionModal() {
+        // Similar implementation for crop production
+        this.showToast('Crop production feature coming soon!', 'info');
+    }
+
+    generateDailySummary() {
+        const stats = this.calculateStats();
+        const today = new Date().toLocaleDateString();
+        
+        const summary = `
+📊 Daily Production Summary - ${today}
+
+🏭 Total Today: ${stats.today} units
+📦 Products: ${stats.uniqueProducts}
+⭐ Top Product: ${stats.topProduct}
+📝 Records Today: ${stats.todayRecords}
+
+Keep up the great work! 🚜
+        `.trim();
+
+        alert(summary);
+    }
+
+    confirmDeleteRecord(recordId) {
+        if (confirm('Are you sure you want to delete this production record?')) {
+            this.deleteProductionRecord(recordId);
         }
-        else if (type === 'livestock') {
-            const animalCount = parseFloat(document.getElementById('livestock-count').value) || 0;
-            const productivity = parseFloat(document.getElementById('livestock-productivity').value) || 0;
-            const health = parseFloat(document.getElementById('livestock-health').value) || 0.8;
-            const feedQuality = parseFloat(document.getElementById('livestock-feed').value) || 0.8;
+    }
 
-            estimatedProduction = animalCount * productivity * health * feedQuality;
-            resourceDetails = `Water: ${(animalCount * 50).toFixed(0)}L, Feed: ${(animalCount * 3).toFixed(0)}kg`;
-        }
-        else if (type === 'aquaculture') {
-            const volume = parseFloat(document.getElementById('aquaculture-volume').value) || 0;
-            const density = parseFloat(document.getElementById('aquaculture-density').value) || 0;
-            const productivity = parseFloat(document.getElementById('aquaculture-productivity').value) || 0;
-            const waterQuality = parseFloat(document.getElementById('aquaculture-water').value) || 0.8;
-
-            estimatedProduction = volume * density * productivity * waterQuality;
-            resourceDetails = `Water: ${volume}m³, Feed: ${(estimatedProduction * 1.5).toFixed(0)}kg`;
-        }
-
-        document.getElementById('estimated-production').textContent = this.formatAmount(estimatedProduction) + ' kg';
-        document.getElementById('resource-details').textContent = resourceDetails;
-    },
-
-    saveProduction: function() {
-        const form = document.getElementById('production-form');
-        if (!form) return;
-
-        const productionId = document.getElementById('production-id').value;
-        const date = document.getElementById('production-date').value;
-        const type = document.getElementById('production-type').value;
-        const notes = document.getElementById('production-notes').value;
-
-        if (!date || !type) {
-            this.showNotification('Please fill in all required fields', 'error');
+    async exportProductionData() {
+        if (this.productionData.length === 0) {
+            this.showToast('No production data to export', 'warning');
             return;
         }
 
-        let productionData = {
-            date: date,
-            type: type,
-            notes: notes
-        };
-
-        // Add type-specific data
-        if (type === 'crop') {
-            const area = parseFloat(document.getElementById('crop-area').value);
-            const yieldPerHectare = parseFloat(document.getElementById('crop-yield').value);
-            if (!area || !yieldPerHectare) {
-                this.showNotification('Please fill in crop-specific fields', 'error');
-                return;
-            }
-            productionData.amount = area * yieldPerHectare;
-            productionData.unit = 'kg';
-            productionData.product = 'Crops';
-            productionData.resources = {
-                water: productionData.amount * 0.5,
-                fertilizer: productionData.amount * 0.1
-            };
-        }
-        else if (type === 'livestock') {
-            const animalCount = parseFloat(document.getElementById('livestock-count').value);
-            const productivity = parseFloat(document.getElementById('livestock-productivity').value);
-            if (!animalCount || !productivity) {
-                this.showNotification('Please fill in livestock-specific fields', 'error');
-                return;
-            }
-            productionData.amount = animalCount * productivity;
-            productionData.unit = 'kg';
-            productionData.product = 'Livestock';
-            productionData.resources = {
-                water: animalCount * 50,
-                feed: animalCount * 3
-            };
-        }
-        else if (type === 'aquaculture') {
-            const volume = parseFloat(document.getElementById('aquaculture-volume').value);
-            const density = parseFloat(document.getElementById('aquaculture-density').value);
-            const productivity = parseFloat(document.getElementById('aquaculture-productivity').value);
-            if (!volume || !density || !productivity) {
-                this.showNotification('Please fill in aquaculture-specific fields', 'error');
-                return;
-            }
-            productionData.amount = volume * density * productivity;
-            productionData.unit = 'kg';
-            productionData.product = 'Fish';
-            productionData.resources = {
-                water: volume,
-                feed: productionData.amount * 1.5
-            };
-        }
-
-        if (productionId) {
-            this.updateProduction(productionId, productionData);
-        } else {
-            this.addProduction(productionData);
-        }
-
-        this.hideModal();
-    },
-
-    addProduction: function(productionData) {
-        if (!FarmModules.appData.production) {
-            FarmModules.appData.production = [];
-        }
-
-        // Add ID if not present
-        if (!productionData.id) {
-            productionData.id = 'PROD-' + Date.now().toString().slice(-6);
-        }
-
-        FarmModules.appData.production.push(productionData);
+        const csvContent = this.convertToCSV();
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `production-export-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
         
-        this.updateSummary();
-        this.renderProductionTable();
-        
-        this.showNotification('Production recorded successfully!', 'success');
-    },
+        this.showToast('Production data exported!', 'success');
+    }
 
-    editProduction: function(productionId) {
-        const production = FarmModules.appData.production || [];
-        const record = production.find(p => p.id === productionId);
-        
-        if (!record) return;
+    convertToCSV() {
+        const headers = ['Date', 'Product', 'Production Type', 'Batch', 'Quantity', 'Unit', 'Quality', 'Notes'];
+        const rows = this.productionData.map(record => [
+            record.date,
+            record.product,
+            record.productionType,
+            record.batch,
+            record.quantity,
+            record.unit,
+            record.quality,
+            record.notes
+        ]);
 
-        const modal = document.getElementById('production-modal');
-        const title = document.getElementById('production-modal-title');
+        return [headers, ...rows].map(row => 
+            row.map(field => `"${field}"`).join(',')
+        ).join('\n');
+    }
 
-        if (modal && title) {
-            document.getElementById('production-id').value = record.id;
-            document.getElementById('production-date').value = record.date;
-            document.getElementById('production-type').value = record.type;
-            document.getElementById('production-notes').value = record.notes || '';
-            document.getElementById('delete-production').style.display = 'block';
-            
-            // Show relevant fields and populate data
-            this.showProductionFields(record.type);
-            // Note: Would need to populate type-specific fields based on record data
-            
-            this.calculateProduction();
-            
-            title.textContent = 'Edit Production';
-            modal.classList.remove('hidden');
-        }
-    },
-
-    updateProduction: function(productionId, productionData) {
-        const production = FarmModules.appData.production || [];
-        const recordIndex = production.findIndex(p => p.id === productionId);
-        
-        if (recordIndex !== -1) {
-            production[recordIndex] = {
-                ...production[recordIndex],
-                ...productionData
-            };
-            
-            this.updateSummary();
-            this.renderProductionTable();
-            this.showNotification('Production updated successfully!', 'success');
-        }
-    },
-
-    deleteProduction: function() {
-        const productionId = document.getElementById('production-id').value;
-        
-        if (confirm('Are you sure you want to delete this production record?')) {
-            this.deleteProductionRecord(productionId);
-            this.hideModal();
-        }
-    },
-
-    deleteProductionRecord: function(productionId) {
-        if (confirm('Are you sure you want to delete this production record?')) {
-            FarmModules.appData.production = FarmModules.appData.production.filter(p => p.id !== productionId);
-            
-            this.updateSummary();
-            this.renderProductionTable();
-            this.showNotification('Production record deleted successfully', 'success');
-        }
-    },
-
-    exportProduction: function() {
-        const production = FarmModules.appData.production || [];
-        const csv = this.convertToCSV(production);
-        const blob = new Blob([csv], { type: 'text/csv' });
-        
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `production-export-${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
-        
-        this.showNotification('Production data exported successfully!', 'success');
-    },
-
-    // Utility methods
-    getDefaultProduct: function(type) {
-        const products = {
-            'crop': 'Crops',
-            'livestock': 'Livestock', 
-            'aquaculture': 'Fish'
-        };
-        return products[type] || 'Product';
-    },
-
-    calculateQuickResources: function(type, amount) {
-        const resources = {
-            'crop': `Water: ${(amount * 0.5).toFixed(0)}L, Fertilizer: ${(amount * 0.1).toFixed(0)}kg`,
-            'livestock': `Water: ${(amount * 10).toFixed(0)}L, Feed: ${(amount * 2).toFixed(0)}kg`,
-            'aquaculture': `Water: ${(amount * 0.1).toFixed(0)}m³, Feed: ${(amount * 1.5).toFixed(0)}kg`
-        };
-        return resources[type] || '-';
-    },
-
-    formatProductName: function(product) {
-        return product || 'Unknown';
-    },
-
-    formatAmount: function(amount) {
-        if (amount >= 1000) {
-            return (amount / 1000).toFixed(1) + 'k';
-        }
-        return Math.round(amount);
-    },
-
-    formatResources: function(resources) {
-        if (typeof resources === 'object') {
-            return Object.entries(resources).map(([key, value]) => 
-                `${key}: ${value}`
-            ).join(', ');
-        }
-        return resources || '-';
-    },
-
-    formatEfficiency: function(efficiency) {
-        return efficiency || 'Good';
-    },
-
-    formatDate: function(dateString) {
-        try {
-            return new Date(dateString).toLocaleDateString();
-        } catch (e) {
-            return 'Invalid date';
-        }
-    },
-
-    updateElement: function(id, value) {
-        const element = document.getElementById(id);
-        if (element) element.textContent = value;
-    },
-
-    showNotification: function(message, type) {
-        if (window.coreModule && window.coreModule.showNotification) {
-            window.coreModule.showNotification(message, type);
+    showToast(message, type = 'info') {
+        if (window.showToast) {
+            window.showToast(message, type);
         } else {
             alert(message);
         }
-    },
-
-    convertToCSV: function(production) {
-        const headers = ['Date', 'Type', 'Product', 'Amount', 'Unit', 'Resources'];
-        const rows = production.map(record => [
-            record.date,
-            record.type,
-            record.product,
-            record.amount,
-            record.unit,
-            this.formatResources(record.resources)
-        ]);
-        
-        return [headers, ...rows].map(row => row.join(',')).join('\n');
     }
-});
+
+    async cleanup() {
+        this.initialized = false;
+        this.container = null;
+    }
+}
+
+// Register module
+if (window.FarmModules) {
+    window.FarmModules.registerModule('production', new ProductionModule());
+    console.log('✅ Production module registered');
+}
