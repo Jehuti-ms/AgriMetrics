@@ -1,22 +1,29 @@
-// app.js - MINIMAL WORKING VERSION
-console.log('🚜 Farm Management PWA - Minimal version');
+// app.js - SIMPLE VERSION
+console.log('🚜 Farm Management PWA - Simple version');
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded - forcing app to show');
-    
-    // Force show everything for now
-    const authForms = document.querySelector('.auth-forms');
-    const appContent = document.querySelector('.app-content');
-    
-    if (authForms) {
-        console.log('Found auth forms');
-        authForms.style.display = 'none';
+class FarmPWA {
+    constructor() {
+        this.init();
     }
-    
-    if (appContent) {
-        console.log('Found app content');
-        appContent.style.display = 'block';
+
+    init() {
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded');
+            this.setupServiceWorker();
+        });
     }
-    
-    console.log('App should be visible now');
-});
+
+    setupServiceWorker() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/AgriMetrics/sw.js')
+                .then(registration => {
+                    console.log('✅ Service Worker registered');
+                })
+                .catch(error => {
+                    console.log('❌ Service Worker failed:', error);
+                });
+        }
+    }
+}
+
+window.farmPWA = new FarmPWA();
