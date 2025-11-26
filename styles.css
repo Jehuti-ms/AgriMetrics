@@ -621,3 +621,36 @@ body {
     visibility: hidden !important;
     display: none !important;
 }
+
+/* Fix the hidden class issue */
+.hidden {
+    display: none !important;
+}
+
+/* Ensure app container is visible */
+#app-container {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Make sure main content areas are visible */
+main, #content-area {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Fix the layout structure */
+.app-content {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+}
+
+/* Make dashboard visible */
+.dashboard-container {
+    display: block !important;
+    padding: 20px;
+    background: white;
+}
