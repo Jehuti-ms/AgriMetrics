@@ -1,427 +1,167 @@
-// modules/reports.js - Fixed (object literal)
-console.log('Loading reports module...');
+// modules/reports.js
+FarmModules.registerModule('reports', {
+    name: 'Reports',
+    icon: '📈',
+    
+    template: `
+        <div class="section active">
+            <div class="module-header">
+                <h1>Reports & Analytics</h1>
+                <p>Comprehensive insights into your farm operations</p>
+            </div>
 
-const ReportsModule = {
-    name: 'reports',
-    initialized: false,
-
-    initialize() {
-        console.log('📊 Initializing reports...');
-        this.render();
-        this.initialized = true;
-        return true;
-    },
-
-    loadAllData() {
-        // Load data from all modules
-        const salesData = JSON.parse(localStorage.getItem('farm-sales-data') || '[]');
-        const productionData = JSON.parse(localStorage.getItem('farm-production-data') || '[]');
-        const mortalityData = JSON.parse(localStorage.getItem('farm-mortality-data') || '[]');
-        const ordersData = JSON.parse(localStorage.getItem('farm-orders-data') || '[]');
-
-        return {
-            sales: salesData,
-            production: productionData,
-            mortality: mortalityData,
-            orders: ordersData
-        };
-    },
-
-    generateSalesReport() {
-        const data = this.loadAllData();
-        const sales = data.sales;
-
-        if (sales.length === 0) {
-            this.showNotification('No sales data available for report', 'info');
-            return;
-        }
-
-        const totalRevenue = sales.reduce((sum, sale) => sum + sale.total, 0);
-        const totalItems = sales.reduce((sum, sale) => sum + sale.quantity, 0);
-        const avgSale = sales.length > 0 ? totalRevenue / sales.length : 0;
-
-        const report = `
-📊 SALES REPORT
-Generated: ${new Date().toLocaleDateString()}
-
-💰 Revenue Summary:
-• Total Revenue: $${totalRevenue.toFixed(2)}
-• Average Sale: $${avgSale.toFixed(2)}
-
-📦 Sales Statistics:
-• Total Items Sold: ${totalItems}
-• Total Transactions: ${sales.length}
-        `.trim();
-
-        this.showReportModal('Sales Report', report);
-    },
-
-    generateProductionReport() {
-        const data = this.loadAllData();
-        const production = data.production;
-
-        if (production.length === 0) {
-            this.showNotification('No production data available for report', 'info');
-            return;
-        }
-
-        const totalProduction = production.reduce((sum, record) => sum + record.quantity, 0);
-        
-        const report = `
-🏭 PRODUCTION REPORT
-Generated: ${new Date().toLocaleDateString()}
-
-📈 Production Summary:
-• Total Production: ${totalProduction} units
-• Total Records: ${production.length}
-        `.trim();
-
-        this.showReportModal('Production Report', report);
-    },
-
-    generateMortalityReport() {
-        const data = this.loadAllData();
-        const mortality = data.mortality;
-
-        if (mortality.length === 0) {
-            this.showNotification('No mortality data available for report', 'info');
-            return;
-        }
-
-        const totalMortality = mortality.reduce((sum, record) => sum + record.quantity, 0);
-
-        const report = `
-🐔 MORTALITY REPORT
-Generated: ${new Date().toLocaleDateString()}
-
-📊 Mortality Summary:
-• Total Mortality: ${totalMortality} birds
-• Total Records: ${mortality.length}
-        `.trim();
-
-        this.showReportModal('Mortality Report', report);
-    },
-
-    generateOrdersReport() {
-        const data = this.loadAllData();
-        const orders = data.orders;
-
-        if (orders.length === 0) {
-            this.showNotification('No orders data available for report', 'info');
-            return;
-        }
-
-        const pendingOrders = orders.filter(order => order.status === 'pending').length;
-        const completedOrders = orders.filter(order => order.status === 'completed').length;
-
-        const report = `
-📋 ORDERS REPORT
-Generated: ${new Date().toLocaleDateString()}
-
-📈 Order Statistics:
-• Total Orders: ${orders.length}
-• Pending Orders: ${pendingOrders}
-• Completed Orders: ${completedOrders}
-        `.trim();
-
-        this.showReportModal('Orders Report', report);
-    },
-
-    generateComprehensiveReport() {
-        const data = this.loadAllData();
-        
-        const salesRevenue = data.sales.reduce((sum, sale) => sum + sale.total, 0);
-        const totalProduction = data.production.reduce((sum, record) => sum + record.quantity, 0);
-        const totalMortality = data.mortality.reduce((sum, record) => sum + record.quantity, 0);
-        const pendingOrders = data.orders.filter(order => order.status === 'pending').length;
-
-        const report = `
-🏆 COMPREHENSIVE FARM REPORT
-Generated: ${new Date().toLocaleString()}
-
-EXECUTIVE SUMMARY:
-• Total Revenue: $${salesRevenue.toFixed(2)}
-• Total Production: ${totalProduction} units
-• Total Mortality: ${totalMortality} birds
-• Pending Orders: ${pendingOrders}
-
-MODULE OVERVIEW:
-• Sales Records: ${data.sales.length}
-• Production Records: ${data.production.length}
-• Mortality Records: ${data.mortality.length}
-• Order Records: ${data.orders.length}
-        `.trim();
-
-        this.showReportModal('Comprehensive Farm Report', report);
-    },
-
-    showReportModal(title, content) {
-        const modal = document.createElement('div');
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        `;
-
-        modal.innerHTML = `
-            <div style="
-                background: white;
-                border-radius: 16px;
-                padding: 30px;
-                width: 90%;
-                max-width: 600px;
-                max-height: 80vh;
-                overflow-y: auto;
-            ">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                    <h3 style="font-size: 20px; font-weight: 600; color: #1a1a1a;">${title}</h3>
-                    <button class="close-modal" style="
-                        background: none;
-                        border: none;
-                        font-size: 24px;
-                        cursor: pointer;
-                        color: #666;
-                    ">×</button>
+            <div class="reports-grid">
+                <div class="report-type-card">
+                    <div class="report-icon">💰</div>
+                    <div class="report-content">
+                        <h3>Financial Report</h3>
+                        <p>Income, expenses, and profit analysis</p>
+                    </div>
+                    <button class="btn btn-outline" onclick="FarmModules.getModule('reports').generateFinancialReport()">
+                        Generate Report
+                    </button>
                 </div>
 
-                <div style="
-                    background: #f8fafc;
-                    border-radius: 8px;
-                    padding: 20px;
-                    font-family: 'Courier New', monospace;
-                    font-size: 14px;
-                    line-height: 1.5;
-                    white-space: pre-wrap;
-                    max-height: 400px;
-                    overflow-y: auto;
-                ">${content}</div>
+                <div class="report-type-card">
+                    <div class="report-icon">📦</div>
+                    <div class="report-content">
+                        <h3>Inventory Report</h3>
+                        <p>Stock levels, turnover, and valuation</p>
+                    </div>
+                    <button class="btn btn-outline" onclick="FarmModules.getModule('reports').generateInventoryReport()">
+                        Generate Report
+                    </button>
+                </div>
 
-                <div style="display: flex; gap: 12px; margin-top: 24px;">
-                    <button class="close-modal" style="
-                        flex: 1;
-                        background: #6b7280;
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        padding: 12px 24px;
-                        font-size: 14px;
-                        font-weight: 600;
-                        cursor: pointer;
-                    ">Close</button>
+                <div class="report-type-card">
+                    <div class="report-icon">🌱</div>
+                    <div class="report-content">
+                        <h3>Production Report</h3>
+                        <p>Crop yields and livestock production</p>
+                    </div>
+                    <button class="btn btn-outline" onclick="FarmModules.getModule('reports').generateProductionReport()">
+                        Generate Report
+                    </button>
                 </div>
             </div>
-        `;
 
-        document.body.appendChild(modal);
+            <div class="report-output" id="report-output" style="display: none;">
+                <div class="output-header">
+                    <h3 id="output-title">Report Output</h3>
+                    <button class="btn btn-text" onclick="document.getElementById('report-output').style.display = 'none'">
+                        Close
+                    </button>
+                </div>
+                <div class="output-content" id="output-content">
+                </div>
+            </div>
+        </div>
+    `,
 
-        const closeModal = () => document.body.removeChild(modal);
-        
-        modal.querySelectorAll('.close-modal').forEach(btn => {
-            btn.addEventListener('click', closeModal);
-        });
-
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
+    initialize: function() {
+        console.log('Reports module initializing...');
     },
 
-    render() {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
+    generateFinancialReport: function() {
+        const transactions = FarmModules.appData.transactions || [];
+        const totalIncome = transactions.filter(t => t.type === 'income')
+            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+        const totalExpenses = transactions.filter(t => t.type === 'expense')
+            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
 
-        contentArea.innerHTML = `
-            <div class="module-container" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
-                <!-- Header -->
-                <div class="module-header" style="margin-bottom: 30px;">
-                    <h1 style="color: #1a1a1a; font-size: 28px; margin-bottom: 8px;">Reports & Analytics</h1>
-                    <p style="color: #666; font-size: 16px;">Comprehensive farm performance insights</p>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="quick-actions" style="margin-bottom: 30px;">
-                    <div class="actions-grid" style="
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                        gap: 16px;
-                    ">
-                        <button class="action-btn" data-action="comprehensive-report" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 20px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            align-items: center;
-                            gap: 12px;
-                        ">
-                            <div style="font-size: 28px;">🏆</div>
-                            <div style="text-align: left;">
-                                <div style="font-size: 16px; font-weight: 600; color: #1a1a1a;">Comprehensive Report</div>
-                                <div style="font-size: 12px; color: #666;">Full farm overview</div>
-                            </div>
-                        </button>
-
-                        <button class="action-btn" data-action="sales-report" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 20px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            align-items: center;
-                            gap: 12px;
-                        ">
-                            <div style="font-size: 28px;">💰</div>
-                            <div style="text-align: left;">
-                                <div style="font-size: 16px; font-weight: 600; color: #1a1a1a;">Sales Report</div>
-                                <div style="font-size: 12px; color: #666;">Revenue analysis</div>
-                            </div>
-                        </button>
-
-                        <button class="action-btn" data-action="production-report" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 20px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            align-items: center;
-                            gap: 12px;
-                        ">
-                            <div style="font-size: 28px;">🏭</div>
-                            <div style="text-align: left;">
-                                <div style="font-size: 16px; font-weight: 600; color: #1a1a1a;">Production Report</div>
-                                <div style="font-size: 12px; color: #666;">Output analysis</div>
-                            </div>
-                        </button>
-
-                        <button class="action-btn" data-action="mortality-report" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 20px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            align-items: center;
-                            gap: 12px;
-                        ">
-                            <div style="font-size: 28px;">🐔</div>
-                            <div style="text-align: left;">
-                                <div style="font-size: 16px; font-weight: 600; color: #1a1a1a;">Mortality Report</div>
-                                <div style="font-size: 12px; color: #666;">Health analysis</div>
-                            </div>
-                        </button>
-
-                        <button class="action-btn" data-action="orders-report" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 20px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            align-items: center;
-                            gap: 12px;
-                        ">
-                            <div style="font-size: 28px;">📋</div>
-                            <div style="text-align: left;">
-                                <div style="font-size: 16px; font-weight: 600; color: #1a1a1a;">Orders Report</div>
-                                <div style="font-size: 12px; color: #666;">Customer analysis</div>
-                            </div>
-                        </button>
+        const reportContent = `
+            <div class="report-section">
+                <h4>Financial Summary</h4>
+                <div class="financial-metrics">
+                    <div class="metric-row">
+                        <span class="metric-label">Total Income:</span>
+                        <span class="metric-value income">${this.formatCurrency(totalIncome)}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Total Expenses:</span>
+                        <span class="metric-value expense">${this.formatCurrency(totalExpenses)}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Net Profit:</span>
+                        <span class="metric-value profit">${this.formatCurrency(totalIncome - totalExpenses)}</span>
                     </div>
                 </div>
+            </div>
+            <div class="report-section">
+                <h4>Transaction Overview</h4>
+                <p>Total transactions: ${transactions.length}</p>
+                <p>Income transactions: ${transactions.filter(t => t.type === 'income').length}</p>
+                <p>Expense transactions: ${transactions.filter(t => t.type === 'expense').length}</p>
+            </div>
+        `;
 
-                <!-- Report Output Area -->
-                <div style="
-                    background: rgba(255, 255, 255, 0.9);
-                    backdrop-filter: blur(20px);
-                    -webkit-backdrop-filter: blur(20px);
-                    border: 1px solid rgba(0, 0, 0, 0.1);
-                    border-radius: 16px;
-                    padding: 30px;
-                    text-align: center;
-                    color: #666;
-                ">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                    <div style="font-size: 18px; margin-bottom: 8px; font-weight: 600;">No Report Generated</div>
-                    <div style="font-size: 14px; color: #999;">Select a report type above to generate insights</div>
+        this.showReport('Financial Report', reportContent);
+    },
+
+    generateInventoryReport: function() {
+        const inventory = FarmModules.appData.inventory || [];
+        const lowStockCount = inventory.filter(item => {
+            const quantity = parseInt(item.quantity) || 0;
+            return quantity > 0 && quantity < 10;
+        }).length;
+
+        const reportContent = `
+            <div class="report-section">
+                <h4>Inventory Overview</h4>
+                <div class="inventory-metrics">
+                    <div class="metric-row">
+                        <span class="metric-label">Total Items:</span>
+                        <span class="metric-value">${inventory.length}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Low Stock Items:</span>
+                        <span class="metric-value warning">${lowStockCount}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Categories:</span>
+                        <span class="metric-value">${[...new Set(inventory.map(item => item.category))].length}</span>
+                    </div>
                 </div>
             </div>
         `;
 
-        this.setupEventListeners();
+        this.showReport('Inventory Report', reportContent);
     },
 
-    setupEventListeners() {
-        const actionButtons = document.querySelectorAll('.action-btn');
-        
-        actionButtons.forEach(button => {
-            button.addEventListener('mouseenter', (e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.1)';
-            });
+    generateProductionReport: function() {
+        const reportContent = `
+            <div class="report-section">
+                <h4>Production Overview</h4>
+                <p>Production tracking features coming soon!</p>
+                <p>This module will track crop yields, livestock production, and other farm outputs.</p>
+            </div>
+        `;
 
-            button.addEventListener('mouseleave', (e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-            });
-
-            button.addEventListener('click', (e) => {
-                const action = e.currentTarget.getAttribute('data-action');
-                switch (action) {
-                    case 'comprehensive-report':
-                        this.generateComprehensiveReport();
-                        break;
-                    case 'sales-report':
-                        this.generateSalesReport();
-                        break;
-                    case 'production-report':
-                        this.generateProductionReport();
-                        break;
-                    case 'mortality-report':
-                        this.generateMortalityReport();
-                        break;
-                    case 'orders-report':
-                        this.generateOrdersReport();
-                        break;
-                }
-            });
-        });
+        this.showReport('Production Report', reportContent);
     },
 
-    showNotification(message, type = 'info') {
-        if (window.showToast) {
-            window.showToast(message, type);
-        } else {
-            alert(message);
+    showReport: function(title, content) {
+        const outputSection = document.getElementById('report-output');
+        const outputTitle = document.getElementById('output-title');
+        const outputContent = document.getElementById('output-content');
+
+        if (outputTitle) outputTitle.textContent = title;
+        if (outputContent) outputContent.innerHTML = content;
+        if (outputSection) outputSection.style.display = 'block';
+
+        this.showNotification(`Generated: ${title}`, 'success');
+    },
+
+    formatCurrency: function(amount) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(amount);
+    },
+
+    showNotification: function(message, type) {
+        if (window.coreModule && window.coreModule.showNotification) {
+            window.coreModule.showNotification(message, type);
         }
     }
-};
-
-// Register module
-if (window.FarmModules) {
-    window.FarmModules.registerModule('reports', ReportsModule);
-    console.log('✅ Reports module registered');
-}
+});
