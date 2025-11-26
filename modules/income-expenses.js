@@ -1,559 +1,806 @@
-// modules/income-expenses.js - PWA Style
-console.log('Loading income-expenses module...');
-
-class IncomeExpensesModule {
-    constructor() {
-        this.moduleId = 'income-expenses';
-        this.moduleName = 'Income & Expenses';
-        this.transactions = [];
-        this.filter = 'all';
-        this.editingId = null;
-    }
-
-    init() {
-        console.log('💰 Initializing income-expenses module...');
-        this.loadTransactions();
-        return true;
-    }
-
-    render(container) {
-        console.log('🎨 Rendering income-expenses...');
-        
-        container.innerHTML = this.getModuleHTML();
-        this.attachEventListeners();
-        this.renderTransactions();
-        
-        // PWA: Animate content
-        this.animateContent();
-    }
-
-    getModuleHTML() {
-        return `
-            <div class="module-container">
-                <!-- Header -->
-                <div class="module-header">
-                    <div class="header-content">
-                        <h1>Income & Expenses</h1>
-                        <p>Track your farm's financial transactions</p>
-                    </div>
-                    <div class="header-actions">
-                        <button class="btn btn-primary" id="add-transaction-btn">
-                            <span class="icon">➕</span>
-                            Add Transaction
-                        </button>
-                    </div>
+// modules/income-expenses.js
+FarmModules.registerModule('income-expenses', {
+    name: 'Income & Expenses',
+    icon: '💰',
+    
+    template: `
+        <div class="section active">
+            <div class="module-header">
+                <h1>Income & Expenses</h1>
+                <p>Track your farm's financial transactions</p>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="add-income-btn">
+                        💰 Add Income
+                    </button>
+                    <button class="btn btn-secondary" id="add-expense-btn">
+                        💸 Add Expense
+                    </button>
                 </div>
+            </div>
 
-                <!-- Summary Cards -->
-                <div class="summary-cards">
-                    <div class="summary-card income">
-                        <div class="summary-icon">💰</div>
-                        <div class="summary-content">
-                            <div class="summary-label">Total Income</div>
-                            <div class="summary-value" id="total-income">$0.00</div>
+            <!-- Quick Add Form -->
+            <div class="quick-add-form card">
+                <h3>Quick Add Transaction</h3>
+                <form id="quick-transaction-form" class="form-inline">
+                    <div class="form-row compact">
+                        <div class="form-group">
+                            <select id="quick-type" required class="form-compact">
+                                <option value="income">Income</option>
+                                <option value="expense">Expense</option>
+                            </select>
                         </div>
-                    </div>
-                    <div class="summary-card expense">
-                        <div class="summary-icon">💸</div>
-                        <div class="summary-content">
-                            <div class="summary-label">Total Expenses</div>
-                            <div class="summary-value" id="total-expenses">$0.00</div>
+                        <div class="form-group">
+                            <input type="text" id="quick-description" placeholder="Description" required class="form-compact">
                         </div>
-                    </div>
-                    <div class="summary-card net">
-                        <div class="summary-icon">📊</div>
-                        <div class="summary-content">
-                            <div class="summary-label">Net Balance</div>
-                            <div class="summary-value" id="net-balance">$0.00</div>
+                        <div class="form-group">
+                            <input type="number" id="quick-amount" step="0.01" placeholder="Amount" required class="form-compact">
                         </div>
-                    </div>
-                </div>
-
-                <!-- Filters and Search -->
-                <div class="toolbar">
-                    <div class="search-box">
-                        <span class="icon">🔍</span>
-                        <input type="text" id="search-input" placeholder="Search transactions...">
-                    </div>
-                    <div class="filter-buttons">
-                        <button class="filter-btn ${this.filter === 'all' ? 'active' : ''}" data-filter="all">
-                            All
-                        </button>
-                        <button class="filter-btn ${this.filter === 'income' ? 'active' : ''}" data-filter="income">
-                            Income
-                        </button>
-                        <button class="filter-btn ${this.filter === 'expense' ? 'active' : ''}" data-filter="expense">
-                            Expenses
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Transactions List -->
-                <div class="transactions-section">
-                    <div class="section-header">
-                        <h2>Recent Transactions</h2>
-                        <div class="section-actions">
-                            <button class="btn-text" id="export-btn">
-                                <span class="icon">📤</span>
-                                Export
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-compact">Add</button>
+                            <button type="button" class="btn btn-text btn-compact" id="show-detailed-form">
+                                Detailed ➔
                             </button>
                         </div>
                     </div>
-                    <div class="transactions-list" id="transactions-list">
-                        <div class="empty-state">
-                            <div class="icon">💸</div>
-                            <div>No transactions yet</div>
-                            <div class="subtext">Add your first income or expense</div>
-                        </div>
+                </form>
+            </div>
+
+            <div class="summary-cards">
+                <div class="summary-card income">
+                    <div class="summary-icon">💰</div>
+                    <div class="summary-content">
+                        <h3>Total Income</h3>
+                        <div class="summary-value" id="total-income-summary">$0.00</div>
                     </div>
+                </div>
+                <div class="summary-card expense">
+                    <div class="summary-icon">💸</div>
+                    <div class="summary-content">
+                        <h3>Total Expenses</h3>
+                        <div class="summary-value" id="total-expenses-summary">$0.00</div>
+                    </div>
+                </div>
+                <div class="summary-card net">
+                    <div class="summary-icon">📈</div>
+                    <div class="summary-content">
+                        <h3>Net Profit</h3>
+                        <div class="summary-value" id="net-profit-summary">$0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-section">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Receipts</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-body">
+                            <tr>
+                                <td colspan="7" class="empty-state">
+                                    <div class="empty-content">
+                                        <span class="empty-icon">💰</span>
+                                        <h4>No transactions yet</h4>
+                                        <p>Start tracking your farm's income and expenses</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
             <!-- Transaction Modal -->
-            <div class="modal-overlay hidden" id="transaction-modal">
+            <div id="transaction-modal" class="modal hidden">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h3 id="modal-title">Add Transaction</h3>
-                        <button class="modal-close" id="modal-close">×</button>
+                        <h3 id="transaction-modal-title">Add Transaction</h3>
+                        <button class="btn-icon close-modal">&times;</button>
                     </div>
-                    <form class="modal-form" id="transaction-form">
-                        <input type="hidden" id="transaction-id">
-                        
-                        <div class="form-group">
-                            <label>Type</label>
-                            <div class="radio-group">
-                                <label class="radio-option">
-                                    <input type="radio" name="type" value="income" checked>
-                                    <span class="radio-label">Income</span>
-                                </label>
-                                <label class="radio-option">
-                                    <input type="radio" name="type" value="expense">
-                                    <span class="radio-label">Expense</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>Description</label>
-                                <input type="text" id="description" required 
-                                       placeholder="e.g., Chicken sales, Feed purchase">
+                    <div class="modal-body">
+                        <form id="transaction-form">
+                            <input type="hidden" id="transaction-id">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="transaction-type">Type:</label>
+                                    <select id="transaction-type" required>
+                                        <option value="income">Income</option>
+                                        <option value="expense">Expense</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="transaction-date">Date:</label>
+                                    <input type="date" id="transaction-date" required>
+                                </div>
                             </div>
                             <div class="form-group">
-                                <label>Amount ($)</label>
-                                <input type="number" id="amount" required 
-                                       step="0.01" min="0.01" placeholder="0.00">
+                                <label for="transaction-description">Description:</label>
+                                <input type="text" id="transaction-description" required placeholder="Enter transaction description">
                             </div>
                             <div class="form-group">
-                                <label>Category</label>
-                                <select id="category" required>
-                                    <option value="">Select category</option>
-                                    <optgroup label="Income">
-                                        <option value="livestock-sales">Livestock Sales</option>
+                                <label for="transaction-amount">Amount ($):</label>
+                                <input type="number" id="transaction-amount" step="0.01" min="0" required placeholder="0.00">
+                            </div>
+                            <div class="form-group">
+                                <label for="transaction-category">Category:</label>
+                                <select id="transaction-category" required>
+                                    <option value="">Select Category</option>
+                                    <optgroup label="Income Categories">
                                         <option value="crop-sales">Crop Sales</option>
-                                        <option value="equipment-rental">Equipment Rental</option>
+                                        <option value="livestock-sales">Livestock Sales</option>
+                                        <option value="dairy-products">Dairy Products</option>
+                                        <option value="poultry-products">Poultry Products</option>
                                         <option value="other-income">Other Income</option>
                                     </optgroup>
-                                    <optgroup label="Expenses">
-                                        <option value="feed">Feed</option>
-                                        <option value="vaccines">Vaccines & Medicine</option>
+                                    <optgroup label="Expense Categories">
+                                        <option value="feed-supplies">Feed & Supplies</option>
                                         <option value="equipment">Equipment</option>
                                         <option value="labor">Labor</option>
+                                        <option value="maintenance">Maintenance</option>
+                                        <option value="seeds-plants">Seeds & Plants</option>
+                                        <option value="fertilizer">Fertilizer</option>
                                         <option value="utilities">Utilities</option>
-                                        <option value="other-expense">Other Expense</option>
+                                        <option value="other-expenses">Other Expenses</option>
                                     </optgroup>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Date</label>
-                                <input type="date" id="date" required>
+                                <label for="transaction-notes">Notes (Optional):</label>
+                                <textarea id="transaction-notes" placeholder="Add any additional notes..." rows="3"></textarea>
                             </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Notes (Optional)</label>
-                            <textarea id="notes" rows="3" 
-                                      placeholder="Additional notes about this transaction"></textarea>
-                        </div>
-
-                        <div class="form-actions">
-                            <button type="button" class="btn btn-secondary" id="cancel-btn">
-                                Cancel
-                            </button>
-                            <button type="submit" class="btn btn-primary">
-                                <span class="icon">💾</span>
-                                Save Transaction
-                            </button>
-                        </div>
-                    </form>
+                            
+                            <!-- Receipt Upload Section -->
+                            <div class="form-group">
+                                <label for="transaction-receipt">Attach Receipt (Optional):</label>
+                                <div class="file-upload-area" id="receipt-upload-area">
+                                    <div class="file-upload-placeholder">
+                                        <span class="upload-icon">📎</span>
+                                        <p>Drop receipt files here or click to browse</p>
+                                        <small>Supports: JPG, PNG, PDF (Max: 5MB)</small>
+                                    </div>
+                                    <input type="file" id="transaction-receipt" 
+                                           accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" 
+                                           multiple
+                                           style="display: none;">
+                                </div>
+                                <div id="receipt-preview" class="file-preview-container"></div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-text close-modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="save-transaction">Save Transaction</button>
+                    </div>
                 </div>
             </div>
-        `;
-    }
 
-    attachEventListeners() {
-        // Add transaction button
-        document.getElementById('add-transaction-btn').addEventListener('click', () => {
-            this.showTransactionModal();
-        });
-
-        // Filter buttons
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                this.setFilter(e.target.dataset.filter);
-            });
-        });
-
-        // Search input
-        document.getElementById('search-input').addEventListener('input', (e) => {
-            this.searchTransactions(e.target.value);
-        });
-
-        // Export button
-        document.getElementById('export-btn').addEventListener('click', () => {
-            this.exportTransactions();
-        });
-
-        // Modal events
-        this.setupModalEvents();
-    }
-
-    setupModalEvents() {
-        const modal = document.getElementById('transaction-modal');
-        const form = document.getElementById('transaction-form');
-        const closeBtn = document.getElementById('modal-close');
-        const cancelBtn = document.getElementById('cancel-btn');
-
-        // Open/close modal
-        closeBtn.addEventListener('click', () => this.hideModal());
-        cancelBtn.addEventListener('click', () => this.hideModal());
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) this.hideModal();
-        });
-
-        // Form submission
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.saveTransaction();
-        });
-
-        // Set today's date as default
-        document.getElementById('date').value = new Date().toISOString().split('T')[0];
-    }
-
-    showTransactionModal(transaction = null) {
-        const modal = document.getElementById('transaction-modal');
-        const title = document.getElementById('modal-title');
-        const form = document.getElementById('transaction-form');
-
-        this.editingId = transaction ? transaction.id : null;
-
-        if (transaction) {
-            title.textContent = 'Edit Transaction';
-            this.populateForm(transaction);
-        } else {
-            title.textContent = 'Add Transaction';
-            form.reset();
-            document.getElementById('date').value = new Date().toISOString().split('T')[0];
-        }
-
-        modal.classList.remove('hidden');
-        document.getElementById('description').focus();
-    }
-
-    populateForm(transaction) {
-        document.getElementById('transaction-id').value = transaction.id;
-        document.querySelector(`input[name="type"][value="${transaction.type}"]`).checked = true;
-        document.getElementById('description').value = transaction.description || '';
-        document.getElementById('amount').value = transaction.amount || '';
-        document.getElementById('category').value = transaction.category || '';
-        document.getElementById('date').value = transaction.date || '';
-        document.getElementById('notes').value = transaction.notes || '';
-    }
-
-    hideModal() {
-        document.getElementById('transaction-modal').classList.add('hidden');
-        this.editingId = null;
-    }
-
-    saveTransaction() {
-        const formData = new FormData(document.getElementById('transaction-form'));
-        const transaction = {
-            id: this.editingId || this.generateId(),
-            type: formData.get('type'),
-            description: formData.get('description'),
-            amount: parseFloat(formData.get('amount')),
-            category: formData.get('category'),
-            date: formData.get('date'),
-            notes: formData.get('notes'),
-            createdAt: this.editingId ? undefined : new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-
-        if (this.editingId) {
-            // Update existing transaction
-            const index = this.transactions.findIndex(t => t.id === this.editingId);
-            if (index !== -1) {
-                this.transactions[index] = { ...this.transactions[index], ...transaction };
-            }
-        } else {
-            // Add new transaction
-            this.transactions.unshift(transaction);
-        }
-
-        this.saveTransactions();
-        this.renderTransactions();
-        this.updateSummary();
-        this.hideModal();
-
-        this.showNotification(
-            `Transaction ${this.editingId ? 'updated' : 'added'} successfully`,
-            'success'
-        );
-    }
-
-    deleteTransaction(id) {
-        if (confirm('Are you sure you want to delete this transaction?')) {
-            this.transactions = this.transactions.filter(t => t.id !== id);
-            this.saveTransactions();
-            this.renderTransactions();
-            this.updateSummary();
-            this.showNotification('Transaction deleted', 'success');
-        }
-    }
-
-    setFilter(filter) {
-        this.filter = filter;
-        
-        // Update active filter button
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.filter === filter);
-        });
-
-        this.renderTransactions();
-    }
-
-    searchTransactions(query) {
-        this.currentSearch = query.toLowerCase();
-        this.renderTransactions();
-    }
-
-    renderTransactions() {
-        const container = document.getElementById('transactions-list');
-        if (!container) return;
-
-        let filteredTransactions = this.transactions;
-
-        // Apply filter
-        if (this.filter !== 'all') {
-            filteredTransactions = filteredTransactions.filter(t => t.type === this.filter);
-        }
-
-        // Apply search
-        if (this.currentSearch) {
-            filteredTransactions = filteredTransactions.filter(t => 
-                t.description.toLowerCase().includes(this.currentSearch) ||
-                t.category.toLowerCase().includes(this.currentSearch) ||
-                t.notes.toLowerCase().includes(this.currentSearch)
-            );
-        }
-
-        if (filteredTransactions.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="icon">🔍</div>
-                    <div>No transactions found</div>
-                    <div class="subtext">${this.currentSearch ? 'Try a different search' : 'Add your first transaction'}</div>
+            <!-- Receipt Viewer Modal -->
+            <div id="receipt-viewer-modal" class="modal hidden">
+                <div class="modal-content receipt-viewer">
+                    <div class="modal-header">
+                        <h3>Receipt Viewer</h3>
+                        <button class="btn-icon close-receipt-viewer">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="receipt-viewer-content">
+                            <!-- Receipt content will be displayed here -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-text close-receipt-viewer">Close</button>
+                        <button type="button" class="btn btn-primary" id="download-receipt">Download</button>
+                    </div>
                 </div>
+            </div>
+        </div>
+    `,
+
+    initialize: function() {
+        console.log('Income & Expenses module initializing...');
+        this.loadTransactionData();
+        this.attachEventListeners();
+        this.updateSummaryCards();
+    },
+
+    loadTransactionData: function() {
+        const transactions = FarmModules.appData.transactions || [];
+        this.renderTransactionsTable(transactions);
+    },
+
+    renderTransactionsTable: function(transactions) {
+        const tbody = document.getElementById('transactions-body');
+        if (!tbody) return;
+
+        if (transactions.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="empty-state">
+                        <div class="empty-content">
+                            <span class="empty-icon">💰</span>
+                            <h4>No transactions yet</h4>
+                            <p>Start tracking your farm's income and expenses</p>
+                        </div>
+                    </td>
+                </tr>
             `;
             return;
         }
 
-        container.innerHTML = filteredTransactions.map(transaction => `
-            <div class="transaction-item" data-id="${transaction.id}">
-                <div class="transaction-icon ${transaction.type}">
-                    ${transaction.type === 'income' ? '💰' : '💸'}
-                </div>
-                <div class="transaction-content">
-                    <div class="transaction-description">${transaction.description}</div>
-                    <div class="transaction-meta">
-                        <span class="transaction-category">${this.formatCategory(transaction.category)}</span>
-                        <span class="transaction-date">${this.formatDate(transaction.date)}</span>
-                        ${transaction.notes ? `<span class="transaction-notes">${transaction.notes}</span>` : ''}
+        tbody.innerHTML = transactions.map(transaction => `
+            <tr class="transaction-row ${transaction.type}">
+                <td>${this.formatDate(transaction.date)}</td>
+                <td>
+                    <div class="transaction-description">
+                        <strong>${transaction.description}</strong>
+                        ${transaction.notes ? `<div class="transaction-notes">${transaction.notes}</div>` : ''}
                     </div>
-                </div>
-                <div class="transaction-amount ${transaction.type}">
-                    ${transaction.type === 'income' ? '+' : '-'}$${transaction.amount.toFixed(2)}
-                </div>
-                <div class="transaction-actions">
-                    <button class="btn-icon edit-btn" title="Edit">
-                        <span class="icon">✏️</span>
-                    </button>
-                    <button class="btn-icon delete-btn" title="Delete">
-                        <span class="icon">🗑️</span>
-                    </button>
+                </td>
+                <td>
+                    <span class="category-badge">${this.formatCategory(transaction.category)}</span>
+                </td>
+                <td>
+                    <span class="type-badge ${transaction.type}">
+                        ${transaction.type === 'income' ? 'Income' : 'Expense'}
+                    </span>
+                </td>
+                <td class="transaction-amount ${transaction.type}">
+                    ${transaction.type === 'income' ? '+' : '-'}${this.formatCurrency(transaction.amount)}
+                </td>
+                <td class="transaction-receipts">
+                    ${transaction.receipts && transaction.receipts.length > 0 ? `
+                        <div class="receipt-thumbnails">
+                            ${transaction.receipts.slice(0, 3).map((receipt, index) => `
+                                <div class="receipt-thumbnail" data-transaction-id="${transaction.id}" data-receipt-index="${index}">
+                                    ${this.getFileIcon(receipt.type)}
+                                    ${transaction.receipts.length > 3 && index === 2 ? `<span class="more-count">+${transaction.receipts.length - 3}</span>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : '<span class="no-receipt">—</span>'}
+                </td>
+                <td class="transaction-actions">
+                    <button class="btn-icon edit-transaction" data-id="${transaction.id}" title="Edit">✏️</button>
+                    <button class="btn-icon delete-transaction" data-id="${transaction.id}" title="Delete">🗑️</button>
+                </td>
+            </tr>
+        `).join('');
+    },
+
+    updateSummaryCards: function() {
+        const transactions = FarmModules.appData.transactions || [];
+
+        const totalIncome = transactions
+            .filter(t => t.type === 'income')
+            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
+        const totalExpenses = transactions
+            .filter(t => t.type === 'expense')
+            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
+        const netProfit = totalIncome - totalExpenses;
+
+        this.updateElement('total-income-summary', this.formatCurrency(totalIncome));
+        this.updateElement('total-expenses-summary', this.formatCurrency(totalExpenses));
+        this.updateElement('net-profit-summary', this.formatCurrency(netProfit));
+    },
+
+    attachEventListeners: function() {
+        // Quick form submission
+        const quickForm = document.getElementById('quick-transaction-form');
+        if (quickForm) {
+            quickForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleQuickAdd();
+            });
+        }
+
+        // Show detailed form
+        const showDetailedBtn = document.getElementById('show-detailed-form');
+        if (showDetailedBtn) {
+            showDetailedBtn.addEventListener('click', () => {
+                const type = document.getElementById('quick-type').value;
+                this.showTransactionModal(type);
+            });
+        }
+
+        // Add transaction buttons
+        const addIncomeBtn = document.getElementById('add-income-btn');
+        const addExpenseBtn = document.getElementById('add-expense-btn');
+
+        if (addIncomeBtn) {
+            addIncomeBtn.addEventListener('click', () => this.showTransactionModal('income'));
+        }
+        if (addExpenseBtn) {
+            addExpenseBtn.addEventListener('click', () => this.showTransactionModal('expense'));
+        }
+
+        // Modal events
+        const closeButtons = document.querySelectorAll('.close-modal');
+        closeButtons.forEach(btn => {
+            btn.addEventListener('click', () => this.hideModal());
+        });
+
+        // Save transaction
+        const saveBtn = document.getElementById('save-transaction');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => this.saveTransaction());
+        }
+
+        // File upload events
+        this.setupFileUpload();
+
+        // Receipt viewer events
+        const closeReceiptViewer = document.querySelector('.close-receipt-viewer');
+        if (closeReceiptViewer) {
+            closeReceiptViewer.addEventListener('click', () => this.hideReceiptViewer());
+        }
+
+        const downloadReceiptBtn = document.getElementById('download-receipt');
+        if (downloadReceiptBtn) {
+            downloadReceiptBtn.addEventListener('click', () => this.downloadReceipt());
+        }
+
+        // Receipt thumbnail clicks
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.receipt-thumbnail')) {
+                const thumbnail = e.target.closest('.receipt-thumbnail');
+                const transactionId = thumbnail.dataset.transactionId;
+                const receiptIndex = parseInt(thumbnail.dataset.receiptIndex);
+                this.viewReceipt(transactionId, receiptIndex);
+            }
+        });
+
+        // Edit and delete transactions
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.edit-transaction')) {
+                const transactionId = e.target.closest('.edit-transaction').dataset.id;
+                this.editTransaction(transactionId);
+            }
+            if (e.target.closest('.delete-transaction')) {
+                const transactionId = e.target.closest('.delete-transaction').dataset.id;
+                this.deleteTransaction(transactionId);
+            }
+        });
+
+        // Close modal on backdrop click
+        const modal = document.getElementById('transaction-modal');
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.hideModal();
+                }
+            });
+        }
+
+        // Close receipt viewer on backdrop click
+        const receiptViewerModal = document.getElementById('receipt-viewer-modal');
+        if (receiptViewerModal) {
+            receiptViewerModal.addEventListener('click', (e) => {
+                if (e.target === receiptViewerModal) {
+                    this.hideReceiptViewer();
+                }
+            });
+        }
+    },
+
+    handleQuickAdd: function() {
+        const type = document.getElementById('quick-type').value;
+        const description = document.getElementById('quick-description').value;
+        const amount = parseFloat(document.getElementById('quick-amount').value);
+
+        if (!description || !amount) {
+            this.showNotification('Please fill in description and amount', 'error');
+            return;
+        }
+
+        if (amount <= 0) {
+            this.showNotification('Amount must be greater than 0', 'error');
+            return;
+        }
+
+        const transactionData = {
+            type: type,
+            description: description,
+            amount: amount,
+            category: type === 'income' ? 'other-income' : 'other-expenses',
+            date: new Date().toISOString().split('T')[0],
+            notes: 'Added via quick form'
+        };
+
+        this.addTransaction(transactionData);
+        
+        // Clear quick form
+        document.getElementById('quick-description').value = '';
+        document.getElementById('quick-amount').value = '';
+        
+        this.showNotification(`${type === 'income' ? 'Income' : 'Expense'} added successfully!`, 'success');
+    },
+
+    setupFileUpload: function() {
+        const uploadArea = document.getElementById('receipt-upload-area');
+        const fileInput = document.getElementById('transaction-receipt');
+        const previewContainer = document.getElementById('receipt-preview');
+
+        if (!uploadArea || !fileInput) return;
+
+        // Click to browse
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            this.handleFileSelection(files);
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            this.handleFileSelection(e.target.files);
+        });
+    },
+
+    handleFileSelection: function(files) {
+        const previewContainer = document.getElementById('receipt-preview');
+        if (!previewContainer) return;
+
+        // Clear existing previews
+        previewContainer.innerHTML = '';
+
+        Array.from(files).forEach(file => {
+            if (!this.validateFile(file)) {
+                return;
+            }
+
+            const fileItem = this.createFilePreview(file);
+            previewContainer.appendChild(fileItem);
+        });
+    },
+
+    validateFile: function(file) {
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        const maxSize = 5 * 1024 * 1024; // 5MB
+
+        if (!validTypes.includes(file.type)) {
+            this.showNotification('Invalid file type. Please upload JPG, PNG, or PDF files.', 'error');
+            return false;
+        }
+
+        if (file.size > maxSize) {
+            this.showNotification('File too large. Maximum size is 5MB.', 'error');
+            return false;
+        }
+
+        return true;
+    },
+
+    createFilePreview: function(file) {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-preview-item';
+        fileItem.innerHTML = `
+            <div class="file-info">
+                <span class="file-icon">${this.getFileIcon(file.type)}</span>
+                <div class="file-details">
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-size">${this.formatFileSize(file.size)}</div>
                 </div>
             </div>
-        `).join('');
+            <button type="button" class="btn-icon remove-file" title="Remove file">🗑️</button>
+        `;
 
-        // Add event listeners to action buttons
-        container.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const transactionId = e.target.closest('.transaction-item').dataset.id;
-                const transaction = this.transactions.find(t => t.id === transactionId);
-                if (transaction) this.showTransactionModal(transaction);
-            });
+        // Remove file button
+        const removeBtn = fileItem.querySelector('.remove-file');
+        removeBtn.addEventListener('click', () => {
+            fileItem.remove();
         });
 
-        container.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const transactionId = e.target.closest('.transaction-item').dataset.id;
-                this.deleteTransaction(transactionId);
-            });
-        });
-    }
+        return fileItem;
+    },
 
-    updateSummary() {
-        const income = this.transactions
-            .filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + t.amount, 0);
-            
-        const expenses = this.transactions
-            .filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + t.amount, 0);
-            
-        const net = income - expenses;
+    getFileIcon: function(fileType) {
+        if (fileType.startsWith('image/')) return '🖼️';
+        if (fileType === 'application/pdf') return '📄';
+        if (fileType.includes('word')) return '📝';
+        return '📎';
+    },
 
-        this.updateElement('total-income', `$${income.toFixed(2)}`);
-        this.updateElement('total-expenses', `$${expenses.toFixed(2)}`);
-        this.updateElement('net-balance', `$${net.toFixed(2)}`);
+    formatFileSize: function(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    },
 
-        // Update color based on net balance
-        const netElement = document.getElementById('net-balance');
-        if (netElement) {
-            netElement.style.color = net >= 0 ? 'var(--success)' : 'var(--error)';
-        }
-    }
+    getReceiptFiles: function() {
+        const previewContainer = document.getElementById('receipt-preview');
+        const fileInput = document.getElementById('transaction-receipt');
+        
+        if (!previewContainer || !fileInput) return [];
 
-    updateElement(id, value) {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value;
-        }
-    }
-
-    exportTransactions() {
-        const data = this.transactions.map(t => ({
-            Date: t.date,
-            Type: t.type.charAt(0).toUpperCase() + t.type.slice(1),
-            Description: t.description,
-            Category: this.formatCategory(t.category),
-            Amount: t.amount,
-            Notes: t.notes || ''
+        const files = Array.from(fileInput.files || []);
+        
+        return files.map(file => ({
+            name: file.name,
+            type: file.type.startsWith('image/') ? 'image' : 'document',
+            size: file.size,
+            file: file
         }));
+    },
 
-        const csv = this.convertToCSV(data);
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `farm-transactions-${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-        window.URL.revokeObjectURL(url);
+    showTransactionModal: function(type = 'income') {
+        const modal = document.getElementById('transaction-modal');
+        const title = document.getElementById('transaction-modal-title');
+        const form = document.getElementById('transaction-form');
 
-        this.showNotification('Transactions exported successfully', 'success');
-    }
-
-    convertToCSV(data) {
-        const headers = Object.keys(data[0] || {});
-        const csv = [
-            headers.join(','),
-            ...data.map(row => headers.map(header => `"${row[header]}"`).join(','))
-        ].join('\n');
-        return csv;
-    }
-
-    loadTransactions() {
-        // Load from FarmModules appData or localStorage
-        const savedData = window.FarmModules?.appData?.transactions;
-        if (savedData && Array.isArray(savedData)) {
-            this.transactions = savedData;
-        } else {
-            // Try localStorage as fallback
-            try {
-                const localData = localStorage.getItem('farm-transactions');
-                if (localData) {
-                    this.transactions = JSON.parse(localData);
-                }
-            } catch (error) {
-                console.error('Error loading transactions:', error);
-            }
+        if (modal && title && form) {
+            // Reset form
+            form.reset();
+            document.getElementById('transaction-id').value = '';
+            
+            // Clear file previews
+            const previewContainer = document.getElementById('receipt-preview');
+            if (previewContainer) previewContainer.innerHTML = '';
+            
+            // Set type and title
+            document.getElementById('transaction-type').value = type;
+            title.textContent = `Add ${type === 'income' ? 'Income' : 'Expense'}`;
+            
+            // Set today's date as default
+            document.getElementById('transaction-date').value = new Date().toISOString().split('T')[0];
+            
+            // Show modal
+            modal.classList.remove('hidden');
         }
-        
-        this.updateSummary();
-    }
+    },
 
-    saveTransactions() {
-        // Save to FarmModules appData
-        if (window.FarmModules) {
-            window.FarmModules.appData.transactions = this.transactions;
-            window.FarmModules.saveDataToStorage();
+    hideModal: function() {
+        const modal = document.getElementById('transaction-modal');
+        if (modal) {
+            modal.classList.add('hidden');
         }
-        
-        // Also save to localStorage as backup
-        try {
-            localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-        } catch (error) {
-            console.error('Error saving transactions:', error);
-        }
-    }
+    },
 
-    formatCategory(category) {
-        const categories = {
-            'livestock-sales': 'Livestock Sales',
-            'crop-sales': 'Crop Sales',
-            'equipment-rental': 'Equipment Rental',
-            'other-income': 'Other Income',
-            'feed': 'Feed',
-            'vaccines': 'Vaccines & Medicine',
-            'equipment': 'Equipment',
-            'labor': 'Labor',
-            'utilities': 'Utilities',
-            'other-expense': 'Other Expense'
+    saveTransaction: function() {
+        const form = document.getElementById('transaction-form');
+        if (!form) return;
+
+        const transactionId = document.getElementById('transaction-id').value;
+        const type = document.getElementById('transaction-type').value;
+        const description = document.getElementById('transaction-description').value;
+        const amount = parseFloat(document.getElementById('transaction-amount').value);
+        const category = document.getElementById('transaction-category').value;
+        const date = document.getElementById('transaction-date').value;
+        const notes = document.getElementById('transaction-notes').value;
+        const receiptFiles = this.getReceiptFiles();
+
+        // Validation
+        if (!description || !amount || !category || !date) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+
+        if (amount <= 0) {
+            this.showNotification('Amount must be greater than 0', 'error');
+            return;
+        }
+
+        const transactionData = {
+            type: type,
+            description: description,
+            amount: amount,
+            category: category,
+            date: date,
+            notes: notes,
+            receipts: receiptFiles
         };
-        return categories[category] || category;
-    }
 
-    formatDate(dateString) {
-        return new Date(dateString).toLocaleDateString();
-    }
+        if (transactionId) {
+            // Update existing transaction
+            this.updateTransaction(transactionId, transactionData);
+        } else {
+            // Add new transaction
+            this.addTransaction(transactionData);
+        }
 
-    generateId() {
-        return Date.now().toString(36) + Math.random().toString(36).substr(2);
-    }
+        this.hideModal();
+    },
 
-    animateContent() {
-        // Animate summary cards
-        const cards = document.querySelectorAll('.summary-card');
-        cards.forEach((card, index) => {
-            card.style.animationDelay = `${index * 0.1}s`;
-            card.classList.add('animate-in');
-        });
-    }
+    addTransaction: function(transactionData) {
+        if (!FarmModules.appData.transactions) {
+            FarmModules.appData.transactions = [];
+        }
 
-    showNotification(message, type = 'info') {
+        const newTransaction = {
+            id: 'tx-' + Date.now(),
+            ...transactionData
+        };
+
+        FarmModules.appData.transactions.push(newTransaction);
+        
+        this.loadTransactionData();
+        this.updateSummaryCards();
+        
+        this.showNotification(`${transactionData.type === 'income' ? 'Income' : 'Expense'} added successfully!`, 'success');
+    },
+
+    editTransaction: function(transactionId) {
+        const transactions = FarmModules.appData.transactions || [];
+        const transaction = transactions.find(t => t.id === transactionId);
+        
+        if (!transaction) return;
+
+        const modal = document.getElementById('transaction-modal');
+        const title = document.getElementById('transaction-modal-title');
+
+        if (modal && title) {
+            // Fill form with transaction data
+            document.getElementById('transaction-id').value = transaction.id;
+            document.getElementById('transaction-type').value = transaction.type;
+            document.getElementById('transaction-description').value = transaction.description || '';
+            document.getElementById('transaction-amount').value = transaction.amount || '';
+            document.getElementById('transaction-category').value = transaction.category || '';
+            document.getElementById('transaction-date').value = transaction.date || '';
+            document.getElementById('transaction-notes').value = transaction.notes || '';
+            
+            // Note: File previews would need special handling for existing files
+            const previewContainer = document.getElementById('receipt-preview');
+            if (previewContainer) previewContainer.innerHTML = 'Existing receipts cannot be edited in demo mode';
+            
+            title.textContent = `Edit ${transaction.type === 'income' ? 'Income' : 'Expense'}`;
+            modal.classList.remove('hidden');
+        }
+    },
+
+    updateTransaction: function(transactionId, transactionData) {
+        const transactions = FarmModules.appData.transactions || [];
+        const index = transactions.findIndex(t => t.id === transactionId);
+        
+        if (index !== -1) {
+            transactions[index] = {
+                ...transactions[index],
+                ...transactionData
+            };
+            
+            this.loadTransactionData();
+            this.updateSummaryCards();
+            this.showNotification('Transaction updated successfully!', 'success');
+        }
+    },
+
+    deleteTransaction: function(transactionId) {
+        if (confirm('Are you sure you want to delete this transaction?')) {
+            FarmModules.appData.transactions = FarmModules.appData.transactions.filter(t => t.id !== transactionId);
+            this.loadTransactionData();
+            this.updateSummaryCards();
+            this.showNotification('Transaction deleted successfully', 'success');
+        }
+    },
+
+    viewReceipt: function(transactionId, receiptIndex) {
+        const transactions = FarmModules.appData.transactions || [];
+        const transaction = transactions.find(t => t.id === transactionId);
+        
+        if (!transaction || !transaction.receipts || !transaction.receipts[receiptIndex]) {
+            this.showNotification('Receipt not found', 'error');
+            return;
+        }
+
+        const receipt = transaction.receipts[receiptIndex];
+        const viewerModal = document.getElementById('receipt-viewer-modal');
+        const viewerContent = document.getElementById('receipt-viewer-content');
+
+        if (viewerModal && viewerContent) {
+            let content = '';
+            
+            if (receipt.type === 'image') {
+                content = `
+                    <div class="receipt-image-viewer">
+                        <div class="image-placeholder">
+                            <span class="file-icon-large">🖼️</span>
+                            <p>Image preview would appear here</p>
+                        </div>
+                        <div class="receipt-info">
+                            <h4>${receipt.name}</h4>
+                            <p>Size: ${this.formatFileSize(receipt.size)}</p>
+                            <p>Type: Image File</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                content = `
+                    <div class="receipt-document-viewer">
+                        <div class="document-icon">📄</div>
+                        <div class="receipt-info">
+                            <h4>${receipt.name}</h4>
+                            <p>Size: ${this.formatFileSize(receipt.size)}</p>
+                            <p>Type: Document File</p>
+                            <p>This is a document file. Please download to view.</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            viewerContent.innerHTML = content;
+            viewerModal.classList.remove('hidden');
+
+            // Store current receipt info for download
+            this.currentReceipt = { transactionId, receiptIndex, receipt };
+        }
+    },
+
+    hideReceiptViewer: function() {
+        const viewerModal = document.getElementById('receipt-viewer-modal');
+        if (viewerModal) {
+            viewerModal.classList.add('hidden');
+            this.currentReceipt = null;
+        }
+    },
+
+    downloadReceipt: function() {
+        if (!this.currentReceipt) return;
+
+        const { receipt } = this.currentReceipt;
+        
+        // In a real app, this would download the actual file
+        // For demo purposes, we'll create a placeholder
+        const link = document.createElement('a');
+        link.href = '#'; // In real app, this would be the file URL
+        link.download = receipt.name;
+        link.click();
+        
+        this.showNotification(`Downloading ${receipt.name}...`, 'info');
+    },
+
+    formatCategory: function(category) {
+        if (!category) return 'Uncategorized';
+        return category.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+    },
+
+    updateElement: function(id, value) {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    },
+
+    formatCurrency: function(amount) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(amount);
+    },
+
+    formatDate: function(dateString) {
+        try {
+            return new Date(dateString).toLocaleDateString();
+        } catch (e) {
+            return 'Invalid date';
+        }
+    },
+
+    showNotification: function(message, type) {
         if (window.coreModule && window.coreModule.showNotification) {
             window.coreModule.showNotification(message, type);
-        } else {
-            // Simple fallback
-            alert(`${type.toUpperCase()}: ${message}`);
         }
     }
-}
-
-// Register the module
-const incomeExpensesModule = new IncomeExpensesModule();
-window.FarmModules.registerModule('income-expenses', incomeExpensesModule);
-window.IncomeExpensesModule = incomeExpensesModule;
-
-console.log('✅ Income & Expenses module registered');
+});
