@@ -1,4 +1,4 @@
-// app.js - GUARANTEED VISIBLE NAVIGATION
+// app.js - FORCE TEXT VISIBILITY
 console.log('Loading main app...');
 
 class FarmManagementApp {
@@ -77,161 +77,131 @@ class FarmManagementApp {
         header = document.createElement('header');
         appContainer.insertBefore(header, appContainer.firstChild);
 
-        // SIMPLE, CLEAR, VISIBLE NAVIGATION
+        // SIMPLE TEXT-BASED NAVIGATION - NO COMPLEX STYLING
         header.innerHTML = `
             <nav class="top-nav" style="
                 position: fixed;
                 top: 0;
                 left: 0;
                 right: 0;
-                height: 70px;
-                background: #ffffff;
-                border-bottom: 3px solid #2c5aa0;
+                height: 60px;
+                background: white;
+                border-bottom: 1px solid #ccc;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
                 padding: 0 20px;
                 z-index: 10000;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
                 font-family: Arial, sans-serif;
             ">
-                <!-- BRAND - LARGE AND CLEAR -->
-                <div class="nav-brand" style="display: flex; align-items: center; gap: 12px;">
-                    <span style="font-size: 32px; color: #2c5aa0;">🌱</span>
-                    <span style="font-weight: bold; font-size: 22px; color: #2c5aa0;">Farm Management</span>
+                <!-- SIMPLE BRAND -->
+                <div class="nav-brand" style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 20px;">🌱</span>
+                    <span style="font-size: 18px; color: black;">Farm Management</span>
                 </div>
                 
-                <!-- NAVIGATION ITEMS - LARGE AND VISIBLE -->
-                <div class="nav-items" style="display: flex; align-items: center; gap: 15px;">
+                <!-- SIMPLE NAV ITEMS - JUST TEXT AND EMOJIS -->
+                <div class="nav-items" style="display: flex; align-items: center; gap: 20px;">
                     <button class="nav-item" data-view="dashboard" style="
+                        background: none;
+                        border: none;
+                        cursor: pointer;
+                        color: black;
+                        font-size: 16px;
+                        padding: 10px;
                         display: flex;
                         align-items: center;
-                        background: #f8f9fa;
-                        border: 2px solid #2c5aa0;
-                        padding: 12px 20px;
-                        border-radius: 10px;
-                        cursor: pointer;
-                        color: #2c5aa0;
-                        gap: 10px;
-                        font-size: 16px;
-                        font-weight: bold;
-                        min-width: 120px;
-                        justify-content: center;
-                        transition: all 0.3s ease;
+                        gap: 5px;
                     ">
-                        <span style="font-size: 24px;">📊</span>
+                        <span>📊</span>
                         <span>Home</span>
                     </button>
 
                     <button class="nav-item" data-view="income-expenses" style="
+                        background: none;
+                        border: none;
+                        cursor: pointer;
+                        color: black;
+                        font-size: 16px;
+                        padding: 10px;
                         display: flex;
                         align-items: center;
-                        background: #f8f9fa;
-                        border: 2px solid #2c5aa0;
-                        padding: 12px 20px;
-                        border-radius: 10px;
-                        cursor: pointer;
-                        color: #2c5aa0;
-                        gap: 10px;
-                        font-size: 16px;
-                        font-weight: bold;
-                        min-width: 120px;
-                        justify-content: center;
-                        transition: all 0.3s ease;
+                        gap: 5px;
                     ">
-                        <span style="font-size: 24px;">💰</span>
+                        <span>💰</span>
                         <span>Finance</span>
                     </button>
 
                     <button class="nav-item" data-view="inventory-check" style="
+                        background: none;
+                        border: none;
+                        cursor: pointer;
+                        color: black;
+                        font-size: 16px;
+                        padding: 10px;
                         display: flex;
                         align-items: center;
-                        background: #f8f9fa;
-                        border: 2px solid #2c5aa0;
-                        padding: 12px 20px;
-                        border-radius: 10px;
-                        cursor: pointer;
-                        color: #2c5aa0;
-                        gap: 10px;
-                        font-size: 16px;
-                        font-weight: bold;
-                        min-width: 120px;
-                        justify-content: center;
-                        transition: all 0.3s ease;
+                        gap: 5px;
                     ">
-                        <span style="font-size: 24px;">📦</span>
+                        <span>📦</span>
                         <span>Inventory</span>
                     </button>
 
                     <button class="nav-item" data-view="more" style="
+                        background: none;
+                        border: none;
+                        cursor: pointer;
+                        color: black;
+                        font-size: 16px;
+                        padding: 10px;
                         display: flex;
                         align-items: center;
-                        background: #f8f9fa;
-                        border: 2px solid #2c5aa0;
-                        padding: 12px 20px;
-                        border-radius: 10px;
-                        cursor: pointer;
-                        color: #2c5aa0;
-                        gap: 10px;
-                        font-size: 16px;
-                        font-weight: bold;
-                        min-width: 120px;
-                        justify-content: center;
-                        transition: all 0.3s ease;
+                        gap: 5px;
                     ">
-                        <span style="font-size: 24px;">⚙️</span>
+                        <span>⚙️</span>
                         <span>More</span>
                     </button>
                 </div>
             </nav>
 
-            <!-- MORE MENU - LARGE AND VISIBLE -->
+            <!-- SIMPLE MORE MENU -->
             <div id="more-menu" class="more-menu hidden" style="
                 position: fixed;
-                top: 75px;
+                top: 60px;
                 right: 20px;
                 background: white;
-                border-radius: 12px;
-                box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-                padding: 20px;
+                border: 1px solid #ccc;
+                padding: 10px;
                 z-index: 10001;
-                min-width: 250px;
-                border: 3px solid #2c5aa0;
-                font-family: Arial, sans-serif;
+                min-width: 150px;
             ">
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <button class="more-menu-item" data-view="feed-record" style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8f9fa; border: 2px solid #2c5aa0; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #2c5aa0; font-size: 16px; font-weight: bold;">
-                        <span style="font-size: 22px;">🌾</span>
-                        <span>Feed Record</span>
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <button class="more-menu-item" data-view="feed-record" style="background: none; border: none; cursor: pointer; color: black; font-size: 14px; padding: 8px; text-align: left; display: flex; align-items: center; gap: 8px;">
+                        <span>🌾</span>
+                        <span>Feed</span>
                     </button>
-
-                    <button class="more-menu-item" data-view="broiler-mortality" style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8f9fa; border: 2px solid #2c5aa0; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #2c5aa0; font-size: 16px; font-weight: bold;">
-                        <span style="font-size: 22px;">🐔</span>
+                    <button class="more-menu-item" data-view="broiler-mortality" style="background: none; border: none; cursor: pointer; color: black; font-size: 14px; padding: 8px; text-align: left; display: flex; align-items: center; gap: 8px;">
+                        <span>🐔</span>
                         <span>Health</span>
                     </button>
-
-                    <button class="more-menu-item" data-view="production" style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8f9fa; border: 2px solid #2c5aa0; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #2c5aa0; font-size: 16px; font-weight: bold;">
-                        <span style="font-size: 22px;">🚜</span>
+                    <button class="more-menu-item" data-view="production" style="background: none; border: none; cursor: pointer; color: black; font-size: 14px; padding: 8px; text-align: left; display: flex; align-items: center; gap: 8px;">
+                        <span>🚜</span>
                         <span>Production</span>
                     </button>
-
-                    <button class="more-menu-item" data-view="sales-record" style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8f9fa; border: 2px solid #2c5aa0; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #2c5aa0; font-size: 16px; font-weight: bold;">
-                        <span style="font-size: 22px;">💰</span>
+                    <button class="more-menu-item" data-view="sales-record" style="background: none; border: none; cursor: pointer; color: black; font-size: 14px; padding: 8px; text-align: left; display: flex; align-items: center; gap: 8px;">
+                        <span>💰</span>
                         <span>Sales</span>
                     </button>
-
-                    <button class="more-menu-item" data-view="orders" style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8f9fa; border: 2px solid #2c5aa0; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #2c5aa0; font-size: 16px; font-weight: bold;">
-                        <span style="font-size: 22px;">📋</span>
+                    <button class="more-menu-item" data-view="orders" style="background: none; border: none; cursor: pointer; color: black; font-size: 14px; padding: 8px; text-align: left; display: flex; align-items: center; gap: 8px;">
+                        <span>📋</span>
                         <span>Orders</span>
                     </button>
-
-                    <button class="more-menu-item" data-view="reports" style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8f9fa; border: 2px solid #2c5aa0; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #2c5aa0; font-size: 16px; font-weight: bold;">
-                        <span style="font-size: 22px;">📈</span>
+                    <button class="more-menu-item" data-view="reports" style="background: none; border: none; cursor: pointer; color: black; font-size: 14px; padding: 8px; text-align: left; display: flex; align-items: center; gap: 8px;">
+                        <span>📈</span>
                         <span>Reports</span>
                     </button>
-
-                    <button class="more-menu-item" data-view="profile" style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8f9fa; border: 2px solid #2c5aa0; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #2c5aa0; font-size: 16px; font-weight: bold;">
-                        <span style="font-size: 22px;">👤</span>
+                    <button class="more-menu-item" data-view="profile" style="background: none; border: none; cursor: pointer; color: black; font-size: 14px; padding: 8px; text-align: left; display: flex; align-items: center; gap: 8px;">
+                        <span>👤</span>
                         <span>Profile</span>
                     </button>
                 </div>
@@ -241,29 +211,24 @@ class FarmManagementApp {
         // Add padding to main content
         const main = appContainer.querySelector('main');
         if (main) {
-            main.style.paddingTop = '80px';
-            main.style.minHeight = 'calc(100vh - 80px)';
+            main.style.paddingTop = '70px';
         }
         
-        console.log('✅ Navigation created - should be clearly visible now');
+        console.log('✅ Simple navigation created - text should be visible');
     }
 
     showSection(sectionId) {
         console.log(`🔄 Switching to section: ${sectionId}`);
         
-        // Update active state - make it very obvious
+        // Simple active state
         document.querySelectorAll('.nav-item').forEach(item => {
-            item.style.background = '#f8f9fa';
-            item.style.color = '#2c5aa0';
-            item.style.border = '2px solid #2c5aa0';
-            item.style.fontWeight = 'bold';
+            item.style.color = 'black';
+            item.style.fontWeight = 'normal';
         });
         
         const activeNavItem = document.querySelector(`.nav-item[data-view="${sectionId}"]`);
         if (activeNavItem) {
-            activeNavItem.style.background = '#2c5aa0';
-            activeNavItem.style.color = 'white';
-            activeNavItem.style.border = '2px solid #2c5aa0';
+            activeNavItem.style.color = 'blue';
             activeNavItem.style.fontWeight = 'bold';
         }
 
@@ -294,9 +259,9 @@ class FarmManagementApp {
         };
 
         contentArea.innerHTML = `
-            <div style="padding: 40px; text-align: center;">
-                <h2 style="color: #2c5aa0; font-size: 28px;">${sectionTitles[sectionId] || sectionId}</h2>
-                <p style="color: #666; margin-top: 10px; font-size: 18px;">This section is loading...</p>
+            <div style="padding: 20px;">
+                <h2>${sectionTitles[sectionId] || sectionId}</h2>
+                <p>Content loading...</p>
             </div>
         `;
     }
