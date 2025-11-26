@@ -65,95 +65,176 @@ class FarmManagementApp {
         this.showSection(this.currentSection);
     }
 
-   createTopNavigation() {
-    const appContainer = document.getElementById('app-container');
-    if (!appContainer) return;
+    createTopNavigation() {
+        const appContainer = document.getElementById('app-container');
+        if (!appContainer) return;
 
-    let header = appContainer.querySelector('header');
-    if (header) {
-        header.remove();
+        let header = appContainer.querySelector('header');
+        if (header) {
+            header.remove();
+        }
+        
+        header = document.createElement('header');
+        appContainer.insertBefore(header, appContainer.firstChild);
+
+        // MODERN PWA NAVIGATION - CLEAN AND VISIBLE
+        header.innerHTML = `
+            <nav class="top-nav" style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 70px;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 16px;
+                z-index: 10000;
+                box-sizing: border-box;
+            ">
+                <!-- CLEAN BRAND -->
+                <div class="nav-brand" style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 28px;">🌱</span>
+                    <span style="font-size: 20px; font-weight: 600; color: #1a1a1a;">Farm</span>
+                </div>
+                
+                <!-- CLEAN NAV ITEMS - ALWAYS VISIBLE -->
+                <div class="nav-items" style="display: flex; align-items: center; gap: 8px;">
+                    <button class="nav-item" data-view="dashboard" style="
+                        background: transparent;
+                        border: none;
+                        cursor: pointer;
+                        color: #666;
+                        font-size: 24px;
+                        padding: 12px;
+                        border-radius: 12px;
+                        min-width: 50px;
+                        min-height: 50px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        transition: all 0.2s ease;
+                    " title="Dashboard">
+                        📊
+                    </button>
+
+                    <button class="nav-item" data-view="income-expenses" style="
+                        background: transparent;
+                        border: none;
+                        cursor: pointer;
+                        color: #666;
+                        font-size: 24px;
+                        padding: 12px;
+                        border-radius: 12px;
+                        min-width: 50px;
+                        min-height: 50px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        transition: all 0.2s ease;
+                    " title="Finance">
+                        💰
+                    </button>
+
+                    <button class="nav-item" data-view="inventory-check" style="
+                        background: transparent;
+                        border: none;
+                        cursor: pointer;
+                        color: #666;
+                        font-size: 24px;
+                        padding: 12px;
+                        border-radius: 12px;
+                        min-width: 50px;
+                        min-height: 50px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        transition: all 0.2s ease;
+                    " title="Inventory">
+                        📦
+                    </button>
+
+                    <button class="nav-item" data-view="more" style="
+                        background: transparent;
+                        border: none;
+                        cursor: pointer;
+                        color: #666;
+                        font-size: 24px;
+                        padding: 12px;
+                        border-radius: 12px;
+                        min-width: 50px;
+                        min-height: 50px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        transition: all 0.2s ease;
+                    " title="More">
+                        ⋮
+                    </button>
+                </div>
+            </nav>
+
+            <!-- MODERN MORE MENU -->
+            <div id="more-menu" class="more-menu hidden" style="
+                position: fixed;
+                top: 75px;
+                right: 16px;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border-radius: 16px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+                padding: 16px;
+                z-index: 10001;
+                min-width: 200px;
+                border: 1px solid rgba(0, 0, 0, 0.1);
+            ">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <button class="more-menu-item" data-view="feed-record" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">🌾</span>
+                        <span>Feed</span>
+                    </button>
+                    <button class="more-menu-item" data-view="broiler-mortality" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">🐔</span>
+                        <span>Health</span>
+                    </button>
+                    <button class="more-menu-item" data-view="production" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">🚜</span>
+                        <span>Production</span>
+                    </button>
+                    <button class="more-menu-item" data-view="sales-record" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">💰</span>
+                        <span>Sales</span>
+                    </button>
+                    <button class="more-menu-item" data-view="orders" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">📋</span>
+                        <span>Orders</span>
+                    </button>
+                    <button class="more-menu-item" data-view="reports" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">📈</span>
+                        <span>Reports</span>
+                    </button>
+                    <button class="more-menu-item" data-view="profile" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
+                        <span style="font-size: 20px;">👤</span>
+                        <span>Profile</span>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Add padding to main content
+        const main = appContainer.querySelector('main');
+        if (main) {
+            main.style.paddingTop = '80px';
+            main.style.minHeight = 'calc(100vh - 80px)';
+        }
+        
+        console.log('✅ Modern PWA navigation created');
     }
-    
-    header = document.createElement('header');
-    appContainer.insertBefore(header, appContainer.firstChild);
-
-    // CLEAN MODERN NAVIGATION - USING CSS CLASSES
-    header.innerHTML = `
-        <nav class="top-nav">
-            <!-- CLEAN BRAND -->
-            <div class="nav-brand">
-                <span class="brand-icon">🌱</span>
-                <span class="brand-text">Farm</span>
-            </div>
-            
-            <!-- CLEAN NAV ITEMS - ALWAYS VISIBLE -->
-            <div class="nav-items">
-                <button class="nav-item" data-view="dashboard" title="Dashboard">
-                    <span class="nav-icon">📊</span>
-                    <span class="nav-label">Dashboard</span>
-                </button>
-
-                <button class="nav-item" data-view="income-expenses" title="Finance">
-                    <span class="nav-icon">💰</span>
-                    <span class="nav-label">Finance</span>
-                </button>
-
-                <button class="nav-item" data-view="inventory-check" title="Inventory">
-                    <span class="nav-icon">📦</span>
-                    <span class="nav-label">Inventory</span>
-                </button>
-
-                <button class="nav-item" data-view="more" title="More">
-                    <span class="nav-icon">⋮</span>
-                    <span class="nav-label">More</span>
-                </button>
-            </div>
-        </nav>
-
-        <!-- MODERN MORE MENU -->
-        <div id="more-menu" class="more-menu hidden">
-            <div class="more-menu-content">
-                <button class="more-menu-item" data-view="feed-record">
-                    <span class="menu-icon">🌾</span>
-                    <span class="menu-label">Feed</span>
-                </button>
-                <button class="more-menu-item" data-view="broiler-mortality">
-                    <span class="menu-icon">🐔</span>
-                    <span class="menu-label">Health</span>
-                </button>
-                <button class="more-menu-item" data-view="production">
-                    <span class="menu-icon">🚜</span>
-                    <span class="menu-label">Production</span>
-                </button>
-                <button class="more-menu-item" data-view="sales-record">
-                    <span class="menu-icon">💰</span>
-                    <span class="menu-label">Sales</span>
-                </button>
-                <button class="more-menu-item" data-view="orders">
-                    <span class="menu-icon">📋</span>
-                    <span class="menu-label">Orders</span>
-                </button>
-                <button class="more-menu-item" data-view="reports">
-                    <span class="menu-icon">📈</span>
-                    <span class="menu-label">Reports</span>
-                </button>
-                <button class="more-menu-item" data-view="profile">
-                    <span class="menu-icon">👤</span>
-                    <span class="menu-label">Profile</span>
-                </button>
-            </div>
-        </div>
-    `;
-
-    // Add padding to main content
-    const main = appContainer.querySelector('main');
-    if (main) {
-        main.style.paddingTop = '80px';
-        main.style.minHeight = 'calc(100vh - 80px)';
-    }
-    
-    console.log('✅ Modern PWA navigation created');
-}
 
     showSection(sectionId) {
         console.log(`🔄 Switching to section: ${sectionId}`);
@@ -232,3 +313,4 @@ if (document.readyState === 'loading') {
 } else {
     window.app = new FarmManagementApp();
 }
+
