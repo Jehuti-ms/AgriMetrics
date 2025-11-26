@@ -1014,15 +1014,25 @@ header, .top-nav {
 /*==================================
   Income & Expenses Module Styles
 ===================================*/
-/* Income & Expenses Module - Enhanced PWA Styling with Complementary Colors */
+/* Income & Expenses Module - Enhanced PWA Styling with Light Colors Only */
 :root {
-  --primary-color: #22c55e;      /* Keep your existing green */
+  --primary-color: #22c55e;      /* Your existing green */
   --primary-dark: #16a34a;
   --primary-light: #4ade80;
-  --complementary-purple: #8b5cf6;  /* Purple complements green */
-  --complementary-orange: #f97316;  /* Orange for accents */
-  --complementary-blue: #3b82f6;    /* Blue for balance */
-  --complementary-amber: #f59e0b;   /* Amber for warnings */
+  --complementary-teal: #14b8a6;   /* Teal that complements green */
+  --complementary-amber: #f59e0b;  /* Warm amber */
+  --complementary-sky: #0ea5e9;    /* Sky blue */
+  --complementary-lavender: #a855f7; /* Soft lavender */
+  
+  /* Light background colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  
+  /* Text colors */
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-light: #94a3b8;
 }
 
 .income-expenses-module {
@@ -1033,16 +1043,16 @@ header, .top-nav {
   background: linear-gradient(135deg, #f8faf9 0%, #f0f7f4 100%);
 }
 
-/* Enhanced Header with Complementary Gradient */
+/* Enhanced Header with Light Gradient */
 .module-header-pwa {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--complementary-purple) 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--complementary-teal) 100%);
   margin: -20px -20px 30px -20px;
   padding: 30px 20px;
   border-radius: 0 0 24px 24px;
   color: white;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(34, 197, 94, 0.2);
+  box-shadow: 0 8px 32px rgba(34, 197, 94, 0.15);
 }
 
 .module-header-pwa::before {
@@ -1068,7 +1078,7 @@ header, .top-nav {
   font-weight: 500;
 }
 
-/* Enhanced Stats Grid with Complementary Accents */
+/* Enhanced Stats Grid with Light Cards */
 .stats-grid-pwa {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -1080,7 +1090,7 @@ header, .top-nav {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 20px;
   padding: 20px;
   text-align: center;
@@ -1091,15 +1101,15 @@ header, .top-nav {
 }
 
 .stat-card-pwa:nth-child(1)::before {
-  background: linear-gradient(90deg, var(--primary-color), var(--complementary-blue));
+  background: linear-gradient(90deg, var(--primary-color), var(--complementary-sky));
 }
 
 .stat-card-pwa:nth-child(2)::before {
-  background: linear-gradient(90deg, var(--complementary-orange), var(--complementary-amber));
+  background: linear-gradient(90deg, var(--complementary-amber), #fbbf24);
 }
 
 .stat-card-pwa:nth-child(3)::before {
-  background: linear-gradient(90deg, var(--complementary-purple), var(--primary-color));
+  background: linear-gradient(90deg, var(--complementary-teal), var(--primary-color));
 }
 
 .stat-card-pwa::before {
@@ -1109,12 +1119,12 @@ header, .top-nav {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--primary-color), var(--complementary-purple));
 }
 
 .stat-card-pwa:hover {
   transform: translateY(-8px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  border-color: rgba(255, 255, 255, 1);
 }
 
 .stat-icon-pwa {
@@ -1127,10 +1137,7 @@ header, .top-nav {
   font-size: 24px;
   font-weight: 800;
   margin-bottom: 4px;
-  background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
 }
 
 .stat-label-pwa {
@@ -1139,7 +1146,7 @@ header, .top-nav {
   font-weight: 600;
 }
 
-/* Enhanced Quick Actions with Complementary Colors */
+/* Enhanced Quick Actions with Light Design */
 .quick-actions-pwa {
   margin-bottom: 30px;
 }
@@ -1154,7 +1161,7 @@ header, .top-nav {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 20px;
   padding: 24px 16px;
   cursor: pointer;
@@ -1175,7 +1182,7 @@ header, .top-nav {
 }
 
 .quick-action-btn-pwa:nth-child(2) {
-  border-top: 3px solid var(--complementary-orange);
+  border-top: 3px solid var(--complementary-amber);
 }
 
 .quick-action-btn-pwa::before {
@@ -1185,7 +1192,7 @@ header, .top-nav {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
   transition: left 0.6s;
 }
 
@@ -1196,6 +1203,7 @@ header, .top-nav {
 .quick-action-btn-pwa:hover {
   transform: translateY(-6px) scale(1.02);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 1);
 }
 
 .quick-icon-pwa {
@@ -1224,19 +1232,19 @@ header, .top-nav {
   line-height: 1.3;
 }
 
-/* Enhanced Form Styling with Complementary Accents */
+/* Enhanced Form Styling with Light Design */
 .form-container-pwa {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 24px;
   padding: 30px;
   margin-bottom: 30px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   position: relative;
   overflow: hidden;
-  border-top: 4px solid var(--complementary-purple);
+  border-top: 4px solid var(--complementary-teal);
 }
 
 .form-title-pwa {
@@ -1245,10 +1253,6 @@ header, .top-nav {
   color: var(--text-primary);
   margin-bottom: 24px;
   text-align: center;
-  background: linear-gradient(135deg, var(--primary-color), var(--complementary-purple));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .form-grid-pwa {
@@ -1273,7 +1277,7 @@ header, .top-nav {
 .form-input-pwa {
   width: 100%;
   padding: 16px;
-  border: 2px solid #e5e7eb;
+  border: 2px solid #e2e8f0;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.9);
   color: var(--text-primary);
@@ -1284,16 +1288,16 @@ header, .top-nav {
 
 .form-input-pwa:focus {
   outline: none;
-  border-color: var(--complementary-purple);
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+  border-color: var(--complementary-teal);
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1);
   transform: translateY(-2px);
 }
 
 .form-select-pwa {
   width: 100%;
   padding: 16px;
-  border: 2px solid #e5e7eb;
+  border: 2px solid #e2e8f0;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.9);
   color: var(--text-primary);
@@ -1301,20 +1305,20 @@ header, .top-nav {
   transition: all 0.3s ease;
   font-weight: 500;
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'><path fill='%23666' d='M2 0L0 2h4zm0 5L0 3h4z'/></svg>");
+  background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'><path fill='%2364748b' d='M2 0L0 2h4zm0 5L0 3h4z'/></svg>");
   background-repeat: no-repeat;
   background-position: right 16px center;
   background-size: 12px;
 }
 
 .form-select-pwa:focus {
-  border-color: var(--complementary-purple);
-  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+  border-color: var(--complementary-teal);
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1);
 }
 
-/* Enhanced Button Styling with Complementary Colors */
+/* Enhanced Button Styling with Light Colors */
 .btn-primary-pwa {
-  background: linear-gradient(135deg, var(--primary-color), var(--complementary-purple));
+  background: linear-gradient(135deg, var(--primary-color), var(--complementary-teal));
   color: white;
   border: none;
   padding: 16px 32px;
@@ -1323,7 +1327,7 @@ header, .top-nav {
   font-size: 16px;
   font-weight: 700;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 20px rgba(20, 184, 166, 0.3);
   position: relative;
   overflow: hidden;
 }
@@ -1345,13 +1349,13 @@ header, .top-nav {
 
 .btn-primary-pwa:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 8px 30px rgba(20, 184, 166, 0.4);
 }
 
 .btn-outline-pwa {
   background: transparent;
-  border: 2px solid var(--complementary-orange);
-  color: var(--complementary-orange);
+  border: 2px solid var(--complementary-amber);
+  color: var(--complementary-amber);
   padding: 16px 32px;
   border-radius: 16px;
   cursor: pointer;
@@ -1361,22 +1365,22 @@ header, .top-nav {
 }
 
 .btn-outline-pwa:hover {
-  background: var(--complementary-orange);
+  background: var(--complementary-amber);
   color: white;
   transform: translateY(-3px);
-  box-shadow: 0 8px 30px rgba(249, 115, 22, 0.3);
+  box-shadow: 0 8px 30px rgba(245, 158, 11, 0.3);
 }
 
-/* Enhanced Transactions List with Color Coding */
+/* Enhanced Transactions List with Light Colors */
 .transactions-section-pwa {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 24px;
   padding: 30px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border-top: 4px solid var(--complementary-blue);
+  border-top: 4px solid var(--complementary-sky);
 }
 
 .section-header-pwa {
@@ -1390,10 +1394,6 @@ header, .top-nav {
   font-size: 22px;
   font-weight: 700;
   color: var(--text-primary);
-  background: linear-gradient(135deg, var(--complementary-blue), var(--primary-color));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .transactions-list-pwa {
@@ -1407,9 +1407,9 @@ header, .top-nav {
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.8);
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   position: relative;
@@ -1417,11 +1417,11 @@ header, .top-nav {
 }
 
 .transaction-item-pwa.income::before {
-  background: linear-gradient(90deg, var(--primary-color), var(--complementary-blue));
+  background: linear-gradient(90deg, var(--primary-color), var(--complementary-sky));
 }
 
 .transaction-item-pwa.expense::before {
-  background: linear-gradient(90deg, var(--complementary-orange), var(--complementary-amber));
+  background: linear-gradient(90deg, var(--complementary-amber), #fbbf24);
 }
 
 .transaction-item-pwa::before {
@@ -1441,7 +1441,7 @@ header, .top-nav {
 
 .transaction-item-pwa:hover {
   transform: translateX(8px);
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 1);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
@@ -1465,8 +1465,8 @@ header, .top-nav {
 }
 
 .transaction-item-pwa.expense .transaction-icon-pwa {
-  background: rgba(249, 115, 22, 0.1);
-  color: var(--complementary-orange);
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--complementary-amber);
 }
 
 .transaction-details-pwa {
@@ -1493,17 +1493,11 @@ header, .top-nav {
 }
 
 .transaction-amount-pwa.income {
-  background: linear-gradient(135deg, var(--primary-color), var(--complementary-blue));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--primary-color);
 }
 
 .transaction-amount-pwa.expense {
-  background: linear-gradient(135deg, var(--complementary-orange), var(--complementary-amber));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--complementary-amber);
 }
 
 /* Enhanced Empty State */
@@ -1517,10 +1511,7 @@ header, .top-nav {
   font-size: 64px;
   margin-bottom: 20px;
   opacity: 0.5;
-  background: linear-gradient(135deg, var(--primary-color), var(--complementary-purple));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--complementary-teal);
 }
 
 .empty-title-pwa {
@@ -1609,42 +1600,7 @@ header, .top-nav {
   }
 }
 
-/* Dark Mode Support with Complementary Colors */
-@media (prefers-color-scheme: dark) {
-  .income-expenses-module {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  }
-  
-  .stat-card-pwa,
-  .quick-action-btn-pwa,
-  .form-container-pwa,
-  .transactions-section-pwa,
-  .transaction-item-pwa {
-    background: rgba(30, 41, 59, 0.95);
-    border-color: rgba(255, 255, 255, 0.1);
-    color: white;
-  }
-  
-  .form-input-pwa,
-  .form-select-pwa {
-    background: rgba(51, 65, 85, 0.8);
-    border-color: rgba(255, 255, 255, 0.1);
-    color: white;
-  }
-  
-  .form-input-pwa:focus {
-    background: rgba(71, 85, 105, 0.95);
-  }
-  
-  .transaction-item-pwa {
-    background: rgba(30, 41, 59, 0.6);
-  }
-  
-  .transaction-item-pwa:hover {
-    background: rgba(51, 65, 85, 0.8);
-  }
-}
-
+/* Light Mode Only - No Dark Mode */
 /* PWA-Specific Enhancements */
 @media (display-mode: standalone) {
   .income-expenses-module {
