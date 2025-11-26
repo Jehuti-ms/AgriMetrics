@@ -1,311 +1,382 @@
 // modules/dashboard.js
 console.log('Loading dashboard module...');
 
-const DashboardModule = {
-    name: 'dashboard',
-    initialized: false,
+class DashboardModule {
+    constructor() {
+        this.name = 'dashboard';
+        this.initialized = false;
+        this.container = null;
+        this.stats = {};
+    }
 
-    initialize() {
+    async initialize() {
         console.log('📊 Initializing dashboard...');
-        this.renderDashboard();
+        await this.loadStats();
+        this.render();
         this.initialized = true;
         return true;
-    },
+    }
 
-    renderDashboard() {
+    async loadStats() {
+        // Load data from all modules to calculate stats
+        try {
+            let salesData = [];
+            let productionData = [];
+            let mortalityData = [];
+            let ordersData = [];
+
+            if (window.db) {
+                salesData = await window.db.getAll('sales') || [];
+                productionData = await window.db.getAll('production') || [];
+                mortalityData = await window.db.getAll('broiler-mortality') || [];
+                ordersData = await window.db.getAll('orders') || [];
+            } else {
+                salesData = JSON.parse(localStorage.getItem('farm-sales-data') || '[]');
+                productionData = JSON.parse(localStorage.getItem('farm-production') || '[]');
+                mortalityData = JSON.parse(localStorage.getItem('farm-broiler-mortality') || '[]');
+                ordersData = JSON.parse(localStorage.getItem('farm-orders') || '[]');
+            }
+
+            // Calculate stats
+            const today = new Date().toDateString();
+            
+            // Sales stats
+            const todaySales = salesData.filter(sale => 
+                new Date(sale.timestamp).toDateString() === today
+            );
+            const totalRevenue = salesData.reduce((sum, sale) => sum + sale.total, 0);
+            const todayRevenue = todaySales.reduce((sum, sale) => sum + sale.total, 0);
+
+            // Production stats
+            const todayProduction = productionData.filter(record => 
+                new Date(record.timestamp).toDateString() === today
+            );
+            const totalProduction = productionData.reduce((sum, record) => sum + record.quantity, 0);
+
+            // Orders stats
+            const pendingOrders = ordersData.filter(order => order.status === 'pending').length;
+
+            // Mortality stats
+            const todayMortality = mortalityData.filter(record => 
+                new Date(record.timestamp).toDateString() === today
+            );
+            const totalMortality = mortalityData.reduce((sum, record) => sum + record.quantity, 0);
+
+            this.stats = {
+                totalRevenue: totalRevenue.toFixed(2),
+                todayRevenue: todayRevenue.toFixed(2),
+                totalProduction,
+                todayProduction: todayProduction.reduce((sum, record) => sum + record.quantity, 0),
+                pendingOrders,
+                totalMortality,
+                todayMortality: todayMortality.reduce((sum, record) => sum + record.quantity, 0),
+                totalSales: salesData.length,
+                todaySales: todaySales.length
+            };
+
+        } catch (error) {
+            console.error('Error loading dashboard stats:', error);
+            this.stats = {
+                totalRevenue: '0.00',
+                todayRevenue: '0.00',
+                totalProduction: 0,
+                todayProduction: 0,
+                pendingOrders: 0,
+                totalMortality: 0,
+                todayMortality: 0,
+                totalSales: 0,
+                todaySales: 0
+            };
+        }
+    }
+
+    render() {
         const contentArea = document.getElementById('content-area');
         if (!contentArea) return;
 
-        contentArea.innerHTML = `
-            <div class="dashboard-container" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
-                <!-- Welcome Section -->
-                <div class="welcome-section" style="margin-bottom: 30px;">
-                    <h1 style="color: #1a1a1a; font-size: 28px; margin-bottom: 8px;">Welcome to Farm Management</h1>
-                    <p style="color: #666; font-size: 16px;">Manage your farm operations efficiently</p>
-                </div>
+        contentArea.innerHTML = this.getTemplate();
+        this.container = contentArea.querySelector('.dashboard-container');
+        this.setupEventListeners();
+        this.updateDisplay();
+    }
 
-                <!-- Quick Actions Grid -->
-                <div class="quick-actions" style="margin-bottom: 40px;">
-                    <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 20px;">Quick Actions</h2>
-                    <div class="actions-grid" style="
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                        gap: 16px;
-                        margin-bottom: 30px;
-                    ">
-                        <button class="quick-action-btn" data-action="add-income" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 16px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            gap: 12px;
-                            min-height: 120px;
-                        ">
-                            <div style="font-size: 32px;">💰</div>
-                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Add Income</span>
-                            <span style="font-size: 12px; color: #666; text-align: center;">Record new income</span>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="add-expense" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 16px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            gap: 12px;
-                            min-height: 120px;
-                        ">
-                            <div style="font-size: 32px;">💸</div>
-                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Add Expense</span>
-                            <span style="font-size: 12px; color: #666; text-align: center;">Record new expense</span>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="check-inventory" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 16px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            gap: 12px;
-                            min-height: 120px;
-                        ">
-                            <div style="font-size: 32px;">📦</div>
-                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Check Inventory</span>
-                            <span style="font-size: 12px; color: #666; text-align: center;">View stock levels</span>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="record-feed" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 16px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            gap: 12px;
-                            min-height: 120px;
-                        ">
-                            <div style="font-size: 32px;">🌾</div>
-                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Record Feed</span>
-                            <span style="font-size: 12px; color: #666; text-align: center;">Log feed usage</span>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="add-production" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 16px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            gap: 12px;
-                            min-height: 120px;
-                        ">
-                            <div style="font-size: 32px;">🚜</div>
-                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Production</span>
-                            <span style="font-size: 12px; color: #666; text-align: center;">Record production</span>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="view-reports" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 16px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            gap: 12px;
-                            min-height: 120px;
-                        ">
-                            <div style="font-size: 32px;">📈</div>
-                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">View Reports</span>
-                            <span style="font-size: 12px; color: #666; text-align: center;">Analytics & insights</span>
+    getTemplate() {
+        return `
+            <div class="dashboard-container">
+                <!-- Header -->
+                <div class="module-header">
+                    <div class="header-content">
+                        <h1 class="header-title">Dashboard</h1>
+                        <p class="header-subtitle">Welcome to your farm management dashboard</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn-secondary" id="refresh-dashboard-btn">
+                            <i class="icon">🔄</i>
+                            Refresh
                         </button>
                     </div>
                 </div>
 
-                <!-- Stats Overview -->
-                <div class="stats-overview" style="margin-bottom: 40px;">
-                    <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 20px;">Overview</h2>
-                    <div class="stats-grid" style="
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                        gap: 16px;
-                    ">
-                        <div class="stat-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;">$0.00</div>
-                            <div style="font-size: 14px; color: #666;">Total Revenue</div>
+                <!-- Quick Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon revenue">💰</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="total-revenue">$0.00</div>
+                            <div class="stat-label">Total Revenue</div>
                         </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon production">🏭</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="total-production">0</div>
+                            <div class="stat-label">Total Production</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orders">📋</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="pending-orders">0</div>
+                            <div class="stat-label">Pending Orders</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon mortality">🐔</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="total-mortality">0</div>
+                            <div class="stat-label">Total Mortality</div>
+                        </div>
+                    </div>
+                </div>
 
-                        <div class="stat-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">💸</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;">$0.00</div>
-                            <div style="font-size: 14px; color: #666;">Total Expenses</div>
+                <!-- Today's Overview -->
+                <div class="today-overview">
+                    <h2>Today's Overview</h2>
+                    <div class="today-grid">
+                        <div class="today-card">
+                            <div class="today-icon">💰</div>
+                            <div class="today-content">
+                                <div class="today-value" id="today-revenue">$0.00</div>
+                                <div class="today-label">Revenue</div>
+                            </div>
                         </div>
+                        <div class="today-card">
+                            <div class="today-icon">🏭</div>
+                            <div class="today-content">
+                                <div class="today-value" id="today-production">0</div>
+                                <div class="today-label">Production</div>
+                            </div>
+                        </div>
+                        <div class="today-card">
+                            <div class="today-icon">📊</div>
+                            <div class="today-content">
+                                <div class="today-value" id="today-sales">0</div>
+                                <div class="today-label">Sales</div>
+                            </div>
+                        </div>
+                        <div class="today-card">
+                            <div class="today-icon">🐔</div>
+                            <div class="today-content">
+                                <div class="today-value" id="today-mortality">0</div>
+                                <div class="today-label">Mortality</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                        <div class="stat-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;">0</div>
-                            <div style="font-size: 14px; color: #666;">Inventory Items</div>
-                        </div>
-
-                        <div class="stat-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">🐔</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;">0</div>
-                            <div style="font-size: 14px; color: #666;">Active Birds</div>
-                        </div>
+                <!-- Quick Actions -->
+                <div class="quick-actions-section">
+                    <h2>Quick Actions</h2>
+                    <div class="actions-grid">
+                        <button class="action-card" data-action="record-sale">
+                            <div class="action-icon">💰</div>
+                            <div class="action-content">
+                                <h3>Record Sale</h3>
+                                <p>Add new sales transaction</p>
+                            </div>
+                        </button>
+                        <button class="action-card" data-action="add-production">
+                            <div class="action-icon">🏭</div>
+                            <div class="action-content">
+                                <h3>Add Production</h3>
+                                <p>Record production output</p>
+                            </div>
+                        </button>
+                        <button class="action-card" data-action="record-mortality">
+                            <div class="action-icon">🐔</div>
+                            <div class="action-content">
+                                <h3>Record Mortality</h3>
+                                <p>Track bird mortality</p>
+                            </div>
+                        </button>
+                        <button class="action-card" data-action="create-order">
+                            <div class="action-icon">📋</div>
+                            <div class="action-content">
+                                <h3>Create Order</h3>
+                                <p>Add customer order</p>
+                            </div>
+                        </button>
                     </div>
                 </div>
 
                 <!-- Recent Activity -->
                 <div class="recent-activity">
-                    <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 20px;">Recent Activity</h2>
-                    <div class="activity-list" style="
-                        background: rgba(255, 255, 255, 0.9);
-                        backdrop-filter: blur(20px);
-                        -webkit-backdrop-filter: blur(20px);
-                        border: 1px solid rgba(0, 0, 0, 0.1);
-                        border-radius: 16px;
-                        padding: 20px;
-                    ">
-                        <div style="text-align: center; color: #666; padding: 40px 20px;">
-                            <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                            <div style="font-size: 16px; margin-bottom: 8px;">No recent activity</div>
-                            <div style="font-size: 14px; color: #999;">Start by adding your first record</div>
-                        </div>
+                    <h2>Recent Activity</h2>
+                    <div class="activity-list" id="activity-list">
+                        <!-- Activity items will be loaded here -->
                     </div>
                 </div>
             </div>
         `;
+    }
 
-        // Add event listeners to quick action buttons
-        this.setupQuickActions();
-    },
+    updateDisplay() {
+        if (!this.container) return;
 
-    setupQuickActions() {
-        const quickActionButtons = document.querySelectorAll('.quick-action-btn');
-        
-        quickActionButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
+        // Update main stats
+        this.updateElement('#total-revenue', `$${this.stats.totalRevenue}`);
+        this.updateElement('#total-production', this.stats.totalProduction.toLocaleString());
+        this.updateElement('#pending-orders', this.stats.pendingOrders);
+        this.updateElement('#total-mortality', this.stats.totalMortality);
+
+        // Update today's stats
+        this.updateElement('#today-revenue', `$${this.stats.todayRevenue}`);
+        this.updateElement('#today-production', this.stats.todayProduction.toLocaleString());
+        this.updateElement('#today-sales', this.stats.todaySales);
+        this.updateElement('#today-mortality', this.stats.todayMortality);
+
+        // Load recent activity
+        this.loadRecentActivity();
+    }
+
+    updateElement(selector, content) {
+        const element = this.container?.querySelector(selector);
+        if (element) element.textContent = content;
+    }
+
+    async loadRecentActivity() {
+        const activityList = this.container?.querySelector('#activity-list');
+        if (!activityList) return;
+
+        try {
+            // Load recent data from all modules
+            let salesData = [];
+            let productionData = [];
+            let mortalityData = [];
+            let ordersData = [];
+
+            if (window.db) {
+                salesData = await window.db.getAll('sales') || [];
+                productionData = await window.db.getAll('production') || [];
+                mortalityData = await window.db.getAll('broiler-mortality') || [];
+                ordersData = await window.db.getAll('orders') || [];
+            } else {
+                salesData = JSON.parse(localStorage.getItem('farm-sales-data') || '[]');
+                productionData = JSON.parse(localStorage.getItem('farm-production') || '[]');
+                mortalityData = JSON.parse(localStorage.getItem('farm-broiler-mortality') || '[]');
+                ordersData = JSON.parse(localStorage.getItem('farm-orders') || '[]');
+            }
+
+            // Combine and sort by timestamp
+            const allActivities = [
+                ...salesData.map(item => ({ ...item, type: 'sale', icon: '💰' })),
+                ...productionData.map(item => ({ ...item, type: 'production', icon: '🏭' })),
+                ...mortalityData.map(item => ({ ...item, type: 'mortality', icon: '🐔' })),
+                ...ordersData.map(item => ({ ...item, type: 'order', icon: '📋' }))
+            ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 10);
+
+            if (allActivities.length === 0) {
+                activityList.innerHTML = `
+                    <div class="empty-activity">
+                        <p>No recent activity</p>
+                    </div>
+                `;
+                return;
+            }
+
+            activityList.innerHTML = allActivities.map(activity => `
+                <div class="activity-item">
+                    <div class="activity-icon">${activity.icon}</div>
+                    <div class="activity-content">
+                        <div class="activity-title">${this.getActivityTitle(activity)}</div>
+                        <div class="activity-time">${window.formatDateTime(activity.timestamp)}</div>
+                    </div>
+                </div>
+            `).join('');
+
+        } catch (error) {
+            console.error('Error loading recent activity:', error);
+            activityList.innerHTML = `
+                <div class="empty-activity">
+                    <p>Error loading activity</p>
+                </div>
+            `;
+        }
+    }
+
+    getActivityTitle(activity) {
+        switch (activity.type) {
+            case 'sale':
+                return `Sold ${activity.quantity} ${activity.product} to ${activity.customer}`;
+            case 'production':
+                return `Produced ${activity.quantity} ${activity.unit} of ${activity.product}`;
+            case 'mortality':
+                return `Recorded ${activity.quantity} bird mortality in ${activity.batch}`;
+            case 'order':
+                return `New order from ${activity.customer} for ${activity.product}`;
+            default:
+                return 'Activity recorded';
+        }
+    }
+
+    setupEventListeners() {
+        if (!this.container) return;
+
+        // Refresh button
+        this.container.querySelector('#refresh-dashboard-btn')?.addEventListener('click', async () => {
+            await this.loadStats();
+            this.updateDisplay();
+            this.showToast('Dashboard refreshed!', 'success');
+        });
+
+        // Quick action buttons
+        this.container.querySelectorAll('.action-card').forEach(card => {
+            card.addEventListener('click', (e) => {
                 const action = e.currentTarget.getAttribute('data-action');
                 this.handleQuickAction(action);
             });
-
-            // Add hover effects
-            button.addEventListener('mouseenter', (e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-            });
-
-            button.addEventListener('mouseleave', (e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-            });
         });
-    },
+    }
 
     handleQuickAction(action) {
-        console.log(`Quick action: ${action}`);
-        
-        const actionMap = {
-            'add-income': 'income-expenses',
-            'add-expense': 'income-expenses',
-            'check-inventory': 'inventory-check',
-            'record-feed': 'feed-record',
-            'add-production': 'production',
-            'view-reports': 'reports'
-        };
-
-        const targetModule = actionMap[action];
-        if (targetModule && window.app) {
-            window.app.showSection(targetModule);
-            
-            // Show notification
-            if (window.coreModule && window.coreModule.showNotification) {
-                window.coreModule.showNotification(`Opening ${this.getActionName(action)}...`, 'info');
-            }
+        switch (action) {
+            case 'record-sale':
+                window.farmApp.loadModule('sales-record');
+                break;
+            case 'add-production':
+                window.farmApp.loadModule('production');
+                break;
+            case 'record-mortality':
+                window.farmApp.loadModule('broiler-mortality');
+                break;
+            case 'create-order':
+                window.farmApp.loadModule('orders');
+                break;
         }
-    },
-
-    getActionName(action) {
-        const names = {
-            'add-income': 'Income',
-            'add-expense': 'Expenses',
-            'check-inventory': 'Inventory',
-            'record-feed': 'Feed Record',
-            'add-production': 'Production',
-            'view-reports': 'Reports'
-        };
-        return names[action] || action;
     }
-};
 
-// Register the module
+    showToast(message, type = 'info') {
+        window.showToast(message, type);
+    }
+
+    async cleanup() {
+        this.initialized = false;
+        this.container = null;
+    }
+}
+
+// Register module
 if (window.FarmModules) {
-    window.FarmModules.registerModule('dashboard', DashboardModule);
+    window.FarmModules.registerModule('dashboard', new DashboardModule());
     console.log('✅ Dashboard module registered');
 }
