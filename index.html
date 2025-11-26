@@ -23,10 +23,10 @@
     <!-- Chart.js for dashboard charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Firebase CDN -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body>
     <!-- Auth Container -->
@@ -134,5 +134,43 @@
     <script src="modules/profile.js"></script>
 
      <script src="app.js"></script>
+
+    <script>
+    // Wait for Firebase to be ready before loading auth
+    function checkFirebaseReady() {
+        if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+            loadAuthScript();
+        } else {
+            setTimeout(checkFirebaseReady, 100);
+        }
+    }
+    
+    function loadAuthScript() {
+        const script = document.createElement('script');
+        script.src = 'firebase/firebase-auth.js';
+        document.head.appendChild(script);
+        
+        // Load other scripts after auth
+        script.onload = function() {
+            // Load your app modules
+            const modules = [
+                'js/framework.js',
+                'js/core.js',
+                'modules/auth.js',
+                'js/app.js',
+                // ... other modules
+            ];
+            
+            modules.forEach(src => {
+                const moduleScript = document.createElement('script');
+                moduleScript.src = src;
+                document.head.appendChild(moduleScript);
+            });
+        };
+    }
+    
+    // Start checking when Firebase config is loaded
+    document.addEventListener('DOMContentLoaded', checkFirebaseReady);
+</script>
 </body>
 </html>
