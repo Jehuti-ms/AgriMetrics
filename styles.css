@@ -1,36 +1,36 @@
 /* styles.css - MODERN PWA ENHANCEMENT */
 :root {
-  /* Enhanced Color System */
+  /* Enhanced GREEN Color System */
   --primary-color: #22c55e;
   --primary-dark: #16a34a;
   --primary-light: #4ade80;
-  --secondary-color: #f59e0b;
-  --accent-color: #3b82f6;
+  --secondary-color: #f59e0b; /* Keep orange as accent */
+  --accent-color: #22c55e; /* Changed from blue to green */
   
   /* Modern Background System */
   --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --bg-tertiary: #f1f5f9;
+  --bg-secondary: #f8faf9; /* Light green tint */
+  --bg-tertiary: #f0f7f4;
   
   /* Text Colors */
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-tertiary: #94a3b8;
+  --text-primary: #1a1a1a;
+  --text-secondary: #4a5568;
+  --text-tertiary: #718096;
   
   /* Surface Colors */
   --surface-01: #ffffff;
-  --surface-02: #f8fafc;
-  --surface-03: #f1f5f9;
+  --surface-02: #f8faf9;
+  --surface-03: #f0f7f4;
   
   /* Border Colors */
-  --border-light: #e2e8f0;
-  --border-medium: #cbd5e1;
+  --border-light: #e2f3e8;
+  --border-medium: #c8e6d0;
   
   /* Semantic Colors */
   --success-color: #22c55e;
   --warning-color: #f59e0b;
   --error-color: #ef4444;
-  --info-color: #3b82f6;
+  --info-color: #22c55e;
   
   /* Modern Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
