@@ -1,4 +1,6 @@
-// app.js - Updated with auth handling
+// app.js - PWA Style (exact working version)
+console.log('🚜 Initializing Farm Management PWA...');
+
 class FarmManagementApp {
     constructor() {
         this.modules = new Map();
@@ -7,19 +9,22 @@ class FarmManagementApp {
     }
 
     async init() {
-        console.log('🚜 Initializing Farm Management PWA...');
+        console.log('📱 Initializing PWA...');
         
-        // Initialize module system first
-        await this.initModules();
+        // Initialize module system
+        await this.initModuleSystem();
         
-        // Check authentication and load appropriate module
-        this.checkAuthAndLoad();
+        // Setup navigation
+        this.setupNavigation();
+        
+        // Load default module
+        this.loadModule('dashboard');
         
         console.log('✅ Farm Management PWA Ready!');
     }
 
-    async initModules() {
-        // Module registry
+    async initModuleSystem() {
+        // PWA-style module registry
         window.FarmModules = {
             modules: new Map(),
             
@@ -42,90 +47,25 @@ class FarmManagementApp {
         };
     }
 
-    checkAuthAndLoad() {
-        const isAuthenticated = localStorage.getItem('farm-user-authenticated') === 'true';
-        
-        if (isAuthenticated) {
-            this.loadModule('dashboard');
-            this.setupAuthenticatedUI();
-        } else {
-            this.loadModule('auth');
-            this.setupUnauthenticatedUI();
-        }
-    }
-
-    setupAuthenticatedUI() {
-        // Add logout button to navigation if it doesn't exist
-        if (!document.querySelector('.logout-btn')) {
-            const navMenu = document.querySelector('.nav-menu');
-            if (navMenu) {
-                const logoutItem = document.createElement('li');
-                logoutItem.innerHTML = `
-                    <a href="#" class="nav-item logout-btn" data-module="logout">
-                        <span class="icon">🚪</span>
-                        <span>Logout</span>
-                    </a>
-                `;
-                navMenu.appendChild(logoutItem);
-                
-                // Add logout handler
-                logoutItem.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (window.FarmModules) {
-                        const authModule = window.FarmModules.getModule('auth');
-                        if (authModule && authModule.logout) {
-                            authModule.logout();
-                        }
-                    }
-                });
-            }
-        }
-        
-        // Remove auth page styles
-        document.body.classList.remove('auth-page');
-    }
-
-    setupUnauthenticatedUI() {
-        // Hide navigation when on auth page
-        const sidebar = document.querySelector('.sidebar');
-        const mainContent = document.querySelector('.main-content');
-        
-        if (sidebar) sidebar.style.display = 'none';
-        if (mainContent) mainContent.style.marginLeft = '0';
-        
-        // Add auth page class to body
-        document.body.classList.add('auth-page');
-    }
-
     setupNavigation() {
-        // Handle navigation clicks - only for authenticated users
+        // Handle navigation clicks
         document.addEventListener('click', (e) => {
-            const navItem = e.target.closest('.nav-item:not(.logout-btn)');
-            if (navItem && localStorage.getItem('farm-user-authenticated') === 'true') {
+            const navItem = e.target.closest('.nav-item');
+            if (navItem) {
                 e.preventDefault();
                 const moduleName = navItem.getAttribute('data-module');
-                if (moduleName !== 'logout') {
-                    this.loadModule(moduleName);
-                }
+                this.loadModule(moduleName);
             }
         });
 
         // Handle browser back/forward
         window.addEventListener('popstate', (e) => {
-            if (localStorage.getItem('farm-user-authenticated') === 'true') {
-                const moduleName = e.state?.module || 'dashboard';
-                this.loadModule(moduleName);
-            }
+            const moduleName = e.state?.module || 'dashboard';
+            this.loadModule(moduleName);
         });
     }
 
     async loadModule(moduleName) {
-        // Don't load modules if not authenticated (except auth module)
-        if (moduleName !== 'auth' && localStorage.getItem('farm-user-authenticated') !== 'true') {
-            this.loadModule('auth');
-            return;
-        }
-
         try {
             // Unload current module
             if (this.currentModule && this.currentModule.cleanup) {
@@ -137,26 +77,20 @@ class FarmManagementApp {
             if (module) {
                 this.currentModule = module;
                 
-                // Update UI for authenticated modules
-                if (moduleName !== 'auth') {
-                    this.updateActiveNav(moduleName);
-                    this.updatePageTitle(moduleName);
-                    this.setupAuthenticatedUI();
-                    
-                    // Update URL
-                    history.pushState({ module: moduleName }, '', `#${moduleName}`);
-                } else {
-                    this.setupUnauthenticatedUI();
-                }
+                // Update UI
+                this.updateActiveNav(moduleName);
+                this.updatePageTitle(moduleName);
+                
+                // Update URL
+                history.pushState({ module: moduleName }, '', `#${moduleName}`);
                 
                 console.log(`✅ Loaded module: ${moduleName}`);
             } else {
                 console.error(`❌ Module not found: ${moduleName}`);
-                this.loadModule('auth'); // Fallback to auth
+                this.loadModule('dashboard'); // Fallback
             }
         } catch (error) {
             console.error(`❌ Error loading module ${moduleName}:`, error);
-            this.loadModule('auth'); // Fallback to auth
         }
     }
 
@@ -181,6 +115,86 @@ class FarmManagementApp {
         document.title = `${titles[moduleName] || 'Farm Management'} - FarmPWA`;
     }
 }
+
+// Toast Notification System (PWA-style)
+window.showToast = function(message, type = 'info', duration = 3000) {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <div class="toast-content">
+            <span class="toast-message">${message}</span>
+            <button class="toast-close">&times;</button>
+        </div>
+    `;
+
+    // Add styles if not already added
+    if (!document.querySelector('#toast-styles')) {
+        const styles = document.createElement('style');
+        styles.id = 'toast-styles';
+        styles.textContent = `
+            .toast {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: white;
+                border-radius: 12px;
+                padding: 0;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+                border: 1px solid rgba(0,0,0,0.1);
+                z-index: 10000;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+                max-width: 400px;
+            }
+            .toast.show {
+                transform: translateX(0);
+            }
+            .toast-content {
+                padding: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+            }
+            .toast-message {
+                flex: 1;
+                font-size: 14px;
+                font-weight: 500;
+            }
+            .toast-close {
+                background: none;
+                border: none;
+                font-size: 18px;
+                cursor: pointer;
+                color: #666;
+                padding: 4px;
+            }
+            .toast-success { border-left: 4px solid #10b981; }
+            .toast-error { border-left: 4px solid #ef4444; }
+            .toast-warning { border-left: 4px solid #f59e0b; }
+            .toast-info { border-left: 4px solid #3b82f6; }
+        `;
+        document.head.appendChild(styles);
+    }
+
+    document.body.appendChild(toast);
+
+    // Animate in
+    setTimeout(() => toast.classList.add('show'), 100);
+
+    // Close button
+    toast.querySelector('.toast-close').addEventListener('click', () => {
+        toast.remove();
+    });
+
+    // Auto remove
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, duration);
+};
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
