@@ -1,301 +1,96 @@
-// modules/income-expenses.js - FULLY WORKING
-console.log('Loading income-expenses module...');
+// In your income-expenses.js module, update the renderModule method:
+renderModule() {
+    const contentArea = document.getElementById('content-area');
+    if (!contentArea) return;
 
-const IncomeExpensesModule = {
-    name: 'income-expenses',
-    initialized: false,
-    transactions: [],
+    const stats = this.calculateStats();
 
-    initialize() {
-        console.log('💰 Initializing income & expenses...');
-        this.loadData();
-        this.renderModule();
-        this.initialized = true;
-        return true;
-    },
+    contentArea.innerHTML = `
+        <div class="income-expenses-module">
+            <!-- Enhanced PWA Header -->
+            <div class="module-header-pwa">
+                <h1 class="module-title-pwa">Income & Expenses</h1>
+                <p class="module-subtitle-pwa">Manage your farm finances</p>
+            </div>
 
-    loadData() {
-        // Load from localStorage or use demo data
-        const saved = localStorage.getItem('farm-transactions');
-        this.transactions = saved ? JSON.parse(saved) : this.getDemoData();
-    },
-
-    getDemoData() {
-        return [
-            { id: 1, type: 'income', amount: 1500, category: 'egg-sales', description: 'Egg sales March', date: '2024-03-15' },
-            { id: 2, type: 'expense', amount: 200, category: 'feed', description: 'Chicken feed', date: '2024-03-14' },
-            { id: 3, type: 'income', amount: 800, category: 'poultry-sales', description: 'Broiler sales', date: '2024-03-10' }
-        ];
-    },
-
-    renderModule() {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
-
-        const stats = this.calculateStats();
-
-        contentArea.innerHTML = `
-            <div class="module-container">
-                <div class="module-header">
-                    <h1 class="module-title">Income & Expenses</h1>
-                    <p class="module-subtitle">Manage your farm finances</p>
+            <!-- Enhanced Stats Grid -->
+            <div class="stats-grid-pwa">
+                <div class="stat-card-pwa">
+                    <div class="stat-icon-pwa">💰</div>
+                    <div class="stat-value-pwa">${this.formatCurrency(stats.totalIncome)}</div>
+                    <div class="stat-label-pwa">Total Income</div>
                 </div>
-
-                <!-- Quick Stats -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.formatCurrency(stats.totalIncome)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Total Income</div>
-                    </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">💸</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.formatCurrency(stats.totalExpenses)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Total Expenses</div>
-                    </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
-                        <div style="font-size: 24px; font-weight: bold; color: ${stats.netProfit >= 0 ? '#22c55e' : '#ef4444'}; margin-bottom: 4px;">${this.formatCurrency(stats.netProfit)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Net Profit</div>
-                    </div>
+                <div class="stat-card-pwa">
+                    <div class="stat-icon-pwa">💸</div>
+                    <div class="stat-value-pwa">${this.formatCurrency(stats.totalExpenses)}</div>
+                    <div class="stat-label-pwa">Total Expenses</div>
                 </div>
-
-                <!-- Action Buttons -->
-                <div class="quick-action-grid">
-                    <button class="quick-action-btn" id="add-income-btn">
-                        <div style="font-size: 32px;">💰</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Income</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record new income</span>
-                    </button>
-                    <button class="quick-action-btn" id="add-expense-btn">
-                        <div style="font-size: 32px;">💸</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Expense</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record new expense</span>
-                    </button>
-                </div>
-
-                <!-- Transaction Form (Hidden by default) -->
-                <div id="transaction-form-container" class="hidden">
-                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
-                        <h3 style="color: var(--text-primary); margin-bottom: 20px;" id="form-title">Add Transaction</h3>
-                        <form id="transaction-form">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Type</label>
-                                    <select class="form-input" id="transaction-type" required>
-                                        <option value="income">Income</option>
-                                        <option value="expense">Expense</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="form-label">Amount</label>
-                                    <input type="number" class="form-input" id="transaction-amount" step="0.01" min="0" required>
-                                </div>
-                            </div>
-                            <div style="margin-bottom: 16px;">
-                                <label class="form-label">Category</label>
-                                <select class="form-input" id="transaction-category" required>
-                                    <option value="">Select category</option>
-                                    <option value="egg-sales">Egg Sales</option>
-                                    <option value="poultry-sales">Poultry Sales</option>
-                                    <option value="crop-sales">Crop Sales</option>
-                                    <option value="feed">Feed</option>
-                                    <option value="medication">Medication</option>
-                                    <option value="equipment">Equipment</option>
-                                    <option value="labor">Labor</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                            <div style="margin-bottom: 16px;">
-                                <label class="form-label">Description</label>
-                                <input type="text" class="form-input" id="transaction-description" required>
-                            </div>
-                            <div style="margin-bottom: 20px;">
-                                <label class="form-label">Date</label>
-                                <input type="date" class="form-input" id="transaction-date" required>
-                            </div>
-                            <div style="display: flex; gap: 12px;">
-                                <button type="submit" class="btn-primary">Save Transaction</button>
-                                <button type="button" class="btn-outline" id="cancel-form">Cancel</button>
-                            </div>
-                        </form>
+                <div class="stat-card-pwa">
+                    <div class="stat-icon-pwa">📊</div>
+                    <div class="stat-value-pwa" style="${stats.netProfit >= 0 ? 'color: var(--success-color)' : 'color: var(--error-color)'}">
+                        ${this.formatCurrency(stats.netProfit)}
                     </div>
-                </div>
-
-                <!-- Recent Transactions -->
-                <div class="glass-card" style="padding: 24px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="color: var(--text-primary); font-size: 20px;">Recent Transactions</h3>
-                        <button class="btn-outline" id="clear-all">Clear All</button>
-                    </div>
-                    <div id="transactions-list">
-                        ${this.renderTransactionsList()}
-                    </div>
+                    <div class="stat-label-pwa">Net Profit</div>
                 </div>
             </div>
-        `;
 
-        this.setupEventListeners();
-    },
-
-    calculateStats() {
-        const totalIncome = this.transactions
-            .filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + t.amount, 0);
-        
-        const totalExpenses = this.transactions
-            .filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + t.amount, 0);
-        
-        return {
-            totalIncome,
-            totalExpenses,
-            netProfit: totalIncome - totalExpenses
-        };
-    },
-
-    renderTransactionsList() {
-        if (this.transactions.length === 0) {
-            return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No transactions yet</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Add your first transaction to get started</div>
-                </div>
-            `;
-        }
-
-        return `
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${this.transactions.map(transaction => `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="font-size: 20px;">${transaction.type === 'income' ? '💰' : '💸'}</div>
-                            <div>
-                                <div style="font-weight: 600; color: var(--text-primary);">${transaction.description}</div>
-                                <div style="font-size: 14px; color: var(--text-secondary);">${transaction.category} • ${transaction.date}</div>
-                            </div>
+            <!-- Quick Actions -->
+            <div class="quick-actions-pwa">
+                <div class="quick-grid-pwa">
+                    <button class="quick-action-btn-pwa" id="add-income-btn">
+                        <div class="quick-icon-pwa">💰</div>
+                        <div class="quick-text-pwa">
+                            <div class="quick-title-pwa">Add Income</div>
+                            <div class="quick-desc-pwa">Record new income</div>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="font-weight: bold; color: ${transaction.type === 'income' ? '#22c55e' : '#ef4444'};">
-                                ${transaction.type === 'income' ? '+' : '-'}${this.formatCurrency(transaction.amount)}
-                            </div>
-                            <button class="btn-icon delete-transaction" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; color: var(--text-secondary);">
-                                🗑️
-                            </button>
+                    </button>
+                    <button class="quick-action-btn-pwa" id="add-expense-btn">
+                        <div class="quick-icon-pwa">💸</div>
+                        <div class="quick-text-pwa">
+                            <div class="quick-title-pwa">Add Expense</div>
+                            <div class="quick-desc-pwa">Record new expense</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Transaction Form -->
+            <div id="transaction-form-container" class="form-container-pwa hidden">
+                <h3 class="form-title-pwa" id="form-title">Add Transaction</h3>
+                <form id="transaction-form">
+                    <div class="form-grid-pwa">
+                        <div class="form-group-pwa">
+                            <label class="form-label-pwa">Type</label>
+                            <select class="form-select-pwa" id="transaction-type" required>
+                                <option value="income">Income</option>
+                                <option value="expense">Expense</option>
+                            </select>
+                        </div>
+                        <div class="form-group-pwa">
+                            <label class="form-label-pwa">Amount</label>
+                            <input type="number" class="form-input-pwa" id="transaction-amount" step="0.01" min="0" required>
                         </div>
                     </div>
-                `).join('')}
+                    <!-- ... rest of form ... -->
+                    <div style="display: flex; gap: 12px;">
+                        <button type="submit" class="btn-primary-pwa">Save Transaction</button>
+                        <button type="button" class="btn-outline-pwa" id="cancel-form">Cancel</button>
+                    </div>
+                </form>
             </div>
-        `;
-    },
 
-    setupEventListeners() {
-        // Add transaction buttons
-        document.getElementById('add-income-btn')?.addEventListener('click', () => this.showTransactionForm('income'));
-        document.getElementById('add-expense-btn')?.addEventListener('click', () => this.showTransactionForm('expense'));
-        
-        // Form handlers
-        document.getElementById('transaction-form')?.addEventListener('submit', (e) => this.handleTransactionSubmit(e));
-        document.getElementById('cancel-form')?.addEventListener('click', () => this.hideTransactionForm());
-        
-        // Clear all button
-        document.getElementById('clear-all')?.addEventListener('click', () => this.clearAllTransactions());
-        
-        // Delete buttons
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.delete-transaction')) {
-                const id = parseInt(e.target.closest('.delete-transaction').dataset.id);
-                this.deleteTransaction(id);
-            }
-        });
+            <!-- Transactions List -->
+            <div class="transactions-section-pwa">
+                <div class="section-header-pwa">
+                    <h3 class="section-title-pwa">Recent Transactions</h3>
+                    <button class="btn-outline-pwa" id="clear-all">Clear All</button>
+                </div>
+                <div class="transactions-list-pwa" id="transactions-list">
+                    ${this.renderTransactionsList()}
+                </div>
+            </div>
+        </div>
+    `;
 
-        // Hover effects
-        const buttons = document.querySelectorAll('.quick-action-btn');
-        buttons.forEach(button => {
-            button.addEventListener('mouseenter', (e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-            });
-            button.addEventListener('mouseleave', (e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-            });
-        });
-    },
-
-    showTransactionForm(type) {
-        const formContainer = document.getElementById('transaction-form-container');
-        const formTitle = document.getElementById('form-title');
-        const typeSelect = document.getElementById('transaction-type');
-        const dateInput = document.getElementById('transaction-date');
-        
-        formTitle.textContent = `Add ${type === 'income' ? 'Income' : 'Expense'}`;
-        typeSelect.value = type;
-        dateInput.value = new Date().toISOString().split('T')[0];
-        
-        formContainer.classList.remove('hidden');
-        formContainer.scrollIntoView({ behavior: 'smooth' });
-    },
-
-    hideTransactionForm() {
-        document.getElementById('transaction-form-container').classList.add('hidden');
-        document.getElementById('transaction-form').reset();
-    },
-
-    handleTransactionSubmit(e) {
-        e.preventDefault();
-        
-        const formData = {
-            id: Date.now(),
-            type: document.getElementById('transaction-type').value,
-            amount: parseFloat(document.getElementById('transaction-amount').value),
-            category: document.getElementById('transaction-category').value,
-            description: document.getElementById('transaction-description').value,
-            date: document.getElementById('transaction-date').value
-        };
-
-        this.transactions.unshift(formData);
-        this.saveData();
-        this.renderModule();
-        
-        if (window.coreModule) {
-            window.coreModule.showNotification('Transaction added successfully!', 'success');
-        }
-    },
-
-    deleteTransaction(id) {
-        this.transactions = this.transactions.filter(t => t.id !== id);
-        this.saveData();
-        this.renderModule();
-        
-        if (window.coreModule) {
-            window.coreModule.showNotification('Transaction deleted!', 'success');
-        }
-    },
-
-    clearAllTransactions() {
-        if (confirm('Are you sure you want to clear all transactions? This cannot be undone.')) {
-            this.transactions = [];
-            this.saveData();
-            this.renderModule();
-            
-            if (window.coreModule) {
-                window.coreModule.showNotification('All transactions cleared!', 'success');
-            }
-        }
-    },
-
-    saveData() {
-        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-    },
-
-    formatCurrency(amount) {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount);
-    }
-};
-
-if (window.FarmModules) {
-    window.FarmModules.registerModule('income-expenses', IncomeExpensesModule);
+    this.setupEventListeners();
 }
