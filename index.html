@@ -137,6 +137,51 @@
     
     <!-- app.js from root folder -->
     <script src="app.js"></script>
-
+<!-- TEMPORARY DEBUG SCRIPT -->
+<script>
+console.log('=== EMERGENCY DEBUG ===');
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded - checking elements:');
+    
+    // Check if elements exist
+    const authForms = document.querySelector('.auth-forms');
+    const appContent = document.querySelector('.app-content');
+    const body = document.body;
+    
+    console.log('Body exists:', !!body);
+    console.log('Auth forms exist:', !!authForms);
+    console.log('App content exists:', !!appContent);
+    
+    // Force show something
+    if (authForms) {
+        console.log('Auth forms found, showing them');
+        authForms.style.display = 'block';
+        authForms.style.background = 'red';
+        authForms.style.padding = '20px';
+        authForms.style.color = 'white';
+        authForms.innerHTML = '<h1>DEBUG: Auth Forms Visible</h1>';
+    }
+    
+    if (appContent) {
+        console.log('App content found, showing it');
+        appContent.style.display = 'block';
+        appContent.style.background = 'green';
+        appContent.style.padding = '20px';
+        appContent.style.color = 'white';
+        appContent.innerHTML = '<h1>DEBUG: App Content Visible</h1>';
+    }
+    
+    // If nothing found, add emergency content
+    if (!authForms && !appContent) {
+        console.log('No main elements found, creating emergency content');
+        const emergencyDiv = document.createElement('div');
+        emergencyDiv.style.cssText = 'background: yellow; padding: 20px; color: black; font-size: 24px;';
+        emergencyDiv.innerHTML = '🚨 EMERGENCY: No content found. Check HTML structure.';
+        document.body.appendChild(emergencyDiv);
+    }
+    
+    console.log('=== DEBUG COMPLETE ===');
+});
+</script>
 </body>
 </html>
