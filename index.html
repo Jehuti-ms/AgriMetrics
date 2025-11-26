@@ -135,42 +135,6 @@
 
      <script src="app.js"></script>
 
-    <script>
-    // Wait for Firebase to be ready before loading auth
-    function checkFirebaseReady() {
-        if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
-            loadAuthScript();
-        } else {
-            setTimeout(checkFirebaseReady, 100);
-        }
-    }
-    
-    function loadAuthScript() {
-        const script = document.createElement('script');
-        script.src = 'firebase/firebase-auth.js';
-        document.head.appendChild(script);
-        
-        // Load other scripts after auth
-        script.onload = function() {
-            // Load your app modules
-            const modules = [
-                'js/framework.js',
-                'js/core.js',
-                'modules/auth.js',
-                'js/app.js',
-                // ... other modules
-            ];
-            
-            modules.forEach(src => {
-                const moduleScript = document.createElement('script');
-                moduleScript.src = src;
-                document.head.appendChild(moduleScript);
-            });
-        };
-    }
-    
-    // Start checking when Firebase config is loaded
-    document.addEventListener('DOMContentLoaded', checkFirebaseReady);
-</script>
+
 </body>
 </html>
