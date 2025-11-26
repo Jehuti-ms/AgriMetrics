@@ -1014,23 +1014,35 @@ header, .top-nav {
 /*==================================
   Income & Expenses Module Styles
 ===================================*/
-/* Income & Expenses Module - Enhanced PWA Styling */
+/* Income & Expenses Module - Enhanced PWA Styling with Complementary Colors */
+:root {
+  --primary-color: #22c55e;      /* Keep your existing green */
+  --primary-dark: #16a34a;
+  --primary-light: #4ade80;
+  --complementary-purple: #8b5cf6;  /* Purple complements green */
+  --complementary-orange: #f97316;  /* Orange for accents */
+  --complementary-blue: #3b82f6;    /* Blue for balance */
+  --complementary-amber: #f59e0b;   /* Amber for warnings */
+}
+
 .income-expenses-module {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
   min-height: calc(100vh - 80px);
+  background: linear-gradient(135deg, #f8faf9 0%, #f0f7f4 100%);
 }
 
-/* Enhanced Header with PWA App-like Design */
+/* Enhanced Header with Complementary Gradient */
 .module-header-pwa {
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--complementary-purple) 100%);
   margin: -20px -20px 30px -20px;
   padding: 30px 20px;
   border-radius: 0 0 24px 24px;
   color: white;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 8px 32px rgba(34, 197, 94, 0.2);
 }
 
 .module-header-pwa::before {
@@ -1056,7 +1068,7 @@ header, .top-nav {
   font-weight: 500;
 }
 
-/* Enhanced Stats Grid with PWA Card Design */
+/* Enhanced Stats Grid with Complementary Accents */
 .stats-grid-pwa {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -1068,7 +1080,7 @@ header, .top-nav {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 20px;
   padding: 20px;
   text-align: center;
@@ -1078,6 +1090,18 @@ header, .top-nav {
   overflow: hidden;
 }
 
+.stat-card-pwa:nth-child(1)::before {
+  background: linear-gradient(90deg, var(--primary-color), var(--complementary-blue));
+}
+
+.stat-card-pwa:nth-child(2)::before {
+  background: linear-gradient(90deg, var(--complementary-orange), var(--complementary-amber));
+}
+
+.stat-card-pwa:nth-child(3)::before {
+  background: linear-gradient(90deg, var(--complementary-purple), var(--primary-color));
+}
+
 .stat-card-pwa::before {
   content: '';
   position: absolute;
@@ -1085,7 +1109,7 @@ header, .top-nav {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+  background: linear-gradient(90deg, var(--primary-color), var(--complementary-purple));
 }
 
 .stat-card-pwa:hover {
@@ -1115,7 +1139,7 @@ header, .top-nav {
   font-weight: 600;
 }
 
-/* Enhanced Quick Actions */
+/* Enhanced Quick Actions with Complementary Colors */
 .quick-actions-pwa {
   margin-bottom: 30px;
 }
@@ -1130,7 +1154,7 @@ header, .top-nav {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 20px;
   padding: 24px 16px;
   cursor: pointer;
@@ -1144,6 +1168,14 @@ header, .top-nav {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   position: relative;
   overflow: hidden;
+}
+
+.quick-action-btn-pwa:nth-child(1) {
+  border-top: 3px solid var(--primary-color);
+}
+
+.quick-action-btn-pwa:nth-child(2) {
+  border-top: 3px solid var(--complementary-orange);
 }
 
 .quick-action-btn-pwa::before {
@@ -1192,28 +1224,19 @@ header, .top-nav {
   line-height: 1.3;
 }
 
-/* Enhanced Form Styling */
+/* Enhanced Form Styling with Complementary Accents */
 .form-container-pwa {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 24px;
   padding: 30px;
   margin-bottom: 30px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   position: relative;
   overflow: hidden;
-}
-
-.form-container-pwa::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  border-top: 4px solid var(--complementary-purple);
 }
 
 .form-title-pwa {
@@ -1222,6 +1245,10 @@ header, .top-nav {
   color: var(--text-primary);
   margin-bottom: 24px;
   text-align: center;
+  background: linear-gradient(135deg, var(--primary-color), var(--complementary-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .form-grid-pwa {
@@ -1246,9 +1273,9 @@ header, .top-nav {
 .form-input-pwa {
   width: 100%;
   padding: 16px;
-  border: 2px solid rgba(0, 0, 0, 0.1);
+  border: 2px solid #e5e7eb;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.9);
   color: var(--text-primary);
   font-size: 16px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1257,18 +1284,18 @@ header, .top-nav {
 
 .form-input-pwa:focus {
   outline: none;
-  border-color: var(--primary-color);
+  border-color: var(--complementary-purple);
   background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
   transform: translateY(-2px);
 }
 
 .form-select-pwa {
   width: 100%;
   padding: 16px;
-  border: 2px solid rgba(0, 0, 0, 0.1);
+  border: 2px solid #e5e7eb;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.9);
   color: var(--text-primary);
   font-size: 16px;
   transition: all 0.3s ease;
@@ -1280,9 +1307,14 @@ header, .top-nav {
   background-size: 12px;
 }
 
-/* Enhanced Button Styling */
+.form-select-pwa:focus {
+  border-color: var(--complementary-purple);
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+}
+
+/* Enhanced Button Styling with Complementary Colors */
 .btn-primary-pwa {
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  background: linear-gradient(135deg, var(--primary-color), var(--complementary-purple));
   color: white;
   border: none;
   padding: 16px 32px;
@@ -1291,7 +1323,7 @@ header, .top-nav {
   font-size: 16px;
   font-weight: 700;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.3);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
   position: relative;
   overflow: hidden;
 }
@@ -1313,13 +1345,13 @@ header, .top-nav {
 
 .btn-primary-pwa:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 30px rgba(34, 197, 94, 0.4);
+  box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
 }
 
 .btn-outline-pwa {
   background: transparent;
-  border: 2px solid var(--primary-color);
-  color: var(--primary-color);
+  border: 2px solid var(--complementary-orange);
+  color: var(--complementary-orange);
   padding: 16px 32px;
   border-radius: 16px;
   cursor: pointer;
@@ -1329,21 +1361,22 @@ header, .top-nav {
 }
 
 .btn-outline-pwa:hover {
-  background: var(--primary-color);
+  background: var(--complementary-orange);
   color: white;
   transform: translateY(-3px);
-  box-shadow: 0 8px 30px rgba(34, 197, 94, 0.3);
+  box-shadow: 0 8px 30px rgba(249, 115, 22, 0.3);
 }
 
-/* Enhanced Transactions List */
+/* Enhanced Transactions List with Color Coding */
 .transactions-section-pwa {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 24px;
   padding: 30px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-top: 4px solid var(--complementary-blue);
 }
 
 .section-header-pwa {
@@ -1357,6 +1390,10 @@ header, .top-nav {
   font-size: 22px;
   font-weight: 700;
   color: var(--text-primary);
+  background: linear-gradient(135deg, var(--complementary-blue), var(--primary-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .transactions-list-pwa {
@@ -1379,6 +1416,14 @@ header, .top-nav {
   overflow: hidden;
 }
 
+.transaction-item-pwa.income::before {
+  background: linear-gradient(90deg, var(--primary-color), var(--complementary-blue));
+}
+
+.transaction-item-pwa.expense::before {
+  background: linear-gradient(90deg, var(--complementary-orange), var(--complementary-amber));
+}
+
 .transaction-item-pwa::before {
   content: '';
   position: absolute;
@@ -1386,17 +1431,8 @@ header, .top-nav {
   top: 0;
   bottom: 0;
   width: 4px;
-  background: var(--primary-color);
   transform: scaleY(0);
   transition: transform 0.3s ease;
-}
-
-.transaction-item-pwa.income::before {
-  background: var(--success-color);
-}
-
-.transaction-item-pwa.expense::before {
-  background: var(--error-color);
 }
 
 .transaction-item-pwa:hover::before {
@@ -1425,12 +1461,12 @@ header, .top-nav {
   justify-content: center;
   border-radius: 12px;
   background: rgba(34, 197, 94, 0.1);
-  color: var(--success-color);
+  color: var(--primary-color);
 }
 
 .transaction-item-pwa.expense .transaction-icon-pwa {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--error-color);
+  background: rgba(249, 115, 22, 0.1);
+  color: var(--complementary-orange);
 }
 
 .transaction-details-pwa {
@@ -1457,11 +1493,17 @@ header, .top-nav {
 }
 
 .transaction-amount-pwa.income {
-  color: var(--success-color);
+  background: linear-gradient(135deg, var(--primary-color), var(--complementary-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .transaction-amount-pwa.expense {
-  color: var(--error-color);
+  background: linear-gradient(135deg, var(--complementary-orange), var(--complementary-amber));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* Enhanced Empty State */
@@ -1475,6 +1517,10 @@ header, .top-nav {
   font-size: 64px;
   margin-bottom: 20px;
   opacity: 0.5;
+  background: linear-gradient(135deg, var(--primary-color), var(--complementary-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .empty-title-pwa {
@@ -1563,35 +1609,39 @@ header, .top-nav {
   }
 }
 
-/* Dark Mode Support */
+/* Dark Mode Support with Complementary Colors */
 @media (prefers-color-scheme: dark) {
+  .income-expenses-module {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+  
   .stat-card-pwa,
   .quick-action-btn-pwa,
   .form-container-pwa,
   .transactions-section-pwa,
   .transaction-item-pwa {
-    background: rgba(30, 30, 30, 0.95);
+    background: rgba(30, 41, 59, 0.95);
     border-color: rgba(255, 255, 255, 0.1);
     color: white;
   }
   
   .form-input-pwa,
   .form-select-pwa {
-    background: rgba(40, 40, 40, 0.8);
+    background: rgba(51, 65, 85, 0.8);
     border-color: rgba(255, 255, 255, 0.1);
     color: white;
   }
   
   .form-input-pwa:focus {
-    background: rgba(50, 50, 50, 0.95);
+    background: rgba(71, 85, 105, 0.95);
   }
   
   .transaction-item-pwa {
-    background: rgba(40, 40, 40, 0.6);
+    background: rgba(30, 41, 59, 0.6);
   }
   
   .transaction-item-pwa:hover {
-    background: rgba(50, 50, 50, 0.8);
+    background: rgba(51, 65, 85, 0.8);
   }
 }
 
@@ -1640,3 +1690,6 @@ header, .top-nav {
   }
 }
 
+/*==================================
+  Income & Expenses Module Styles
+===================================*/
