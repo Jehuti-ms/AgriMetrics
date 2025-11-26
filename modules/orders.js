@@ -1,610 +1,850 @@
 // modules/orders.js
-console.log('Loading orders module...');
-
-const OrdersModule = {
-    name: 'orders',
-    initialized: false,
-    ordersData: [],
-
-    initialize() {
-        console.log('📋 Initializing orders management...');
-        this.loadOrdersData();
-        this.renderOrders();
-        this.initialized = true;
-        return true;
-    },
-
-    loadOrdersData() {
-        const savedData = localStorage.getItem('farm-orders-data');
-        if (savedData) {
-            this.ordersData = JSON.parse(savedData);
-        }
-    },
-
-    saveOrdersData() {
-        localStorage.setItem('farm-orders-data', JSON.stringify(this.ordersData));
-    },
-
-    addOrder(orderData) {
-        const order = {
-            id: Date.now().toString(),
-            date: new Date().toISOString(),
-            orderNumber: `ORD-${String(this.ordersData.length + 1).padStart(3, '0')}`,
-            customer: orderData.customer,
-            product: orderData.product,
-            quantity: parseInt(orderData.quantity),
-            price: parseFloat(orderData.price),
-            total: parseFloat(orderData.quantity) * parseFloat(orderData.price),
-            status: 'pending',
-            deliveryDate: orderData.deliveryDate,
-            notes: orderData.notes || ''
-        };
-        
-        this.ordersData.unshift(order);
-        this.saveOrdersData();
-        this.updateOrdersDisplay();
-        this.showNotification('Order created successfully!', 'success');
-    },
-
-    updateOrderStatus(orderId, newStatus) {
-        const order = this.ordersData.find(o => o.id === orderId);
-        if (order) {
-            order.status = newStatus;
-            this.saveOrdersData();
-            this.updateOrdersDisplay();
-            this.showNotification(`Order status updated to ${newStatus}`, 'success');
-        }
-    },
-
-    deleteOrder(orderId) {
-        this.ordersData = this.ordersData.filter(order => order.id !== orderId);
-        this.saveOrdersData();
-        this.updateOrdersDisplay();
-        this.showNotification('Order deleted!', 'success');
-    },
-
-    calculateOrdersStats() {
-        const pending = this.ordersData.filter(order => order.status === 'pending').length;
-        const completed = this.ordersData.filter(order => order.status === 'completed').length;
-        const totalRevenue = this.ordersData
-            .filter(order => order.status === 'completed')
-            .reduce((sum, order) => sum + order.total, 0);
-
-        return {
-            pending,
-            completed,
-            totalRevenue: totalRevenue.toFixed(2),
-            totalOrders: this.ordersData.length
-        };
-    },
-
-    updateOrdersDisplay() {
-        const stats = this.calculateOrdersStats();
-        
-        // Update summary cards
-        const pendingEl = document.querySelector('.orders-summary-card:nth-child(1) div:nth-child(3)');
-        const completedEl = document.querySelector('.orders-summary-card:nth-child(2) div:nth-child(3)');
-        const revenueEl = document.querySelector('.orders-summary-card:nth-child(3) div:nth-child(3)');
-        
-        if (pendingEl) pendingEl.textContent = stats.pending;
-        if (completedEl) completedEl.textContent = stats.completed;
-        if (revenueEl) revenueEl.textContent = `$${stats.totalRevenue}`;
-
-        // Update orders table
-        this.renderOrdersTable();
-    },
-
-    renderOrdersTable() {
-        const ordersContainer = document.querySelector('.orders-container');
-        if (!ordersContainer) return;
-
-        if (this.ordersData.length === 0) {
-            ordersContainer.innerHTML = `
-                <div style="text-align: center; color: #666; padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No orders yet</div>
-                    <div style="font-size: 14px; color: #999;">Create your first order</div>
+FarmModules.registerModule('orders', {
+    name: 'Orders',
+    icon: '📋',
+    
+    template: `
+        <div class="section active">
+            <div class="module-header">
+                <h1>Produce Orders</h1>
+                <p>Manage customer orders and track order fulfillment</p>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="add-order">
+                        ➕ New Order
+                    </button>
                 </div>
-            `;
-            return;
-        }
-
-        const recentOrders = this.ordersData.slice(0, 10);
-        
-        ordersContainer.innerHTML = `
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="border-bottom: 1px solid rgba(0,0,0,0.1);">
-                            <th style="text-align: left; padding: 12px 16px; font-weight: 600; color: #666;">Order #</th>
-                            <th style="text-align: left; padding: 12px 16px; font-weight: 600; color: #666;">Customer</th>
-                            <th style="text-align: left; padding: 12px 16px; font-weight: 600; color: #666;">Product</th>
-                            <th style="text-align: right; padding: 12px 16px; font-weight: 600; color: #666;">Qty</th>
-                            <th style="text-align: right; padding: 12px 16px; font-weight: 600; color: #666;">Total</th>
-                            <th style="text-align: left; padding: 12px 16px; font-weight: 600; color: #666;">Status</th>
-                            <th style="text-align: center; padding: 12px 16px; font-weight: 600; color: #666;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${recentOrders.map(order => `
-                            <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                                <td style="padding: 12px 16px; font-weight: 500;">${order.orderNumber}</td>
-                                <td style="padding: 12px 16px; color: #666;">${order.customer}</td>
-                                <td style="padding: 12px 16px; font-weight: 500;">${order.product}</td>
-                                <td style="padding: 12px 16px; text-align: right; color: #666;">${order.quantity}</td>
-                                <td style="padding: 12px 16px; text-align: right; font-weight: 600; color: #10b981;">$${order.total.toFixed(2)}</td>
-                                <td style="padding: 12px 16px;">
-                                    <span style="
-                                        padding: 4px 8px;
-                                        border-radius: 6px;
-                                        font-size: 12px;
-                                        font-weight: 600;
-                                        background: ${order.status === 'completed' ? '#d1fae5' : order.status === 'pending' ? '#fef3c7' : '#fee2e2'};
-                                        color: ${order.status === 'completed' ? '#065f46' : order.status === 'pending' ? '#92400e' : '#991b1b'};
-                                    ">${order.status}</span>
-                                </td>
-                                <td style="padding: 12px 16px; text-align: center;">
-                                    <div style="display: flex; gap: 8px; justify-content: center;">
-                                        ${order.status === 'pending' ? `
-                                            <button class="complete-order-btn" data-order-id="${order.id}" style="
-                                                background: rgba(16, 185, 129, 0.1);
-                                                border: 1px solid rgba(16, 185, 129, 0.2);
-                                                border-radius: 6px;
-                                                padding: 6px 12px;
-                                                color: #10b981;
-                                                font-size: 12px;
-                                                cursor: pointer;
-                                            ">Complete</button>
-                                        ` : ''}
-                                        <button class="delete-order-btn" data-order-id="${order.id}" style="
-                                            background: rgba(239, 68, 68, 0.1);
-                                            border: 1px solid rgba(239, 68, 68, 0.2);
-                                            border-radius: 6px;
-                                            padding: 6px 12px;
-                                            color: #ef4444;
-                                            font-size: 12px;
-                                            cursor: pointer;
-                                        ">Delete</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
             </div>
-        `;
 
-        this.setupOrdersTableListeners();
-    },
-
-    setupOrdersTableListeners() {
-        // Complete order buttons
-        const completeButtons = document.querySelectorAll('.complete-order-btn');
-        completeButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                const orderId = e.target.getAttribute('data-order-id');
-                this.updateOrderStatus(orderId, 'completed');
-            });
-        });
-
-        // Delete order buttons
-        const deleteButtons = document.querySelectorAll('.delete-order-btn');
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                const orderId = e.target.getAttribute('data-order-id');
-                if (confirm('Are you sure you want to delete this order?')) {
-                    this.deleteOrder(orderId);
-                }
-            });
-        });
-    },
-
-    showCreateOrderModal() {
-        const modal = document.createElement('div');
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        `;
-
-        modal.innerHTML = `
-            <div style="
-                background: white;
-                border-radius: 16px;
-                padding: 30px;
-                width: 90%;
-                max-width: 500px;
-                max-height: 90vh;
-                overflow-y: auto;
-            ">
-                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 24px;">
-                    <h3 style="font-size: 20px; font-weight: 600; color: #1a1a1a;">Create New Order</h3>
-                    <button class="close-modal" style="
-                        background: none;
-                        border: none;
-                        font-size: 24px;
-                        cursor: pointer;
-                        color: #666;
-                    ">×</button>
+            <!-- Order Summary -->
+            <div class="orders-summary">
+                <div class="summary-card">
+                    <div class="summary-icon">📥</div>
+                    <div class="summary-content">
+                        <h3>Pending Orders</h3>
+                        <div class="summary-value" id="pending-orders">0</div>
+                        <div class="summary-period">Awaiting fulfillment</div>
+                    </div>
                 </div>
+                <div class="summary-card">
+                    <div class="summary-icon">🚚</div>
+                    <div class="summary-content">
+                        <h3>In Progress</h3>
+                        <div class="summary-value" id="progress-orders">0</div>
+                        <div class="summary-period">Being processed</div>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon">✅</div>
+                    <div class="summary-content">
+                        <h3>Completed</h3>
+                        <div class="summary-value" id="completed-orders">0</div>
+                        <div class="summary-period">This month</div>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon">💰</div>
+                    <div class="summary-content">
+                        <h3>Revenue</h3>
+                        <div class="summary-value" id="total-revenue">$0</div>
+                        <div class="summary-period">This month</div>
+                    </div>
+                </div>
+            </div>
 
-                <form id="create-order-form">
-                    <div style="display: grid; gap: 16px;">
-                        <div>
-                            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Customer Name *</label>
-                            <input type="text" name="customer" required style="
-                                width: 100%;
-                                padding: 12px 16px;
-                                border: 1px solid #d1d5db;
-                                border-radius: 8px;
-                                font-size: 14px;
-                                box-sizing: border-box;
-                            " placeholder="Enter customer name">
+            <!-- Quick Order Form -->
+            <div class="quick-order card">
+                <h3>Quick Order</h3>
+                <form id="quick-order-form" class="form-inline">
+                    <div class="form-row compact">
+                        <div class="form-group">
+                            <input type="text" id="quick-customer" placeholder="Customer name" required class="form-compact">
                         </div>
-
-                        <div>
-                            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Product *</label>
-                            <input type="text" name="product" required style="
-                                width: 100%;
-                                padding: 12px 16px;
-                                border: 1px solid #d1d5db;
-                                border-radius: 8px;
-                                font-size: 14px;
-                                box-sizing: border-box;
-                            " placeholder="Enter product name">
+                        <div class="form-group">
+                            <select id="quick-product" required class="form-compact">
+                                <option value="">Select Product</option>
+                                <option value="broilers">Broilers</option>
+                                <option value="eggs">Eggs</option>
+                                <option value="vegetables">Vegetables</option>
+                                <option value="fruits">Fruits</option>
+                                <option value="dairy">Dairy</option>
+                                <option value="other">Other</option>
+                            </select>
                         </div>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Quantity *</label>
-                                <input type="number" name="quantity" min="1" required style="
-                                    width: 100%;
-                                    padding: 12px 16px;
-                                    border: 1px solid #d1d5db;
-                                    border-radius: 8px;
-                                    font-size: 14px;
-                                    box-sizing: border-box;
-                                " placeholder="0">
-                            </div>
-
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Price ($) *</label>
-                                <input type="number" name="price" min="0" step="0.01" required style="
-                                    width: 100%;
-                                    padding: 12px 16px;
-                                    border: 1px solid #d1d5db;
-                                    border-radius: 8px;
-                                    font-size: 14px;
-                                    box-sizing: border-box;
-                                " placeholder="0.00">
-                            </div>
+                        <div class="form-group">
+                            <input type="number" id="quick-quantity" placeholder="Qty" required class="form-compact" min="1">
                         </div>
-
-                        <div>
-                            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Delivery Date</label>
-                            <input type="date" name="deliveryDate" style="
-                                width: 100%;
-                                padding: 12px 16px;
-                                border: 1px solid #d1d5db;
-                                border-radius: 8px;
-                                font-size: 14px;
-                                box-sizing: border-box;
-                            ">
+                        <div class="form-group">
+                            <input type="number" id="quick-price" placeholder="Price" step="0.01" class="form-compact" min="0">
                         </div>
-
-                        <div>
-                            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Notes</label>
-                            <textarea name="notes" style="
-                                width: 100%;
-                                padding: 12px 16px;
-                                border: 1px solid #d1d5db;
-                                border-radius: 8px;
-                                font-size: 14px;
-                                box-sizing: border-box;
-                                resize: vertical;
-                                min-height: 80px;
-                            " placeholder="Special instructions..."></textarea>
-                        </div>
-
-                        <div style="display: flex; gap: 12px; margin-top: 24px;">
-                            <button type="submit" style="
-                                flex: 1;
-                                background: #10b981;
-                                color: white;
-                                border: none;
-                                border-radius: 8px;
-                                padding: 12px 24px;
-                                font-size: 14px;
-                                font-weight: 600;
-                                cursor: pointer;
-                                transition: background 0.2s ease;
-                            ">Create Order</button>
-                            <button type="button" class="cancel-modal" style="
-                                flex: 1;
-                                background: #6b7280;
-                                color: white;
-                                border: none;
-                                border-radius: 8px;
-                                padding: 12px 24px;
-                                font-size: 14px;
-                                font-weight: 600;
-                                cursor: pointer;
-                                transition: background 0.2s ease;
-                            ">Cancel</button>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-compact">Create Order</button>
                         </div>
                     </div>
                 </form>
             </div>
-        `;
 
-        // Set minimum date to today
-        const today = new Date().toISOString().split('T')[0];
-        modal.querySelector('input[type="date"]').min = today;
-
-        document.body.appendChild(modal);
-
-        // Event listeners for modal
-        const closeModal = () => document.body.removeChild(modal);
-        
-        modal.querySelector('.close-modal').addEventListener('click', closeModal);
-        modal.querySelector('.cancel-modal').addEventListener('click', closeModal);
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
-
-        // Form submission
-        modal.querySelector('#create-order-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const orderData = Object.fromEntries(formData);
-            
-            this.addOrder(orderData);
-            closeModal();
-        });
-    },
-
-    renderOrders() {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
-
-        contentArea.innerHTML = `
-            <div class="module-container" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
-                <!-- Header -->
-                <div class="module-header" style="margin-bottom: 30px;">
-                    <h1 style="color: #1a1a1a; font-size: 28px; margin-bottom: 8px;">Orders</h1>
-                    <p style="color: #666; font-size: 16px;">Manage customer orders and deliveries</p>
+            <!-- Orders List -->
+            <div class="orders-list card">
+                <div class="card-header">
+                    <h3>Recent Orders</h3>
+                    <div class="filter-controls">
+                        <select id="status-filter">
+                            <option value="all">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <button class="btn btn-text" id="export-orders">Export</button>
+                    </div>
                 </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Due Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-body">
+                            <tr>
+                                <td colspan="8" class="empty-state">
+                                    <div class="empty-content">
+                                        <span class="empty-icon">📋</span>
+                                        <h4>No orders yet</h4>
+                                        <p>Start by creating your first order</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-                <!-- Quick Actions -->
-                <div class="quick-actions" style="margin-bottom: 30px;">
-                    <div class="actions-grid" style="
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                        gap: 16px;
-                    ">
-                        <button class="action-btn" data-action="create-order" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 20px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            align-items: center;
-                            gap: 12px;
-                        ">
-                            <div style="font-size: 28px;">📋</div>
-                            <div style="text-align: left;">
-                                <div style="font-size: 16px; font-weight: 600; color: #1a1a1a;">Create Order</div>
-                                <div style="font-size: 12px; color: #666;">Add new customer order</div>
+            <!-- Order Modal -->
+            <div id="order-modal" class="modal hidden">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 id="order-modal-title">New Order</h3>
+                        <button class="btn-icon close-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="order-form">
+                            <input type="hidden" id="order-id">
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="order-customer">Customer Name *</label>
+                                    <input type="text" id="order-customer" required placeholder="Enter customer name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="order-phone">Phone Number</label>
+                                    <input type="tel" id="order-phone" placeholder="Enter phone number">
+                                </div>
                             </div>
-                        </button>
 
-                        <button class="action-btn" data-action="orders-report" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 20px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            align-items: center;
-                            gap: 12px;
-                        ">
-                            <div style="font-size: 28px;">📊</div>
-                            <div style="text-align: left;">
-                                <div style="font-size: 16px; font-weight: 600; color: #1a1a1a;">Orders Report</div>
-                                <div style="font-size: 12px; color: #666;">Generate report</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="order-product">Product *</label>
+                                    <select id="order-product" required>
+                                        <option value="">Select Product</option>
+                                        <optgroup label="Livestock">
+                                            <option value="broilers">Broilers (Live)</option>
+                                            <option value="broilers-dressed">Broilers (Dressed)</option>
+                                            <option value="eggs">Eggs</option>
+                                            <option value="pork">Pork</option>
+                                            <option value="beef">Beef</option>
+                                        </optgroup>
+                                        <optgroup label="Produce">
+                                            <option value="tomatoes">Tomatoes</option>
+                                            <option value="peppers">Peppers</option>
+                                            <option value="cucumbers">Cucumbers</option>
+                                            <option value="lettuce">Lettuce</option>
+                                            <option value="carrots">Carrots</option>
+                                            <option value="potatoes">Potatoes</option>
+                                        </optgroup>
+                                        <optgroup label="Other">
+                                            <option value="honey">Honey</option>
+                                            <option value="milk">Milk</option>
+                                            <option value="cheese">Cheese</option>
+                                            <option value="other">Other</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="order-unit">Unit *</label>
+                                    <select id="order-unit" required>
+                                        <option value="kg">Kilograms (kg)</option>
+                                        <option value="lbs">Pounds (lbs)</option>
+                                        <option value="units">Units</option>
+                                        <option value="dozen">Dozen</option>
+                                        <option value="case">Case</option>
+                                        <option value="crate">Crate</option>
+                                        <option value="bag">Bag</option>
+                                    </select>
+                                </div>
                             </div>
-                        </button>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="order-quantity">Quantity *</label>
+                                    <input type="number" id="order-quantity" min="1" required placeholder="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="order-price">Price per Unit ($) *</label>
+                                    <input type="number" id="order-price" step="0.01" min="0" required placeholder="0.00">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="order-status">Status *</label>
+                                    <select id="order-status" required>
+                                        <option value="pending">Pending</option>
+                                        <option value="confirmed">Confirmed</option>
+                                        <option value="in-progress">In Progress</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="order-due-date">Due Date *</label>
+                                    <input type="date" id="order-due-date" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="order-notes">Order Notes (Optional)</label>
+                                <textarea id="order-notes" placeholder="Special instructions, delivery notes, etc." rows="3"></textarea>
+                            </div>
+
+                            <div class="order-total">
+                                <h4>Order Total: <span id="order-total-amount">$0.00</span></h4>
+                            </div>
+                        </form>
                     </div>
-                </div>
-
-                <!-- Orders Summary -->
-                <div class="orders-summary" style="margin-bottom: 30px;">
-                    <div class="summary-grid" style="
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                        gap: 16px;
-                    ">
-                        <div class="orders-summary-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 32px; color: #f59e0b; margin-bottom: 12px;">⏳</div>
-                            <div style="font-size: 14px; color: #666; margin-bottom: 8px;">Pending Orders</div>
-                            <div style="font-size: 28px; font-weight: bold; color: #f59e0b;">0</div>
-                        </div>
-
-                        <div class="orders-summary-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 32px; color: #10b981; margin-bottom: 12px;">✅</div>
-                            <div style="font-size: 14px; color: #666; margin-bottom: 8px;">Completed Orders</div>
-                            <div style="font-size: 28px; font-weight: bold; color: #10b981;">0</div>
-                        </div>
-
-                        <div class="orders-summary-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 32px; color: #3b82f6; margin-bottom: 12px;">💰</div>
-                            <div style="font-size: 14px; color: #666; margin-bottom: 8px;">Total Revenue</div>
-                            <div style="font-size: 28px; font-weight: bold; color: #3b82f6;">$0.00</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Orders -->
-                <div class="recent-orders">
-                    <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 20px;">
-                        <h2 style="color: #1a1a1a; font-size: 20px;">Recent Orders</h2>
-                        <button style="
-                            background: rgba(59, 130, 246, 0.1);
-                            border: 1px solid rgba(59, 130, 246, 0.2);
-                            border-radius: 12px;
-                            padding: 10px 16px;
-                            color: #3b82f6;
-                            font-size: 14px;
-                            font-weight: 600;
-                            cursor: pointer;
-                        ">View All</button>
-                    </div>
-                    
-                    <div class="orders-container" style="
-                        background: rgba(255, 255, 255, 0.9);
-                        backdrop-filter: blur(20px);
-                        -webkit-backdrop-filter: blur(20px);
-                        border: 1px solid rgba(0, 0, 0, 0.1);
-                        border-radius: 16px;
-                        padding: 20px;
-                    ">
-                        <div style="text-align: center; color: #666; padding: 40px 20px;">
-                            <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
-                            <div style="font-size: 16px; margin-bottom: 8px;">No orders yet</div>
-                            <div style="font-size: 14px; color: #999;">Create your first order</div>
-                        </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-text close-modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="delete-order" style="display: none;">Delete</button>
+                        <button type="button" class="btn btn-primary" id="save-order">Save Order</button>
                     </div>
                 </div>
             </div>
-        `;
+        </div>
+    `,
 
-        this.setupOrdersEventListeners();
-        this.updateOrdersDisplay();
+    styles: `
+        .orders-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .summary-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .summary-icon {
+            font-size: 2rem;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-content h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-period {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .quick-order {
+            margin: 1.5rem 0;
+        }
+
+        .quick-order .form-row.compact {
+            margin-bottom: 0;
+        }
+
+        .orders-list .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .order-total {
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .order-total h4 {
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        #order-total-amount {
+            color: var(--success-color);
+            font-weight: 700;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .status-pending {
+            background: var(--warning-light);
+            color: var(--warning-dark);
+        }
+
+        .status-confirmed {
+            background: var(--info-light);
+            color: var(--info-dark);
+        }
+
+        .status-in-progress {
+            background: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        .status-completed {
+            background: var(--success-light);
+            color: var(--success-color);
+        }
+
+        .status-cancelled {
+            background: var(--danger-light);
+            color: var(--danger-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            opacity: 0.5;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .empty-content h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.2rem;
+        }
+
+        .empty-content p {
+            margin: 0;
+            opacity: 0.8;
+        }
+    `,
+
+    initialize: function() {
+        console.log('Orders module initializing...');
+        this.loadOrdersData();
+        this.attachEventListeners();
+        this.updateSummary();
+        this.renderOrdersTable();
     },
 
-    setupOrdersEventListeners() {
-        const actionButtons = document.querySelectorAll('.action-btn');
-        
-        actionButtons.forEach(button => {
-            button.addEventListener('mouseenter', (e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.1)';
-            });
+    loadOrdersData: function() {
+        if (!FarmModules.appData.orders) {
+            FarmModules.appData.orders = [];
+        }
+    },
 
-            button.addEventListener('mouseleave', (e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-            });
+    updateSummary: function() {
+        const orders = FarmModules.appData.orders || [];
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth();
+        const currentYear = currentDate.getFullYear();
 
-            // Add click handlers for action buttons
-            button.addEventListener('click', (e) => {
-                const action = e.currentTarget.getAttribute('data-action');
-                switch (action) {
-                    case 'create-order':
-                        this.showCreateOrderModal();
-                        break;
-                    case 'orders-report':
-                        this.generateOrdersReport();
-                        break;
-                }
-            });
+        const monthlyOrders = orders.filter(order => {
+            const orderDate = new Date(order.orderDate);
+            return orderDate.getMonth() === currentMonth && 
+                   orderDate.getFullYear() === currentYear;
         });
+
+        const pendingOrders = orders.filter(order => order.status === 'pending').length;
+        const progressOrders = orders.filter(order => order.status === 'in-progress').length;
+        const completedOrders = monthlyOrders.filter(order => order.status === 'completed').length;
+        
+        const totalRevenue = monthlyOrders
+            .filter(order => order.status === 'completed')
+            .reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+
+        this.updateElement('pending-orders', pendingOrders);
+        this.updateElement('progress-orders', progressOrders);
+        this.updateElement('completed-orders', completedOrders);
+        this.updateElement('total-revenue', this.formatCurrency(totalRevenue));
     },
 
-    generateOrdersReport() {
-        if (this.ordersData.length === 0) {
-            this.showNotification('No orders data available for report', 'info');
+    renderOrdersTable: function(filterStatus = 'all') {
+        const tbody = document.getElementById('orders-body');
+        const orders = FarmModules.appData.orders || [];
+
+        let filteredOrders = orders;
+        if (filterStatus !== 'all') {
+            filteredOrders = orders.filter(order => order.status === filterStatus);
+        }
+
+        if (filteredOrders.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="empty-state">
+                        <div class="empty-content">
+                            <span class="empty-icon">📋</span>
+                            <h4>No orders found</h4>
+                            <p>${filterStatus === 'all' ? 'Start by creating your first order' : `No ${filterStatus} orders`}</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
             return;
         }
 
-        const stats = this.calculateOrdersStats();
-        const recentOrders = this.ordersData.slice(0, 10);
-        
-        const report = `
-Orders Report - ${new Date().toLocaleDateString()}
+        // Show most recent orders first
+        const sortedOrders = filteredOrders.slice().reverse();
 
-📊 Order Statistics:
-• Pending Orders: ${stats.pending}
-• Completed Orders: ${stats.completed}
-• Total Revenue: $${stats.totalRevenue}
-• Total Orders: ${stats.totalOrders}
-
-Recent Orders:
-${recentOrders.map(order => 
-    `• ${order.orderNumber} - ${order.customer} - ${order.product} - $${order.total.toFixed(2)} - ${order.status}`
-).join('\n')}
-        `.trim();
-
-        alert(report);
-        this.showNotification('Orders report generated!', 'success');
+        tbody.innerHTML = sortedOrders.map(order => {
+            const statusClass = `status-badge status-${order.status.replace(' ', '-')}`;
+            
+            return `
+                <tr>
+                    <td><strong>${order.id}</strong></td>
+                    <td>${order.customerName}</td>
+                    <td>${this.formatProductName(order.product)}</td>
+                    <td>${order.quantity} ${order.unit}</td>
+                    <td>${this.formatCurrency(order.totalAmount)}</td>
+                    <td><span class="${statusClass}">${order.status}</span></td>
+                    <td>${this.formatDate(order.dueDate)}</td>
+                    <td class="order-actions">
+                        <button class="btn-icon edit-order" data-id="${order.id}" title="Edit">✏️</button>
+                        <button class="btn-icon view-order" data-id="${order.id}" title="View">👁️</button>
+                        ${order.status !== 'completed' && order.status !== 'cancelled' ? 
+                            `<button class="btn-icon complete-order" data-id="${order.id}" title="Complete">✅</button>` : ''
+                        }
+                    </td>
+                </tr>
+            `;
+        }).join('');
     },
 
-    showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: ${type === 'success' ? '#10b981' : '#3b82f6'};
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            z-index: 1001;
-            animation: slideIn 0.3s ease;
-        `;
-        
-        notification.textContent = message;
-        document.body.appendChild(notification);
+    attachEventListeners: function() {
+        // Quick order form
+        document.getElementById('quick-order-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleQuickOrder();
+        });
 
-        setTimeout(() => {
-            if (document.body.contains(notification)) {
-                document.body.removeChild(notification);
+        // Modal buttons
+        document.getElementById('add-order').addEventListener('click', () => this.showOrderModal());
+        document.getElementById('save-order').addEventListener('click', () => this.saveOrder());
+        document.getElementById('delete-order').addEventListener('click', () => this.deleteOrder());
+
+        // Modal events
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', () => this.hideModal());
+        });
+
+        // Real-time total calculation
+        document.getElementById('order-quantity').addEventListener('input', () => this.calculateTotal());
+        document.getElementById('order-price').addEventListener('input', () => this.calculateTotal());
+
+        // Filter
+        document.getElementById('status-filter').addEventListener('change', (e) => {
+            this.renderOrdersTable(e.target.value);
+        });
+
+        // Export
+        document.getElementById('export-orders').addEventListener('click', () => {
+            this.exportOrders();
+        });
+
+        // Order actions
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.edit-order')) {
+                const orderId = e.target.closest('.edit-order').dataset.id;
+                this.editOrder(orderId);
             }
-        }, 3000);
-    }
-};
+            if (e.target.closest('.view-order')) {
+                const orderId = e.target.closest('.view-order').dataset.id;
+                this.viewOrder(orderId);
+            }
+            if (e.target.closest('.complete-order')) {
+                const orderId = e.target.closest('.complete-order').dataset.id;
+                this.completeOrder(orderId);
+            }
+        });
 
-if (window.FarmModules) {
-    window.FarmModules.registerModule('orders', OrdersModule);
-    console.log('✅ Orders module registered');
-}
+        // Modal backdrop
+        document.getElementById('order-modal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                this.hideModal();
+            }
+        });
+    },
+
+    handleQuickOrder: function() {
+        const customer = document.getElementById('quick-customer').value;
+        const product = document.getElementById('quick-product').value;
+        const quantity = parseInt(document.getElementById('quick-quantity').value);
+        const price = parseFloat(document.getElementById('quick-price').value) || 0;
+
+        if (!customer || !product || !quantity) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+
+        const orderData = {
+            customerName: customer,
+            product: product,
+            quantity: quantity,
+            unit: 'units',
+            pricePerUnit: price,
+            totalAmount: quantity * price,
+            status: 'pending',
+            dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
+            orderDate: new Date().toISOString().split('T')[0]
+        };
+
+        this.addOrder(orderData);
+        
+        // Reset form
+        document.getElementById('quick-order-form').reset();
+        this.showNotification('Order created successfully!', 'success');
+    },
+
+    showOrderModal: function() {
+        const modal = document.getElementById('order-modal');
+        const title = document.getElementById('order-modal-title');
+        const form = document.getElementById('order-form');
+
+        if (modal && title && form) {
+            form.reset();
+            document.getElementById('order-id').value = '';
+            document.getElementById('order-due-date').value = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            document.getElementById('delete-order').style.display = 'none';
+            document.getElementById('order-total-amount').textContent = '$0.00';
+            
+            modal.classList.remove('hidden');
+        }
+    },
+
+    hideModal: function() {
+        const modal = document.getElementById('order-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    },
+
+    calculateTotal: function() {
+        const quantity = parseInt(document.getElementById('order-quantity').value) || 0;
+        const price = parseFloat(document.getElementById('order-price').value) || 0;
+        const total = quantity * price;
+        
+        document.getElementById('order-total-amount').textContent = this.formatCurrency(total);
+    },
+
+    saveOrder: function() {
+        const form = document.getElementById('order-form');
+        if (!form) return;
+
+        const orderId = document.getElementById('order-id').value;
+        const customerName = document.getElementById('order-customer').value;
+        const phone = document.getElementById('order-phone').value;
+        const product = document.getElementById('order-product').value;
+        const unit = document.getElementById('order-unit').value;
+        const quantity = parseInt(document.getElementById('order-quantity').value);
+        const pricePerUnit = parseFloat(document.getElementById('order-price').value);
+        const status = document.getElementById('order-status').value;
+        const dueDate = document.getElementById('order-due-date').value;
+        const notes = document.getElementById('order-notes').value;
+
+        if (!customerName || !product || !quantity || !pricePerUnit || !dueDate) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+
+        if (quantity <= 0) {
+            this.showNotification('Quantity must be greater than 0', 'error');
+            return;
+        }
+
+        if (pricePerUnit < 0) {
+            this.showNotification('Price cannot be negative', 'error');
+            return;
+        }
+
+        const orderData = {
+            customerName: customerName,
+            phone: phone,
+            product: product,
+            unit: unit,
+            quantity: quantity,
+            pricePerUnit: pricePerUnit,
+            totalAmount: quantity * pricePerUnit,
+            status: status,
+            dueDate: dueDate,
+            notes: notes,
+            orderDate: new Date().toISOString().split('T')[0]
+        };
+
+        if (orderId) {
+            this.updateOrder(orderId, orderData);
+        } else {
+            this.addOrder(orderData);
+        }
+
+        this.hideModal();
+    },
+
+    addOrder: function(orderData) {
+        if (!FarmModules.appData.orders) {
+            FarmModules.appData.orders = [];
+        }
+
+        const newOrder = {
+            id: 'ORD-' + Date.now().toString().slice(-6),
+            ...orderData
+        };
+
+        FarmModules.appData.orders.push(newOrder);
+        
+        this.updateSummary();
+        this.renderOrdersTable();
+        
+        this.showNotification('Order created successfully!', 'success');
+    },
+
+    editOrder: function(orderId) {
+        const orders = FarmModules.appData.orders || [];
+        const order = orders.find(o => o.id === orderId);
+        
+        if (!order) return;
+
+        const modal = document.getElementById('order-modal');
+        const title = document.getElementById('order-modal-title');
+
+        if (modal && title) {
+            document.getElementById('order-id').value = order.id;
+            document.getElementById('order-customer').value = order.customerName;
+            document.getElementById('order-phone').value = order.phone || '';
+            document.getElementById('order-product').value = order.product;
+            document.getElementById('order-unit').value = order.unit;
+            document.getElementById('order-quantity').value = order.quantity;
+            document.getElementById('order-price').value = order.pricePerUnit;
+            document.getElementById('order-status').value = order.status;
+            document.getElementById('order-due-date').value = order.dueDate;
+            document.getElementById('order-notes').value = order.notes || '';
+            document.getElementById('delete-order').style.display = 'block';
+            
+            this.calculateTotal();
+            
+            title.textContent = 'Edit Order';
+            modal.classList.remove('hidden');
+        }
+    },
+
+    viewOrder: function(orderId) {
+        const orders = FarmModules.appData.orders || [];
+        const order = orders.find(o => o.id === orderId);
+        
+        if (!order) return;
+
+        const modal = document.getElementById('order-modal');
+        const title = document.getElementById('order-modal-title');
+
+        if (modal && title) {
+            document.getElementById('order-id').value = order.id;
+            document.getElementById('order-customer').value = order.customerName;
+            document.getElementById('order-phone').value = order.phone || '';
+            document.getElementById('order-product').value = order.product;
+            document.getElementById('order-unit').value = order.unit;
+            document.getElementById('order-quantity').value = order.quantity;
+            document.getElementById('order-price').value = order.pricePerUnit;
+            document.getElementById('order-status').value = order.status;
+            document.getElementById('order-due-date').value = order.dueDate;
+            document.getElementById('order-notes').value = order.notes || '';
+            document.getElementById('delete-order').style.display = 'block';
+            
+            // Make fields read-only for viewing
+            const inputs = modal.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => input.disabled = true);
+            document.getElementById('save-order').style.display = 'none';
+            
+            this.calculateTotal();
+            
+            title.textContent = 'View Order';
+            modal.classList.remove('hidden');
+
+            // Re-enable fields when modal closes
+            modal.addEventListener('hidden', () => {
+                inputs.forEach(input => input.disabled = false);
+                document.getElementById('save-order').style.display = 'block';
+            }, { once: true });
+        }
+    },
+
+    completeOrder: function(orderId) {
+        if (confirm('Mark this order as completed?')) {
+            const orders = FarmModules.appData.orders || [];
+            const orderIndex = orders.findIndex(o => o.id === orderId);
+            
+            if (orderIndex !== -1) {
+                orders[orderIndex].status = 'completed';
+                orders[orderIndex].completedDate = new Date().toISOString().split('T')[0];
+                
+                this.updateSummary();
+                this.renderOrdersTable();
+                this.showNotification('Order marked as completed!', 'success');
+            }
+        }
+    },
+
+    updateOrder: function(orderId, orderData) {
+        const orders = FarmModules.appData.orders || [];
+        const orderIndex = orders.findIndex(o => o.id === orderId);
+        
+        if (orderIndex !== -1) {
+            orders[orderIndex] = {
+                ...orders[orderIndex],
+                ...orderData
+            };
+            
+            this.updateSummary();
+            this.renderOrdersTable();
+            this.showNotification('Order updated successfully!', 'success');
+        }
+    },
+
+    deleteOrder: function() {
+        const orderId = document.getElementById('order-id').value;
+        
+        if (confirm('Are you sure you want to delete this order?')) {
+            FarmModules.appData.orders = FarmModules.appData.orders.filter(o => o.id !== orderId);
+            
+            this.updateSummary();
+            this.renderOrdersTable();
+            this.hideModal();
+            this.showNotification('Order deleted successfully', 'success');
+        }
+    },
+
+    exportOrders: function() {
+        const orders = FarmModules.appData.orders || [];
+        const csv = this.convertToCSV(orders);
+        const blob = new Blob([csv], { type: 'text/csv' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `orders-export-${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        
+        this.showNotification('Orders exported successfully!', 'success');
+    },
+
+    convertToCSV: function(orders) {
+        const headers = ['Order ID', 'Customer', 'Product', 'Quantity', 'Unit', 'Price', 'Total', 'Status', 'Order Date', 'Due Date'];
+        const rows = orders.map(order => [
+            order.id,
+            order.customerName,
+            this.formatProductName(order.product),
+            order.quantity,
+            order.unit,
+            this.formatCurrency(order.pricePerUnit),
+            this.formatCurrency(order.totalAmount),
+            order.status,
+            order.orderDate,
+            order.dueDate
+        ]);
+        
+        return [headers, ...rows].map(row => row.join(',')).join('\n');
+    },
+
+    formatProductName: function(product) {
+        const productNames = {
+            'broilers': 'Broilers (Live)',
+            'broilers-dressed': 'Broilers (Dressed)',
+            'eggs': 'Eggs',
+            'pork': 'Pork',
+            'beef': 'Beef',
+            'tomatoes': 'Tomatoes',
+            'peppers': 'Peppers',
+            'cucumbers': 'Cucumbers',
+            'lettuce': 'Lettuce',
+            'carrots': 'Carrots',
+            'potatoes': 'Potatoes',
+            'honey': 'Honey',
+            'milk': 'Milk',
+            'cheese': 'Cheese',
+            'other': 'Other'
+        };
+        return productNames[product] || product;
+    },
+
+    formatCurrency: function(amount) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(amount);
+    },
+
+    formatDate: function(dateString) {
+        try {
+            return new Date(dateString).toLocaleDateString();
+        } catch (e) {
+            return 'Invalid date';
+        }
+    },
+
+    updateElement: function(id, value) {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    },
+
+    showNotification: function(message, type) {
+        if (window.coreModule && window.coreModule.showNotification) {
+            window.coreModule.showNotification(message, type);
+        } else {
+            alert(message);
+        }
+    }
+});
