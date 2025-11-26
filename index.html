@@ -97,64 +97,50 @@
             </div>
         </div>
     </div>
-        <!-- App Container -->
-<div id="app-container" class="hidden">
-    <!-- Sidebar Navigation -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-logo">🚜</div>
-            <h1>AgriMetrics</h1>
-        </div>
-        <nav class="sidebar-nav">
-            <ul class="sidebar-menu" id="sidebar-menu">
-                <!-- Navigation will be populated by JavaScript -->
-            </ul>
-        </nav>
-        <div class="sidebar-footer">
-            <button class="sidebar-item sign-out" onclick="farmPWA.signOut()">
-                <span class="icon">🚪</span>
-                <span class="label">Sign Out</span>
-            </button>
-        </div>
-    </aside>
 
-    <!-- Overlay for mobile -->
-    <div class="sidebar-overlay" id="sidebar-overlay"></div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Top Bar with Hamburger -->
-        <div class="top-bar">
-            <button class="menu-button" id="menu-button">
-                <span class="menu-line"></span>
-                <span class="menu-line"></span>
-                <span class="menu-line"></span>
-            </button>
-            <h1 class="page-title" id="page-title">Dashboard</h1>
-        </div>
-        
-        <!-- Content Area -->
-        <main>
-            <div id="content-area">
-                <!-- Content will be populated by JavaScript -->
-            </div>
-        </main>
-    </div>
-</div>
-    
-    <!-- App Container -->
+    <!-- App Container - SIDEBAR VERSION (KEEP THIS ONE) -->
     <div id="app-container" class="hidden">
-        <header>
-            <nav id="main-nav">
-                <!-- Navigation will be populated by JavaScript -->
-            </nav>
-        </header>
-        
-        <main>
-            <div id="content-area">
-                <!-- Content will be populated by JavaScript -->
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">🚜</div>
+                <h1>AgriMetrics</h1>
             </div>
-        </main>
+            <nav class="sidebar-nav">
+                <ul class="sidebar-menu" id="sidebar-menu">
+                    <!-- Navigation will be populated by JavaScript -->
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="sidebar-item sign-out" onclick="farmPWA.signOut()">
+                    <span class="icon">🚪</span>
+                    <span class="label">Sign Out</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Overlay for mobile -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Bar with Hamburger -->
+            <div class="top-bar">
+                <button class="menu-button" id="menu-button">
+                    <span class="menu-line"></span>
+                    <span class="menu-line"></span>
+                    <span class="menu-line"></span>
+                </button>
+                <h1 class="page-title" id="page-title">Dashboard</h1>
+            </div>
+            
+            <!-- Content Area -->
+            <main>
+                <div id="content-area">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+            </main>
+        </div>
     </div>
 
     <!-- Load scripts in correct order -->
