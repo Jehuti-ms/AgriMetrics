@@ -654,3 +654,40 @@ main, #content-area {
     padding: 20px;
     background: white;
 }
+
+/* Add missing hidden class */
+.hidden {
+    display: none !important;
+}
+
+/* Fix flexbox properties */
+.module-header {
+    display: flex;
+    justify-content: space-between; /* FIX: between → space-between */
+    align-items: flex-start; /* FIX: start → flex-start */
+    margin-bottom: 30px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+/* Ensure proper container visibility */
+#app-container {
+    display: block;
+    min-height: 100vh;
+}
+
+.app-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Make sure content area is always ready */
+#content-area {
+    display: block !important;
+    flex: 1;
+    padding: 20px;
+}
