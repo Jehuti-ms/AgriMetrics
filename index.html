@@ -28,6 +28,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
+    <body>
 <!-- Navigation Bar -->
 <nav class="navbar">
     <div class="nav-container">
@@ -107,3 +108,32 @@
         </div>
     </div>
 </div>
+        <!-- Main Content -->
+        <main id="content-area">
+            <!-- Content will be loaded here by modules -->
+        </main>
+    </div>
+
+    <!-- Notifications Container -->
+    <div class="notification-container" id="notification-container"></div>
+
+    <!-- Load scripts in correct order -->
+    <script src="firebase/firebase-config.js"></script>
+    <script src="firebase/firebase-auth.js"></script>
+    <script src="modules/framework.js"></script>
+    <script src="modules/core.js"></script>
+    <script src="modules/auth.js"></script>
+    <script src="modules/dashboard.js"></script>
+    <script src="modules/income-expenses.js"></script>
+    <script src="modules/inventory-check.js"></script>
+    <script src="modules/feed-record.js"></script>
+    <script src="modules/broiler-mortality.js"></script>
+    <script src="modules/orders.js"></script>
+    <script src="modules/sales-record.js"></script>
+    <script src="modules/production.js"></script>
+    <script src="modules/reports.js"></script>
+    <script src="modules/profile.js"></script>
+
+    <script src="app.js"></script>
+</body>
+</html>
