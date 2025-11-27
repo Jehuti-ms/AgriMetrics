@@ -23,54 +23,57 @@ const CoreModule = {
         console.log('🔔 Notification system ready');
     },
 
-    setupNavigation() {
-        console.log('🧭 Setting up navigation...');
-        
-        // Main nav items
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                const section = item.getAttribute('data-section');
-                this.setActiveNavItem(section);
-                window.app.showSection(section);
-            });
-        });
-
-        // Side menu items
-        document.querySelectorAll('.side-menu-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                const section = item.getAttribute('data-section');
-                this.setActiveNavItem(section);
-                window.app.showSection(section);
-                this.closeSideMenu();
-            });
-        });
-
-        // Brand click
-        document.querySelector('.nav-brand').addEventListener('click', (e) => {
+  // modules/core.js - Add this to the setupNavigation method
+setupNavigation() {
+    console.log('🧭 Setting up navigation...');
+    
+    // Main nav items
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
             e.preventDefault();
-            this.setActiveNavItem('dashboard');
-            window.app.showSection('dashboard');
+            const section = item.getAttribute('data-section');
+            console.log('Main nav clicked:', section);
+            this.setActiveNavItem(section);
+            window.app.showSection(section);
         });
+    });
 
-        // Mobile menu toggle
-        document.getElementById('menu-toggle').addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.toggleSideMenu();
+    // Side menu items
+    document.querySelectorAll('.side-menu-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const section = item.getAttribute('data-section');
+            console.log('Side menu clicked:', section);
+            this.setActiveNavItem(section);
+            window.app.showSection(section);
+            this.closeSideMenu();
         });
+    });
 
-        // Close side menu when clicking outside
-        document.addEventListener('click', (e) => {
-            const sideMenu = document.getElementById('side-menu');
-            const menuToggle = document.getElementById('menu-toggle');
-            if (!sideMenu.contains(e.target) && e.target !== menuToggle && sideMenu.classList.contains('open')) {
-                this.closeSideMenu();
-            }
-        });
+    // Brand click
+    document.querySelector('.nav-brand').addEventListener('click', (e) => {
+        e.preventDefault();
+        this.setActiveNavItem('dashboard');
+        window.app.showSection('dashboard');
+    });
 
-        console.log('✅ Navigation setup complete');
-    },
+    // Mobile menu toggle
+    document.getElementById('menu-toggle').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.toggleSideMenu();
+    });
+
+    // Close side menu when clicking outside
+    document.addEventListener('click', (e) => {
+        const sideMenu = document.getElementById('side-menu');
+        const menuToggle = document.getElementById('menu-toggle');
+        if (!sideMenu.contains(e.target) && e.target !== menuToggle && sideMenu.classList.contains('open')) {
+            this.closeSideMenu();
+        }
+    });
+
+    console.log('✅ Navigation setup complete');
+},
 
     setActiveNavItem(section) {
         // Remove active class from all nav items
