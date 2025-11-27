@@ -16,7 +16,7 @@ const DashboardModule = {
         const contentArea = document.getElementById('content-area');
         if (!contentArea) return;
 
-       /* contentArea.innerHTML = `
+         contentArea.innerHTML = `
             <div class="dashboard-container" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
                 <!-- Welcome Section -->
                 <div class="welcome-section" style="margin-bottom: 30px;">
@@ -240,7 +240,7 @@ const DashboardModule = {
                     </div>
                 </div>
             </div>
-        `; */
+        `; 
 
         // Add event listeners to quick action buttons
         this.setupQuickActions();
