@@ -1,135 +1,184 @@
-// app.js
-const App = {
-    currentUser: null,
-    currentSection: 'dashboard',
-    modules: {},
+// modules/auth.js
+console.log('Loading auth module...');
 
-    init() {
-        console.log('🚀 Initializing Farm Management System...');
-        
-        // Initialize Firebase Auth
-        this.initAuth();
-        
-        // Initialize module framework
-        this.initModules();
-        
-        // Check auth state
-        firebase.auth().onAuthStateChanged((user) => {
-            if (user) {
-                this.handleSignIn(user);
-            } else {
-                this.handleSignOut();
-            }
-        });
+const AuthModule = {
+    name: 'auth',
+    initialized: false,
+
+    initialize() {
+        console.log('🔐 Initializing auth module...');
+        this.setupAuthForms();
+        this.initialized = true;
+        return true;
     },
 
-    initAuth() {
-        // Auth will be handled by auth.js module
-        console.log('✅ Auth system ready');
-    },
+    setupAuthForms() {
+        // Form elements
+        const signinForm = document.getElementById('signin-form-element');
+        const signupForm = document.getElementById('signup-form-element');
+        const forgotForm = document.getElementById('forgot-password-form-element');
+        
+        // Link elements
+        const showSignup = document.getElementById('show-signup');
+        const showSignin = document.getElementById('show-signin');
+        const showForgotPassword = document.getElementById('show-forgot-password');
+        const showSigninFromForgot = document.getElementById('show-signin-from-forgot');
+        const googleSignin = document.getElementById('google-signin');
 
-    initModules() {
-        // Register all modules
-        this.modules = window.FarmModules.getModules();
-        console.log('📦 Registered modules:', Object.keys(this.modules));
-    },
+        // Form submissions
+        signinForm.addEventListener('submit', (e) => this.handleSignIn(e));
+        signupForm.addEventListener('submit', (e) => this.handleSignUp(e));
+        forgotForm.addEventListener('submit', (e) => this.handleForgotPassword(e));
 
-    handleSignIn(user) {
-        console.log('👤 User signed in:', user.email);
-        this.currentUser = user;
-        
-        // Show app, hide auth
-        document.getElementById('auth-container').classList.add('hidden');
-        document.getElementById('app-container').classList.remove('hidden');
-        
-        // Initialize navigation
-        if (window.coreModule) {
-            window.coreModule.setupNavigation();
-        }
-        
-        // Show dashboard by default
-        this.showSection('dashboard');
-        
-        // Show welcome notification
-        if (window.coreModule) {
-            window.coreModule.showNotification(`Welcome back, ${user.displayName || user.email}!`, 'success');
-        }
-    },
-
-    handleSignOut() {
-        console.log('👤 User signed out');
-        this.currentUser = null;
-        
-        // Show auth, hide app
-        document.getElementById('auth-container').classList.remove('hidden');
-        document.getElementById('app-container').classList.add('hidden');
-        
-        // Reset to signin form
-        if (window.authModule) {
-            window.authModule.showSignInForm();
-        }
-    },
-
-    showSection(section) {
-        console.log('🔄 Switching to section:', section);
-        
-        // Close side menu on mobile
-        if (window.coreModule) {
-            window.coreModule.closeSideMenu();
-        }
-
-        // Update content area with proper top padding
-        const contentArea = document.getElementById('content-area');
-        contentArea.style.paddingTop = '80px'; // Account for fixed navbar
-        contentArea.style.minHeight = 'calc(100vh - 80px)';
-
-        // Hide all modules
-        Object.keys(this.modules).forEach(moduleName => {
-            const module = this.modules[moduleName];
-            if (module.initialized) {
-                // You could add a deactivate method if needed
-            }
+        // Form navigation
+        showSignup.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showSignUpForm();
         });
 
-        // Show selected module
-        const targetModule = this.modules[section];
-        if (targetModule) {
-            this.currentSection = section;
-            
-            if (!targetModule.initialized) {
-                targetModule.initialize();
-            } else {
-                // Re-render the module if it's already initialized
-                if (targetModule.renderModule) {
-                    targetModule.renderModule();
-                }
-            }
-            
-            // Update active navigation
-            if (window.coreModule) {
-                window.coreModule.setActiveNavItem(section);
-            }
-            
-            console.log('✅ Loaded module:', section);
-        } else {
-            console.error('❌ Module not found:', section);
-            this.showSection('dashboard'); // Fallback to dashboard
+        showSignin.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showSignInForm();
+        });
+
+        showForgotPassword.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showForgotPasswordForm();
+        });
+
+        showSigninFromForgot.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showSignInForm();
+        });
+
+        // Google Sign In
+        googleSignin.addEventListener('click', () => this.handleGoogleSignIn());
+
+        console.log('✅ Auth forms setup complete');
+    },
+
+    showSignInForm() {
+        document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
+        document.getElementById('signin-form').classList.add('active');
+    },
+
+    showSignUpForm() {
+        document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
+        document.getElementById('signup-form').classList.add('active');
+    },
+
+    showForgotPasswordForm() {
+        document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
+        document.getElementById('forgot-password-form').classList.add('active');
+    },
+
+    async handleSignIn(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('signin-email').value;
+        const password = document.getElementById('signin-password').value;
+
+        try {
+            const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+            console.log('✅ User signed in:', userCredential.user.email);
+        } catch (error) {
+            console.error('❌ Sign in error:', error);
+            this.showAuthError(error.message);
         }
     },
 
-    getCurrentUser() {
-        return this.currentUser;
+    async handleSignUp(e) {
+        e.preventDefault();
+        
+        const name = document.getElementById('signup-name').value;
+        const email = document.getElementById('signup-email').value;
+        const password = document.getElementById('signup-password').value;
+        const confirmPassword = document.getElementById('signup-confirm-password').value;
+        const farmName = document.getElementById('farm-name').value;
+
+        if (password !== confirmPassword) {
+            this.showAuthError('Passwords do not match');
+            return;
+        }
+
+        try {
+            const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+            await userCredential.user.updateProfile({
+                displayName: name
+            });
+            
+            // Save additional user data to Firestore
+            await this.saveUserData(userCredential.user.uid, {
+                name: name,
+                email: email,
+                farmName: farmName,
+                createdAt: new Date().toISOString()
+            });
+            
+            console.log('✅ User signed up:', userCredential.user.email);
+        } catch (error) {
+            console.error('❌ Sign up error:', error);
+            this.showAuthError(error.message);
+        }
     },
 
-    getCurrentSection() {
-        return this.currentSection;
+    async handleForgotPassword(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('forgot-email').value;
+
+        try {
+            await firebase.auth().sendPasswordResetEmail(email);
+            this.showAuthSuccess('Password reset email sent!');
+            this.showSignInForm();
+        } catch (error) {
+            console.error('❌ Password reset error:', error);
+            this.showAuthError(error.message);
+        }
+    },
+
+    async handleGoogleSignIn() {
+        try {
+            // For now, we'll use a simple approach
+            // In a real app, you'd use Firebase Google Auth
+            this.showAuthError('Google Sign In not implemented yet');
+        } catch (error) {
+            console.error('❌ Google sign in error:', error);
+            this.showAuthError(error.message);
+        }
+    },
+
+    async saveUserData(uid, userData) {
+        try {
+            await firebase.firestore().collection('users').doc(uid).set(userData);
+        } catch (error) {
+            console.error('Error saving user data:', error);
+        }
+    },
+
+    showAuthError(message) {
+        // You can enhance this with better UI
+        alert('Error: ' + message);
+    },
+
+    showAuthSuccess(message) {
+        // You can enhance this with better UI
+        alert('Success: ' + message);
+    },
+
+    signOut() {
+        firebase.auth().signOut().then(() => {
+            console.log('✅ User signed out');
+        }).catch((error) => {
+            console.error('❌ Sign out error:', error);
+        });
     }
 };
 
-// Initialize app when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    App.init();
-});
+// Register auth module
+if (window.FarmModules) {
+    window.FarmModules.registerModule('auth', AuthModule);
+}
 
-// Make app globally available
-window.app = App;
+// Make auth module globally available
+window.authModule = AuthModule;
