@@ -1034,3 +1034,86 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* ===== NAVIGATION TEXT VISIBILITY FIXES ===== */
+.nav-label {
+    white-space: nowrap;
+    color: white !important;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Ensure brand text is visible */
+.brand-text {
+    display: flex !important;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.brand-main {
+    font-size: 18px;
+    font-weight: 700;
+    color: white !important;
+}
+
+.brand-sub {
+    font-size: 11px;
+    opacity: 0.9;
+    font-weight: 500;
+    color: white !important;
+}
+
+/* Make sure navigation items are properly spaced */
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    color: white;
+    text-decoration: none;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+/* Side menu text visibility */
+.side-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    color: #64748b;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.side-menu-item span:last-child {
+    color: #64748b;
+    font-weight: 500;
+}
+
+.side-menu-item:hover span:last-child,
+.side-menu-item.active span:last-child {
+    color: #22c55e;
+}
+
+/* Mobile responsive - hide labels on smaller screens */
+@media (max-width: 1024px) {
+    .nav-label {
+        display: inline-block !important; /* Force show on larger mobile */
+    }
+}
+
+@media (max-width: 768px) {
+    .nav-label {
+        display: none !important; /* Hide on smaller screens */
+    }
+    
+    .brand-text {
+        display: none !important; /* Hide brand text on mobile */
+    }
+}
