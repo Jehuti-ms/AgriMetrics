@@ -1012,641 +1012,6 @@ header, .top-nav {
 }
 
 /*==================================
-  Income & Expenses Module Styles
-===================================*/
-/* Income & Expenses Module - Enhanced PWA Styling with Light Colors Only */
-:root {
-  --primary-color: #22c55e;      /* Your existing green */
-  --primary-dark: #16a34a;
-  --primary-light: #4ade80;
-  --complementary-teal: #14b8a6;   /* Teal that complements green */
-  --complementary-amber: #f59e0b;  /* Warm amber */
-  --complementary-sky: #0ea5e9;    /* Sky blue */
-  --complementary-lavender: #a855f7; /* Soft lavender */
-  
-  /* Light background colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --bg-tertiary: #f1f5f9;
-  
-  /* Text colors */
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-light: #94a3b8;
-}
-
-.income-expenses-module {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  min-height: calc(100vh - 80px);
-  background: linear-gradient(135deg, #f8faf9 0%, #f0f7f4 100%);
-}
-
-/* Enhanced Header with Light Gradient */
-.module-header-pwa {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--complementary-teal) 100%);
-  margin: -20px -20px 30px -20px;
-  padding: 30px 20px;
-  border-radius: 0 0 24px 24px;
-  color: white;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(34, 197, 94, 0.15);
-}
-
-.module-header-pwa::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="white" opacity="0.1"/><circle cx="80" cy="40" r="3" fill="white" opacity="0.1"/><circle cx="40" cy="80" r="2" fill="white" opacity="0.1"/></svg>');
-}
-
-.module-title-pwa {
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.module-subtitle-pwa {
-  font-size: 16px;
-  opacity: 0.9;
-  font-weight: 500;
-}
-
-/* Enhanced Stats Grid with Light Cards */
-.stats-grid-pwa {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 16px;
-  margin-bottom: 30px;
-}
-
-.stat-card-pwa {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 20px;
-  padding: 20px;
-  text-align: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-card-pwa:nth-child(1)::before {
-  background: linear-gradient(90deg, var(--primary-color), var(--complementary-sky));
-}
-
-.stat-card-pwa:nth-child(2)::before {
-  background: linear-gradient(90deg, var(--complementary-amber), #fbbf24);
-}
-
-.stat-card-pwa:nth-child(3)::before {
-  background: linear-gradient(90deg, var(--complementary-teal), var(--primary-color));
-}
-
-.stat-card-pwa::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-}
-
-.stat-card-pwa:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-  border-color: rgba(255, 255, 255, 1);
-}
-
-.stat-icon-pwa {
-  font-size: 32px;
-  margin-bottom: 12px;
-  display: block;
-}
-
-.stat-value-pwa {
-  font-size: 24px;
-  font-weight: 800;
-  margin-bottom: 4px;
-  color: var(--text-primary);
-}
-
-.stat-label-pwa {
-  font-size: 14px;
-  color: var(--text-secondary);
-  font-weight: 600;
-}
-
-/* Enhanced Quick Actions with Light Design */
-.quick-actions-pwa {
-  margin-bottom: 30px;
-}
-
-.quick-grid-pwa {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 16px;
-}
-
-.quick-action-btn-pwa {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 20px;
-  padding: 24px 16px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  text-decoration: none;
-  color: inherit;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  position: relative;
-  overflow: hidden;
-}
-
-.quick-action-btn-pwa:nth-child(1) {
-  border-top: 3px solid var(--primary-color);
-}
-
-.quick-action-btn-pwa:nth-child(2) {
-  border-top: 3px solid var(--complementary-amber);
-}
-
-.quick-action-btn-pwa::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
-  transition: left 0.6s;
-}
-
-.quick-action-btn-pwa:hover::before {
-  left: 100%;
-}
-
-.quick-action-btn-pwa:hover {
-  transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-  background: rgba(255, 255, 255, 1);
-}
-
-.quick-icon-pwa {
-  font-size: 32px;
-  transition: transform 0.3s ease;
-}
-
-.quick-action-btn-pwa:hover .quick-icon-pwa {
-  transform: scale(1.1);
-}
-
-.quick-text-pwa {
-  text-align: center;
-}
-
-.quick-title-pwa {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-
-.quick-desc-pwa {
-  font-size: 12px;
-  color: var(--text-secondary);
-  line-height: 1.3;
-}
-
-/* Enhanced Form Styling with Light Design */
-.form-container-pwa {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 24px;
-  padding: 30px;
-  margin-bottom: 30px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  position: relative;
-  overflow: hidden;
-  border-top: 4px solid var(--complementary-teal);
-}
-
-.form-title-pwa {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 24px;
-  text-align: center;
-}
-
-.form-grid-pwa {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 20px;
-}
-
-.form-group-pwa {
-  margin-bottom: 20px;
-}
-
-.form-label-pwa {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: 14px;
-}
-
-.form-input-pwa {
-  width: 100%;
-  padding: 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--text-primary);
-  font-size: 16px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-weight: 500;
-}
-
-.form-input-pwa:focus {
-  outline: none;
-  border-color: var(--complementary-teal);
-  background: rgba(255, 255, 255, 1);
-  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1);
-  transform: translateY(-2px);
-}
-
-.form-select-pwa {
-  width: 100%;
-  padding: 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--text-primary);
-  font-size: 16px;
-  transition: all 0.3s ease;
-  font-weight: 500;
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'><path fill='%2364748b' d='M2 0L0 2h4zm0 5L0 3h4z'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 16px center;
-  background-size: 12px;
-}
-
-.form-select-pwa:focus {
-  border-color: var(--complementary-teal);
-  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1);
-}
-
-/* Enhanced Button Styling with Light Colors */
-.btn-primary-pwa {
-  background: linear-gradient(135deg, var(--primary-color), var(--complementary-teal));
-  color: white;
-  border: none;
-  padding: 16px 32px;
-  border-radius: 16px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 700;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 20px rgba(20, 184, 166, 0.3);
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-primary-pwa::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  transition: left 0.6s;
-}
-
-.btn-primary-pwa:hover::before {
-  left: 100%;
-}
-
-.btn-primary-pwa:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 30px rgba(20, 184, 166, 0.4);
-}
-
-.btn-outline-pwa {
-  background: transparent;
-  border: 2px solid var(--complementary-amber);
-  color: var(--complementary-amber);
-  padding: 16px 32px;
-  border-radius: 16px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 700;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.btn-outline-pwa:hover {
-  background: var(--complementary-amber);
-  color: white;
-  transform: translateY(-3px);
-  box-shadow: 0 8px 30px rgba(245, 158, 11, 0.3);
-}
-
-/* Enhanced Transactions List with Light Colors */
-.transactions-section-pwa {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 24px;
-  padding: 30px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border-top: 4px solid var(--complementary-sky);
-}
-
-.section-header-pwa {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.section-title-pwa {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.transactions-list-pwa {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.transaction-item-pwa {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-
-.transaction-item-pwa.income::before {
-  background: linear-gradient(90deg, var(--primary-color), var(--complementary-sky));
-}
-
-.transaction-item-pwa.expense::before {
-  background: linear-gradient(90deg, var(--complementary-amber), #fbbf24);
-}
-
-.transaction-item-pwa::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  transform: scaleY(0);
-  transition: transform 0.3s ease;
-}
-
-.transaction-item-pwa:hover::before {
-  transform: scaleY(1);
-}
-
-.transaction-item-pwa:hover {
-  transform: translateX(8px);
-  background: rgba(255, 255, 255, 1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.transaction-info-pwa {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex: 1;
-}
-
-.transaction-icon-pwa {
-  font-size: 24px;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  background: rgba(34, 197, 94, 0.1);
-  color: var(--primary-color);
-}
-
-.transaction-item-pwa.expense .transaction-icon-pwa {
-  background: rgba(245, 158, 11, 0.1);
-  color: var(--complementary-amber);
-}
-
-.transaction-details-pwa {
-  flex: 1;
-}
-
-.transaction-title-pwa {
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-
-.transaction-meta-pwa {
-  font-size: 14px;
-  color: var(--text-secondary);
-  display: flex;
-  gap: 12px;
-}
-
-.transaction-amount-pwa {
-  font-weight: 800;
-  font-size: 18px;
-  text-align: right;
-}
-
-.transaction-amount-pwa.income {
-  color: var(--primary-color);
-}
-
-.transaction-amount-pwa.expense {
-  color: var(--complementary-amber);
-}
-
-/* Enhanced Empty State */
-.empty-state-pwa {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-secondary);
-}
-
-.empty-icon-pwa {
-  font-size: 64px;
-  margin-bottom: 20px;
-  opacity: 0.5;
-  color: var(--complementary-teal);
-}
-
-.empty-title-pwa {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: var(--text-primary);
-}
-
-.empty-desc-pwa {
-  font-size: 14px;
-  margin-bottom: 24px;
-}
-
-/* Mobile-First Responsive Design */
-@media (max-width: 768px) {
-  .income-expenses-module {
-    padding: 16px;
-  }
-  
-  .module-header-pwa {
-    margin: -16px -16px 24px -16px;
-    padding: 24px 16px;
-    border-radius: 0 0 20px 20px;
-  }
-  
-  .stats-grid-pwa {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  
-  .quick-grid-pwa {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-  
-  .form-grid-pwa {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  
-  .form-container-pwa {
-    padding: 24px 20px;
-  }
-  
-  .transactions-section-pwa {
-    padding: 24px 20px;
-  }
-  
-  .section-header-pwa {
-    flex-direction: column;
-    gap: 16px;
-    align-items: stretch;
-  }
-  
-  .transaction-item-pwa {
-    padding: 16px;
-  }
-  
-  .transaction-info-pwa {
-    gap: 12px;
-  }
-  
-  .transaction-icon-pwa {
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-  }
-}
-
-@media (max-width: 480px) {
-  .quick-grid-pwa {
-    grid-template-columns: 1fr;
-  }
-  
-  .module-title-pwa {
-    font-size: 24px;
-  }
-  
-  .stat-card-pwa {
-    padding: 16px;
-  }
-  
-  .quick-action-btn-pwa {
-    padding: 20px 12px;
-  }
-}
-
-/* Light Mode Only - No Dark Mode */
-/* PWA-Specific Enhancements */
-@media (display-mode: standalone) {
-  .income-expenses-module {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  
-  .module-header-pwa {
-    padding-top: calc(30px + env(safe-area-inset-top));
-  }
-}
-
-/* Touch Device Optimizations */
-@media (hover: none) {
-  .stat-card-pwa:hover,
-  .quick-action-btn-pwa:hover,
-  .transaction-item-pwa:hover,
-  .btn-primary-pwa:hover,
-  .btn-outline-pwa:hover {
-    transform: none;
-  }
-  
-  .quick-action-btn-pwa:active,
-  .transaction-item-pwa:active {
-    transform: scale(0.98);
-  }
-}
-
-/* Reduced Motion Support */
-@media (prefers-reduced-motion: reduce) {
-  .stat-card-pwa,
-  .quick-action-btn-pwa,
-  .transaction-item-pwa,
-  .btn-primary-pwa,
-  .btn-outline-pwa,
-  .form-input-pwa {
-    transition: none;
-  }
-  
-  .quick-action-btn-pwa::before,
-  .btn-primary-pwa::before {
-    display: none;
-  }
-}
-
-/*==================================
   Dashboard Module Styles
 ===================================*/
 /* Dashboard Module - Enhanced PWA Styling with Light Colors */
@@ -1891,10 +1256,28 @@ header, .top-nav {
 }
 
 /*==================================
-  Inventory Check Module Styles
+  Income & Expenses Module Styles
+  Matching Dashboard Design System
 ===================================*/
-/* Inventory Check Module - Enhanced PWA Styling */
-.inventory-module {
+:root {
+  --primary-color: #22c55e;
+  --primary-dark: #16a34a;
+  --primary-light: #4ade80;
+  --complementary-teal: #14b8a6;
+  --complementary-amber: #f59e0b;
+  --complementary-sky: #0ea5e9;
+  --complementary-lavender: #a855f7;
+  
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-light: #94a3b8;
+}
+
+.income-expenses-module {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
@@ -1902,234 +1285,443 @@ header, .top-nav {
   background: linear-gradient(135deg, #f8faf9 0%, #f0f7f4 100%);
 }
 
-.inventory-header-pwa {
-  background: linear-gradient(135deg, var(--complementary-teal) 0%, var(--complementary-sky) 100%);
+/* Header - Matching Dashboard */
+.module-header-pwa {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--complementary-teal) 100%);
   margin: -20px -20px 30px -20px;
   padding: 30px 20px;
   border-radius: 0 0 24px 24px;
   color: white;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(20, 184, 166, 0.15);
+  box-shadow: 0 8px 32px rgba(34, 197, 94, 0.15);
 }
 
-/* Inventory Stats */
-.inventory-stats-pwa {
+.module-title-pwa {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.module-subtitle-pwa {
+  font-size: 16px;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+/* Stats Grid - Compact Dashboard Style */
+.stats-grid-pwa {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
   margin-bottom: 30px;
 }
 
-.inventory-stat-pwa {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 20px;
-  padding: 20px;
-  text-align: center;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-}
-
-.inventory-stat-pwa:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-}
-
-/* Low Stock Alerts */
-.low-stock-alert-pwa {
+.stat-card-pwa {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 20px;
   padding: 24px;
-  margin-bottom: 24px;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border-left: 4px solid var(--complementary-amber);
+  position: relative;
+  overflow: hidden;
 }
 
-.alert-header-pwa {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
+.stat-card-pwa::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-color), var(--complementary-teal));
 }
 
-.alert-title-pwa {
-  font-size: 18px;
-  font-weight: 700;
+.stat-card-pwa:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon-pwa {
+  font-size: 32px;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.stat-value-pwa {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 4px;
   color: var(--text-primary);
 }
 
-.alert-badge-pwa {
-  background: var(--complementary-amber);
-  color: white;
-  padding: 4px 12px;
-  border-radius: 12px;
+.stat-label-pwa {
   font-size: 14px;
+  color: var(--text-secondary);
   font-weight: 600;
 }
 
-.alert-grid-pwa {
+/* Quick Actions - Dashboard Button Style */
+.quick-actions-pwa {
+  margin-bottom: 30px;
+}
+
+.quick-grid-pwa {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.quick-action-btn-pwa {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  padding: 24px 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
 }
 
-.alert-item-pwa {
-  padding: 16px;
-  background: rgba(245, 158, 11, 0.05);
-  border-radius: 12px;
-  border: 1px solid rgba(245, 158, 11, 0.2);
+.quick-action-btn-pwa:nth-child(1) { border-top: 3px solid var(--primary-color); }
+.quick-action-btn-pwa:nth-child(2) { border-top: 3px solid var(--complementary-amber); }
+.quick-action-btn-pwa:nth-child(3) { border-top: 3px solid var(--complementary-teal); }
+.quick-action-btn-pwa:nth-child(4) { border-top: 3px solid var(--complementary-sky); }
+.quick-action-btn-pwa:nth-child(5) { border-top: 3px solid var(--complementary-lavender); }
+
+.quick-action-btn-pwa:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 1);
 }
 
-.alert-item-name-pwa {
-  font-weight: 600;
+.quick-icon-pwa {
+  font-size: 32px;
+  transition: transform 0.3s ease;
+}
+
+.quick-action-btn-pwa:hover .quick-icon-pwa {
+  transform: scale(1.1);
+}
+
+.quick-text-pwa {
+  text-align: center;
+}
+
+.quick-title-pwa {
+  font-size: 14px;
+  font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 4px;
 }
 
-.alert-item-details-pwa {
-  font-size: 14px;
-  color: var(--complementary-amber);
+.quick-desc-pwa {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.3;
 }
 
-/* Inventory Items */
-.inventory-items-pwa {
+/* Form Container - Dashboard Card Style */
+.form-container-pwa {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 24px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-top: 4px solid var(--complementary-teal);
+}
+
+.form-title-pwa {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.form-grid-pwa {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.form-group-pwa {
+  margin-bottom: 20px;
+}
+
+.form-label-pwa {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.form-input-pwa {
+  width: 100%;
+  padding: 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary);
+  font-size: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
+}
+
+.form-input-pwa:focus {
+  outline: none;
+  border-color: var(--complementary-teal);
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1);
+  transform: translateY(-2px);
+}
+
+.form-select-pwa {
+  width: 100%;
+  padding: 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary);
+  font-size: 16px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.form-select-pwa:focus {
+  border-color: var(--complementary-teal);
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1);
+}
+
+/* Buttons - Dashboard Style */
+.btn-primary-pwa {
+  background: linear-gradient(135deg, var(--primary-color), var(--complementary-teal));
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(20, 184, 166, 0.3);
+}
+
+.btn-primary-pwa:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(20, 184, 166, 0.4);
+}
+
+.btn-outline-pwa {
+  background: transparent;
+  border: 2px solid var(--complementary-amber);
+  color: var(--complementary-amber);
+  padding: 16px 32px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-outline-pwa:hover {
+  background: var(--complementary-amber);
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(245, 158, 11, 0.3);
+}
+
+/* Transactions - Matching Dashboard Activity Style */
+.transactions-section-pwa {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 24px;
   padding: 30px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border-top: 4px solid var(--complementary-teal);
+  border-top: 4px solid var(--complementary-sky);
 }
 
-.items-header-pwa {
+.section-header-pwa {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
 }
 
-.items-title-pwa {
+.section-title-pwa {
   font-size: 22px;
   font-weight: 700;
   color: var(--text-primary);
 }
 
-.items-filter-pwa {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.inventory-list-pwa {
+.transactions-list-pwa {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.inventory-item-pwa {
+.transaction-item-pwa {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
+  padding: 16px;
   background: rgba(255, 255, 255, 0.8);
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.6);
   transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
 }
 
-.inventory-item-pwa::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: var(--complementary-teal);
-  transform: scaleY(0);
-  transition: transform 0.3s ease;
-}
-
-.inventory-item-pwa:hover::before {
-  transform: scaleY(1);
-}
-
-.inventory-item-pwa:hover {
+.transaction-item-pwa:hover {
   transform: translateX(8px);
   background: rgba(255, 255, 255, 1);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.item-info-pwa {
+.transaction-info-pwa {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
-.item-icon-pwa {
-  font-size: 24px;
-  width: 48px;
-  height: 48px;
+.transaction-icon-pwa {
+  font-size: 20px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  background: rgba(20, 184, 166, 0.1);
-  color: var(--complementary-teal);
-}
-
-.item-details-pwa {
-  flex: 1;
-}
-
-.item-name-pwa {
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-
-.item-meta-pwa {
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.item-stock-pwa {
-  text-align: right;
-}
-
-.item-quantity-pwa {
-  font-weight: 800;
-  font-size: 18px;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-
-.item-status-pwa {
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.status-adequate-pwa {
+  border-radius: 10px;
   background: rgba(34, 197, 94, 0.1);
   color: var(--primary-color);
 }
 
-.status-low-pwa {
+.transaction-item-pwa.expense .transaction-icon-pwa {
   background: rgba(245, 158, 11, 0.1);
   color: var(--complementary-amber);
 }
 
-.status-out-pwa {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+.transaction-details-pwa {
+  flex: 1;
 }
 
+.transaction-title-pwa {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
 
+.transaction-meta-pwa {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.transaction-amount-pwa {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.transaction-amount-pwa.income {
+  color: var(--primary-color);
+}
+
+.transaction-amount-pwa.expense {
+  color: var(--complementary-amber);
+}
+
+/* Empty State */
+.empty-state-pwa {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-icon-pwa {
+  font-size: 64px;
+  margin-bottom: 20px;
+  opacity: 0.5;
+  color: var(--complementary-teal);
+}
+
+.empty-title-pwa {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.empty-desc-pwa {
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .income-expenses-module {
+    padding: 16px;
+  }
+  
+  .module-header-pwa {
+    margin: -16px -16px 24px -16px;
+    padding: 24px 16px;
+  }
+  
+  .stats-grid-pwa {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .quick-grid-pwa {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .form-grid-pwa {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .form-container-pwa {
+    padding: 24px 20px;
+  }
+  
+  .transactions-section-pwa {
+    padding: 24px 20px;
+  }
+  
+  .section-header-pwa {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 480px) {
+  .quick-grid-pwa {
+    grid-template-columns: 1fr;
+  }
+  
+  .module-title-pwa {
+    font-size: 24px;
+  }
+}
+
+/*==================================
+  Inventory Check Module Styles
+===================================*/
