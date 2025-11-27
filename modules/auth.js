@@ -1,253 +1,135 @@
-// modules/auth.js
-console.log('Loading auth module...');
-
-class AuthModule {
-    constructor() {
-        this.init();
-    }
+// app.js
+const App = {
+    currentUser: null,
+    currentSection: 'dashboard',
+    modules: {},
 
     init() {
-        console.log('✅ Auth module initialized');
-        this.setupAuthForms();
-    }
-
-    setupAuthForms() {
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                this.attachFormHandlers();
-            });
-        } else {
-            this.attachFormHandlers();
-        }
-    }
-
-    attachFormHandlers() {
-        // Sign up form
-        const signupForm = document.getElementById('signup-form-element');
-        if (signupForm) {
-            signupForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                await this.handleSignUp();
-            });
-        }
-
-        // Sign in form
-        const signinForm = document.getElementById('signin-form-element');
-        if (signinForm) {
-            signinForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                await this.handleSignIn();
-            });
-        }
-
-        // Forgot password form
-        const forgotForm = document.getElementById('forgot-password-form-element');
-        if (forgotForm) {
-            forgotForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                await this.handleForgotPassword();
-            });
-        }
-
-        // Google sign in
-        const googleBtn = document.getElementById('google-signin');
-        if (googleBtn) {
-            googleBtn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                await this.handleGoogleSignIn();
-            });
-        }
-
-        this.setupAuthListeners();
-    }
-
-    setupAuthListeners() {
-        // Form switching
-        const showSignup = document.getElementById('show-signup');
-        if (showSignup) {
-            showSignup.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.showAuthForm('signup');
-            });
-        }
-
-        const showSignin = document.getElementById('show-signin');
-        if (showSignin) {
-            showSignin.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.showAuthForm('signin');
-            });
-        }
-
-        const showForgot = document.getElementById('show-forgot-password');
-        if (showForgot) {
-            showForgot.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.showAuthForm('forgot-password');
-            });
-        }
-
-        const showSigninFromForgot = document.getElementById('show-signin-from-forgot');
-        if (showSigninFromForgot) {
-            showSigninFromForgot.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.showAuthForm('signin');
-            });
-        }
-    }
-
-    async handleSignUp() {
-        const form = document.getElementById('signup-form-element');
-        if (!form) return;
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const name = document.getElementById('signup-name')?.value || '';
-        const email = document.getElementById('signup-email')?.value || '';
-        const password = document.getElementById('signup-password')?.value || '';
-        const confirmPassword = document.getElementById('signup-confirm-password')?.value || '';
-        const farmName = document.getElementById('farm-name')?.value || '';
-
-        if (password !== confirmPassword) {
-            this.showNotification('Passwords do not match', 'error');
-            return;
-        }
-
-        if (password.length < 6) {
-            this.showNotification('Password must be at least 6 characters', 'error');
-            return;
-        }
-
-        if (submitBtn) {
-            submitBtn.innerHTML = 'Creating Account...';
-            submitBtn.disabled = true;
-        }
-
-        try {
-            const result = await window.authManager?.signUp(email, password, {
-                name: name,
-                email: email,
-                farmName: farmName
-            });
-
-            if (result?.success) {
-                this.showNotification('Account created successfully!', 'success');
-            } else {
-                this.showNotification(result?.error || 'Error creating account', 'error');
-            }
-        } catch (error) {
-            this.showNotification('Error creating account', 'error');
-        } finally {
-            if (submitBtn) {
-                submitBtn.innerHTML = 'Create Account';
-                submitBtn.disabled = false;
-            }
-        }
-    }
-
-    async handleSignIn() {
-        const form = document.getElementById('signin-form-element');
-        if (!form) return;
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const email = document.getElementById('signin-email')?.value || '';
-        const password = document.getElementById('signin-password')?.value || '';
-
-        if (submitBtn) {
-            submitBtn.innerHTML = 'Signing In...';
-            submitBtn.disabled = true;
-        }
-
-        try {
-            const result = await window.authManager?.signIn(email, password);
-
-            if (result?.success) {
-                this.showNotification('Welcome back!', 'success');
-            } else {
-                this.showNotification(result?.error || 'Error signing in', 'error');
-            }
-        } catch (error) {
-            this.showNotification('Error signing in', 'error');
-        } finally {
-            if (submitBtn) {
-                submitBtn.innerHTML = 'Sign In';
-                submitBtn.disabled = false;
-            }
-        }
-    }
-
-    async handleGoogleSignIn() {
-        const button = document.getElementById('google-signin');
-        if (!button) return;
-
-        const originalText = button.innerHTML;
-        button.innerHTML = 'Signing in with Google...';
-        button.disabled = true;
-
-        try {
-            const result = await window.authManager?.signInWithGoogle();
-
-            if (result?.success) {
-                this.showNotification('Signed in with Google!', 'success');
-            } else {
-                this.showNotification(result?.error || 'Error signing in with Google', 'error');
-            }
-        } catch (error) {
-            this.showNotification('Error signing in with Google', 'error');
-        } finally {
-            button.innerHTML = originalText;
-            button.disabled = false;
-        }
-    }
-
-    async handleForgotPassword() {
-        const form = document.getElementById('forgot-password-form-element');
-        if (!form) return;
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const email = document.getElementById('forgot-email')?.value || '';
-
-        if (submitBtn) {
-            submitBtn.innerHTML = 'Sending Reset Link...';
-            submitBtn.disabled = true;
-        }
-
-        try {
-            const result = await window.authManager?.resetPassword(email);
-
-            if (result?.success) {
-                this.showNotification('Password reset email sent!', 'success');
-                this.showAuthForm('signin');
-            } else {
-                this.showNotification(result?.error || 'Error sending reset email', 'error');
-            }
-        } catch (error) {
-            this.showNotification('Error sending reset email', 'error');
-        } finally {
-            if (submitBtn) {
-                submitBtn.innerHTML = 'Send Reset Link';
-                submitBtn.disabled = false;
-            }
-        }
-    }
-
-    showAuthForm(formName) {
-        document.querySelectorAll('.auth-form').forEach(form => {
-            form.classList.remove('active');
-        });
+        console.log('🚀 Initializing Farm Management System...');
         
-        const targetForm = document.getElementById(`${formName}-form`);
-        if (targetForm) {
-            targetForm.classList.add('active');
-        }
-    }
+        // Initialize Firebase Auth
+        this.initAuth();
+        
+        // Initialize module framework
+        this.initModules();
+        
+        // Check auth state
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                this.handleSignIn(user);
+            } else {
+                this.handleSignOut();
+            }
+        });
+    },
 
-    showNotification(message, type) {
-        if (window.coreModule && window.coreModule.showNotification) {
-            window.coreModule.showNotification(message, type);
+    initAuth() {
+        // Auth will be handled by auth.js module
+        console.log('✅ Auth system ready');
+    },
+
+    initModules() {
+        // Register all modules
+        this.modules = window.FarmModules.getModules();
+        console.log('📦 Registered modules:', Object.keys(this.modules));
+    },
+
+    handleSignIn(user) {
+        console.log('👤 User signed in:', user.email);
+        this.currentUser = user;
+        
+        // Show app, hide auth
+        document.getElementById('auth-container').classList.add('hidden');
+        document.getElementById('app-container').classList.remove('hidden');
+        
+        // Initialize navigation
+        if (window.coreModule) {
+            window.coreModule.setupNavigation();
+        }
+        
+        // Show dashboard by default
+        this.showSection('dashboard');
+        
+        // Show welcome notification
+        if (window.coreModule) {
+            window.coreModule.showNotification(`Welcome back, ${user.displayName || user.email}!`, 'success');
+        }
+    },
+
+    handleSignOut() {
+        console.log('👤 User signed out');
+        this.currentUser = null;
+        
+        // Show auth, hide app
+        document.getElementById('auth-container').classList.remove('hidden');
+        document.getElementById('app-container').classList.add('hidden');
+        
+        // Reset to signin form
+        if (window.authModule) {
+            window.authModule.showSignInForm();
+        }
+    },
+
+    showSection(section) {
+        console.log('🔄 Switching to section:', section);
+        
+        // Close side menu on mobile
+        if (window.coreModule) {
+            window.coreModule.closeSideMenu();
+        }
+
+        // Update content area with proper top padding
+        const contentArea = document.getElementById('content-area');
+        contentArea.style.paddingTop = '80px'; // Account for fixed navbar
+        contentArea.style.minHeight = 'calc(100vh - 80px)';
+
+        // Hide all modules
+        Object.keys(this.modules).forEach(moduleName => {
+            const module = this.modules[moduleName];
+            if (module.initialized) {
+                // You could add a deactivate method if needed
+            }
+        });
+
+        // Show selected module
+        const targetModule = this.modules[section];
+        if (targetModule) {
+            this.currentSection = section;
+            
+            if (!targetModule.initialized) {
+                targetModule.initialize();
+            } else {
+                // Re-render the module if it's already initialized
+                if (targetModule.renderModule) {
+                    targetModule.renderModule();
+                }
+            }
+            
+            // Update active navigation
+            if (window.coreModule) {
+                window.coreModule.setActiveNavItem(section);
+            }
+            
+            console.log('✅ Loaded module:', section);
         } else {
-            alert(message);
+            console.error('❌ Module not found:', section);
+            this.showSection('dashboard'); // Fallback to dashboard
         }
-    }
-}
+    },
 
-window.authModule = new AuthModule();
+    getCurrentUser() {
+        return this.currentUser;
+    },
+
+    getCurrentSection() {
+        return this.currentSection;
+    }
+};
+
+// Initialize app when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    App.init();
+});
+
+// Make app globally available
+window.app = App;
