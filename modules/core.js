@@ -1,123 +1,184 @@
 // modules/core.js
 console.log('Loading core module...');
 
-class CoreModule {
-    constructor() {
-        this.init();
-    }
+const CoreModule = {
+    name: 'core',
+    initialized: false,
 
-    init() {
-        console.log('✅ Core module initialized');
-        this.setupGlobalErrorHandling();
-    }
+    initialize() {
+        console.log('⚙️ Initializing core module...');
+        this.setupNotificationSystem();
+        this.initialized = true;
+        return true;
+    },
 
-    setupGlobalErrorHandling() {
-        window.addEventListener('error', (event) => {
-            console.error('Global error:', event.error);
-        });
+    setupNotificationSystem() {
+        // Create notification container if it doesn't exist
+        if (!document.getElementById('notification-container')) {
+            const container = document.createElement('div');
+            container.id = 'notification-container';
+            container.className = 'notification-container';
+            document.body.appendChild(container);
+        }
+        console.log('🔔 Notification system ready');
+    },
 
-        window.addEventListener('unhandledrejection', (event) => {
-            console.error('Unhandled promise rejection:', event.reason);
-        });
-    }
-
-    showNotification(message, type = 'info') {
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                this.createNotification(message, type);
+    setupNavigation() {
+        console.log('🧭 Setting up navigation...');
+        
+        // Main nav items
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const section = item.getAttribute('data-section');
+                this.setActiveNavItem(section);
+                window.app.showSection(section);
             });
-        } else {
-            this.createNotification(message, type);
-        }
-    }
+        });
 
-    createNotification(message, type) {
-        if (!document.body) {
-            console.log(`[${type}] ${message}`);
-            return;
+        // Side menu items
+        document.querySelectorAll('.side-menu-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const section = item.getAttribute('data-section');
+                this.setActiveNavItem(section);
+                window.app.showSection(section);
+                this.closeSideMenu();
+            });
+        });
+
+        // Brand click
+        document.querySelector('.nav-brand').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.setActiveNavItem('dashboard');
+            window.app.showSection('dashboard');
+        });
+
+        // Mobile menu toggle
+        document.getElementById('menu-toggle').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleSideMenu();
+        });
+
+        // Close side menu when clicking outside
+        document.addEventListener('click', (e) => {
+            const sideMenu = document.getElementById('side-menu');
+            const menuToggle = document.getElementById('menu-toggle');
+            if (!sideMenu.contains(e.target) && e.target !== menuToggle && sideMenu.classList.contains('open')) {
+                this.closeSideMenu();
+            }
+        });
+
+        console.log('✅ Navigation setup complete');
+    },
+
+    setActiveNavItem(section) {
+        // Remove active class from all nav items
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        document.querySelectorAll('.side-menu-item').forEach(item => {
+            item.classList.remove('active');
+        });
+
+        // Add active class to current section
+        const navItem = document.querySelector(`.nav-item[data-section="${section}"]`);
+        const sideMenuItem = document.querySelector(`.side-menu-item[data-section="${section}"]`);
+        
+        if (navItem) {
+            navItem.classList.add('active');
         }
+        if (sideMenuItem) {
+            sideMenuItem.classList.add('active');
+        }
+    },
+
+    toggleSideMenu() {
+        const sideMenu = document.getElementById('side-menu');
+        sideMenu.classList.toggle('open');
+    },
+
+    closeSideMenu() {
+        const sideMenu = document.getElementById('side-menu');
+        sideMenu.classList.remove('open');
+    },
+
+    showNotification(message, type = 'info', duration = 5000) {
+        const container = document.getElementById('notification-container');
+        if (!container) return;
 
         const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
+        notification.className = `notification ${type}`;
         notification.innerHTML = `
-            <span>${message}</span>
-            <button onclick="this.parentElement.remove()">&times;</button>
+            <div class="notification-content">
+                <span class="notification-message">${message}</span>
+                <button class="notification-close">&times;</button>
+            </div>
         `;
 
-        if (!document.querySelector('#notification-styles')) {
-            const styles = `
-                <style>
-                    .notification {
-                        position: fixed;
-                        top: 20px;
-                        right: 20px;
-                        padding: 1rem 1.5rem;
-                        border-radius: 8px;
-                        color: white;
-                        z-index: 1000;
-                        display: flex;
-                        align-items: center;
-                        gap: 1rem;
-                        max-width: 400px;
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                        animation: slideIn 0.3s ease-out;
-                    }
-                    .notification-success { background: #22c55e; }
-                    .notification-error { background: #ef4444; }
-                    .notification-warning { background: #f59e0b; }
-                    .notification-info { background: #3b82f6; }
-                    .notification button {
-                        background: none;
-                        border: none;
-                        color: white;
-                        font-size: 1.2rem;
-                        cursor: pointer;
-                        padding: 0;
-                    }
-                    @keyframes slideIn {
-                        from { transform: translateX(100%); opacity: 0; }
-                        to { transform: translateX(0); opacity: 1; }
-                    }
-                </style>
-            `;
-            document.head.insertAdjacentHTML('beforeend', styles);
-        }
+        container.appendChild(notification);
 
-        document.body.appendChild(notification);
-        
+        // Add close functionality
+        notification.querySelector('.notification-close').addEventListener('click', () => {
+            notification.remove();
+        });
+
+        // Auto remove after duration
         setTimeout(() => {
-            if (notification.parentElement) {
+            if (notification.parentNode) {
                 notification.remove();
             }
-        }, 5000);
-    }
+        }, duration);
+
+        return notification;
+    },
 
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD'
         }).format(amount);
-    }
+    },
 
     formatDate(date) {
+        return new Date(date).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    },
+
+    // Utility function to generate unique IDs
+    generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    },
+
+    // Data storage helpers
+    saveToLocalStorage(key, data) {
         try {
-            return new Date(date).toLocaleDateString('en-US');
-        } catch (e) {
-            return 'Invalid date';
+            localStorage.setItem(key, JSON.stringify(data));
+            return true;
+        } catch (error) {
+            console.error('Error saving to localStorage:', error);
+            return false;
+        }
+    },
+
+    loadFromLocalStorage(key) {
+        try {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : null;
+        } catch (error) {
+            console.error('Error loading from localStorage:', error);
+            return null;
         }
     }
+};
 
-    debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
+// Register core module
+if (window.FarmModules) {
+    window.FarmModules.registerModule('core', CoreModule);
 }
 
-window.coreModule = new CoreModule();
+// Make core module globally available
+window.coreModule = CoreModule;
