@@ -1933,6 +1933,377 @@ header, .top-nav {
 }
 /*===================================================*/
 
+/* ===== SALES MODULE ===== */
+.sales-module {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: calc(100vh - 80px);
+  background: linear-gradient(135deg, #f8faf9 0%, #f0f7f4 100%);
+}
+
+/* Header */
+.sales-module .module-header-pwa {
+  background: linear-gradient(135deg, #22c55e 0%, #14b8a6 100%);
+  margin: -20px -20px 20px -20px;
+  padding: 25px 20px;
+  border-radius: 0 0 20px 20px;
+  color: white !important;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.15);
+}
+
+.sales-module .module-title-pwa {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  color: white !important;
+}
+
+.sales-module .module-subtitle-pwa {
+  font-size: 14px;
+  opacity: 0.9;
+  font-weight: 500;
+  color: white !important;
+}
+
+/* Stats Grid */
+.sales-module .stats-grid-pwa {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.sales-module .stat-card-pwa {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.sales-module .stat-card-pwa::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #22c55e, #14b8a6);
+}
+
+.sales-module .stat-card-pwa:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.sales-module .stat-icon-pwa {
+  font-size: 28px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.sales-module .stat-value-pwa {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 2px;
+  color: #1e293b !important;
+}
+
+.sales-module .stat-label-pwa {
+  font-size: 13px;
+  color: #64748b !important;
+  font-weight: 600;
+}
+
+/* Quick Actions */
+.sales-module .quick-actions-pwa {
+  margin-bottom: 20px;
+}
+
+.sales-module .quick-grid-pwa {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  justify-items: center;
+}
+
+.sales-module .quick-action-btn-pwa {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 20px 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 150px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.sales-module .quick-action-btn-pwa:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 1);
+}
+
+.sales-module .quick-icon-pwa {
+  font-size: 28px;
+  transition: transform 0.3s ease;
+}
+
+.sales-module .quick-action-btn-pwa:hover .quick-icon-pwa {
+  transform: scale(1.05);
+}
+
+.sales-module .quick-title-pwa {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b !important;
+  margin-bottom: 2px;
+}
+
+.sales-module .quick-desc-pwa {
+  font-size: 11px;
+  color: #64748b !important;
+  line-height: 1.3;
+}
+
+/* Form Container */
+.sales-module .form-container-pwa {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-top: 3px solid #14b8a6;
+}
+
+.sales-module .form-title-pwa {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b !important;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.sales-module .form-grid-pwa {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.sales-module .form-group-pwa {
+  margin-bottom: 16px;
+}
+
+.sales-module .form-label-pwa {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #1e293b !important;
+  font-size: 13px;
+}
+
+.sales-module .form-input-pwa, 
+.sales-module .form-select-pwa {
+  width: 100%;
+  padding: 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #1e293b !important;
+  font-size: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
+}
+
+.sales-module .form-input-pwa:focus {
+  outline: none;
+  border-color: #14b8a6;
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Transactions Section */
+.sales-module .transactions-section-pwa {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-top: 3px solid #0ea5e9;
+}
+
+.sales-module .section-header-pwa {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.sales-module .section-title-pwa {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b !important;
+}
+
+.sales-module .transactions-list-pwa {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sales-module .transaction-item-pwa {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.sales-module .transaction-item-pwa:hover {
+  transform: translateX(4px);
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.sales-module .transaction-info-pwa {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.sales-module .transaction-icon-pwa {
+  font-size: 18px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.sales-module .transaction-details-pwa {
+  flex: 1;
+}
+
+.sales-module .transaction-title-pwa {
+  font-weight: 600;
+  color: #1e293b !important;
+  margin-bottom: 1px;
+  font-size: 14px;
+}
+
+.sales-module .transaction-meta-pwa {
+  font-size: 11px;
+  color: #64748b !important;
+  display: flex;
+  gap: 12px;
+}
+
+.sales-module .transaction-amount-pwa {
+  font-weight: 700;
+  color: #22c55e !important;
+  font-size: 16px;
+}
+
+/* Buttons */
+.sales-module .btn-primary-pwa {
+  background: linear-gradient(135deg, #22c55e, #14b8a6);
+  color: white !important;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 12px rgba(20, 184, 166, 0.3);
+}
+
+.sales-module .btn-primary-pwa:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(20, 184, 166, 0.4);
+}
+
+.sales-module .btn-outline-pwa {
+  background: transparent;
+  border: 1.5px solid #f59e0b;
+  color: #f59e0b !important;
+  padding: 14px 28px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sales-module .btn-outline-pwa:hover {
+  background: #f59e0b;
+  color: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);
+}
+
+/* Empty State */
+.sales-module .empty-state-pwa {
+  text-align: center;
+  padding: 40px 20px;
+  color: #64748b !important;
+}
+
+.sales-module .empty-icon-pwa {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+  color: #14b8a6;
+}
+
+.sales-module .empty-title-pwa {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #1e293b !important;
+}
+
+.sales-module .empty-desc-pwa {
+  font-size: 13px;
+  margin-bottom: 20px;
+  color: #64748b !important;
+}
+/*============================================*/
+
+
 /* ===== REPORTS MODULE ===== */
 .section.active {
   max-width: 1200px;
