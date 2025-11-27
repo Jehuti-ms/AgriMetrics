@@ -1011,13 +1011,140 @@ header, .top-nav {
     transform: none !important;
 }
 
-/* ===== NOTIFICATION FIXES ===== */
+/* ===== NOTIFICATIONS ===== */
 .notification-container {
     position: fixed;
-    top: 80px; /* Below the navigation bar */
+    top: 80px;
     right: 20px;
     z-index: 1000;
     max-width: 400px;
+}
+
+.notification {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    padding: 0;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid;
+    animation: slideIn 0.3s ease;
+    overflow: hidden;
+}
+
+.notification.success {
+    border-left-color: #22c55e;
+}
+
+.notification.error {
+    border-left-color: #ef4444;
+}
+
+.notification.info {
+    border-left-color: #3b82f6;
+}
+
+.notification.warning {
+    border-left-color: #f59e0b;
+}
+
+.notification-content {
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.notification-message {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #64748b;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.notification-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #1e293b;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ===== AUTH FORMS ===== */
+#auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f8faf9 0%, #f0f7f4 100%);
+    padding: 20px;
+}
+
+.auth-forms {
+    width: 100%;
+    max-width: 400px;
+}
+
+.auth-form {
+    display: none;
+}
+
+.auth-form.active {
+    display: block;
+}
+
+.auth-form h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #1e293b;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.auth-links {
+    display: flex;
+    justify-content: space-between;
+    margin: 16px 0;
+}
+
+.auth-links a {
+    color: #64748b;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.3s ease;
+}
+
+.auth-links a:hover {
+    color: #22c55e;
+}
+
+.btn-google {
+    width: 100%;
+    background: #4285f4 !important;
+    color: white !important;
+    border: none !important;
+    margin-top: 16px;
 }
 
 /* ===== NAVIGATION BAR ===== */
