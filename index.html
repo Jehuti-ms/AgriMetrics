@@ -28,89 +28,170 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
-    <body>
-<!-- Navigation Bar -->
-<nav class="navbar">
-    <div class="nav-container">
-        <!-- Brand -->
-        <a href="#" class="nav-brand" data-section="dashboard">
-            <span class="brand-icon">🌱</span>
-            <div class="brand-text">
-                <span class="brand-main">AgriMetrics</span>
-                <span class="brand-sub">Farm Management System</span>
+<body>
+    <!-- Auth Container -->
+    <div id="auth-container">
+        <div class="auth-forms">
+            <!-- Sign In Form -->
+            <div id="signin-form" class="auth-form active">
+                <h2>Sign In</h2>
+                <form id="signin-form-element">
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="signin-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password:</label>
+                        <input type="password" id="signin-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Sign In</button>
+                    <div class="auth-links">
+                        <a href="#" id="show-forgot-password">Forgot Password?</a>
+                        <a href="#" id="show-signup">Sign Up</a>
+                    </div>
+                    <button type="button" id="google-signin" class="btn btn-google">Sign in with Google</button>
+                </form>
             </div>
-        </a>
 
-        <!-- Main Navigation - ALL ITEMS SHOULD BE VISIBLE -->
-        <div class="nav-main">
-            <a href="#" class="nav-item active" data-section="dashboard">
-                <span class="nav-icon">📊</span>
-                <span class="nav-label">Dashboard</span>
-            </a>
-            <a href="#" class="nav-item" data-section="income-expenses">
-                <span class="nav-icon">💰</span>
-                <span class="nav-label">Income & Expenses</span>
-            </a>
-            <a href="#" class="nav-item" data-section="inventory">
-                <span class="nav-icon">📦</span>
-                <span class="nav-label">Inventory</span>
-            </a>
-            <a href="#" class="nav-item" data-section="sales">
-                <span class="nav-icon">🛒</span>
-                <span class="nav-label">Sales</span>
-            </a>
-            <a href="#" class="nav-item" data-section="orders">
-                <span class="nav-icon">📋</span>
-                <span class="nav-label">Orders</span>
-            </a>
-            <a href="#" class="nav-item" data-section="profile">
-                <span class="nav-icon">👤</span>
-                <span class="nav-label">Profile</span>
-            </a>
-        </div>
+            <!-- Sign Up Form -->
+            <div id="signup-form" class="auth-form">
+                <h2>Sign Up</h2>
+                <form id="signup-form-element">
+                    <div class="form-group">
+                        <label>Full Name:</label>
+                        <input type="text" id="signup-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="signup-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password:</label>
+                        <input type="password" id="signup-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm Password:</label>
+                        <input type="password" id="signup-confirm-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Farm Name:</label>
+                        <input type="text" id="farm-name" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Account</button>
+                    <div class="auth-links">
+                        <a href="#" id="show-signin">Already have an account?</a>
+                    </div>
+                </form>
+            </div>
 
-        <!-- Mobile Menu Button -->
-        <button class="nav-menu-btn" id="menu-toggle">☰</button>
-    </div>
-</nav>
-
-<!-- Side Menu -->
-<div class="side-menu" id="side-menu">
-    <div class="side-menu-header">
-        <div class="side-menu-title">Farm Operations</div>
-        <div class="side-menu-subtitle">Production & Management</div>
-    </div>
-    <div class="side-menu-items">
-        <!-- Production & Operations -->
-        <div class="side-menu-section">
-            <div class="side-menu-section-title">Production</div>
-            <a href="#" class="side-menu-item" data-section="production">
-                <span class="side-menu-icon">🚜</span>
-                <span>Production</span>
-            </a>
-            <a href="#" class="side-menu-item" data-section="feed">
-                <span class="side-menu-icon">🌾</span>
-                <span>Feed Management</span>
-            </a>
-            <a href="#" class="side-menu-item" data-section="health">
-                <span class="side-menu-icon">🐔</span>
-                <span>Health & Mortality</span>
-            </a>
-        </div>
-        
-        <!-- Analytics -->
-        <div class="side-menu-section">
-            <div class="side-menu-section-title">Analytics</div>
-            <a href="#" class="side-menu-item" data-section="reports">
-                <span class="side-menu-icon">📈</span>
-                <span>Reports & Analytics</span>
-            </a>
+            <!-- Forgot Password Form -->
+            <div id="forgot-password-form" class="auth-form">
+                <h2>Reset Password</h2>
+                <form id="forgot-password-form-element">
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="forgot-email" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Send Reset Link</button>
+                    <div class="auth-links">
+                        <a href="#" id="show-signin-from-forgot">Back to Sign In</a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
-        <!-- Main Content -->
+
+    <!-- App Container -->
+    <div id="app-container" class="hidden">
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <!-- Brand -->
+                <a href="#" class="nav-brand" data-section="dashboard">
+                    <span class="brand-icon">🌱</span>
+                    <div class="brand-text">
+                        <span class="brand-main">AgriMetrics</span>
+                        <span class="brand-sub">Farm Management System</span>
+                    </div>
+                </a>
+
+                <!-- Main Navigation - 6 Items with Icons + Text -->
+                <div class="nav-main">
+                    <a href="#" class="nav-item active" data-section="dashboard">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-label">Dashboard</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="income-expenses">
+                        <span class="nav-icon">💰</span>
+                        <span class="nav-label">Income & Expenses</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="inventory">
+                        <span class="nav-icon">📦</span>
+                        <span class="nav-label">Inventory</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="sales">
+                        <span class="nav-icon">🛒</span>
+                        <span class="nav-label">Sales</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="orders">
+                        <span class="nav-icon">📋</span>
+                        <span class="nav-label">Orders</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="profile">
+                        <span class="nav-icon">👤</span>
+                        <span class="nav-label">Profile</span>
+                    </a>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <button class="nav-menu-btn" id="menu-toggle">☰</button>
+            </div>
+        </nav>
+
+        <!-- Side Menu - 4 Items Only -->
+        <div class="side-menu" id="side-menu">
+            <div class="side-menu-header">
+                <div class="side-menu-title">Farm Operations</div>
+                <div class="side-menu-subtitle">Production & Management</div>
+            </div>
+            <div class="side-menu-items">
+                <!-- Production Section -->
+                <div class="side-menu-section">
+                    <div class="side-menu-section-title">Production</div>
+                    <a href="#" class="side-menu-item" data-section="production">
+                        <span class="side-menu-icon">🚜</span>
+                        <span>Production</span>
+                    </a>
+                    <a href="#" class="side-menu-item" data-section="feed">
+                        <span class="side-menu-icon">🌾</span>
+                        <span>Feed Management</span>
+                    </a>
+                    <a href="#" class="side-menu-item" data-section="health">
+                        <span class="side-menu-icon">🐔</span>
+                        <span>Health & Mortality</span>
+                    </a>
+                </div>
+                
+                <!-- Analytics Section -->
+                <div class="side-menu-section">
+                    <div class="side-menu-section-title">Analytics</div>
+                    <a href="#" class="side-menu-item" data-section="reports">
+                        <span class="side-menu-icon">📈</span>
+                        <span>Reports & Analytics</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
         <main id="content-area">
-            <!-- Content will be loaded here by modules -->
+            <!-- Content will be loaded here by JavaScript modules -->
+            <div class="content-placeholder">
+                <div class="welcome-message">
+                    <h1>Welcome to Farm Management System</h1>
+                    <p>Select a module from the navigation to get started</p>
+                </div>
+            </div>
         </main>
     </div>
 
