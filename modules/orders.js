@@ -1,12 +1,12 @@
-// modules/reports.js - FULLY WORKING
-console.log('Loading reports module...');
+// modules/orders.js - Orders Management Module
+console.log('Loading orders module...');
 
-const ReportsModule = {
-    name: 'reports',
+const OrdersModule = {
+    name: 'orders',
     initialized: false,
 
     initialize() {
-        console.log('📈 Initializing reports...');
+        console.log('📦 Initializing orders...');
         this.renderModule();
         this.initialized = true;
         return true;
@@ -17,985 +17,932 @@ const ReportsModule = {
         if (!contentArea) return;
 
         contentArea.innerHTML = `
-            <div class="module-container">
-                <div class="module-header">
-                    <h1 class="module-title">Farm Reports & Analytics</h1>
-                    <p class="module-subtitle">Comprehensive insights and analytics for your farm operations</p>
+            <div class="dashboard-container" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
+                <!-- Welcome Section -->
+                <div class="welcome-section" style="margin-bottom: 30px;">
+                    <h1 style="color: #1a1a1a; font-size: 28px; margin-bottom: 8px;">Orders Management</h1>
+                    <p style="color: #666; font-size: 16px;">Manage customer orders, track status, and process deliveries</p>
                 </div>
 
-                <!-- Report Categories -->
-                <div class="reports-grid">
-                    <!-- Financial Reports -->
-                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
-                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">💰</div>
-                        <div class="report-content">
-                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Financial Reports</h3>
-                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Income, expenses, profit analysis and financial performance</p>
-                            <button class="btn-primary generate-financial-report" style="width: 100%;">
-                                Generate Report
-                            </button>
-                        </div>
-                    </div>
+                <!-- Quick Actions Grid -->
+                <div class="quick-actions" style="margin-bottom: 40px;">
+                    <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 20px;">Quick Actions</h2>
+                    <div class="actions-grid" style="
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                        gap: 16px;
+                        margin-bottom: 30px;
+                    ">
+                        <button class="quick-action-btn" data-action="create-order" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 16px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 12px;
+                            min-height: 120px;
+                        ">
+                            <div style="font-size: 32px;">➕</div>
+                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Create Order</span>
+                            <span style="font-size: 12px; color: #666; text-align: center;">New customer order</span>
+                        </button>
 
-                    <!-- Production Reports -->
-                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
-                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">🚜</div>
-                        <div class="report-content">
-                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Production Reports</h3>
-                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Egg production, poultry output, and productivity metrics</p>
-                            <button class="btn-primary generate-production-report" style="width: 100%;">
-                                Generate Report
-                            </button>
-                        </div>
-                    </div>
+                        <button class="quick-action-btn" data-action="pending-orders" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 16px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 12px;
+                            min-height: 120px;
+                        ">
+                            <div style="font-size: 32px;">⏳</div>
+                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Pending Orders</span>
+                            <span style="font-size: 12px; color: #666; text-align: center;">Awaiting processing</span>
+                        </button>
 
-                    <!-- Inventory Reports -->
-                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
-                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">📦</div>
-                        <div class="report-content">
-                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Inventory Reports</h3>
-                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Stock levels, consumption patterns, and reorder analysis</p>
-                            <button class="btn-primary generate-inventory-report" style="width: 100%;">
-                                Generate Report
-                            </button>
-                        </div>
-                    </div>
+                        <button class="quick-action-btn" data-action="today-orders" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 16px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 12px;
+                            min-height: 120px;
+                        ">
+                            <div style="font-size: 32px;">📅</div>
+                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Today's Orders</span>
+                            <span style="font-size: 12px; color: #666; text-align: center;">Due for delivery</span>
+                        </button>
 
-                    <!-- Sales Reports -->
-                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
-                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                        <div class="report-content">
-                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Sales Reports</h3>
-                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Revenue, customer analysis, and sales performance</p>
-                            <button class="btn-primary generate-sales-report" style="width: 100%;">
-                                Generate Report
-                            </button>
-                        </div>
+                        <button class="quick-action-btn" data-action="completed-orders" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 16px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 12px;
+                            min-height: 120px;
+                        ">
+                            <div style="font-size: 32px;">✅</div>
+                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Completed</span>
+                            <span style="font-size: 12px; color: #666; text-align: center;">Delivered orders</span>
+                        </button>
                     </div>
+                </div>
 
-                    <!-- Health & Mortality Reports -->
-                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
-                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">🐔</div>
-                        <div class="report-content">
-                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Health Reports</h3>
-                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Mortality rates, health trends, and flock management</p>
-                            <button class="btn-primary generate-health-report" style="width: 100%;">
-                                Generate Report
-                            </button>
+                <!-- Stats Overview -->
+                <div class="stats-overview" style="margin-bottom: 40px;">
+                    <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 20px;">Orders Overview</h2>
+                    <div class="stats-grid" style="
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                        gap: 16px;
+                    ">
+                        <div class="stat-card" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 20px;
+                            text-align: center;
+                        ">
+                            <div style="font-size: 24px; margin-bottom: 8px;">⏳</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="pending-count">0</div>
+                            <div style="font-size: 14px; color: #666;">Pending Orders</div>
                         </div>
-                    </div>
 
-                    <!-- Feed Consumption Reports -->
-                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
-                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">🌾</div>
-                        <div class="report-content">
-                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Feed Reports</h3>
-                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Feed usage, cost analysis, and consumption patterns</p>
-                            <button class="btn-primary generate-feed-report" style="width: 100%;">
-                                Generate Report
-                            </button>
+                        <div class="stat-card" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 20px;
+                            text-align: center;
+                        ">
+                            <div style="font-size: 24px; margin-bottom: 8px;">✅</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="completed-count">0</div>
+                            <div style="font-size: 14px; color: #666;">Completed Orders</div>
                         </div>
-                    </div>
 
-                    <!-- Comprehensive Farm Report -->
-                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center; grid-column: 1 / -1;">
-                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">🏆</div>
-                        <div class="report-content">
-                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Comprehensive Farm Report</h3>
-                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Complete overview of all farm operations and performance metrics</p>
-                            <button class="btn-primary generate-comprehensive-report" style="width: 100%; background: linear-gradient(135deg, #22c55e, #3b82f6);">
-                                Generate Full Report
-                            </button>
+                        <div class="stat-card" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 20px;
+                            text-align: center;
+                        ">
+                            <div style="font-size: 24px; margin-bottom: 8px;">📅</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="today-count">0</div>
+                            <div style="font-size: 14px; color: #666;">Today's Orders</div>
+                        </div>
+
+                        <div class="stat-card" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backdrop-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 20px;
+                            text-align: center;
+                        ">
+                            <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="revenue-amount">$0</div>
+                            <div style="font-size: 14px; color: #666;">Total Revenue</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Report Output Section -->
-                <div id="report-output" class="report-output glass-card hidden" style="margin-top: 32px;">
-                    <div class="output-header" style="display: flex; justify-content: space-between; align-items: center; padding: 24px; border-bottom: 1px solid var(--glass-border);">
-                        <h3 style="color: var(--text-primary); margin: 0;" id="report-title">Report Output</h3>
+                <!-- Recent Orders -->
+                <div class="recent-activity">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="color: #1a1a1a; font-size: 20px; margin: 0;">Recent Orders</h2>
                         <div style="display: flex; gap: 12px;">
-                            <button class="btn-outline" id="print-report">
-                                🖨️ Print
-                            </button>
-                            <button class="btn-outline" id="export-report">
-                                📥 Export
-                            </button>
-                            <button class="btn-outline" id="close-report">
-                                ✕ Close
-                            </button>
+                            <select id="order-filter" style="
+                                padding: 8px 12px;
+                                border: 1px solid rgba(0, 0, 0, 0.1);
+                                border-radius: 8px;
+                                background: rgba(255, 255, 255, 0.9);
+                                backdrop-filter: blur(20px);
+                                color: #1a1a1a;
+                                font-size: 14px;
+                            ">
+                                <option value="all">All Orders</option>
+                                <option value="pending">Pending</option>
+                                <option value="processing">Processing</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                            <div style="position: relative;">
+                                <input type="text" id="order-search" placeholder="Search orders..." style="
+                                    padding: 8px 12px 8px 36px;
+                                    border: 1px solid rgba(0, 0, 0, 0.1);
+                                    border-radius: 8px;
+                                    background: rgba(255, 255, 255, 0.9);
+                                    backdrop-filter: blur(20px);
+                                    color: #1a1a1a;
+                                    font-size: 14px;
+                                    width: 200px;
+                                ">
+                                <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #666;">🔍</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="output-content" style="padding: 24px;">
-                        <div id="report-content">
-                            <!-- Report content will be generated here -->
-                        </div>
+                    <div class="activity-list" style="
+                        background: rgba(255, 255, 255, 0.9);
+                        backdrop-filter: blur(20px);
+                        -webkit-backdrop-filter: blur(20px);
+                        border: 1px solid rgba(0, 0, 0, 0.1);
+                        border-radius: 16px;
+                        padding: 20px;
+                    ">
+                        ${this.renderOrdersList()}
                     </div>
                 </div>
+            </div>
 
-                <!-- Quick Stats Overview -->
-                <div class="glass-card" style="padding: 24px; margin-top: 32px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Quick Stats Overview</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                        ${this.renderQuickStats()}
+            <!-- Create Order Modal -->
+            <div id="create-order-modal" class="modal hidden">
+                <div class="modal-content" style="
+                    background: rgba(255, 255, 255, 0.95);
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    border: 1px solid rgba(0, 0, 0, 0.1);
+                    border-radius: 16px;
+                    padding: 0;
+                    max-width: 600px;
+                    width: 90%;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                ">
+                    <div class="modal-header" style="
+                        padding: 24px;
+                        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    ">
+                        <h3 style="color: #1a1a1a; margin: 0; font-size: 20px;">Create New Order</h3>
+                        <button class="close-modal" id="close-create-modal" style="
+                            background: none;
+                            border: none;
+                            font-size: 24px;
+                            color: #666;
+                            cursor: pointer;
+                            padding: 0;
+                            width: 30px;
+                            height: 30px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        ">&times;</button>
                     </div>
-                </div>
-
-                <!-- Recent Activity -->
-                <div class="glass-card" style="padding: 24px; margin-top: 24px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Recent Farm Activity</h3>
-                    <div id="recent-activity">
-                        ${this.renderRecentActivity()}
+                    <div class="modal-body" style="padding: 24px;">
+                        <form id="create-order-form">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; color: #1a1a1a; font-weight: 600; font-size: 14px;">Customer</label>
+                                    <select id="customer-select" required style="
+                                        width: 100%;
+                                        padding: 10px 12px;
+                                        border: 1px solid rgba(0, 0, 0, 0.1);
+                                        border-radius: 8px;
+                                        background: rgba(255, 255, 255, 0.9);
+                                        backdrop-filter: blur(20px);
+                                        color: #1a1a1a;
+                                        font-size: 14px;
+                                    ">
+                                        <option value="">Select Customer</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; color: #1a1a1a; font-weight: 600; font-size: 14px;">Order Date</label>
+                                    <input type="date" id="order-date" required value="${new Date().toISOString().split('T')[0]}" style="
+                                        width: 100%;
+                                        padding: 10px 12px;
+                                        border: 1px solid rgba(0, 0, 0, 0.1);
+                                        border-radius: 8px;
+                                        background: rgba(255, 255, 255, 0.9);
+                                        backdrop-filter: blur(20px);
+                                        color: #1a1a1a;
+                                        font-size: 14px;
+                                    ">
+                                </div>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; color: #1a1a1a; font-weight: 600; font-size: 14px;">Delivery Date</label>
+                                    <input type="date" id="delivery-date" required style="
+                                        width: 100%;
+                                        padding: 10px 12px;
+                                        border: 1px solid rgba(0, 0, 0, 0.1);
+                                        border-radius: 8px;
+                                        background: rgba(255, 255, 255, 0.9);
+                                        backdrop-filter: blur(20px);
+                                        color: #1a1a1a;
+                                        font-size: 14px;
+                                    ">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; color: #1a1a1a; font-weight: 600; font-size: 14px;">Status</label>
+                                    <select id="order-status" style="
+                                        width: 100%;
+                                        padding: 10px 12px;
+                                        border: 1px solid rgba(0, 0, 0, 0.1);
+                                        border-radius: 8px;
+                                        background: rgba(255, 255, 255, 0.9);
+                                        backdrop-filter: blur(20px);
+                                        color: #1a1a1a;
+                                        font-size: 14px;
+                                    ">
+                                        <option value="pending">Pending</option>
+                                        <option value="processing">Processing</option>
+                                        <option value="completed">Completed</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px; padding: 20px; background: rgba(255, 255, 255, 0.5); border-radius: 12px; border: 1px solid rgba(0, 0, 0, 0.1);">
+                                <h4 style="color: #1a1a1a; margin: 0 0 16px 0; font-size: 16px;">Order Items</h4>
+                                <div id="order-items">
+                                    <div class="order-item" style="margin-bottom: 12px;">
+                                        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; align-items: end;">
+                                            <select class="product-select" required style="
+                                                padding: 8px 12px;
+                                                border: 1px solid rgba(0, 0, 0, 0.1);
+                                                border-radius: 8px;
+                                                background: rgba(255, 255, 255, 0.9);
+                                                backdrop-filter: blur(20px);
+                                                color: #1a1a1a;
+                                                font-size: 14px;
+                                            ">
+                                                <option value="">Select Product</option>
+                                                <option value="eggs">Eggs</option>
+                                                <option value="broilers">Broilers</option>
+                                                <option value="layers">Layers</option>
+                                            </select>
+                                            <input type="number" class="quantity-input" placeholder="Qty" min="1" required style="
+                                                padding: 8px 12px;
+                                                border: 1px solid rgba(0, 0, 0, 0.1);
+                                                border-radius: 8px;
+                                                background: rgba(255, 255, 255, 0.9);
+                                                backdrop-filter: blur(20px);
+                                                color: #1a1a1a;
+                                                font-size: 14px;
+                                            ">
+                                            <input type="number" class="price-input" placeholder="Price" step="0.01" min="0" required style="
+                                                padding: 8px 12px;
+                                                border: 1px solid rgba(0, 0, 0, 0.1);
+                                                border-radius: 8px;
+                                                background: rgba(255, 255, 255, 0.9);
+                                                backdrop-filter: blur(20px);
+                                                color: #1a1a1a;
+                                                font-size: 14px;
+                                            ">
+                                            <button type="button" class="remove-item" style="
+                                                padding: 8px 12px;
+                                                border: 1px solid rgba(0, 0, 0, 0.1);
+                                                border-radius: 8px;
+                                                background: rgba(255, 255, 255, 0.9);
+                                                backdrop-filter: blur(20px);
+                                                color: #666;
+                                                cursor: pointer;
+                                                font-size: 14px;
+                                            ">Remove</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" id="add-item" style="
+                                    padding: 8px 16px;
+                                    border: 1px solid rgba(0, 0, 0, 0.1);
+                                    border-radius: 8px;
+                                    background: rgba(255, 255, 255, 0.9);
+                                    backdrop-filter: blur(20px);
+                                    color: #1a1a1a;
+                                    cursor: pointer;
+                                    font-size: 14px;
+                                    margin-top: 8px;
+                                ">+ Add Item</button>
+                            </div>
+                            
+                            <div style="margin-bottom: 24px;">
+                                <label style="display: block; margin-bottom: 8px; color: #1a1a1a; font-weight: 600; font-size: 14px;">Notes</label>
+                                <textarea id="order-notes" rows="3" placeholder="Any special instructions..." style="
+                                    width: 100%;
+                                    padding: 12px;
+                                    border: 1px solid rgba(0, 0, 0, 0.1);
+                                    border-radius: 8px;
+                                    background: rgba(255, 255, 255, 0.9);
+                                    backdrop-filter: blur(20px);
+                                    color: #1a1a1a;
+                                    font-size: 14px;
+                                    resize: vertical;
+                                "></textarea>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 20px; border-top: 1px solid rgba(0, 0, 0, 0.1);">
+                                <button type="button" id="cancel-order" style="
+                                    padding: 10px 20px;
+                                    border: 1px solid rgba(0, 0, 0, 0.1);
+                                    border-radius: 8px;
+                                    background: rgba(255, 255, 255, 0.9);
+                                    backdrop-filter: blur(20px);
+                                    color: #666;
+                                    cursor: pointer;
+                                    font-size: 14px;
+                                    font-weight: 600;
+                                ">Cancel</button>
+                                <button type="submit" style="
+                                    padding: 10px 20px;
+                                    border: 1px solid rgba(0, 0, 0, 0.1);
+                                    border-radius: 8px;
+                                    background: #1a1a1a;
+                                    color: white;
+                                    cursor: pointer;
+                                    font-size: 14px;
+                                    font-weight: 600;
+                                ">Create Order</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
         `;
 
         this.setupEventListeners();
+        this.updateOrderStats();
+        this.loadCustomers();
+        
+        // Set delivery date to tomorrow by default
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        document.getElementById('delivery-date').value = tomorrow.toISOString().split('T')[0];
     },
 
-    renderQuickStats() {
-        // Load data from all modules to generate comprehensive stats
-        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
-        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
-        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
-        const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
-        const mortality = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
-        const feedRecords = JSON.parse(localStorage.getItem('farm-feed-records') || '[]');
-
-        // Calculate stats
-        const totalRevenue = transactions
-            .filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + t.amount, 0);
+    renderOrdersList() {
+        const orders = JSON.parse(localStorage.getItem('farm-orders') || '[]');
         
-        const totalExpenses = transactions
-            .filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + t.amount, 0);
-        
-        const netProfit = totalRevenue - totalExpenses;
-        const totalSales = sales.reduce((sum, sale) => sum + sale.total, 0);
-        const totalProduction = production.reduce((sum, record) => sum + record.quantity, 0);
-        const lowStockItems = inventory.filter(item => item.currentStock <= item.minStock).length;
-        const totalFeedUsed = feedRecords.reduce((sum, record) => sum + record.quantity, 0);
-
-        return `
-            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Total Revenue</div>
-                <div style="font-size: 20px; font-weight: bold; color: #22c55e;">${this.formatCurrency(totalRevenue)}</div>
-            </div>
-            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Net Profit</div>
-                <div style="font-size: 20px; font-weight: bold; color: ${netProfit >= 0 ? '#22c55e' : '#ef4444'};">${this.formatCurrency(netProfit)}</div>
-            </div>
-            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Total Sales</div>
-                <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(totalSales)}</div>
-            </div>
-            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Production</div>
-                <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${totalProduction}</div>
-            </div>
-            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Low Stock Items</div>
-                <div style="font-size: 20px; font-weight: bold; color: ${lowStockItems > 0 ? '#f59e0b' : '#22c55e'};">${lowStockItems}</div>
-            </div>
-            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Feed Used</div>
-                <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${totalFeedUsed} kg</div>
-            </div>
-        `;
-    },
-
-    renderRecentActivity() {
-        // Combine recent activities from different modules
-        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]').slice(0, 3);
-        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]').slice(0, 3);
-        const production = JSON.parse(localStorage.getItem('farm-production') || '[]').slice(0, 3);
-
-        const activities = [];
-
-        // Add transactions
-        transactions.forEach(transaction => {
-            activities.push({
-                type: 'transaction',
-                date: transaction.date,
-                description: `${transaction.type === 'income' ? '💰 Income' : '💸 Expense'}: ${transaction.description}`,
-                amount: transaction.amount
-            });
-        });
-
-        // Add sales
-        sales.forEach(sale => {
-            activities.push({
-                type: 'sale',
-                date: sale.date,
-                description: `📦 Sale: ${sale.items.length} items`,
-                amount: sale.totalAmount
-            });
-        });
-
-        // Add production
-        production.forEach(record => {
-            activities.push({
-                type: 'production',
-                date: record.date,
-                description: `🚜 Production: ${record.quantity} ${record.unit} of ${record.product}`,
-                amount: null
-            });
-        });
-
-        // Sort by date and take latest 5
-        activities.sort((a, b) => new Date(b.date) - new Date(a.date));
-        const recentActivities = activities.slice(0, 5);
-
-        if (recentActivities.length === 0) {
+        if (orders.length === 0) {
             return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No recent activity</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Start using the app to see activity here</div>
+                <div style="text-align: center; color: #666; padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No orders yet</div>
+                    <div style="font-size: 14px; color: #999;">Create your first order to get started</div>
                 </div>
             `;
         }
 
+        const recentOrders = orders
+            .sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate))
+            .slice(0, 5);
+
         return `
             <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${recentActivities.map(activity => `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                ${recentOrders.map(order => `
+                    <div style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 16px;
+                        background: rgba(255, 255, 255, 0.5);
+                        border-radius: 12px;
+                        border: 1px solid rgba(0, 0, 0, 0.1);
+                        transition: all 0.3s ease;
+                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';" 
+                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="font-size: 20px;">
-                                ${activity.type === 'transaction' ? (activity.description.includes('Income') ? '💰' : '💸') : 
-                                  activity.type === 'sale' ? '📦' : '🚜'}
+                            <div style="
+                                width: 40px;
+                                height: 40px;
+                                border-radius: 50%;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 18px;
+                                background: ${this.getStatusColor(order.status).background};
+                                color: ${this.getStatusColor(order.status).color};
+                            ">
+                                ${this.getStatusIcon(order.status)}
                             </div>
                             <div>
-                                <div style="font-weight: 600; color: var(--text-primary);">${activity.description}</div>
-                                <div style="font-size: 14px; color: var(--text-secondary);">${activity.date}</div>
+                                <div style="font-weight: 600; color: #1a1a1a; font-size: 14px;">
+                                    Order #${order.id} - ${order.customerName}
+                                </div>
+                                <div style="font-size: 12px; color: #666;">
+                                    ${order.orderDate} • ${order.items.length} items • ${this.formatCurrency(order.totalAmount)}
+                                </div>
                             </div>
                         </div>
-                        ${activity.amount !== null ? `
-                            <div style="font-weight: bold; color: var(--text-primary);">
-                                ${this.formatCurrency(activity.amount)}
-                            </div>
-                        ` : ''}
+                        <div style="display: flex; gap: 8px;">
+                            <button class="view-order" data-order-id="${order.id}" style="
+                                padding: 6px 12px;
+                                border: 1px solid rgba(0, 0, 0, 0.1);
+                                border-radius: 6px;
+                                background: rgba(255, 255, 255, 0.9);
+                                backdrop-filter: blur(20px);
+                                color: #666;
+                                cursor: pointer;
+                                font-size: 12px;
+                            ">View</button>
+                            ${order.status === 'pending' ? `
+                                <button class="process-order" data-order-id="${order.id}" style="
+                                    padding: 6px 12px;
+                                    border: 1px solid rgba(0, 0, 0, 0.1);
+                                    border-radius: 6px;
+                                    background: #1a1a1a;
+                                    color: white;
+                                    cursor: pointer;
+                                    font-size: 12px;
+                                ">Process</button>
+                            ` : ''}
+                        </div>
                     </div>
                 `).join('')}
             </div>
         `;
+    },
+
+    updateOrderStats() {
+        const orders = JSON.parse(localStorage.getItem('farm-orders') || '[]');
+        
+        const pendingCount = orders.filter(order => order.status === 'pending').length;
+        const completedCount = orders.filter(order => order.status === 'completed').length;
+        const todayCount = orders.filter(order => {
+            const today = new Date().toISOString().split('T')[0];
+            return order.deliveryDate === today;
+        }).length;
+        
+        const revenue = orders
+            .filter(order => order.status === 'completed')
+            .reduce((sum, order) => sum + order.totalAmount, 0);
+        
+        document.getElementById('pending-count').textContent = pendingCount;
+        document.getElementById('completed-count').textContent = completedCount;
+        document.getElementById('today-count').textContent = todayCount;
+        document.getElementById('revenue-amount').textContent = this.formatCurrency(revenue);
     },
 
     setupEventListeners() {
-        // Report generation buttons
-        document.querySelector('.generate-financial-report')?.addEventListener('click', () => this.generateFinancialReport());
-        document.querySelector('.generate-production-report')?.addEventListener('click', () => this.generateProductionReport());
-        document.querySelector('.generate-inventory-report')?.addEventListener('click', () => this.generateInventoryReport());
-        document.querySelector('.generate-sales-report')?.addEventListener('click', () => this.generateSalesReport());
-        document.querySelector('.generate-health-report')?.addEventListener('click', () => this.generateHealthReport());
-        document.querySelector('.generate-feed-report')?.addEventListener('click', () => this.generateFeedReport());
-        document.querySelector('.generate-comprehensive-report')?.addEventListener('click', () => this.generateComprehensiveReport());
-        
-        // Report actions
-        document.getElementById('print-report')?.addEventListener('click', () => this.printReport());
-        document.getElementById('export-report')?.addEventListener('click', () => this.exportReport());
-        document.getElementById('close-report')?.addEventListener('click', () => this.closeReport());
-    },
+        // Quick action buttons
+        const quickActionButtons = document.querySelectorAll('.quick-action-btn');
+        quickActionButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const action = e.currentTarget.getAttribute('data-action');
+                this.handleQuickAction(action);
+            });
 
-    generateFinancialReport() {
-        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
-        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
-        
-        // Calculate financial metrics
-        const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-        const expenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-        const netProfit = income - expenses;
-        const profitMargin = income > 0 ? (netProfit / income) * 100 : 0;
-        
-        // Category breakdown
-        const incomeByCategory = {};
-        const expensesByCategory = {};
-        
-        transactions.forEach(transaction => {
-            if (transaction.type === 'income') {
-                incomeByCategory[transaction.category] = (incomeByCategory[transaction.category] || 0) + transaction.amount;
-            } else {
-                expensesByCategory[transaction.category] = (expensesByCategory[transaction.category] || 0) + transaction.amount;
-            }
-        });
+            // Add hover effects
+            button.addEventListener('mouseenter', (e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+            });
 
-        const reportContent = `
-            <div class="report-section">
-                <h4>💰 Financial Performance Summary</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Income</span>
-                    <span class="metric-value income">${this.formatCurrency(income)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Expenses</span>
-                    <span class="metric-value expense">${this.formatCurrency(expenses)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Net Profit</span>
-                    <span class="metric-value ${netProfit >= 0 ? 'profit' : 'expense'}">${this.formatCurrency(netProfit)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Profit Margin</span>
-                    <span class="metric-value ${profitMargin >= 0 ? 'profit' : 'expense'}">${profitMargin.toFixed(1)}%</span>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>📊 Income by Category</h4>
-                ${Object.entries(incomeByCategory).map(([category, amount]) => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatCategory(category)}</span>
-                        <span class="metric-value income">${this.formatCurrency(amount)}</span>
-                    </div>
-                `).join('')}
-            </div>
-
-            <div class="report-section">
-                <h4>📊 Expenses by Category</h4>
-                ${Object.entries(expensesByCategory).map(([category, amount]) => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatCategory(category)}</span>
-                        <span class="metric-value expense">${this.formatCurrency(amount)}</span>
-                    </div>
-                `).join('')}
-            </div>
-
-            <div class="report-section">
-                <h4>💡 Financial Insights</h4>
-                <div style="padding: 16px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
-                    <p style="margin: 0; color: #1e40af;">
-                        ${this.getFinancialInsights(income, expenses, netProfit, profitMargin)}
-                    </p>
-                </div>
-            </div>
-        `;
-
-        this.showReport('Financial Performance Report', reportContent);
-    },
-
-    generateProductionReport() {
-        const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
-        
-        // Calculate production metrics
-        const totalProduction = production.reduce((sum, record) => sum + record.quantity, 0);
-        const eggProduction = production.filter(p => p.product === 'eggs').reduce((sum, p) => sum + p.quantity, 0);
-        const poultryProduction = production.filter(p => p.product === 'broilers').reduce((sum, p) => sum + p.quantity, 0);
-        
-        // Quality breakdown
-        const qualityCounts = {};
-        production.forEach(record => {
-            qualityCounts[record.quality] = (qualityCounts[record.quality] || 0) + record.quantity;
-        });
-
-        const reportContent = `
-            <div class="report-section">
-                <h4>🚜 Production Overview</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Production</span>
-                    <span class="metric-value">${totalProduction} units</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Egg Production</span>
-                    <span class="metric-value">${eggProduction} pieces</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Poultry Production</span>
-                    <span class="metric-value">${poultryProduction} birds</span>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>📈 Production Quality</h4>
-                ${Object.entries(qualityCounts).map(([quality, count]) => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatQuality(quality)}</span>
-                        <span class="metric-value">${count} units</span>
-                    </div>
-                `).join('')}
-            </div>
-
-            <div class="report-section">
-                <h4>📅 Recent Production Activity</h4>
-                ${production.slice(0, 5).map(record => `
-                    <div class="metric-row">
-                        <span class="metric-label">${record.date} - ${record.product}</span>
-                        <span class="metric-value">${record.quantity} ${record.unit}</span>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-
-        this.showReport('Production Analysis Report', reportContent);
-    },
-
-    generateInventoryReport() {
-        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
-        
-        // Calculate inventory metrics
-        const totalItems = inventory.length;
-        const lowStockItems = inventory.filter(item => item.currentStock <= item.minStock).length;
-        const outOfStockItems = inventory.filter(item => item.currentStock === 0).length;
-        const totalValue = inventory.reduce((sum, item) => sum + (item.currentStock * item.cost), 0);
-        
-        // Category breakdown
-        const categorySummary = {};
-        inventory.forEach(item => {
-            if (!categorySummary[item.category]) {
-                categorySummary[item.category] = { count: 0, value: 0, lowStock: 0 };
-            }
-            categorySummary[item.category].count++;
-            categorySummary[item.category].value += item.currentStock * item.cost;
-            if (item.currentStock <= item.minStock) {
-                categorySummary[item.category].lowStock++;
-            }
-        });
-
-        const reportContent = `
-            <div class="report-section">
-                <h4>📦 Inventory Summary</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Items</span>
-                    <span class="metric-value">${totalItems}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Low Stock Items</span>
-                    <span class="metric-value ${lowStockItems > 0 ? 'warning' : ''}">${lowStockItems}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Out of Stock</span>
-                    <span class="metric-value ${outOfStockItems > 0 ? 'warning' : ''}">${outOfStockItems}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Inventory Value</span>
-                    <span class="metric-value">${this.formatCurrency(totalValue)}</span>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>📊 Inventory by Category</h4>
-                ${Object.entries(categorySummary).map(([category, data]) => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatCategory(category)}</span>
-                        <span class="metric-value">${data.count} items (${this.formatCurrency(data.value)})</span>
-                    </div>
-                    ${data.lowStock > 0 ? `
-                        <div class="metric-row" style="font-size: 12px; color: #f59e0b;">
-                            <span class="metric-label">⚠️ Low stock items</span>
-                            <span class="metric-value">${data.lowStock}</span>
-                        </div>
-                    ` : ''}
-                `).join('')}
-            </div>
-
-            <div class="report-section">
-                <h4>🚨 Critical Stock Items</h4>
-                ${inventory.filter(item => item.currentStock <= item.minStock).map(item => `
-                    <div class="metric-row">
-                        <span class="metric-label">${item.name}</span>
-                        <span class="metric-value warning">${item.currentStock} ${item.unit} (min: ${item.minStock})</span>
-                    </div>
-                `).join('')}
-                ${inventory.filter(item => item.currentStock <= item.minStock).length === 0 ? `
-                    <p style="color: #22c55e; text-align: center;">✅ All items are adequately stocked</p>
-                ` : ''}
-            </div>
-        `;
-
-        this.showReport('Inventory Analysis Report', reportContent);
-    },
-
-    generateSalesReport() {
-        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
-        const customers = JSON.parse(localStorage.getItem('farm-customers') || '[]');
-        
-        // Calculate sales metrics
-        const totalSales = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
-        const totalOrders = sales.length;
-        const avgOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
-        
-        // Customer analysis
-        const customerSales = {};
-        sales.forEach(sale => {
-            customerSales[sale.customerId] = (customerSales[sale.customerId] || 0) + sale.totalAmount;
-        });
-
-        // Product analysis
-        const productSales = {};
-        sales.forEach(sale => {
-            sale.items.forEach(item => {
-                productSales[item.productId] = (productSales[item.productId] || 0) + item.quantity;
+            button.addEventListener('mouseleave', (e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
             });
         });
 
-        const reportContent = `
-            <div class="report-section">
-                <h4>💰 Sales Performance</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Revenue</span>
-                    <span class="metric-value income">${this.formatCurrency(totalSales)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Orders</span>
-                    <span class="metric-value">${totalOrders}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Average Order Value</span>
-                    <span class="metric-value">${this.formatCurrency(avgOrderValue)}</span>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>👥 Top Customers</h4>
-                ${Object.entries(customerSales)
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 5)
-                    .map(([customerId, revenue]) => {
-                        const customer = customers.find(c => c.id === parseInt(customerId));
-                        return `
-                            <div class="metric-row">
-                                <span class="metric-label">${customer?.name || 'Unknown Customer'}</span>
-                                <span class="metric-value income">${this.formatCurrency(revenue)}</span>
-                            </div>
-                        `;
-                    }).join('')}
-            </div>
-
-            <div class="report-section">
-                <h4>📈 Sales Trends</h4>
-                <div style="padding: 16px; background: #f0fdf4; border-radius: 8px;">
-                    <p style="margin: 0; color: #166534;">
-                        ${this.getSalesInsights(sales, totalSales, avgOrderValue)}
-                    </p>
-                </div>
-            </div>
-        `;
-
-        this.showReport('Sales Performance Report', reportContent);
-    },
-
-    generateHealthReport() {
-        const mortality = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
-        const currentStock = parseInt(localStorage.getItem('farm-current-stock') || '1000');
+        // Filter and search
+        document.getElementById('order-filter')?.addEventListener('change', (e) => this.filterOrders(e.target.value));
+        document.getElementById('order-search')?.addEventListener('input', (e) => this.searchOrders(e.target.value));
         
-        // Calculate health metrics
-        const totalLosses = mortality.reduce((sum, record) => sum + record.quantity, 0);
-        const mortalityRate = currentStock > 0 ? (totalLosses / (currentStock + totalLosses)) * 100 : 0;
+        // Modal controls
+        document.getElementById('close-create-modal')?.addEventListener('click', () => this.closeCreateModal());
+        document.getElementById('cancel-order')?.addEventListener('click', () => this.closeCreateModal());
         
-        // Cause analysis
-        const causeAnalysis = {};
-        mortality.forEach(record => {
-            causeAnalysis[record.cause] = (causeAnalysis[record.cause] || 0) + record.quantity;
-        });
-
-        const reportContent = `
-            <div class="report-section">
-                <h4>🐔 Flock Health Overview</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Current Stock</span>
-                    <span class="metric-value">${currentStock} birds</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Losses</span>
-                    <span class="metric-value">${totalLosses} birds</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Mortality Rate</span>
-                    <span class="metric-value ${mortalityRate > 5 ? 'warning' : 'profit'}">${mortalityRate.toFixed(1)}%</span>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>🔍 Loss Analysis by Cause</h4>
-                ${Object.entries(causeAnalysis).map(([cause, count]) => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatCause(cause)}</span>
-                        <span class="metric-value">${count} birds</span>
-                    </div>
-                `).join('')}
-            </div>
-
-            <div class="report-section">
-                <h4>💡 Health Recommendations</h4>
-                <div style="padding: 16px; background: #fef7ed; border-radius: 8px; border-left: 4px solid #f59e0b;">
-                    <p style="margin: 0; color: #92400e;">
-                        ${this.getHealthRecommendations(mortalityRate, causeAnalysis)}
-                    </p>
-                </div>
-            </div>
-        `;
-
-        this.showReport('Flock Health Report', reportContent);
-    },
-
-    generateFeedReport() {
-        const feedRecords = JSON.parse(localStorage.getItem('farm-feed-records') || '[]');
-        const feedInventory = JSON.parse(localStorage.getItem('farm-feed-inventory') || '[]');
-        const birdsStock = parseInt(localStorage.getItem('farm-birds-stock') || '1000');
+        // Create order form
+        document.getElementById('create-order-form')?.addEventListener('submit', (e) => this.createOrder(e));
+        document.getElementById('add-item')?.addEventListener('click', () => this.addOrderItem());
         
-        // Calculate feed metrics
-        const totalFeedUsed = feedRecords.reduce((sum, record) => sum + record.quantity, 0);
-        const totalFeedCost = feedRecords.reduce((sum, record) => sum + record.cost, 0);
-        const avgCostPerKg = totalFeedUsed > 0 ? totalFeedCost / totalFeedUsed : 0;
-        const feedPerBird = birdsStock > 0 ? (totalFeedUsed / birdsStock) * 1000 : 0; // grams per bird
-
-        const reportContent = `
-            <div class="report-section">
-                <h4>🌾 Feed Consumption Summary</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Feed Used</span>
-                    <span class="metric-value">${totalFeedUsed.toFixed(1)} kg</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Feed Cost</span>
-                    <span class="metric-value expense">${this.formatCurrency(totalFeedCost)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Average Cost per kg</span>
-                    <span class="metric-value">${this.formatCurrency(avgCostPerKg)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Feed per Bird</span>
-                    <span class="metric-value">${feedPerBird.toFixed(0)} g/bird</span>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>📊 Current Feed Inventory</h4>
-                ${feedInventory.map(item => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatFeedType(item.feedType)}</span>
-                        <span class="metric-value">${item.currentStock} kg ($${item.costPerKg}/kg)</span>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-
-        this.showReport('Feed Consumption Report', reportContent);
-    },
-
-    generateComprehensiveReport() {
-        // Combine all report data
-        let comprehensiveContent = '';
-        
-        // Financial Section
-        comprehensiveContent += this.generateFinancialReportContent();
-        
-        // Production Section
-        comprehensiveContent += this.generateProductionReportContent();
-        
-        // Inventory Section
-        comprehensiveContent += this.generateInventoryReportContent();
-        
-        // Sales Section
-        comprehensiveContent += this.generateSalesReportContent();
-        
-        // Health Section
-        comprehensiveContent += this.generateHealthReportContent();
-        
-        // Feed Section
-        comprehensiveContent += this.generateFeedReportContent();
-
-        this.showReport('Comprehensive Farm Report', comprehensiveContent);
-    },
-
-    generateFinancialReportContent() {
-        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
-        const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-        const expenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-        const netProfit = income - expenses;
-
-        return `
-            <div class="report-section">
-                <h4>💰 Financial Summary</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Income</span>
-                    <span class="metric-value income">${this.formatCurrency(income)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Expenses</span>
-                    <span class="metric-value expense">${this.formatCurrency(expenses)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Net Profit</span>
-                    <span class="metric-value ${netProfit >= 0 ? 'profit' : 'expense'}">${this.formatCurrency(netProfit)}</span>
-                </div>
-            </div>
-        `;
-    },
-
-    generateProductionReportContent() {
-        const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
-        const totalProduction = production.reduce((sum, record) => sum + record.quantity, 0);
-
-        return `
-            <div class="report-section">
-                <h4>🚜 Production Summary</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Production</span>
-                    <span class="metric-value">${totalProduction} units</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Production Records</span>
-                    <span class="metric-value">${production.length}</span>
-                </div>
-            </div>
-        `;
-    },
-
-    generateInventoryReportContent() {
-        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
-        const lowStockItems = inventory.filter(item => item.currentStock <= item.minStock).length;
-
-        return `
-            <div class="report-section">
-                <h4>📦 Inventory Summary</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Items</span>
-                    <span class="metric-value">${inventory.length}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Low Stock Items</span>
-                    <span class="metric-value ${lowStockItems > 0 ? 'warning' : ''}">${lowStockItems}</span>
-                </div>
-            </div>
-        `;
-    },
-
-    generateSalesReportContent() {
-        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
-        const totalSales = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
-
-        return `
-            <div class="report-section">
-                <h4>📊 Sales Summary</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Revenue</span>
-                    <span class="metric-value income">${this.formatCurrency(totalSales)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Orders</span>
-                    <span class="metric-value">${sales.length}</span>
-                </div>
-            </div>
-        `;
-    },
-
-    generateHealthReportContent() {
-        const mortality = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
-        const currentStock = parseInt(localStorage.getItem('farm-current-stock') || '1000');
-        const totalLosses = mortality.reduce((sum, record) => sum + record.quantity, 0);
-        const mortalityRate = currentStock > 0 ? (totalLosses / (currentStock + totalLosses)) * 100 : 0;
-
-        return `
-            <div class="report-section">
-                <h4>🐔 Health Summary</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Current Flock</span>
-                    <span class="metric-value">${currentStock} birds</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Mortality Rate</span>
-                    <span class="metric-value ${mortalityRate > 5 ? 'warning' : 'profit'}">${mortalityRate.toFixed(1)}%</span>
-                </div>
-            </div>
-        `;
-    },
-
-    generateFeedReportContent() {
-        const feedRecords = JSON.parse(localStorage.getItem('farm-feed-records') || '[]');
-        const totalFeedUsed = feedRecords.reduce((sum, record) => sum + record.quantity, 0);
-
-        return `
-            <div class="report-section">
-                <h4>🌾 Feed Summary</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Feed Used</span>
-                    <span class="metric-value">${totalFeedUsed.toFixed(1)} kg</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Feed Records</span>
-                    <span class="metric-value">${feedRecords.length}</span>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>🏆 Overall Farm Performance</h4>
-                <div style="padding: 20px; background: linear-gradient(135deg, #dcfce7, #dbeafe); border-radius: 12px; text-align: center;">
-                    <h3 style="color: #1a1a1a; margin-bottom: 8px;">Farm Health Score</h3>
-                    <div style="font-size: 32px; font-weight: bold; color: #22c55e;">85%</div>
-                    <p style="color: #666; margin-top: 8px;">Your farm is performing well overall with strong financials and good production metrics.</p>
-                </div>
-            </div>
-        `;
-    },
-
-    showReport(title, content) {
-        document.getElementById('report-title').textContent = title;
-        document.getElementById('report-content').innerHTML = content;
-        document.getElementById('report-output').classList.remove('hidden');
-        document.getElementById('report-output').scrollIntoView({ behavior: 'smooth' });
-    },
-
-    closeReport() {
-        document.getElementById('report-output').classList.add('hidden');
-    },
-
-    printReport() {
-        const reportContent = document.getElementById('report-content').innerHTML;
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-            <html>
-                <head>
-                    <title>Farm Report</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 20px; }
-                        .report-section { margin-bottom: 30px; }
-                        .metric-row { display: flex; justify-content: space-between; margin-bottom: 8px; padding: 8px 0; border-bottom: 1px solid #eee; }
-                        .metric-label { font-weight: 600; }
-                        .metric-value { font-weight: bold; }
-                        .income { color: #22c55e; }
-                        .expense { color: #ef4444; }
-                        .profit { color: #22c55e; }
-                        .warning { color: #f59e0b; }
-                    </style>
-                </head>
-                <body>
-                    <h1>${document.getElementById('report-title').textContent}</h1>
-                    <div>Generated on: ${new Date().toLocaleDateString()}</div>
-                    <hr>
-                    ${reportContent}
-                </body>
-            </html>
-        `);
-        printWindow.document.close();
-        printWindow.print();
-    },
-
-    exportReport() {
-        const reportTitle = document.getElementById('report-title').textContent;
-        const reportContent = document.getElementById('report-content').textContent;
-        
-        const blob = new Blob([`${reportTitle}\n\nGenerated on: ${new Date().toLocaleDateString()}\n\n${reportContent}`], {
-            type: 'text/plain'
+        // Event delegation for dynamic elements
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('view-order')) {
+                const orderId = e.target.getAttribute('data-order-id');
+                this.viewOrder(orderId);
+            }
+            
+            if (e.target.classList.contains('process-order')) {
+                const orderId = e.target.getAttribute('data-order-id');
+                this.processOrder(orderId);
+            }
+            
+            if (e.target.classList.contains('remove-item')) {
+                this.removeOrderItem(e.target);
+            }
         });
         
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${reportTitle.toLowerCase().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            const createModal = document.getElementById('create-order-modal');
+            if (e.target === createModal) {
+                this.closeCreateModal();
+            }
+        });
+    },
+
+    handleQuickAction(action) {
+        const actionMap = {
+            'create-order': () => this.showCreateOrderModal(),
+            'pending-orders': () => this.filterOrders('pending'),
+            'today-orders': () => this.filterOrders('today'),
+            'completed-orders': () => this.filterOrders('completed')
+        };
+
+        const actionHandler = actionMap[action];
+        if (actionHandler) {
+            actionHandler();
+        }
+    },
+
+    loadCustomers() {
+        const customers = JSON.parse(localStorage.getItem('farm-customers') || '[]');
+        const customerSelect = document.getElementById('customer-select');
+        
+        customerSelect.innerHTML = '<option value="">Select Customer</option>';
+        customers.forEach(customer => {
+            const option = document.createElement('option');
+            option.value = customer.id;
+            option.textContent = customer.name;
+            customerSelect.appendChild(option);
+        });
+    },
+
+    showCreateOrderModal() {
+        document.getElementById('create-order-modal').classList.remove('hidden');
+    },
+
+    closeCreateModal() {
+        document.getElementById('create-order-modal').classList.add('hidden');
+        document.getElementById('create-order-form').reset();
+        
+        // Reset to single item
+        const orderItems = document.getElementById('order-items');
+        orderItems.innerHTML = `
+            <div class="order-item" style="margin-bottom: 12px;">
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; align-items: end;">
+                    <select class="product-select" required style="
+                        padding: 8px 12px;
+                        border: 1px solid rgba(0, 0, 0, 0.1);
+                        border-radius: 8px;
+                        background: rgba(255, 255, 255, 0.9);
+                        backdrop-filter: blur(20px);
+                        color: #1a1a1a;
+                        font-size: 14px;
+                    ">
+                        <option value="">Select Product</option>
+                        <option value="eggs">Eggs</option>
+                        <option value="broilers">Broilers</option>
+                        <option value="layers">Layers</option>
+                    </select>
+                    <input type="number" class="quantity-input" placeholder="Qty" min="1" required style="
+                        padding: 8px 12px;
+                        border: 1px solid rgba(0, 0, 0, 0.1);
+                        border-radius: 8px;
+                        background: rgba(255, 255, 255, 0.9);
+                        backdrop-filter: blur(20px);
+                        color: #1a1a1a;
+                        font-size: 14px;
+                    ">
+                    <input type="number" class="price-input" placeholder="Price" step="0.01" min="0" required style="
+                        padding: 8px 12px;
+                        border: 1px solid rgba(0, 0, 0, 0.1);
+                        border-radius: 8px;
+                        background: rgba(255, 255, 255, 0.9);
+                        backdrop-filter: blur(20px);
+                        color: #1a1a1a;
+                        font-size: 14px;
+                    ">
+                    <button type="button" class="remove-item" style="
+                        padding: 8px 12px;
+                        border: 1px solid rgba(0, 0, 0, 0.1);
+                        border-radius: 8px;
+                        background: rgba(255, 255, 255, 0.9);
+                        backdrop-filter: blur(20px);
+                        color: #666;
+                        cursor: pointer;
+                        font-size: 14px;
+                    ">Remove</button>
+                </div>
+            </div>
+        `;
+    },
+
+    addOrderItem() {
+        const orderItems = document.getElementById('order-items');
+        const newItem = document.createElement('div');
+        newItem.className = 'order-item';
+        newItem.style.marginBottom = '12px';
+        newItem.innerHTML = `
+            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; align-items: end;">
+                <select class="product-select" required style="
+                    padding: 8px 12px;
+                    border: 1px solid rgba(0, 0, 0, 0.1);
+                    border-radius: 8px;
+                    background: rgba(255, 255, 255, 0.9);
+                    backdrop-filter: blur(20px);
+                    color: #1a1a1a;
+                    font-size: 14px;
+                ">
+                    <option value="">Select Product</option>
+                    <option value="eggs">Eggs</option>
+                    <option value="broilers">Broilers</option>
+                    <option value="layers">Layers</option>
+                </select>
+                <input type="number" class="quantity-input" placeholder="Qty" min="1" required style="
+                    padding: 8px 12px;
+                    border: 1px solid rgba(0, 0, 0, 0.1);
+                    border-radius: 8px;
+                    background: rgba(255, 255, 255, 0.9);
+                    backdrop-filter: blur(20px);
+                    color: #1a1a1a;
+                    font-size: 14px;
+                ">
+                <input type="number" class="price-input" placeholder="Price" step="0.01" min="0" required style="
+                    padding: 8px 12px;
+                    border: 1px solid rgba(0, 0, 0, 0.1);
+                    border-radius: 8px;
+                    background: rgba(255, 255, 255, 0.9);
+                    backdrop-filter: blur(20px);
+                    color: #1a1a1a;
+                    font-size: 14px;
+                ">
+                <button type="button" class="remove-item" style="
+                    padding: 8px 12px;
+                    border: 1px solid rgba(0, 0, 0, 0.1);
+                    border-radius: 8px;
+                    background: rgba(255, 255, 255, 0.9);
+                    backdrop-filter: blur(20px);
+                    color: #666;
+                    cursor: pointer;
+                    font-size: 14px;
+                ">Remove</button>
+            </div>
+        `;
+        orderItems.appendChild(newItem);
+    },
+
+    removeOrderItem(button) {
+        const orderItems = document.getElementById('order-items');
+        if (orderItems.children.length > 1) {
+            button.closest('.order-item').remove();
+        }
+    },
+
+    createOrder(e) {
+        e.preventDefault();
+        
+        const customerId = document.getElementById('customer-select').value;
+        const customerName = document.getElementById('customer-select').options[document.getElementById('customer-select').selectedIndex].text;
+        const orderDate = document.getElementById('order-date').value;
+        const deliveryDate = document.getElementById('delivery-date').value;
+        const status = document.getElementById('order-status').value;
+        const notes = document.getElementById('order-notes').value;
+        
+        // Validate items
+        const items = [];
+        let totalAmount = 0;
+        let valid = true;
+        
+        document.querySelectorAll('.order-item').forEach(item => {
+            const productSelect = item.querySelector('.product-select');
+            const quantityInput = item.querySelector('.quantity-input');
+            const priceInput = item.querySelector('.price-input');
+            
+            if (!productSelect.value || !quantityInput.value || !priceInput.value) {
+                valid = false;
+                return;
+            }
+            
+            const quantity = parseInt(quantityInput.value);
+            const price = parseFloat(priceInput.value);
+            const itemTotal = quantity * price;
+            
+            items.push({
+                product: productSelect.value,
+                productName: productSelect.options[productSelect.selectedIndex].text,
+                quantity: quantity,
+                price: price,
+                total: itemTotal
+            });
+            
+            totalAmount += itemTotal;
+        });
+        
+        if (!valid) {
+            if (window.coreModule) {
+                window.coreModule.showNotification('Please fill all item fields', 'error');
+            }
+            return;
+        }
+        
+        // Create order object
+        const order = {
+            id: Date.now(),
+            customerId: parseInt(customerId),
+            customerName: customerName,
+            orderDate: orderDate,
+            deliveryDate: deliveryDate,
+            status: status,
+            items: items,
+            totalAmount: totalAmount,
+            notes: notes,
+            createdAt: new Date().toISOString()
+        };
+        
+        // Save to localStorage
+        const orders = JSON.parse(localStorage.getItem('farm-orders') || '[]');
+        orders.push(order);
+        localStorage.setItem('farm-orders', JSON.stringify(orders));
+        
+        // Close modal and refresh
+        this.closeCreateModal();
+        this.renderModule();
         
         if (window.coreModule) {
-            window.coreModule.showNotification('Report exported successfully!', 'success');
+            window.coreModule.showNotification('Order created successfully!', 'success');
+        }
+    },
+
+    viewOrder(orderId) {
+        // Implementation for viewing order details
+        if (window.coreModule) {
+            window.coreModule.showNotification('View order details for #' + orderId, 'info');
+        }
+    },
+
+    processOrder(orderId) {
+        const orders = JSON.parse(localStorage.getItem('farm-orders') || '[]');
+        const orderIndex = orders.findIndex(o => o.id == orderId);
+        
+        if (orderIndex !== -1) {
+            orders[orderIndex].status = 'processing';
+            localStorage.setItem('farm-orders', JSON.stringify(orders));
+            this.renderModule();
+            
+            if (window.coreModule) {
+                window.coreModule.showNotification('Order processing started!', 'success');
+            }
+        }
+    },
+
+    filterOrders(status) {
+        // Implementation for filtering orders
+        if (window.coreModule) {
+            window.coreModule.showNotification('Filtering orders: ' + status, 'info');
+        }
+    },
+
+    searchOrders(query) {
+        // Implementation for searching orders
+        if (query) {
+            if (window.coreModule) {
+                window.coreModule.showNotification('Searching for: ' + query, 'info');
+            }
         }
     },
 
     // Helper methods
+    getStatusIcon(status) {
+        const icons = {
+            'pending': '⏳',
+            'processing': '🔄',
+            'completed': '✅',
+            'cancelled': '❌'
+        };
+        return icons[status] || '📦';
+    },
+
+    getStatusColor(status) {
+        const colors = {
+            'pending': { background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b' },
+            'processing': { background: 'rgba(59, 130, 246, 0.2)', color: '#3b82f6' },
+            'completed': { background: 'rgba(34, 197, 94, 0.2)', color: '#22c55e' },
+            'cancelled': { background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }
+        };
+        return colors[status] || { background: 'rgba(0, 0, 0, 0.1)', color: '#666' };
+    },
+
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD'
         }).format(amount);
-    },
-
-    formatCategory(category) {
-        const categories = {
-            'egg-sales': 'Egg Sales',
-            'poultry-sales': 'Poultry Sales',
-            'crop-sales': 'Crop Sales',
-            'feed': 'Feed',
-            'medication': 'Medication',
-            'equipment': 'Equipment',
-            'labor': 'Labor',
-            'other': 'Other',
-            'feed': 'Feed',
-            'medical': 'Medical',
-            'packaging': 'Packaging',
-            'equipment': 'Equipment',
-            'cleaning': 'Cleaning'
-        };
-        return categories[category] || category;
-    },
-
-    formatQuality(quality) {
-        const qualities = {
-            'excellent': 'Excellent',
-            'grade-a': 'Grade A',
-            'grade-b': 'Grade B',
-            'grade-c': 'Grade C',
-            'rejects': 'Rejects'
-        };
-        return qualities[quality] || quality;
-    },
-
-    formatCause(cause) {
-        const causes = {
-            'natural': 'Natural Causes',
-            'disease': 'Disease',
-            'predator': 'Predator',
-            'accident': 'Accident',
-            'heat-stress': 'Heat Stress',
-            'other': 'Other'
-        };
-        return causes[cause] || cause;
-    },
-
-    formatFeedType(feedType) {
-        const types = {
-            'starter': 'Starter',
-            'grower': 'Grower',
-            'finisher': 'Finisher',
-            'layer': 'Layer'
-        };
-        return types[feedType] || feedType;
-    },
-
-    getFinancialInsights(income, expenses, netProfit, profitMargin) {
-        if (netProfit < 0) {
-            return "⚠️ Your farm is operating at a loss. Consider reviewing expenses and increasing revenue streams.";
-        } else if (profitMargin < 10) {
-            return "📈 Profit margin is low. Focus on cost optimization and premium product offerings.";
-        } else if (profitMargin > 25) {
-            return "🎉 Excellent profitability! Consider reinvesting in farm expansion or improvements.";
-        } else {
-            return "✅ Healthy financial performance. Maintain current operations and monitor trends.";
-        }
-    },
-
-    getSalesInsights(sales, totalSales, avgOrderValue) {
-        if (sales.length === 0) return "No sales data available. Start recording sales to get insights.";
-        
-        const recentSales = sales.slice(0, 7); // Last 7 sales
-        const recentTotal = recentSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
-        const growth = recentTotal > 0 ? ((totalSales - recentTotal) / recentTotal) * 100 : 0;
-
-        if (growth > 0) {
-            return `📈 Sales are growing! ${growth.toFixed(1)}% increase in recent activity.`;
-        } else if (growth < 0) {
-            return `📉 Sales have decreased by ${Math.abs(growth).toFixed(1)}%. Review marketing and customer engagement.`;
-        } else {
-            return "➡️ Sales are stable. Consider new marketing initiatives to drive growth.";
-        }
-    },
-
-    getHealthRecommendations(mortalityRate, causeAnalysis) {
-        if (mortalityRate > 5) {
-            return "🚨 High mortality rate detected. Immediate veterinary consultation recommended. Review housing conditions and biosecurity measures.";
-        } else if (mortalityRate > 2) {
-            return "⚠️ Moderate mortality rate. Monitor flock health closely. Consider vaccination programs and nutritional supplements.";
-        } else if (causeAnalysis['disease'] > 0) {
-            return "🦠 Disease cases reported. Enhance biosecurity and consider preventive healthcare measures.";
-        } else {
-            return "✅ Excellent flock health! Maintain current management practices and continue regular monitoring.";
-        }
     }
 };
 
+// Add modal CSS
+const ordersCSS = `
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+    }
+
+    .modal.hidden {
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .actions-grid {
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+        }
+        
+        .modal-content {
+            width: 95% !important;
+            margin: 20px;
+        }
+    }
+`;
+
+// Inject CSS
+if (!document.querySelector('#orders-module-css')) {
+    const style = document.createElement('style');
+    style.id = 'orders-module-css';
+    style.textContent = ordersCSS;
+    document.head.appendChild(style);
+}
+
 if (window.FarmModules) {
-    window.FarmModules.registerModule('reports', ReportsModule);
+    window.FarmModules.registerModule('orders', OrdersModule);
 }
