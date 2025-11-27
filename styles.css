@@ -1633,6 +1633,535 @@ header, .top-nav {
     gap: 12px;
   }
 }
+
 /*==================================
-  Inventory Check Module Styles
+  Inventory Module Styles
+  EXACT Dashboard Design System
 ===================================*/
+.inventory-module {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: calc(100vh - 80px);
+  background: linear-gradient(135deg, #f8faf9 0%, #f0f7f4 100%);
+}
+
+/* Header - EXACT Dashboard Size */
+.inventory-header-pwa {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--complementary-teal) 100%);
+  margin: -20px -20px 20px -20px;
+  padding: 25px 20px;
+  border-radius: 0 0 20px 20px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.15);
+}
+
+.inventory-title-pwa {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.inventory-subtitle-pwa {
+  font-size: 14px;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+/* Inventory Stats - EXACT Dashboard Card Size */
+.inventory-stats-pwa {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.inventory-stat-pwa {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.inventory-stat-pwa::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary-color), var(--complementary-teal));
+}
+
+.inventory-stat-pwa:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.inventory-stat-icon-pwa {
+  font-size: 28px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.inventory-stat-value-pwa {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 2px;
+  color: var(--text-primary);
+}
+
+.inventory-stat-label-pwa {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* Inventory Actions - EXACT Dashboard Button Size */
+.inventory-actions-pwa {
+  margin-bottom: 20px;
+}
+
+.inventory-grid-pwa {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.inventory-action-btn-pwa {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 20px 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.inventory-action-btn-pwa:nth-child(1) { border-top: 2px solid var(--primary-color); }
+.inventory-action-btn-pwa:nth-child(2) { border-top: 2px solid var(--complementary-amber); }
+.inventory-action-btn-pwa:nth-child(3) { border-top: 2px solid var(--complementary-teal); }
+.inventory-action-btn-pwa:nth-child(4) { border-top: 2px solid var(--complementary-sky); }
+.inventory-action-btn-pwa:nth-child(5) { border-top: 2px solid var(--complementary-lavender); }
+
+.inventory-action-btn-pwa:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 1);
+}
+
+.inventory-action-icon-pwa {
+  font-size: 28px;
+  transition: transform 0.3s ease;
+}
+
+.inventory-action-btn-pwa:hover .inventory-action-icon-pwa {
+  transform: scale(1.05);
+}
+
+.inventory-action-title-pwa {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.inventory-action-desc-pwa {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+/* Quick Inventory Management - Compact Form */
+.quick-management-pwa {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-top: 3px solid var(--complementary-amber);
+}
+
+.management-title-pwa {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.management-grid-pwa {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.management-group-pwa {
+  margin-bottom: 16px;
+}
+
+.management-label-pwa {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.management-input-pwa, .management-select-pwa {
+  width: 100%;
+  padding: 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
+}
+
+.management-input-pwa:focus {
+  border-color: var(--complementary-amber);
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Inventory List - EXACT Dashboard Activity Size */
+.inventory-list-section-pwa {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-top: 3px solid var(--complementary-sky);
+}
+
+.list-header-pwa {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.list-title-pwa {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.inventory-list-pwa {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inventory-item-pwa {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  transition: all 0.3s ease;
+}
+
+.inventory-item-pwa:hover {
+  transform: translateX(4px);
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.inventory-item-info-pwa {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.inventory-item-icon-pwa {
+  font-size: 18px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--primary-color);
+}
+
+.inventory-item-pwa.low-stock .inventory-item-icon-pwa {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.inventory-item-pwa.out-of-stock .inventory-item-icon-pwa {
+  background: rgba(156, 163, 175, 0.1);
+  color: #9ca3af;
+}
+
+.inventory-item-details-pwa {
+  flex: 1;
+}
+
+.inventory-item-name-pwa {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1px;
+  font-size: 14px;
+}
+
+.inventory-item-meta-pwa {
+  font-size: 11px;
+  color: var(--text-secondary);
+  display: flex;
+  gap: 12px;
+}
+
+.inventory-item-stock-pwa {
+  font-weight: 700;
+  text-align: right;
+  min-width: 80px;
+}
+
+.inventory-item-stock-pwa.in-stock {
+  color: var(--primary-color);
+}
+
+.inventory-item-stock-pwa.low-stock {
+  color: var(--complementary-amber);
+}
+
+.inventory-item-stock-pwa.out-of-stock {
+  color: #ef4444;
+}
+
+/* Stock Alerts - Compact Dashboard Style */
+.stock-alerts-pwa {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-top: 3px solid #ef4444;
+}
+
+.alerts-header-pwa {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.alerts-title-pwa {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.alerts-list-pwa {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.alert-item-pwa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  transition: all 0.3s ease;
+}
+
+.alert-item-pwa:hover {
+  transform: translateX(4px);
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.alert-icon-pwa {
+  font-size: 18px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.alert-item-pwa.warning .alert-icon-pwa {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--complementary-amber);
+}
+
+.alert-details-pwa {
+  flex: 1;
+}
+
+.alert-message-pwa {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  font-size: 14px;
+}
+
+.alert-product-pwa {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* Buttons - Consistent Dashboard Size */
+.inventory-btn-primary-pwa {
+  background: linear-gradient(135deg, var(--primary-color), var(--complementary-teal));
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 12px rgba(20, 184, 166, 0.3);
+}
+
+.inventory-btn-primary-pwa:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(20, 184, 166, 0.4);
+}
+
+.inventory-btn-warning-pwa {
+  background: linear-gradient(135deg, var(--complementary-amber), #f59e0b);
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.3);
+}
+
+.inventory-btn-warning-pwa:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+}
+
+/* Empty State */
+.inventory-empty-pwa {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
+
+.inventory-empty-icon-pwa {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+  color: var(--complementary-teal);
+}
+
+.inventory-empty-title-pwa {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+
+.inventory-empty-desc-pwa {
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .inventory-module {
+    padding: 16px;
+  }
+  
+  .inventory-header-pwa {
+    margin: -16px -16px 16px -16px;
+    padding: 20px 16px;
+  }
+  
+  .inventory-stats-pwa {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .inventory-grid-pwa {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .management-grid-pwa {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .inventory-list-section-pwa,
+  .stock-alerts-pwa,
+  .quick-management-pwa {
+    padding: 20px 16px;
+  }
+  
+  .list-header-pwa,
+  .alerts-header-pwa {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 480px) {
+  .inventory-grid-pwa {
+    grid-template-columns: 1fr;
+  }
+  
+  .inventory-title-pwa {
+    font-size: 22px;
+  }
+  
+  .inventory-item-info-pwa {
+    gap: 8px;
+  }
+  
+  .inventory-item-icon-pwa {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+}
+
+
