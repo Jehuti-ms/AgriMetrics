@@ -171,31 +171,7 @@ setupHamburgerMenu() {
     });
 }
 
-    setupHamburgerMenu() {
-        const hamburger = document.getElementById('hamburger-menu');
-        const sideMenu = document.getElementById('side-menu');
-        
-        if (hamburger && sideMenu) {
-            hamburger.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent event bubbling
-                sideMenu.classList.toggle('active');
-            });
-        }
-        
-        // Close sidebar when clicking outside
-        document.addEventListener('click', (e) => {
-            const sideMenu = document.getElementById('side-menu');
-            const hamburger = document.getElementById('hamburger-menu');
-            
-            if (sideMenu && hamburger) {
-                if (!sideMenu.contains(e.target) && !hamburger.contains(e.target)) {
-                    sideMenu.classList.remove('active');
-                }
-            }
-        });
-        
-        console.log('✅ Hamburger menu setup');
-    }
+
 
     setupSideMenuEvents() {
         const sideMenuItems = document.querySelectorAll('.side-menu-item');
