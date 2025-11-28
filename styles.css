@@ -3893,7 +3893,7 @@ header, .top-nav {
     position: fixed;
     top: 80px; /* Below the navigation bar */
     right: 20px;
-    z-index: 1000;
+    z-index: 10001; /* HIGHER THAN NAVBAR (10000) */
     max-width: 400px;
 }
 
@@ -3907,6 +3907,7 @@ header, .top-nav {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     border-left: 4px solid;
     animation: slideIn 0.3s ease;
+    z-index: 10002; /* EVEN HIGHER */
 }
 
 .notification.success {
@@ -3935,6 +3936,7 @@ header, .top-nav {
         opacity: 1;
     }
 }
+
 /*==============================================================*/
 /* ===== SIDE MENU STYLES ===== */
 .side-menu {
