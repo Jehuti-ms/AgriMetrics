@@ -4235,37 +4235,34 @@ header, .top-nav {
     bottom: 0;
     width: 280px;
     background: #f8f9fa;
-    border-left: 1px solid #e9ecef; /* Border on left since it's on right side */
-    transform: translateX(100%); /* Start off-screen to the right */
+    border-left: 1px solid #e9ecef;
+    transform: translateX(100%); /* Hidden by default - off screen to right */
     transition: transform 0.3s ease;
     z-index: 999;
     overflow-y: auto;
+    /* Ensure it's hidden */
+    visibility: hidden;
+    opacity: 0;
 }
 
 .side-menu.active {
     transform: translateX(0); /* Slide in from right */
+    visibility: visible;
+    opacity: 1;
 }
 
-/* Top nav items spacing */
-.nav-items {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-}
-
-.nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+/* Hamburger menu styling */
+.hamburger-menu {
     background: none;
     border: none;
+    font-size: 24px;
+    cursor: pointer;
     padding: 8px 12px;
     border-radius: 6px;
-    cursor: pointer;
     transition: background-color 0.2s;
 }
 
-.nav-item:hover {
+.hamburger-menu:hover {
     background: #f5f5f5;
 }
 
