@@ -1,4 +1,4 @@
-// modules/income-expenses.js - FULLY WORKING (CORRECTED)
+// modules/income-expenses.js - FULLY WORKING (UPDATED WITH QUICK ACTION SUPPORT)
 console.log('Loading income-expenses module...');
 
 const IncomeExpensesModule = {
@@ -171,7 +171,12 @@ const IncomeExpensesModule = {
             `;
         }
 
-        return this.transactions.map(transaction => {
+        // Sort by date (newest first)
+        const sortedTransactions = [...this.transactions].sort((a, b) => 
+            new Date(b.date) - new Date(a.date)
+        );
+
+        return sortedTransactions.map(transaction => {
             const isIncome = transaction.type === 'income';
             const icon = isIncome ? '💰' : '💸';
             const amountClass = isIncome ? 'income' : 'expense';
@@ -185,13 +190,16 @@ const IncomeExpensesModule = {
                             <div class="transaction-meta-pwa">
                                 <span>${this.formatCategory(transaction.category)}</span>
                                 <span>•</span>
-                                <span>${transaction.date}</span>
+                                <span>${this.formatDate(transaction.date)}</span>
                             </div>
                         </div>
                     </div>
                     <div class="transaction-amount-pwa ${amountClass}">
                         ${isIncome ? '+' : '-'}${this.formatCurrency(transaction.amount)}
                     </div>
+                    <button class="delete-transaction-btn" data-id="${transaction.id}" title="Delete transaction">
+                        🗑️
+                    </button>
                 </div>
             `;
         }).join('');
@@ -211,9 +219,8 @@ const IncomeExpensesModule = {
         
         // Delete transaction handlers
         document.addEventListener('click', (e) => {
-            const transactionItem = e.target.closest('.transaction-item-pwa');
-            if (transactionItem) {
-                const id = parseInt(transactionItem.dataset.id);
+            if (e.target.classList.contains('delete-transaction-btn')) {
+                const id = parseInt(e.target.dataset.id);
                 this.deleteTransaction(id);
             }
         });
@@ -233,6 +240,13 @@ const IncomeExpensesModule = {
                 e.currentTarget.style.transform = 'translateY(0) scale(1)';
             });
         });
+
+        // Auto-focus amount field when form is shown
+        document.getElementById('transaction-type')?.addEventListener('change', (e) => {
+            setTimeout(() => {
+                document.getElementById('transaction-amount')?.focus();
+            }, 100);
+        });
     },
 
     showTransactionForm(type) {
@@ -247,6 +261,11 @@ const IncomeExpensesModule = {
         
         formContainer.classList.remove('hidden');
         formContainer.scrollIntoView({ behavior: 'smooth' });
+        
+        // Auto-focus amount field
+        setTimeout(() => {
+            document.getElementById('transaction-amount')?.focus();
+        }, 300);
     },
 
     hideTransactionForm() {
@@ -267,13 +286,18 @@ const IncomeExpensesModule = {
             date: document.getElementById('transaction-date').value
         };
 
+        // Validate amount
+        if (formData.amount <= 0) {
+            this.showNotification('Please enter a valid amount greater than 0', 'error');
+            return;
+        }
+
         this.transactions.unshift(formData);
         this.saveData();
         this.renderModule();
+        this.hideTransactionForm();
         
-        if (window.coreModule && window.coreModule.showNotification) {
-            window.coreModule.showNotification('Transaction added successfully!', 'success');
-        }
+        this.showNotification('Transaction added successfully!', 'success');
     },
 
     deleteTransaction(id) {
@@ -282,9 +306,7 @@ const IncomeExpensesModule = {
             this.saveData();
             this.renderModule();
             
-            if (window.coreModule && window.coreModule.showNotification) {
-                window.coreModule.showNotification('Transaction deleted!', 'success');
-            }
+            this.showNotification('Transaction deleted!', 'success');
         }
     },
 
@@ -294,12 +316,40 @@ const IncomeExpensesModule = {
             this.saveData();
             this.renderModule();
             
-            if (window.coreModule && window.coreModule.showNotification) {
-                window.coreModule.showNotification('All transactions cleared!', 'success');
-            }
+            this.showNotification('All transactions cleared!', 'success');
         }
     },
 
+    // NEW METHODS FOR DASHBOARD QUICK ACTIONS
+    handleQuickAction(action) {
+        console.log('IncomeExpenses: Handling quick action:', action);
+        
+        if (action === 'add-income') {
+            this.showIncomeTab();
+            setTimeout(() => {
+                this.showTransactionForm('income');
+            }, 100);
+        } else if (action === 'add-expense') {
+            this.showExpenseTab();
+            setTimeout(() => {
+                this.showTransactionForm('expense');
+            }, 100);
+        }
+    },
+
+    showIncomeTab() {
+        // Since we don't have tabs in this version, we'll just show the income form directly
+        console.log('Showing income tab...');
+        // If we had tabs, we would activate the income tab here
+    },
+
+    showExpenseTab() {
+        // Since we don't have tabs in this version, we'll just show the expense form directly
+        console.log('Showing expense tab...');
+        // If we had tabs, we would activate the expense tab here
+    },
+
+    // Helper methods
     formatCategory(category) {
         const categories = {
             'egg-sales': 'Egg Sales',
@@ -314,6 +364,19 @@ const IncomeExpensesModule = {
         return categories[category] || category;
     },
 
+    formatDate(dateString) {
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        } catch (error) {
+            return dateString;
+        }
+    },
+
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -323,6 +386,25 @@ const IncomeExpensesModule = {
 
     saveData() {
         localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+    },
+
+    showNotification(message, type) {
+        if (window.coreModule && window.coreModule.showNotification) {
+            window.coreModule.showNotification(message, type);
+        } else {
+            alert(message);
+        }
+    },
+
+    // Method to get recent transactions for dashboard
+    getRecentTransactions(limit = 5) {
+        const sorted = [...this.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+        return sorted.slice(0, limit);
+    },
+
+    // Method to get stats for dashboard
+    getStats() {
+        return this.calculateStats();
     }
 };
 
