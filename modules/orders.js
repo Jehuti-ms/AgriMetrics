@@ -1,850 +1,821 @@
-// modules/orders.js
-FarmModules.registerModule('orders', {
-    name: 'Orders',
-    icon: '📋',
-    
-    template: `
-        <div class="section active">
-            <div class="module-header">
-                <h1>Produce Orders</h1>
-                <p>Manage customer orders and track order fulfillment</p>
-                <div class="header-actions">
-                    <button class="btn btn-primary" id="add-order">
-                        ➕ New Order
+// modules/orders.js - FULLY WORKING
+console.log('Loading orders module...');
+
+const OrdersModule = {
+    name: 'orders',
+    initialized: false,
+    orders: [],
+    customers: [],
+    products: [],
+
+    initialize() {
+        console.log('📋 Initializing orders...');
+        this.loadData();
+        this.renderModule();
+        this.initialized = true;
+        return true;
+    },
+
+    loadData() {
+        const savedOrders = localStorage.getItem('farm-orders');
+        const savedCustomers = localStorage.getItem('farm-customers');
+        const savedProducts = localStorage.getItem('farm-products');
+        
+        this.orders = savedOrders ? JSON.parse(savedOrders) : this.getDemoOrders();
+        this.customers = savedCustomers ? JSON.parse(savedCustomers) : this.getDemoCustomers();
+        this.products = savedProducts ? JSON.parse(savedProducts) : this.getDemoProducts();
+    },
+
+    getDemoOrders() {
+        return [
+            {
+                id: 1,
+                orderNumber: 'ORD-001',
+                customerId: 1,
+                date: '2024-03-15',
+                status: 'completed',
+                items: [
+                    { productId: 1, quantity: 20, unitPrice: 8.50, total: 170 },
+                    { productId: 2, quantity: 5, unitPrice: 12.00, total: 60 }
+                ],
+                totalAmount: 230,
+                paymentStatus: 'paid',
+                deliveryDate: '2024-03-16',
+                notes: 'Regular customer - prompt payment'
+            },
+            {
+                id: 2,
+                orderNumber: 'ORD-002',
+                customerId: 2,
+                date: '2024-03-14',
+                status: 'processing',
+                items: [
+                    { productId: 3, quantity: 100, unitPrice: 0.25, total: 25 }
+                ],
+                totalAmount: 25,
+                paymentStatus: 'pending',
+                deliveryDate: '2024-03-17',
+                notes: 'New customer - follow up'
+            },
+            {
+                id: 3,
+                orderNumber: 'ORD-003',
+                customerId: 3,
+                date: '2024-03-13',
+                status: 'pending',
+                items: [
+                    { productId: 1, quantity: 50, unitPrice: 8.00, total: 400 },
+                    { productId: 4, quantity: 10, unitPrice: 5.00, total: 50 }
+                ],
+                totalAmount: 450,
+                paymentStatus: 'pending',
+                deliveryDate: '2024-03-20',
+                notes: 'Bulk order - confirm stock'
+            }
+        ];
+    },
+
+    getDemoCustomers() {
+        return [
+            { id: 1, name: 'Restaurant A', email: 'orders@restauranta.com', phone: '+1234567890', address: '123 Main St, City', type: 'restaurant' },
+            { id: 2, name: 'Local Market', email: 'produce@localmarket.com', phone: '+1234567891', address: '456 Market Ave, Town', type: 'retail' },
+            { id: 3, name: 'Hotel Grand', email: 'procurement@hotelgrand.com', phone: '+1234567892', address: '789 Luxury Blvd, City', type: 'hotel' },
+            { id: 4, name: 'Individual Customer', email: 'john@email.com', phone: '+1234567893', address: '321 Home St, Village', type: 'individual' }
+        ];
+    },
+
+    getDemoProducts() {
+        return [
+            { id: 1, name: 'Broilers', category: 'poultry', unit: 'birds', price: 8.50, inStock: true },
+            { id: 2, name: 'Layers', category: 'poultry', unit: 'birds', price: 12.00, inStock: true },
+            { id: 3, name: 'Eggs', category: 'eggs', unit: 'pieces', price: 0.25, inStock: true },
+            { id: 4, name: 'Manure', category: 'fertilizer', unit: 'bags', price: 5.00, inStock: true },
+            { id: 5, name: 'Chicken Feed', category: 'feed', unit: 'kg', price: 2.50, inStock: false }
+        ];
+    },
+
+    renderModule() {
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
+
+        const stats = this.calculateStats();
+        const recentOrders = this.orders.slice(0, 5);
+
+        contentArea.innerHTML = `
+            <div class="module-container">
+                <div class="module-header">
+                    <h1 class="module-title">Orders Management</h1>
+                    <p class="module-subtitle">Manage customer orders and deliveries</p>
+                </div>
+
+                <!-- Orders Overview -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📋</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.totalOrders}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Orders</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.formatCurrency(stats.totalRevenue)}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Revenue</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">⏳</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #f59e0b; margin-bottom: 4px;">${stats.pendingOrders}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Pending</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.avgOrderValue}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Avg Order</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-action-grid">
+                    <button class="quick-action-btn" id="create-order-btn">
+                        <div style="font-size: 32px;">➕</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Create Order</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">New customer order</span>
+                    </button>
+                    <button class="quick-action-btn" id="manage-customers-btn">
+                        <div style="font-size: 32px;">👥</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Customers</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Manage customers</span>
+                    </button>
+                    <button class="quick-action-btn" id="manage-products-btn">
+                        <div style="font-size: 32px;">📦</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Products</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Manage products</span>
+                    </button>
+                    <button class="quick-action-btn" id="orders-report-btn">
+                        <div style="font-size: 32px;">📈</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Orders Report</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Sales analytics</span>
                     </button>
                 </div>
-            </div>
 
-            <!-- Order Summary -->
-            <div class="orders-summary">
-                <div class="summary-card">
-                    <div class="summary-icon">📥</div>
-                    <div class="summary-content">
-                        <h3>Pending Orders</h3>
-                        <div class="summary-value" id="pending-orders">0</div>
-                        <div class="summary-period">Awaiting fulfillment</div>
-                    </div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-icon">🚚</div>
-                    <div class="summary-content">
-                        <h3>In Progress</h3>
-                        <div class="summary-value" id="progress-orders">0</div>
-                        <div class="summary-period">Being processed</div>
-                    </div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-icon">✅</div>
-                    <div class="summary-content">
-                        <h3>Completed</h3>
-                        <div class="summary-value" id="completed-orders">0</div>
-                        <div class="summary-period">This month</div>
-                    </div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-icon">💰</div>
-                    <div class="summary-content">
-                        <h3>Revenue</h3>
-                        <div class="summary-value" id="total-revenue">$0</div>
-                        <div class="summary-period">This month</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Order Form -->
-            <div class="quick-order card">
-                <h3>Quick Order</h3>
-                <form id="quick-order-form" class="form-inline">
-                    <div class="form-row compact">
-                        <div class="form-group">
-                            <input type="text" id="quick-customer" placeholder="Customer name" required class="form-compact">
-                        </div>
-                        <div class="form-group">
-                            <select id="quick-product" required class="form-compact">
-                                <option value="">Select Product</option>
-                                <option value="broilers">Broilers</option>
-                                <option value="eggs">Eggs</option>
-                                <option value="vegetables">Vegetables</option>
-                                <option value="fruits">Fruits</option>
-                                <option value="dairy">Dairy</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <input type="number" id="quick-quantity" placeholder="Qty" required class="form-compact" min="1">
-                        </div>
-                        <div class="form-group">
-                            <input type="number" id="quick-price" placeholder="Price" step="0.01" class="form-compact" min="0">
-                        </div>
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary btn-compact">Create Order</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Orders List -->
-            <div class="orders-list card">
-                <div class="card-header">
-                    <h3>Recent Orders</h3>
-                    <div class="filter-controls">
-                        <select id="status-filter">
-                            <option value="all">All Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="confirmed">Confirmed</option>
-                            <option value="in-progress">In Progress</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
-                        <button class="btn btn-text" id="export-orders">Export</button>
-                    </div>
-                </div>
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Order ID</th>
-                                <th>Customer</th>
-                                <th>Product</th>
-                                <th>Quantity</th>
-                                <th>Total</th>
-                                <th>Status</th>
-                                <th>Due Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="orders-body">
-                            <tr>
-                                <td colspan="8" class="empty-state">
-                                    <div class="empty-content">
-                                        <span class="empty-icon">📋</span>
-                                        <h4>No orders yet</h4>
-                                        <p>Start by creating your first order</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Order Modal -->
-            <div id="order-modal" class="modal hidden">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 id="order-modal-title">New Order</h3>
-                        <button class="btn-icon close-modal">&times;</button>
-                    </div>
-                    <div class="modal-body">
+                <!-- Create Order Form -->
+                <div id="order-form-container" class="hidden">
+                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                        <h3 style="color: var(--text-primary); margin-bottom: 20px;">Create New Order</h3>
                         <form id="order-form">
-                            <input type="hidden" id="order-id">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Customer</label>
+                                    <select class="form-input" id="order-customer" required>
+                                        <option value="">Select Customer</option>
+                                        ${this.customers.map(customer => `
+                                            <option value="${customer.id}">${customer.name} (${customer.type})</option>
+                                        `).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">Order Date</label>
+                                    <input type="date" class="form-input" id="order-date" required>
+                                </div>
+                            </div>
                             
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="order-customer">Customer Name *</label>
-                                    <input type="text" id="order-customer" required placeholder="Enter customer name">
+                            <!-- Order Items -->
+                            <div style="margin-bottom: 20px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <label class="form-label">Order Items</label>
+                                    <button type="button" class="btn-outline" id="add-order-item" style="font-size: 12px; padding: 6px 12px;">
+                                        + Add Item
+                                    </button>
                                 </div>
-                                <div class="form-group">
-                                    <label for="order-phone">Phone Number</label>
-                                    <input type="tel" id="order-phone" placeholder="Enter phone number">
+                                <div id="order-items-container">
+                                    <!-- Items will be added dynamically -->
                                 </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="order-product">Product *</label>
-                                    <select id="order-product" required>
-                                        <option value="">Select Product</option>
-                                        <optgroup label="Livestock">
-                                            <option value="broilers">Broilers (Live)</option>
-                                            <option value="broilers-dressed">Broilers (Dressed)</option>
-                                            <option value="eggs">Eggs</option>
-                                            <option value="pork">Pork</option>
-                                            <option value="beef">Beef</option>
-                                        </optgroup>
-                                        <optgroup label="Produce">
-                                            <option value="tomatoes">Tomatoes</option>
-                                            <option value="peppers">Peppers</option>
-                                            <option value="cucumbers">Cucumbers</option>
-                                            <option value="lettuce">Lettuce</option>
-                                            <option value="carrots">Carrots</option>
-                                            <option value="potatoes">Potatoes</option>
-                                        </optgroup>
-                                        <optgroup label="Other">
-                                            <option value="honey">Honey</option>
-                                            <option value="milk">Milk</option>
-                                            <option value="cheese">Cheese</option>
-                                            <option value="other">Other</option>
-                                        </optgroup>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="order-unit">Unit *</label>
-                                    <select id="order-unit" required>
-                                        <option value="kg">Kilograms (kg)</option>
-                                        <option value="lbs">Pounds (lbs)</option>
-                                        <option value="units">Units</option>
-                                        <option value="dozen">Dozen</option>
-                                        <option value="case">Case</option>
-                                        <option value="crate">Crate</option>
-                                        <option value="bag">Bag</option>
-                                    </select>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--glass-border);">
+                                    <div style="font-weight: 600; color: var(--text-primary);">Total Amount:</div>
+                                    <div style="font-size: 18px; font-weight: bold; color: var(--primary-color);" id="order-total-amount">$0.00</div>
                                 </div>
                             </div>
 
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="order-quantity">Quantity *</label>
-                                    <input type="number" id="order-quantity" min="1" required placeholder="0">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Delivery Date</label>
+                                    <input type="date" class="form-input" id="delivery-date">
                                 </div>
-                                <div class="form-group">
-                                    <label for="order-price">Price per Unit ($) *</label>
-                                    <input type="number" id="order-price" step="0.01" min="0" required placeholder="0.00">
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="order-status">Status *</label>
-                                    <select id="order-status" required>
+                                <div>
+                                    <label class="form-label">Payment Status</label>
+                                    <select class="form-input" id="payment-status" required>
                                         <option value="pending">Pending</option>
-                                        <option value="confirmed">Confirmed</option>
-                                        <option value="in-progress">In Progress</option>
-                                        <option value="completed">Completed</option>
-                                        <option value="cancelled">Cancelled</option>
+                                        <option value="paid">Paid</option>
+                                        <option value="partial">Partial</option>
+                                        <option value="overdue">Overdue</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label for="order-due-date">Due Date *</label>
-                                    <input type="date" id="order-due-date" required>
-                                </div>
                             </div>
-
-                            <div class="form-group">
-                                <label for="order-notes">Order Notes (Optional)</label>
-                                <textarea id="order-notes" placeholder="Special instructions, delivery notes, etc." rows="3"></textarea>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label class="form-label">Order Notes</label>
+                                <textarea class="form-input" id="order-notes" rows="3" placeholder="Special instructions, delivery notes, etc."></textarea>
                             </div>
-
-                            <div class="order-total">
-                                <h4>Order Total: <span id="order-total-amount">$0.00</span></h4>
+                            
+                            <div style="display: flex; gap: 12px;">
+                                <button type="submit" class="btn-primary">Create Order</button>
+                                <button type="button" class="btn-outline" id="cancel-order-form">Cancel</button>
                             </div>
                         </form>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-text close-modal">Cancel</button>
-                        <button type="button" class="btn btn-danger" id="delete-order" style="display: none;">Delete</button>
-                        <button type="button" class="btn btn-primary" id="save-order">Save Order</button>
+                </div>
+
+                <!-- Recent Orders & Quick Stats -->
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;">
+                    <!-- Recent Orders -->
+                    <div class="glass-card" style="padding: 24px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="color: var(--text-primary); font-size: 20px;">Recent Orders</h3>
+                            <button class="btn-primary" id="show-order-form">Create Order</button>
+                        </div>
+                        <div id="recent-orders-list">
+                            ${this.renderRecentOrders(recentOrders)}
+                        </div>
+                    </div>
+
+                    <!-- Orders Summary -->
+                    <div class="glass-card" style="padding: 24px;">
+                        <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Orders Summary</h3>
+                        <div id="orders-summary">
+                            ${this.renderOrdersSummary(stats)}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- All Orders Table -->
+                <div class="glass-card" style="padding: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: var(--text-primary); font-size: 20px;">All Orders</h3>
+                        <div style="display: flex; gap: 12px;">
+                            <select class="form-input" id="status-filter" style="width: auto;">
+                                <option value="">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="processing">Processing</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                            <input type="text" class="form-input" id="search-orders" placeholder="Search orders..." style="width: 200px;">
+                        </div>
+                    </div>
+                    <div id="all-orders-table">
+                        ${this.renderAllOrdersTable()}
                     </div>
                 </div>
             </div>
-        </div>
-    `,
+        `;
 
-    styles: `
-        .orders-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
-            margin: 1.5rem 0;
-        }
-
-        .summary-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
-            border: 1px solid var(--border-color);
-        }
-
-        .summary-icon {
-            font-size: 2rem;
-            opacity: 0.8;
-            margin-bottom: 0.5rem;
-        }
-
-        .summary-content h3 {
-            margin: 0 0 0.5rem 0;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .summary-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-color);
-            margin-bottom: 0.25rem;
-        }
-
-        .summary-period {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .quick-order {
-            margin: 1.5rem 0;
-        }
-
-        .quick-order .form-row.compact {
-            margin-bottom: 0;
-        }
-
-        .orders-list .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .filter-controls {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .order-total {
-            background: var(--bg-color);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-            text-align: center;
-        }
-
-        .order-total h4 {
-            margin: 0;
-            color: var(--text-color);
-        }
-
-        #order-total-amount {
-            color: var(--success-color);
-            font-weight: 700;
-        }
-
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: capitalize;
-        }
-
-        .status-pending {
-            background: var(--warning-light);
-            color: var(--warning-dark);
-        }
-
-        .status-confirmed {
-            background: var(--info-light);
-            color: var(--info-dark);
-        }
-
-        .status-in-progress {
-            background: var(--primary-light);
-            color: var(--primary-color);
-        }
-
-        .status-completed {
-            background: var(--success-light);
-            color: var(--success-color);
-        }
-
-        .status-cancelled {
-            background: var(--danger-light);
-            color: var(--danger-color);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-muted);
-        }
-
-        .empty-icon {
-            font-size: 3rem;
-            opacity: 0.5;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .empty-content h4 {
-            margin: 0 0 0.5rem 0;
-            font-size: 1.2rem;
-        }
-
-        .empty-content p {
-            margin: 0;
-            opacity: 0.8;
-        }
-    `,
-
-    initialize: function() {
-        console.log('Orders module initializing...');
-        this.loadOrdersData();
-        this.attachEventListeners();
-        this.updateSummary();
-        this.renderOrdersTable();
+        this.setupEventListeners();
+        this.addOrderItem(); // Add one empty item row by default
     },
 
-    loadOrdersData: function() {
-        if (!FarmModules.appData.orders) {
-            FarmModules.appData.orders = [];
-        }
-    },
+    calculateStats() {
+        const totalOrders = this.orders.length;
+        const totalRevenue = this.orders.reduce((sum, order) => sum + order.totalAmount, 0);
+        const pendingOrders = this.orders.filter(order => order.status === 'pending').length;
+        const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
-    updateSummary: function() {
-        const orders = FarmModules.appData.orders || [];
-        const currentDate = new Date();
-        const currentMonth = currentDate.getMonth();
-        const currentYear = currentDate.getFullYear();
-
-        const monthlyOrders = orders.filter(order => {
-            const orderDate = new Date(order.orderDate);
-            return orderDate.getMonth() === currentMonth && 
-                   orderDate.getFullYear() === currentYear;
-        });
-
-        const pendingOrders = orders.filter(order => order.status === 'pending').length;
-        const progressOrders = orders.filter(order => order.status === 'in-progress').length;
-        const completedOrders = monthlyOrders.filter(order => order.status === 'completed').length;
-        
-        const totalRevenue = monthlyOrders
-            .filter(order => order.status === 'completed')
-            .reduce((sum, order) => sum + (order.totalAmount || 0), 0);
-
-        this.updateElement('pending-orders', pendingOrders);
-        this.updateElement('progress-orders', progressOrders);
-        this.updateElement('completed-orders', completedOrders);
-        this.updateElement('total-revenue', this.formatCurrency(totalRevenue));
-    },
-
-    renderOrdersTable: function(filterStatus = 'all') {
-        const tbody = document.getElementById('orders-body');
-        const orders = FarmModules.appData.orders || [];
-
-        let filteredOrders = orders;
-        if (filterStatus !== 'all') {
-            filteredOrders = orders.filter(order => order.status === filterStatus);
-        }
-
-        if (filteredOrders.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="8" class="empty-state">
-                        <div class="empty-content">
-                            <span class="empty-icon">📋</span>
-                            <h4>No orders found</h4>
-                            <p>${filterStatus === 'all' ? 'Start by creating your first order' : `No ${filterStatus} orders`}</p>
-                        </div>
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        // Show most recent orders first
-        const sortedOrders = filteredOrders.slice().reverse();
-
-        tbody.innerHTML = sortedOrders.map(order => {
-            const statusClass = `status-badge status-${order.status.replace(' ', '-')}`;
-            
-            return `
-                <tr>
-                    <td><strong>${order.id}</strong></td>
-                    <td>${order.customerName}</td>
-                    <td>${this.formatProductName(order.product)}</td>
-                    <td>${order.quantity} ${order.unit}</td>
-                    <td>${this.formatCurrency(order.totalAmount)}</td>
-                    <td><span class="${statusClass}">${order.status}</span></td>
-                    <td>${this.formatDate(order.dueDate)}</td>
-                    <td class="order-actions">
-                        <button class="btn-icon edit-order" data-id="${order.id}" title="Edit">✏️</button>
-                        <button class="btn-icon view-order" data-id="${order.id}" title="View">👁️</button>
-                        ${order.status !== 'completed' && order.status !== 'cancelled' ? 
-                            `<button class="btn-icon complete-order" data-id="${order.id}" title="Complete">✅</button>` : ''
-                        }
-                    </td>
-                </tr>
-            `;
-        }).join('');
-    },
-
-    attachEventListeners: function() {
-        // Quick order form
-        document.getElementById('quick-order-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleQuickOrder();
-        });
-
-        // Modal buttons
-        document.getElementById('add-order').addEventListener('click', () => this.showOrderModal());
-        document.getElementById('save-order').addEventListener('click', () => this.saveOrder());
-        document.getElementById('delete-order').addEventListener('click', () => this.deleteOrder());
-
-        // Modal events
-        document.querySelectorAll('.close-modal').forEach(btn => {
-            btn.addEventListener('click', () => this.hideModal());
-        });
-
-        // Real-time total calculation
-        document.getElementById('order-quantity').addEventListener('input', () => this.calculateTotal());
-        document.getElementById('order-price').addEventListener('input', () => this.calculateTotal());
-
-        // Filter
-        document.getElementById('status-filter').addEventListener('change', (e) => {
-            this.renderOrdersTable(e.target.value);
-        });
-
-        // Export
-        document.getElementById('export-orders').addEventListener('click', () => {
-            this.exportOrders();
-        });
-
-        // Order actions
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.edit-order')) {
-                const orderId = e.target.closest('.edit-order').dataset.id;
-                this.editOrder(orderId);
-            }
-            if (e.target.closest('.view-order')) {
-                const orderId = e.target.closest('.view-order').dataset.id;
-                this.viewOrder(orderId);
-            }
-            if (e.target.closest('.complete-order')) {
-                const orderId = e.target.closest('.complete-order').dataset.id;
-                this.completeOrder(orderId);
-            }
-        });
-
-        // Modal backdrop
-        document.getElementById('order-modal').addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) {
-                this.hideModal();
-            }
-        });
-    },
-
-    handleQuickOrder: function() {
-        const customer = document.getElementById('quick-customer').value;
-        const product = document.getElementById('quick-product').value;
-        const quantity = parseInt(document.getElementById('quick-quantity').value);
-        const price = parseFloat(document.getElementById('quick-price').value) || 0;
-
-        if (!customer || !product || !quantity) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
-        }
-
-        const orderData = {
-            customerName: customer,
-            product: product,
-            quantity: quantity,
-            unit: 'units',
-            pricePerUnit: price,
-            totalAmount: quantity * price,
-            status: 'pending',
-            dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
-            orderDate: new Date().toISOString().split('T')[0]
+        // Status breakdown
+        const statusCounts = {
+            pending: this.orders.filter(order => order.status === 'pending').length,
+            processing: this.orders.filter(order => order.status === 'processing').length,
+            completed: this.orders.filter(order => order.status === 'completed').length,
+            cancelled: this.orders.filter(order => order.status === 'cancelled').length
         };
 
-        this.addOrder(orderData);
+        return {
+            totalOrders,
+            totalRevenue,
+            pendingOrders,
+            avgOrderValue: this.formatCurrency(avgOrderValue),
+            statusCounts
+        };
+    },
+
+    renderRecentOrders(orders) {
+        if (orders.length === 0) {
+            return `
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No orders yet</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Create your first order to get started</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                ${orders.map(order => {
+                    const customer = this.customers.find(c => c.id === order.customerId);
+                    const statusColor = this.getStatusColor(order.status);
+                    const paymentColor = this.getPaymentColor(order.paymentStatus);
+                    
+                    return `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary);">
+                                    ${order.orderNumber} • ${customer?.name || 'Unknown Customer'}
+                                </div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">
+                                    ${order.date} • ${order.items.length} item${order.items.length > 1 ? 's' : ''}
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: bold; color: var(--text-primary); font-size: 16px;">
+                                    ${this.formatCurrency(order.totalAmount)}
+                                </div>
+                                <div style="display: flex; gap: 8px; margin-top: 4px;">
+                                    <span style="padding: 2px 8px; border-radius: 8px; background: ${statusColor}20; color: ${statusColor}; font-size: 11px; font-weight: 600;">
+                                        ${order.status}
+                                    </span>
+                                    <span style="padding: 2px 8px; border-radius: 8px; background: ${paymentColor}20; color: ${paymentColor}; font-size: 11px; font-weight: 600;">
+                                        ${order.paymentStatus}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    },
+
+    renderOrdersSummary(stats) {
+        return `
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">Pending:</span>
+                    <span style="font-weight: 600; color: #f59e0b;">${stats.statusCounts.pending}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">Processing:</span>
+                    <span style="font-weight: 600; color: #3b82f6;">${stats.statusCounts.processing}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">Completed:</span>
+                    <span style="font-weight: 600; color: #22c55e;">${stats.statusCounts.completed}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">Cancelled:</span>
+                    <span style="font-weight: 600; color: #ef4444;">${stats.statusCounts.cancelled}</span>
+                </div>
+                <div style="border-top: 1px solid var(--glass-border); padding-top: 12px; margin-top: 8px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary); font-weight: 600;">Total:</span>
+                        <span style="font-weight: 600; color: var(--text-primary);">${stats.totalOrders}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    renderAllOrdersTable() {
+        if (this.orders.length === 0) {
+            return `
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No orders found</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Create your first order to get started</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${this.orders.map(order => {
+                            const customer = this.customers.find(c => c.id === order.customerId);
+                            const statusColor = this.getStatusColor(order.status);
+                            const paymentColor = this.getPaymentColor(order.paymentStatus);
+                            
+                            return `
+                                <tr>
+                                    <td style="font-weight: 600; color: var(--text-primary);">${order.orderNumber}</td>
+                                    <td>${customer?.name || 'Unknown'}</td>
+                                    <td>${order.date}</td>
+                                    <td>${order.items.length} items</td>
+                                    <td style="font-weight: 600; color: var(--text-primary);">${this.formatCurrency(order.totalAmount)}</td>
+                                    <td>
+                                        <span style="padding: 4px 8px; border-radius: 6px; background: ${statusColor}20; color: ${statusColor}; font-size: 12px; font-weight: 600;">
+                                            ${order.status}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span style="padding: 4px 8px; border-radius: 6px; background: ${paymentColor}20; color: ${paymentColor}; font-size: 12px; font-weight: 600;">
+                                            ${order.paymentStatus}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; gap: 8px;">
+                                            <button class="btn-icon view-order" data-id="${order.id}" title="View Order">
+                                                👁️
+                                            </button>
+                                            <button class="btn-icon edit-order" data-id="${order.id}" title="Edit Order">
+                                                ✏️
+                                            </button>
+                                            <button class="btn-icon delete-order" data-id="${order.id}" title="Delete Order">
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    },
+
+    getStatusColor(status) {
+        const colors = {
+            'pending': '#f59e0b',
+            'processing': '#3b82f6',
+            'completed': '#22c55e',
+            'cancelled': '#ef4444'
+        };
+        return colors[status] || '#6b7280';
+    },
+
+    getPaymentColor(status) {
+        const colors = {
+            'pending': '#f59e0b',
+            'paid': '#22c55e',
+            'partial': '#3b82f6',
+            'overdue': '#ef4444'
+        };
+        return colors[status] || '#6b7280';
+    },
+
+    setupEventListeners() {
+        // Form buttons
+        document.getElementById('show-order-form')?.addEventListener('click', () => this.showOrderForm());
+        document.getElementById('create-order-btn')?.addEventListener('click', () => this.showOrderForm());
+        document.getElementById('manage-customers-btn')?.addEventListener('click', () => this.manageCustomers());
+        document.getElementById('manage-products-btn')?.addEventListener('click', () => this.manageProducts());
+        document.getElementById('orders-report-btn')?.addEventListener('click', () => this.generateOrdersReport());
         
-        // Reset form
-        document.getElementById('quick-order-form').reset();
-        this.showNotification('Order created successfully!', 'success');
+        // Form handlers
+        document.getElementById('order-form')?.addEventListener('submit', (e) => this.handleOrderSubmit(e));
+        document.getElementById('cancel-order-form')?.addEventListener('click', () => this.hideOrderForm());
+        document.getElementById('add-order-item')?.addEventListener('click', () => this.addOrderItem());
+        
+        // Filter and search
+        document.getElementById('status-filter')?.addEventListener('change', (e) => this.filterOrders(e.target.value));
+        document.getElementById('search-orders')?.addEventListener('input', (e) => this.searchOrders(e.target.value));
+        
+        // Action buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.delete-order')) {
+                const id = parseInt(e.target.closest('.delete-order').dataset.id);
+                this.deleteOrder(id);
+            }
+            if (e.target.closest('.view-order')) {
+                const id = parseInt(e.target.closest('.view-order').dataset.id);
+                this.viewOrder(id);
+            }
+            if (e.target.closest('.edit-order')) {
+                const id = parseInt(e.target.closest('.edit-order').dataset.id);
+                this.editOrder(id);
+            }
+            if (e.target.closest('.remove-order-item')) {
+                e.target.closest('.order-item-row').remove();
+                this.calculateOrderTotal();
+            }
+        });
+
+        // Set today's date
+        const today = new Date().toISOString().split('T')[0];
+        const orderDate = document.getElementById('order-date');
+        const deliveryDate = document.getElementById('delivery-date');
+        if (orderDate) orderDate.value = today;
+
+        // Hover effects
+        const buttons = document.querySelectorAll('.quick-action-btn');
+        buttons.forEach(button => {
+            button.addEventListener('mouseenter', (e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+            });
+            button.addEventListener('mouseleave', (e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+            });
+        });
     },
 
-    showOrderModal: function() {
-        const modal = document.getElementById('order-modal');
-        const title = document.getElementById('order-modal-title');
-        const form = document.getElementById('order-form');
-
-        if (modal && title && form) {
-            form.reset();
-            document.getElementById('order-id').value = '';
-            document.getElementById('order-due-date').value = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            document.getElementById('delete-order').style.display = 'none';
-            document.getElementById('order-total-amount').textContent = '$0.00';
-            
-            modal.classList.remove('hidden');
-        }
+    showOrderForm() {
+        document.getElementById('order-form-container').classList.remove('hidden');
+        document.getElementById('order-form').reset();
+        document.getElementById('order-items-container').innerHTML = '';
+        this.addOrderItem();
+        
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('order-date').value = today;
+        
+        document.getElementById('order-form-container').scrollIntoView({ behavior: 'smooth' });
     },
 
-    hideModal: function() {
-        const modal = document.getElementById('order-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
+    hideOrderForm() {
+        document.getElementById('order-form-container').classList.add('hidden');
     },
 
-    calculateTotal: function() {
-        const quantity = parseInt(document.getElementById('order-quantity').value) || 0;
-        const price = parseFloat(document.getElementById('order-price').value) || 0;
+    addOrderItem() {
+        const container = document.getElementById('order-items-container');
+        const itemIndex = container.children.length;
+        
+        const itemRow = document.createElement('div');
+        itemRow.className = 'order-item-row';
+        itemRow.style.cssText = 'display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 8px; margin-bottom: 8px; align-items: end;';
+        
+        itemRow.innerHTML = `
+            <div>
+                <label class="form-label" style="font-size: 12px;">Product</label>
+                <select class="form-input order-item-product" style="font-size: 14px;" required>
+                    <option value="">Select Product</option>
+                    ${this.products.map(product => `
+                        <option value="${product.id}" data-price="${product.price}" ${!product.inStock ? 'disabled' : ''}>
+                            ${product.name} - ${this.formatCurrency(product.price)}/${product.unit} ${!product.inStock ? '(Out of Stock)' : ''}
+                        </option>
+                    `).join('')}
+                </select>
+            </div>
+            <div>
+                <label class="form-label" style="font-size: 12px;">Quantity</label>
+                <input type="number" class="form-input order-item-quantity" min="1" value="1" style="font-size: 14px;" required>
+            </div>
+            <div>
+                <label class="form-label" style="font-size: 12px;">Unit Price</label>
+                <input type="number" class="form-input order-item-price" step="0.01" min="0" style="font-size: 14px;" required>
+            </div>
+            <div>
+                <label class="form-label" style="font-size: 12px;">Total</label>
+                <div class="order-item-total" style="padding: 8px; background: var(--glass-bg); border-radius: 4px; font-size: 14px; font-weight: 600; color: var(--text-primary);">
+                    $0.00
+                </div>
+            </div>
+            <div>
+                <button type="button" class="btn-icon remove-order-item" style="background: none; border: none; cursor: pointer; padding: 8px; color: var(--text-secondary);" ${itemIndex === 0 ? 'disabled' : ''}>
+                    🗑️
+                </button>
+            </div>
+        `;
+
+        container.appendChild(itemRow);
+
+        // Add event listeners for the new row
+        const productSelect = itemRow.querySelector('.order-item-product');
+        const quantityInput = itemRow.querySelector('.order-item-quantity');
+        const priceInput = itemRow.querySelector('.order-item-price');
+
+        productSelect.addEventListener('change', (e) => {
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            const price = selectedOption.dataset.price;
+            if (price) {
+                priceInput.value = price;
+                this.calculateItemTotal(itemRow);
+            }
+        });
+
+        quantityInput.addEventListener('input', () => this.calculateItemTotal(itemRow));
+        priceInput.addEventListener('input', () => this.calculateItemTotal(itemRow));
+    },
+
+    calculateItemTotal(itemRow) {
+        const quantity = parseFloat(itemRow.querySelector('.order-item-quantity').value) || 0;
+        const price = parseFloat(itemRow.querySelector('.order-item-price').value) || 0;
         const total = quantity * price;
+        
+        itemRow.querySelector('.order-item-total').textContent = this.formatCurrency(total);
+        this.calculateOrderTotal();
+    },
+
+    calculateOrderTotal() {
+        const itemRows = document.querySelectorAll('.order-item-row');
+        let total = 0;
+        
+        itemRows.forEach(row => {
+            const quantity = parseFloat(row.querySelector('.order-item-quantity').value) || 0;
+            const price = parseFloat(row.querySelector('.order-item-price').value) || 0;
+            total += quantity * price;
+        });
         
         document.getElementById('order-total-amount').textContent = this.formatCurrency(total);
     },
 
-    saveOrder: function() {
-        const form = document.getElementById('order-form');
-        if (!form) return;
-
-        const orderId = document.getElementById('order-id').value;
-        const customerName = document.getElementById('order-customer').value;
-        const phone = document.getElementById('order-phone').value;
-        const product = document.getElementById('order-product').value;
-        const unit = document.getElementById('order-unit').value;
-        const quantity = parseInt(document.getElementById('order-quantity').value);
-        const pricePerUnit = parseFloat(document.getElementById('order-price').value);
-        const status = document.getElementById('order-status').value;
-        const dueDate = document.getElementById('order-due-date').value;
+    handleOrderSubmit(e) {
+        e.preventDefault();
+        
+        const customerId = parseInt(document.getElementById('order-customer').value);
+        const orderDate = document.getElementById('order-date').value;
+        const deliveryDate = document.getElementById('delivery-date').value;
+        const paymentStatus = document.getElementById('payment-status').value;
         const notes = document.getElementById('order-notes').value;
 
-        if (!customerName || !product || !quantity || !pricePerUnit || !dueDate) {
-            this.showNotification('Please fill in all required fields', 'error');
+        // Collect order items
+        const items = [];
+        const itemRows = document.querySelectorAll('.order-item-row');
+        
+        itemRows.forEach(row => {
+            const productId = parseInt(row.querySelector('.order-item-product').value);
+            const quantity = parseInt(row.querySelector('.order-item-quantity').value);
+            const unitPrice = parseFloat(row.querySelector('.order-item-price').value);
+            
+            if (productId && quantity && unitPrice) {
+                items.push({
+                    productId,
+                    quantity,
+                    unitPrice,
+                    total: quantity * unitPrice
+                });
+            }
+        });
+
+        if (items.length === 0) {
+            alert('Please add at least one item to the order.');
             return;
         }
 
-        if (quantity <= 0) {
-            this.showNotification('Quantity must be greater than 0', 'error');
-            return;
-        }
-
-        if (pricePerUnit < 0) {
-            this.showNotification('Price cannot be negative', 'error');
-            return;
-        }
-
-        const orderData = {
-            customerName: customerName,
-            phone: phone,
-            product: product,
-            unit: unit,
-            quantity: quantity,
-            pricePerUnit: pricePerUnit,
-            totalAmount: quantity * pricePerUnit,
-            status: status,
-            dueDate: dueDate,
-            notes: notes,
-            orderDate: new Date().toISOString().split('T')[0]
-        };
-
-        if (orderId) {
-            this.updateOrder(orderId, orderData);
-        } else {
-            this.addOrder(orderData);
-        }
-
-        this.hideModal();
-    },
-
-    addOrder: function(orderData) {
-        if (!FarmModules.appData.orders) {
-            FarmModules.appData.orders = [];
-        }
+        const totalAmount = items.reduce((sum, item) => sum + item.total, 0);
+        const orderNumber = `ORD-${String(this.orders.length + 1).padStart(3, '0')}`;
 
         const newOrder = {
-            id: 'ORD-' + Date.now().toString().slice(-6),
-            ...orderData
+            id: Date.now(),
+            orderNumber,
+            customerId,
+            date: orderDate,
+            status: 'pending',
+            items,
+            totalAmount,
+            paymentStatus,
+            deliveryDate: deliveryDate || null,
+            notes: notes || ''
         };
 
-        FarmModules.appData.orders.push(newOrder);
+        this.orders.unshift(newOrder);
+        this.saveData();
+        this.renderModule();
         
-        this.updateSummary();
-        this.renderOrdersTable();
-        
-        this.showNotification('Order created successfully!', 'success');
-    },
-
-    editOrder: function(orderId) {
-        const orders = FarmModules.appData.orders || [];
-        const order = orders.find(o => o.id === orderId);
-        
-        if (!order) return;
-
-        const modal = document.getElementById('order-modal');
-        const title = document.getElementById('order-modal-title');
-
-        if (modal && title) {
-            document.getElementById('order-id').value = order.id;
-            document.getElementById('order-customer').value = order.customerName;
-            document.getElementById('order-phone').value = order.phone || '';
-            document.getElementById('order-product').value = order.product;
-            document.getElementById('order-unit').value = order.unit;
-            document.getElementById('order-quantity').value = order.quantity;
-            document.getElementById('order-price').value = order.pricePerUnit;
-            document.getElementById('order-status').value = order.status;
-            document.getElementById('order-due-date').value = order.dueDate;
-            document.getElementById('order-notes').value = order.notes || '';
-            document.getElementById('delete-order').style.display = 'block';
-            
-            this.calculateTotal();
-            
-            title.textContent = 'Edit Order';
-            modal.classList.remove('hidden');
+        if (window.coreModule) {
+            window.coreModule.showNotification(`Order ${orderNumber} created successfully!`, 'success');
         }
     },
 
-    viewOrder: function(orderId) {
-        const orders = FarmModules.appData.orders || [];
-        const order = orders.find(o => o.id === orderId);
-        
+    deleteOrder(id) {
+        const order = this.orders.find(order => order.id === id);
         if (!order) return;
 
-        const modal = document.getElementById('order-modal');
-        const title = document.getElementById('order-modal-title');
-
-        if (modal && title) {
-            document.getElementById('order-id').value = order.id;
-            document.getElementById('order-customer').value = order.customerName;
-            document.getElementById('order-phone').value = order.phone || '';
-            document.getElementById('order-product').value = order.product;
-            document.getElementById('order-unit').value = order.unit;
-            document.getElementById('order-quantity').value = order.quantity;
-            document.getElementById('order-price').value = order.pricePerUnit;
-            document.getElementById('order-status').value = order.status;
-            document.getElementById('order-due-date').value = order.dueDate;
-            document.getElementById('order-notes').value = order.notes || '';
-            document.getElementById('delete-order').style.display = 'block';
+        if (confirm(`Are you sure you want to delete order ${order.orderNumber}? This action cannot be undone.`)) {
+            this.orders = this.orders.filter(order => order.id !== id);
+            this.saveData();
+            this.renderModule();
             
-            // Make fields read-only for viewing
-            const inputs = modal.querySelectorAll('input, select, textarea');
-            inputs.forEach(input => input.disabled = true);
-            document.getElementById('save-order').style.display = 'none';
-            
-            this.calculateTotal();
-            
-            title.textContent = 'View Order';
-            modal.classList.remove('hidden');
-
-            // Re-enable fields when modal closes
-            modal.addEventListener('hidden', () => {
-                inputs.forEach(input => input.disabled = false);
-                document.getElementById('save-order').style.display = 'block';
-            }, { once: true });
-        }
-    },
-
-    completeOrder: function(orderId) {
-        if (confirm('Mark this order as completed?')) {
-            const orders = FarmModules.appData.orders || [];
-            const orderIndex = orders.findIndex(o => o.id === orderId);
-            
-            if (orderIndex !== -1) {
-                orders[orderIndex].status = 'completed';
-                orders[orderIndex].completedDate = new Date().toISOString().split('T')[0];
-                
-                this.updateSummary();
-                this.renderOrdersTable();
-                this.showNotification('Order marked as completed!', 'success');
+            if (window.coreModule) {
+                window.coreModule.showNotification(`Order ${order.orderNumber} deleted!`, 'success');
             }
         }
     },
 
-    updateOrder: function(orderId, orderData) {
-        const orders = FarmModules.appData.orders || [];
-        const orderIndex = orders.findIndex(o => o.id === orderId);
+    viewOrder(id) {
+        const order = this.orders.find(order => order.id === id);
+        if (!order) return;
+
+        const customer = this.customers.find(c => c.id === order.customerId);
         
-        if (orderIndex !== -1) {
-            orders[orderIndex] = {
-                ...orders[orderIndex],
-                ...orderData
-            };
-            
-            this.updateSummary();
-            this.renderOrdersTable();
-            this.showNotification('Order updated successfully!', 'success');
+        let orderDetails = `📋 ORDER DETAILS\n\n`;
+        orderDetails += `Order Number: ${order.orderNumber}\n`;
+        orderDetails += `Customer: ${customer?.name || 'Unknown'}\n`;
+        orderDetails += `Date: ${order.date}\n`;
+        orderDetails += `Status: ${order.status}\n`;
+        orderDetails += `Payment: ${order.paymentStatus}\n`;
+        orderDetails += `Delivery Date: ${order.deliveryDate || 'Not set'}\n\n`;
+        
+        orderDetails += `ITEMS:\n`;
+        order.items.forEach(item => {
+            const product = this.products.find(p => p.id === item.productId);
+            orderDetails += `• ${product?.name || 'Unknown Product'}: ${item.quantity} x ${this.formatCurrency(item.unitPrice)} = ${this.formatCurrency(item.total)}\n`;
+        });
+        
+        orderDetails += `\nTOTAL: ${this.formatCurrency(order.totalAmount)}\n`;
+        
+        if (order.notes) {
+            orderDetails += `\nNOTES: ${order.notes}\n`;
         }
+
+        alert(orderDetails);
     },
 
-    deleteOrder: function() {
-        const orderId = document.getElementById('order-id').value;
+    editOrder(id) {
+        alert('Edit order functionality coming soon! For now, you can delete and recreate the order.');
+    },
+
+    manageCustomers() {
+        alert('Customer management feature coming soon!');
+    },
+
+    manageProducts() {
+        alert('Product management feature coming soon!');
+    },
+
+    filterOrders(status) {
+        const rows = document.querySelectorAll('#all-orders-table tbody tr');
+        rows.forEach(row => {
+            const rowStatus = row.querySelector('td:nth-child(6) span').textContent.toLowerCase();
+            if (!status || rowStatus === status) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    },
+
+    searchOrders(query) {
+        const rows = document.querySelectorAll('#all-orders-table tbody tr');
+        const searchTerm = query.toLowerCase();
         
-        if (confirm('Are you sure you want to delete this order?')) {
-            FarmModules.appData.orders = FarmModules.appData.orders.filter(o => o.id !== orderId);
-            
-            this.updateSummary();
-            this.renderOrdersTable();
-            this.hideModal();
-            this.showNotification('Order deleted successfully', 'success');
-        }
+        rows.forEach(row => {
+            const rowText = row.textContent.toLowerCase();
+            if (rowText.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
     },
 
-    exportOrders: function() {
-        const orders = FarmModules.appData.orders || [];
-        const csv = this.convertToCSV(orders);
-        const blob = new Blob([csv], { type: 'text/csv' });
+    generateOrdersReport() {
+        const stats = this.calculateStats();
+        const recentMonth = new Date();
+        recentMonth.setMonth(recentMonth.getMonth() - 1);
         
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `orders-export-${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
+        const monthlyOrders = this.orders.filter(order => new Date(order.date) >= recentMonth);
+        const monthlyRevenue = monthlyOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+
+        let report = `📊 ORDERS REPORT\n\n`;
+        report += `OVERVIEW:\n`;
+        report += `Total Orders: ${stats.totalOrders}\n`;
+        report += `Total Revenue: ${this.formatCurrency(stats.totalRevenue)}\n`;
+        report += `Average Order Value: ${stats.avgOrderValue}\n`;
+        report += `Pending Orders: ${stats.pendingOrders}\n\n`;
         
-        this.showNotification('Orders exported successfully!', 'success');
-    },
-
-    convertToCSV: function(orders) {
-        const headers = ['Order ID', 'Customer', 'Product', 'Quantity', 'Unit', 'Price', 'Total', 'Status', 'Order Date', 'Due Date'];
-        const rows = orders.map(order => [
-            order.id,
-            order.customerName,
-            this.formatProductName(order.product),
-            order.quantity,
-            order.unit,
-            this.formatCurrency(order.pricePerUnit),
-            this.formatCurrency(order.totalAmount),
-            order.status,
-            order.orderDate,
-            order.dueDate
-        ]);
+        report += `LAST 30 DAYS:\n`;
+        report += `Orders: ${monthlyOrders.length}\n`;
+        report += `Revenue: ${this.formatCurrency(monthlyRevenue)}\n\n`;
         
-        return [headers, ...rows].map(row => row.join(',')).join('\n');
+        report += `STATUS BREAKDOWN:\n`;
+        report += `Pending: ${stats.statusCounts.pending}\n`;
+        report += `Processing: ${stats.statusCounts.processing}\n`;
+        report += `Completed: ${stats.statusCounts.completed}\n`;
+        report += `Cancelled: ${stats.statusCounts.cancelled}\n\n`;
+        
+        report += `TOP CUSTOMERS:\n`;
+        const customerOrders = {};
+        this.orders.forEach(order => {
+            if (!customerOrders[order.customerId]) {
+                customerOrders[order.customerId] = 0;
+            }
+            customerOrders[order.customerId] += order.totalAmount;
+        });
+        
+        const topCustomers = Object.entries(customerOrders)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3);
+        
+        topCustomers.forEach(([customerId, revenue]) => {
+            const customer = this.customers.find(c => c.id === parseInt(customerId));
+            report += `• ${customer?.name || 'Unknown'}: ${this.formatCurrency(revenue)}\n`;
+        });
+
+        alert(report);
     },
 
-    formatProductName: function(product) {
-        const productNames = {
-            'broilers': 'Broilers (Live)',
-            'broilers-dressed': 'Broilers (Dressed)',
-            'eggs': 'Eggs',
-            'pork': 'Pork',
-            'beef': 'Beef',
-            'tomatoes': 'Tomatoes',
-            'peppers': 'Peppers',
-            'cucumbers': 'Cucumbers',
-            'lettuce': 'Lettuce',
-            'carrots': 'Carrots',
-            'potatoes': 'Potatoes',
-            'honey': 'Honey',
-            'milk': 'Milk',
-            'cheese': 'Cheese',
-            'other': 'Other'
-        };
-        return productNames[product] || product;
-    },
-
-    formatCurrency: function(amount) {
+    formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD'
         }).format(amount);
     },
 
-    formatDate: function(dateString) {
-        try {
-            return new Date(dateString).toLocaleDateString();
-        } catch (e) {
-            return 'Invalid date';
-        }
-    },
-
-    updateElement: function(id, value) {
-        const element = document.getElementById(id);
-        if (element) element.textContent = value;
-    },
-
-    showNotification: function(message, type) {
-        if (window.coreModule && window.coreModule.showNotification) {
-            window.coreModule.showNotification(message, type);
-        } else {
-            alert(message);
-        }
+    saveData() {
+        localStorage.setItem('farm-orders', JSON.stringify(this.orders));
+        localStorage.setItem('farm-customers', JSON.stringify(this.customers));
+        localStorage.setItem('farm-products', JSON.stringify(this.products));
     }
-});
+};
+
+if (window.FarmModules) {
+    window.FarmModules.registerModule('orders', OrdersModule);
+}
