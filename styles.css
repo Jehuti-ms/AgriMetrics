@@ -3904,7 +3904,7 @@ header, .top-nav {
     position: fixed;
     top: 80px; /* Below the navigation bar */
     right: 20px;
-    z-index: 10001; /* HIGHER THAN NAVBAR (10000) */
+    z-index: 10001;
     max-width: 400px;
 }
 
@@ -3918,23 +3918,43 @@ header, .top-nav {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     border-left: 4px solid;
     animation: slideIn 0.3s ease;
-    z-index: 10002; /* EVEN HIGHER */
+    z-index: 10002;
+    /* FIX TEXT COLOR */
+    color: #1a1a1a !important; /* Dark text color */
 }
 
 .notification.success {
     border-left-color: #22c55e;
+    background: rgba(34, 197, 94, 0.1); /* Light green background */
 }
 
 .notification.error {
     border-left-color: #ef4444;
+    background: rgba(239, 68, 68, 0.1); /* Light red background */
 }
 
 .notification.info {
     border-left-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1); /* Light blue background */
 }
 
 .notification.warning {
     border-left-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1); /* Light orange background */
+}
+
+/* Ensure all text inside notifications is visible */
+.notification * {
+    color: #1a1a1a !important;
+}
+
+.notification button {
+    color: #1a1a1a !important;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
 }
 
 @keyframes slideIn {
