@@ -4189,3 +4189,134 @@ header, .top-nav {
     scrollbar-width: none;
 }
 
+/*=================================================*/
+/* ===== NAVIGATION STYLES ===== */
+.top-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    z-index: 10000;
+    box-sizing: border-box;
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.nav-brand img {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+}
+
+.brand-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.nav-items {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow-x: auto;
+    flex: 1;
+    justify-content: flex-start;
+    padding: 0 8px;
+}
+
+.nav-item {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    padding: 8px 12px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.2s ease;
+    min-width: 60px;
+    flex-shrink: 0;
+}
+
+.nav-item:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.nav-item.active {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.nav-item span:first-child {
+    font-size: 20px;
+    margin-bottom: 2px;
+}
+
+.nav-label {
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Hide scrollbar but keep functionality */
+.nav-items::-webkit-scrollbar {
+    display: none;
+}
+
+.nav-items {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .brand-text {
+        display: none;
+    }
+    
+    .nav-item {
+        min-width: 50px;
+        padding: 6px 8px;
+    }
+    
+    .nav-item span:first-child {
+        font-size: 18px;
+    }
+    
+    .nav-label {
+        font-size: 9px;
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-item {
+        min-width: 45px;
+        padding: 4px 6px;
+    }
+    
+    .nav-item span:first-child {
+        font-size: 16px;
+    }
+    
+    .nav-label {
+        font-size: 8px;
+    }
+}
