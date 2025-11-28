@@ -153,16 +153,12 @@ FarmModules.registerModule('dashboard', {
     navigateToModule: function(moduleName, action = null) {
     console.log('Navigating to:', moduleName);
     
-    // Try multiple navigation methods
-    if (window.coreModule && typeof window.coreModule.showSection === 'function') {
-        window.coreModule.showSection(moduleName);
-    } else if (window.FarmModules && typeof window.FarmModules.showModule === 'function') {
-        window.FarmModules.showModule(moduleName);
-    } else if (window.app && typeof window.app.showSection === 'function') {
-        window.app.showSection(moduleName);
+    // Use the core module's navigation method
+    if (window.coreModule && window.coreModule.loadModule) {
+        window.coreModule.loadModule(moduleName);
     } else {
-        console.log('Navigation not available, would go to:', moduleName);
-        // Fallback - just show a message
+        console.log('Core module navigation not available');
+        // Fallback
         alert(`Would navigate to: ${moduleName}`);
     }
 }
