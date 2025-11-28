@@ -26,10 +26,9 @@ const CoreModule = {
     setupNavigation() {
         console.log('🧭 Setting up navigation...');
         
-        // Module name mapping
-        const MODULE_NAME_MAP = {
+        const MODULE_MAP = {
             'dashboard': 'dashboard',
-            'income-expenses': 'income-expenses',
+            'income-expenses': 'income-expenses', 
             'inventory': 'inventory-check',
             'sales': 'sales-record',
             'orders': 'orders',
@@ -40,48 +39,51 @@ const CoreModule = {
             'reports': 'reports'
         };
 
-        // Main nav items
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', (e) => {
+        const loadModule = (section) => {
+            const moduleName = MODULE_MAP[section] || section;
+            console.log('Loading module:', section, '->', moduleName);
+            
+            if (window.FarmModules && window.FarmModules.initializeModule) {
+                window.FarmModules.initializeModule(moduleName);
+            } else {
+                console.error('FarmModules not available');
+            }
+        };
+
+        // Main nav
+        document.addEventListener('click', (e) => {
+            const navItem = e.target.closest('.nav-item');
+            if (navItem) {
                 e.preventDefault();
-                const section = item.getAttribute('data-section');
-                const actualModule = MODULE_NAME_MAP[section] || section;
-                console.log('Main nav clicked:', section, '->', actualModule);
+                const section = navItem.getAttribute('data-section');
                 this.setActiveNavItem(section);
-                if (window.FarmModules && window.FarmModules.initializeModule) {
-                    window.FarmModules.initializeModule(actualModule);
-                }
-            });
+                loadModule(section);
+            }
         });
 
-        // Side menu items
-        document.querySelectorAll('.side-menu-item').forEach(item => {
-            item.addEventListener('click', (e) => {
+        // Side menu
+        document.addEventListener('click', (e) => {
+            const sideItem = e.target.closest('.side-menu-item');
+            if (sideItem) {
                 e.preventDefault();
-                const section = item.getAttribute('data-section');
-                const actualModule = MODULE_NAME_MAP[section] || section;
-                console.log('Side menu clicked:', section, '->', actualModule);
+                const section = sideItem.getAttribute('data-section');
                 this.setActiveNavItem(section);
-                if (window.FarmModules && window.FarmModules.initializeModule) {
-                    window.FarmModules.initializeModule(actualModule);
-                }
+                loadModule(section);
                 this.closeSideMenu();
-            });
+            }
         });
 
-        // Brand click
+        // Brand
         const brand = document.querySelector('.nav-brand');
         if (brand) {
             brand.addEventListener('click', (e) => {
                 e.preventDefault();
                 this.setActiveNavItem('dashboard');
-                if (window.FarmModules && window.FarmModules.initializeModule) {
-                    window.FarmModules.initializeModule('dashboard');
-                }
+                loadModule('dashboard');
             });
         }
 
-        // Mobile menu toggle
+        // Mobile menu
         const menuToggle = document.getElementById('menu-toggle');
         if (menuToggle) {
             menuToggle.addEventListener('click', (e) => {
@@ -94,7 +96,7 @@ const CoreModule = {
         document.addEventListener('click', (e) => {
             const sideMenu = document.getElementById('side-menu');
             const menuToggle = document.getElementById('menu-toggle');
-            if (sideMenu && !sideMenu.contains(e.target) && e.target !== menuToggle && sideMenu.classList.contains('open')) {
+            if (sideMenu && !sideMenu.contains(e.target) && e.target !== menuToggle) {
                 this.closeSideMenu();
             }
         });
@@ -103,18 +105,16 @@ const CoreModule = {
     },
 
     setActiveNavItem(section) {
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        document.querySelectorAll('.side-menu-item').forEach(item => {
-            item.classList.remove('active');
-        });
-
+        // Remove active from all
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        document.querySelectorAll('.side-menu-item').forEach(item => item.classList.remove('active'));
+        
+        // Add active to current
         const navItem = document.querySelector(`.nav-item[data-section="${section}"]`);
-        const sideMenuItem = document.querySelector(`.side-menu-item[data-section="${section}"]`);
+        const sideItem = document.querySelector(`.side-menu-item[data-section="${section}"]`);
         
         if (navItem) navItem.classList.add('active');
-        if (sideMenuItem) sideMenuItem.classList.add('active');
+        if (sideItem) sideItem.classList.add('active');
     },
 
     toggleSideMenu() {
@@ -146,57 +146,24 @@ const CoreModule = {
             notification.remove();
         });
 
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.remove();
-            }
-        }, duration);
-
+        setTimeout(() => notification.remove(), duration);
         return notification;
     },
 
     formatCurrency(amount) {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount);
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     },
 
     formatDate(date) {
-        return new Date(date).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
+        return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     },
 
     generateId() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
-    },
-
-    saveToLocalStorage(key, data) {
-        try {
-            localStorage.setItem(key, JSON.stringify(data));
-            return true;
-        } catch (error) {
-            console.error('Error saving to localStorage:', error);
-            return false;
-        }
-    },
-
-    loadFromLocalStorage(key) {
-        try {
-            const data = localStorage.getItem(key);
-            return data ? JSON.parse(data) : null;
-        } catch (error) {
-            console.error('Error loading from localStorage:', error);
-            return null;
-        }
     }
 };
 
 if (window.FarmModules) {
     window.FarmModules.registerModule('core', CoreModule);
 }
-
 window.coreModule = CoreModule;
