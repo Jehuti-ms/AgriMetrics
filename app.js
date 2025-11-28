@@ -66,12 +66,13 @@ class FarmManagementApp {
     header = document.createElement('header');
     appContainer.insertBefore(header, appContainer.firstChild);
 
-    header.innerHTML = `
-        <nav class="top-nav">
-            <div class="nav-brand">
-                <img src="icons/icon-96x96.png" alt="AgriMetrics">
-                <span class="brand-text">AgriMetrics</span>
-            </div>
+   header.innerHTML = `
+    <nav class="top-nav">
+        <div class="nav-brand">
+            <button class="hamburger-menu">☰</button>
+            <img src="icons/icon-96x96.png" alt="AgriMetrics">
+            <span class="brand-text">AgriMetrics</span>
+        </div>
             
             <div class="nav-items">
                 <!-- Core navigation items only -->
@@ -109,6 +110,15 @@ class FarmManagementApp {
         </nav>
     `;
 
+     
+// Add event listener for hamburger menu
+const hamburger = header.querySelector('.hamburger-menu');
+const sidebar = appContainer.querySelector('.sidebar');
+if (hamburger && sidebar) {
+    hamburger.addEventListener('click', () => {
+        sidebar.classList.toggle('active');
+    });
+}
     // Adjust main content padding
     const main = appContainer.querySelector('main');
     if (main) {
