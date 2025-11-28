@@ -1,5 +1,5 @@
-// app.js - PROPER MOBILE PWA NAVIGATION
-console.log('Loading main app...');
+// app.js - Enhanced Navigation Integration
+console.log('Loading enhanced navigation app...');
 
 class FarmManagementApp {
     constructor() {
@@ -10,7 +10,7 @@ class FarmManagementApp {
     }
 
     async init() {
-        console.log('🚀 Starting Farm Management App...');
+        console.log('🚀 Starting Farm Management App with Enhanced Navigation...');
         
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
@@ -22,34 +22,42 @@ class FarmManagementApp {
     }
 
     async initializeApp() {
-        console.log('✅ Initializing app...');
+        console.log('✅ Initializing enhanced navigation app...');
         this.isDemoMode = true;
         this.showApp();
         this.setupEventListeners();
     }
 
     setupEventListeners() {
+        // Handle navigation clicks
         document.addEventListener('click', (e) => {
+            // Main nav items
             if (e.target.closest('.nav-item')) {
                 const navItem = e.target.closest('.nav-item');
-                const view = navItem.getAttribute('data-view');
-                
-                if (view === 'more') {
-                    this.toggleMoreMenu();
-                } else {
-                    this.showSection(view);
+                const section = navItem.getAttribute('data-section');
+                if (section) {
+                    this.showSection(section);
                 }
             }
             
-            if (e.target.closest('.more-menu-item')) {
-                const menuItem = e.target.closest('.more-menu-item');
-                const view = menuItem.getAttribute('data-view');
-                this.hideMoreMenu();
-                this.showSection(view);
+            // Side menu items
+            if (e.target.closest('.side-menu-item')) {
+                const menuItem = e.target.closest('.side-menu-item');
+                const section = menuItem.getAttribute('data-section');
+                if (section) {
+                    this.showSection(section);
+                    this.hideSideMenu();
+                }
             }
             
-            if (!e.target.closest('.more-menu') && !e.target.closest('[data-view="more"]')) {
-                this.hideMoreMenu();
+            // Mobile menu toggle
+            if (e.target.closest('#menu-toggle')) {
+                this.toggleSideMenu();
+            }
+            
+            // Close side menu when clicking outside
+            if (!e.target.closest('.side-menu') && !e.target.closest('#menu-toggle')) {
+                this.hideSideMenu();
             }
         });
     }
@@ -61,200 +69,156 @@ class FarmManagementApp {
         if (authContainer) authContainer.classList.add('hidden');
         if (appContainer) appContainer.classList.remove('hidden');
         
-        this.createTopNavigation();
+        this.createEnhancedNavigation();
         this.showSection(this.currentSection);
     }
 
-    createTopNavigation() {
+    createEnhancedNavigation() {
         const appContainer = document.getElementById('app-container');
         if (!appContainer) return;
 
-        let header = appContainer.querySelector('header');
-        if (header) {
-            header.remove();
+        // Check if navigation already exists
+        let navbar = appContainer.querySelector('.navbar');
+        let sideMenu = appContainer.querySelector('.side-menu');
+        
+        if (!navbar) {
+            // Create enhanced navigation structure
+            const navHTML = `
+                <nav class="navbar">
+                    <div class="nav-container">
+                        <!-- Brand -->
+                        <a href="#" class="nav-brand" data-section="dashboard">
+                            <span class="brand-icon">🌱</span>
+                            <div class="brand-text">
+                                <span class="brand-main">AgriMetrics</span>
+                                <span class="brand-sub">Farm Management</span>
+                            </div>
+                        </a>
+
+                        <!-- Main Navigation - 6 Core Items -->
+                        <div class="nav-main">
+                            <a href="#" class="nav-item active" data-section="dashboard">
+                                <span class="nav-icon">📊</span>
+                                <span class="nav-label">Dashboard</span>
+                            </a>
+                            <a href="#" class="nav-item" data-section="income-expenses">
+                                <span class="nav-icon">💰</span>
+                                <span class="nav-label">Income & Expenses</span>
+                            </a>
+                            <a href="#" class="nav-item" data-section="inventory">
+                                <span class="nav-icon">📦</span>
+                                <span class="nav-label">Inventory</span>
+                            </a>
+                            <a href="#" class="nav-item" data-section="sales">
+                                <span class="nav-icon">🛒</span>
+                                <span class="nav-label">Sales</span>
+                            </a>
+                            <a href="#" class="nav-item" data-section="orders">
+                                <span class="nav-icon">📋</span>
+                                <span class="nav-label">Orders</span>
+                            </a>
+                            <a href="#" class="nav-item" data-section="profile">
+                                <span class="nav-icon">👤</span>
+                                <span class="nav-label">Profile</span>
+                            </a>
+                        </div>
+
+                        <!-- Mobile Menu Button -->
+                        <button class="nav-menu-btn" id="menu-toggle">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                    </div>
+                </nav>
+
+                <!-- Side Menu for Additional Modules -->
+                <div class="side-menu" id="side-menu">
+                    <div class="side-menu-header">
+                        <div class="side-menu-title">Farm Operations</div>
+                        <div class="side-menu-subtitle">Production & Management</div>
+                    </div>
+                    <div class="side-menu-items">
+                        <!-- Production Section -->
+                        <div class="side-menu-section">
+                            <div class="side-menu-section-title">Production</div>
+                            <a href="#" class="side-menu-item" data-section="production">
+                                <span class="side-menu-icon">🚜</span>
+                                <span>Production</span>
+                            </a>
+                            <a href="#" class="side-menu-item" data-section="feed">
+                                <span class="side-menu-icon">🌾</span>
+                                <span>Feed Management</span>
+                            </a>
+                            <a href="#" class="side-menu-item" data-section="health">
+                                <span class="side-menu-icon">🐔</span>
+                                <span>Health & Mortality</span>
+                            </a>
+                        </div>
+                        
+                        <!-- Analytics Section -->
+                        <div class="side-menu-section">
+                            <div class="side-menu-section-title">Analytics</div>
+                            <a href="#" class="side-menu-item" data-section="reports">
+                                <span class="side-menu-icon">📈</span>
+                                <span>Reports & Analytics</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            appContainer.insertAdjacentHTML('afterbegin', navHTML);
         }
         
-        header = document.createElement('header');
-        appContainer.insertBefore(header, appContainer.firstChild);
-
-        // MODERN PWA NAVIGATION - CLEAN AND VISIBLE
-        header.innerHTML = `
-            <nav class="top-nav" style="
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 70px;
-                background: rgba(255, 255, 255, 0.95);
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
-                border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 0 16px;
-                z-index: 10000;
-                box-sizing: border-box;
-            ">
-                <!-- CLEAN BRAND -->
-                <div class="nav-brand" style="display: flex; align-items: center; gap: 12px;">
-                    <span style="font-size: 28px;">🌱</span>
-                    <span style="font-size: 20px; font-weight: 600; color: #1a1a1a;">Farm</span>
-                </div>
-                
-                <!-- CLEAN NAV ITEMS - ALWAYS VISIBLE -->
-                <div class="nav-items" style="display: flex; align-items: center; gap: 8px;">
-                    <button class="nav-item" data-view="dashboard" style="
-                        background: transparent;
-                        border: none;
-                        cursor: pointer;
-                        color: #666;
-                        font-size: 24px;
-                        padding: 12px;
-                        border-radius: 12px;
-                        min-width: 50px;
-                        min-height: 50px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        transition: all 0.2s ease;
-                    " title="Dashboard">
-                        📊
-                    </button>
-
-                    <button class="nav-item" data-view="income-expenses" style="
-                        background: transparent;
-                        border: none;
-                        cursor: pointer;
-                        color: #666;
-                        font-size: 24px;
-                        padding: 12px;
-                        border-radius: 12px;
-                        min-width: 50px;
-                        min-height: 50px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        transition: all 0.2s ease;
-                    " title="Finance">
-                        💰
-                    </button>
-
-                    <button class="nav-item" data-view="inventory-check" style="
-                        background: transparent;
-                        border: none;
-                        cursor: pointer;
-                        color: #666;
-                        font-size: 24px;
-                        padding: 12px;
-                        border-radius: 12px;
-                        min-width: 50px;
-                        min-height: 50px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        transition: all 0.2s ease;
-                    " title="Inventory">
-                        📦
-                    </button>
-
-                    <button class="nav-item" data-view="more" style="
-                        background: transparent;
-                        border: none;
-                        cursor: pointer;
-                        color: #666;
-                        font-size: 24px;
-                        padding: 12px;
-                        border-radius: 12px;
-                        min-width: 50px;
-                        min-height: 50px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        transition: all 0.2s ease;
-                    " title="More">
-                        ⋮
-                    </button>
-                </div>
-            </nav>
-
-            <!-- MODERN MORE MENU -->
-            <div id="more-menu" class="more-menu hidden" style="
-                position: fixed;
-                top: 75px;
-                right: 16px;
-                background: rgba(255, 255, 255, 0.95);
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
-                border-radius: 16px;
-                box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-                padding: 16px;
-                z-index: 10001;
-                min-width: 200px;
-                border: 1px solid rgba(0, 0, 0, 0.1);
-            ">
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <button class="more-menu-item" data-view="feed-record" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
-                        <span style="font-size: 20px;">🌾</span>
-                        <span>Feed</span>
-                    </button>
-                    <button class="more-menu-item" data-view="broiler-mortality" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
-                        <span style="font-size: 20px;">🐔</span>
-                        <span>Health</span>
-                    </button>
-                    <button class="more-menu-item" data-view="production" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
-                        <span style="font-size: 20px;">🚜</span>
-                        <span>Production</span>
-                    </button>
-                    <button class="more-menu-item" data-view="sales-record" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
-                        <span style="font-size: 20px;">💰</span>
-                        <span>Sales</span>
-                    </button>
-                    <button class="more-menu-item" data-view="orders" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
-                        <span style="font-size: 20px;">📋</span>
-                        <span>Orders</span>
-                    </button>
-                    <button class="more-menu-item" data-view="reports" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
-                        <span style="font-size: 20px;">📈</span>
-                        <span>Reports</span>
-                    </button>
-                    <button class="more-menu-item" data-view="profile" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; color: #666; font-size: 16px; transition: all 0.2s ease;">
-                        <span style="font-size: 20px;">👤</span>
-                        <span>Profile</span>
-                    </button>
-                </div>
-            </div>
-        `;
-
-        // Add padding to main content
-        const main = appContainer.querySelector('main');
-        if (main) {
-            main.style.paddingTop = '80px';
-            main.style.minHeight = 'calc(100vh - 80px)';
-        }
-        
-        console.log('✅ Modern PWA navigation created');
+        console.log('✅ Enhanced navigation created');
     }
 
     showSection(sectionId) {
         console.log(`🔄 Switching to section: ${sectionId}`);
         
-        // Clean active state
+        // Update active states
         document.querySelectorAll('.nav-item').forEach(item => {
-            item.style.background = 'transparent';
-            item.style.color = '#666';
+            item.classList.remove('active');
         });
         
-        const activeNavItem = document.querySelector(`.nav-item[data-view="${sectionId}"]`);
-        if (activeNavItem) {
-            activeNavItem.style.background = 'rgba(59, 130, 246, 0.1)';
-            activeNavItem.style.color = '#3b82f6';
-        }
+        document.querySelectorAll('.side-menu-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        // Set active state for current section
+        const activeNavItem = document.querySelector(`.nav-item[data-section="${sectionId}"]`);
+        const activeSideItem = document.querySelector(`.side-menu-item[data-section="${sectionId}"]`);
+        
+        if (activeNavItem) activeNavItem.classList.add('active');
+        if (activeSideItem) activeSideItem.classList.add('active');
 
         this.currentSection = sectionId;
         
+        // Load module content
+        this.loadModuleContent(sectionId);
+    }
+
+    loadModuleContent(sectionId) {
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
+
+        // Map section IDs to your existing module names
+        const moduleMap = {
+            'dashboard': 'dashboard',
+            'income-expenses': 'income-expenses', 
+            'inventory': 'inventory-check',
+            'sales': 'sales-record',
+            'orders': 'orders',
+            'profile': 'profile',
+            'production': 'production',
+            'feed': 'feed-record',
+            'health': 'broiler-mortality',
+            'reports': 'reports'
+        };
+
+        const actualModule = moduleMap[sectionId] || sectionId;
+        
         if (window.FarmModules && typeof window.FarmModules.initializeModule === 'function') {
-            window.FarmModules.initializeModule(sectionId);
+            window.FarmModules.initializeModule(actualModule);
         } else {
             this.loadFallbackContent(sectionId);
         }
@@ -265,47 +229,85 @@ class FarmManagementApp {
         if (!contentArea) return;
 
         const sectionTitles = {
-            'dashboard': 'Dashboard',
+            'dashboard': 'Dashboard Overview',
             'income-expenses': 'Income & Expenses',
-            'inventory-check': 'Inventory Check',
-            'feed-record': 'Feed Record',
-            'broiler-mortality': 'Broiler Mortality',
+            'inventory': 'Inventory Management',
+            'sales': 'Sales Records',
+            'orders': 'Order Management',
+            'profile': 'Profile Settings',
             'production': 'Production Records',
-            'sales-record': 'Sales Record',
-            'orders': 'Orders',
-            'reports': 'Reports',
-            'profile': 'Profile'
+            'feed': 'Feed Management',
+            'health': 'Health & Mortality',
+            'reports': 'Reports & Analytics'
         };
 
         contentArea.innerHTML = `
-            <div style="padding: 20px;">
-                <h2 style="color: #1a1a1a;">${sectionTitles[sectionId] || sectionId}</h2>
-                <p style="color: #666;">Content loading...</p>
+            <div class="module-container">
+                <div class="module-header">
+                    <h1>${sectionTitles[sectionId] || sectionId}</h1>
+                    <p>Manage your farm ${sectionTitles[sectionId]?.toLowerCase() || 'operations'}</p>
+                </div>
+                <div class="module-content">
+                    <div class="glass-card">
+                        <h3>Welcome to ${sectionTitles[sectionId] || sectionId}</h3>
+                        <p>This module is loading...</p>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary">Get Started</button>
+                            <button class="btn btn-outline">Learn More</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
     }
 
-    toggleMoreMenu() {
-        const moreMenu = document.getElementById('more-menu');
-        if (moreMenu) {
-            if (moreMenu.classList.contains('hidden')) {
-                moreMenu.classList.remove('hidden');
-            } else {
-                moreMenu.classList.add('hidden');
-            }
+    toggleSideMenu() {
+        const sideMenu = document.getElementById('side-menu');
+        if (sideMenu) {
+            sideMenu.classList.toggle('open');
         }
     }
 
-    hideMoreMenu() {
-        const moreMenu = document.getElementById('more-menu');
-        if (moreMenu) {
-            moreMenu.classList.add('hidden');
+    hideSideMenu() {
+        const sideMenu = document.getElementById('side-menu');
+        if (sideMenu) {
+            sideMenu.classList.remove('open');
         }
+    }
+
+    // Notification system
+    showNotification(message, type = 'info') {
+        const notificationContainer = document.getElementById('notification-container');
+        if (!notificationContainer) return;
+
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-message">${message}</span>
+                <button class="notification-close">&times;</button>
+            </div>
+        `;
+
+        notificationContainer.appendChild(notification);
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 5000);
+
+        // Close button
+        notification.querySelector('.notification-close').addEventListener('click', () => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        });
     }
 }
 
-window.FarmManagementApp = FarmManagementApp;
-
+// Initialize the app
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.app = new FarmManagementApp();
@@ -313,4 +315,3 @@ if (document.readyState === 'loading') {
 } else {
     window.app = new FarmManagementApp();
 }
-
