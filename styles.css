@@ -4289,5 +4289,14 @@ header, .top-nav {
     z-index: -1;
 }
 
-/* Desktop: You can keep it click-to-open or make it always visible - your choice */
-/* For click-to-open on all devices, no media query needed */
+/* Active states for navigation */
+.nav-item.active {
+    background: rgba(59, 130, 246, 0.1) !important;
+    color: #3b82f6 !important;
+}
+
+.side-menu-item.active {
+    background: rgba(59, 130, 246, 0.1) !important;
+    color: #3b82f6 !important;
+}
+
