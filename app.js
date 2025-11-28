@@ -52,11 +52,11 @@ class FarmManagementApp {
         this.showSection(this.currentSection);
     }
 
-    createTopNavigation() {
+   createTopNavigation() {
     const appContainer = document.getElementById('app-container');
     if (!appContainer) return;
 
-    // Remove existing header
+    // Remove existing header if any
     let header = appContainer.querySelector('header');
     if (header) {
         header.remove();
@@ -66,16 +66,15 @@ class FarmManagementApp {
     header = document.createElement('header');
     appContainer.insertBefore(header, appContainer.firstChild);
 
-   header.innerHTML = `
-    <nav class="top-nav">
-        <div class="nav-brand">
-            <button class="hamburger-menu">☰</button>
-            <img src="icons/icon-96x96.png" alt="AgriMetrics">
-            <span class="brand-text">AgriMetrics</span>
-        </div>
+    header.innerHTML = `
+        <nav class="top-nav">
+            <div class="nav-brand">
+                <button class="hamburger-menu" id="hamburger-menu">☰</button>
+                <img src="icons/icon-96x96.png" alt="AgriMetrics">
+                <span class="brand-text">AgriMetrics</span>
+            </div>
             
             <div class="nav-items">
-                <!-- Core navigation items only -->
                 <button class="nav-item" data-view="dashboard" title="Dashboard">
                     <span>📊</span>
                     <span class="nav-label">Dashboard</span>
@@ -101,7 +100,6 @@ class FarmManagementApp {
                     <span class="nav-label">Sales</span>
                 </button>
 
-                <!-- Profile/Account button -->
                 <button class="nav-item" data-view="profile" title="Profile">
                     <span>👤</span>
                     <span class="nav-label">Profile</span>
@@ -110,23 +108,49 @@ class FarmManagementApp {
         </nav>
     `;
 
-     
-// Add event listener for hamburger menu
-const hamburger = header.querySelector('.hamburger-menu');
-const sidebar = appContainer.querySelector('.sidebar');
-if (hamburger && sidebar) {
-    hamburger.addEventListener('click', () => {
-        sidebar.classList.toggle('active');
-    });
-}
+    // Setup hamburger menu to toggle the existing sidebar
+    this.setupHamburgerMenu();
+    
     // Adjust main content padding
     const main = appContainer.querySelector('main');
     if (main) {
         main.style.paddingTop = '80px';
-        main.style.minHeight = 'calc(100vh - 80px)';
     }
     
     console.log('✅ Top Navigation created');
+}
+
+setupHamburgerMenu() {
+    const hamburger = document.getElementById('hamburger-menu');
+    const sideMenu = document.getElementById('side-menu');
+    
+    if (hamburger && sideMenu) {
+        hamburger.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent event bubbling
+            sideMenu.classList.toggle('active');
+        });
+    }
+    
+    // Close sidebar when clicking on menu items
+    const sideMenuItems = document.querySelectorAll('.side-menu-item');
+    sideMenuItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const sideMenu = document.getElementById('side-menu');
+            sideMenu.classList.remove('active');
+        });
+    });
+    
+    // Close sidebar when clicking outside
+    document.addEventListener('click', (e) => {
+        const sideMenu = document.getElementById('side-menu');
+        const hamburger = document.getElementById('hamburger-menu');
+        
+        if (sideMenu && hamburger) {
+            if (!sideMenu.contains(e.target) && !hamburger.contains(e.target)) {
+                sideMenu.classList.remove('active');
+            }
+        }
+    });
 }
 
     createSidebarNavigation() {
