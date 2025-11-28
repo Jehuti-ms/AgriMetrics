@@ -146,13 +146,15 @@ setupHamburgerMenu() {
     const sideMenu = document.getElementById('side-menu');
     
     if (hamburger && sideMenu) {
-        // Update sidebar position to be on the right
+        // Ensure sidebar is hidden by default and positioned on right
         sideMenu.style.left = 'auto';
         sideMenu.style.right = '0';
         sideMenu.style.transform = 'translateX(100%)';
+        sideMenu.classList.remove('active'); // Ensure it's hidden
         
         hamburger.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent event bubbling
+            e.preventDefault();
+            e.stopPropagation();
             console.log('🍔 Hamburger clicked, toggling sidebar');
             sideMenu.classList.toggle('active');
         });
@@ -173,6 +175,17 @@ setupHamburgerMenu() {
                 sideMenu.classList.remove('active');
             }
         }
+    });
+    
+    // Also close sidebar when clicking on sidebar items
+    const sideMenuItems = document.querySelectorAll('.side-menu-item');
+    sideMenuItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const sideMenu = document.getElementById('side-menu');
+            if (sideMenu) {
+                sideMenu.classList.remove('active');
+            }
+        });
     });
 }
 
