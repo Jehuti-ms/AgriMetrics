@@ -123,11 +123,8 @@ class FarmManagementApp {
                     <span class="nav-label">Profile</span>
                 </button>
                 
-                <!-- Hamburger menu on the right side -->
-                <button class="hamburger-menu" id="hamburger-menu" title="Farm Operations">
-                    <span>☰</span>
-                    <span class="nav-label">More</span>
-                </button>
+                <!-- Hamburger menu button only -->
+                <button class="hamburger-menu" id="hamburger-menu" title="Farm Operations">☰</button>
             </div>
         </nav>
     `;
@@ -142,6 +139,36 @@ class FarmManagementApp {
     }
     
     console.log('✅ Top Navigation created');
+}
+
+setupHamburgerMenu() {
+    const hamburger = document.getElementById('hamburger-menu');
+    const sideMenu = document.getElementById('side-menu');
+    
+    if (hamburger && sideMenu) {
+        hamburger.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent event bubbling
+            console.log('🍔 Hamburger clicked, toggling sidebar');
+            sideMenu.classList.toggle('active');
+        });
+        
+        console.log('✅ Hamburger menu connected to sidebar');
+    } else {
+        console.log('❌ Hamburger or side menu not found:', { hamburger, sideMenu });
+    }
+    
+    // Close sidebar when clicking outside
+    document.addEventListener('click', (e) => {
+        const sideMenu = document.getElementById('side-menu');
+        const hamburger = document.getElementById('hamburger-menu');
+        
+        if (sideMenu && sideMenu.classList.contains('active') && hamburger) {
+            if (!sideMenu.contains(e.target) && !hamburger.contains(e.target)) {
+                console.log('📱 Click outside, closing sidebar');
+                sideMenu.classList.remove('active');
+            }
+        }
+    });
 }
 
     setupHamburgerMenu() {
