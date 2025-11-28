@@ -3978,7 +3978,7 @@ header, .top-nav {
   margin-bottom: 0;
 }
 
-/* Enhanced Navigation Styles */
+/* Enhanced Navigation Styles - FIXED */
 .navbar {
     background: linear-gradient(135deg, #22c55e 0%, #14b8a6 100%);
     padding: 0 20px;
@@ -3998,6 +3998,7 @@ header, .top-nav {
     align-items: center;
     justify-content: space-between;
     height: 100%;
+    width: 100%;
 }
 
 .nav-brand {
@@ -4090,24 +4091,24 @@ header, .top-nav {
     background: rgba(255, 255, 255, 0.15);
 }
 
-/* Side Menu */
+/* Side Menu - FIXED POSITION */
 .side-menu {
     position: fixed;
     top: 60px;
-    left: -300px;
+    right: -300px; /* Changed from left to right */
     width: 280px;
     height: calc(100vh - 60px);
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(20px);
-    border-right: 1px solid rgba(255, 255, 255, 0.8);
-    transition: left 0.3s ease;
+    border-left: 1px solid rgba(255, 255, 255, 0.8); /* Changed from border-right */
+    transition: right 0.3s ease; /* Changed from left to right */
     z-index: 999;
     overflow-y: auto;
-    box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
+    box-shadow: -2px 0 20px rgba(0, 0, 0, 0.1); /* Negative shadow for right side */
 }
 
 .side-menu.open {
-    left: 0;
+    right: 0; /* Changed from left to right */
 }
 
 .side-menu-header {
@@ -4173,7 +4174,7 @@ header, .top-nav {
     text-align: center;
 }
 
-/* Responsive */
+/* Responsive - FIXED */
 @media (max-width: 1024px) {
     .nav-label {
         display: none;
@@ -4182,19 +4183,38 @@ header, .top-nav {
     .nav-item {
         padding: 10px 12px;
     }
+    
+    .nav-item span:last-child {
+        display: none;
+    }
 }
 
 @media (max-width: 768px) {
     .nav-main {
-        display: none;
+        display: none !important; /* Force hide on mobile */
     }
     
     .nav-menu-btn {
-        display: block;
+        display: block !important; /* Force show on mobile */
     }
     
     .nav-brand .brand-text {
         display: none;
+    }
+    
+    .nav-brand {
+        flex: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar {
+        padding: 0 16px;
+    }
+    
+    .side-menu {
+        width: 85vw;
+        right: -85vw;
     }
 }
 
@@ -4209,13 +4229,20 @@ header, .top-nav {
     z-index: 1000 !important;
 }
 
-/* Remove any conflicting styles that might hide the navbar */
-header {
+/* Remove any conflicting styles */
+header, .top-nav {
     display: none !important;
 }
 
-.top-nav {
-    display: none !important;
+/* Force mobile menu button to be visible on mobile */
+@media (max-width: 768px) {
+    .nav-menu-btn {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+    }
 }
 
 
