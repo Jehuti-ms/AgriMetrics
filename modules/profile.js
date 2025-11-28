@@ -128,6 +128,12 @@ FarmModules.registerModule('profile', {
 
     initialize: function() {
         console.log('Profile module initializing...');
+        
+        // Ensure appData exists
+        if (!FarmModules.appData) {
+            FarmModules.appData = {};
+        }
+        
         this.loadRealData();
         this.attachEventListeners();
         this.updateAllDisplays();
@@ -141,7 +147,6 @@ FarmModules.registerModule('profile', {
         
         const farmName = profileData.farmName || 'My Farm';
         const farmerName = profileData.farmerName || 'Farmer';
-        const email = profileData.email || 'user@example.com';
         
         this.setValue('farm-name', farmName);
         this.setValue('farmer-name', farmerName);
@@ -168,7 +173,9 @@ FarmModules.registerModule('profile', {
     },
 
     updateProfileInfo: function() {
-        const profile = FarmModules.appData.profile || {};
+        // Safe access to appData with fallbacks
+        const appData = FarmModules.appData || {};
+        const profile = appData.profile || {};
         const currentUser = this.getCurrentUser();
         
         const farmName = profile.farmName || currentUser?.farmName || 'My Farm';
@@ -176,16 +183,18 @@ FarmModules.registerModule('profile', {
         
         this.setValue('farm-name', farmName);
         this.setValue('farmer-name', farmerName);
-        this.setValue('farm-type', profile.farmType);
-        this.setValue('farm-size', profile.farmSize);
-        this.setValue('farm-location', profile.farmLocation);
-        this.setValue('farm-description', profile.farmDescription);
+        this.setValue('farm-type', profile.farmType || '');
+        this.setValue('farm-size', profile.farmSize || '');
+        this.setValue('farm-location', profile.farmLocation || '');
+        this.setValue('farm-description', profile.farmDescription || '');
     },
 
     updateStatsOverview: function() {
-        const sales = FarmModules.appData.sales || [];
-        const inventory = FarmModules.appData.inventory || [];
-        const feedRecords = FarmModules.appData.feedRecords || [];
+        // Safe access to appData with fallbacks
+        const appData = FarmModules.appData || {};
+        const sales = appData.sales || [];
+        const inventory = appData.inventory || [];
+        const feedRecords = appData.feedRecords || [];
         
         const inventoryValue = inventory.reduce((sum, item) => sum + (item.quantity * (item.price || 0)), 0);
         const salesRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
@@ -237,7 +246,15 @@ FarmModules.registerModule('profile', {
     },
 
     saveProfile: function() {
-        const profile = FarmModules.appData.profile || {};
+        // Ensure appData and profile exist
+        if (!FarmModules.appData) {
+            FarmModules.appData = {};
+        }
+        if (!FarmModules.appData.profile) {
+            FarmModules.appData.profile = {};
+        }
+        
+        const profile = FarmModules.appData.profile;
         
         profile.farmName = this.getValue('farm-name');
         profile.farmerName = this.getValue('farmer-name');
@@ -273,7 +290,8 @@ FarmModules.registerModule('profile', {
     },
 
     exportData: function() {
-        const dataStr = JSON.stringify(FarmModules.appData, null, 2);
+        const appData = FarmModules.appData || {};
+        const dataStr = JSON.stringify(appData, null, 2);
         const dataBlob = new Blob([dataStr], {type: 'application/json'});
         
         const link = document.createElement('a');
@@ -286,6 +304,9 @@ FarmModules.registerModule('profile', {
 
     clearAllData: function() {
         if (confirm('Clear ALL farm data? This cannot be undone!')) {
+            if (!FarmModules.appData) {
+                FarmModules.appData = {};
+            }
             FarmModules.appData.sales = [];
             FarmModules.appData.inventory = [];
             FarmModules.appData.feedRecords = [];
@@ -295,7 +316,8 @@ FarmModules.registerModule('profile', {
     },
 
     formatCurrency: function(amount) {
-        const profile = FarmModules.appData.profile || {};
+        const appData = FarmModules.appData || {};
+        const profile = appData.profile || {};
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: profile.currency || 'USD'
