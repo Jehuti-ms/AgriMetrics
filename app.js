@@ -72,112 +72,194 @@ class FarmManagementApp {
     }
 
     createTopNavigation() {
-        var appContainer = document.getElementById('app-container');
-        if (!appContainer) return;
+    const appContainer = document.getElementById('app-container');
+    if (!appContainer) return;
 
-        var header = appContainer.querySelector('header');
-        if (header) {
-            header.remove();
-        }
-        
-        header = document.createElement('header');
-        appContainer.insertBefore(header, appContainer.firstChild);
-
-        header.innerHTML = this.getNavigationHTML();
-        
-        var main = appContainer.querySelector('main');
-        if (main) {
-            main.style.paddingTop = '80px';
-            main.style.minHeight = 'calc(100vh - 80px)';
-        }
-        
-        console.log('✅ Navigation created');
+    let header = appContainer.querySelector('header');
+    if (header) {
+        header.remove();
     }
+    
+    header = document.createElement('header');
+    appContainer.insertBefore(header, appContainer.firstChild);
 
-    getNavigationHTML() {
-        return `
-            <nav class="top-nav">
-                <div class="nav-brand">
-                    <img src="icons/icon-96x96.png" alt="AgriMetrics">
-                    <span class="brand-text">AgriMetrics</span>
-                </div>
-                
-                <div class="nav-items">
-                    <button class="nav-item" data-view="dashboard" title="Dashboard">
-                        <span>📊</span>
-                        <span class="nav-label">Dashboard</span>
+    header.innerHTML = `
+        <nav class="top-nav" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 10000;
+        ">
+            <!-- Brand -->
+            <div class="nav-brand" style="display: flex; align-items: center; gap: 12px;">
+                <img src="icons/icon-96x96.png" alt="AgriMetrics" style="width: 32px; height: 32px; border-radius: 8px;">
+                <span style="font-size: 18px; font-weight: 600; color: #1a1a1a;">AgriMetrics</span>
+            </div>
+            
+            <!-- Navigation Items -->
+            <div class="nav-items" style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            ">
+                <button class="nav-item" data-view="dashboard" style="
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
+                    color: #666;
+                    padding: 12px;
+                    border-radius: 12px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    transition: all 0.2s ease;
+                ">
+                    <span style="font-size: 20px;">📊</span>
+                    <span style="font-size: 10px; margin-top: 2px;">Dashboard</span>
+                </button>
+
+                <button class="nav-item" data-view="income-expenses" style="
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
+                    color: #666;
+                    padding: 12px;
+                    border-radius: 12px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    transition: all 0.2s ease;
+                ">
+                    <span style="font-size: 20px;">💰</span>
+                    <span style="font-size: 10px; margin-top: 2px;">Income</span>
+                </button>
+
+                <button class="nav-item" data-view="inventory-check" style="
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
+                    color: #666;
+                    padding: 12px;
+                    border-radius: 12px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    transition: all 0.2s ease;
+                ">
+                    <span style="font-size: 20px;">📦</span>
+                    <span style="font-size: 10px; margin-top: 2px;">Inventory</span>
+                </button>
+
+                <button id="menu-toggle" style="
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
+                    color: #666;
+                    font-size: 24px;
+                    padding: 12px;
+                    border-radius: 8px;
+                    transition: all 0.2s ease;
+                ">
+                    ☰
+                </button>
+            </div>
+        </nav>
+
+        <!-- Side Menu -->
+        <div class="side-menu hidden" id="side-menu" style="
+            position: fixed;
+            top: 70px;
+            right: 0;
+            bottom: 0;
+            width: 280px;
+            background: white;
+            border-left: 1px solid #e5e5e5;
+            z-index: 9999;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+        ">
+            <div style="padding: 24px 20px 16px; border-bottom: 1px solid #e5e5e5; background: #22c55e; color: white;">
+                <div style="font-size: 18px; font-weight: 700;">More Options</div>
+                <div style="font-size: 12px;">Additional features</div>
+            </div>
+            <div style="padding: 16px 0;">
+                <div style="margin-bottom: 24px;">
+                    <div style="padding: 0 20px 8px; font-size: 12px; font-weight: 600; color: #666;">Orders</div>
+                    <button class="side-menu-item" data-section="orders" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; width: 100%; text-align: left; border: none; background: transparent; cursor: pointer;">
+                        <span>📋</span>
+                        <span>Orders</span>
                     </button>
-
-                    <button class="nav-item" data-view="income-expenses" title="Income & Expenses">
-                        <span>💰</span>
-                        <span class="nav-label">Income</span>
+                    <button class="side-menu-item" data-section="sales-record" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; width: 100%; text-align: left; border: none; background: transparent; cursor: pointer;">
+                        <span>🛒</span>
+                        <span>Sales</span>
                     </button>
+                </div>
 
-                    <button class="nav-item" data-view="inventory-check" title="Inventory">
-                        <span>📦</span>
-                        <span class="nav-label">Inventory</span>
+                <div style="margin-bottom: 24px;">
+                    <div style="padding: 0 20px 8px; font-size: 12px; font-weight: 600; color: #666;">Production</div>
+                    <button class="side-menu-item" data-section="production" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; width: 100%; text-align: left; border: none; background: transparent; cursor: pointer;">
+                        <span>🚜</span>
+                        <span>Production</span>
                     </button>
-
-                    <button id="menu-toggle" title="Menu">☰</button>
+                    <button class="side-menu-item" data-section="feed-record" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; width: 100%; text-align: left; border: none; background: transparent; cursor: pointer;">
+                        <span>🌾</span>
+                        <span>Feed</span>
+                    </button>
+                    <button class="side-menu-item" data-section="broiler-mortality" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; width: 100%; text-align: left; border: none; background: transparent; cursor: pointer;">
+                        <span>🐔</span>
+                        <span>Health</span>
+                    </button>
                 </div>
-            </nav>
 
-            <div class="side-menu hidden" id="side-menu">
-                <div class="side-menu-header">
-                    <div class="side-menu-title">More Options</div>
-                    <div class="side-menu-subtitle">Additional features</div>
+                <div style="margin-bottom: 24px;">
+                    <div style="padding: 0 20px 8px; font-size: 12px; font-weight: 600; color: #666;">Analytics</div>
+                    <button class="side-menu-item" data-section="reports" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; width: 100%; text-align: left; border: none; background: transparent; cursor: pointer;">
+                        <span>📈</span>
+                        <span>Reports</span>
+                    </button>
                 </div>
-                <div class="side-menu-items">
-                    <div class="side-menu-section">
-                        <div class="side-menu-section-title">Orders</div>
-                        <button class="side-menu-item" data-section="orders">
-                            <span>📋</span>
-                            <span>Orders</span>
-                        </button>
-                        <button class="side-menu-item" data-section="sales-record">
-                            <span>🛒</span>
-                            <span>Sales</span>
-                        </button>
-                    </div>
 
-                    <div class="side-menu-section">
-                        <div class="side-menu-section-title">Production</div>
-                        <button class="side-menu-item" data-section="production">
-                            <span>🚜</span>
-                            <span>Production</span>
-                        </button>
-                        <button class="side-menu-item" data-section="feed-record">
-                            <span>🌾</span>
-                            <span>Feed</span>
-                        </button>
-                        <button class="side-menu-item" data-section="broiler-mortality">
-                            <span>🐔</span>
-                            <span>Health</span>
-                        </button>
-                    </div>
-
-                    <div class="side-menu-section">
-                        <div class="side-menu-section-title">Analytics</div>
-                        <button class="side-menu-item" data-section="reports">
-                            <span>📈</span>
-                            <span>Reports</span>
-                        </button>
-                    </div>
-
-                    <div class="side-menu-section">
-                        <div class="side-menu-section-title">Account</div>
-                        <button class="side-menu-item" data-section="profile">
-                            <span>👤</span>
-                            <span>Profile</span>
-                        </button>
-                    </div>
+                <div>
+                    <div style="padding: 0 20px 8px; font-size: 12px; font-weight: 600; color: #666;">Account</div>
+                    <button class="side-menu-item" data-section="profile" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; width: 100%; text-align: left; border: none; background: transparent; cursor: pointer;">
+                        <span>👤</span>
+                        <span>Profile</span>
+                    </button>
                 </div>
             </div>
+        </div>
 
-            <div id="side-menu-overlay" class="hidden"></div>
-        `;
+        <!-- Overlay -->
+        <div id="side-menu-overlay" class="hidden" style="
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9998;
+        "></div>
+    `;
+
+    const main = appContainer.querySelector('main');
+    if (main) {
+        main.style.paddingTop = '80px';
+        main.style.minHeight = 'calc(100vh - 80px)';
     }
-
+    
+    console.log('✅ Navigation created');
+}
+    
     showSection(sectionId) {
         console.log('🔄 Switching to section: ' + sectionId);
         
