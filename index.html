@@ -103,18 +103,94 @@
 
     <!-- App Container -->
     <div id="app-container" class="hidden">
-        <header>
-            <nav id="main-nav">
-                <!-- Navigation will be populated by JavaScript -->
-            </nav>
-        </header>
-        
-        <main>
-            <div id="content-area">
-                <!-- Content will be populated by JavaScript -->
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <!-- Brand -->
+                <a href="#" class="nav-brand" data-section="dashboard">
+                    <span class="brand-icon">🌱</span>
+                    <div class="brand-text">
+                        <span class="brand-main">AgriMetrics</span>
+                        <span class="brand-sub">Farm Management System</span>
+                    </div>
+                </a>
+
+                <!-- Main Navigation -->
+                <div class="nav-main">
+                    <a href="#" class="nav-item active" data-section="dashboard">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-label">Dashboard</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="income-expenses">
+                        <span class="nav-icon">💰</span>
+                        <span class="nav-label">Income & Expenses</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="inventory">
+                        <span class="nav-icon">📦</span>
+                        <span class="nav-label">Inventory</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="sales">
+                        <span class="nav-icon">🛒</span>
+                        <span class="nav-label">Sales</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="orders">
+                        <span class="nav-icon">📋</span>
+                        <span class="nav-label">Orders</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="profile">
+                        <span class="nav-icon">👤</span>
+                        <span class="nav-label">Profile</span>
+                    </a>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <button class="nav-menu-btn" id="menu-toggle">☰</button>
             </div>
+        </nav>
+
+        <!-- Side Menu -->
+        <div class="side-menu" id="side-menu">
+            <div class="side-menu-header">
+                <div class="side-menu-title">Farm Operations</div>
+                <div class="side-menu-subtitle">Production & Management</div>
+            </div>
+            <div class="side-menu-items">
+                <!-- Production & Operations -->
+                <div class="side-menu-section">
+                    <div class="side-menu-section-title">Production</div>
+                    <a href="#" class="side-menu-item" data-section="production">
+                        <span class="side-menu-icon">🚜</span>
+                        <span>Production</span>
+                    </a>
+                    <a href="#" class="side-menu-item" data-section="feed">
+                        <span class="side-menu-icon">🌾</span>
+                        <span>Feed Management</span>
+                    </a>
+                    <a href="#" class="side-menu-item" data-section="health">
+                        <span class="side-menu-icon">🐔</span>
+                        <span>Health & Mortality</span>
+                    </a>
+                </div>
+                
+                <!-- Analytics -->
+                <div class="side-menu-section">
+                    <div class="side-menu-section-title">Analytics</div>
+                    <a href="#" class="side-menu-item" data-section="reports">
+                        <span class="side-menu-icon">📈</span>
+                        <span>Reports & Analytics</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main id="content-area">
+            <!-- Content will be loaded here by modules -->
         </main>
     </div>
+
+    <!-- Notifications Container -->
+    <div class="notification-container" id="notification-container"></div>
 
     <!-- Load scripts in correct order -->
     <script src="firebase/firebase-config.js"></script>
@@ -133,6 +209,6 @@
     <script src="modules/reports.js"></script>
     <script src="modules/profile.js"></script>
 
-     <script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
