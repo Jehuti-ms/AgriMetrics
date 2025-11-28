@@ -128,8 +128,11 @@ class FarmManagementApp {
                     <span class="nav-label">Profile</span>
                 </button>
                 
-                <!-- Hamburger menu button only -->
-                <button class="hamburger-menu" id="hamburger-menu" title="Farm Operations">☰</button>
+                <!-- Hamburger menu as a proper nav-item -->
+                <button class="nav-item hamburger-menu" id="hamburger-menu" title="Farm Operations">
+                    <span>☰</span>
+                    <span class="nav-label">More</span>
+                </button>
             </div>
         </nav>
     `;
@@ -145,7 +148,7 @@ class FarmManagementApp {
     
     console.log('✅ Top Navigation created');
 }
-
+    
 setupHamburgerMenu() {
     const hamburger = document.getElementById('hamburger-menu');
     const sideMenu = document.getElementById('side-menu');
