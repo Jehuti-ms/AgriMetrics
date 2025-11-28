@@ -28,39 +28,42 @@ class FarmManagementApp {
         this.setupEventListeners();
     }
 
-    setupEventListeners() {
-        // Handle navigation clicks
-        document.addEventListener('click', (e) => {
-            // Main nav items
-            if (e.target.closest('.nav-item')) {
-                const navItem = e.target.closest('.nav-item');
-                const section = navItem.getAttribute('data-section');
-                if (section) {
-                    this.showSection(section);
-                }
+// Add this to your setupEventListeners method
+setupEventListeners() {
+    document.addEventListener('click', (e) => {
+        console.log('🖱️ Click detected:', e.target);
+        
+        // Main nav items
+        if (e.target.closest('.nav-item')) {
+            const navItem = e.target.closest('.nav-item');
+            const section = navItem.getAttribute('data-section');
+            if (section) {
+                this.showSection(section);
             }
-            
-            // Side menu items
-            if (e.target.closest('.side-menu-item')) {
-                const menuItem = e.target.closest('.side-menu-item');
-                const section = menuItem.getAttribute('data-section');
-                if (section) {
-                    this.showSection(section);
-                    this.hideSideMenu();
-                }
-            }
-            
-            // Mobile menu toggle
-            if (e.target.closest('#menu-toggle')) {
-                this.toggleSideMenu();
-            }
-            
-            // Close side menu when clicking outside
-            if (!e.target.closest('.side-menu') && !e.target.closest('#menu-toggle')) {
+        }
+        
+        // Mobile menu button
+        if (e.target.closest('#menu-toggle')) {
+            console.log('📱 Mobile menu button clicked!');
+            this.toggleSideMenu();
+        }
+        
+        // Side menu items
+        if (e.target.closest('.side-menu-item')) {
+            const menuItem = e.target.closest('.side-menu-item');
+            const section = menuItem.getAttribute('data-section');
+            if (section) {
+                this.showSection(section);
                 this.hideSideMenu();
             }
-        });
-    }
+        }
+        
+        // Close side menu when clicking outside
+        if (!e.target.closest('.side-menu') && !e.target.closest('#menu-toggle')) {
+            this.hideSideMenu();
+        }
+    });
+}
 
     showApp() {
         const authContainer = document.getElementById('auth-container');
