@@ -71,73 +71,78 @@ class FarmManagementApp {
         console.log('🏠 App container shown');
     }
 
-    createTopNavigation() {
-        const appContainer = document.getElementById('app-container');
-        if (!appContainer) return;
+   createTopNavigation() {
+    const appContainer = document.getElementById('app-container');
+    if (!appContainer) return;
 
-        // Remove existing header if any
-        let header = appContainer.querySelector('header');
-        if (header) {
-            header.remove();
-        }
-        
-        // Create new header
-        header = document.createElement('header');
-        appContainer.insertBefore(header, appContainer.firstChild);
-
-        header.innerHTML = `
-            <nav class="top-nav">
-                <div class="nav-brand">
-                    <button class="hamburger-menu" id="hamburger-menu">☰</button>
-                    <img src="icons/icon-96x96.png" alt="AgriMetrics">
-                    <span class="brand-text">AgriMetrics</span>
-                </div>
-                
-                <div class="nav-items">
-                    <button class="nav-item" data-view="dashboard" title="Dashboard">
-                        <span>📊</span>
-                        <span class="nav-label">Dashboard</span>
-                    </button>
-
-                    <button class="nav-item" data-view="income-expenses" title="Income & Expenses">
-                        <span>💰</span>
-                        <span class="nav-label">Income</span>
-                    </button>
-
-                    <button class="nav-item" data-view="inventory-check" title="Inventory">
-                        <span>📦</span>
-                        <span class="nav-label">Inventory</span>
-                    </button>
-
-                    <button class="nav-item" data-view="orders" title="Orders">
-                        <span>📋</span>
-                        <span class="nav-label">Orders</span>
-                    </button>
-
-                    <button class="nav-item" data-view="sales-record" title="Sales">
-                        <span>🛒</span>
-                        <span class="nav-label">Sales</span>
-                    </button>
-
-                    <button class="nav-item" data-view="profile" title="Profile">
-                        <span>👤</span>
-                        <span class="nav-label">Profile</span>
-                    </button>
-                </div>
-            </nav>
-        `;
-
-        // Setup hamburger menu functionality
-        this.setupHamburgerMenu();
-        
-        // Adjust main content padding
-        const main = appContainer.querySelector('main');
-        if (main) {
-            main.style.paddingTop = '80px';
-        }
-        
-        console.log('✅ Top Navigation created');
+    // Remove existing header if any
+    let header = appContainer.querySelector('header');
+    if (header) {
+        header.remove();
     }
+    
+    // Create new header
+    header = document.createElement('header');
+    appContainer.insertBefore(header, appContainer.firstChild);
+
+    header.innerHTML = `
+        <nav class="top-nav">
+            <div class="nav-brand">
+                <img src="icons/icon-96x96.png" alt="AgriMetrics">
+                <span class="brand-text">AgriMetrics</span>
+            </div>
+            
+            <div class="nav-items">
+                <button class="nav-item" data-view="dashboard" title="Dashboard">
+                    <span>📊</span>
+                    <span class="nav-label">Dashboard</span>
+                </button>
+
+                <button class="nav-item" data-view="income-expenses" title="Income & Expenses">
+                    <span>💰</span>
+                    <span class="nav-label">Income</span>
+                </button>
+
+                <button class="nav-item" data-view="inventory-check" title="Inventory">
+                    <span>📦</span>
+                    <span class="nav-label">Inventory</span>
+                </button>
+
+                <button class="nav-item" data-view="orders" title="Orders">
+                    <span>📋</span>
+                    <span class="nav-label">Orders</span>
+                </button>
+
+                <button class="nav-item" data-view="sales-record" title="Sales">
+                    <span>🛒</span>
+                    <span class="nav-label">Sales</span>
+                </button>
+
+                <button class="nav-item" data-view="profile" title="Profile">
+                    <span>👤</span>
+                    <span class="nav-label">Profile</span>
+                </button>
+                
+                <!-- Hamburger menu on the right side -->
+                <button class="hamburger-menu" id="hamburger-menu" title="Farm Operations">
+                    <span>☰</span>
+                    <span class="nav-label">More</span>
+                </button>
+            </div>
+        </nav>
+    `;
+
+    // Setup hamburger menu functionality
+    this.setupHamburgerMenu();
+    
+    // Adjust main content padding
+    const main = appContainer.querySelector('main');
+    if (main) {
+        main.style.paddingTop = '80px';
+    }
+    
+    console.log('✅ Top Navigation created');
+}
 
     setupHamburgerMenu() {
         const hamburger = document.getElementById('hamburger-menu');
