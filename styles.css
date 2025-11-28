@@ -4206,40 +4206,88 @@ header, .top-nav {
     z-index: 1000;
 }
 
-/* Sidebar */
-.sidebar {
-    position: fixed;
-    top: 80px; /* Below top nav */
-    left: 0;
-    bottom: 0;
-    width: 250px;
-    background: #f8f9fa;
-    border-right: 1px solid #e9ecef;
-    padding: 20px;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-    z-index: 999;
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.sidebar.active {
-    transform: translateX(0);
-}
-
-/* Hamburger menu for mobile */
 .hamburger-menu {
-    display: none;
     background: none;
     border: none;
     font-size: 24px;
     cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
 }
 
-@media (max-width: 768px) {
-    .hamburger-menu {
-        display: block;
-    }
-    
-    .sidebar {
-        width: 280px;
-    }
+.hamburger-menu:hover {
+    background: #f5f5f5;
 }
+
+.nav-items {
+    display: flex;
+    gap: 15px;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: none;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.nav-item:hover {
+    background: #f5f5f5;
+}
+
+.nav-label {
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* Side Menu - Hidden by default on all screens */
+.side-menu {
+    position: fixed;
+    top: 80px; /* Below top nav */
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    background: #f8f9fa;
+    border-right: 1px solid #e9ecef;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 999;
+    overflow-y: auto;
+}
+
+.side-menu.active {
+    transform: translateX(0);
+}
+
+/* Main content */
+#content-area {
+    padding-top: 80px;
+    min-height: calc(100vh - 80px);
+    transition: margin-left 0.3s ease;
+}
+
+/* Optional: Add overlay when sidebar is open */
+.side-menu.active::before {
+    content: '';
+    position: fixed;
+    top: 80px;
+    left: 280px;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: -1;
+}
+
+/* Desktop: You can keep it click-to-open or make it always visible - your choice */
+/* For click-to-open on all devices, no media query needed */
