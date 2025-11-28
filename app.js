@@ -24,8 +24,19 @@ class FarmManagementApp {
     async initializeApp() {
         console.log('✅ Initializing app...');
         this.isDemoMode = true;
+        
+        // Show the app interface
         this.showApp();
+        
+        // Setup navigation and events
+        this.createTopNavigation();
+        this.setupSideMenuEvents();
         this.setupEventListeners();
+        
+        // Load initial section
+        this.showSection(this.currentSection);
+        
+        console.log('✅ App initialized successfully');
     }
 
     setupEventListeners() {
@@ -38,6 +49,15 @@ class FarmManagementApp {
                     this.showSection(view);
                 }
             }
+            
+            // Handle sidebar menu items (for the existing HTML sidebar)
+            if (e.target.closest('.side-menu-item')) {
+                const menuItem = e.target.closest('.side-menu-item');
+                const section = menuItem.getAttribute('data-section');
+                if (section) {
+                    this.showSection(section);
+                }
+            }
         });
     }
 
@@ -48,174 +68,150 @@ class FarmManagementApp {
         if (authContainer) authContainer.classList.add('hidden');
         if (appContainer) appContainer.classList.remove('hidden');
         
-        this.createTopNavigation();
-        this.showSection(this.currentSection);
+        console.log('🏠 App container shown');
     }
 
-   createTopNavigation() {
-    const appContainer = document.getElementById('app-container');
-    if (!appContainer) return;
+    createTopNavigation() {
+        const appContainer = document.getElementById('app-container');
+        if (!appContainer) return;
 
-    // Remove existing header if any
-    let header = appContainer.querySelector('header');
-    if (header) {
-        header.remove();
-    }
-    
-    // Create new header
-    header = document.createElement('header');
-    appContainer.insertBefore(header, appContainer.firstChild);
-
-    header.innerHTML = `
-        <nav class="top-nav">
-            <div class="nav-brand">
-                <button class="hamburger-menu" id="hamburger-menu">☰</button>
-                <img src="icons/icon-96x96.png" alt="AgriMetrics">
-                <span class="brand-text">AgriMetrics</span>
-            </div>
-            
-            <div class="nav-items">
-                <button class="nav-item" data-view="dashboard" title="Dashboard">
-                    <span>📊</span>
-                    <span class="nav-label">Dashboard</span>
-                </button>
-
-                <button class="nav-item" data-view="income-expenses" title="Income & Expenses">
-                    <span>💰</span>
-                    <span class="nav-label">Income</span>
-                </button>
-
-                <button class="nav-item" data-view="inventory-check" title="Inventory">
-                    <span>📦</span>
-                    <span class="nav-label">Inventory</span>
-                </button>
-
-                <button class="nav-item" data-view="orders" title="Orders">
-                    <span>📋</span>
-                    <span class="nav-label">Orders</span>
-                </button>
-
-                <button class="nav-item" data-view="sales-record" title="Sales">
-                    <span>🛒</span>
-                    <span class="nav-label">Sales</span>
-                </button>
-
-                <button class="nav-item" data-view="profile" title="Profile">
-                    <span>👤</span>
-                    <span class="nav-label">Profile</span>
-                </button>
-            </div>
-        </nav>
-    `;
-
-    // Setup hamburger menu to toggle the existing sidebar
-    this.setupHamburgerMenu();
-    
-    // Adjust main content padding
-    const main = appContainer.querySelector('main');
-    if (main) {
-        main.style.paddingTop = '80px';
-    }
-    
-    console.log('✅ Top Navigation created');
-}
-
-setupHamburgerMenu() {
-    const hamburger = document.getElementById('hamburger-menu');
-    const sideMenu = document.getElementById('side-menu');
-    
-    if (hamburger && sideMenu) {
-        hamburger.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent event bubbling
-            sideMenu.classList.toggle('active');
-        });
-    }
-    
-    // Close sidebar when clicking on menu items
-    const sideMenuItems = document.querySelectorAll('.side-menu-item');
-    sideMenuItems.forEach(item => {
-        item.addEventListener('click', () => {
-            const sideMenu = document.getElementById('side-menu');
-            sideMenu.classList.remove('active');
-        });
-    });
-    
-    // Close sidebar when clicking outside
-    document.addEventListener('click', (e) => {
-        const sideMenu = document.getElementById('side-menu');
-        const hamburger = document.getElementById('hamburger-menu');
-        
-        if (sideMenu && hamburger) {
-            if (!sideMenu.contains(e.target) && !hamburger.contains(e.target)) {
-                sideMenu.classList.remove('active');
-            }
+        // Remove existing header if any
+        let header = appContainer.querySelector('header');
+        if (header) {
+            header.remove();
         }
-    });
-}
+        
+        // Create new header
+        header = document.createElement('header');
+        appContainer.insertBefore(header, appContainer.firstChild);
 
-    createSidebarNavigation() {
-    const appContainer = document.getElementById('app-container');
-    if (!appContainer) return;
+        header.innerHTML = `
+            <nav class="top-nav">
+                <div class="nav-brand">
+                    <button class="hamburger-menu" id="hamburger-menu">☰</button>
+                    <img src="icons/icon-96x96.png" alt="AgriMetrics">
+                    <span class="brand-text">AgriMetrics</span>
+                </div>
+                
+                <div class="nav-items">
+                    <button class="nav-item" data-view="dashboard" title="Dashboard">
+                        <span>📊</span>
+                        <span class="nav-label">Dashboard</span>
+                    </button>
 
-    // Remove existing sidebar if any
-    let sidebar = appContainer.querySelector('.sidebar');
-    if (sidebar) {
-        sidebar.remove();
+                    <button class="nav-item" data-view="income-expenses" title="Income & Expenses">
+                        <span>💰</span>
+                        <span class="nav-label">Income</span>
+                    </button>
+
+                    <button class="nav-item" data-view="inventory-check" title="Inventory">
+                        <span>📦</span>
+                        <span class="nav-label">Inventory</span>
+                    </button>
+
+                    <button class="nav-item" data-view="orders" title="Orders">
+                        <span>📋</span>
+                        <span class="nav-label">Orders</span>
+                    </button>
+
+                    <button class="nav-item" data-view="sales-record" title="Sales">
+                        <span>🛒</span>
+                        <span class="nav-label">Sales</span>
+                    </button>
+
+                    <button class="nav-item" data-view="profile" title="Profile">
+                        <span>👤</span>
+                        <span class="nav-label">Profile</span>
+                    </button>
+                </div>
+            </nav>
+        `;
+
+        // Setup hamburger menu functionality
+        this.setupHamburgerMenu();
+        
+        // Adjust main content padding
+        const main = appContainer.querySelector('main');
+        if (main) {
+            main.style.paddingTop = '80px';
+        }
+        
+        console.log('✅ Top Navigation created');
     }
 
-    // Create sidebar
-    sidebar = document.createElement('aside');
-    sidebar.className = 'sidebar';
-    sidebar.innerHTML = `
-        <div class="sidebar-content">
-            <h3>Farm Management</h3>
-            <div class="sidebar-items">
-                <button class="sidebar-item" data-view="production" title="Production">
-                    <span>🚜</span>
-                    <span class="sidebar-label">Production</span>
-                </button>
+    setupHamburgerMenu() {
+        const hamburger = document.getElementById('hamburger-menu');
+        const sideMenu = document.getElementById('side-menu');
+        
+        if (hamburger && sideMenu) {
+            hamburger.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent event bubbling
+                sideMenu.classList.toggle('active');
+            });
+        }
+        
+        // Close sidebar when clicking outside
+        document.addEventListener('click', (e) => {
+            const sideMenu = document.getElementById('side-menu');
+            const hamburger = document.getElementById('hamburger-menu');
+            
+            if (sideMenu && hamburger) {
+                if (!sideMenu.contains(e.target) && !hamburger.contains(e.target)) {
+                    sideMenu.classList.remove('active');
+                }
+            }
+        });
+        
+        console.log('✅ Hamburger menu setup');
+    }
 
-                <button class="sidebar-item" data-view="feed-record" title="Feed Management">
-                    <span>🌾</span>
-                    <span class="sidebar-label">Feed</span>
-                </button>
-
-                <button class="sidebar-item" data-view="broiler-mortality" title="Health & Mortality">
-                    <span>🐔</span>
-                    <span class="sidebar-label">Health</span>
-                </button>
-
-                <button class="sidebar-item" data-view="reports" title="Reports">
-                    <span>📈</span>
-                    <span class="sidebar-label">Reports</span>
-                </button>
-            </div>
-        </div>
-    `;
-
-    // Add sidebar to app container
-    appContainer.appendChild(sidebar);
-    
-    console.log('✅ Sidebar Navigation created');
-}
+    setupSideMenuEvents() {
+        const sideMenuItems = document.querySelectorAll('.side-menu-item');
+        sideMenuItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const section = item.getAttribute('data-section');
+                if (section) {
+                    console.log('📱 Side menu item clicked:', section);
+                    
+                    // Close sidebar after selection
+                    const sideMenu = document.getElementById('side-menu');
+                    if (sideMenu) {
+                        sideMenu.classList.remove('active');
+                    }
+                }
+            });
+        });
+        
+        console.log('✅ Side menu events setup');
+    }
     
     showSection(sectionId) {
         console.log(`🔄 Switching to section: ${sectionId}`);
         
-        // Update active nav state
+        // Update active nav state for top navigation
         document.querySelectorAll('.nav-item').forEach(item => {
-            item.style.background = 'transparent';
-            item.style.color = '#666';
+            item.classList.remove('active');
         });
         
         const activeNavItem = document.querySelector(`.nav-item[data-view="${sectionId}"]`);
         if (activeNavItem) {
-            activeNavItem.style.background = 'rgba(59, 130, 246, 0.1)';
-            activeNavItem.style.color = '#3b82f6';
+            activeNavItem.classList.add('active');
+        }
+
+        // Update active state for sidebar items
+        document.querySelectorAll('.side-menu-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        const activeSideItem = document.querySelector(`.side-menu-item[data-section="${sectionId}"]`);
+        if (activeSideItem) {
+            activeSideItem.classList.add('active');
         }
 
         this.currentSection = sectionId;
         
+        // Load the module content
         if (window.FarmModules && typeof window.FarmModules.initializeModule === 'function') {
             window.FarmModules.initializeModule(sectionId);
         } else {
@@ -244,13 +240,13 @@ setupHamburgerMenu() {
             <div style="padding: 20px;">
                 <h2 style="color: #1a1a1a;">${sectionTitles[sectionId] || sectionId}</h2>
                 <p style="color: #666;">Content loading...</p>
+                <p style="color: #999; font-size: 14px;">Module system not loaded yet</p>
             </div>
         `;
     }
 }
 
-window.FarmManagementApp = FarmManagementApp;
-
+// Initialize the app
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.app = new FarmManagementApp();
