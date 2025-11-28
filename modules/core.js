@@ -8,12 +8,12 @@ const CoreModule = {
     initialize() {
         console.log('⚙️ Initializing core module...');
         this.setupNotificationSystem();
+        this.setupNavigation();
         this.initialized = true;
         return true;
     },
 
     setupNotificationSystem() {
-        // Create notification container if it doesn't exist
         if (!document.getElementById('notification-container')) {
             const container = document.createElement('div');
             container.id = 'notification-container';
@@ -23,60 +23,86 @@ const CoreModule = {
         console.log('🔔 Notification system ready');
     },
 
-  // modules/core.js - Add this to the setupNavigation method
-setupNavigation() {
-    console.log('🧭 Setting up navigation...');
-    
-    // Main nav items
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            const section = item.getAttribute('data-section');
-            console.log('Main nav clicked:', section);
-            this.setActiveNavItem(section);
-            window.app.showSection(section);
+    setupNavigation() {
+        console.log('🧭 Setting up navigation...');
+        
+        // Module name mapping
+        const MODULE_NAME_MAP = {
+            'dashboard': 'dashboard',
+            'income-expenses': 'income-expenses',
+            'inventory': 'inventory-check',
+            'sales': 'sales-record',
+            'orders': 'orders',
+            'profile': 'profile',
+            'production': 'production',
+            'feed': 'feed-record',
+            'health': 'broiler-mortality',
+            'reports': 'reports'
+        };
+
+        // Main nav items
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const section = item.getAttribute('data-section');
+                const actualModule = MODULE_NAME_MAP[section] || section;
+                console.log('Main nav clicked:', section, '->', actualModule);
+                this.setActiveNavItem(section);
+                if (window.FarmModules && window.FarmModules.initializeModule) {
+                    window.FarmModules.initializeModule(actualModule);
+                }
+            });
         });
-    });
 
-    // Side menu items
-    document.querySelectorAll('.side-menu-item').forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            const section = item.getAttribute('data-section');
-            console.log('Side menu clicked:', section);
-            this.setActiveNavItem(section);
-            window.app.showSection(section);
-            this.closeSideMenu();
+        // Side menu items
+        document.querySelectorAll('.side-menu-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const section = item.getAttribute('data-section');
+                const actualModule = MODULE_NAME_MAP[section] || section;
+                console.log('Side menu clicked:', section, '->', actualModule);
+                this.setActiveNavItem(section);
+                if (window.FarmModules && window.FarmModules.initializeModule) {
+                    window.FarmModules.initializeModule(actualModule);
+                }
+                this.closeSideMenu();
+            });
         });
-    });
 
-    // Brand click
-    document.querySelector('.nav-brand').addEventListener('click', (e) => {
-        e.preventDefault();
-        this.setActiveNavItem('dashboard');
-        window.app.showSection('dashboard');
-    });
-
-    // Mobile menu toggle
-    document.getElementById('menu-toggle').addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.toggleSideMenu();
-    });
-
-    // Close side menu when clicking outside
-    document.addEventListener('click', (e) => {
-        const sideMenu = document.getElementById('side-menu');
-        const menuToggle = document.getElementById('menu-toggle');
-        if (!sideMenu.contains(e.target) && e.target !== menuToggle && sideMenu.classList.contains('open')) {
-            this.closeSideMenu();
+        // Brand click
+        const brand = document.querySelector('.nav-brand');
+        if (brand) {
+            brand.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.setActiveNavItem('dashboard');
+                if (window.FarmModules && window.FarmModules.initializeModule) {
+                    window.FarmModules.initializeModule('dashboard');
+                }
+            });
         }
-    });
 
-    console.log('✅ Navigation setup complete');
-},
+        // Mobile menu toggle
+        const menuToggle = document.getElementById('menu-toggle');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleSideMenu();
+            });
+        }
+
+        // Close side menu when clicking outside
+        document.addEventListener('click', (e) => {
+            const sideMenu = document.getElementById('side-menu');
+            const menuToggle = document.getElementById('menu-toggle');
+            if (sideMenu && !sideMenu.contains(e.target) && e.target !== menuToggle && sideMenu.classList.contains('open')) {
+                this.closeSideMenu();
+            }
+        });
+
+        console.log('✅ Navigation setup complete');
+    },
 
     setActiveNavItem(section) {
-        // Remove active class from all nav items
         document.querySelectorAll('.nav-item').forEach(item => {
             item.classList.remove('active');
         });
@@ -84,26 +110,21 @@ setupNavigation() {
             item.classList.remove('active');
         });
 
-        // Add active class to current section
         const navItem = document.querySelector(`.nav-item[data-section="${section}"]`);
         const sideMenuItem = document.querySelector(`.side-menu-item[data-section="${section}"]`);
         
-        if (navItem) {
-            navItem.classList.add('active');
-        }
-        if (sideMenuItem) {
-            sideMenuItem.classList.add('active');
-        }
+        if (navItem) navItem.classList.add('active');
+        if (sideMenuItem) sideMenuItem.classList.add('active');
     },
 
     toggleSideMenu() {
         const sideMenu = document.getElementById('side-menu');
-        sideMenu.classList.toggle('open');
+        if (sideMenu) sideMenu.classList.toggle('open');
     },
 
     closeSideMenu() {
         const sideMenu = document.getElementById('side-menu');
-        sideMenu.classList.remove('open');
+        if (sideMenu) sideMenu.classList.remove('open');
     },
 
     showNotification(message, type = 'info', duration = 5000) {
@@ -121,12 +142,10 @@ setupNavigation() {
 
         container.appendChild(notification);
 
-        // Add close functionality
         notification.querySelector('.notification-close').addEventListener('click', () => {
             notification.remove();
         });
 
-        // Auto remove after duration
         setTimeout(() => {
             if (notification.parentNode) {
                 notification.remove();
@@ -151,12 +170,10 @@ setupNavigation() {
         });
     },
 
-    // Utility function to generate unique IDs
     generateId() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
     },
 
-    // Data storage helpers
     saveToLocalStorage(key, data) {
         try {
             localStorage.setItem(key, JSON.stringify(data));
@@ -178,10 +195,8 @@ setupNavigation() {
     }
 };
 
-// Register core module
 if (window.FarmModules) {
     window.FarmModules.registerModule('core', CoreModule);
 }
 
-// Make core module globally available
 window.coreModule = CoreModule;
