@@ -38,24 +38,6 @@ class FarmManagementApp {
                     this.showSection(view);
                 }
             }
-            
-            // Handle side menu items
-            if (e.target.closest('.side-menu-item')) {
-                const menuItem = e.target.closest('.side-menu-item');
-                const section = menuItem.getAttribute('data-section');
-                this.showSection(section);
-                this.hideSideMenu();
-            }
-            
-            // Handle menu toggle
-            if (e.target.closest('#menu-toggle')) {
-                this.toggleSideMenu();
-            }
-            
-            // Close side menu when clicking outside
-            if (!e.target.closest('.side-menu') && !e.target.closest('#menu-toggle')) {
-                this.hideSideMenu();
-            }
         });
     }
 
@@ -115,50 +97,32 @@ class FarmManagementApp {
                         <span class="nav-label">Sales</span>
                     </button>
 
+                    <button class="nav-item" data-view="production" title="Production">
+                        <span>🚜</span>
+                        <span class="nav-label">Production</span>
+                    </button>
+
+                    <button class="nav-item" data-view="feed-record" title="Feed Management">
+                        <span>🌾</span>
+                        <span class="nav-label">Feed</span>
+                    </button>
+
+                    <button class="nav-item" data-view="broiler-mortality" title="Health & Mortality">
+                        <span>🐔</span>
+                        <span class="nav-label">Health</span>
+                    </button>
+
+                    <button class="nav-item" data-view="reports" title="Reports">
+                        <span>📈</span>
+                        <span class="nav-label">Reports</span>
+                    </button>
+
                     <button class="nav-item" data-view="profile" title="Profile">
                         <span>👤</span>
                         <span class="nav-label">Profile</span>
                     </button>
-
-                    <!-- Hamburger menu for production sections -->
-                    <button id="menu-toggle" title="Production Menu">☰</button>
                 </div>
             </nav>
-
-            <!-- ONLY ONE SIDE MENU - for Production & Analytics -->
-            <div class="side-menu hidden" id="side-menu">
-                <div class="side-menu-header">
-                    <div class="side-menu-title">Production & Analytics</div>
-                    <div class="side-menu-subtitle">Additional features</div>
-                </div>
-                <div class="side-menu-items">
-                    <div class="side-menu-section">
-                        <div class="side-menu-section-title">PRODUCTION</div>
-                        <button class="side-menu-item" data-section="production">
-                            <span>🚜</span>
-                            <span>Production</span>
-                        </button>
-                        <button class="side-menu-item" data-section="feed-record">
-                            <span>🌾</span>
-                            <span>Feed Management</span>
-                        </button>
-                        <button class="side-menu-item" data-section="broiler-mortality">
-                            <span>🐔</span>
-                            <span>Health & Mortality</span>
-                        </button>
-                    </div>
-
-                    <div class="side-menu-section">
-                        <div class="side-menu-section-title">ANALYTICS</div>
-                        <button class="side-menu-item" data-section="reports">
-                            <span>📈</span>
-                            <span>Reports</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="side-menu-overlay" class="hidden"></div>
         `;
 
         const main = appContainer.querySelector('main');
@@ -167,7 +131,7 @@ class FarmManagementApp {
             main.style.minHeight = 'calc(100vh - 80px)';
         }
         
-        console.log('✅ Navigation created - ONE sidebar only');
+        console.log('✅ Navigation created - NO SIDEBAR');
     }
 
     showSection(sectionId) {
@@ -192,8 +156,6 @@ class FarmManagementApp {
         } else {
             this.loadFallbackContent(sectionId);
         }
-        
-        this.hideSideMenu();
     }
 
     loadFallbackContent(sectionId) {
@@ -220,31 +182,6 @@ class FarmManagementApp {
             </div>
         `;
     }
-
-    toggleSideMenu() {
-        const sideMenu = document.getElementById('side-menu');
-        const overlay = document.getElementById('side-menu-overlay');
-        
-        if (sideMenu && overlay) {
-            if (sideMenu.classList.contains('hidden')) {
-                sideMenu.classList.remove('hidden');
-                overlay.classList.remove('hidden');
-            } else {
-                this.hideSideMenu();
-            }
-        }
-    }
-
-    hideSideMenu() {
-        const sideMenu = document.getElementById('side-menu');
-        const overlay = document.getElementById('side-menu-overlay');
-        
-        if (sideMenu) sideMenu.classList.add('hidden');
-        if (overlay) overlay.classList.add('hidden');
-    }
-
-    // REMOVED: toggleMoreMenu() and hideMoreMenu() methods
-    // REMOVED: All "more-menu" related code
 }
 
 window.FarmManagementApp = FarmManagementApp;
