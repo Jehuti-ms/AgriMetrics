@@ -151,23 +151,22 @@ FarmModules.registerModule('dashboard', {
     },
 
     navigateToModule: function(moduleName, action = null) {
-        console.log('Navigating to:', moduleName);
+    console.log('Navigating to:', moduleName);
+    
+    // Try multiple navigation methods
+    if (window.coreModule && typeof window.coreModule.showSection === 'function') {
+        window.coreModule.showSection(moduleName);
+    } else if (window.FarmModules && typeof window.FarmModules.showModule === 'function') {
+        window.FarmModules.showModule(moduleName);
+    } else if (window.app && typeof window.app.showSection === 'function') {
+        window.app.showSection(moduleName);
+    } else {
+        console.log('Navigation not available, would go to:', moduleName);
+        // Fallback - just show a message
+        alert(`Would navigate to: ${moduleName}`);
+    }
+}
         
-        // Use the core module's navigation if available
-        if (window.coreModule && window.coreModule.showSection) {
-            window.coreModule.showSection(moduleName);
-        } 
-        // Fallback to FarmModules
-        else if (window.FarmModules && window.FarmModules.showModule) {
-            window.FarmModules.showModule(moduleName);
-        }
-        // Last resort
-        else {
-            console.log('Would navigate to:', moduleName);
-            this.showNotification(`Would open ${moduleName} module`, 'info');
-        }
-    },
-
     loadDashboardData: function() {
         this.updateRevenueStats();
         this.updateOrderStats();
