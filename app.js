@@ -71,7 +71,7 @@ class FarmManagementApp {
         this.showSection(this.currentSection);
     }
 
-    createTopNavigation() {
+   createTopNavigation() {
     const appContainer = document.getElementById('app-container');
     if (!appContainer) return;
 
@@ -105,12 +105,13 @@ class FarmManagementApp {
                 <span style="font-size: 18px; font-weight: 600; color: #1a1a1a;">AgriMetrics</span>
             </div>
             
-            <!-- Navigation Items -->
+            <!-- Main Navigation Items -->
             <div class="nav-items" style="
                 display: flex;
                 align-items: center;
                 gap: 8px;
             ">
+                <!-- Main navbar sections -->
                 <button class="nav-item" data-view="dashboard" style="
                     background: transparent;
                     border: none;
@@ -159,6 +160,55 @@ class FarmManagementApp {
                     <span style="font-size: 10px; margin-top: 2px;">Inventory</span>
                 </button>
 
+                <button class="nav-item" data-view="orders" style="
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
+                    color: #666;
+                    padding: 12px;
+                    border-radius: 12px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    transition: all 0.2s ease;
+                ">
+                    <span style="font-size: 20px;">📋</span>
+                    <span style="font-size: 10px; margin-top: 2px;">Orders</span>
+                </button>
+
+                <button class="nav-item" data-view="sales-record" style="
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
+                    color: #666;
+                    padding: 12px;
+                    border-radius: 12px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    transition: all 0.2s ease;
+                ">
+                    <span style="font-size: 20px;">🛒</span>
+                    <span style="font-size: 10px; margin-top: 2px;">Sales</span>
+                </button>
+
+                <button class="nav-item" data-view="profile" style="
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
+                    color: #666;
+                    padding: 12px;
+                    border-radius: 12px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    transition: all 0.2s ease;
+                ">
+                    <span style="font-size: 20px;">👤</span>
+                    <span style="font-size: 10px; margin-top: 2px;">Profile</span>
+                </button>
+
+                <!-- Hamburger menu for secondary sections -->
                 <button id="menu-toggle" style="
                     background: transparent;
                     border: none;
@@ -174,7 +224,7 @@ class FarmManagementApp {
             </div>
         </nav>
 
-        <!-- Side Menu -->
+        <!-- Side Menu - ONLY for Production, Feed, Health, Reports -->
         <div class="side-menu hidden" id="side-menu" style="
             position: fixed;
             top: 70px;
@@ -189,51 +239,33 @@ class FarmManagementApp {
             overflow-y: auto;
         ">
             <div style="padding: 24px 20px 16px; border-bottom: 1px solid #e5e5e5; background: #22c55e; color: white;">
-                <div style="font-size: 18px; font-weight: 700;">More Options</div>
+                <div style="font-size: 18px; font-weight: 700;">Production & Analytics</div>
                 <div style="font-size: 12px;">Additional features</div>
             </div>
             <div style="padding: 16px 0;">
+                <!-- Production Section -->
                 <div style="margin-bottom: 24px;">
-                    <div style="padding: 0 20px 8px; font-size: 12px; font-weight: 600; color: #666;">Orders</div>
-                    <button class="side-menu-item" data-section="orders" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; width: 100%; text-align: left; border: none; background: transparent; cursor: pointer;">
-                        <span>📋</span>
-                        <span>Orders</span>
-                    </button>
-                    <button class="side-menu-item" data-section="sales-record" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; width: 100%; text-align: left; border: none; background: transparent; cursor: pointer;">
-                        <span>🛒</span>
-                        <span>Sales</span>
-                    </button>
-                </div>
-
-                <div style="margin-bottom: 24px;">
-                    <div style="padding: 0 20px 8px; font-size: 12px; font-weight: 600; color: #666;">Production</div>
+                    <div style="padding: 0 20px 8px; font-size: 12px; font-weight: 600; color: #666;">PRODUCTION</div>
                     <button class="side-menu-item" data-section="production" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; width: 100%; text-align: left; border: none; background: transparent; cursor: pointer;">
                         <span>🚜</span>
                         <span>Production</span>
                     </button>
                     <button class="side-menu-item" data-section="feed-record" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; width: 100%; text-align: left; border: none; background: transparent; cursor: pointer;">
                         <span>🌾</span>
-                        <span>Feed</span>
+                        <span>Feed Management</span>
                     </button>
                     <button class="side-menu-item" data-section="broiler-mortality" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; width: 100%; text-align: left; border: none; background: transparent; cursor: pointer;">
                         <span>🐔</span>
-                        <span>Health</span>
+                        <span>Health & Mortality</span>
                     </button>
                 </div>
 
-                <div style="margin-bottom: 24px;">
-                    <div style="padding: 0 20px 8px; font-size: 12px; font-weight: 600; color: #666;">Analytics</div>
+                <!-- Analytics Section -->
+                <div>
+                    <div style="padding: 0 20px 8px; font-size: 12px; font-weight: 600; color: #666;">ANALYTICS</div>
                     <button class="side-menu-item" data-section="reports" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; width: 100%; text-align: left; border: none; background: transparent; cursor: pointer;">
                         <span>📈</span>
                         <span>Reports</span>
-                    </button>
-                </div>
-
-                <div>
-                    <div style="padding: 0 20px 8px; font-size: 12px; font-weight: 600; color: #666;">Account</div>
-                    <button class="side-menu-item" data-section="profile" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; width: 100%; text-align: left; border: none; background: transparent; cursor: pointer;">
-                        <span>👤</span>
-                        <span>Profile</span>
                     </button>
                 </div>
             </div>
