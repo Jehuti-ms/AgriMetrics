@@ -22,22 +22,27 @@ class FarmManagementApp {
     }
 
     async initializeApp() {
-        console.log('✅ Initializing app...');
-        this.isDemoMode = true;
-        
-        // Show the app interface
-        this.showApp();
-        
-        // Setup navigation and events
-        this.createTopNavigation();
+    console.log('✅ Initializing app...');
+    this.isDemoMode = true;
+    
+    // Show the app interface
+    this.showApp();
+    
+    // Setup navigation and events
+    this.createTopNavigation();
+    
+    // Small delay to ensure DOM is ready
+    setTimeout(() => {
+        this.setupHamburgerMenu();
         this.setupSideMenuEvents();
         this.setupEventListeners();
-        
-        // Load initial section
-        this.showSection(this.currentSection);
-        
-        console.log('✅ App initialized successfully');
-    }
+    }, 100);
+    
+    // Load initial section
+    this.showSection(this.currentSection);
+    
+    console.log('✅ App initialized successfully');
+}
 
     setupEventListeners() {
         document.addEventListener('click', (e) => {
