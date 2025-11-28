@@ -4075,3 +4075,117 @@ header, .top-nav {
 .side-menu.hidden {
     display: none;
 }
+
+/* ===== RESPONSIVE NAVIGATION FIXES ===== */
+@media (max-width: 768px) {
+    .nav-items {
+        gap: 2px !important;
+        padding: 0 4px !important;
+    }
+    
+    .nav-item {
+        padding: 6px 8px !important;
+        min-width: 50px !important;
+    }
+    
+    .nav-item span:first-child {
+        font-size: 18px !important;
+    }
+    
+    .nav-label {
+        font-size: 9px !important;
+    }
+    
+    .brand-text {
+        display: none !important;
+    }
+    
+    #menu-toggle {
+        font-size: 20px !important;
+        padding: 6px 10px !important;
+        min-width: 44px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-items {
+        gap: 1px !important;
+        padding: 0 2px !important;
+    }
+    
+    .nav-item {
+        padding: 4px 6px !important;
+        min-width: 45px !important;
+    }
+    
+    .nav-item span:first-child {
+        font-size: 16px !important;
+    }
+    
+    .nav-label {
+        font-size: 8px !important;
+    }
+    
+    .top-nav {
+        padding: 0 12px !important;
+    }
+    
+    #menu-toggle {
+        font-size: 18px !important;
+        padding: 4px 8px !important;
+        min-width: 40px !important;
+    }
+}
+
+@media (max-width: 360px) {
+    .nav-item {
+        padding: 3px 4px !important;
+        min-width: 40px !important;
+    }
+    
+    .nav-item span:first-child {
+        font-size: 14px !important;
+    }
+    
+    .nav-label {
+        font-size: 7px !important;
+    }
+    
+    .top-nav {
+        padding: 0 8px !important;
+    }
+}
+
+/* Ensure side menu is visible when not hidden */
+.side-menu:not(.hidden) {
+    transform: translateX(0) !important;
+}
+
+/* Side menu item hover effects */
+.side-menu-item:hover {
+    background: rgba(59, 130, 246, 0.1) !important;
+    color: #3b82f6 !important;
+}
+
+/* Menu toggle hover effect */
+#menu-toggle:hover {
+    background: rgba(59, 130, 246, 0.1) !important;
+    color: #3b82f6 !important;
+}
+
+/* Nav item active state */
+.nav-item.active {
+    background: rgba(59, 130, 246, 0.1) !important;
+    color: #3b82f6 !important;
+}
+
+/* Hide scrollbar for nav items but keep functionality */
+.nav-items::-webkit-scrollbar {
+    display: none;
+}
+
+.nav-items {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
