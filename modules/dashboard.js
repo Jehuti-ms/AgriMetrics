@@ -145,23 +145,40 @@ FarmModules.registerModule('dashboard', {
     },
 
     navigateToModule: function(moduleName, action = null) {
-        // Use the FarmModules framework to navigate
+        // Check if FarmModules is available
         if (window.FarmModules && window.FarmModules.showModule) {
-            window.FarmModules.showModule(moduleName);
+            const success = window.FarmModules.showModule(moduleName);
             
-            // If there's a specific action, trigger it after navigation
-            if (action && moduleName === 'income-expenses') {
-                // Store the action to be used by the target module
+            if (success && action) {
+                // If there's a specific action, store it for the target module to use
                 setTimeout(() => {
                     const targetModule = FarmModules.getModule(moduleName);
                     if (targetModule && targetModule.handleQuickAction) {
                         targetModule.handleQuickAction(action);
+                    } else if (moduleName === 'income-expenses') {
+                        // Special handling for income-expenses to show the correct tab
+                        this.handleIncomeExpensesAction(action);
                     }
-                }, 100);
+                }, 200);
             }
         } else {
-            console.error('FarmModules navigation not available');
-            this.showNotification(`Cannot navigate to ${moduleName}`, 'error');
+            console.warn('FarmModules not available yet, retrying...');
+            // Retry after a short delay
+            setTimeout(() => {
+                this.navigateToModule(moduleName, action);
+            }, 500);
+        }
+    },
+
+    handleIncomeExpensesAction: function(action) {
+        // Special handling for income-expenses module
+        const incomeExpensesModule = FarmModules.getModule('income-expenses');
+        if (incomeExpensesModule) {
+            if (action === 'add-income') {
+                incomeExpensesModule.showIncomeTab();
+            } else if (action === 'add-expense') {
+                incomeExpensesModule.showExpenseTab();
+            }
         }
     },
 
@@ -174,7 +191,6 @@ FarmModules.registerModule('dashboard', {
     },
 
     updateRevenueStats: function() {
-        // Calculate today's revenue from sales and orders
         const today = new Date().toISOString().split('T')[0];
         const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
         const orders = JSON.parse(localStorage.getItem('farm-orders') || '[]');
@@ -211,17 +227,20 @@ FarmModules.registerModule('dashboard', {
 
     updateInventoryStats: function() {
         const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
-        const birdsItem = inventory.find(item => item.name === 'Broilers' || item.name === 'Layers');
-        const birdsCount = birdsItem ? birdsItem.quantity : 0;
+        const broilersItem = inventory.find(item => item.name === 'Broilers');
+        const layersItem = inventory.find(item => item.name === 'Layers');
         
-        this.updateElement('birds-count', birdsCount.toLocaleString());
+        const broilersCount = broilersItem ? broilersItem.quantity : 0;
+        const layersCount = layersItem ? layersItem.quantity : 0;
+        const totalBirds = broilersCount + layersCount;
+        
+        this.updateElement('birds-count', totalBirds.toLocaleString());
     },
 
     loadRecentActivity: function() {
         const activityList = document.getElementById('recent-activity');
         if (!activityList) return;
 
-        // Get recent activities from various modules
         const activities = this.getRecentActivities();
         
         if (activities.length === 0) {
@@ -253,9 +272,10 @@ FarmModules.registerModule('dashboard', {
         const activities = [];
         const today = new Date().toISOString().split('T')[0];
 
-        // Get recent sales
+        // Get recent sales (last 3)
         const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]')
             .slice(-3)
+            .reverse()
             .map(sale => ({
                 icon: '💰',
                 title: `Sale: ${sale.product}`,
@@ -264,9 +284,10 @@ FarmModules.registerModule('dashboard', {
                 amountClass: 'positive'
             }));
 
-        // Get recent production
+        // Get recent production (last 2)
         const production = JSON.parse(localStorage.getItem('farm-production') || '[]')
             .slice(-2)
+            .reverse()
             .map(prod => ({
                 icon: '🥚',
                 title: `Production: ${prod.eggsCollected} eggs`,
@@ -274,9 +295,10 @@ FarmModules.registerModule('dashboard', {
                 amount: ''
             }));
 
-        // Get recent orders
+        // Get recent orders (last 2)
         const orders = JSON.parse(localStorage.getItem('farm-orders') || '[]')
             .slice(-2)
+            .reverse()
             .map(order => ({
                 icon: '📦',
                 title: `Order: ${order.customerName}`,
@@ -289,7 +311,7 @@ FarmModules.registerModule('dashboard', {
         
         // Sort by date (newest first) and take top 5
         return activities
-            .sort((a, b) => new Date(b.time) - new Date(a.time))
+            .sort((a, b) => new Date(b.originalDate || b.time) - new Date(a.originalDate || a.time))
             .slice(0, 5);
     },
 
@@ -298,20 +320,24 @@ FarmModules.registerModule('dashboard', {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD'
-        }).format(amount);
+        }).format(amount || 0);
     },
 
     formatTimeAgo: function(dateString) {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffTime = Math.abs(now - date);
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays === 0) return 'Today';
-        if (diffDays === 1) return 'Yesterday';
-        if (diffDays < 7) return `${diffDays} days ago`;
-        if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-        return `${Math.floor(diffDays / 30)} months ago`;
+        try {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) return 'Today';
+            if (diffDays === 1) return 'Yesterday';
+            if (diffDays < 7) return `${diffDays} days ago`;
+            if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+            return `${Math.floor(diffDays / 30)} months ago`;
+        } catch (error) {
+            return 'Recently';
+        }
     },
 
     updateElement: function(id, value) {
