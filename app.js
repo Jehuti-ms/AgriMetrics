@@ -146,6 +146,11 @@ setupHamburgerMenu() {
     const sideMenu = document.getElementById('side-menu');
     
     if (hamburger && sideMenu) {
+        // Update sidebar position to be on the right
+        sideMenu.style.left = 'auto';
+        sideMenu.style.right = '0';
+        sideMenu.style.transform = 'translateX(100%)';
+        
         hamburger.addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent event bubbling
             console.log('🍔 Hamburger clicked, toggling sidebar');
@@ -170,8 +175,6 @@ setupHamburgerMenu() {
         }
     });
 }
-
-
 
     setupSideMenuEvents() {
         const sideMenuItems = document.querySelectorAll('.side-menu-item');
