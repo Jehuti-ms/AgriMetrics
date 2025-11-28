@@ -1,184 +1,253 @@
 // modules/auth.js
 console.log('Loading auth module...');
 
-const AuthModule = {
-    name: 'auth',
-    initialized: false,
+class AuthModule {
+    constructor() {
+        this.init();
+    }
 
-    initialize() {
-        console.log('🔐 Initializing auth module...');
+    init() {
+        console.log('✅ Auth module initialized');
         this.setupAuthForms();
-        this.initialized = true;
-        return true;
-    },
+    }
 
     setupAuthForms() {
-        // Form elements
-        const signinForm = document.getElementById('signin-form-element');
-        const signupForm = document.getElementById('signup-form-element');
-        const forgotForm = document.getElementById('forgot-password-form-element');
-        
-        // Link elements
-        const showSignup = document.getElementById('show-signup');
-        const showSignin = document.getElementById('show-signin');
-        const showForgotPassword = document.getElementById('show-forgot-password');
-        const showSigninFromForgot = document.getElementById('show-signin-from-forgot');
-        const googleSignin = document.getElementById('google-signin');
-
-        // Form submissions
-        signinForm.addEventListener('submit', (e) => this.handleSignIn(e));
-        signupForm.addEventListener('submit', (e) => this.handleSignUp(e));
-        forgotForm.addEventListener('submit', (e) => this.handleForgotPassword(e));
-
-        // Form navigation
-        showSignup.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showSignUpForm();
-        });
-
-        showSignin.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showSignInForm();
-        });
-
-        showForgotPassword.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showForgotPasswordForm();
-        });
-
-        showSigninFromForgot.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showSignInForm();
-        });
-
-        // Google Sign In
-        googleSignin.addEventListener('click', () => this.handleGoogleSignIn());
-
-        console.log('✅ Auth forms setup complete');
-    },
-
-    showSignInForm() {
-        document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
-        document.getElementById('signin-form').classList.add('active');
-    },
-
-    showSignUpForm() {
-        document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
-        document.getElementById('signup-form').classList.add('active');
-    },
-
-    showForgotPasswordForm() {
-        document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
-        document.getElementById('forgot-password-form').classList.add('active');
-    },
-
-    async handleSignIn(e) {
-        e.preventDefault();
-        
-        const email = document.getElementById('signin-email').value;
-        const password = document.getElementById('signin-password').value;
-
-        try {
-            const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
-            console.log('✅ User signed in:', userCredential.user.email);
-        } catch (error) {
-            console.error('❌ Sign in error:', error);
-            this.showAuthError(error.message);
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.attachFormHandlers();
+            });
+        } else {
+            this.attachFormHandlers();
         }
-    },
+    }
 
-    async handleSignUp(e) {
-        e.preventDefault();
-        
-        const name = document.getElementById('signup-name').value;
-        const email = document.getElementById('signup-email').value;
-        const password = document.getElementById('signup-password').value;
-        const confirmPassword = document.getElementById('signup-confirm-password').value;
-        const farmName = document.getElementById('farm-name').value;
+    attachFormHandlers() {
+        // Sign up form
+        const signupForm = document.getElementById('signup-form-element');
+        if (signupForm) {
+            signupForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await this.handleSignUp();
+            });
+        }
+
+        // Sign in form
+        const signinForm = document.getElementById('signin-form-element');
+        if (signinForm) {
+            signinForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await this.handleSignIn();
+            });
+        }
+
+        // Forgot password form
+        const forgotForm = document.getElementById('forgot-password-form-element');
+        if (forgotForm) {
+            forgotForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await this.handleForgotPassword();
+            });
+        }
+
+        // Google sign in
+        const googleBtn = document.getElementById('google-signin');
+        if (googleBtn) {
+            googleBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await this.handleGoogleSignIn();
+            });
+        }
+
+        this.setupAuthListeners();
+    }
+
+    setupAuthListeners() {
+        // Form switching
+        const showSignup = document.getElementById('show-signup');
+        if (showSignup) {
+            showSignup.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showAuthForm('signup');
+            });
+        }
+
+        const showSignin = document.getElementById('show-signin');
+        if (showSignin) {
+            showSignin.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showAuthForm('signin');
+            });
+        }
+
+        const showForgot = document.getElementById('show-forgot-password');
+        if (showForgot) {
+            showForgot.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showAuthForm('forgot-password');
+            });
+        }
+
+        const showSigninFromForgot = document.getElementById('show-signin-from-forgot');
+        if (showSigninFromForgot) {
+            showSigninFromForgot.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showAuthForm('signin');
+            });
+        }
+    }
+
+    async handleSignUp() {
+        const form = document.getElementById('signup-form-element');
+        if (!form) return;
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const name = document.getElementById('signup-name')?.value || '';
+        const email = document.getElementById('signup-email')?.value || '';
+        const password = document.getElementById('signup-password')?.value || '';
+        const confirmPassword = document.getElementById('signup-confirm-password')?.value || '';
+        const farmName = document.getElementById('farm-name')?.value || '';
 
         if (password !== confirmPassword) {
-            this.showAuthError('Passwords do not match');
+            this.showNotification('Passwords do not match', 'error');
             return;
         }
 
+        if (password.length < 6) {
+            this.showNotification('Password must be at least 6 characters', 'error');
+            return;
+        }
+
+        if (submitBtn) {
+            submitBtn.innerHTML = 'Creating Account...';
+            submitBtn.disabled = true;
+        }
+
         try {
-            const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
-            await userCredential.user.updateProfile({
-                displayName: name
-            });
-            
-            // Save additional user data to Firestore
-            await this.saveUserData(userCredential.user.uid, {
+            const result = await window.authManager?.signUp(email, password, {
                 name: name,
                 email: email,
-                farmName: farmName,
-                createdAt: new Date().toISOString()
+                farmName: farmName
             });
-            
-            console.log('✅ User signed up:', userCredential.user.email);
-        } catch (error) {
-            console.error('❌ Sign up error:', error);
-            this.showAuthError(error.message);
-        }
-    },
 
-    async handleForgotPassword(e) {
-        e.preventDefault();
-        
-        const email = document.getElementById('forgot-email').value;
+            if (result?.success) {
+                this.showNotification('Account created successfully!', 'success');
+            } else {
+                this.showNotification(result?.error || 'Error creating account', 'error');
+            }
+        } catch (error) {
+            this.showNotification('Error creating account', 'error');
+        } finally {
+            if (submitBtn) {
+                submitBtn.innerHTML = 'Create Account';
+                submitBtn.disabled = false;
+            }
+        }
+    }
+
+    async handleSignIn() {
+        const form = document.getElementById('signin-form-element');
+        if (!form) return;
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const email = document.getElementById('signin-email')?.value || '';
+        const password = document.getElementById('signin-password')?.value || '';
+
+        if (submitBtn) {
+            submitBtn.innerHTML = 'Signing In...';
+            submitBtn.disabled = true;
+        }
 
         try {
-            await firebase.auth().sendPasswordResetEmail(email);
-            this.showAuthSuccess('Password reset email sent!');
-            this.showSignInForm();
+            const result = await window.authManager?.signIn(email, password);
+
+            if (result?.success) {
+                this.showNotification('Welcome back!', 'success');
+            } else {
+                this.showNotification(result?.error || 'Error signing in', 'error');
+            }
         } catch (error) {
-            console.error('❌ Password reset error:', error);
-            this.showAuthError(error.message);
+            this.showNotification('Error signing in', 'error');
+        } finally {
+            if (submitBtn) {
+                submitBtn.innerHTML = 'Sign In';
+                submitBtn.disabled = false;
+            }
         }
-    },
+    }
 
     async handleGoogleSignIn() {
+        const button = document.getElementById('google-signin');
+        if (!button) return;
+
+        const originalText = button.innerHTML;
+        button.innerHTML = 'Signing in with Google...';
+        button.disabled = true;
+
         try {
-            // For now, we'll use a simple approach
-            // In a real app, you'd use Firebase Google Auth
-            this.showAuthError('Google Sign In not implemented yet');
+            const result = await window.authManager?.signInWithGoogle();
+
+            if (result?.success) {
+                this.showNotification('Signed in with Google!', 'success');
+            } else {
+                this.showNotification(result?.error || 'Error signing in with Google', 'error');
+            }
         } catch (error) {
-            console.error('❌ Google sign in error:', error);
-            this.showAuthError(error.message);
+            this.showNotification('Error signing in with Google', 'error');
+        } finally {
+            button.innerHTML = originalText;
+            button.disabled = false;
         }
-    },
-
-    async saveUserData(uid, userData) {
-        try {
-            await firebase.firestore().collection('users').doc(uid).set(userData);
-        } catch (error) {
-            console.error('Error saving user data:', error);
-        }
-    },
-
-    showAuthError(message) {
-        // You can enhance this with better UI
-        alert('Error: ' + message);
-    },
-
-    showAuthSuccess(message) {
-        // You can enhance this with better UI
-        alert('Success: ' + message);
-    },
-
-    signOut() {
-        firebase.auth().signOut().then(() => {
-            console.log('✅ User signed out');
-        }).catch((error) => {
-            console.error('❌ Sign out error:', error);
-        });
     }
-};
 
-// Register auth module
-if (window.FarmModules) {
-    window.FarmModules.registerModule('auth', AuthModule);
+    async handleForgotPassword() {
+        const form = document.getElementById('forgot-password-form-element');
+        if (!form) return;
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const email = document.getElementById('forgot-email')?.value || '';
+
+        if (submitBtn) {
+            submitBtn.innerHTML = 'Sending Reset Link...';
+            submitBtn.disabled = true;
+        }
+
+        try {
+            const result = await window.authManager?.resetPassword(email);
+
+            if (result?.success) {
+                this.showNotification('Password reset email sent!', 'success');
+                this.showAuthForm('signin');
+            } else {
+                this.showNotification(result?.error || 'Error sending reset email', 'error');
+            }
+        } catch (error) {
+            this.showNotification('Error sending reset email', 'error');
+        } finally {
+            if (submitBtn) {
+                submitBtn.innerHTML = 'Send Reset Link';
+                submitBtn.disabled = false;
+            }
+        }
+    }
+
+    showAuthForm(formName) {
+        document.querySelectorAll('.auth-form').forEach(form => {
+            form.classList.remove('active');
+        });
+        
+        const targetForm = document.getElementById(`${formName}-form`);
+        if (targetForm) {
+            targetForm.classList.add('active');
+        }
+    }
+
+    showNotification(message, type) {
+        if (window.coreModule && window.coreModule.showNotification) {
+            window.coreModule.showNotification(message, type);
+        } else {
+            alert(message);
+        }
+    }
 }
 
-// Make auth module globally available
-window.authModule = AuthModule;
+window.authModule = new AuthModule();

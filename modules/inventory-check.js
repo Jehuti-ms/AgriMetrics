@@ -1,746 +1,558 @@
-// modules/inventory-check.js - FULLY WORKING
-console.log('Loading inventory-check module...');
-
-const InventoryCheckModule = {
-    name: 'inventory-check',
-    initialized: false,
-    inventory: [],
-    categories: ['feed', 'medical', 'packaging', 'equipment', 'cleaning', 'other'],
-
-    initialize() {
-        console.log('📦 Initializing inventory check...');
-        this.loadData();
-        this.renderModule();
-        this.initialized = true;
-        return true;
-    },
-
-    loadData() {
-        const saved = localStorage.getItem('farm-inventory');
-        this.inventory = saved ? JSON.parse(saved) : this.getDemoData();
-    },
-
-    getDemoData() {
-        return [
-            { 
-                id: 1, 
-                name: 'Chicken Feed - Starter', 
-                category: 'feed', 
-                currentStock: 50, 
-                unit: 'kg', 
-                minStock: 20, 
-                cost: 2.5,
-                supplier: 'FeedCo',
-                lastRestocked: '2024-03-10',
-                notes: 'For chicks 0-3 weeks'
-            },
-            { 
-                id: 2, 
-                name: 'Egg Cartons - Large', 
-                category: 'packaging', 
-                currentStock: 200, 
-                unit: 'pcs', 
-                minStock: 50, 
-                cost: 0.5,
-                supplier: 'Packaging Inc',
-                lastRestocked: '2024-03-12',
-                notes: '30-dozen capacity'
-            },
-            { 
-                id: 3, 
-                name: 'Poultry Vaccines', 
-                category: 'medical', 
-                currentStock: 5, 
-                unit: 'bottles', 
-                minStock: 10, 
-                cost: 15,
-                supplier: 'VetSupply',
-                lastRestocked: '2024-03-05',
-                notes: 'Keep refrigerated'
-            },
-            { 
-                id: 4, 
-                name: 'Water Troughs', 
-                category: 'equipment', 
-                currentStock: 8, 
-                unit: 'pcs', 
-                minStock: 5, 
-                cost: 25,
-                supplier: 'FarmGear',
-                lastRestocked: '2024-02-28',
-                notes: '10L capacity'
-            },
-            { 
-                id: 5, 
-                name: 'Disinfectant Spray', 
-                category: 'cleaning', 
-                currentStock: 3, 
-                unit: 'bottles', 
-                minStock: 5, 
-                cost: 8,
-                supplier: 'CleanCo',
-                lastRestocked: '2024-03-08',
-                notes: 'For equipment cleaning'
-            }
-        ];
-    },
-
-    renderModule() {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
-
-        const stats = this.calculateStats();
-        const lowStockItems = this.getLowStockItems();
-
-        contentArea.innerHTML = `
-            <div class="module-container">
-                <div class="module-header">
-                    <h1 class="module-title">Inventory Check</h1>
-                    <p class="module-subtitle">Manage your farm inventory</p>
-                </div>
-
-                <!-- Inventory Overview -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.totalItems}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Total Items</div>
-                    </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">✅</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.inStock}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">In Stock</div>
-                    </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">⚠️</div>
-                        <div style="font-size: 24px; font-weight: bold; color: ${lowStockItems.length > 0 ? '#f59e0b' : '#22c55e'}; margin-bottom: 4px;">${lowStockItems.length}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Low Stock</div>
-                    </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.formatCurrency(stats.totalValue)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Total Value</div>
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="quick-action-grid">
-                    <button class="quick-action-btn" id="add-item-btn">
-                        <div style="font-size: 32px;">➕</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Item</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Add new inventory item</span>
-                    </button>
-                    <button class="quick-action-btn" id="stock-check-btn">
-                        <div style="font-size: 32px;">🔍</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Stock Check</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Update stock levels</span>
-                    </button>
-                    <button class="quick-action-btn" id="low-stock-report-btn">
-                        <div style="font-size: 32px;">📋</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Low Stock Report</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View items to reorder</span>
-                    </button>
-                    <button class="quick-action-btn" id="inventory-report-btn">
-                        <div style="font-size: 32px;">📈</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Inventory Report</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Full inventory analysis</span>
+// modules/inventory-check.js
+FarmModules.registerModule('inventory-check', {
+    name: 'Inventory',
+    icon: '📦',
+    
+    template: `
+        <div class="section active">
+            <div class="module-header">
+                <h1>Inventory Management</h1>
+                <p>Track and manage your farm inventory</p>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="add-inventory-btn">
+                        ➕ Add Item
                     </button>
                 </div>
+            </div>
 
-                <!-- Add Item Form -->
-                <div id="inventory-form-container" class="hidden">
-                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
-                        <h3 style="color: var(--text-primary); margin-bottom: 20px;">Add Inventory Item</h3>
+            <!-- Quick Add Form -->
+            <div class="quick-add-form card">
+                <h3>Quick Add Item</h3>
+                <form id="quick-inventory-form" class="form-inline">
+                    <div class="form-row compact">
+                        <div class="form-group">
+                            <input type="text" id="quick-name" placeholder="Item Name" required class="form-compact">
+                        </div>
+                        <div class="form-group">
+                            <select id="quick-category" required class="form-compact">
+                                <option value="seeds">Seeds</option>
+                                <option value="feed">Feed</option>
+                                <option value="equipment">Equipment</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <input type="number" id="quick-quantity" placeholder="Qty" required class="form-compact">
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-compact">Add</button>
+                            <button type="button" class="btn btn-text btn-compact" id="show-detailed-form">
+                                Detailed ➔
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="inventory-summary">
+                <div class="summary-card">
+                    <div class="summary-icon">📦</div>
+                    <div class="summary-content">
+                        <h3>Total Items</h3>
+                        <div class="summary-value" id="total-items-count">0</div>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon">⚠️</div>
+                    <div class="summary-content">
+                        <h3>Low Stock</h3>
+                        <div class="summary-value" id="low-stock-count">0</div>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon">💰</div>
+                    <div class="summary-content">
+                        <h3>Total Value</h3>
+                        <div class="summary-value" id="total-inventory-value">$0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="inventory-grid" id="inventory-grid">
+                <div class="empty-inventory">
+                    <div class="empty-content">
+                        <span class="empty-icon">📦</span>
+                        <h4>No inventory items yet</h4>
+                        <p>Start by adding your first inventory item</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory Modal -->
+            <div id="inventory-modal" class="modal hidden">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 id="inventory-modal-title">Add Inventory Item</h3>
+                        <button class="btn-icon close-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
                         <form id="inventory-form">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Item Name</label>
-                                    <input type="text" class="form-input" id="item-name" required placeholder="e.g., Chicken Feed - Starter">
+                            <input type="hidden" id="inventory-id">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="inventory-name">Item Name:</label>
+                                    <input type="text" id="inventory-name" required placeholder="Enter item name">
                                 </div>
-                                <div>
-                                    <label class="form-label">Category</label>
-                                    <select class="form-input" id="item-category" required>
-                                        <option value="">Select category</option>
-                                        ${this.categories.map(cat => `
-                                            <option value="${cat}">${this.formatCategory(cat)}</option>
-                                        `).join('')}
+                                <div class="form-group">
+                                    <label for="inventory-category">Category:</label>
+                                    <select id="inventory-category" required>
+                                        <option value="">Select Category</option>
+                                        <option value="seeds">Seeds</option>
+                                        <option value="feed">Animal Feed</option>
+                                        <option value="fertilizer">Fertilizer</option>
+                                        <option value="equipment">Equipment</option>
+                                        <option value="tools">Tools</option>
+                                        <option value="medical">Medical Supplies</option>
+                                        <option value="other">Other</option>
                                     </select>
                                 </div>
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Current Stock</label>
-                                    <input type="number" class="form-input" id="current-stock" min="0" required>
-                                </div>
-                                <div>
-                                    <label class="form-label">Unit</label>
-                                    <input type="text" class="form-input" id="item-unit" required placeholder="e.g., kg, pcs, bottles">
-                                </div>
-                                <div>
-                                    <label class="form-label">Min Stock Level</label>
-                                    <input type="number" class="form-input" id="min-stock" min="0" required>
-                                </div>
+                            <div class="form-group">
+                                <label for="inventory-description">Description:</label>
+                                <textarea id="inventory-description" placeholder="Enter item description..." rows="2"></textarea>
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Cost per Unit ($)</label>
-                                    <input type="number" class="form-input" id="item-cost" step="0.01" min="0" required>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="inventory-quantity">Quantity:</label>
+                                    <input type="number" id="inventory-quantity" min="0" required placeholder="0">
                                 </div>
-                                <div>
-                                    <label class="form-label">Supplier</label>
-                                    <input type="text" class="form-input" id="item-supplier" placeholder="Supplier name">
-                                </div>
-                            </div>
-                            <div style="margin-bottom: 20px;">
-                                <label class="form-label">Notes</label>
-                                <textarea class="form-input" id="item-notes" rows="3" placeholder="Storage instructions, usage notes, etc."></textarea>
-                            </div>
-                            <div style="display: flex; gap: 12px;">
-                                <button type="submit" class="btn-primary">Save Item</button>
-                                <button type="button" class="btn-outline" id="cancel-inventory-form">Cancel</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Stock Update Form -->
-                <div id="stock-update-container" class="hidden">
-                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
-                        <h3 style="color: var(--text-primary); margin-bottom: 20px;" id="stock-update-title">Update Stock Level</h3>
-                        <form id="stock-update-form">
-                            <input type="hidden" id="update-item-id">
-                            <div style="margin-bottom: 16px;">
-                                <div style="font-weight: 600; color: var(--text-primary); font-size: 18px;" id="update-item-name"></div>
-                                <div style="font-size: 14px; color: var(--text-secondary);" id="update-item-details"></div>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Current Stock</label>
-                                    <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; font-weight: 600; color: var(--text-primary);" id="current-stock-display"></div>
-                                </div>
-                                <div>
-                                    <label class="form-label">New Stock Level</label>
-                                    <input type="number" class="form-input" id="new-stock-level" min="0" required>
+                                <div class="form-group">
+                                    <label for="inventory-unit">Unit:</label>
+                                    <select id="inventory-unit" required>
+                                        <option value="units">Units</option>
+                                        <option value="kg">Kilograms (kg)</option>
+                                        <option value="lbs">Pounds (lbs)</option>
+                                        <option value="liters">Liters</option>
+                                        <option value="gallons">Gallons</option>
+                                        <option value="bags">Bags</option>
+                                        <option value="boxes">Boxes</option>
+                                        <option value="packs">Packs</option>
+                                    </select>
                                 </div>
                             </div>
-                            <div style="margin-bottom: 20px;">
-                                <label class="form-label">Update Reason</label>
-                                <select class="form-input" id="stock-update-reason" required>
-                                    <option value="restock">Restock/New Delivery</option>
-                                    <option value="usage">Daily Usage</option>
-                                    <option value="damage">Damage/Loss</option>
-                                    <option value="adjustment">Stock Adjustment</option>
-                                    <option value="other">Other</option>
-                                </select>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="inventory-cost">Unit Cost ($):</label>
+                                    <input type="number" id="inventory-cost" step="0.01" min="0" placeholder="0.00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="inventory-minstock">Minimum Stock:</label>
+                                    <input type="number" id="inventory-minstock" min="0" placeholder="10">
+                                </div>
                             </div>
-                            <div style="display: flex; gap: 12px;">
-                                <button type="submit" class="btn-primary">Update Stock</button>
-                                <button type="button" class="btn-outline" id="cancel-stock-update">Cancel</button>
+                            <div class="form-group">
+                                <label for="inventory-location">Storage Location:</label>
+                                <input type="text" id="inventory-location" placeholder="e.g., Storage Shed A">
+                            </div>
+                            <div class="form-group">
+                                <label for="inventory-supplier">Supplier (Optional):</label>
+                                <input type="text" id="inventory-supplier" placeholder="Supplier name">
+                            </div>
+                            <div class="form-group">
+                                <label for="inventory-expiry">Expiry Date (Optional):</label>
+                                <input type="date" id="inventory-expiry">
                             </div>
                         </form>
                     </div>
-                </div>
-
-                <!-- Low Stock Alerts -->
-                ${lowStockItems.length > 0 ? `
-                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px; border-left: 4px solid #f59e0b;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                            <h3 style="color: var(--text-primary); font-size: 20px;">⚠️ Low Stock Alerts</h3>
-                            <span style="background: #f59e0b; color: white; padding: 4px 12px; border-radius: 12px; font-size: 14px; font-weight: 600;">
-                                ${lowStockItems.length} item${lowStockItems.length > 1 ? 's' : ''}
-                            </span>
-                        </div>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
-                            ${lowStockItems.map(item => `
-                                <div style="padding: 12px; background: #fef3c7; border-radius: 8px; border: 1px solid #f59e0b;">
-                                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${item.name}</div>
-                                    <div style="font-size: 14px; color: #92400e;">
-                                        ${item.currentStock} ${item.unit} • Min: ${item.minStock} ${item.unit}
-                                    </div>
-                                    <button class="btn-outline restock-item" data-id="${item.id}" style="margin-top: 8px; padding: 4px 12px; font-size: 12px; width: 100%;">
-                                        Restock Now
-                                    </button>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                ` : ''}
-
-                <!-- Inventory List -->
-                <div class="glass-card" style="padding: 24px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="color: var(--text-primary); font-size: 20px;">All Inventory Items</h3>
-                        <div style="display: flex; gap: 12px;">
-                            <select class="form-input" id="category-filter" style="width: auto;">
-                                <option value="">All Categories</option>
-                                ${this.categories.map(cat => `
-                                    <option value="${cat}">${this.formatCategory(cat)}</option>
-                                `).join('')}
-                            </select>
-                            <button class="btn-primary" id="show-add-form">Add Item</button>
-                        </div>
-                    </div>
-                    <div id="inventory-list">
-                        ${this.renderInventoryList()}
-                    </div>
-                </div>
-
-                <!-- Category Summary -->
-                <div class="glass-card" style="padding: 24px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Inventory by Category</h3>
-                    <div id="category-summary">
-                        ${this.renderCategorySummary()}
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-text close-modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="save-inventory">Save Item</button>
                     </div>
                 </div>
             </div>
-        `;
+        </div>
+    `,
 
-        this.setupEventListeners();
+    initialize: function() {
+        console.log('Inventory module initializing...');
+        this.loadInventoryData();
+        this.attachEventListeners();
+        this.updateSummaryCards();
     },
 
-    calculateStats() {
-        const totalItems = this.inventory.length;
-        const inStock = this.inventory.filter(item => item.currentStock > 0).length;
-        const totalValue = this.inventory.reduce((sum, item) => sum + (item.currentStock * item.cost), 0);
-        
-        return { totalItems, inStock, totalValue };
+    loadInventoryData: function() {
+        const inventory = FarmModules.appData.inventory || [];
+        this.renderInventoryGrid(inventory);
     },
 
-    getLowStockItems() {
-        return this.inventory.filter(item => item.currentStock <= item.minStock && item.currentStock > 0);
-    },
+    renderInventoryGrid: function(inventory) {
+        const grid = document.getElementById('inventory-grid');
+        if (!grid) return;
 
-    getOutOfStockItems() {
-        return this.inventory.filter(item => item.currentStock === 0);
-    },
-
-    renderInventoryList() {
-        if (this.inventory.length === 0) {
-            return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No inventory items</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Add your first inventory item to get started</div>
+        if (inventory.length === 0) {
+            grid.innerHTML = `
+                <div class="empty-inventory">
+                    <div class="empty-content">
+                        <span class="empty-icon">📦</span>
+                        <h4>No inventory items yet</h4>
+                        <p>Start by adding your first inventory item</p>
+                    </div>
                 </div>
             `;
-        }
-
-        return `
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${this.inventory.map(item => {
-                    const status = this.getStockStatus(item);
-                    const statusColor = status === 'Adequate' ? '#22c55e' : status === 'Low' ? '#f59e0b' : '#ef4444';
-                    const totalValue = item.currentStock * item.cost;
-                    
-                    return `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <div style="font-size: 20px;">${this.getCategoryIcon(item.category)}</div>
-                                <div>
-                                    <div style="font-weight: 600; color: var(--text-primary);">${item.name}</div>
-                                    <div style="font-size: 14px; color: var(--text-secondary);">
-                                        ${this.formatCategory(item.category)} • ${item.supplier || 'No supplier'}
-                                        ${item.lastRestocked ? ` • Last: ${item.lastRestocked}` : ''}
-                                    </div>
-                                    ${item.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${item.notes}</div>` : ''}
-                                </div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 16px;">
-                                <div style="text-align: right;">
-                                    <div style="font-weight: bold; color: var(--text-primary); font-size: 18px;">
-                                        ${item.currentStock} ${item.unit}
-                                    </div>
-                                    <div style="font-size: 14px; color: var(--text-secondary);">
-                                        Min: ${item.minStock} ${item.unit} • ${this.formatCurrency(totalValue)}
-                                    </div>
-                                </div>
-                                <div style="padding: 4px 12px; border-radius: 12px; background: ${statusColor}20; color: ${statusColor}; font-size: 12px; font-weight: 600;">
-                                    ${status} Stock
-                                </div>
-                                <div style="display: flex; gap: 8px;">
-                                    <button class="btn-icon update-stock" data-id="${item.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Update Stock">
-                                        ✏️
-                                    </button>
-                                    <button class="btn-icon delete-item" data-id="${item.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Delete Item">
-                                        🗑️
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
-    },
-
-    renderCategorySummary() {
-        const categoryData = {};
-        this.categories.forEach(cat => {
-            categoryData[cat] = {
-                count: 0,
-                totalValue: 0,
-                lowStock: 0
-            };
-        });
-
-        this.inventory.forEach(item => {
-            if (categoryData[item.category]) {
-                categoryData[item.category].count++;
-                categoryData[item.category].totalValue += item.currentStock * item.cost;
-                if (item.currentStock <= item.minStock) {
-                    categoryData[item.category].lowStock++;
-                }
-            }
-        });
-
-        return `
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                ${this.categories.map(cat => {
-                    const data = categoryData[cat];
-                    return `
-                        <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                                <div style="font-size: 20px;">${this.getCategoryIcon(cat)}</div>
-                                <div style="font-weight: 600; color: var(--text-primary);">${this.formatCategory(cat)}</div>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="color: var(--text-secondary);">Items:</span>
-                                <span style="font-weight: 600; color: var(--text-primary);">${data.count}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="color: var(--text-secondary);">Value:</span>
-                                <span style="font-weight: 600; color: var(--text-primary);">${this.formatCurrency(data.totalValue)}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span style="color: var(--text-secondary);">Low Stock:</span>
-                                <span style="font-weight: 600; color: ${data.lowStock > 0 ? '#f59e0b' : '#22c55e'};">${data.lowStock}</span>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
-    },
-
-    getStockStatus(item) {
-        if (item.currentStock === 0) return 'Out of Stock';
-        if (item.currentStock <= item.minStock) return 'Low';
-        return 'Adequate';
-    },
-
-    getCategoryIcon(category) {
-        const icons = {
-            'feed': '🌾',
-            'medical': '💊',
-            'packaging': '📦',
-            'equipment': '🔧',
-            'cleaning': '🧼',
-            'other': '📋'
-        };
-        return icons[category] || '📦';
-    },
-
-    formatCategory(category) {
-        const categories = {
-            'feed': 'Feed',
-            'medical': 'Medical',
-            'packaging': 'Packaging',
-            'equipment': 'Equipment',
-            'cleaning': 'Cleaning',
-            'other': 'Other'
-        };
-        return categories[category] || category;
-    },
-
-    setupEventListeners() {
-        // Form buttons
-        document.getElementById('show-add-form')?.addEventListener('click', () => this.showInventoryForm());
-        document.getElementById('add-item-btn')?.addEventListener('click', () => this.showInventoryForm());
-        document.getElementById('stock-check-btn')?.addEventListener('click', () => this.showStockCheck());
-        document.getElementById('low-stock-report-btn')?.addEventListener('click', () => this.generateLowStockReport());
-        document.getElementById('inventory-report-btn')?.addEventListener('click', () => this.generateInventoryReport());
-        
-        // Form handlers
-        document.getElementById('inventory-form')?.addEventListener('submit', (e) => this.handleInventorySubmit(e));
-        document.getElementById('stock-update-form')?.addEventListener('submit', (e) => this.handleStockUpdate(e));
-        document.getElementById('cancel-inventory-form')?.addEventListener('click', () => this.hideInventoryForm());
-        document.getElementById('cancel-stock-update')?.addEventListener('click', () => this.hideStockUpdate());
-        
-        // Category filter
-        document.getElementById('category-filter')?.addEventListener('change', (e) => this.filterByCategory(e.target.value));
-        
-        // Action buttons
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.delete-item')) {
-                const id = parseInt(e.target.closest('.delete-item').dataset.id);
-                this.deleteItem(id);
-            }
-            if (e.target.closest('.update-stock')) {
-                const id = parseInt(e.target.closest('.update-stock').dataset.id);
-                this.showUpdateStockForm(id);
-            }
-            if (e.target.closest('.restock-item')) {
-                const id = parseInt(e.target.closest('.restock-item').dataset.id);
-                this.quickRestock(id);
-            }
-        });
-
-        // Hover effects
-        const buttons = document.querySelectorAll('.quick-action-btn');
-        buttons.forEach(button => {
-            button.addEventListener('mouseenter', (e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-            });
-            button.addEventListener('mouseleave', (e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-            });
-        });
-    },
-
-    showInventoryForm() {
-        document.getElementById('inventory-form-container').classList.remove('hidden');
-        document.getElementById('inventory-form').reset();
-        document.getElementById('inventory-form-container').scrollIntoView({ behavior: 'smooth' });
-    },
-
-    hideInventoryForm() {
-        document.getElementById('inventory-form-container').classList.add('hidden');
-    },
-
-    showUpdateStockForm(id) {
-        const item = this.inventory.find(item => item.id === id);
-        if (!item) return;
-
-        document.getElementById('stock-update-container').classList.remove('hidden');
-        document.getElementById('update-item-id').value = item.id;
-        document.getElementById('update-item-name').textContent = item.name;
-        document.getElementById('update-item-details').textContent = `${this.formatCategory(item.category)} • ${item.supplier || 'No supplier'}`;
-        document.getElementById('current-stock-display').textContent = `${item.currentStock} ${item.unit}`;
-        document.getElementById('new-stock-level').value = item.currentStock;
-        document.getElementById('stock-update-form').reset();
-        
-        document.getElementById('stock-update-container').scrollIntoView({ behavior: 'smooth' });
-    },
-
-    hideStockUpdate() {
-        document.getElementById('stock-update-container').classList.add('hidden');
-    },
-
-    handleInventorySubmit(e) {
-        e.preventDefault();
-        
-        const formData = {
-            id: Date.now(),
-            name: document.getElementById('item-name').value,
-            category: document.getElementById('item-category').value,
-            currentStock: parseInt(document.getElementById('current-stock').value),
-            unit: document.getElementById('item-unit').value,
-            minStock: parseInt(document.getElementById('min-stock').value),
-            cost: parseFloat(document.getElementById('item-cost').value),
-            supplier: document.getElementById('item-supplier').value || '',
-            lastRestocked: new Date().toISOString().split('T')[0],
-            notes: document.getElementById('item-notes').value || ''
-        };
-
-        this.inventory.unshift(formData);
-        this.saveData();
-        this.renderModule();
-        
-        if (window.coreModule) {
-            window.coreModule.showNotification('Inventory item added successfully!', 'success');
-        }
-    },
-
-    handleStockUpdate(e) {
-        e.preventDefault();
-        
-        const id = parseInt(document.getElementById('update-item-id').value);
-        const newStock = parseInt(document.getElementById('new-stock-level').value);
-        const reason = document.getElementById('stock-update-reason').value;
-
-        const item = this.inventory.find(item => item.id === id);
-        if (!item) return;
-
-        const oldStock = item.currentStock;
-        item.currentStock = newStock;
-        
-        if (reason === 'restock') {
-            item.lastRestocked = new Date().toISOString().split('T')[0];
-        }
-
-        this.saveData();
-        this.renderModule();
-        
-        if (window.coreModule) {
-            const change = newStock - oldStock;
-            const changeText = change > 0 ? `+${change}` : change;
-            window.coreModule.showNotification(`Stock updated: ${changeText} ${item.unit} (${reason})`, 'success');
-        }
-    },
-
-    deleteItem(id) {
-        const item = this.inventory.find(item => item.id === id);
-        if (!item) return;
-
-        if (confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`)) {
-            this.inventory = this.inventory.filter(item => item.id !== id);
-            this.saveData();
-            this.renderModule();
-            
-            if (window.coreModule) {
-                window.coreModule.showNotification('Item deleted successfully!', 'success');
-            }
-        }
-    },
-
-    quickRestock(id) {
-        const item = this.inventory.find(item => item.id === id);
-        if (!item) return;
-
-        const suggestedRestock = Math.max(item.minStock * 2, item.currentStock + 10);
-        const restockAmount = prompt(`Restock "${item.name}"\nCurrent: ${item.currentStock} ${item.unit}\nMin: ${item.minStock} ${item.unit}\nEnter amount to add:`, suggestedRestock.toString());
-        
-        if (restockAmount !== null && !isNaN(restockAmount)) {
-            const amount = parseInt(restockAmount);
-            item.currentStock += amount;
-            item.lastRestocked = new Date().toISOString().split('T')[0];
-            
-            this.saveData();
-            this.renderModule();
-            
-            if (window.coreModule) {
-                window.coreModule.showNotification(`Restocked ${amount} ${item.unit} of ${item.name}`, 'success');
-            }
-        }
-    },
-
-    showStockCheck() {
-        let report = '📦 Stock Check Report\n\n';
-        
-        const lowStock = this.getLowStockItems();
-        const outOfStock = this.getOutOfStockItems();
-        
-        if (lowStock.length > 0) {
-            report += `⚠️ LOW STOCK ITEMS (${lowStock.length}):\n`;
-            lowStock.forEach(item => {
-                report += `• ${item.name}: ${item.currentStock} ${item.unit} (min: ${item.minStock} ${item.unit})\n`;
-            });
-            report += '\n';
-        }
-        
-        if (outOfStock.length > 0) {
-            report += `❌ OUT OF STOCK (${outOfStock.length}):\n`;
-            outOfStock.forEach(item => {
-                report += `• ${item.name}: 0 ${item.unit}\n`;
-            });
-            report += '\n';
-        }
-        
-        if (lowStock.length === 0 && outOfStock.length === 0) {
-            report += '✅ All items are adequately stocked!\n\n';
-        }
-        
-        report += `Total Items: ${this.inventory.length}\n`;
-        report += `Total Inventory Value: ${this.formatCurrency(this.calculateStats().totalValue)}`;
-        
-        alert(report);
-    },
-
-    generateLowStockReport() {
-        const lowStock = this.getLowStockItems();
-        const outOfStock = this.getOutOfStockItems();
-        
-        if (lowStock.length === 0 && outOfStock.length === 0) {
-            alert('✅ No low stock items! All inventory is adequately stocked.');
             return;
         }
 
-        let report = '📋 LOW STOCK & REORDER REPORT\n\n';
-        
-        if (outOfStock.length > 0) {
-            report += `URGENT - OUT OF STOCK:\n`;
-            outOfStock.forEach(item => {
-                const suggestedOrder = item.minStock * 2;
-                report += `• ${item.name}: ORDER ${suggestedOrder} ${item.unit} (Supplier: ${item.supplier || 'Not specified'})\n`;
-            });
-            report += '\n';
-        }
-        
-        if (lowStock.length > 0) {
-            report += `LOW STOCK - REORDER SOON:\n`;
-            lowStock.forEach(item => {
-                const suggestedOrder = Math.max(item.minStock * 2 - item.currentStock, 10);
-                report += `• ${item.name}: ${item.currentStock} ${item.unit} left - Order ${suggestedOrder} ${item.unit}\n`;
-            });
-        }
-        
-        alert(report);
+        grid.innerHTML = inventory.map(item => {
+            const isLowStock = item.quantity <= item.minStock;
+            const totalValue = (item.quantity * item.cost).toFixed(2);
+            
+            return `
+                <div class="inventory-item ${isLowStock ? 'low-stock' : ''}" data-id="${item.id}">
+                    <div class="inventory-item-header">
+                        <h4 class="inventory-item-name">${this.escapeHtml(item.name)}</h4>
+                        <span class="inventory-item-category">${this.formatCategory(item.category)}</span>
+                    </div>
+                    
+                    <div class="inventory-item-details">
+                        <div class="detail-item">
+                            <label>Quantity</label>
+                            <div class="value">${item.quantity} ${item.unit}</div>
+                        </div>
+                        <div class="detail-item">
+                            <label>Value</label>
+                            <div class="value">$${totalValue}</div>
+                        </div>
+                        <div class="detail-item">
+                            <label>Location</label>
+                            <div class="value">${item.location || 'Not specified'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <label>Status</label>
+                            <div class="value ${isLowStock ? 'text-danger' : ''}">
+                                ${isLowStock ? 'Low Stock' : 'In Stock'}
+                            </div>
+                        </div>
+                    </div>
+
+                    ${item.description ? `
+                        <div class="inventory-item-description">
+                            <label>Description:</label>
+                            <p>${this.escapeHtml(item.description)}</p>
+                        </div>
+                    ` : ''}
+
+                    <div class="inventory-item-actions">
+                        <button class="btn btn-text btn-sm edit-inventory" data-id="${item.id}">Edit</button>
+                        <button class="btn btn-primary btn-sm use-inventory" data-id="${item.id}">Use</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
     },
 
-    generateInventoryReport() {
-        const stats = this.calculateStats();
-        const categoryData = {};
-        
-        this.categories.forEach(cat => {
-            const items = this.inventory.filter(item => item.category === cat);
-            categoryData[cat] = {
-                count: items.length,
-                totalValue: items.reduce((sum, item) => sum + (item.currentStock * item.cost), 0),
-                lowStock: items.filter(item => item.currentStock <= item.minStock).length
-            };
+    updateSummaryCards: function() {
+        const inventory = FarmModules.appData.inventory || [];
+
+        const totalItems = inventory.length;
+        const lowStockCount = inventory.filter(item => item.quantity <= item.minStock).length;
+        const totalValue = inventory.reduce((sum, item) => sum + (item.quantity * item.cost), 0);
+
+        this.updateElement('total-items-count', totalItems);
+        this.updateElement('low-stock-count', lowStockCount);
+        this.updateElement('total-inventory-value', this.formatCurrency(totalValue));
+    },
+
+    attachEventListeners: function() {
+        // Quick form submission
+        const quickForm = document.getElementById('quick-inventory-form');
+        if (quickForm) {
+            quickForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleQuickAdd();
+            });
+        }
+
+        // Show detailed form
+        const showDetailedBtn = document.getElementById('show-detailed-form');
+        if (showDetailedBtn) {
+            showDetailedBtn.addEventListener('click', () => {
+                this.showInventoryModal();
+            });
+        }
+
+        // Add inventory button
+        const addInventoryBtn = document.getElementById('add-inventory-btn');
+        if (addInventoryBtn) {
+            addInventoryBtn.addEventListener('click', () => this.showInventoryModal());
+        }
+
+        // Modal events
+        const closeButtons = document.querySelectorAll('.close-modal');
+        closeButtons.forEach(btn => {
+            btn.addEventListener('click', () => this.hideModal());
         });
 
-        let report = '📊 COMPLETE INVENTORY REPORT\n\n';
-        report += `OVERVIEW:\n`;
-        report += `Total Items: ${stats.totalItems}\n`;
-        report += `Items in Stock: ${stats.inStock}\n`;
-        report += `Total Inventory Value: ${this.formatCurrency(stats.totalValue)}\n\n`;
-        
-        report += `CATEGORY BREAKDOWN:\n`;
-        this.categories.forEach(cat => {
-            const data = categoryData[cat];
-            if (data.count > 0) {
-                report += `• ${this.formatCategory(cat)}: ${data.count} items, ${this.formatCurrency(data.totalValue)}, ${data.lowStock} low stock\n`;
+        // Save inventory
+        const saveBtn = document.getElementById('save-inventory');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => this.saveInventory());
+        }
+
+        // Edit and delete inventory items
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.edit-inventory')) {
+                const itemId = e.target.closest('.edit-inventory').dataset.id;
+                this.editInventory(itemId);
+            }
+            if (e.target.closest('.use-inventory')) {
+                const itemId = e.target.closest('.use-inventory').dataset.id;
+                this.useInventory(itemId);
             }
         });
-        
-        report += `\nLOW STOCK SUMMARY:\n`;
-        const lowStock = this.getLowStockItems();
-        if (lowStock.length > 0) {
-            lowStock.forEach(item => {
-                report += `• ${item.name}: ${item.currentStock} ${item.unit} (min: ${item.minStock} ${item.unit})\n`;
+
+        // Close modal on backdrop click
+        const modal = document.getElementById('inventory-modal');
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.hideModal();
+                }
             });
+        }
+    },
+
+    handleQuickAdd: function() {
+        const name = document.getElementById('quick-name').value;
+        const category = document.getElementById('quick-category').value;
+        const quantity = parseInt(document.getElementById('quick-quantity').value);
+
+        if (!name || !quantity) {
+            this.showNotification('Please fill in name and quantity', 'error');
+            return;
+        }
+
+        if (quantity < 0) {
+            this.showNotification('Quantity must be 0 or greater', 'error');
+            return;
+        }
+
+        const inventoryData = {
+            name: name,
+            category: category,
+            quantity: quantity,
+            unit: 'units',
+            cost: 0,
+            minStock: 10,
+            description: 'Added via quick form',
+            location: '',
+            supplier: '',
+            expiry: ''
+        };
+
+        this.addInventory(inventoryData);
+        
+        // Clear quick form
+        document.getElementById('quick-name').value = '';
+        document.getElementById('quick-quantity').value = '';
+        
+        this.showNotification('Item added successfully!', 'success');
+    },
+
+    showInventoryModal: function() {
+        const modal = document.getElementById('inventory-modal');
+        const title = document.getElementById('inventory-modal-title');
+        const form = document.getElementById('inventory-form');
+
+        if (modal && title && form) {
+            // Reset form
+            form.reset();
+            document.getElementById('inventory-id').value = '';
+            
+            // Set today's date as default for expiry (optional)
+            const today = new Date();
+            const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
+            document.getElementById('inventory-expiry').value = nextMonth.toISOString().split('T')[0];
+            
+            // Set default min stock
+            document.getElementById('inventory-minstock').value = '10';
+            
+            // Show modal
+            modal.classList.remove('hidden');
+        }
+    },
+
+    hideModal: function() {
+        const modal = document.getElementById('inventory-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    },
+
+    saveInventory: function() {
+        const form = document.getElementById('inventory-form');
+        if (!form) return;
+
+        const inventoryId = document.getElementById('inventory-id').value;
+        const name = document.getElementById('inventory-name').value;
+        const category = document.getElementById('inventory-category').value;
+        const description = document.getElementById('inventory-description').value;
+        const quantity = parseInt(document.getElementById('inventory-quantity').value);
+        const unit = document.getElementById('inventory-unit').value;
+        const cost = parseFloat(document.getElementById('inventory-cost').value) || 0;
+        const minStock = parseInt(document.getElementById('inventory-minstock').value) || 0;
+        const location = document.getElementById('inventory-location').value;
+        const supplier = document.getElementById('inventory-supplier').value;
+        const expiry = document.getElementById('inventory-expiry').value;
+
+        // Validation
+        if (!name || !category || quantity === undefined) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+
+        if (quantity < 0) {
+            this.showNotification('Quantity must be 0 or greater', 'error');
+            return;
+        }
+
+        const inventoryData = {
+            name: name,
+            category: category,
+            description: description,
+            quantity: quantity,
+            unit: unit,
+            cost: cost,
+            minStock: minStock,
+            location: location,
+            supplier: supplier,
+            expiry: expiry
+        };
+
+        if (inventoryId) {
+            // Update existing inventory
+            this.updateInventory(inventoryId, inventoryData);
         } else {
-            report += `✅ No low stock items\n`;
+            // Add new inventory
+            this.addInventory(inventoryData);
         }
+
+        this.hideModal();
+    },
+
+    addInventory: function(inventoryData) {
+        if (!FarmModules.appData.inventory) {
+            FarmModules.appData.inventory = [];
+        }
+
+        const newInventory = {
+            id: 'inv-' + Date.now(),
+            ...inventoryData,
+            createdAt: new Date().toISOString()
+        };
+
+        FarmModules.appData.inventory.push(newInventory);
         
-        alert(report);
+        this.loadInventoryData();
+        this.updateSummaryCards();
+        
+        this.showNotification('Item added successfully!', 'success');
     },
 
-    filterByCategory(category) {
-        const items = document.querySelectorAll('#inventory-list > div > div');
-        items.forEach(item => {
-            const itemCategory = item.querySelector('div > div:nth-child(2) > div:nth-child(2)')?.textContent;
-            if (!category || (itemCategory && itemCategory.includes(this.formatCategory(category)))) {
-                item.style.display = 'flex';
-            } else {
-                item.style.display = 'none';
-            }
-        });
+    editInventory: function(inventoryId) {
+        const inventory = FarmModules.appData.inventory || [];
+        const item = inventory.find(i => i.id === inventoryId);
+        
+        if (!item) return;
+
+        const modal = document.getElementById('inventory-modal');
+        const title = document.getElementById('inventory-modal-title');
+
+        if (modal && title) {
+            // Fill form with inventory data
+            document.getElementById('inventory-id').value = item.id;
+            document.getElementById('inventory-name').value = item.name || '';
+            document.getElementById('inventory-category').value = item.category || '';
+            document.getElementById('inventory-description').value = item.description || '';
+            document.getElementById('inventory-quantity').value = item.quantity || '';
+            document.getElementById('inventory-unit').value = item.unit || 'units';
+            document.getElementById('inventory-cost').value = item.cost || '';
+            document.getElementById('inventory-minstock').value = item.minStock || '10';
+            document.getElementById('inventory-location').value = item.location || '';
+            document.getElementById('inventory-supplier').value = item.supplier || '';
+            document.getElementById('inventory-expiry').value = item.expiry || '';
+            
+            title.textContent = 'Edit Inventory Item';
+            modal.classList.remove('hidden');
+        }
     },
 
-    formatCurrency(amount) {
+    updateInventory: function(inventoryId, inventoryData) {
+        const inventory = FarmModules.appData.inventory || [];
+        const index = inventory.findIndex(i => i.id === inventoryId);
+        
+        if (index !== -1) {
+            inventory[index] = {
+                ...inventory[index],
+                ...inventoryData,
+                updatedAt: new Date().toISOString()
+            };
+            
+            this.loadInventoryData();
+            this.updateSummaryCards();
+            this.showNotification('Item updated successfully!', 'success');
+        }
+    },
+
+    useInventory: function(inventoryId) {
+        const inventory = FarmModules.appData.inventory || [];
+        const item = inventory.find(i => i.id === inventoryId);
+        
+        if (!item) return;
+
+        const quantity = prompt(`How many ${item.unit} of ${item.name} would you like to use?`, "1");
+        if (quantity === null) return;
+
+        const useQuantity = parseInt(quantity);
+        if (isNaN(useQuantity) || useQuantity <= 0) {
+            this.showNotification('Please enter a valid quantity', 'error');
+            return;
+        }
+
+        if (useQuantity > item.quantity) {
+            this.showNotification(`Not enough stock. Only ${item.quantity} ${item.unit} available.`, 'error');
+            return;
+        }
+
+        // Update quantity
+        item.quantity -= useQuantity;
+        item.updatedAt = new Date().toISOString();
+        
+        this.loadInventoryData();
+        this.updateSummaryCards();
+        this.showNotification(`Used ${useQuantity} ${item.unit} of ${item.name}`, 'success');
+    },
+
+    formatCategory: function(category) {
+        if (!category) return 'Uncategorized';
+        return category.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+    },
+
+    updateElement: function(id, value) {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    },
+
+    formatCurrency: function(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD'
         }).format(amount);
     },
 
-    saveData() {
-        localStorage.setItem('farm-inventory', JSON.stringify(this.inventory));
-    }
-};
+    escapeHtml: function(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    },
 
-if (window.FarmModules) {
-    window.FarmModules.registerModule('inventory-check', InventoryCheckModule);
-}
+    showNotification: function(message, type) {
+        if (window.coreModule && window.coreModule.showNotification) {
+            window.coreModule.showNotification(message, type);
+        }
+    }
+});

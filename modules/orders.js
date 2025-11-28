@@ -3,558 +3,821 @@ FarmModules.registerModule('orders', {
     name: 'Orders',
     icon: '📋',
     
-    template: function() {
-        return `
-        <div class="orders-module">
-            <div class="module-header-pwa">
-                <h1 class="module-title-pwa">Orders Management</h1>
-                <p class="module-subtitle-pwa">Manage customer orders, track status, and process deliveries</p>
+    template: `
+        <div class="section active">
+            <div class="module-header">
+                <h1>Produce Orders</h1>
+                <p>Manage customer orders and track order fulfillment</p>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="add-order">
+                        ➕ New Order
+                    </button>
+                </div>
             </div>
 
-            <div class="orders-content">
-                <!-- Orders Stats Overview -->
-                <div class="stats-grid-pwa">
-                    <div class="stat-card-pwa">
-                        <div class="stat-icon-pwa">⏳</div>
-                        <div class="stat-value-pwa" id="pending-count">0</div>
-                        <div class="stat-label-pwa">Pending Orders</div>
-                    </div>
-                    <div class="stat-card-pwa">
-                        <div class="stat-icon-pwa">✅</div>
-                        <div class="stat-value-pwa" id="completed-count">0</div>
-                        <div class="stat-label-pwa">Completed Orders</div>
-                    </div>
-                    <div class="stat-card-pwa">
-                        <div class="stat-icon-pwa">📅</div>
-                        <div class="stat-value-pwa" id="today-count">0</div>
-                        <div class="stat-label-pwa">Today's Orders</div>
-                    </div>
-                    <div class="stat-card-pwa">
-                        <div class="stat-icon-pwa">💰</div>
-                        <div class="stat-value-pwa" id="revenue-amount">$0</div>
-                        <div class="stat-label-pwa">Total Revenue</div>
+            <!-- Order Summary -->
+            <div class="orders-summary">
+                <div class="summary-card">
+                    <div class="summary-icon">📥</div>
+                    <div class="summary-content">
+                        <h3>Pending Orders</h3>
+                        <div class="summary-value" id="pending-orders">0</div>
+                        <div class="summary-period">Awaiting fulfillment</div>
                     </div>
                 </div>
-
-                <!-- Quick Actions -->
-                <div class="quick-actions-pwa">
-                    <div class="quick-grid-pwa">
-                        <a href="#" class="quick-action-btn-pwa" id="quick-create-order">
-                            <div class="quick-icon-pwa">➕</div>
-                            <div class="quick-title-pwa">Create Order</div>
-                            <div class="quick-desc-pwa">New customer order</div>
-                        </a>
-                        <a href="#" class="quick-action-btn-pwa" id="quick-pending-orders">
-                            <div class="quick-icon-pwa">⏳</div>
-                            <div class="quick-title-pwa">Pending Orders</div>
-                            <div class="quick-desc-pwa">Awaiting processing</div>
-                        </a>
-                        <a href="#" class="quick-action-btn-pwa" id="quick-today-orders">
-                            <div class="quick-icon-pwa">📅</div>
-                            <div class="quick-title-pwa">Today's Orders</div>
-                            <div class="quick-desc-pwa">Due for delivery</div>
-                        </a>
-                        <a href="#" class="quick-action-btn-pwa" id="quick-completed-orders">
-                            <div class="quick-icon-pwa">✅</div>
-                            <div class="quick-title-pwa">Completed</div>
-                            <div class="quick-desc-pwa">Delivered orders</div>
-                        </a>
+                <div class="summary-card">
+                    <div class="summary-icon">🚚</div>
+                    <div class="summary-content">
+                        <h3>In Progress</h3>
+                        <div class="summary-value" id="progress-orders">0</div>
+                        <div class="summary-period">Being processed</div>
                     </div>
                 </div>
+                <div class="summary-card">
+                    <div class="summary-icon">✅</div>
+                    <div class="summary-content">
+                        <h3>Completed</h3>
+                        <div class="summary-value" id="completed-orders">0</div>
+                        <div class="summary-period">This month</div>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon">💰</div>
+                    <div class="summary-content">
+                        <h3>Revenue</h3>
+                        <div class="summary-value" id="total-revenue">$0</div>
+                        <div class="summary-period">This month</div>
+                    </div>
+                </div>
+            </div>
 
-                <!-- Recent Orders Section -->
-                <div class="transactions-section-pwa">
-                    <div class="section-header-pwa">
-                        <h3 class="section-title-pwa">Recent Orders</h3>
-                        <div class="filters-container">
-                            <div class="search-box">
-                                <span class="search-icon">🔍</span>
-                                <input type="text" id="order-search" class="search-input" placeholder="Search orders...">
-                            </div>
-                            <select id="order-filter" class="filter-select">
-                                <option value="all">All Orders</option>
-                                <option value="pending">Pending</option>
-                                <option value="processing">Processing</option>
-                                <option value="completed">Completed</option>
+            <!-- Quick Order Form -->
+            <div class="quick-order card">
+                <h3>Quick Order</h3>
+                <form id="quick-order-form" class="form-inline">
+                    <div class="form-row compact">
+                        <div class="form-group">
+                            <input type="text" id="quick-customer" placeholder="Customer name" required class="form-compact">
+                        </div>
+                        <div class="form-group">
+                            <select id="quick-product" required class="form-compact">
+                                <option value="">Select Product</option>
+                                <option value="broilers">Broilers</option>
+                                <option value="eggs">Eggs</option>
+                                <option value="vegetables">Vegetables</option>
+                                <option value="fruits">Fruits</option>
+                                <option value="dairy">Dairy</option>
+                                <option value="other">Other</option>
                             </select>
                         </div>
+                        <div class="form-group">
+                            <input type="number" id="quick-quantity" placeholder="Qty" required class="form-compact" min="1">
+                        </div>
+                        <div class="form-group">
+                            <input type="number" id="quick-price" placeholder="Price" step="0.01" class="form-compact" min="0">
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-compact">Create Order</button>
+                        </div>
                     </div>
-                    
-                    <div class="orders-list" id="orders-list">
-                        ${this.renderOrdersList()}
+                </form>
+            </div>
+
+            <!-- Orders List -->
+            <div class="orders-list card">
+                <div class="card-header">
+                    <h3>Recent Orders</h3>
+                    <div class="filter-controls">
+                        <select id="status-filter">
+                            <option value="all">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <button class="btn btn-text" id="export-orders">Export</button>
                     </div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Due Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-body">
+                            <tr>
+                                <td colspan="8" class="empty-state">
+                                    <div class="empty-content">
+                                        <span class="empty-icon">📋</span>
+                                        <h4>No orders yet</h4>
+                                        <p>Start by creating your first order</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
 
-        <!-- Create Order Modal -->
-        <div id="create-order-modal" class="modal hidden">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Create New Order</h3>
-                    <button class="close-modal" id="close-create-modal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <form id="create-order-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="customer-select">Customer *</label>
-                                <select id="customer-select" class="form-select" required>
-                                    <option value="">Select Customer</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="order-date">Order Date *</label>
-                                <input type="date" id="order-date" class="form-input" required value="${new Date().toISOString().split('T')[0]}">
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="delivery-date">Delivery Date *</label>
-                                <input type="date" id="delivery-date" class="form-input" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="order-status">Status</label>
-                                <select id="order-status" class="form-select">
-                                    <option value="pending">Pending</option>
-                                    <option value="processing">Processing</option>
-                                    <option value="completed">Completed</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="form-section">
-                            <h4>Order Items</h4>
-                            <div id="order-items" class="items-container">
-                                <div class="order-item">
-                                    <div class="item-row">
-                                        <div class="form-group">
-                                            <label>Product *</label>
-                                            <select class="product-select form-select" required>
-                                                <option value="">Select Product</option>
-                                                <option value="eggs">Eggs</option>
-                                                <option value="broilers">Broilers</option>
-                                                <option value="layers">Layers</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group">
-                                            <label>Quantity *</label>
-                                            <input type="number" class="quantity-input form-input" placeholder="Qty" min="1" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label>Price *</label>
-                                            <input type="number" class="price-input form-input" placeholder="Price" step="0.01" min="0" required>
-                                        </div>
-                                        <button type="button" class="remove-item btn-icon">🗑️</button>
-                                    </div>
+            <!-- Order Modal -->
+            <div id="order-modal" class="modal hidden">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 id="order-modal-title">New Order</h3>
+                        <button class="btn-icon close-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="order-form">
+                            <input type="hidden" id="order-id">
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="order-customer">Customer Name *</label>
+                                    <input type="text" id="order-customer" required placeholder="Enter customer name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="order-phone">Phone Number</label>
+                                    <input type="tel" id="order-phone" placeholder="Enter phone number">
                                 </div>
                             </div>
-                            <button type="button" id="add-item" class="btn btn-outline">+ Add Item</button>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="order-notes">Notes</label>
-                            <textarea id="order-notes" class="form-input" placeholder="Any special instructions..." rows="3"></textarea>
-                        </div>
-                        
-                        <div class="form-actions">
-                            <button type="button" id="cancel-order" class="btn btn-outline">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Create Order</button>
-                        </div>
-                    </form>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="order-product">Product *</label>
+                                    <select id="order-product" required>
+                                        <option value="">Select Product</option>
+                                        <optgroup label="Livestock">
+                                            <option value="broilers">Broilers (Live)</option>
+                                            <option value="broilers-dressed">Broilers (Dressed)</option>
+                                            <option value="eggs">Eggs</option>
+                                            <option value="pork">Pork</option>
+                                            <option value="beef">Beef</option>
+                                        </optgroup>
+                                        <optgroup label="Produce">
+                                            <option value="tomatoes">Tomatoes</option>
+                                            <option value="peppers">Peppers</option>
+                                            <option value="cucumbers">Cucumbers</option>
+                                            <option value="lettuce">Lettuce</option>
+                                            <option value="carrots">Carrots</option>
+                                            <option value="potatoes">Potatoes</option>
+                                        </optgroup>
+                                        <optgroup label="Other">
+                                            <option value="honey">Honey</option>
+                                            <option value="milk">Milk</option>
+                                            <option value="cheese">Cheese</option>
+                                            <option value="other">Other</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="order-unit">Unit *</label>
+                                    <select id="order-unit" required>
+                                        <option value="kg">Kilograms (kg)</option>
+                                        <option value="lbs">Pounds (lbs)</option>
+                                        <option value="units">Units</option>
+                                        <option value="dozen">Dozen</option>
+                                        <option value="case">Case</option>
+                                        <option value="crate">Crate</option>
+                                        <option value="bag">Bag</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="order-quantity">Quantity *</label>
+                                    <input type="number" id="order-quantity" min="1" required placeholder="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="order-price">Price per Unit ($) *</label>
+                                    <input type="number" id="order-price" step="0.01" min="0" required placeholder="0.00">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="order-status">Status *</label>
+                                    <select id="order-status" required>
+                                        <option value="pending">Pending</option>
+                                        <option value="confirmed">Confirmed</option>
+                                        <option value="in-progress">In Progress</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="order-due-date">Due Date *</label>
+                                    <input type="date" id="order-due-date" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="order-notes">Order Notes (Optional)</label>
+                                <textarea id="order-notes" placeholder="Special instructions, delivery notes, etc." rows="3"></textarea>
+                            </div>
+
+                            <div class="order-total">
+                                <h4>Order Total: <span id="order-total-amount">$0.00</span></h4>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-text close-modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="delete-order" style="display: none;">Delete</button>
+                        <button type="button" class="btn btn-primary" id="save-order">Save Order</button>
+                    </div>
                 </div>
             </div>
         </div>
-    `;
-    },
+    `,
+
+    styles: `
+        .orders-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .summary-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .summary-icon {
+            font-size: 2rem;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-content h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-period {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .quick-order {
+            margin: 1.5rem 0;
+        }
+
+        .quick-order .form-row.compact {
+            margin-bottom: 0;
+        }
+
+        .orders-list .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .order-total {
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .order-total h4 {
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        #order-total-amount {
+            color: var(--success-color);
+            font-weight: 700;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .status-pending {
+            background: var(--warning-light);
+            color: var(--warning-dark);
+        }
+
+        .status-confirmed {
+            background: var(--info-light);
+            color: var(--info-dark);
+        }
+
+        .status-in-progress {
+            background: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        .status-completed {
+            background: var(--success-light);
+            color: var(--success-color);
+        }
+
+        .status-cancelled {
+            background: var(--danger-light);
+            color: var(--danger-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            opacity: 0.5;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .empty-content h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.2rem;
+        }
+
+        .empty-content p {
+            margin: 0;
+            opacity: 0.8;
+        }
+    `,
 
     initialize: function() {
-        console.log('📦 Initializing orders...');
-        this.showContent();
-        this.setupEventListeners();
-        this.updateOrderStats();
-        this.loadCustomers();
-        
-        // Set delivery date to tomorrow by default
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const deliveryDateInput = document.getElementById('delivery-date');
-        if (deliveryDateInput) {
-            deliveryDateInput.value = tomorrow.toISOString().split('T')[0];
-        }
-        
-        return true;
+        console.log('Orders module initializing...');
+        this.loadOrdersData();
+        this.attachEventListeners();
+        this.updateSummary();
+        this.renderOrdersTable();
     },
 
-    showContent: function() {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) {
-            console.error('Content area not found');
+    loadOrdersData: function() {
+        if (!FarmModules.appData.orders) {
+            FarmModules.appData.orders = [];
+        }
+    },
+
+    updateSummary: function() {
+        const orders = FarmModules.appData.orders || [];
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth();
+        const currentYear = currentDate.getFullYear();
+
+        const monthlyOrders = orders.filter(order => {
+            const orderDate = new Date(order.orderDate);
+            return orderDate.getMonth() === currentMonth && 
+                   orderDate.getFullYear() === currentYear;
+        });
+
+        const pendingOrders = orders.filter(order => order.status === 'pending').length;
+        const progressOrders = orders.filter(order => order.status === 'in-progress').length;
+        const completedOrders = monthlyOrders.filter(order => order.status === 'completed').length;
+        
+        const totalRevenue = monthlyOrders
+            .filter(order => order.status === 'completed')
+            .reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+
+        this.updateElement('pending-orders', pendingOrders);
+        this.updateElement('progress-orders', progressOrders);
+        this.updateElement('completed-orders', completedOrders);
+        this.updateElement('total-revenue', this.formatCurrency(totalRevenue));
+    },
+
+    renderOrdersTable: function(filterStatus = 'all') {
+        const tbody = document.getElementById('orders-body');
+        const orders = FarmModules.appData.orders || [];
+
+        let filteredOrders = orders;
+        if (filterStatus !== 'all') {
+            filteredOrders = orders.filter(order => order.status === filterStatus);
+        }
+
+        if (filteredOrders.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="empty-state">
+                        <div class="empty-content">
+                            <span class="empty-icon">📋</span>
+                            <h4>No orders found</h4>
+                            <p>${filterStatus === 'all' ? 'Start by creating your first order' : `No ${filterStatus} orders`}</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
             return;
         }
 
-        contentArea.innerHTML = this.template();
-        console.log('✅ Orders content loaded');
-    },
+        // Show most recent orders first
+        const sortedOrders = filteredOrders.slice().reverse();
 
-    renderOrdersList: function() {
-        const orders = JSON.parse(localStorage.getItem('farm-orders') || '[]');
-        
-        if (orders.length === 0) {
+        tbody.innerHTML = sortedOrders.map(order => {
+            const statusClass = `status-badge status-${order.status.replace(' ', '-')}`;
+            
             return `
-                <div class="empty-state">
-                    <div class="empty-icon">📦</div>
-                    <div class="empty-title">No orders yet</div>
-                    <div class="empty-desc">Create your first order to get started</div>
-                </div>
+                <tr>
+                    <td><strong>${order.id}</strong></td>
+                    <td>${order.customerName}</td>
+                    <td>${this.formatProductName(order.product)}</td>
+                    <td>${order.quantity} ${order.unit}</td>
+                    <td>${this.formatCurrency(order.totalAmount)}</td>
+                    <td><span class="${statusClass}">${order.status}</span></td>
+                    <td>${this.formatDate(order.dueDate)}</td>
+                    <td class="order-actions">
+                        <button class="btn-icon edit-order" data-id="${order.id}" title="Edit">✏️</button>
+                        <button class="btn-icon view-order" data-id="${order.id}" title="View">👁️</button>
+                        ${order.status !== 'completed' && order.status !== 'cancelled' ? 
+                            `<button class="btn-icon complete-order" data-id="${order.id}" title="Complete">✅</button>` : ''
+                        }
+                    </td>
+                </tr>
             `;
-        }
-
-        const recentOrders = orders
-            .sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate))
-            .slice(0, 5);
-
-        return recentOrders.map(order => `
-            <div class="order-card">
-                <div class="order-info">
-                    <div class="order-status-badge ${order.status}">
-                        <span class="status-icon">${this.getStatusIcon(order.status)}</span>
-                        <span class="status-text">${order.status}</span>
-                    </div>
-                    <div class="order-details">
-                        <div class="order-title">Order #${order.id} - ${order.customerName}</div>
-                        <div class="order-meta">
-                            ${order.orderDate} • ${order.items.length} items • ${this.formatCurrency(order.totalAmount)}
-                        </div>
-                    </div>
-                </div>
-                <div class="order-actions">
-                    <button class="btn-icon view-order" data-order-id="${order.id}" title="View Order">👁️</button>
-                    ${order.status === 'pending' ? `
-                        <button class="btn-icon process-order" data-order-id="${order.id}" title="Process Order">🔄</button>
-                    ` : ''}
-                </div>
-            </div>
-        `).join('');
+        }).join('');
     },
 
-    setupEventListeners: function() {
-        // Quick action buttons
+    attachEventListeners: function() {
+        // Quick order form
+        document.getElementById('quick-order-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleQuickOrder();
+        });
+
+        // Modal buttons
+        document.getElementById('add-order').addEventListener('click', () => this.showOrderModal());
+        document.getElementById('save-order').addEventListener('click', () => this.saveOrder());
+        document.getElementById('delete-order').addEventListener('click', () => this.deleteOrder());
+
+        // Modal events
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', () => this.hideModal());
+        });
+
+        // Real-time total calculation
+        document.getElementById('order-quantity').addEventListener('input', () => this.calculateTotal());
+        document.getElementById('order-price').addEventListener('input', () => this.calculateTotal());
+
+        // Filter
+        document.getElementById('status-filter').addEventListener('change', (e) => {
+            this.renderOrdersTable(e.target.value);
+        });
+
+        // Export
+        document.getElementById('export-orders').addEventListener('click', () => {
+            this.exportOrders();
+        });
+
+        // Order actions
         document.addEventListener('click', (e) => {
-            const target = e.target.closest('[id]');
-            if (!target) return;
-
-            switch(target.id) {
-                case 'quick-create-order':
-                    e.preventDefault();
-                    this.showCreateOrderModal();
-                    break;
-                case 'quick-pending-orders':
-                    e.preventDefault();
-                    this.filterOrders('pending');
-                    break;
-                case 'quick-today-orders':
-                    e.preventDefault();
-                    this.filterOrders('today');
-                    break;
-                case 'quick-completed-orders':
-                    e.preventDefault();
-                    this.filterOrders('completed');
-                    break;
-                case 'add-item':
-                    e.preventDefault();
-                    this.addOrderItem();
-                    break;
-                case 'cancel-order':
-                    e.preventDefault();
-                    this.closeCreateModal();
-                    break;
-                case 'close-create-modal':
-                    e.preventDefault();
-                    this.closeCreateModal();
-                    break;
+            if (e.target.closest('.edit-order')) {
+                const orderId = e.target.closest('.edit-order').dataset.id;
+                this.editOrder(orderId);
             }
-        });
-
-        // Form submission
-        document.addEventListener('submit', (e) => {
-            if (e.target.id === 'create-order-form') {
-                e.preventDefault();
-                this.createOrder(e);
-            }
-        });
-
-        // Filter and search
-        document.addEventListener('change', (e) => {
-            if (e.target.id === 'order-filter') {
-                this.filterOrders(e.target.value);
-            }
-        });
-
-        document.addEventListener('input', (e) => {
-            if (e.target.id === 'order-search') {
-                this.searchOrders(e.target.value);
-            }
-        });
-
-        // Event delegation for dynamic elements
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('view-order') || e.target.closest('.view-order')) {
-                const orderId = e.target.closest('.view-order').getAttribute('data-order-id');
+            if (e.target.closest('.view-order')) {
+                const orderId = e.target.closest('.view-order').dataset.id;
                 this.viewOrder(orderId);
             }
-            
-            if (e.target.classList.contains('process-order') || e.target.closest('.process-order')) {
-                const orderId = e.target.closest('.process-order').getAttribute('data-order-id');
-                this.processOrder(orderId);
-            }
-            
-            if (e.target.classList.contains('remove-item') || e.target.closest('.remove-item')) {
-                this.removeOrderItem(e.target.closest('.remove-item'));
+            if (e.target.closest('.complete-order')) {
+                const orderId = e.target.closest('.complete-order').dataset.id;
+                this.completeOrder(orderId);
             }
         });
 
-        // Close modal when clicking outside
-        window.addEventListener('click', (e) => {
-            const createModal = document.getElementById('create-order-modal');
-            if (e.target === createModal) {
-                this.closeCreateModal();
+        // Modal backdrop
+        document.getElementById('order-modal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                this.hideModal();
             }
         });
     },
 
-    updateOrderStats: function() {
-        const orders = JSON.parse(localStorage.getItem('farm-orders') || '[]');
-        
-        const pendingCount = orders.filter(order => order.status === 'pending').length;
-        const completedCount = orders.filter(order => order.status === 'completed').length;
-        const todayCount = orders.filter(order => {
-            const today = new Date().toISOString().split('T')[0];
-            return order.deliveryDate === today;
-        }).length;
-        
-        const revenue = orders
-            .filter(order => order.status === 'completed')
-            .reduce((sum, order) => sum + order.totalAmount, 0);
-        
-        this.updateElement('pending-count', pendingCount);
-        this.updateElement('completed-count', completedCount);
-        this.updateElement('today-count', todayCount);
-        this.updateElement('revenue-amount', this.formatCurrency(revenue));
-    },
+    handleQuickOrder: function() {
+        const customer = document.getElementById('quick-customer').value;
+        const product = document.getElementById('quick-product').value;
+        const quantity = parseInt(document.getElementById('quick-quantity').value);
+        const price = parseFloat(document.getElementById('quick-price').value) || 0;
 
-    loadCustomers: function() {
-        const customers = JSON.parse(localStorage.getItem('farm-customers') || '[]');
-        const customerSelect = document.getElementById('customer-select');
-        
-        if (customerSelect) {
-            customerSelect.innerHTML = '<option value="">Select Customer</option>';
-            customers.forEach(customer => {
-                const option = document.createElement('option');
-                option.value = customer.id;
-                option.textContent = customer.name;
-                customerSelect.appendChild(option);
-            });
+        if (!customer || !product || !quantity) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
         }
+
+        const orderData = {
+            customerName: customer,
+            product: product,
+            quantity: quantity,
+            unit: 'units',
+            pricePerUnit: price,
+            totalAmount: quantity * price,
+            status: 'pending',
+            dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
+            orderDate: new Date().toISOString().split('T')[0]
+        };
+
+        this.addOrder(orderData);
+        
+        // Reset form
+        document.getElementById('quick-order-form').reset();
+        this.showNotification('Order created successfully!', 'success');
     },
 
-    showCreateOrderModal: function() {
-        const modal = document.getElementById('create-order-modal');
-        if (modal) {
+    showOrderModal: function() {
+        const modal = document.getElementById('order-modal');
+        const title = document.getElementById('order-modal-title');
+        const form = document.getElementById('order-form');
+
+        if (modal && title && form) {
+            form.reset();
+            document.getElementById('order-id').value = '';
+            document.getElementById('order-due-date').value = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            document.getElementById('delete-order').style.display = 'none';
+            document.getElementById('order-total-amount').textContent = '$0.00';
+            
             modal.classList.remove('hidden');
         }
     },
 
-    closeCreateModal: function() {
-        const modal = document.getElementById('create-order-modal');
-        const form = document.getElementById('create-order-form');
-        
-        if (modal) modal.classList.add('hidden');
-        if (form) form.reset();
-        
-        // Reset to single item
-        const orderItems = document.getElementById('order-items');
-        if (orderItems) {
-            orderItems.innerHTML = `
-                <div class="order-item">
-                    <div class="item-row">
-                        <div class="form-group">
-                            <label>Product *</label>
-                            <select class="product-select form-select" required>
-                                <option value="">Select Product</option>
-                                <option value="eggs">Eggs</option>
-                                <option value="broilers">Broilers</option>
-                                <option value="layers">Layers</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Quantity *</label>
-                            <input type="number" class="quantity-input form-input" placeholder="Qty" min="1" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Price *</label>
-                            <input type="number" class="price-input form-input" placeholder="Price" step="0.01" min="0" required>
-                        </div>
-                        <button type="button" class="remove-item btn-icon">🗑️</button>
-                    </div>
-                </div>
-            `;
+    hideModal: function() {
+        const modal = document.getElementById('order-modal');
+        if (modal) {
+            modal.classList.add('hidden');
         }
     },
 
-    addOrderItem: function() {
-        const orderItems = document.getElementById('order-items');
-        if (orderItems) {
-            const newItem = document.createElement('div');
-            newItem.className = 'order-item';
-            newItem.innerHTML = `
-                <div class="item-row">
-                    <div class="form-group">
-                        <label>Product *</label>
-                        <select class="product-select form-select" required>
-                            <option value="">Select Product</option>
-                            <option value="eggs">Eggs</option>
-                            <option value="broilers">Broilers</option>
-                            <option value="layers">Layers</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Quantity *</label>
-                        <input type="number" class="quantity-input form-input" placeholder="Qty" min="1" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Price *</label>
-                        <input type="number" class="price-input form-input" placeholder="Price" step="0.01" min="0" required>
-                    </div>
-                    <button type="button" class="remove-item btn-icon">🗑️</button>
-                </div>
-            `;
-            orderItems.appendChild(newItem);
-        }
-    },
-
-    removeOrderItem: function(button) {
-        const orderItems = document.getElementById('order-items');
-        if (orderItems && orderItems.children.length > 1) {
-            button.closest('.order-item').remove();
-        }
-    },
-
-    createOrder: function(e) {
-        e.preventDefault();
+    calculateTotal: function() {
+        const quantity = parseInt(document.getElementById('order-quantity').value) || 0;
+        const price = parseFloat(document.getElementById('order-price').value) || 0;
+        const total = quantity * price;
         
-        const customerId = document.getElementById('customer-select').value;
-        const customerSelect = document.getElementById('customer-select');
-        const customerName = customerSelect ? customerSelect.options[customerSelect.selectedIndex].text : '';
-        const orderDate = document.getElementById('order-date').value;
-        const deliveryDate = document.getElementById('delivery-date').value;
+        document.getElementById('order-total-amount').textContent = this.formatCurrency(total);
+    },
+
+    saveOrder: function() {
+        const form = document.getElementById('order-form');
+        if (!form) return;
+
+        const orderId = document.getElementById('order-id').value;
+        const customerName = document.getElementById('order-customer').value;
+        const phone = document.getElementById('order-phone').value;
+        const product = document.getElementById('order-product').value;
+        const unit = document.getElementById('order-unit').value;
+        const quantity = parseInt(document.getElementById('order-quantity').value);
+        const pricePerUnit = parseFloat(document.getElementById('order-price').value);
         const status = document.getElementById('order-status').value;
+        const dueDate = document.getElementById('order-due-date').value;
         const notes = document.getElementById('order-notes').value;
-        
-        if (!customerId || !orderDate || !deliveryDate) {
-            this.showNotification('Please fill all required fields', 'error');
+
+        if (!customerName || !product || !quantity || !pricePerUnit || !dueDate) {
+            this.showNotification('Please fill in all required fields', 'error');
             return;
         }
-        
-        // Validate items
-        const items = [];
-        let totalAmount = 0;
-        let valid = true;
-        
-        document.querySelectorAll('.order-item').forEach(item => {
-            const productSelect = item.querySelector('.product-select');
-            const quantityInput = item.querySelector('.quantity-input');
-            const priceInput = item.querySelector('.price-input');
-            
-            if (!productSelect.value || !quantityInput.value || !priceInput.value) {
-                valid = false;
-                return;
-            }
-            
-            const quantity = parseInt(quantityInput.value);
-            const price = parseFloat(priceInput.value);
-            const itemTotal = quantity * price;
-            
-            items.push({
-                product: productSelect.value,
-                productName: productSelect.options[productSelect.selectedIndex].text,
-                quantity: quantity,
-                price: price,
-                total: itemTotal
-            });
-            
-            totalAmount += itemTotal;
-        });
-        
-        if (!valid) {
-            this.showNotification('Please fill all item fields', 'error');
+
+        if (quantity <= 0) {
+            this.showNotification('Quantity must be greater than 0', 'error');
             return;
         }
-        
-        // Create order object
-        const order = {
-            id: Date.now(),
-            customerId: parseInt(customerId),
+
+        if (pricePerUnit < 0) {
+            this.showNotification('Price cannot be negative', 'error');
+            return;
+        }
+
+        const orderData = {
             customerName: customerName,
-            orderDate: orderDate,
-            deliveryDate: deliveryDate,
+            phone: phone,
+            product: product,
+            unit: unit,
+            quantity: quantity,
+            pricePerUnit: pricePerUnit,
+            totalAmount: quantity * pricePerUnit,
             status: status,
-            items: items,
-            totalAmount: totalAmount,
+            dueDate: dueDate,
             notes: notes,
-            createdAt: new Date().toISOString()
+            orderDate: new Date().toISOString().split('T')[0]
         };
+
+        if (orderId) {
+            this.updateOrder(orderId, orderData);
+        } else {
+            this.addOrder(orderData);
+        }
+
+        this.hideModal();
+    },
+
+    addOrder: function(orderData) {
+        if (!FarmModules.appData.orders) {
+            FarmModules.appData.orders = [];
+        }
+
+        const newOrder = {
+            id: 'ORD-' + Date.now().toString().slice(-6),
+            ...orderData
+        };
+
+        FarmModules.appData.orders.push(newOrder);
         
-        // Save to localStorage
-        const orders = JSON.parse(localStorage.getItem('farm-orders') || '[]');
-        orders.push(order);
-        localStorage.setItem('farm-orders', JSON.stringify(orders));
-        
-        // Close modal and refresh
-        this.closeCreateModal();
-        this.showContent();
-        this.updateOrderStats();
+        this.updateSummary();
+        this.renderOrdersTable();
         
         this.showNotification('Order created successfully!', 'success');
     },
 
-    viewOrder: function(orderId) {
-        this.showNotification('View order details for #' + orderId, 'info');
+    editOrder: function(orderId) {
+        const orders = FarmModules.appData.orders || [];
+        const order = orders.find(o => o.id === orderId);
+        
+        if (!order) return;
+
+        const modal = document.getElementById('order-modal');
+        const title = document.getElementById('order-modal-title');
+
+        if (modal && title) {
+            document.getElementById('order-id').value = order.id;
+            document.getElementById('order-customer').value = order.customerName;
+            document.getElementById('order-phone').value = order.phone || '';
+            document.getElementById('order-product').value = order.product;
+            document.getElementById('order-unit').value = order.unit;
+            document.getElementById('order-quantity').value = order.quantity;
+            document.getElementById('order-price').value = order.pricePerUnit;
+            document.getElementById('order-status').value = order.status;
+            document.getElementById('order-due-date').value = order.dueDate;
+            document.getElementById('order-notes').value = order.notes || '';
+            document.getElementById('delete-order').style.display = 'block';
+            
+            this.calculateTotal();
+            
+            title.textContent = 'Edit Order';
+            modal.classList.remove('hidden');
+        }
     },
 
-    processOrder: function(orderId) {
-        const orders = JSON.parse(localStorage.getItem('farm-orders') || '[]');
-        const orderIndex = orders.findIndex(o => o.id == orderId);
+    viewOrder: function(orderId) {
+        const orders = FarmModules.appData.orders || [];
+        const order = orders.find(o => o.id === orderId);
+        
+        if (!order) return;
+
+        const modal = document.getElementById('order-modal');
+        const title = document.getElementById('order-modal-title');
+
+        if (modal && title) {
+            document.getElementById('order-id').value = order.id;
+            document.getElementById('order-customer').value = order.customerName;
+            document.getElementById('order-phone').value = order.phone || '';
+            document.getElementById('order-product').value = order.product;
+            document.getElementById('order-unit').value = order.unit;
+            document.getElementById('order-quantity').value = order.quantity;
+            document.getElementById('order-price').value = order.pricePerUnit;
+            document.getElementById('order-status').value = order.status;
+            document.getElementById('order-due-date').value = order.dueDate;
+            document.getElementById('order-notes').value = order.notes || '';
+            document.getElementById('delete-order').style.display = 'block';
+            
+            // Make fields read-only for viewing
+            const inputs = modal.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => input.disabled = true);
+            document.getElementById('save-order').style.display = 'none';
+            
+            this.calculateTotal();
+            
+            title.textContent = 'View Order';
+            modal.classList.remove('hidden');
+
+            // Re-enable fields when modal closes
+            modal.addEventListener('hidden', () => {
+                inputs.forEach(input => input.disabled = false);
+                document.getElementById('save-order').style.display = 'block';
+            }, { once: true });
+        }
+    },
+
+    completeOrder: function(orderId) {
+        if (confirm('Mark this order as completed?')) {
+            const orders = FarmModules.appData.orders || [];
+            const orderIndex = orders.findIndex(o => o.id === orderId);
+            
+            if (orderIndex !== -1) {
+                orders[orderIndex].status = 'completed';
+                orders[orderIndex].completedDate = new Date().toISOString().split('T')[0];
+                
+                this.updateSummary();
+                this.renderOrdersTable();
+                this.showNotification('Order marked as completed!', 'success');
+            }
+        }
+    },
+
+    updateOrder: function(orderId, orderData) {
+        const orders = FarmModules.appData.orders || [];
+        const orderIndex = orders.findIndex(o => o.id === orderId);
         
         if (orderIndex !== -1) {
-            orders[orderIndex].status = 'processing';
-            localStorage.setItem('farm-orders', JSON.stringify(orders));
-            this.showContent();
-            this.updateOrderStats();
-            this.showNotification('Order processing started!', 'success');
+            orders[orderIndex] = {
+                ...orders[orderIndex],
+                ...orderData
+            };
+            
+            this.updateSummary();
+            this.renderOrdersTable();
+            this.showNotification('Order updated successfully!', 'success');
         }
     },
 
-    filterOrders: function(status) {
-        this.showNotification('Filtering orders: ' + status, 'info');
-    },
-
-    searchOrders: function(query) {
-        if (query) {
-            this.showNotification('Searching for: ' + query, 'info');
+    deleteOrder: function() {
+        const orderId = document.getElementById('order-id').value;
+        
+        if (confirm('Are you sure you want to delete this order?')) {
+            FarmModules.appData.orders = FarmModules.appData.orders.filter(o => o.id !== orderId);
+            
+            this.updateSummary();
+            this.renderOrdersTable();
+            this.hideModal();
+            this.showNotification('Order deleted successfully', 'success');
         }
     },
 
-    // Helper methods
-    getStatusIcon: function(status) {
-        const icons = {
-            'pending': '⏳',
-            'processing': '🔄',
-            'completed': '✅',
-            'cancelled': '❌'
+    exportOrders: function() {
+        const orders = FarmModules.appData.orders || [];
+        const csv = this.convertToCSV(orders);
+        const blob = new Blob([csv], { type: 'text/csv' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `orders-export-${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        
+        this.showNotification('Orders exported successfully!', 'success');
+    },
+
+    convertToCSV: function(orders) {
+        const headers = ['Order ID', 'Customer', 'Product', 'Quantity', 'Unit', 'Price', 'Total', 'Status', 'Order Date', 'Due Date'];
+        const rows = orders.map(order => [
+            order.id,
+            order.customerName,
+            this.formatProductName(order.product),
+            order.quantity,
+            order.unit,
+            this.formatCurrency(order.pricePerUnit),
+            this.formatCurrency(order.totalAmount),
+            order.status,
+            order.orderDate,
+            order.dueDate
+        ]);
+        
+        return [headers, ...rows].map(row => row.join(',')).join('\n');
+    },
+
+    formatProductName: function(product) {
+        const productNames = {
+            'broilers': 'Broilers (Live)',
+            'broilers-dressed': 'Broilers (Dressed)',
+            'eggs': 'Eggs',
+            'pork': 'Pork',
+            'beef': 'Beef',
+            'tomatoes': 'Tomatoes',
+            'peppers': 'Peppers',
+            'cucumbers': 'Cucumbers',
+            'lettuce': 'Lettuce',
+            'carrots': 'Carrots',
+            'potatoes': 'Potatoes',
+            'honey': 'Honey',
+            'milk': 'Milk',
+            'cheese': 'Cheese',
+            'other': 'Other'
         };
-        return icons[status] || '📦';
+        return productNames[product] || product;
     },
 
     formatCurrency: function(amount) {
@@ -562,6 +825,14 @@ FarmModules.registerModule('orders', {
             style: 'currency',
             currency: 'USD'
         }).format(amount);
+    },
+
+    formatDate: function(dateString) {
+        try {
+            return new Date(dateString).toLocaleDateString();
+        } catch (e) {
+            return 'Invalid date';
+        }
     },
 
     updateElement: function(id, value) {

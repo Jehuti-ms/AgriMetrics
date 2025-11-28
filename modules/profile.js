@@ -4,130 +4,118 @@ FarmModules.registerModule('profile', {
     icon: '👤',
     
     template: `
-        <div class="profile-module">
-            <div class="module-header-pwa">
-                <h1 class="module-title-pwa">Farm Profile</h1>
-                <p class="module-subtitle-pwa">Manage your farm information and settings</p>
+        <div class="section active">
+            <div class="module-header">
+                <h1>Farm Profile</h1>
+                <p>Manage your farm information and settings</p>
             </div>
 
             <div class="profile-content">
                 <!-- Farm Stats Overview -->
-                <div class="stats-grid-pwa">
-                    <div class="stat-card-pwa">
-                        <div class="stat-icon-pwa">💰</div>
-                        <div class="stat-value-pwa" id="total-transactions">0</div>
-                        <div class="stat-label-pwa">Total Transactions</div>
+                <div class="stats-overview">
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-content">
+                            <h3>Total Transactions</h3>
+                            <div class="stat-value" id="total-transactions">0</div>
+                        </div>
                     </div>
-                    <div class="stat-card-pwa">
-                        <div class="stat-icon-pwa">📦</div>
-                        <div class="stat-value-pwa" id="total-inventory">0</div>
-                        <div class="stat-label-pwa">Inventory Items</div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-content">
+                            <h3>Inventory Items</h3>
+                            <div class="stat-value" id="total-inventory">0</div>
+                        </div>
                     </div>
-                    <div class="stat-card-pwa">
-                        <div class="stat-icon-pwa">🌾</div>
-                        <div class="stat-value-pwa" id="total-feed-records">0</div>
-                        <div class="stat-label-pwa">Feed Records</div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🌾</div>
+                        <div class="stat-content">
+                            <h3>Feed Records</h3>
+                            <div class="stat-value" id="total-feed-records">0</div>
+                        </div>
                     </div>
-                    <div class="stat-card-pwa">
-                        <div class="stat-icon-pwa">📈</div>
-                        <div class="stat-value-pwa" id="farm-value">$0</div>
-                        <div class="stat-label-pwa">Farm Value</div>
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="quick-actions-pwa">
-                    <div class="quick-grid-pwa">
-                        <a href="#" class="quick-action-btn-pwa" id="quick-edit-profile">
-                            <div class="quick-icon-pwa">✏️</div>
-                            <div class="quick-title-pwa">Edit Profile</div>
-                            <div class="quick-desc-pwa">Update farm details</div>
-                        </a>
-                        <a href="#" class="quick-action-btn-pwa" id="quick-export-data">
-                            <div class="quick-icon-pwa">📥</div>
-                            <div class="quick-title-pwa">Export Data</div>
-                            <div class="quick-desc-pwa">Backup all farm data</div>
-                        </a>
-                        <a href="#" class="quick-action-btn-pwa" id="quick-settings">
-                            <div class="quick-icon-pwa">⚙️</div>
-                            <div class="quick-title-pwa">Settings</div>
-                            <div class="quick-desc-pwa">App preferences</div>
-                        </a>
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-content">
+                            <h3>Farm Value</h3>
+                            <div class="stat-value" id="farm-value">$0</div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Farm Information Form -->
-                <div class="form-container-pwa">
-                    <h3 class="form-title-pwa">Farm Information</h3>
+                <div class="profile-card card">
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            <span class="avatar-icon">🚜</span>
+                        </div>
+                        <div class="profile-info">
+                            <h2 id="profile-farm-name">Loading...</h2>
+                            <p id="profile-farmer-name">Loading...</p>
+                            <p class="profile-email" id="profile-email">Loading...</p>
+                            <div class="profile-stats">
+                                <span class="stat-badge" id="member-since">Member since: Loading...</span>
+                                <span class="stat-badge" id="data-entries">Data entries: 0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-details card">
+                    <h3>Farm Information</h3>
                     <form id="profile-form">
-                        <div class="form-grid-pwa">
-                            <div class="form-group-pwa">
-                                <label class="form-label-pwa">Farm Name *</label>
-                                <input type="text" id="farm-name" class="form-input-pwa" placeholder="Enter farm name" required>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="farm-name">Farm Name</label>
+                                <input type="text" id="farm-name" placeholder="Enter farm name" required>
                             </div>
-                            <div class="form-group-pwa">
-                                <label class="form-label-pwa">Farmer Name *</label>
-                                <input type="text" id="farmer-name" class="form-input-pwa" placeholder="Enter your name" required>
+                            <div class="form-group">
+                                <label for="farmer-name">Farmer Name</label>
+                                <input type="text" id="farmer-name" placeholder="Enter your name" required>
                             </div>
-                            <div class="form-group-pwa">
-                                <label class="form-label-pwa">Email Address *</label>
-                                <input type="email" id="profile-email" class="form-input-pwa" placeholder="your.email@example.com" required>
-                            </div>
-                            <div class="form-group-pwa">
-                                <label class="form-label-pwa">Phone Number</label>
-                                <input type="tel" id="profile-phone" class="form-input-pwa" placeholder="+1 (555) 123-4567">
-                            </div>
-                            <div class="form-group-pwa">
-                                <label class="form-label-pwa">Farm Type</label>
-                                <select id="farm-type" class="form-select-pwa">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="farm-type">Farm Type</label>
+                                <select id="farm-type">
                                     <option value="">Select farm type</option>
-                                    <option value="poultry">Poultry Farm</option>
-                                    <option value="dairy">Dairy Farm</option>
                                     <option value="crop">Crop Farm</option>
                                     <option value="livestock">Livestock Farm</option>
+                                    <option value="dairy">Dairy Farm</option>
+                                    <option value="poultry">Poultry Farm</option>
                                     <option value="mixed">Mixed Farming</option>
                                     <option value="other">Other</option>
                                 </select>
                             </div>
-                            <div class="form-group-pwa">
-                                <label class="form-label-pwa">Farm Size (acres)</label>
-                                <input type="number" id="farm-size" class="form-input-pwa" placeholder="e.g., 100" min="0" step="0.1">
+                            <div class="form-group">
+                                <label for="farm-size">Farm Size (acres)</label>
+                                <input type="number" id="farm-size" placeholder="e.g., 100" min="0">
                             </div>
                         </div>
-                        
-                        <div class="form-group-pwa">
-                            <label class="form-label-pwa">Farm Location</label>
-                            <input type="text" id="farm-location" class="form-input-pwa" placeholder="Enter farm address">
+                        <div class="form-group">
+                            <label for="farm-location">Farm Location</label>
+                            <input type="text" id="farm-location" placeholder="Enter farm location">
                         </div>
-                        
-                        <div class="form-group-pwa">
-                            <label class="form-label-pwa">Farm Description</label>
-                            <textarea id="farm-description" class="form-input-pwa" placeholder="Describe your farm operations, specialties, or any other relevant information..." rows="3"></textarea>
+                        <div class="form-group">
+                            <label for="farm-description">Farm Description</label>
+                            <textarea id="farm-description" placeholder="Describe your farm..." rows="3"></textarea>
                         </div>
                         
                         <div class="form-actions">
-                            <button type="submit" class="btn btn-primary-pwa">
-                                <span class="btn-icon">💾</span>
-                                Save Profile
-                            </button>
-                            <button type="button" class="btn btn-outline-pwa" id="reset-profile">
-                                <span class="btn-icon">🔄</span>
-                                Reset Form
-                            </button>
+                            <button type="submit" class="btn btn-primary">Save Profile</button>
+                            <button type="button" class="btn btn-text" id="reset-profile">Reset to Current</button>
                         </div>
                     </form>
                 </div>
 
-                <!-- Account Settings -->
-                <div class="transactions-section-pwa">
-                    <div class="section-header-pwa">
-                        <h3 class="section-title-pwa">Account Settings</h3>
-                    </div>
-                    
-                    <div class="settings-grid">
-                        <div class="setting-group">
-                            <label class="form-label-pwa">Default Currency</label>
-                            <select id="default-currency" class="form-select-pwa">
+                <div class="settings-section card">
+                    <h3>Application Settings</h3>
+                    <div class="settings-list">
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Default Currency</h4>
+                                <p>Set your preferred currency for financial records</p>
+                            </div>
+                           <select id="default-currency" class="setting-control">
                                 <option value="USD">US Dollar ($)</option>
                                 <option value="EUR">Euro (€)</option>
                                 <option value="GBP">British Pound (£)</option>
@@ -135,351 +123,523 @@ FarmModules.registerModule('profile', {
                                 <option value="CAD">Canadian Dollar (C$)</option>
                                 <option value="AUD">Australian Dollar (A$)</option>
                                 <option value="JMD">Jamaican Dollar (J$)</option>
+                                <option value="TTD">Trinidad & Tobago Dollar (TT$)</option>
+                                <option value="XCD">East Caribbean Dollar (EC$)</option>
                             </select>
                         </div>
                         
-                        <div class="setting-group">
-                            <label class="form-label-pwa">Low Stock Threshold</label>
-                            <div class="input-with-unit">
-                                <input type="number" id="low-stock-threshold" class="form-input-pwa" value="10" min="1" max="1000">
-                                <span class="input-unit">items</span>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Low Stock Threshold</h4>
+                                <p>Set when to receive low inventory alerts</p>
                             </div>
-                            <div class="form-help-pwa">Receive alerts when inventory drops below this level</div>
+                            <input type="number" id="low-stock-threshold" class="setting-control" min="1" max="100" value="10">
+                            <span class="setting-unit">items</span>
                         </div>
                         
-                        <div class="setting-group">
-                            <label class="form-label-pwa">Date Format</label>
-                            <select id="date-format" class="form-select-pwa">
-                                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                            </select>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Auto-backup Data</h4>
+                                <p>Automatically backup your farm data</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="auto-backup" checked>
+                                <span class="slider"></span>
+                            </label>
                         </div>
                     </div>
                 </div>
 
-                <!-- Data Management -->
-                <div class="transactions-section-pwa">
-                    <div class="section-header-pwa">
-                        <h3 class="section-title-pwa">Data Management</h3>
-                    </div>
-                    
+                <div class="data-management card">
+                    <h3>Data Management</h3>
                     <div class="data-stats">
-                        <div class="data-stat-item">
-                            <span class="data-stat-label">Total Transactions:</span>
-                            <span class="data-stat-value" id="data-transactions">0 records</span>
+                        <div class="data-stat">
+                            <label>Transactions:</label>
+                            <span id="transactions-count">0 records</span>
                         </div>
-                        <div class="data-stat-item">
-                            <span class="data-stat-label">Inventory Items:</span>
-                            <span class="data-stat-value" id="data-inventory">0 items</span>
+                        <div class="data-stat">
+                            <label>Inventory:</label>
+                            <span id="inventory-count">0 items</span>
                         </div>
-                        <div class="data-stat-item">
-                            <span class="data-stat-label">Feed Records:</span>
-                            <span class="data-stat-value" id="data-feed-records">0 entries</span>
+                        <div class="data-stat">
+                            <label>Feed Records:</label>
+                            <span id="feed-records-count">0 entries</span>
                         </div>
-                        <div class="data-stat-item">
-                            <span class="data-stat-label">Total Data Size:</span>
-                            <span class="data-stat-value" id="data-total-size">0 KB</span>
+                        <div class="data-stat">
+                            <label>Total Data:</label>
+                            <span id="total-data-size">0 KB</span>
                         </div>
                     </div>
-                    
                     <div class="action-buttons">
-                        <button class="btn btn-primary-pwa" id="export-all-data">
-                            <span class="btn-icon">📥</span>
-                            Export All Data
-                        </button>
-                        <button class="btn btn-outline-pwa" id="clear-transactions">
-                            <span class="btn-icon">🗑️</span>
-                            Clear Transactions
-                        </button>
-                        <button class="btn btn-danger-pwa" id="clear-all-data">
-                            <span class="btn-icon">⚠️</span>
-                            Clear All Data
-                        </button>
+                        <button class="btn btn-secondary" id="export-data">📥 Export All Data</button>
+                        <button class="btn btn-warning" id="clear-transactions">🗑️ Clear Transactions</button>
+                        <button class="btn btn-danger" id="clear-all-data">⚠️ Clear All Data</button>
                     </div>
                 </div>
 
-                <!-- Account Actions -->
-                <div class="transactions-section-pwa">
-                    <div class="section-header-pwa">
-                        <h3 class="section-title-pwa">Account</h3>
-                    </div>
-                    
+                <div class="account-actions card">
+                    <h3>Account</h3>
                     <div class="action-buttons">
                         ${window.app && window.app.isDemoMode ? 
-                            `<button class="btn btn-primary-pwa" id="demo-login">
-                                <span class="btn-icon">🔐</span>
-                                Switch to Real Account
-                            </button>` : 
-                            `<button class="btn btn-outline-pwa" id="logout-profile">
-                                <span class="btn-icon">🚪</span>
-                                Logout
-                            </button>`
+                            '<button class="btn btn-primary" id="demo-login">🔐 Switch to Real Account</button>' : 
+                            '<button class="btn btn-secondary" id="logout-profile">🚪 Logout</button>'
                         }
-                        <button class="btn btn-text-pwa" id="refresh-data">
-                            <span class="btn-icon">🔄</span>
-                            Refresh Data
-                        </button>
-                    </div>
-                    
-                    <div class="account-info">
-                        <div class="account-info-item">
-                            <span class="account-info-label">Member Since:</span>
-                            <span class="account-info-value" id="member-since">Loading...</span>
-                        </div>
-                        <div class="account-info-item">
-                            <span class="account-info-label">Last Login:</span>
-                            <span class="account-info-value" id="last-login">Loading...</span>
-                        </div>
-                        <div class="account-info-item">
-                            <span class="account-info-label">App Version:</span>
-                            <span class="account-info-value">1.0.0</span>
-                        </div>
+                        <button class="btn btn-text" id="refresh-data">🔄 Refresh Data</button>
                     </div>
                 </div>
             </div>
         </div>
     `,
 
-    initialize: function() {
-        console.log('Profile module initializing...');
-        this.showContent();
-        this.setupEventListeners();
-        this.loadProfileData();
-        this.updateStats();
-        return true;
-    },
-
-    showContent: function() {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) {
-            console.error('Content area not found');
-            return;
+    styles: `
+        .profile-content {
+            max-width: 900px;
+            margin: 0 auto;
         }
 
-        contentArea.innerHTML = this.template;
-        console.log('✅ Profile content loaded');
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            opacity: 0.8;
+        }
+
+        .stat-content h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        .profile-card {
+            margin-bottom: 1.5rem;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 1.5rem;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .avatar-icon {
+            font-size: 2.5rem;
+        }
+
+        .profile-info h2 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text-color);
+        }
+
+        .profile-info p {
+            margin: 0.25rem 0;
+            color: var(--text-muted);
+        }
+
+        .profile-stats {
+            margin-top: 0.5rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            background: var(--bg-color);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+        }
+
+        .profile-details, .settings-section, .data-management, .account-actions {
+            margin-bottom: 1.5rem;
+        }
+
+        .settings-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-info h4 {
+            margin: 0 0 0.25rem 0;
+            font-size: 1rem;
+        }
+
+        .setting-info p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .setting-control {
+            min-width: 150px;
+        }
+
+        .setting-unit {
+            margin-left: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .data-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--bg-color);
+            border-radius: 8px;
+        }
+
+        .data-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+        }
+
+        .data-stat label {
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        /* Switch styles */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-color);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+    `,
+
+    initialize: function() {
+        console.log('Profile module initializing...');
+        this.loadRealData();
+        this.attachEventListeners();
+        this.updateAllDisplays();
     },
 
-    setupEventListeners: function() {
-        // Use event delegation for dynamic elements
-        document.addEventListener('click', (e) => {
-            const target = e.target.closest('[id]');
-            if (!target) return;
-
-            switch(target.id) {
-                case 'quick-edit-profile':
-                    e.preventDefault();
-                    this.scrollToForm();
-                    break;
-                case 'quick-export-data':
-                    e.preventDefault();
-                    this.exportAllData();
-                    break;
-                case 'quick-settings':
-                    e.preventDefault();
-                    this.scrollToSettings();
-                    break;
-                case 'reset-profile':
-                    e.preventDefault();
-                    this.resetForm();
-                    break;
-                case 'export-all-data':
-                    e.preventDefault();
-                    this.exportAllData();
-                    break;
-                case 'clear-transactions':
-                    e.preventDefault();
-                    this.clearTransactions();
-                    break;
-                case 'clear-all-data':
-                    e.preventDefault();
-                    this.clearAllData();
-                    break;
-                case 'logout-profile':
-                    e.preventDefault();
-                    this.logout();
-                    break;
-                case 'demo-login':
-                    e.preventDefault();
-                    this.showDemoLoginMessage();
-                    break;
-                case 'refresh-data':
-                    e.preventDefault();
-                    this.refreshData();
-                    break;
-            }
-        });
-
-        // Form submission
-        document.addEventListener('submit', (e) => {
-            if (e.target.id === 'profile-form') {
-                e.preventDefault();
-                this.saveProfile();
-            }
-        });
-
-        // Real-time settings changes
-        document.addEventListener('change', (e) => {
-            const target = e.target;
-            if (target.id === 'default-currency' || target.id === 'low-stock-threshold' || target.id === 'date-format') {
-                this.saveSettings();
-            }
-        });
-
-        console.log('✅ Profile event listeners setup');
-    },
-
-    loadProfileData: function() {
-        console.log('Loading profile data...');
-        
-        // Load from app data or use defaults
-        const appData = FarmModules.appData || {};
-        const profile = appData.profile || {};
+    loadRealData: function() {
+        // Get actual user data from Firebase or auth system
         const currentUser = this.getCurrentUser();
         
-        // Set form values
-        this.setValue('farm-name', profile.farmName || currentUser?.farmName || 'My Farm');
-        this.setValue('farmer-name', profile.farmerName || currentUser?.displayName || 'Farmer');
-        this.setValue('profile-email', profile.email || currentUser?.email || '');
-        this.setValue('profile-phone', profile.phone || '');
-        this.setValue('farm-type', profile.farmType || '');
-        this.setValue('farm-size', profile.farmSize || '');
-        this.setValue('farm-location', profile.farmLocation || '');
-        this.setValue('farm-description', profile.farmDescription || '');
-        
-        // Set settings
-        this.setValue('default-currency', profile.currency || 'USD');
-        this.setValue('low-stock-threshold', profile.lowStockThreshold || 10);
-        this.setValue('date-format', profile.dateFormat || 'MM/DD/YYYY');
-        
-        // Set account info
-        this.updateElement('member-since', profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today');
-        this.updateElement('last-login', new Date().toLocaleString());
-        
-        console.log('✅ Profile data loaded');
+        if (!FarmModules.appData.profile) {
+            FarmModules.appData.profile = {
+                farmName: FarmModules.appData.farmName || 'My Farm',
+                farmerName: currentUser?.displayName || 'Farmer',
+                email: currentUser?.email || 'No email',
+                farmType: '',
+                farmSize: '',
+                farmLocation: '',
+                farmDescription: '',
+                currency: 'USD',
+                lowStockThreshold: 10,
+                autoBackup: true,
+                memberSince: new Date().toISOString()
+            };
+        }
     },
 
-    updateStats: function() {
-        const appData = FarmModules.appData || {};
-        const sales = appData.sales || [];
-        const inventory = appData.inventory || [];
-        const feedRecords = appData.feedRecords || [];
+    getCurrentUser: function() {
+        // Try to get user from Firebase auth
+        if (window.farmModules?.firebase?.getCurrentUser) {
+            return window.farmModules.firebase.getCurrentUser();
+        }
         
-        // Calculate farm value
+        // Fallback to auth module
+        if (window.authModule?.getCurrentUser) {
+            return window.authModule.getCurrentUser();
+        }
+        
+        // Check Firebase auth directly
+        if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+            return firebase.auth().currentUser;
+        }
+        
+        return null;
+    },
+
+    updateAllDisplays: function() {
+        this.updateProfileInfo();
+        this.updateStatsOverview();
+        this.updateDataManagement();
+        this.updateSettings();
+    },
+
+    updateProfileInfo: function() {
+        const profile = FarmModules.appData.profile;
+        const currentUser = this.getCurrentUser();
+        
+        // Use actual user data instead of hardcoded values
+        const farmName = profile.farmName || currentUser?.farmName || 'My Farm';
+        const farmerName = profile.farmerName || currentUser?.displayName || 'Farmer';
+        const email = profile.email || currentUser?.email || 'No email';
+        
+        this.updateElement('profile-farm-name', farmName);
+        this.updateElement('profile-farmer-name', farmerName);
+        this.updateElement('profile-email', email);
+        
+        // Update form with current data
+        this.setValue('farm-name', farmName);
+        this.setValue('farmer-name', farmerName);
+        this.setValue('farm-type', profile.farmType);
+        this.setValue('farm-size', profile.farmSize);
+        this.setValue('farm-location', profile.farmLocation);
+        this.setValue('farm-description', profile.farmDescription);
+        
+        // Member since
+        const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
+        this.updateElement('member-since', `Member since: ${memberSince}`);
+    },
+
+    updateStatsOverview: function() {
+        // Real data from other modules
+        const sales = FarmModules.appData.sales || [];
+        const inventory = FarmModules.appData.inventory || [];
+        const feedRecords = FarmModules.appData.feedRecords || [];
+        
+        // Calculate farm value (inventory value + sales revenue)
         const inventoryValue = inventory.reduce((sum, item) => sum + (item.quantity * (item.price || 0)), 0);
         const salesRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
         const farmValue = inventoryValue + salesRevenue;
         
-        // Update stats cards
         this.updateElement('total-transactions', sales.length);
         this.updateElement('total-inventory', inventory.length);
         this.updateElement('total-feed-records', feedRecords.length);
         this.updateElement('farm-value', this.formatCurrency(farmValue));
         
-        // Update data management stats
-        this.updateElement('data-transactions', `${sales.length} records`);
-        this.updateElement('data-inventory', `${inventory.length} items`);
-        this.updateElement('data-feed-records', `${feedRecords.length} entries`);
+        // Update data entries count
+        const totalEntries = sales.length + inventory.length + feedRecords.length;
+        this.updateElement('data-entries', `Data entries: ${totalEntries}`);
+    },
+
+    updateDataManagement: function() {
+        const sales = FarmModules.appData.sales || [];
+        const inventory = FarmModules.appData.inventory || [];
+        const feedRecords = FarmModules.appData.feedRecords || [];
         
-        // Calculate data size
-        const dataSize = JSON.stringify(appData).length;
+        this.updateElement('transactions-count', `${sales.length} records`);
+        this.updateElement('inventory-count', `${inventory.length} items`);
+        this.updateElement('feed-records-count', `${feedRecords.length} entries`);
+        
+        // Calculate approximate data size
+        const dataSize = JSON.stringify(FarmModules.appData).length;
         const sizeInKB = (dataSize / 1024).toFixed(2);
-        this.updateElement('data-total-size', `${sizeInKB} KB`);
+        this.updateElement('total-data-size', `${sizeInKB} KB`);
+    },
+
+    updateSettings: function() {
+        const profile = FarmModules.appData.profile;
+        
+        this.setValue('default-currency', profile.currency || 'USD');
+        this.setValue('low-stock-threshold', profile.lowStockThreshold || 10);
+        this.setChecked('auto-backup', profile.autoBackup !== false);
+    },
+
+    attachEventListeners: function() {
+        // Profile form
+        const profileForm = document.getElementById('profile-form');
+        if (profileForm) {
+            profileForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveProfile();
+            });
+        }
+
+        // Reset button
+        const resetBtn = document.getElementById('reset-profile');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                this.updateAllDisplays();
+                this.showNotification('Profile form reset to current values', 'info');
+            });
+        }
+
+        // Settings changes
+        const currencySelect = document.getElementById('default-currency');
+        if (currencySelect) {
+            currencySelect.addEventListener('change', (e) => {
+                this.saveSetting('currency', e.target.value);
+            });
+        }
+
+        const thresholdInput = document.getElementById('low-stock-threshold');
+        if (thresholdInput) {
+            thresholdInput.addEventListener('change', (e) => {
+                this.saveSetting('lowStockThreshold', parseInt(e.target.value));
+            });
+        }
+
+        const backupCheckbox = document.getElementById('auto-backup');
+        if (backupCheckbox) {
+            backupCheckbox.addEventListener('change', (e) => {
+                this.saveSetting('autoBackup', e.target.checked);
+            });
+        }
+
+        // Data management
+        const exportBtn = document.getElementById('export-data');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                this.exportData();
+            });
+        }
+
+        const clearTransBtn = document.getElementById('clear-transactions');
+        if (clearTransBtn) {
+            clearTransBtn.addEventListener('click', () => {
+                this.clearTransactions();
+            });
+        }
+
+        const clearAllBtn = document.getElementById('clear-all-data');
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', () => {
+                this.clearAllData();
+            });
+        }
+
+        // Account actions
+        const logoutBtn = document.getElementById('logout-profile');
+        const demoLoginBtn = document.getElementById('demo-login');
+        const refreshBtn = document.getElementById('refresh-data');
+        
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                this.logout();
+            });
+        }
+        
+        if (demoLoginBtn) {
+            demoLoginBtn.addEventListener('click', () => {
+                this.showNotification('Real account features coming soon!', 'info');
+            });
+        }
+        
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.updateAllDisplays();
+                this.showNotification('Data refreshed', 'success');
+            });
+        }
     },
 
     saveProfile: function() {
-        console.log('Saving profile...');
-        
-        if (!FarmModules.appData) {
-            FarmModules.appData = {};
-        }
-        if (!FarmModules.appData.profile) {
-            FarmModules.appData.profile = {};
-        }
-        
         const profile = FarmModules.appData.profile;
         
-        // Save form data
         profile.farmName = this.getValue('farm-name');
         profile.farmerName = this.getValue('farmer-name');
-        profile.email = this.getValue('profile-email');
-        profile.phone = this.getValue('profile-phone');
         profile.farmType = this.getValue('farm-type');
         profile.farmSize = this.getValue('farm-size');
         profile.farmLocation = this.getValue('farm-location');
         profile.farmDescription = this.getValue('farm-description');
-        
-        // Set member since if not set
-        if (!profile.memberSince) {
-            profile.memberSince = new Date().toISOString();
-        }
-        
-        // Update app data
+
+        // Also update main app data
         FarmModules.appData.farmName = profile.farmName;
-        
+
+        this.updateAllDisplays();
         this.showNotification('Profile saved successfully!', 'success');
-        this.updateStats();
-        console.log('✅ Profile saved');
     },
 
-    saveSettings: function() {
-        if (!FarmModules.appData.profile) {
-            FarmModules.appData.profile = {};
-        }
-        
-        const profile = FarmModules.appData.profile;
-        profile.currency = this.getValue('default-currency');
-        profile.lowStockThreshold = parseInt(this.getValue('low-stock-threshold')) || 10;
-        profile.dateFormat = this.getValue('date-format');
-        
-        this.showNotification('Settings updated', 'info');
-    },
-
-    resetForm: function() {
-        if (confirm('Reset form to saved values?')) {
-            this.loadProfileData();
-            this.showNotification('Form reset to saved values', 'info');
-        }
-    },
-
-    exportAllData: function() {
-        const appData = FarmModules.appData || {};
-        const dataStr = JSON.stringify(appData, null, 2);
-        const dataBlob = new Blob([dataStr], {type: 'application/json'});
-        
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(dataBlob);
-        link.download = `farm-data-backup-${new Date().toISOString().split('T')[0]}.json`;
-        link.click();
-        
-        this.showNotification('All farm data exported successfully!', 'success');
-    },
-
-    clearTransactions: function() {
-        if (confirm('Are you sure you want to clear all transactions? This cannot be undone.')) {
-            if (!FarmModules.appData) FarmModules.appData = {};
-            FarmModules.appData.sales = [];
-            this.showNotification('All transactions cleared', 'success');
-            this.updateStats();
-        }
-    },
-
-    clearAllData: function() {
-        if (confirm('ARE YOU SURE? This will delete ALL your farm data including sales, inventory, and feed records. This cannot be undone!')) {
-            if (!FarmModules.appData) FarmModules.appData = {};
-            FarmModules.appData.sales = [];
-            FarmModules.appData.inventory = [];
-            FarmModules.appData.feedRecords = [];
-            this.showNotification('All data cleared successfully', 'success');
-            this.updateStats();
-        }
+    saveSetting: function(setting, value) {
+        FarmModules.appData.profile[setting] = value;
+        this.showNotification('Setting updated', 'info');
     },
 
     logout: function() {
         if (confirm('Are you sure you want to log out?')) {
-            console.log('Logging out...');
+            console.log('🚪 Logging out...');
             
+            // Try Firebase logout first
             if (typeof firebase !== 'undefined' && firebase.auth) {
                 firebase.auth().signOut().then(() => {
                     this.handleLogoutSuccess();
@@ -494,55 +654,53 @@ FarmModules.registerModule('profile', {
     },
 
     handleLogoutSuccess: function() {
+        // Clear app data
         FarmModules.appData = {};
+        
+        // Show logout message
         this.showNotification('You have been logged out successfully', 'success');
         
+        // Redirect to login or reload page
         setTimeout(() => {
-            window.location.reload();
+            window.location.href = '/';
         }, 1500);
     },
 
-    showDemoLoginMessage: function() {
-        this.showNotification('Real account features coming soon!', 'info');
+    exportData: function() {
+        const dataStr = JSON.stringify(FarmModules.appData, null, 2);
+        const dataBlob = new Blob([dataStr], {type: 'application/json'});
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `farm-data-backup-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        
+        this.showNotification('All farm data exported successfully!', 'success');
     },
 
-    refreshData: function() {
-        this.updateStats();
-        this.showNotification('Data refreshed', 'success');
-    },
-
-    scrollToForm: function() {
-        const form = document.getElementById('profile-form');
-        if (form) {
-            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    },
-
-    scrollToSettings: function() {
-        const settings = document.querySelector('.transactions-section-pwa');
-        if (settings) {
-            settings.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    clearTransactions: function() {
+        if (confirm('Are you sure you want to clear all transactions? This cannot be undone.')) {
+            FarmModules.appData.sales = [];
+            this.showNotification('All transactions cleared', 'success');
+            this.updateAllDisplays();
         }
     },
 
-    getCurrentUser: function() {
-        if (window.farmModules?.firebase?.getCurrentUser) {
-            return window.farmModules.firebase.getCurrentUser();
+    clearAllData: function() {
+        if (confirm('ARE YOU SURE? This will delete ALL your farm data including sales, inventory, and feed records. This cannot be undone!')) {
+            FarmModules.appData.sales = [];
+            FarmModules.appData.inventory = [];
+            FarmModules.appData.feedRecords = [];
+            
+            this.showNotification('All data cleared successfully', 'success');
+            this.updateAllDisplays();
         }
-        if (window.authModule?.getCurrentUser) {
-            return window.authModule.getCurrentUser();
-        }
-        if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
-            return firebase.auth().currentUser();
-        }
-        return null;
     },
 
     formatCurrency: function(amount) {
-        const profile = FarmModules.appData?.profile || {};
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: profile.currency || 'USD'
+            currency: FarmModules.appData.profile?.currency || 'USD'
         }).format(amount);
     },
 
@@ -554,6 +712,11 @@ FarmModules.registerModule('profile', {
     setValue: function(id, value) {
         const element = document.getElementById(id);
         if (element) element.value = value || '';
+    },
+
+    setChecked: function(id, checked) {
+        const element = document.getElementById(id);
+        if (element) element.checked = !!checked;
     },
 
     updateElement: function(id, value) {
