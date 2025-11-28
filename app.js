@@ -56,6 +56,65 @@ class FarmManagementApp {
     }
 
     setupSideMenuListeners() {
+    // Menu toggle button
+    const menuToggle = document.getElementById('menu-toggle');
+    const sideMenu = document.getElementById('side-menu');
+    const overlay = document.getElementById('side-menu-overlay');
+
+    if (menuToggle) {
+        menuToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleSideMenu();
+        });
+    }
+
+    // Side menu items
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.side-menu-item')) {
+            const menuItem = e.target.closest('.side-menu-item');
+            const section = menuItem.getAttribute('data-section');
+            this.showSection(section);
+            this.hideSideMenu();
+        }
+    });
+
+    // Close side menu when clicking overlay
+    if (overlay) {
+        overlay.addEventListener('click', () => {
+            this.hideSideMenu();
+        });
+    }
+
+    // Close side menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.side-menu') && !e.target.closest('#menu-toggle')) {
+            this.hideSideMenu();
+        }
+    });
+}
+
+toggleSideMenu() {
+    const sideMenu = document.getElementById('side-menu');
+    const overlay = document.getElementById('side-menu-overlay');
+    
+    if (sideMenu && overlay) {
+        if (sideMenu.classList.contains('hidden')) {
+            sideMenu.classList.remove('hidden');
+            overlay.classList.remove('hidden');
+        } else {
+            this.hideSideMenu();
+        }
+    }
+}
+
+hideSideMenu() {
+    const sideMenu = document.getElementById('side-menu');
+    const overlay = document.getElementById('side-menu-overlay');
+    
+    if (sideMenu) sideMenu.classList.add('hidden');
+    if (overlay) overlay.classList.add('hidden');
+}
+    
         document.addEventListener('click', (e) => {
             if (e.target.closest('.side-menu-item')) {
                 const menuItem = e.target.closest('.side-menu-item');
