@@ -1,4 +1,4 @@
-// modules/income-expenses.js - RESTORED WORKING VERSION
+// modules/income-expenses.js
 console.log('Loading income-expenses module...');
 
 FarmModules.registerModule('income-expenses', {
@@ -105,7 +105,7 @@ FarmModules.registerModule('income-expenses', {
                     <button class="btn-outline-pwa" id="clear-all">Clear All</button>
                 </div>
                 <div class="transactions-list-pwa" id="transactions-list">
-                    ${this.renderTransactionsList()}
+                    <!-- Transactions will be loaded here -->
                 </div>
             </div>
         </div>
@@ -113,10 +113,33 @@ FarmModules.registerModule('income-expenses', {
 
     initialize: function() {
         console.log('💰 Initializing income & expenses...');
-        this.transactions = this.loadData();
+        
+        // Check if user is logged in
+        if (!this.checkAuth()) {
+            console.log('User not authenticated, redirecting to login...');
+            return false;
+        }
+        
         this.showContent();
         this.setupEventListeners();
+        this.loadTransactions();
         this.updateStats();
+        return true;
+    },
+
+    checkAuth: function() {
+        // Check if user is logged in by checking Firebase auth or localStorage
+        const user = JSON.parse(localStorage.getItem('farm-user') || 'null');
+        const isLoggedIn = user !== null;
+        
+        if (!isLoggedIn) {
+            // Redirect to login or show auth screen
+            if (window.FarmModules && window.FarmModules.showModule) {
+                window.FarmModules.showModule('auth');
+            }
+            return false;
+        }
+        
         return true;
     },
 
@@ -131,9 +154,10 @@ FarmModules.registerModule('income-expenses', {
         console.log('✅ Income & Expenses content loaded');
     },
 
-    loadData: function() {
+    loadTransactions: function() {
         const saved = localStorage.getItem('farm-transactions');
-        return saved ? JSON.parse(saved) : this.getDemoData();
+        this.transactions = saved ? JSON.parse(saved) : this.getDemoData();
+        this.renderTransactionsList();
     },
 
     getDemoData: function() {
@@ -145,17 +169,21 @@ FarmModules.registerModule('income-expenses', {
     },
 
     renderTransactionsList: function() {
+        const transactionsList = document.getElementById('transactions-list');
+        if (!transactionsList) return;
+
         if (this.transactions.length === 0) {
-            return `
+            transactionsList.innerHTML = `
                 <div class="empty-state-pwa">
                     <div class="empty-icon-pwa">📋</div>
                     <div class="empty-title-pwa">No transactions yet</div>
                     <div class="empty-desc-pwa">Add your first transaction to get started</div>
                 </div>
             `;
+            return;
         }
 
-        return this.transactions.map(transaction => {
+        transactionsList.innerHTML = this.transactions.map(transaction => {
             const isIncome = transaction.type === 'income';
             const icon = isIncome ? '💰' : '💸';
             const amountClass = isIncome ? 'income' : 'expense';
@@ -214,6 +242,11 @@ FarmModules.registerModule('income-expenses', {
         const typeSelect = document.getElementById('transaction-type');
         const dateInput = document.getElementById('transaction-date');
         
+        if (!formContainer || !formTitle || !typeSelect || !dateInput) {
+            console.error('Form elements not found');
+            return;
+        }
+        
         formTitle.textContent = `Add ${type === 'income' ? 'Income' : 'Expense'}`;
         typeSelect.value = type;
         dateInput.value = new Date().toISOString().split('T')[0];
@@ -224,8 +257,10 @@ FarmModules.registerModule('income-expenses', {
 
     hideTransactionForm: function() {
         const formContainer = document.getElementById('transaction-form-container');
-        formContainer.classList.add('hidden');
-        document.getElementById('transaction-form').reset();
+        const form = document.getElementById('transaction-form');
+        
+        if (formContainer) formContainer.classList.add('hidden');
+        if (form) form.reset();
     },
 
     handleTransactionSubmit: function(e) {
@@ -240,10 +275,17 @@ FarmModules.registerModule('income-expenses', {
             date: document.getElementById('transaction-date').value
         };
 
+        // Validate
+        if (formData.amount <= 0) {
+            this.showNotification('Please enter a valid amount', 'error');
+            return;
+        }
+
         this.transactions.unshift(formData);
         this.saveData();
-        this.showContent();
+        this.renderTransactionsList();
         this.updateStats();
+        this.hideTransactionForm();
         
         this.showNotification('Transaction added successfully!', 'success');
     },
@@ -252,7 +294,7 @@ FarmModules.registerModule('income-expenses', {
         if (confirm('Are you sure you want to delete this transaction?')) {
             this.transactions = this.transactions.filter(t => t.id !== id);
             this.saveData();
-            this.showContent();
+            this.renderTransactionsList();
             this.updateStats();
             
             this.showNotification('Transaction deleted!', 'success');
@@ -263,7 +305,7 @@ FarmModules.registerModule('income-expenses', {
         if (confirm('Are you sure you want to clear all transactions? This cannot be undone.')) {
             this.transactions = [];
             this.saveData();
-            this.showContent();
+            this.renderTransactionsList();
             this.updateStats();
             
             this.showNotification('All transactions cleared!', 'success');
