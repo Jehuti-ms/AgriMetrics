@@ -53,87 +53,118 @@ class FarmManagementApp {
     }
 
     createTopNavigation() {
-        const appContainer = document.getElementById('app-container');
-        if (!appContainer) return;
+    const appContainer = document.getElementById('app-container');
+    if (!appContainer) return;
 
-        let header = appContainer.querySelector('header');
-        if (header) {
-            header.remove();
-        }
-        
-        header = document.createElement('header');
-        appContainer.insertBefore(header, appContainer.firstChild);
+    // Remove existing header
+    let header = appContainer.querySelector('header');
+    if (header) {
+        header.remove();
+    }
+    
+    // Create new header
+    header = document.createElement('header');
+    appContainer.insertBefore(header, appContainer.firstChild);
 
-        header.innerHTML = `
-            <nav class="top-nav">
-                <div class="nav-brand">
-                    <img src="icons/icon-96x96.png" alt="AgriMetrics">
-                    <span class="brand-text">AgriMetrics</span>
-                </div>
-                
-                <div class="nav-items">
-                    <button class="nav-item" data-view="dashboard" title="Dashboard">
-                        <span>📊</span>
-                        <span class="nav-label">Dashboard</span>
-                    </button>
+    header.innerHTML = `
+        <nav class="top-nav">
+            <div class="nav-brand">
+                <img src="icons/icon-96x96.png" alt="AgriMetrics">
+                <span class="brand-text">AgriMetrics</span>
+            </div>
+            
+            <div class="nav-items">
+                <!-- Core navigation items only -->
+                <button class="nav-item" data-view="dashboard" title="Dashboard">
+                    <span>📊</span>
+                    <span class="nav-label">Dashboard</span>
+                </button>
 
-                    <button class="nav-item" data-view="income-expenses" title="Income & Expenses">
-                        <span>💰</span>
-                        <span class="nav-label">Income</span>
-                    </button>
+                <button class="nav-item" data-view="income-expenses" title="Income & Expenses">
+                    <span>💰</span>
+                    <span class="nav-label">Income</span>
+                </button>
 
-                    <button class="nav-item" data-view="inventory-check" title="Inventory">
-                        <span>📦</span>
-                        <span class="nav-label">Inventory</span>
-                    </button>
+                <button class="nav-item" data-view="inventory-check" title="Inventory">
+                    <span>📦</span>
+                    <span class="nav-label">Inventory</span>
+                </button>
 
-                    <button class="nav-item" data-view="orders" title="Orders">
-                        <span>📋</span>
-                        <span class="nav-label">Orders</span>
-                    </button>
+                <button class="nav-item" data-view="orders" title="Orders">
+                    <span>📋</span>
+                    <span class="nav-label">Orders</span>
+                </button>
 
-                    <button class="nav-item" data-view="sales-record" title="Sales">
-                        <span>🛒</span>
-                        <span class="nav-label">Sales</span>
-                    </button>
+                <button class="nav-item" data-view="sales-record" title="Sales">
+                    <span>🛒</span>
+                    <span class="nav-label">Sales</span>
+                </button>
 
-                    <button class="nav-item" data-view="production" title="Production">
-                        <span>🚜</span>
-                        <span class="nav-label">Production</span>
-                    </button>
+                <!-- Profile/Account button -->
+                <button class="nav-item" data-view="profile" title="Profile">
+                    <span>👤</span>
+                    <span class="nav-label">Profile</span>
+                </button>
+            </div>
+        </nav>
+    `;
 
-                    <button class="nav-item" data-view="feed-record" title="Feed Management">
-                        <span>🌾</span>
-                        <span class="nav-label">Feed</span>
-                    </button>
+    // Adjust main content padding
+    const main = appContainer.querySelector('main');
+    if (main) {
+        main.style.paddingTop = '80px';
+        main.style.minHeight = 'calc(100vh - 80px)';
+    }
+    
+    console.log('✅ Top Navigation created');
+}
 
-                    <button class="nav-item" data-view="broiler-mortality" title="Health & Mortality">
-                        <span>🐔</span>
-                        <span class="nav-label">Health</span>
-                    </button>
+    createSidebarNavigation() {
+    const appContainer = document.getElementById('app-container');
+    if (!appContainer) return;
 
-                    <button class="nav-item" data-view="reports" title="Reports">
-                        <span>📈</span>
-                        <span class="nav-label">Reports</span>
-                    </button>
-
-                    <button class="nav-item" data-view="profile" title="Profile">
-                        <span>👤</span>
-                        <span class="nav-label">Profile</span>
-                    </button>
-                </div>
-            </nav>
-        `;
-
-        const main = appContainer.querySelector('main');
-        if (main) {
-            main.style.paddingTop = '80px';
-            main.style.minHeight = 'calc(100vh - 80px)';
-        }
-        
-        console.log('✅ Navigation created - NO SIDEBAR');
+    // Remove existing sidebar if any
+    let sidebar = appContainer.querySelector('.sidebar');
+    if (sidebar) {
+        sidebar.remove();
     }
 
+    // Create sidebar
+    sidebar = document.createElement('aside');
+    sidebar.className = 'sidebar';
+    sidebar.innerHTML = `
+        <div class="sidebar-content">
+            <h3>Farm Management</h3>
+            <div class="sidebar-items">
+                <button class="sidebar-item" data-view="production" title="Production">
+                    <span>🚜</span>
+                    <span class="sidebar-label">Production</span>
+                </button>
+
+                <button class="sidebar-item" data-view="feed-record" title="Feed Management">
+                    <span>🌾</span>
+                    <span class="sidebar-label">Feed</span>
+                </button>
+
+                <button class="sidebar-item" data-view="broiler-mortality" title="Health & Mortality">
+                    <span>🐔</span>
+                    <span class="sidebar-label">Health</span>
+                </button>
+
+                <button class="sidebar-item" data-view="reports" title="Reports">
+                    <span>📈</span>
+                    <span class="sidebar-label">Reports</span>
+                </button>
+            </div>
+        </div>
+    `;
+
+    // Add sidebar to app container
+    appContainer.appendChild(sidebar);
+    
+    console.log('✅ Sidebar Navigation created');
+}
+    
     showSection(sectionId) {
         console.log(`🔄 Switching to section: ${sectionId}`);
         
