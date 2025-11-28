@@ -21,7 +21,7 @@ class FarmManagementApp {
         }
     }
 
-    async initializeApp() {
+async initializeApp() {
     console.log('✅ Initializing app...');
     this.isDemoMode = true;
     
@@ -31,11 +31,22 @@ class FarmManagementApp {
     // Setup navigation and events
     this.createTopNavigation();
     
-    // Small delay to ensure DOM is ready
+    // Small delay to ensure DOM is fully rendered
     setTimeout(() => {
         this.setupHamburgerMenu();
         this.setupSideMenuEvents();
         this.setupEventListeners();
+        
+        // Test if hamburger is working
+        const hamburger = document.getElementById('hamburger-menu');
+        const sideMenu = document.getElementById('side-menu');
+        console.log('🔍 Debug - Hamburger exists:', !!hamburger);
+        console.log('🔍 Debug - Side menu exists:', !!sideMenu);
+        
+        if (hamburger) {
+            console.log('🔍 Debug - Hamburger classes:', hamburger.className);
+            console.log('🔍 Debug - Hamburger styles:', window.getComputedStyle(hamburger));
+        }
     }, 100);
     
     // Load initial section
@@ -158,9 +169,13 @@ setupHamburgerMenu() {
         sideMenu.style.left = 'auto';
         sideMenu.style.right = '0';
         sideMenu.style.transform = 'translateX(100%)';
-        sideMenu.classList.remove('active'); // Ensure it's hidden
+        sideMenu.classList.remove('active');
         
-        hamburger.addEventListener('click', (e) => {
+        // Remove any existing event listeners to prevent duplicates
+        hamburger.replaceWith(hamburger.cloneNode(true));
+        const newHamburger = document.getElementById('hamburger-menu');
+        
+        newHamburger.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             console.log('🍔 Hamburger clicked, toggling sidebar');
@@ -185,7 +200,7 @@ setupHamburgerMenu() {
         }
     });
     
-    // Also close sidebar when clicking on sidebar items
+    // Close sidebar when clicking on sidebar items
     const sideMenuItems = document.querySelectorAll('.side-menu-item');
     sideMenuItems.forEach(item => {
         item.addEventListener('click', () => {
