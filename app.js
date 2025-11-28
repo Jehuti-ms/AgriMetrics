@@ -106,6 +106,7 @@ async initializeApp() {
             <div class="nav-brand">
                 <img src="icons/icon-96x96.png" alt="AgriMetrics">
                 <span class="brand-text">AgriMetrics</span>
+                <span class="brand-subtitle">Farm Management System</span>
             </div>
             
             <div class="nav-items">
