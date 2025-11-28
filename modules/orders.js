@@ -3,7 +3,8 @@ FarmModules.registerModule('orders', {
     name: 'Orders',
     icon: '📋',
     
-    template: `
+    template: function() {
+        return `
         <div class="orders-module">
             <div class="module-header-pwa">
                 <h1 class="module-title-pwa">Orders Management</h1>
@@ -165,7 +166,8 @@ FarmModules.registerModule('orders', {
                 </div>
             </div>
         </div>
-    `,
+    `;
+    },
 
     initialize: function() {
         console.log('📦 Initializing orders...');
@@ -177,7 +179,10 @@ FarmModules.registerModule('orders', {
         // Set delivery date to tomorrow by default
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
-        document.getElementById('delivery-date').value = tomorrow.toISOString().split('T')[0];
+        const deliveryDateInput = document.getElementById('delivery-date');
+        if (deliveryDateInput) {
+            deliveryDateInput.value = tomorrow.toISOString().split('T')[0];
+        }
         
         return true;
     },
@@ -189,7 +194,7 @@ FarmModules.registerModule('orders', {
             return;
         }
 
-        contentArea.innerHTML = this.template;
+        contentArea.innerHTML = this.template();
         console.log('✅ Orders content loaded');
     },
 
@@ -355,12 +360,18 @@ FarmModules.registerModule('orders', {
     },
 
     showCreateOrderModal: function() {
-        document.getElementById('create-order-modal').classList.remove('hidden');
+        const modal = document.getElementById('create-order-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
     },
 
     closeCreateModal: function() {
-        document.getElementById('create-order-modal').classList.add('hidden');
-        document.getElementById('create-order-form').reset();
+        const modal = document.getElementById('create-order-modal');
+        const form = document.getElementById('create-order-form');
+        
+        if (modal) modal.classList.add('hidden');
+        if (form) form.reset();
         
         // Reset to single item
         const orderItems = document.getElementById('order-items');
@@ -434,11 +445,17 @@ FarmModules.registerModule('orders', {
         e.preventDefault();
         
         const customerId = document.getElementById('customer-select').value;
-        const customerName = document.getElementById('customer-select').options[document.getElementById('customer-select').selectedIndex].text;
+        const customerSelect = document.getElementById('customer-select');
+        const customerName = customerSelect ? customerSelect.options[customerSelect.selectedIndex].text : '';
         const orderDate = document.getElementById('order-date').value;
         const deliveryDate = document.getElementById('delivery-date').value;
         const status = document.getElementById('order-status').value;
         const notes = document.getElementById('order-notes').value;
+        
+        if (!customerId || !orderDate || !deliveryDate) {
+            this.showNotification('Please fill all required fields', 'error');
+            return;
+        }
         
         // Validate items
         const items = [];
@@ -497,6 +514,7 @@ FarmModules.registerModule('orders', {
         // Close modal and refresh
         this.closeCreateModal();
         this.showContent();
+        this.updateOrderStats();
         
         this.showNotification('Order created successfully!', 'success');
     },
@@ -513,6 +531,7 @@ FarmModules.registerModule('orders', {
             orders[orderIndex].status = 'processing';
             localStorage.setItem('farm-orders', JSON.stringify(orders));
             this.showContent();
+            this.updateOrderStats();
             this.showNotification('Order processing started!', 'success');
         }
     },
