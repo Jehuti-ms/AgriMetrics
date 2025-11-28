@@ -1,123 +1,90 @@
-// modules/core.js
+// core.js - COMPATIBLE JAVESCRIPT
 console.log('Loading core module...');
 
-class CoreModule {
-    constructor() {
-        this.init();
-    }
+const CoreModule = {
+    name: 'core',
+    initialized: false,
 
-    init() {
-        console.log('✅ Core module initialized');
-        this.setupGlobalErrorHandling();
-    }
+    initialize: function() {
+        console.log('✅ Core module initializing...');
+        this.setupErrorHandling();
+        this.initialized = true;
+        return true;
+    },
 
-    setupGlobalErrorHandling() {
-        window.addEventListener('error', (event) => {
+    setupErrorHandling: function() {
+        var self = this;
+        window.addEventListener('error', function(event) {
             console.error('Global error:', event.error);
         });
 
-        window.addEventListener('unhandledrejection', (event) => {
+        window.addEventListener('unhandledrejection', function(event) {
             console.error('Unhandled promise rejection:', event.reason);
         });
-    }
+    },
 
-    showNotification(message, type = 'info') {
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                this.createNotification(message, type);
-            });
-        } else {
-            this.createNotification(message, type);
-        }
-    }
-
-    createNotification(message, type) {
-        if (!document.body) {
-            console.log(`[${type}] ${message}`);
-            return;
+    showNotification: function(message, type) {
+        var container = document.getElementById('notification-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'notification-container';
+            container.className = 'notification-container';
+            document.body.appendChild(container);
         }
 
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.innerHTML = `
-            <span>${message}</span>
-            <button onclick="this.parentElement.remove()">&times;</button>
-        `;
+        var notification = document.createElement('div');
+        notification.className = 'notification ' + (type || 'info');
+        notification.innerHTML = 
+            '<span>' + (message || '') + '</span>' +
+            '<button onclick="this.parentElement.remove()">&times;</button>';
 
-        if (!document.querySelector('#notification-styles')) {
-            const styles = `
-                <style>
-                    .notification {
-                        position: fixed;
-                        top: 20px;
-                        right: 20px;
-                        padding: 1rem 1.5rem;
-                        border-radius: 8px;
-                        color: white;
-                        z-index: 1000;
-                        display: flex;
-                        align-items: center;
-                        gap: 1rem;
-                        max-width: 400px;
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                        animation: slideIn 0.3s ease-out;
-                    }
-                    .notification-success { background: #22c55e; }
-                    .notification-error { background: #ef4444; }
-                    .notification-warning { background: #f59e0b; }
-                    .notification-info { background: #3b82f6; }
-                    .notification button {
-                        background: none;
-                        border: none;
-                        color: white;
-                        font-size: 1.2rem;
-                        cursor: pointer;
-                        padding: 0;
-                    }
-                    @keyframes slideIn {
-                        from { transform: translateX(100%); opacity: 0; }
-                        to { transform: translateX(0); opacity: 1; }
-                    }
-                </style>
-            `;
-            document.head.insertAdjacentHTML('beforeend', styles);
-        }
+        container.appendChild(notification);
 
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
+        setTimeout(function() {
             if (notification.parentElement) {
                 notification.remove();
             }
         }, 5000);
-    }
+    },
 
-    formatCurrency(amount) {
+    formatCurrency: function(amount) {
+        if (isNaN(amount)) {
+            amount = 0;
+        }
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD'
         }).format(amount);
-    }
+    },
 
-    formatDate(date) {
-        try {
-            return new Date(date).toLocaleDateString('en-US');
-        } catch (e) {
-            return 'Invalid date';
+    formatDate: function(dateString) {
+        var date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+            return 'Invalid Date';
         }
-    }
+        var options = { year: 'numeric', month: 'short', day: 'numeric' };
+        return date.toLocaleDateString('en-US', options);
+    },
 
-    debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
+    generateId: function() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+    },
+
+    debounce: function(func, wait) {
+        var timeout;
+        return function() {
+            var context = this;
+            var args = arguments;
             clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
+            timeout = setTimeout(function() {
+                func.apply(context, args);
+            }, wait);
         };
     }
-}
+};
 
-window.coreModule = new CoreModule();
+// Register core module
+if (typeof window.CoreModule === 'undefined') {
+    window.coreModule = CoreModule;
+    console.log('✅ Core module registered');
+}
