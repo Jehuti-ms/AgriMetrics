@@ -1,33 +1,32 @@
-// framework.js
-console.log('Loading module framework...');
+// app.js
+console.log('Loading main app...');
 
-const FarmModules = {
-    modules: {},
-    
-    registerModule: function(name, module) {
-        console.log(`📦 Registering module: ${name}`);
-        this.modules[name] = module;
-    },
-
-    showModule: function(name) {
-        console.log(`🔄 Switching to module: ${name}`);
-        
-        if (!this.modules[name]) {
-            console.error(`Module "${name}" not found`);
-            return false;
-        }
-
-        const module = this.modules[name];
-        
-        if (module.initialize && typeof module.initialize === 'function') {
-            return module.initialize();
-        }
-        
-        return false;
+class FarmManagementApp {
+    constructor() {
+        this.init();
     }
-};
 
-// Make it globally available
-window.FarmModules = FarmModules;
+    init() {
+        console.log('🚀 Starting Farm Management App...');
+        
+        // Check if user is logged in
+        const user = JSON.parse(localStorage.getItem('farm-user') || 'null');
+        
+        if (user && user.loggedIn) {
+            console.log('User already logged in');
+            // Framework will handle showing dashboard via DOMContentLoaded
+        } else {
+            console.log('User not logged in, showing auth');
+            if (window.FarmModules) {
+                window.FarmModules.showModule('auth');
+            }
+        }
+    }
+}
 
-console.log('✅ Module framework loaded');
+// Start the app when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    window.app = new FarmManagementApp();
+});
+
+console.log('✅ Main app loaded');
