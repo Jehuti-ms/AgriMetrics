@@ -1,41 +1,97 @@
-// modules/framework.js
+// framework.js
 console.log('Loading module framework...');
 
 const FarmModules = {
     modules: {},
+    currentModule: null,
+    isInitialized: false,
 
-    registerModule(name, module) {
+    registerModule: function(name, module) {
         console.log(`📦 Registering module: ${name}`);
         this.modules[name] = module;
         
-        // Auto-initialize if it's the core module
+        // If this is the core module, store it globally
         if (name === 'core') {
-            module.initialize();
+            window.coreModule = module;
+        }
+        
+        // Auto-initialize if the framework is ready and this is the current module
+        if (this.isInitialized && this.currentModule === name) {
+            this.showModule(name);
         }
     },
 
-    getModule(name) {
-        return this.modules[name];
-    },
+    showModule: function(name) {
+        console.log(`🔄 Switching to module: ${name}`);
+        
+        if (!this.modules[name]) {
+            console.error(`❌ Module "${name}" not found`);
+            return false;
+        }
 
-    getModules() {
-        return this.modules;
-    },
+        // Hide current module if exists
+        if (this.currentModule && this.modules[this.currentModule].onHide) {
+            this.modules[this.currentModule].onHide();
+        }
 
-    initializeModule(name) {
+        // Show new module
+        this.currentModule = name;
         const module = this.modules[name];
-        if (module && !module.initialized) {
-            return module.initialize();
+        
+        if (module.initialize && typeof module.initialize === 'function') {
+            const success = module.initialize();
+            if (success) {
+                console.log(`✅ Module "${name}" initialized successfully`);
+                
+                // Update active navigation
+                this.updateActiveNav(name);
+                
+                // Call onShow if defined
+                if (module.onShow) {
+                    module.onShow();
+                }
+                
+                return true;
+            }
         }
+        
+        console.error(`❌ Failed to initialize module "${name}"`);
         return false;
     },
 
-    // Method to get all module names for navigation
-    getModuleNames() {
-        return Object.keys(this.modules).filter(name => name !== 'core' && name !== 'auth' && name !== 'framework');
+    updateActiveNav: function(activeModule) {
+        // Update navigation highlights
+        const navItems = document.querySelectorAll('.nav-item-pwa, .sidebar-nav-item');
+        navItems.forEach(item => {
+            item.classList.remove('active');
+            if (item.getAttribute('data-module') === activeModule) {
+                item.classList.add('active');
+            }
+        });
+    },
+
+    getModule: function(name) {
+        return this.modules[name];
+    },
+
+    initializeFramework: function() {
+        console.log('🚀 Initializing FarmModules framework...');
+        this.isInitialized = true;
+        
+        // Show default module (dashboard)
+        setTimeout(() => {
+            this.showModule('dashboard');
+        }, 100);
     }
 };
 
-// Make FarmModules globally available
+// Make it globally available
 window.FarmModules = FarmModules;
+
+// Initialize framework when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ DOM ready, initializing framework...');
+    FarmModules.initializeFramework();
+});
+
 console.log('✅ Module framework loaded');
