@@ -4023,12 +4023,14 @@ header, .top-nav {
 .brand-main {
     font-size: 18px;
     font-weight: 700;
+    color: white;
 }
 
 .brand-sub {
     font-size: 11px;
     opacity: 0.9;
     font-weight: 500;
+    color: white;
 }
 
 .nav-main {
@@ -4081,6 +4083,11 @@ header, .top-nav {
     cursor: pointer;
     padding: 8px;
     border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.nav-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
 }
 
 /* Side Menu */
@@ -4195,6 +4202,20 @@ header, .top-nav {
 #app-container main {
     padding-top: 80px !important;
     min-height: calc(100vh - 80px) !important;
+}
+
+/* Make sure the navbar is visible and on top */
+.navbar {
+    z-index: 1000 !important;
+}
+
+/* Remove any conflicting styles that might hide the navbar */
+header {
+    display: none !important;
+}
+
+.top-nav {
+    display: none !important;
 }
 
 
