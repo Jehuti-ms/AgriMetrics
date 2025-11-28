@@ -408,27 +408,43 @@ FarmModules.registerModule('profile', {
         this.updateAllDisplays();
     },
 
-    loadRealData: function() {
-        // Get actual user data from Firebase or auth system
-        const currentUser = this.getCurrentUser();
-        
-        if (!FarmModules.appData.profile) {
-            FarmModules.appData.profile = {
-                farmName: FarmModules.appData.farmName || 'My Farm',
-                farmerName: currentUser?.displayName || 'Farmer',
-                email: currentUser?.email || 'No email',
-                farmType: '',
-                farmSize: '',
-                farmLocation: '',
-                farmDescription: '',
-                currency: 'USD',
-                lowStockThreshold: 10,
-                autoBackup: true,
-                memberSince: new Date().toISOString()
-            };
-        }
-    },
-
+  // In your profile.js file, update the loadRealData function:
+loadRealData: function() {
+    console.log('👤 Loading profile data...');
+    
+    // Check if user data exists before trying to access it
+    const userData = window.userData || {};
+    const profileData = userData.profile || {};
+    
+    // Set default values if data is missing
+    const farmName = profileData.farmName || 'My Farm';
+    const farmerName = profileData.farmerName || 'Farmer';
+    const email = profileData.email || 'user@example.com';
+    const phone = profileData.phone || '+1234567890';
+    const address = profileData.address || 'Farm Address';
+    const farmSize = profileData.farmSize || '0';
+    const farmType = profileData.farmType || 'Poultry';
+    
+    // Update the form fields safely
+    const farmNameInput = document.getElementById('farm-name');
+    const farmerNameInput = document.getElementById('farmer-name');
+    const emailInput = document.getElementById('profile-email');
+    const phoneInput = document.getElementById('profile-phone');
+    const addressInput = document.getElementById('profile-address');
+    const farmSizeInput = document.getElementById('farm-size');
+    const farmTypeSelect = document.getElementById('farm-type');
+    
+    if (farmNameInput) farmNameInput.value = farmName;
+    if (farmerNameInput) farmerNameInput.value = farmerName;
+    if (emailInput) emailInput.value = email;
+    if (phoneInput) phoneInput.value = phone;
+    if (addressInput) addressInput.value = address;
+    if (farmSizeInput) farmSizeInput.value = farmSize;
+    if (farmTypeSelect) farmTypeSelect.value = farmType;
+    
+    console.log('✅ Profile data loaded safely');
+}
+    
     getCurrentUser: function() {
         // Try to get user from Firebase auth
         if (window.farmModules?.firebase?.getCurrentUser) {
