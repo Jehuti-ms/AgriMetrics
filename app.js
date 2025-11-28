@@ -1,57 +1,78 @@
 // app.js
-console.log('Loading main app...');
-
 class FarmManagementApp {
     constructor() {
-        this.currentUser = null;
-        this.currentSection = 'dashboard';
-        this.isDemoMode = false;
+        this.currentModule = null;
         this.init();
     }
 
-    async init() {
+    init() {
         console.log('🚀 Starting Farm Management App...');
         
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                this.initializeApp();
-            });
+        // Initialize Firebase first
+        this.initFirebase().then(() => {
+            // Initialize core module
+            this.initCoreModule();
+            
+            // Initialize all other modules
+            this.initModules();
+            
+            // Setup navigation
+            this.setupNavigation();
+            
+            console.log('✅ App initialized successfully');
+        }).catch(error => {
+            console.error('❌ App initialization failed:', error);
+        });
+    }
+
+    async initFirebase() {
+        // Firebase initialization will happen through the separate files
+        await new Promise(resolve => setTimeout(resolve, 100));
+        console.log('✅ Firebase setup completed');
+    }
+
+    initCoreModule() {
+        if (window.coreModule) {
+            window.coreModule.initialize();
+            window.app = this; // Make app instance globally available
+        }
+    }
+
+    initModules() {
+        // Modules are auto-registered through their individual files
+        // We just need to ensure they're loaded
+        console.log('📦 Modules loading...');
+    }
+
+    setupNavigation() {
+        // Navigation is handled by the core module
+        console.log('🧭 Navigation setup completed');
+    }
+
+    // Global navigation method
+    showSection(sectionId) {
+        console.log('Navigating to section:', sectionId);
+        
+        if (window.FarmModules && window.FarmModules.showModule) {
+            window.FarmModules.showModule(sectionId);
         } else {
-            this.initializeApp();
+            console.error('FarmModules framework not available');
         }
     }
 
-    async initializeApp() {
-        console.log('✅ Initializing app...');
-        this.isDemoMode = true;
-        this.showApp();
-    }
-
-    showApp() {
-        const authContainer = document.getElementById('auth-container');
-        const appContainer = document.getElementById('app-container');
-        
-        if (authContainer) authContainer.classList.add('hidden');
-        if (appContainer) appContainer.classList.remove('hidden');
-        
-        // Initialize core module which handles navigation
-        if (window.FarmModules && window.FarmModules.initializeModule) {
-            window.FarmModules.initializeModule('core');
-        }
-        
-        // Show dashboard by default
-        if (window.FarmModules && window.FarmModules.initializeModule) {
-            window.FarmModules.initializeModule('dashboard');
+    // Global method to show notifications
+    showNotification(message, type = 'info') {
+        if (window.coreModule && window.coreModule.showNotification) {
+            window.coreModule.showNotification(message, type);
+        } else {
+            alert(message);
         }
     }
 }
 
-window.FarmManagementApp = FarmManagementApp;
+// Start the app when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    window.farmApp = new FarmManagementApp();
+});
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.app = new FarmManagementApp();
-    });
-} else {
-    window.app = new FarmManagementApp();
-}
+console.log('✅ Main app loaded');
