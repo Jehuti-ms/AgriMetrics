@@ -55,6 +55,7 @@ FarmModules.registerModule('profile', {
                             <div class="profile-stats">
                                 <span class="stat-badge" id="member-since">Member since: Loading...</span>
                                 <span class="stat-badge" id="data-entries">Data entries: 0</span>
+                                <span class="stat-badge" id="sync-status">🔄 Syncing...</span>
                             </div>
                         </div>
                     </div>
@@ -101,7 +102,8 @@ FarmModules.registerModule('profile', {
                         </div>
                         
                         <div class="form-actions">
-                            <button type="submit" class="btn btn-primary">Save Profile</button>
+                            <button type="submit" class="btn btn-primary">💾 Save Profile</button>
+                            <button type="button" class="btn btn-secondary" id="sync-now-btn">🔄 Sync Now</button>
                             <button type="button" class="btn btn-text" id="reset-profile">Reset to Current</button>
                         </div>
                     </form>
@@ -110,6 +112,18 @@ FarmModules.registerModule('profile', {
                 <div class="settings-section card">
                     <h3>Application Settings</h3>
                     <div class="settings-list">
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Theme Preference</h4>
+                                <p>Choose your preferred theme</p>
+                            </div>
+                            <select id="theme-preference" class="setting-control">
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                                <option value="auto">Auto (System)</option>
+                            </select>
+                        </div>
+                        
                         <div class="setting-item">
                             <div class="setting-info">
                                 <h4>Default Currency</h4>
@@ -144,6 +158,17 @@ FarmModules.registerModule('profile', {
                             </div>
                             <label class="switch">
                                 <input type="checkbox" id="auto-backup" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Auto-sync to Cloud</h4>
+                                <p>Automatically sync data to Firebase</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="auto-sync" checked>
                                 <span class="slider"></span>
                             </label>
                         </div>
@@ -354,6 +379,13 @@ FarmModules.registerModule('profile', {
             flex-wrap: wrap;
         }
 
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
         /* Switch styles */
         .switch {
             position: relative;
@@ -403,49 +435,116 @@ FarmModules.registerModule('profile', {
 
     initialize: function() {
         console.log('Profile module initializing...');
-        this.loadRealData();
+        this.loadUserData();
         this.attachEventListeners();
         this.updateAllDisplays();
     },
 
-    loadRealData: function() {
-        // Get actual user data from Firebase or auth system
-        const currentUser = this.getCurrentUser();
-        
-        if (!FarmModules.appData.profile) {
-            FarmModules.appData.profile = {
-                farmName: FarmModules.appData.farmName || 'My Farm',
-                farmerName: currentUser?.displayName || 'Farmer',
-                email: currentUser?.email || 'No email',
-                farmType: '',
-                farmSize: '',
-                farmLocation: '',
-                farmDescription: '',
-                currency: 'USD',
-                lowStockThreshold: 10,
-                autoBackup: true,
-                memberSince: new Date().toISOString()
-            };
+    async loadUserData() {
+        try {
+            const currentUser = this.getCurrentUser();
+            
+            // Initialize profile data structure
+            if (!FarmModules.appData.profile) {
+                FarmModules.appData.profile = {
+                    farmName: FarmModules.appData.farmName || 'My Farm',
+                    farmerName: currentUser?.displayName || 'Farmer',
+                    email: currentUser?.email || 'No email',
+                    farmType: '',
+                    farmSize: '',
+                    farmLocation: '',
+                    farmDescription: '',
+                    currency: 'USD',
+                    lowStockThreshold: 10,
+                    autoBackup: true,
+                    autoSync: true,
+                    theme: 'auto',
+                    memberSince: new Date().toISOString(),
+                    lastSync: null,
+                    preferences: {
+                        notifications: true,
+                        language: 'en'
+                    }
+                };
+            }
+
+            // Try to load from Firebase
+            await this.loadFromFirebase();
+            
+            // Apply theme preference
+            this.applyThemePreference(FarmModules.appData.profile.theme);
+            
+        } catch (error) {
+            console.error('Error loading user data:', error);
         }
     },
 
-    getCurrentUser: function() {
-        // Try to get user from Firebase auth
-        if (window.farmModules?.firebase?.getCurrentUser) {
-            return window.farmModules.firebase.getCurrentUser();
+    async loadFromFirebase() {
+        try {
+            const currentUser = this.getCurrentUser();
+            if (!currentUser || !currentUser.uid) return;
+
+            if (typeof firebase !== 'undefined' && firebase.firestore) {
+                const userDoc = await firebase.firestore()
+                    .collection('users')
+                    .doc(currentUser.uid)
+                    .get();
+
+                if (userDoc.exists) {
+                    const firebaseData = userDoc.data();
+                    // Merge Firebase data with local data
+                    FarmModules.appData.profile = {
+                        ...FarmModules.appData.profile,
+                        ...firebaseData,
+                        // Don't override memberSince if it already exists
+                        memberSince: FarmModules.appData.profile.memberSince || firebaseData.memberSince
+                    };
+                    console.log('✅ Profile data loaded from Firebase');
+                    this.updateSyncStatus('✅ Synced');
+                } else {
+                    // Create user document in Firebase
+                    await this.saveToFirebase();
+                }
+            }
+        } catch (error) {
+            console.error('Error loading from Firebase:', error);
+            this.updateSyncStatus('❌ Sync failed');
         }
-        
-        // Fallback to auth module
-        if (window.authModule?.getCurrentUser) {
-            return window.authModule.getCurrentUser();
+    },
+
+    async saveToFirebase() {
+        try {
+            const currentUser = this.getCurrentUser();
+            if (!currentUser || !currentUser.uid) return;
+
+            if (typeof firebase !== 'undefined' && firebase.firestore) {
+                const profileData = {
+                    ...FarmModules.appData.profile,
+                    lastSync: new Date().toISOString(),
+                    uid: currentUser.uid
+                };
+
+                await firebase.firestore()
+                    .collection('users')
+                    .doc(currentUser.uid)
+                    .set(profileData, { merge: true });
+
+                console.log('✅ Profile data saved to Firebase');
+                this.updateSyncStatus('✅ Synced');
+                return true;
+            }
+        } catch (error) {
+            console.error('Error saving to Firebase:', error);
+            this.updateSyncStatus('❌ Sync failed');
+            return false;
         }
-        
-        // Check Firebase auth directly
-        if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
-            return firebase.auth().currentUser;
+    },
+
+    updateSyncStatus(status) {
+        const syncElement = document.getElementById('sync-status');
+        if (syncElement) {
+            syncElement.textContent = status;
         }
-        
-        return null;
     },
 
     updateAllDisplays: function() {
@@ -522,7 +621,9 @@ FarmModules.registerModule('profile', {
         
         this.setValue('default-currency', profile.currency || 'USD');
         this.setValue('low-stock-threshold', profile.lowStockThreshold || 10);
+        this.setValue('theme-preference', profile.theme || 'auto');
         this.setChecked('auto-backup', profile.autoBackup !== false);
+        this.setChecked('auto-sync', profile.autoSync !== false);
     },
 
     attachEventListeners: function() {
@@ -535,6 +636,14 @@ FarmModules.registerModule('profile', {
             });
         }
 
+        // Sync now button
+        const syncBtn = document.getElementById('sync-now-btn');
+        if (syncBtn) {
+            syncBtn.addEventListener('click', () => {
+                this.syncNow();
+            });
+        }
+
         // Reset button
         const resetBtn = document.getElementById('reset-profile');
         if (resetBtn) {
@@ -544,27 +653,8 @@ FarmModules.registerModule('profile', {
             });
         }
 
-        // Settings changes
-        const currencySelect = document.getElementById('default-currency');
-        if (currencySelect) {
-            currencySelect.addEventListener('change', (e) => {
-                this.saveSetting('currency', e.target.value);
-            });
-        }
-
-        const thresholdInput = document.getElementById('low-stock-threshold');
-        if (thresholdInput) {
-            thresholdInput.addEventListener('change', (e) => {
-                this.saveSetting('lowStockThreshold', parseInt(e.target.value));
-            });
-        }
-
-        const backupCheckbox = document.getElementById('auto-backup');
-        if (backupCheckbox) {
-            backupCheckbox.addEventListener('change', (e) => {
-                this.saveSetting('autoBackup', e.target.checked);
-            });
-        }
+        // Settings changes with auto-save
+        this.attachSettingListeners();
 
         // Data management
         const exportBtn = document.getElementById('export-data');
@@ -613,7 +703,37 @@ FarmModules.registerModule('profile', {
         }
     },
 
-    saveProfile: function() {
+    attachSettingListeners() {
+        // Auto-save settings with debounce
+        const settings = [
+            { id: 'default-currency', key: 'currency' },
+            { id: 'low-stock-threshold', key: 'lowStockThreshold', transform: parseInt },
+            { id: 'theme-preference', key: 'theme' },
+            { id: 'auto-backup', key: 'autoBackup', type: 'checkbox' },
+            { id: 'auto-sync', key: 'autoSync', type: 'checkbox' }
+        ];
+
+        settings.forEach(setting => {
+            const element = document.getElementById(setting.id);
+            if (element) {
+                if (setting.type === 'checkbox') {
+                    element.addEventListener('change', this.debounce(() => {
+                        this.saveSetting(setting.key, element.checked);
+                    }, 500));
+                } else {
+                    element.addEventListener('change', this.debounce(() => {
+                        let value = element.value;
+                        if (setting.transform) {
+                            value = setting.transform(value);
+                        }
+                        this.saveSetting(setting.key, value);
+                    }, 500));
+                }
+            }
+        });
+    },
+
+    async saveProfile() {
         const profile = FarmModules.appData.profile;
         
         profile.farmName = this.getValue('farm-name');
@@ -626,13 +746,73 @@ FarmModules.registerModule('profile', {
         // Also update main app data
         FarmModules.appData.farmName = profile.farmName;
 
+        // Auto-save to Firebase if enabled
+        if (profile.autoSync) {
+            await this.saveToFirebase();
+        }
+
         this.updateAllDisplays();
         this.showNotification('Profile saved successfully!', 'success');
     },
 
-    saveSetting: function(setting, value) {
+    async saveSetting(setting, value) {
         FarmModules.appData.profile[setting] = value;
+        
+        // Special handling for theme changes
+        if (setting === 'theme') {
+            this.applyThemePreference(value);
+        }
+        
+        // Auto-save to Firebase if enabled
+        if (FarmModules.appData.profile.autoSync) {
+            await this.saveToFirebase();
+        }
+        
         this.showNotification('Setting updated', 'info');
+    },
+
+    applyThemePreference(theme) {
+        const body = document.body;
+        body.classList.remove('dark-mode', 'light-mode');
+        
+        if (theme === 'dark') {
+            body.classList.add('dark-mode');
+        } else if (theme === 'light') {
+            body.classList.add('light-mode');
+        } else {
+            // Auto mode - follow system preference
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (prefersDark) {
+                body.classList.add('dark-mode');
+            }
+        }
+        
+        // Update dark mode toggle icon if it exists
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        if (darkModeToggle) {
+            const icon = darkModeToggle.querySelector('span:first-child');
+            const label = darkModeToggle.querySelector('.nav-label');
+            const isDarkMode = body.classList.contains('dark-mode');
+            
+            if (isDarkMode) {
+                icon.textContent = '☀️';
+                label.textContent = 'Light';
+            } else {
+                icon.textContent = '🌙';
+                label.textContent = 'Dark';
+            }
+        }
+    },
+
+    async syncNow() {
+        this.updateSyncStatus('🔄 Syncing...');
+        const success = await this.saveToFirebase();
+        
+        if (success) {
+            this.showNotification('Data synced with cloud!', 'success');
+        } else {
+            this.showNotification('Sync failed. Check your connection.', 'error');
+        }
     },
 
     logout: function() {
@@ -722,6 +902,32 @@ FarmModules.registerModule('profile', {
     updateElement: function(id, value) {
         const element = document.getElementById(id);
         if (element) element.textContent = value;
+    },
+
+    getCurrentUser: function() {
+        // Try to get user from Firebase auth
+        if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+            return firebase.auth().currentUser;
+        }
+        
+        // Fallback to auth module
+        if (window.authModule?.getCurrentUser) {
+            return window.authModule.getCurrentUser();
+        }
+        
+        return null;
+    },
+
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
     },
 
     showNotification: function(message, type) {
