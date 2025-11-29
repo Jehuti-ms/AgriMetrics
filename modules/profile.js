@@ -1,4 +1,4 @@
-// modules/profile.js - WITH FIREBASE SYNC FEATURES
+// modules/profile.js - UPDATED WITH SHARED DATA PATTERN & LOGOUT
 console.log('Loading profile module...');
 
 FarmModules.registerModule('profile', {
@@ -157,6 +157,8 @@ FarmModules.registerModule('profile', {
                     <div class="action-buttons">
                         <button class="btn btn-secondary" id="export-data">📥 Export All Data</button>
                         <button class="btn btn-danger" id="clear-all-data">⚠️ Clear All Data</button>
+                        <!-- ADD LOGOUT BUTTON -->
+                        <button class="btn btn-text" id="logout-btn" style="color: #ef4444; border-color: #ef4444;">🚪 Logout</button>
                     </div>
                 </div>
             </div>
@@ -383,45 +385,9 @@ FarmModules.registerModule('profile', {
     initialize: function() {
         console.log('Profile module initializing...');
         
-        // Make ProfileModule available globally immediately
-        this.makeProfileModuleAvailable();
-        
         this.loadUserData();
         this.attachEventListeners();
         this.updateAllDisplays();
-
-         // ADD THESE LINES - Make sure both naming patterns work
-        window.ProfileModule = this;
-        window.profileInstance = this;
-        console.log('✅ ProfileModule made available globally as both ProfileModule and profileInstance');
-    },
-
-    makeProfileModuleAvailable: function() {
-        window.ProfileModule = {
-            updateBusinessStats: (module, stats) => {
-                console.log('📊 Stats updated for', module + ':', stats);
-                if (!FarmModules.appData.profile.dashboardStats) {
-                    FarmModules.appData.profile.dashboardStats = {};
-                }
-                FarmModules.appData.profile.dashboardStats[module] = stats;
-                
-                // Auto-save to Firebase if enabled
-                if (FarmModules.appData.profile.autoSync !== false) {
-                    this.saveToFirebase();
-                }
-            },
-            getUserPreferences: () => FarmModules.appData.profile,
-            updatePreference: (key, value) => {
-                FarmModules.appData.profile[key] = value;
-                if (FarmModules.appData.profile.autoSync !== false) {
-                    this.saveToFirebase();
-                }
-            },
-            loadUserPreferences: () => FarmModules.appData.profile
-        };
-        
-        window.profileInstance = window.ProfileModule;
-        console.log('✅ ProfileModule made available globally');
     },
 
     async loadUserData() {
@@ -442,6 +408,11 @@ FarmModules.registerModule('profile', {
                     memberSince: new Date().toISOString(),
                     lastSync: null
                 };
+            }
+
+            // Initialize dashboard stats if not exists
+            if (!FarmModules.appData.profile.dashboardStats) {
+                FarmModules.appData.profile.dashboardStats = {};
             }
 
             // Try to load from Firebase
@@ -556,18 +527,23 @@ FarmModules.registerModule('profile', {
     },
 
     updateStatsOverview: function() {
-        const orders = FarmModules.appData.orders || [];
-        const inventory = FarmModules.appData.inventory || [];
-        const customers = FarmModules.appData.customers || [];
+        // Get stats from shared dashboard data
+        const dashboardStats = FarmModules.appData.profile.dashboardStats || {};
         
-        const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+        const totalRevenue = dashboardStats.totalRevenue || 
+                           dashboardStats.totalIncome || 
+                           FarmModules.appData.orders?.reduce((sum, order) => sum + (order.totalAmount || 0), 0) || 0;
+        
+        const totalOrders = dashboardStats.totalOrders || FarmModules.appData.orders?.length || 0;
+        const totalInventory = dashboardStats.totalInventoryItems || FarmModules.appData.inventory?.length || 0;
+        const totalCustomers = dashboardStats.totalCustomers || FarmModules.appData.customers?.length || 0;
         
         this.updateElement('total-revenue', this.formatCurrency(totalRevenue));
-        this.updateElement('total-orders', orders.length);
-        this.updateElement('total-inventory', inventory.length);
-        this.updateElement('total-customers', customers.length);
+        this.updateElement('total-orders', totalOrders);
+        this.updateElement('total-inventory', totalInventory);
+        this.updateElement('total-customers', totalCustomers);
         
-        const totalEntries = orders.length + inventory.length + customers.length;
+        const totalEntries = totalOrders + totalInventory + totalCustomers;
         this.updateElement('data-entries', `Data entries: ${totalEntries}`);
     },
 
@@ -652,6 +628,14 @@ FarmModules.registerModule('profile', {
                 this.clearAllData();
             });
         }
+
+        // ADDED: Logout button
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                this.handleLogout();
+            });
+        }
     },
 
     async saveProfile() {
@@ -714,8 +698,60 @@ FarmModules.registerModule('profile', {
             FarmModules.appData.customers = [];
             FarmModules.appData.products = [];
             
+            // Clear dashboard stats
+            if (FarmModules.appData.profile.dashboardStats) {
+                FarmModules.appData.profile.dashboardStats = {};
+            }
+            
             this.showNotification('All data cleared successfully', 'success');
             this.updateAllDisplays();
+        }
+    },
+
+    // ADDED: Logout handler
+    async handleLogout() {
+        if (confirm('Are you sure you want to logout?')) {
+            try {
+                // Sign out from Firebase
+                if (typeof firebase !== 'undefined' && firebase.auth) {
+                    await firebase.auth().signOut();
+                }
+                
+                // Clear local data
+                localStorage.removeItem('farm-user');
+                localStorage.removeItem('farm-orders');
+                localStorage.removeItem('farm-inventory');
+                localStorage.removeItem('farm-customers');
+                localStorage.removeItem('farm-products');
+                
+                // Reset app data
+                FarmModules.appData = {
+                    profile: {
+                        farmName: 'My Farm',
+                        farmerName: 'Farm Manager',
+                        farmType: 'poultry',
+                        currency: 'USD',
+                        lowStockThreshold: 10,
+                        autoSync: true,
+                        memberSince: new Date().toISOString()
+                    },
+                    orders: [],
+                    inventory: [],
+                    customers: [],
+                    products: []
+                };
+                
+                this.showNotification('Logged out successfully', 'success');
+                
+                // Redirect to login page or reload
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Logout error:', error);
+                this.showNotification('Error during logout', 'error');
+            }
         }
     },
 
@@ -762,10 +798,5 @@ FarmModules.registerModule('profile', {
         }
     }
 });
-
-// IN modules/profile.js - ADD AT THE END:
-// Make sure both naming conventions work
-window.ProfileModule = this;
-window.profileInstance = this;
 
 console.log('✅ Profile module registered');
