@@ -389,6 +389,11 @@ FarmModules.registerModule('profile', {
         this.loadUserData();
         this.attachEventListeners();
         this.updateAllDisplays();
+
+         // ADD THESE LINES - Make sure both naming patterns work
+        window.ProfileModule = this;
+        window.profileInstance = this;
+        console.log('✅ ProfileModule made available globally as both ProfileModule and profileInstance');
     },
 
     makeProfileModuleAvailable: function() {
