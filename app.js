@@ -37,6 +37,9 @@ async initializeApp() {
         this.setupSideMenuEvents();
         this.setupEventListeners();
         this.setupDarkMode();
+
+        // Load user preferences and apply theme
+        this.loadUserPreferences();
         
         // Test if hamburger is working
         const hamburger = document.getElementById('hamburger-menu');
@@ -56,6 +59,16 @@ async initializeApp() {
     console.log('✅ App initialized successfully');
 }
 
+    async loadUserPreferences() {
+    // Load user data and apply preferences
+    const profileModule = new ProfileModule();
+    await profileModule.loadUserData();
+    
+    // Apply theme preference
+    if (profileModule.userData.preferences.theme) {
+        profileModule.applyThemePreference(profileModule.userData.preferences.theme);
+    }
+}
     setupEventListeners() {
         document.addEventListener('click', (e) => {
             // Handle main nav items
