@@ -1,4 +1,4 @@
-// modules/inventory-check.js - FULLY WORKING
+// modules/inventory-check.js - UPDATED WITH PROFILE SYNC
 console.log('Loading inventory-check module...');
 
 const InventoryCheckModule = {
@@ -12,6 +12,10 @@ const InventoryCheckModule = {
         this.loadData();
         this.renderModule();
         this.initialized = true;
+        
+        // Sync initial stats with profile
+        this.syncStatsWithProfile();
+        
         return true;
     },
 
@@ -302,8 +306,10 @@ const InventoryCheckModule = {
         const totalItems = this.inventory.length;
         const inStock = this.inventory.filter(item => item.currentStock > 0).length;
         const totalValue = this.inventory.reduce((sum, item) => sum + (item.currentStock * item.cost), 0);
+        const lowStockItems = this.getLowStockItems().length;
+        const outOfStockItems = this.getOutOfStockItems().length;
         
-        return { totalItems, inStock, totalValue };
+        return { totalItems, inStock, totalValue, lowStockItems, outOfStockItems };
     },
 
     getLowStockItems() {
@@ -546,6 +552,9 @@ const InventoryCheckModule = {
         this.saveData();
         this.renderModule();
         
+        // SYNC WITH PROFILE - Update inventory stats
+        this.syncStatsWithProfile();
+        
         if (window.coreModule) {
             window.coreModule.showNotification('Inventory item added successfully!', 'success');
         }
@@ -571,6 +580,9 @@ const InventoryCheckModule = {
         this.saveData();
         this.renderModule();
         
+        // SYNC WITH PROFILE - Update stats after stock change
+        this.syncStatsWithProfile();
+        
         if (window.coreModule) {
             const change = newStock - oldStock;
             const changeText = change > 0 ? `+${change}` : change;
@@ -586,6 +598,9 @@ const InventoryCheckModule = {
             this.inventory = this.inventory.filter(item => item.id !== id);
             this.saveData();
             this.renderModule();
+            
+            // SYNC WITH PROFILE - Update stats after deletion
+            this.syncStatsWithProfile();
             
             if (window.coreModule) {
                 window.coreModule.showNotification('Item deleted successfully!', 'success');
@@ -607,6 +622,9 @@ const InventoryCheckModule = {
             
             this.saveData();
             this.renderModule();
+            
+            // SYNC WITH PROFILE - Update stats after restock
+            this.syncStatsWithProfile();
             
             if (window.coreModule) {
                 window.coreModule.showNotification(`Restocked ${amount} ${item.unit} of ${item.name}`, 'success');
@@ -727,6 +745,21 @@ const InventoryCheckModule = {
                 item.style.display = 'none';
             }
         });
+    },
+
+    // NEW METHOD: Sync inventory stats with user profile
+    syncStatsWithProfile() {
+        const stats = this.calculateStats();
+        
+        if (window.ProfileModule && window.profileInstance) {
+            window.profileInstance.updateStats({
+                totalInventoryItems: stats.totalItems,
+                inStockItems: stats.inStock,
+                lowStockItems: stats.lowStockItems,
+                outOfStockItems: stats.outOfStockItems,
+                inventoryValue: stats.totalValue
+            });
+        }
     },
 
     formatCurrency(amount) {
