@@ -1,4 +1,4 @@
-// modules/production.js - FULLY WORKING (CORRECTED)
+// modules/production.js - UPDATED WITH SHARED DATA PATTERN
 console.log('Loading production module...');
 
 const ProductionModule = {
@@ -12,8 +12,8 @@ const ProductionModule = {
         this.renderModule();
         this.initialized = true;
         
-        // Update profile stats on initial load
-        this.updateProfileStats();
+        // Update dashboard stats on initial load
+        this.syncStatsWithDashboard();
         
         return true;
     },
@@ -199,7 +199,8 @@ const ProductionModule = {
         return { 
             todayEggs, 
             weekProduction, 
-            avgDaily: this.formatNumber(avgDaily) 
+            avgDaily: this.formatNumber(avgDaily),
+            totalRecords: this.productionRecords.length
         };
     },
 
@@ -461,8 +462,14 @@ const ProductionModule = {
         this.saveData();
         this.renderModule();
         
-        // ✅ UPDATE PROFILE STATS AFTER SAVING PRODUCTION RECORD
-        this.updateProfileStats();
+        // ✅ SYNC WITH DASHBOARD AFTER SAVING PRODUCTION RECORD
+        this.syncStatsWithDashboard();
+        
+        // Add recent activity
+        this.addRecentActivity({
+            type: 'production_recorded',
+            record: formData
+        });
         
         if (window.coreModule && window.coreModule.showNotification) {
             window.coreModule.showNotification('Production record added successfully!', 'success');
@@ -473,12 +480,22 @@ const ProductionModule = {
 
     deleteProductionRecord(id) {
         if (confirm('Are you sure you want to delete this production record?')) {
+            const record = this.productionRecords.find(record => record.id === id);
+            
             this.productionRecords = this.productionRecords.filter(record => record.id !== id);
             this.saveData();
             this.renderModule();
             
-            // ✅ UPDATE PROFILE STATS AFTER DELETING PRODUCTION RECORD
-            this.updateProfileStats();
+            // ✅ SYNC WITH DASHBOARD AFTER DELETING PRODUCTION RECORD
+            this.syncStatsWithDashboard();
+            
+            // Add recent activity
+            if (record) {
+                this.addRecentActivity({
+                    type: 'production_deleted',
+                    record: record
+                });
+            }
             
             if (window.coreModule && window.coreModule.showNotification) {
                 window.coreModule.showNotification('Production record deleted!', 'success');
@@ -493,12 +510,21 @@ const ProductionModule = {
         // For now, show a simple edit form - in a real app you'd populate the existing form
         const newQuantity = prompt(`Edit quantity for ${record.product} (current: ${record.quantity} ${record.unit}):`, record.quantity);
         if (newQuantity !== null && !isNaN(newQuantity)) {
+            const oldQuantity = record.quantity;
             record.quantity = parseInt(newQuantity);
             this.saveData();
             this.renderModule();
             
-            // ✅ UPDATE PROFILE STATS AFTER EDITING PRODUCTION RECORD
-            this.updateProfileStats();
+            // ✅ SYNC WITH DASHBOARD AFTER EDITING PRODUCTION RECORD
+            this.syncStatsWithDashboard();
+            
+            // Add recent activity
+            this.addRecentActivity({
+                type: 'production_updated',
+                record: record,
+                oldQuantity: oldQuantity,
+                newQuantity: record.quantity
+            });
             
             if (window.coreModule && window.coreModule.showNotification) {
                 window.coreModule.showNotification('Production record updated!', 'success');
@@ -506,15 +532,127 @@ const ProductionModule = {
         }
     },
 
-    // ✅ NEW METHOD: Update Profile Stats
-    updateProfileStats() {
-        if (window.ProfileModule && window.profileInstance) {
-            const productionRecords = this.productionRecords || [];
+    // ✅ UPDATED METHOD: Sync production stats with dashboard (no ProfileModule dependency)
+    syncStatsWithDashboard() {
+        const stats = this.calculateStats();
+        
+        // Update shared data structure
+        if (window.FarmModules && window.FarmModules.appData) {
+            if (!window.FarmModules.appData.profile) {
+                window.FarmModules.appData.profile = {};
+            }
+            if (!window.FarmModules.appData.profile.dashboardStats) {
+                window.FarmModules.appData.profile.dashboardStats = {};
+            }
             
-            window.profileInstance.updateStats({
-                activeProduction: productionRecords.length
+            // Update production stats in shared data
+            Object.assign(window.FarmModules.appData.profile.dashboardStats, {
+                todayEggs: stats.todayEggs,
+                weekProduction: stats.weekProduction,
+                avgDailyProduction: stats.avgDaily,
+                totalProductionRecords: stats.totalRecords
             });
         }
+        
+        // Notify dashboard module if available
+        if (window.FarmModules && window.FarmModules.modules.dashboard) {
+            window.FarmModules.modules.dashboard.updateDashboardStats({
+                todayEggs: stats.todayEggs,
+                weekProduction: stats.weekProduction,
+                avgDailyProduction: stats.avgDaily,
+                totalProductionRecords: stats.totalRecords
+            });
+        }
+    },
+
+    // ✅ NEW METHOD: Add recent activity to dashboard
+    addRecentActivity(activityData) {
+        if (!window.FarmModules || !window.FarmModules.modules.dashboard) return;
+        
+        let activity;
+        
+        switch (activityData.type) {
+            case 'production_recorded':
+                activity = {
+                    type: 'production_recorded',
+                    message: `Production: ${activityData.record.quantity} ${activityData.record.unit} of ${activityData.record.product}`,
+                    icon: '🚜'
+                };
+                break;
+            case 'production_updated':
+                activity = {
+                    type: 'production_updated',
+                    message: `Updated: ${activityData.record.product} (${activityData.oldQuantity} → ${activityData.newQuantity} ${activityData.record.unit})`,
+                    icon: '✏️'
+                };
+                break;
+            case 'production_deleted':
+                activity = {
+                    type: 'production_deleted',
+                    message: `Deleted: ${activityData.record.product} production record`,
+                    icon: '🗑️'
+                };
+                break;
+        }
+        
+        if (activity) {
+            window.FarmModules.modules.dashboard.addRecentActivity(activity);
+        }
+    },
+
+    // ✅ NEW METHOD: Get production summary for other modules
+    getProductionSummary() {
+        const stats = this.calculateStats();
+        return {
+            ...stats,
+            recentProduction: this.productionRecords.slice(0, 5),
+            topProducts: this.getTopProducts(3),
+            productionTrend: this.getProductionTrend(7) // Last 7 days
+        };
+    },
+
+    // ✅ NEW METHOD: Get top products by quantity
+    getTopProducts(limit = 3) {
+        const productTotals = {};
+        
+        this.productionRecords.forEach(record => {
+            if (!productTotals[record.product]) {
+                productTotals[record.product] = 0;
+            }
+            productTotals[record.product] += record.quantity;
+        });
+
+        return Object.entries(productTotals)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, limit)
+            .map(([product, quantity]) => ({
+                product: this.formatProductName(product),
+                quantity: quantity,
+                icon: this.getProductIcon(product)
+            }));
+    },
+
+    // ✅ NEW METHOD: Get production trend data
+    getProductionTrend(days = 7) {
+        const trend = [];
+        
+        for (let i = days - 1; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dateString = date.toISOString().split('T')[0];
+            
+            const dailyProduction = this.productionRecords
+                .filter(record => record.date === dateString)
+                .reduce((sum, record) => sum + record.quantity, 0);
+            
+            trend.push({
+                date: dateString,
+                quantity: dailyProduction,
+                records: this.productionRecords.filter(record => record.date === dateString).length
+            });
+        }
+        
+        return trend;
     },
 
     generateProductionReport() {
