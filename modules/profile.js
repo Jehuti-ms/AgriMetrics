@@ -80,11 +80,13 @@ FarmModules.registerModule('profile', {
                             <div class="form-group">
                                 <label for="farm-type">Farm Type</label>
                                 <select id="farm-type">
-                                    <option value="poultry">Poultry Farm</option>
+                                    <option value="">Select farm type</option>
                                     <option value="crop">Crop Farm</option>
                                     <option value="livestock">Livestock Farm</option>
                                     <option value="dairy">Dairy Farm</option>
+                                    <option value="poultry">Poultry Farm</option>
                                     <option value="mixed">Mixed Farming</option>
+                                    <option value="other">Other</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -113,6 +115,12 @@ FarmModules.registerModule('profile', {
                                 <option value="USD">US Dollar ($)</option>
                                 <option value="EUR">Euro (€)</option>
                                 <option value="GBP">British Pound (£)</option>
+                                <option value="BBD">Barbadian Dollar (BBD$)</option>
+                                <option value="CAD">Canadian Dollar (C$)</option>
+                                <option value="AUD">Australian Dollar (A$)</option>
+                                <option value="JMD">Jamaican Dollar (J$)</option>
+                                <option value="TTD">Trinidad & Tobago Dollar (TT$)</option>
+                                <option value="XCD">East Caribbean Dollar (EC$)</option>
                             </select>
                         </div>
                         
