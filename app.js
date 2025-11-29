@@ -36,6 +36,7 @@ async initializeApp() {
         this.setupHamburgerMenu();
         this.setupSideMenuEvents();
         this.setupEventListeners();
+        this.setupDarkMode();
         
         // Test if hamburger is working
         const hamburger = document.getElementById('hamburger-menu');
@@ -76,6 +77,55 @@ async initializeApp() {
             }
         });
     }
+        // Add to your initializeApp() method
+setupDarkMode() {
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    // Check for saved theme or prefer OS setting
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark' || (!savedTheme && prefersDarkScheme.matches)) {
+        document.body.classList.add('dark-mode');
+        this.updateDarkModeIcon(true);
+    }
+    
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            
+            // Save preference
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+            
+            // Update icon
+            this.updateDarkModeIcon(isDarkMode);
+        });
+    }
+    
+    // Listen for system theme changes
+    prefersDarkScheme.addEventListener('change', (e) => {
+        if (!localStorage.getItem('theme')) {
+            document.body.classList.toggle('dark-mode', e.matches);
+            this.updateDarkModeIcon(e.matches);
+        }
+    });
+}
+
+updateDarkModeIcon(isDarkMode) {
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    if (darkModeToggle) {
+        const icon = darkModeToggle.querySelector('span:first-child');
+        const label = darkModeToggle.querySelector('.nav-label');
+        
+        if (isDarkMode) {
+            icon.textContent = '☀️';
+            label.textContent = 'Light';
+        } else {
+            icon.textContent = '🌙';
+            label.textContent = 'Dark';
+        }
+    }
+}
 
     showApp() {
         const authContainer = document.getElementById('auth-container');
@@ -138,6 +188,12 @@ async initializeApp() {
                 <button class="nav-item" data-view="profile" title="Profile">
                     <span>👤</span>
                     <span class="nav-label">Profile</span>
+                </button>
+
+                    <!-- Dark Mode Toggle -->
+                <button class="nav-item dark-mode-toggle" id="dark-mode-toggle" title="Toggle Dark Mode">
+                    <span>🌙</span>
+                    <span class="nav-label">Theme</span>
                 </button>
                 
                 <!-- Hamburger menu as a proper nav-item -->
