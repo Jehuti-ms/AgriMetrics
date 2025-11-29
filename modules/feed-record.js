@@ -1,4 +1,4 @@
-// modules/feed-record.js - CORRECTED VERSION
+// modules/feed-record.js - COMPLETE FIXED VERSION
 console.log('Loading feed-record module...');
 
 const FeedRecordModule = {
@@ -88,6 +88,19 @@ const FeedRecordModule = {
                         <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.birdsStock}</div>
                         <div style="font-size: 14px; color: var(--text-secondary);">Birds to Feed</div>
                     </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.formatCurrency(stats.totalInventoryValue)}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Inventory Value</div>
+                    </div>
+                </div>
+
+                <!-- Inventory Overview -->
+                <div class="glass-card" style="padding: 24px; margin: 24px 0;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px;">Feed Inventory</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                        ${this.renderInventoryOverview()}
+                    </div>
                 </div>
 
                 <!-- Simple Form -->
@@ -98,9 +111,13 @@ const FeedRecordModule = {
                             <div>
                                 <label class="form-label">Feed Type</label>
                                 <select class="form-input" id="feed-type" required>
-                                    <option value="starter">Starter Feed</option>
-                                    <option value="grower">Grower Feed</option>
-                                    <option value="finisher">Finisher Feed</option>
+                                    <option value="">Select feed type</option>
+                                    ${this.feedInventory.map(item => `
+                                        <option value="${item.feedType}" ${item.currentStock <= item.minStock ? 'disabled' : ''}>
+                                            ${item.feedType.charAt(0).toUpperCase() + item.feedType.slice(1)} Feed 
+                                            ${item.currentStock <= item.minStock ? '(Low Stock)' : ''}
+                                        </option>
+                                    `).join('')}
                                 </select>
                             </div>
                             <div>
@@ -131,7 +148,35 @@ const FeedRecordModule = {
 
     calculateStats() {
         const totalStock = this.feedInventory.reduce((sum, item) => sum + item.currentStock, 0);
-        return { totalStock };
+        const totalInventoryValue = this.feedInventory.reduce((sum, item) => sum + (item.currentStock * item.costPerKg), 0);
+        return { totalStock, totalInventoryValue };
+    },
+
+    renderInventoryOverview() {
+        return this.feedInventory.map(item => {
+            const isLowStock = item.currentStock <= item.minStock;
+            const stockStatus = isLowStock ? 'Low Stock' : 'Good';
+            const statusColor = isLowStock ? '#ef4444' : '#10b981';
+            
+            return `
+                <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border-left: 4px solid ${statusColor};">
+                    <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 600; color: var(--text-primary); text-transform: capitalize;">
+                            ${item.feedType}
+                        </span>
+                        <span style="font-size: 12px; color: ${statusColor}; font-weight: 600;">
+                            ${stockStatus}
+                        </span>
+                    </div>
+                    <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">
+                        ${item.currentStock} ${item.unit}
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        Min: ${item.minStock}${item.unit} • ${this.formatCurrency(item.costPerKg)}/kg
+                    </div>
+                </div>
+            `;
+        }).join('');
     },
 
     renderFeedRecordsList() {
@@ -146,8 +191,9 @@ const FeedRecordModule = {
                         ${record.feedType} Feed
                     </div>
                     <div style="font-size: 14px; color: var(--text-secondary);">
-                        ${record.date} • ${record.quantity}kg
+                        ${record.date} • ${record.quantity}kg • ${record.birdsFed} birds
                     </div>
+                    ${record.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${record.notes}</div>` : ''}
                 </div>
                 <div style="color: var(--text-primary); font-weight: bold;">
                     ${this.formatCurrency(record.cost)}
@@ -159,33 +205,125 @@ const FeedRecordModule = {
     setupEventListeners() {
         document.getElementById('feed-record-form')?.addEventListener('submit', (e) => this.handleFeedRecordSubmit(e));
         document.getElementById('record-feed-btn')?.addEventListener('click', () => this.showFeedForm());
+        document.getElementById('add-stock-btn')?.addEventListener('click', () => this.showAddStockForm());
+        document.getElementById('adjust-birds-btn')?.addEventListener('click', () => this.showAdjustBirdsForm());
     },
 
     handleFeedRecordSubmit(e) {
         e.preventDefault();
         
+        const feedType = document.getElementById('feed-type').value;
+        const quantity = parseFloat(document.getElementById('feed-quantity').value);
+        
+        // Check if feed type has sufficient stock
+        const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
+        if (!inventoryItem) {
+            if (window.coreModule) {
+                window.coreModule.showNotification('Invalid feed type selected!', 'error');
+            }
+            return;
+        }
+        
+        if (inventoryItem.currentStock < quantity) {
+            if (window.coreModule) {
+                window.coreModule.showNotification(`Insufficient stock! Only ${inventoryItem.currentStock}kg available.`, 'error');
+            }
+            return;
+        }
+
         const formData = {
             id: Date.now(),
             date: new Date().toISOString().split('T')[0],
-            feedType: document.getElementById('feed-type').value,
-            quantity: parseFloat(document.getElementById('feed-quantity').value),
-            cost: parseFloat(document.getElementById('feed-quantity').value) * 2.5, // Simple calculation
+            feedType: feedType,
+            quantity: quantity,
+            cost: this.calculateCost(feedType, quantity),
             notes: document.getElementById('feed-notes').value,
             birdsFed: this.birdsStock
         };
 
+        // Update inventory
+        inventoryItem.currentStock -= quantity;
+        
         this.feedRecords.unshift(formData);
         this.saveData();
         this.renderModule();
         
         if (window.coreModule) {
-            window.coreModule.showNotification(`Recorded ${formData.quantity}kg feed usage!`, 'success');
+            window.coreModule.showNotification(`Recorded ${formData.quantity}kg ${feedType} feed usage!`, 'success');
         }
     },
 
     showFeedForm() {
-        // Simple form show logic
         document.getElementById('feed-record-form').scrollIntoView({ behavior: 'smooth' });
+    },
+
+    showAddStockForm() {
+        const feedType = prompt('Enter feed type (starter/grower/finisher/layer):');
+        if (!feedType) return;
+        
+        const quantity = parseFloat(prompt(`Enter quantity to add to ${feedType} (kg):`));
+        if (isNaN(quantity) || quantity <= 0) {
+            if (window.coreModule) {
+                window.coreModule.showNotification('Invalid quantity entered!', 'error');
+            }
+            return;
+        }
+
+        this.addToInventory(feedType, quantity);
+    },
+
+    showAdjustBirdsForm() {
+        const newCount = parseInt(prompt(`Current birds: ${this.birdsStock}\nEnter new bird count:`));
+        if (isNaN(newCount) || newCount < 0) {
+            if (window.coreModule) {
+                window.coreModule.showNotification('Invalid bird count entered!', 'error');
+            }
+            return;
+        }
+
+        this.adjustBirdCount(newCount);
+    },
+
+    addToInventory(feedType, quantity) {
+        const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
+        if (inventoryItem) {
+            inventoryItem.currentStock += quantity;
+            this.saveData();
+            this.renderModule();
+            if (window.coreModule) {
+                window.coreModule.showNotification(`Added ${quantity}kg to ${feedType} inventory!`, 'success');
+            }
+        } else {
+            // Create new inventory item
+            const newItem = {
+                id: Date.now(),
+                feedType: feedType,
+                currentStock: quantity,
+                unit: 'kg',
+                costPerKg: 2.5, // Default cost
+                minStock: 20
+            };
+            this.feedInventory.push(newItem);
+            this.saveData();
+            this.renderModule();
+            if (window.coreModule) {
+                window.coreModule.showNotification(`Created new ${feedType} inventory with ${quantity}kg!`, 'success');
+            }
+        }
+    },
+
+    adjustBirdCount(newCount) {
+        this.birdsStock = newCount;
+        this.saveData();
+        this.renderModule();
+        if (window.coreModule) {
+            window.coreModule.showNotification(`Adjusted bird count to ${newCount}!`, 'success');
+        }
+    },
+
+    calculateCost(feedType, quantity) {
+        const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
+        return quantity * (inventoryItem?.costPerKg || 2.5);
     },
 
     syncStatsWithSharedData() {
@@ -197,6 +335,7 @@ const FeedRecordModule = {
             
             window.FarmModules.appData.profile.dashboardStats.totalBirds = this.birdsStock;
             window.FarmModules.appData.profile.dashboardStats.totalFeedStock = stats.totalStock;
+            window.FarmModules.appData.profile.dashboardStats.inventoryValue = stats.totalInventoryValue;
         }
     },
 
