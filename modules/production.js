@@ -1,4 +1,4 @@
-// modules/production.js - UPDATED WITH SHARED DATA PATTERN
+// modules/production.js - COMPLETE REWRITE WITH POPOUT MODAL
 console.log('Loading production module...');
 
 const ProductionModule = {
@@ -7,14 +7,10 @@ const ProductionModule = {
     productionRecords: [],
 
     initialize() {
-        console.log('🚜 Initializing production records...');
+        console.log('🚜 Initializing production...');
         this.loadData();
         this.renderModule();
         this.initialized = true;
-        
-        // Update dashboard stats on initial load
-        this.syncStatsWithDashboard();
-        
         return true;
     },
 
@@ -25,18 +21,15 @@ const ProductionModule = {
 
     getDemoData() {
         return [
-            { id: 1, date: '2024-03-15', product: 'eggs', quantity: 450, unit: 'pieces', quality: 'grade-a', notes: 'Normal production' },
-            { id: 2, date: '2024-03-14', product: 'eggs', quantity: 420, unit: 'pieces', quality: 'grade-a', notes: 'Slight drop' },
-            { id: 3, date: '2024-03-13', product: 'broilers', quantity: 50, unit: 'birds', quality: 'excellent', notes: 'Ready for market' }
+            { id: 1, date: '2024-03-15', product: 'eggs', quantity: 450, unit: 'pieces', quality: 'grade-a', notes: 'Morning collection' },
+            { id: 2, date: '2024-03-14', product: 'eggs', quantity: 420, unit: 'pieces', quality: 'grade-a', notes: 'Regular production' },
+            { id: 3, date: '2024-03-13', product: 'broilers', quantity: 50, unit: 'birds', quality: 'excellent', notes: 'Weekly harvest' }
         ];
     },
 
     renderModule() {
         const contentArea = document.getElementById('content-area');
-        if (!contentArea) {
-            console.error('Content area not found');
-            return;
-        }
+        if (!contentArea) return;
 
         const stats = this.calculateStats();
 
@@ -44,134 +37,118 @@ const ProductionModule = {
             <div class="module-container">
                 <div class="module-header">
                     <h1 class="module-title">Production Records</h1>
-                    <p class="module-subtitle">Track your farm output</p>
+                    <p class="module-subtitle">Track your farm production and yields</p>
                 </div>
 
-                <!-- Production Overview -->
+                <!-- Stats -->
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div style="font-size: 24px; margin-bottom: 8px;">🥚</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.todayEggs}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Today's Eggs</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.totalEggs}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Eggs Today</div>
                     </div>
                     <div class="stat-card">
                         <div style="font-size: 24px; margin-bottom: 8px;">🐔</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.weekProduction}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">This Week</div>
-                    </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">📈</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.avgDaily}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Avg Daily</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.totalBirds}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Birds This Week</div>
                     </div>
                     <div class="stat-card">
                         <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.productionRecords.length}</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.totalRecords}</div>
                         <div style="font-size: 14px; color: var(--text-secondary);">Total Records</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">⭐</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.avgQuality}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Avg Quality</div>
                     </div>
                 </div>
 
                 <!-- Quick Actions -->
                 <div class="quick-action-grid">
-                    <button class="quick-action-btn" id="record-eggs-btn">
-                        <div style="font-size: 32px;">🥚</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Record Eggs</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Daily egg production</span>
-                    </button>
-                    <button class="quick-action-btn" id="record-poultry-btn">
-                        <div style="font-size: 32px;">🐔</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Record Poultry</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Broiler production</span>
-                    </button>
-                    <button class="quick-action-btn" id="record-other-btn">
-                        <div style="font-size: 32px;">📦</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Other Products</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Manure, crops, etc.</span>
+                    <button class="quick-action-btn" id="record-production-btn">
+                        <div style="font-size: 32px;">📝</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Record Production</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Log daily production</span>
                     </button>
                     <button class="quick-action-btn" id="production-report-btn">
                         <div style="font-size: 32px;">📈</div>
                         <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Production Report</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View trends</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View production analytics</span>
                     </button>
                 </div>
 
                 <!-- Production Form -->
-                <div id="production-form-container" class="hidden">
-                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
-                        <h3 style="color: var(--text-primary); margin-bottom: 20px;" id="production-form-title">Record Production</h3>
-                        <form id="production-form">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Product Type</label>
-                                    <select class="form-input" id="production-product" required>
-                                        <option value="eggs">Eggs</option>
-                                        <option value="broilers">Broilers</option>
-                                        <option value="layers">Layers</option>
-                                        <option value="manure">Manure</option>
-                                        <option value="crops">Crops</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="form-label">Date</label>
-                                    <input type="date" class="form-input" id="production-date" required>
-                                </div>
+                <div class="glass-card" style="padding: 24px; margin: 24px 0;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px;">Record Production</h3>
+                    <form id="production-form">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <label class="form-label">Product Type</label>
+                                <select class="form-input" id="product-type" required>
+                                    <option value="eggs">Eggs</option>
+                                    <option value="broilers">Broilers</option>
+                                    <option value="layers">Layers</option>
+                                    <option value="other">Other</option>
+                                </select>
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Quantity</label>
-                                    <input type="number" class="form-input" id="production-quantity" min="0" required>
-                                </div>
-                                <div>
-                                    <label class="form-label">Unit</label>
-                                    <select class="form-input" id="production-unit" required>
-                                        <option value="pieces">Pieces</option>
-                                        <option value="birds">Birds</option>
-                                        <option value="kg">Kilograms</option>
-                                        <option value="liters">Liters</option>
-                                        <option value="bags">Bags</option>
-                                        <option value="crates">Crates</option>
-                                    </select>
-                                </div>
+                            <div>
+                                <label class="form-label">Quantity</label>
+                                <input type="number" class="form-input" id="production-quantity" min="1" required>
                             </div>
-                            <div style="margin-bottom: 16px;">
-                                <label class="form-label">Quality/Grade</label>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <label class="form-label">Quality</label>
                                 <select class="form-input" id="production-quality" required>
                                     <option value="excellent">Excellent</option>
                                     <option value="grade-a">Grade A</option>
                                     <option value="grade-b">Grade B</option>
-                                    <option value="grade-c">Grade C</option>
                                     <option value="rejects">Rejects</option>
                                 </select>
                             </div>
-                            <div style="margin-bottom: 20px;">
-                                <label class="form-label">Notes</label>
-                                <textarea class="form-input" id="production-notes" rows="3" placeholder="Any observations, special conditions, or additional information..."></textarea>
+                            <div>
+                                <label class="form-label">Unit</label>
+                                <select class="form-input" id="production-unit" required>
+                                    <option value="pieces">Pieces</option>
+                                    <option value="birds">Birds</option>
+                                    <option value="kg">Kilograms</option>
+                                    <option value="crates">Crates</option>
+                                </select>
                             </div>
-                            <div style="display: flex; gap: 12px;">
-                                <button type="submit" class="btn-primary">Save Record</button>
-                                <button type="button" class="btn-outline" id="cancel-production-form">Cancel</button>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-input" id="production-notes" rows="3" placeholder="Production details, observations..."></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary">Save Production Record</button>
+                    </form>
+                </div>
+
+                <!-- Production Report Modal -->
+                <div id="production-report-modal" class="popout-modal hidden">
+                    <div class="popout-modal-content" style="max-width: 800px;">
+                        <div class="popout-modal-header">
+                            <h3 class="popout-modal-title" id="production-report-title">Production Report</h3>
+                            <button class="popout-modal-close" id="close-production-report">&times;</button>
+                        </div>
+                        <div class="popout-modal-body">
+                            <div id="production-report-content">
+                                <!-- Report content will be inserted here -->
                             </div>
-                        </form>
+                        </div>
+                        <div class="popout-modal-footer">
+                            <button class="btn-outline" id="print-production-report">🖨️ Print</button>
+                            <button class="btn-primary" id="close-production-report-btn">Close</button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Recent Production Records -->
+                <!-- Recent Production -->
                 <div class="glass-card" style="padding: 24px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="color: var(--text-primary); font-size: 20px;">Recent Production</h3>
-                        <button class="btn-primary" id="show-production-form">Add Record</button>
-                    </div>
-                    <div id="production-records-list">
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Recent Production</h3>
+                    <div id="production-list">
                         ${this.renderProductionList()}
-                    </div>
-                </div>
-
-                <!-- Production Trends -->
-                <div class="glass-card" style="padding: 24px; margin-top: 24px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Production Trends</h3>
-                    <div id="production-trends">
-                        ${this.renderProductionTrends()}
                     </div>
                 </div>
             </div>
@@ -182,25 +159,37 @@ const ProductionModule = {
 
     calculateStats() {
         const today = new Date().toISOString().split('T')[0];
-        const todayEggs = this.productionRecords
-            .filter(record => record.date === today && record.product === 'eggs')
+        const last7Days = new Date();
+        last7Days.setDate(last7Days.getDate() - 7);
+        const last7DaysStr = last7Days.toISOString().split('T')[0];
+
+        const todayProduction = this.productionRecords.filter(record => record.date === today);
+        const last7DaysProduction = this.productionRecords.filter(record => record.date >= last7DaysStr);
+
+        const totalEggs = todayProduction
+            .filter(record => record.product === 'eggs')
             .reduce((sum, record) => sum + record.quantity, 0);
 
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-        const weekProduction = this.productionRecords
-            .filter(record => new Date(record.date) >= oneWeekAgo)
+        const totalBirds = last7DaysProduction
+            .filter(record => record.product === 'broilers' || record.product === 'layers')
             .reduce((sum, record) => sum + record.quantity, 0);
 
-        const avgDaily = this.productionRecords.length > 0 
-            ? Math.round(this.productionRecords.reduce((sum, record) => sum + record.quantity, 0) / this.productionRecords.length)
-            : 0;
+        const qualityScores = {
+            'excellent': 5,
+            'grade-a': 4,
+            'grade-b': 3,
+            'rejects': 1
+        };
 
-        return { 
-            todayEggs, 
-            weekProduction, 
-            avgDaily: this.formatNumber(avgDaily),
-            totalRecords: this.productionRecords.length
+        const avgQuality = this.productionRecords.length > 0 
+            ? (this.productionRecords.reduce((sum, record) => sum + (qualityScores[record.quality] || 3), 0) / this.productionRecords.length).toFixed(1)
+            : '0.0';
+
+        return {
+            totalEggs,
+            totalBirds,
+            totalRecords: this.productionRecords.length,
+            avgQuality
         };
     },
 
@@ -209,7 +198,7 @@ const ProductionModule = {
             return `
                 <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
                     <div style="font-size: 48px; margin-bottom: 16px;">🚜</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No production records yet</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No production records</div>
                     <div style="font-size: 14px; color: var(--text-secondary);">Record your first production to get started</div>
                 </div>
             `;
@@ -217,85 +206,25 @@ const ProductionModule = {
 
         return `
             <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${this.productionRecords.slice(0, 8).map(record => `
+                ${this.productionRecords.slice(0, 10).map(record => `
                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="font-size: 24px;">${this.getProductIcon(record.product)}</div>
+                            <div style="font-size: 20px;">${this.getProductIcon(record.product)}</div>
                             <div>
-                                <div style="font-weight: 600; color: var(--text-primary); text-transform: capitalize;">
-                                    ${record.product} • ${record.quality}
-                                </div>
+                                <div style="font-weight: 600; color: var(--text-primary); text-transform: capitalize;">${record.product}</div>
                                 <div style="font-size: 14px; color: var(--text-secondary);">
-                                    ${record.date} • ${record.notes || 'No notes'}
+                                    ${record.date} • ${this.formatQuality(record.quality)}
                                 </div>
+                                ${record.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${record.notes}</div>` : ''}
                             </div>
                         </div>
                         <div style="text-align: right;">
                             <div style="font-weight: bold; color: var(--text-primary); font-size: 18px;">
-                                ${this.formatNumber(record.quantity)} ${record.unit}
-                            </div>
-                            <div style="display: flex; gap: 8px; margin-top: 8px;">
-                                <button class="btn-icon edit-production" data-id="${record.id}" style="background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; color: var(--text-secondary); font-size: 12px;">
-                                    ✏️ Edit
-                                </button>
-                                <button class="btn-icon delete-production" data-id="${record.id}" style="background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; color: var(--text-secondary); font-size: 12px;">
-                                    🗑️ Delete
-                                </button>
+                                ${record.quantity} ${record.unit}
                             </div>
                         </div>
                     </div>
                 `).join('')}
-            </div>
-        `;
-    },
-
-    renderProductionTrends() {
-        // Group production by product type for the last 7 days
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-        
-        const recentProduction = this.productionRecords
-            .filter(record => new Date(record.date) >= oneWeekAgo);
-        
-        const productTotals = {};
-        recentProduction.forEach(record => {
-            if (!productTotals[record.product]) {
-                productTotals[record.product] = 0;
-            }
-            productTotals[record.product] += record.quantity;
-        });
-
-        if (Object.keys(productTotals).length === 0) {
-            return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
-                    <div style="font-size: 32px; margin-bottom: 12px;">📊</div>
-                    <div style="font-size: 14px;">No production data for trends</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">Add production records to see trends</div>
-                </div>
-            `;
-        }
-
-        const maxTotal = Math.max(...Object.values(productTotals));
-        
-        return `
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${Object.entries(productTotals).map(([product, total]) => {
-                    const percentage = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
-                    return `
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="font-size: 20px;">${this.getProductIcon(product)}</div>
-                            <div style="flex: 1;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                    <span style="font-weight: 600; color: var(--text-primary); text-transform: capitalize;">${product}</span>
-                                    <span style="font-weight: 600; color: var(--text-primary);">${this.formatNumber(total)}</span>
-                                </div>
-                                <div style="width: 100%; height: 8px; background: var(--glass-border); border-radius: 4px; overflow: hidden;">
-                                    <div style="width: ${percentage}%; height: 100%; background: var(--primary-color); border-radius: 4px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
             </div>
         `;
     },
@@ -305,401 +234,9 @@ const ProductionModule = {
             'eggs': '🥚',
             'broilers': '🐔',
             'layers': '🐓',
-            'manure': '💩',
-            'crops': '🌱',
             'other': '📦'
         };
         return icons[product] || '📦';
-    },
-
-    setupEventListeners() {
-        // Form buttons
-        const showFormBtn = document.getElementById('show-production-form');
-        const recordEggsBtn = document.getElementById('record-eggs-btn');
-        const recordPoultryBtn = document.getElementById('record-poultry-btn');
-        const recordOtherBtn = document.getElementById('record-other-btn');
-        const reportBtn = document.getElementById('production-report-btn');
-
-        if (showFormBtn) showFormBtn.addEventListener('click', () => this.showProductionForm());
-        if (recordEggsBtn) recordEggsBtn.addEventListener('click', () => this.showEggsForm());
-        if (recordPoultryBtn) recordPoultryBtn.addEventListener('click', () => this.showPoultryForm());
-        if (recordOtherBtn) recordOtherBtn.addEventListener('click', () => this.showOtherForm());
-        if (reportBtn) reportBtn.addEventListener('click', () => this.generateProductionReport());
-        
-        // Form handlers
-        const productionForm = document.getElementById('production-form');
-        const cancelForm = document.getElementById('cancel-production-form');
-
-        if (productionForm) productionForm.addEventListener('submit', (e) => this.handleProductionSubmit(e));
-        if (cancelForm) cancelForm.addEventListener('click', () => this.hideProductionForm());
-        
-        // Action buttons
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.delete-production')) {
-                const id = parseInt(e.target.closest('.delete-production').dataset.id);
-                this.deleteProductionRecord(id);
-            }
-            if (e.target.closest('.edit-production')) {
-                const id = parseInt(e.target.closest('.edit-production').dataset.id);
-                this.editProductionRecord(id);
-            }
-        });
-
-        // Set today's date
-        const today = new Date().toISOString().split('T')[0];
-        const dateInput = document.getElementById('production-date');
-        if (dateInput) dateInput.value = today;
-
-        // Auto-set unit based on product selection
-        const productSelect = document.getElementById('production-product');
-        if (productSelect) {
-            productSelect.addEventListener('change', (e) => {
-                this.updateUnitForProduct(e.target.value);
-            });
-        }
-
-        // Hover effects
-        const buttons = document.querySelectorAll('.quick-action-btn');
-        buttons.forEach(button => {
-            button.addEventListener('mouseenter', (e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-            });
-            button.addEventListener('mouseleave', (e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-            });
-        });
-
-        console.log('✅ Production module event listeners setup complete');
-    },
-
-    showProductionForm() {
-        this.showFormWithProduct('');
-    },
-
-    showEggsForm() {
-        this.showFormWithProduct('eggs');
-    },
-
-    showPoultryForm() {
-        this.showFormWithProduct('broilers');
-    },
-
-    showOtherForm() {
-        this.showFormWithProduct('other');
-    },
-
-    showFormWithProduct(product) {
-        const formContainer = document.getElementById('production-form-container');
-        const formTitle = document.getElementById('production-form-title');
-        const productSelect = document.getElementById('production-product');
-        
-        if (!formContainer || !formTitle || !productSelect) {
-            console.error('Form elements not found');
-            return;
-        }
-
-        if (product) {
-            formTitle.textContent = `Record ${this.formatProductName(product)} Production`;
-            productSelect.value = product;
-            this.updateUnitForProduct(product);
-        } else {
-            formTitle.textContent = 'Record Production';
-        }
-        
-        formContainer.classList.remove('hidden');
-        formContainer.scrollIntoView({ behavior: 'smooth' });
-    },
-
-    updateUnitForProduct(product) {
-        const unitSelect = document.getElementById('production-unit');
-        if (!unitSelect) return;
-
-        const unitMap = {
-            'eggs': 'pieces',
-            'broilers': 'birds',
-            'layers': 'birds',
-            'manure': 'bags',
-            'crops': 'kg',
-            'other': 'units'
-        };
-
-        unitSelect.value = unitMap[product] || 'units';
-    },
-
-    hideProductionForm() {
-        const formContainer = document.getElementById('production-form-container');
-        if (formContainer) {
-            formContainer.classList.add('hidden');
-        }
-        const form = document.getElementById('production-form');
-        if (form) {
-            form.reset();
-        }
-    },
-
-    handleProductionSubmit(e) {
-        e.preventDefault();
-        
-        const formData = {
-            id: Date.now(),
-            date: document.getElementById('production-date').value,
-            product: document.getElementById('production-product').value,
-            quantity: parseInt(document.getElementById('production-quantity').value),
-            unit: document.getElementById('production-unit').value,
-            quality: document.getElementById('production-quality').value,
-            notes: document.getElementById('production-notes').value
-        };
-
-        // Validate data
-        if (!formData.date || !formData.product || formData.quantity <= 0) {
-            alert('Please fill in all required fields with valid data.');
-            return;
-        }
-
-        this.productionRecords.unshift(formData);
-        this.saveData();
-        this.renderModule();
-        
-        // ✅ SYNC WITH DASHBOARD AFTER SAVING PRODUCTION RECORD
-        this.syncStatsWithDashboard();
-        
-        // Add recent activity
-        this.addRecentActivity({
-            type: 'production_recorded',
-            record: formData
-        });
-        
-        if (window.coreModule && window.coreModule.showNotification) {
-            window.coreModule.showNotification('Production record added successfully!', 'success');
-        } else {
-            alert('Production record added!');
-        }
-    },
-
-    deleteProductionRecord(id) {
-        if (confirm('Are you sure you want to delete this production record?')) {
-            const record = this.productionRecords.find(record => record.id === id);
-            
-            this.productionRecords = this.productionRecords.filter(record => record.id !== id);
-            this.saveData();
-            this.renderModule();
-            
-            // ✅ SYNC WITH DASHBOARD AFTER DELETING PRODUCTION RECORD
-            this.syncStatsWithDashboard();
-            
-            // Add recent activity
-            if (record) {
-                this.addRecentActivity({
-                    type: 'production_deleted',
-                    record: record
-                });
-            }
-            
-            if (window.coreModule && window.coreModule.showNotification) {
-                window.coreModule.showNotification('Production record deleted!', 'success');
-            }
-        }
-    },
-
-    editProductionRecord(id) {
-        const record = this.productionRecords.find(record => record.id === id);
-        if (!record) return;
-
-        // For now, show a simple edit form - in a real app you'd populate the existing form
-        const newQuantity = prompt(`Edit quantity for ${record.product} (current: ${record.quantity} ${record.unit}):`, record.quantity);
-        if (newQuantity !== null && !isNaN(newQuantity)) {
-            const oldQuantity = record.quantity;
-            record.quantity = parseInt(newQuantity);
-            this.saveData();
-            this.renderModule();
-            
-            // ✅ SYNC WITH DASHBOARD AFTER EDITING PRODUCTION RECORD
-            this.syncStatsWithDashboard();
-            
-            // Add recent activity
-            this.addRecentActivity({
-                type: 'production_updated',
-                record: record,
-                oldQuantity: oldQuantity,
-                newQuantity: record.quantity
-            });
-            
-            if (window.coreModule && window.coreModule.showNotification) {
-                window.coreModule.showNotification('Production record updated!', 'success');
-            }
-        }
-    },
-
-    // ✅ UPDATED METHOD: Sync production stats with dashboard (no ProfileModule dependency)
-    syncStatsWithDashboard() {
-        const stats = this.calculateStats();
-        
-        // Update shared data structure
-        if (window.FarmModules && window.FarmModules.appData) {
-            if (!window.FarmModules.appData.profile) {
-                window.FarmModules.appData.profile = {};
-            }
-            if (!window.FarmModules.appData.profile.dashboardStats) {
-                window.FarmModules.appData.profile.dashboardStats = {};
-            }
-            
-            // Update production stats in shared data
-            Object.assign(window.FarmModules.appData.profile.dashboardStats, {
-                todayEggs: stats.todayEggs,
-                weekProduction: stats.weekProduction,
-                avgDailyProduction: stats.avgDaily,
-                totalProductionRecords: stats.totalRecords
-            });
-        }
-        
-        // Notify dashboard module if available
-        if (window.FarmModules && window.FarmModules.modules.dashboard) {
-            window.FarmModules.modules.dashboard.updateDashboardStats({
-                todayEggs: stats.todayEggs,
-                weekProduction: stats.weekProduction,
-                avgDailyProduction: stats.avgDaily,
-                totalProductionRecords: stats.totalRecords
-            });
-        }
-    },
-
-    // ✅ NEW METHOD: Add recent activity to dashboard
-    addRecentActivity(activityData) {
-        if (!window.FarmModules || !window.FarmModules.modules.dashboard) return;
-        
-        let activity;
-        
-        switch (activityData.type) {
-            case 'production_recorded':
-                activity = {
-                    type: 'production_recorded',
-                    message: `Production: ${activityData.record.quantity} ${activityData.record.unit} of ${activityData.record.product}`,
-                    icon: '🚜'
-                };
-                break;
-            case 'production_updated':
-                activity = {
-                    type: 'production_updated',
-                    message: `Updated: ${activityData.record.product} (${activityData.oldQuantity} → ${activityData.newQuantity} ${activityData.record.unit})`,
-                    icon: '✏️'
-                };
-                break;
-            case 'production_deleted':
-                activity = {
-                    type: 'production_deleted',
-                    message: `Deleted: ${activityData.record.product} production record`,
-                    icon: '🗑️'
-                };
-                break;
-        }
-        
-        if (activity) {
-            window.FarmModules.modules.dashboard.addRecentActivity(activity);
-        }
-    },
-
-    // ✅ NEW METHOD: Get production summary for other modules
-    getProductionSummary() {
-        const stats = this.calculateStats();
-        return {
-            ...stats,
-            recentProduction: this.productionRecords.slice(0, 5),
-            topProducts: this.getTopProducts(3),
-            productionTrend: this.getProductionTrend(7) // Last 7 days
-        };
-    },
-
-    // ✅ NEW METHOD: Get top products by quantity
-    getTopProducts(limit = 3) {
-        const productTotals = {};
-        
-        this.productionRecords.forEach(record => {
-            if (!productTotals[record.product]) {
-                productTotals[record.product] = 0;
-            }
-            productTotals[record.product] += record.quantity;
-        });
-
-        return Object.entries(productTotals)
-            .sort(([,a], [,b]) => b - a)
-            .slice(0, limit)
-            .map(([product, quantity]) => ({
-                product: this.formatProductName(product),
-                quantity: quantity,
-                icon: this.getProductIcon(product)
-            }));
-    },
-
-    // ✅ NEW METHOD: Get production trend data
-    getProductionTrend(days = 7) {
-        const trend = [];
-        
-        for (let i = days - 1; i >= 0; i--) {
-            const date = new Date();
-            date.setDate(date.getDate() - i);
-            const dateString = date.toISOString().split('T')[0];
-            
-            const dailyProduction = this.productionRecords
-                .filter(record => record.date === dateString)
-                .reduce((sum, record) => sum + record.quantity, 0);
-            
-            trend.push({
-                date: dateString,
-                quantity: dailyProduction,
-                records: this.productionRecords.filter(record => record.date === dateString).length
-            });
-        }
-        
-        return trend;
-    },
-
-    generateProductionReport() {
-        const totalProduction = this.productionRecords.reduce((sum, record) => sum + record.quantity, 0);
-        const eggProduction = this.productionRecords
-            .filter(record => record.product === 'eggs')
-            .reduce((sum, record) => sum + record.quantity, 0);
-        const poultryProduction = this.productionRecords
-            .filter(record => record.product === 'broilers' || record.product === 'layers')
-            .reduce((sum, record) => sum + record.quantity, 0);
-
-        // Quality breakdown
-        const qualityCounts = {};
-        this.productionRecords.forEach(record => {
-            qualityCounts[record.quality] = (qualityCounts[record.quality] || 0) + record.quantity;
-        });
-
-        let report = `📊 PRODUCTION REPORT\n\n`;
-        report += `Total Production: ${this.formatNumber(totalProduction)} units\n`;
-        report += `Egg Production: ${this.formatNumber(eggProduction)} pieces\n`;
-        report += `Poultry Production: ${this.formatNumber(poultryProduction)} birds\n`;
-        report += `Total Records: ${this.productionRecords.length}\n\n`;
-        
-        report += `Quality Breakdown:\n`;
-        Object.entries(qualityCounts).forEach(([quality, count]) => {
-            const percentage = totalProduction > 0 ? (count / totalProduction) * 100 : 0;
-            report += `• ${this.formatQuality(quality)}: ${this.formatNumber(count)} (${percentage.toFixed(1)}%)\n`;
-        });
-
-        report += `\nRecent Production (Last 5 records):\n`;
-        this.productionRecords.slice(0, 5).forEach(record => {
-            report += `• ${record.date}: ${this.formatNumber(record.quantity)} ${record.unit} of ${record.product} (${record.quality})\n`;
-        });
-
-        alert(report);
-    },
-
-    formatProductName(product) {
-        const names = {
-            'eggs': 'Eggs',
-            'broilers': 'Broilers',
-            'layers': 'Layers',
-            'manure': 'Manure',
-            'crops': 'Crops',
-            'other': 'Other'
-        };
-        return names[product] || product;
     },
 
     formatQuality(quality) {
@@ -707,14 +244,165 @@ const ProductionModule = {
             'excellent': 'Excellent',
             'grade-a': 'Grade A',
             'grade-b': 'Grade B',
-            'grade-c': 'Grade C',
             'rejects': 'Rejects'
         };
         return qualities[quality] || quality;
     },
 
-    formatNumber(number) {
-        return new Intl.NumberFormat().format(number);
+    setupEventListeners() {
+        // Production form
+        document.getElementById('production-form')?.addEventListener('submit', (e) => this.handleProductionSubmit(e));
+        
+        // Report button
+        document.getElementById('production-report-btn')?.addEventListener('click', () => this.generateProductionReport());
+        
+        // Modal controls
+        document.getElementById('close-production-report')?.addEventListener('click', () => this.hideProductionReportModal());
+        document.getElementById('close-production-report-btn')?.addEventListener('click', () => this.hideProductionReportModal());
+        document.getElementById('print-production-report')?.addEventListener('click', () => this.printProductionReport());
+    },
+
+    handleProductionSubmit(e) {
+        e.preventDefault();
+        
+        const formData = {
+            id: Date.now(),
+            date: new Date().toISOString().split('T')[0],
+            product: document.getElementById('product-type').value,
+            quantity: parseInt(document.getElementById('production-quantity').value),
+            unit: document.getElementById('production-unit').value,
+            quality: document.getElementById('production-quality').value,
+            notes: document.getElementById('production-notes').value || ''
+        };
+
+        this.productionRecords.unshift(formData);
+        this.saveData();
+        this.renderModule();
+        
+        if (window.coreModule) {
+            window.coreModule.showNotification('Production record saved successfully!', 'success');
+        }
+    },
+
+    generateProductionReport() {
+        const stats = this.calculateStats();
+        const recentRecords = this.productionRecords.slice(0, 10);
+
+        // Calculate product distribution
+        const productDistribution = {};
+        this.productionRecords.forEach(record => {
+            productDistribution[record.product] = (productDistribution[record.product] || 0) + record.quantity;
+        });
+
+        // Calculate quality distribution
+        const qualityDistribution = {};
+        this.productionRecords.forEach(record => {
+            qualityDistribution[record.quality] = (qualityDistribution[record.quality] || 0) + 1;
+        });
+
+        const reportContent = `
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: var(--text-primary); margin-bottom: 12px;">📊 Production Overview</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                    <div style="padding: 12px; background: #f0f9ff; border-radius: 8px;">
+                        <div style="font-weight: 600; color: #1e40af;">Total Records</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #1e40af;">${stats.totalRecords}</div>
+                    </div>
+                    <div style="padding: 12px; background: #f0fdf4; border-radius: 8px;">
+                        <div style="font-weight: 600; color: #166534;">Today's Eggs</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #166534;">${stats.totalEggs}</div>
+                    </div>
+                    <div style="padding: 12px; background: #fef3c7; border-radius: 8px;">
+                        <div style="font-weight: 600; color: #92400e;">Weekly Birds</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #92400e;">${stats.totalBirds}</div>
+                    </div>
+                    <div style="padding: 12px; background: #faf5ff; border-radius: 8px;">
+                        <div style="font-weight: 600; color: #7c3aed;">Avg Quality</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #7c3aed;">${stats.avgQuality}/5</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: var(--text-primary); margin-bottom: 12px;">📈 Product Distribution</h4>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    ${Object.entries(productDistribution).map(([product, quantity]) => `
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="font-size: 16px;">${this.getProductIcon(product)}</div>
+                                <span style="color: var(--text-primary); text-transform: capitalize;">${product}</span>
+                            </div>
+                            <span style="font-weight: 600; color: var(--text-primary);">${quantity} units</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: var(--text-primary); margin-bottom: 12px;">⭐ Quality Distribution</h4>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    ${Object.entries(qualityDistribution).map(([quality, count]) => `
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
+                            <span style="color: var(--text-primary);">${this.formatQuality(quality)}</span>
+                            <span style="font-weight: 600; color: var(--text-primary);">${count} records</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div>
+                <h4 style="color: var(--text-primary); margin-bottom: 12px;">📅 Recent Production Activity</h4>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    ${recentRecords.map(record => `
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary); text-transform: capitalize;">${record.product}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">${record.date} • ${this.formatQuality(record.quality)}</div>
+                            </div>
+                            <span style="font-weight: 600; color: var(--text-primary);">${record.quantity} ${record.unit}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
+        this.showProductionReportModal('Production Analysis Report', reportContent);
+    },
+
+    showProductionReportModal(title, content) {
+        document.getElementById('production-report-title').textContent = title;
+        document.getElementById('production-report-content').innerHTML = content;
+        document.getElementById('production-report-modal').classList.remove('hidden');
+    },
+
+    hideProductionReportModal() {
+        document.getElementById('production-report-modal').classList.add('hidden');
+    },
+
+    printProductionReport() {
+        const reportContent = document.getElementById('production-report-content').innerHTML;
+        const reportTitle = document.getElementById('production-report-title').textContent;
+        
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>${reportTitle}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
+                        h4 { color: #1a1a1a; margin-bottom: 10px; }
+                    </style>
+                </head>
+                <body>
+                    <h2>${reportTitle}</h2>
+                    <div>Generated on: ${new Date().toLocaleDateString()}</div>
+                    <hr>
+                    ${reportContent}
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
     },
 
     saveData() {
@@ -722,13 +410,6 @@ const ProductionModule = {
     }
 };
 
-// Register the module properly
 if (window.FarmModules) {
     window.FarmModules.registerModule('production', ProductionModule);
-    console.log('✅ Production module registered successfully');
-} else {
-    console.error('❌ FarmModules framework not available');
 }
-
-// Make it globally available for debugging
-window.ProductionModule = ProductionModule;
