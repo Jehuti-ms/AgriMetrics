@@ -758,4 +758,9 @@ FarmModules.registerModule('profile', {
     }
 });
 
+// IN modules/profile.js - ADD AT THE END:
+// Make sure both naming conventions work
+window.ProfileModule = this;
+window.profileInstance = this;
+
 console.log('✅ Profile module registered');
