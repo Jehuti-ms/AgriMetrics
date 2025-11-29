@@ -1,21 +1,18 @@
-// modules/broiler-mortality.js - UPDATED WITH SHARED DATA PATTERN
+// modules/broiler-mortality.js - CORRECTED VERSION
 console.log('Loading broiler-mortality module...');
 
 const BroilerMortalityModule = {
     name: 'broiler-mortality',
     initialized: false,
     mortalityRecords: [],
-    currentStock: 1000, // Starting stock
+    currentStock: 1000,
 
     initialize() {
         console.log('🐔 Initializing broiler mortality...');
         this.loadData();
         this.renderModule();
         this.initialized = true;
-        
-        // Sync initial stats with shared data
         this.syncStatsWithSharedData();
-        
         return true;
     },
 
@@ -29,77 +26,104 @@ const BroilerMortalityModule = {
 
     getDemoData() {
         return [
-            { id: 1, date: '2024-03-15', quantity: 2, cause: 'natural', age: 28, notes: 'Found during morning check' },
-            { id: 2, date: '2024-03-14', quantity: 1, cause: 'disease', age: 27, notes: 'Respiratory issues' },
-            { id: 3, date: '2024-03-13', quantity: 3, cause: 'predator', age: 26, notes: 'Security breach' }
+            { id: 1, date: '2024-03-15', quantity: 2, cause: 'natural', age: 28, notes: 'Found during morning check' }
         ];
     },
 
-    // ... (ALL THE RENDER METHODS REMAIN EXACTLY THE SAME - no changes needed)
-    // renderModule(), calculateStats(), renderMortalityList(), etc.
-    // ALL UI CODE STAYS THE SAME
+    renderModule() {
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
 
-    // ... (ALL EVENT HANDLER METHODS REMAIN EXACTLY THE SAME)
-    // setupEventListeners(), showMortalityForm(), handleMortalitySubmit(), etc.
-
-    // ... (ALL HELPER METHODS REMAIN EXACTLY THE SAME)
-    // formatCause(), getAlertColor(), getWeekNumber(), etc.
-
-    // UPDATED METHOD: Sync mortality stats with shared app data
-    syncStatsWithSharedData() {
         const stats = this.calculateStats();
+
+        contentArea.innerHTML = `
+            <div class="module-container">
+                <div class="module-header">
+                    <h1 class="module-title">Broiler Health & Mortality</h1>
+                    <p class="module-subtitle">Track bird health and losses</p>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">🐔</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.currentStock}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Current Stock</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">😔</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.totalLosses}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Losses</div>
+                    </div>
+                </div>
+
+                <!-- Simple Form -->
+                <div class="glass-card" style="padding: 24px; margin: 24px 0;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px;">Record Mortality</h3>
+                    <form id="mortality-form">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <label class="form-label">Number of Birds</label>
+                                <input type="number" class="form-input" id="mortality-quantity" min="1" max="${this.currentStock}" required>
+                            </div>
+                            <div>
+                                <label class="form-label">Cause</label>
+                                <select class="form-input" id="mortality-cause" required>
+                                    <option value="natural">Natural Causes</option>
+                                    <option value="disease">Disease</option>
+                                    <option value="predator">Predator</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-input" id="mortality-notes" rows="2" placeholder="Observations..."></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary">Record Loss</button>
+                    </form>
+                </div>
+
+                <!-- Recent Records -->
+                <div class="glass-card" style="padding: 24px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Recent Mortality Records</h3>
+                    <div id="mortality-records-list">
+                        ${this.renderMortalityList()}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        this.setupEventListeners();
+    },
+
+    calculateStats() {
         const totalLosses = this.mortalityRecords.reduce((sum, record) => sum + record.quantity, 0);
-        
-        // Update shared app data
-        if (window.FarmModules && window.FarmModules.appData) {
-            window.FarmModules.appData.profile = window.FarmModules.appData.profile || {};
-            window.FarmModules.appData.profile.dashboardStats = window.FarmModules.appData.profile.dashboardStats || {};
-            
-            // Update mortality-related stats in shared data
-            window.FarmModules.appData.profile.dashboardStats.totalBirds = this.currentStock;
-            window.FarmModules.appData.profile.dashboardStats.totalMortality = totalLosses;
-            window.FarmModules.appData.profile.dashboardStats.mortalityRate = parseFloat(stats.mortalityRate);
-            window.FarmModules.appData.profile.dashboardStats.totalMortalityRecords = this.mortalityRecords.length;
-            
-            // Calculate weekly mortality for trends
-            const weeklyMortality = this.getWeeklyMortality();
-            window.FarmModules.appData.profile.dashboardStats.weeklyMortality = weeklyMortality;
-            
-            console.log('📊 Mortality stats synced with shared data:', {
-                totalBirds: this.currentStock,
-                totalMortality: totalLosses,
-                mortalityRate: stats.mortalityRate
-            });
-            
-            // Notify other modules that mortality data has been updated
-            this.notifyDataUpdate();
+        return { totalLosses };
+    },
+
+    renderMortalityList() {
+        if (this.mortalityRecords.length === 0) {
+            return `<div style="text-align: center; color: var(--text-secondary); padding: 20px;">No mortality records yet</div>`;
         }
+
+        return this.mortalityRecords.slice(0, 5).map(record => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; margin-bottom: 8px;">
+                <div>
+                    <div style="font-weight: 600; color: var(--text-primary);">
+                        ${record.quantity} bird${record.quantity > 1 ? 's' : ''} • ${this.formatCause(record.cause)}
+                    </div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">
+                        ${record.date}
+                    </div>
+                </div>
+            </div>
+        `).join('');
     },
 
-    // NEW METHOD: Calculate weekly mortality
-    getWeeklyMortality() {
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-        
-        return this.mortalityRecords
-            .filter(record => new Date(record.date) >= oneWeekAgo)
-            .reduce((sum, record) => sum + record.quantity, 0);
+    setupEventListeners() {
+        document.getElementById('mortality-form')?.addEventListener('submit', (e) => this.handleMortalitySubmit(e));
     },
 
-    // NEW METHOD: Notify other modules about data updates
-    notifyDataUpdate() {
-        // Dispatch a custom event that other modules can listen for
-        const event = new CustomEvent('mortalityDataUpdated', {
-            detail: {
-                currentStock: this.currentStock,
-                mortalityRecords: this.mortalityRecords.length,
-                totalLosses: this.mortalityRecords.reduce((sum, record) => sum + record.quantity, 0)
-            }
-        });
-        document.dispatchEvent(event);
-    },
-
-    // UPDATED METHOD: Handle mortality submission
     handleMortalitySubmit(e) {
         e.preventDefault();
         
@@ -112,80 +136,43 @@ const BroilerMortalityModule = {
 
         const formData = {
             id: Date.now(),
-            date: document.getElementById('mortality-date').value,
+            date: new Date().toISOString().split('T')[0],
             quantity: quantity,
             cause: document.getElementById('mortality-cause').value,
-            age: parseInt(document.getElementById('mortality-age').value),
+            age: 30, // Default age
             notes: document.getElementById('mortality-notes').value
         };
 
-        // Update current stock
         this.currentStock -= quantity;
-
         this.mortalityRecords.unshift(formData);
         this.saveData();
         this.renderModule();
         
-        // SYNC WITH SHARED DATA - Update mortality stats
-        this.syncStatsWithSharedData();
-        
         if (window.coreModule) {
-            window.coreModule.showNotification(`Recorded ${quantity} bird loss. Stock updated.`, 'success');
+            window.coreModule.showNotification(`Recorded ${quantity} bird loss.`, 'success');
         }
     },
 
-    // UPDATED METHOD: Handle stock submission
-    handleStockSubmit(e) {
-        e.preventDefault();
-        
-        const quantity = parseInt(document.getElementById('stock-quantity').value);
-        
-        const formData = {
-            id: Date.now(),
-            date: document.getElementById('stock-date').value,
-            quantity: quantity,
-            source: document.getElementById('stock-source').value,
-            notes: document.getElementById('stock-notes').value
+    formatCause(cause) {
+        const causes = {
+            'natural': 'Natural Causes',
+            'disease': 'Disease',
+            'predator': 'Predator'
         };
-
-        // Update current stock
-        this.currentStock += quantity;
-
-        this.saveData();
-        this.renderModule();
-        
-        // SYNC WITH SHARED DATA - Update bird count
-        this.syncStatsWithSharedData();
-        
-        if (window.coreModule) {
-            window.coreModule.showNotification(`Added ${quantity} birds to stock.`, 'success');
-        }
+        return causes[cause] || cause;
     },
 
-    // UPDATED METHOD: Delete mortality record
-    deleteMortalityRecord(id) {
-        const record = this.mortalityRecords.find(record => record.id === id);
-        if (!record) return;
-
-        if (confirm(`Are you sure you want to delete this mortality record? This will restore ${record.quantity} birds to your stock.`)) {
-            // Restore birds to stock
-            this.currentStock += record.quantity;
+    syncStatsWithSharedData() {
+        const stats = this.calculateStats();
+        
+        if (window.FarmModules && window.FarmModules.appData) {
+            window.FarmModules.appData.profile = window.FarmModules.appData.profile || {};
+            window.FarmModules.appData.profile.dashboardStats = window.FarmModules.appData.profile.dashboardStats || {};
             
-            this.mortalityRecords = this.mortalityRecords.filter(record => record.id !== id);
-            this.saveData();
-            this.renderModule();
-            
-            // SYNC WITH SHARED DATA - Update stats after deletion
-            this.syncStatsWithSharedData();
-            
-            if (window.coreModule) {
-                window.coreModule.showNotification('Mortality record deleted. Stock updated.', 'success');
-            }
+            window.FarmModules.appData.profile.dashboardStats.totalBirds = this.currentStock;
+            window.FarmModules.appData.profile.dashboardStats.totalMortality = stats.totalLosses;
         }
     },
-
-    // ... (ALL OTHER METHODS REMAIN EXACTLY THE SAME)
-    // generateHealthReport(), saveData(), etc.
 
     saveData() {
         localStorage.setItem('farm-mortality-records', JSON.stringify(this.mortalityRecords));
