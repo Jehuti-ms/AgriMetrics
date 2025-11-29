@@ -1,4 +1,4 @@
-// modules/feed-record.js - FULLY WORKING
+// modules/feed-record.js - UPDATED WITH PROFILE SYNC
 console.log('Loading feed-record module...');
 
 const FeedRecordModule = {
@@ -13,6 +13,10 @@ const FeedRecordModule = {
         this.loadData();
         this.renderModule();
         this.initialized = true;
+        
+        // Sync initial stats with profile
+        this.syncStatsWithProfile();
+        
         return true;
     },
 
@@ -294,10 +298,21 @@ const FeedRecordModule = {
         const totalBirdsDays = this.feedRecords.reduce((sum, record) => sum + record.birdsFed, 0);
         const avgCostPerBird = totalBirdsDays > 0 ? totalCost / totalBirdsDays : 0;
 
+        // Calculate additional stats for profile sync
+        const lowStockItems = this.feedInventory.filter(item => item.currentStock <= item.minStock).length;
+        const outOfStockItems = this.feedInventory.filter(item => item.currentStock === 0).length;
+        const totalFeedCost = this.feedRecords.reduce((sum, record) => sum + record.cost, 0);
+        const totalFeedUsed = this.feedRecords.reduce((sum, record) => sum + record.quantity, 0);
+
         return { 
             totalStock, 
             thisWeekUsage: thisWeekUsage.toFixed(1), 
-            avgCostPerBird: avgCostPerBird.toFixed(3)
+            avgCostPerBird: avgCostPerBird.toFixed(3),
+            lowStockItems,
+            outOfStockItems,
+            totalFeedCost,
+            totalFeedUsed,
+            totalFeedRecords: this.feedRecords.length
         };
     },
 
@@ -635,6 +650,9 @@ const FeedRecordModule = {
         this.saveData();
         this.renderModule();
         
+        // SYNC WITH PROFILE - Update feed stats
+        this.syncStatsWithProfile();
+        
         if (window.coreModule) {
             window.coreModule.showNotification(`Recorded ${quantity}kg feed usage!`, 'success');
         }
@@ -653,6 +671,9 @@ const FeedRecordModule = {
         this.saveData();
         this.renderModule();
         
+        // SYNC WITH PROFILE - Update feed stats
+        this.syncStatsWithProfile();
+        
         if (window.coreModule) {
             window.coreModule.showNotification(`Added ${quantity}kg to ${this.formatFeedType(feedType)} feed stock!`, 'success');
         }
@@ -669,6 +690,9 @@ const FeedRecordModule = {
 
         this.saveData();
         this.renderModule();
+        
+        // SYNC WITH PROFILE - Update bird count
+        this.syncStatsWithProfile();
         
         if (window.coreModule) {
             const change = newCount - oldCount;
@@ -742,6 +766,24 @@ const FeedRecordModule = {
         }
 
         alert(report);
+    },
+
+    // NEW METHOD: Sync feed stats with user profile
+    syncStatsWithProfile() {
+        const stats = this.calculateStats();
+        
+        if (window.ProfileModule && window.profileInstance) {
+            window.profileInstance.updateStats({
+                totalBirds: this.birdsStock,
+                totalFeedStock: stats.totalStock,
+                lowFeedStockItems: stats.lowStockItems,
+                outOfFeedStockItems: stats.outOfStockItems,
+                totalFeedUsed: stats.totalFeedUsed,
+                totalFeedCost: stats.totalFeedCost,
+                totalFeedRecords: stats.totalFeedRecords,
+                weeklyFeedUsage: parseFloat(stats.thisWeekUsage)
+            });
+        }
     },
 
     formatCurrency(amount) {
