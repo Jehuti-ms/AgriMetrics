@@ -388,62 +388,61 @@ const InventoryCheckModule = {
         }
     },
 
-    generateInventoryReport() {
-        const stats = this.calculateStats();
-        
-        const reportContent = `
-            <div style="margin-bottom: 20px;">
-                <h4 style="color: var(--text-primary); margin-bottom: 12px;">Inventory Overview</h4>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
-                    <div style="padding: 12px; background: #f0f9ff; border-radius: 8px;">
-                        <div style="font-weight: 600; color: #1e40af;">Total Items</div>
-                        <div style="font-size: 18px; font-weight: bold; color: #1e40af;">${stats.totalItems}</div>
-                    </div>
-                    <div style="padding: 12px; background: #f0fdf4; border-radius: 8px;">
-                        <div style="font-weight: 600; color: #166534;">In Stock</div>
-                        <div style="font-size: 18px; font-weight: bold; color: #166534;">${stats.inStock}</div>
-                    </div>
-                    <div style="padding: 12px; background: #fef3c7; border-radius: 8px;">
-                        <div style="font-weight: 600; color: #92400e;">Low Stock</div>
-                        <div style="font-size: 18px; font-weight: bold; color: #92400e;">${stats.lowStockItems}</div>
-                    </div>
-                    <div style="padding: 12px; background: #faf5ff; border-radius: 8px;">
-                        <div style="font-weight: 600; color: #7c3aed;">Total Value</div>
-                        <div style="font-size: 18px; font-weight: bold; color: #7c3aed;">${this.formatCurrency(stats.totalValue)}</div>
-                    </div>
+    // In the generateInventoryReport method, replace inline styles with classes:
+generateInventoryReport() {
+    const stats = this.calculateStats();
+    
+    const reportContent = `
+        <div class="report-section">
+            <h4 class="report-section-title">Inventory Overview</h4>
+            <div class="stats-grid-compact">
+                <div class="stat-card-compact stat-primary">
+                    <div class="stat-label">Total Items</div>
+                    <div class="stat-value">${stats.totalItems}</div>
+                </div>
+                <div class="stat-card-compact stat-success">
+                    <div class="stat-label">In Stock</div>
+                    <div class="stat-value">${stats.inStock}</div>
+                </div>
+                <div class="stat-card-compact stat-warning">
+                    <div class="stat-label">Low Stock</div>
+                    <div class="stat-value">${stats.lowStockItems}</div>
+                </div>
+                <div class="stat-card-compact stat-info">
+                    <div class="stat-label">Total Value</div>
+                    <div class="stat-value">${this.formatCurrency(stats.totalValue)}</div>
                 </div>
             </div>
+        </div>
 
-            <div style="margin-bottom: 20px;">
-                <h4 style="color: var(--text-primary); margin-bottom: 12px;">Category Breakdown</h4>
-                <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
-                    ${this.categories.map(cat => {
-                        const categoryItems = this.inventory.filter(item => item.category === cat);
-                        const categoryValue = categoryItems.reduce((sum, item) => sum + (item.currentStock * item.cost), 0);
-                        
-                        return categoryItems.length > 0 ? `
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 6px;">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <div style="font-size: 16px;">${this.getCategoryIcon(cat)}</div>
-                                    <div>
-                                        <div style="font-weight: 600; color: var(--text-primary);">${this.formatCategory(cat)}</div>
-                                        <div style="font-size: 12px; color: var(--text-secondary);">${categoryItems.length} items</div>
-                                    </div>
-                                </div>
-                                <div style="text-align: right;">
-                                    <div style="font-weight: 600; color: var(--text-primary);">${this.formatCurrency(categoryValue)}</div>
+        <div class="report-section">
+            <h4 class="report-section-title">Category Breakdown</h4>
+            <div class="category-list">
+                ${this.categories.map(cat => {
+                    const categoryItems = this.inventory.filter(item => item.category === cat);
+                    const categoryValue = categoryItems.reduce((sum, item) => sum + (item.currentStock * item.cost), 0);
+                    
+                    return categoryItems.length > 0 ? `
+                        <div class="category-item">
+                            <div class="category-header">
+                                <span class="category-icon">${this.getCategoryIcon(cat)}</span>
+                                <div class="category-info">
+                                    <div class="category-name">${this.formatCategory(cat)}</div>
+                                    <div class="category-count">${categoryItems.length} items</div>
                                 </div>
                             </div>
-                        ` : '';
-                    }).join('')}
-                </div>
+                            <div class="category-value">${this.formatCurrency(categoryValue)}</div>
+                        </div>
+                    ` : '';
+                }).join('')}
             </div>
-        `;
+        </div>
+    `;
 
-        document.getElementById('inventory-report-content').innerHTML = reportContent;
-        this.showInventoryReportModal();
-    },
-
+    document.getElementById('inventory-report-content').innerHTML = reportContent;
+    this.showInventoryReportModal();
+}
+    
     printInventoryReport() {
         const reportContent = document.getElementById('inventory-report-content').innerHTML;
         const reportTitle = document.getElementById('inventory-report-title').textContent;
