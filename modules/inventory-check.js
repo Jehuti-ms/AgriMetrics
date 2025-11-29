@@ -1,4 +1,4 @@
-// modules/inventory-check.js - UPDATED WITH MODALS
+// modules/inventory-check.js - ADD MODAL REPORTS TO WORKING VERSION
 console.log('Loading inventory-check module...');
 
 const InventoryCheckModule = {
@@ -19,7 +19,75 @@ const InventoryCheckModule = {
         return true;
     },
 
-    // ... (previous loadData, getDemoData, renderModule methods remain the same) ...
+    loadData() {
+        const saved = localStorage.getItem('farm-inventory');
+        this.inventory = saved ? JSON.parse(saved) : this.getDemoData();
+    },
+
+    getDemoData() {
+        return [
+            { 
+                id: 1, 
+                name: 'Chicken Feed - Starter', 
+                category: 'feed', 
+                currentStock: 50, 
+                unit: 'kg', 
+                minStock: 20, 
+                cost: 2.5,
+                supplier: 'FeedCo',
+                lastRestocked: '2024-03-10',
+                notes: 'For chicks 0-3 weeks'
+            },
+            { 
+                id: 2, 
+                name: 'Egg Cartons - Large', 
+                category: 'packaging', 
+                currentStock: 200, 
+                unit: 'pcs', 
+                minStock: 50, 
+                cost: 0.5,
+                supplier: 'Packaging Inc',
+                lastRestocked: '2024-03-12',
+                notes: '30-dozen capacity'
+            },
+            { 
+                id: 3, 
+                name: 'Poultry Vaccines', 
+                category: 'medical', 
+                currentStock: 5, 
+                unit: 'bottles', 
+                minStock: 10, 
+                cost: 15,
+                supplier: 'VetSupply',
+                lastRestocked: '2024-03-05',
+                notes: 'Keep refrigerated'
+            },
+            { 
+                id: 4, 
+                name: 'Water Troughs', 
+                category: 'equipment', 
+                currentStock: 8, 
+                unit: 'pcs', 
+                minStock: 5, 
+                cost: 25,
+                supplier: 'FarmGear',
+                lastRestocked: '2024-02-28',
+                notes: '10L capacity'
+            },
+            { 
+                id: 5, 
+                name: 'Disinfectant Spray', 
+                category: 'cleaning', 
+                currentStock: 3, 
+                unit: 'bottles', 
+                minStock: 5, 
+                cost: 8,
+                supplier: 'CleanCo',
+                lastRestocked: '2024-03-08',
+                notes: 'For equipment cleaning'
+            }
+        ];
+    },
 
     renderModule() {
         const contentArea = document.getElementById('content-area');
@@ -253,7 +321,162 @@ const InventoryCheckModule = {
         this.setupEventListeners();
     },
 
-    // ... (previous calculateStats, getLowStockItems, renderInventoryList, etc. remain the same) ...
+    // KEEP ALL THE EXISTING METHODS EXACTLY AS THEY WERE WORKING
+    calculateStats() {
+        const totalItems = this.inventory.length;
+        const inStock = this.inventory.filter(item => item.currentStock > 0).length;
+        const totalValue = this.inventory.reduce((sum, item) => sum + (item.currentStock * item.cost), 0);
+        const lowStockItems = this.getLowStockItems().length;
+        const outOfStockItems = this.getOutOfStockItems().length;
+        
+        return { totalItems, inStock, totalValue, lowStockItems, outOfStockItems };
+    },
+
+    getLowStockItems() {
+        return this.inventory.filter(item => item.currentStock <= item.minStock && item.currentStock > 0);
+    },
+
+    getOutOfStockItems() {
+        return this.inventory.filter(item => item.currentStock === 0);
+    },
+
+    renderInventoryList() {
+        if (this.inventory.length === 0) {
+            return `
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No inventory items</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Add your first inventory item to get started</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                ${this.inventory.map(item => {
+                    const status = this.getStockStatus(item);
+                    const statusColor = status === 'Adequate' ? '#22c55e' : status === 'Low' ? '#f59e0b' : '#ef4444';
+                    const totalValue = item.currentStock * item.cost;
+                    
+                    return `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="font-size: 20px;">${this.getCategoryIcon(item.category)}</div>
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">${item.name}</div>
+                                    <div style="font-size: 14px; color: var(--text-secondary);">
+                                        ${this.formatCategory(item.category)} • ${item.supplier || 'No supplier'}
+                                        ${item.lastRestocked ? ` • Last: ${item.lastRestocked}` : ''}
+                                    </div>
+                                    ${item.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${item.notes}</div>` : ''}
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div style="text-align: right;">
+                                    <div style="font-weight: bold; color: var(--text-primary); font-size: 18px;">
+                                        ${item.currentStock} ${item.unit}
+                                    </div>
+                                    <div style="font-size: 14px; color: var(--text-secondary);">
+                                        Min: ${item.minStock} ${item.unit} • ${this.formatCurrency(totalValue)}
+                                    </div>
+                                </div>
+                                <div style="padding: 4px 12px; border-radius: 12px; background: ${statusColor}20; color: ${statusColor}; font-size: 12px; font-weight: 600;">
+                                    ${status} Stock
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn-icon update-stock" data-id="${item.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Update Stock">
+                                        ✏️
+                                    </button>
+                                    <button class="btn-icon delete-item" data-id="${item.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Delete Item">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    },
+
+    renderCategorySummary() {
+        const categoryData = {};
+        this.categories.forEach(cat => {
+            categoryData[cat] = {
+                count: 0,
+                totalValue: 0,
+                lowStock: 0
+            };
+        });
+
+        this.inventory.forEach(item => {
+            if (categoryData[item.category]) {
+                categoryData[item.category].count++;
+                categoryData[item.category].totalValue += item.currentStock * item.cost;
+                if (item.currentStock <= item.minStock) {
+                    categoryData[item.category].lowStock++;
+                }
+            }
+        });
+
+        return `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                ${this.categories.map(cat => {
+                    const data = categoryData[cat];
+                    return `
+                        <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                <div style="font-size: 20px;">${this.getCategoryIcon(cat)}</div>
+                                <div style="font-weight: 600; color: var(--text-primary);">${this.formatCategory(cat)}</div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span style="color: var(--text-secondary);">Items:</span>
+                                <span style="font-weight: 600; color: var(--text-primary);">${data.count}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span style="color: var(--text-secondary);">Value:</span>
+                                <span style="font-weight: 600; color: var(--text-primary);">${this.formatCurrency(data.totalValue)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Low Stock:</span>
+                                <span style="font-weight: 600; color: ${data.lowStock > 0 ? '#f59e0b' : '#22c55e'};">${data.lowStock}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    },
+
+    getStockStatus(item) {
+        if (item.currentStock === 0) return 'Out of Stock';
+        if (item.currentStock <= item.minStock) return 'Low';
+        return 'Adequate';
+    },
+
+    getCategoryIcon(category) {
+        const icons = {
+            'feed': '🌾',
+            'medical': '💊',
+            'packaging': '📦',
+            'equipment': '🔧',
+            'cleaning': '🧼',
+            'other': '📋'
+        };
+        return icons[category] || '📦';
+    },
+
+    formatCategory(category) {
+        const categories = {
+            'feed': 'Feed',
+            'medical': 'Medical',
+            'packaging': 'Packaging',
+            'equipment': 'Equipment',
+            'cleaning': 'Cleaning',
+            'other': 'Other'
+        };
+        return categories[category] || category;
+    },
 
     setupEventListeners() {
         // Form buttons
@@ -306,8 +529,148 @@ const InventoryCheckModule = {
         });
     },
 
-    // ... (previous form handling methods remain the same) ...
+    showInventoryForm() {
+        document.getElementById('inventory-form-container').classList.remove('hidden');
+        document.getElementById('inventory-form').reset();
+        document.getElementById('inventory-form-container').scrollIntoView({ behavior: 'smooth' });
+    },
 
+    hideInventoryForm() {
+        document.getElementById('inventory-form-container').classList.add('hidden');
+    },
+
+    showUpdateStockForm(id) {
+        const item = this.inventory.find(item => item.id === id);
+        if (!item) return;
+
+        document.getElementById('stock-update-container').classList.remove('hidden');
+        document.getElementById('update-item-id').value = item.id;
+        document.getElementById('update-item-name').textContent = item.name;
+        document.getElementById('update-item-details').textContent = `${this.formatCategory(item.category)} • ${item.supplier || 'No supplier'}`;
+        document.getElementById('current-stock-display').textContent = `${item.currentStock} ${item.unit}`;
+        document.getElementById('new-stock-level').value = item.currentStock;
+        document.getElementById('stock-update-form').reset();
+        
+        document.getElementById('stock-update-container').scrollIntoView({ behavior: 'smooth' });
+    },
+
+    hideStockUpdate() {
+        document.getElementById('stock-update-container').classList.add('hidden');
+    },
+
+    handleInventorySubmit(e) {
+        e.preventDefault();
+        
+        const formData = {
+            id: Date.now(),
+            name: document.getElementById('item-name').value,
+            category: document.getElementById('item-category').value,
+            currentStock: parseInt(document.getElementById('current-stock').value),
+            unit: document.getElementById('item-unit').value,
+            minStock: parseInt(document.getElementById('min-stock').value),
+            cost: parseFloat(document.getElementById('item-cost').value),
+            supplier: document.getElementById('item-supplier').value || '',
+            lastRestocked: new Date().toISOString().split('T')[0],
+            notes: document.getElementById('item-notes').value || ''
+        };
+
+        this.inventory.unshift(formData);
+        this.saveData();
+        this.renderModule();
+        
+        // SYNC WITH PROFILE - Update inventory stats
+        this.syncStatsWithProfile();
+        
+        if (window.coreModule) {
+            window.coreModule.showNotification('Inventory item added successfully!', 'success');
+        }
+    },
+
+    handleStockUpdate(e) {
+        e.preventDefault();
+        
+        const id = parseInt(document.getElementById('update-item-id').value);
+        const newStock = parseInt(document.getElementById('new-stock-level').value);
+        const reason = document.getElementById('stock-update-reason').value;
+
+        const item = this.inventory.find(item => item.id === id);
+        if (!item) return;
+
+        const oldStock = item.currentStock;
+        item.currentStock = newStock;
+        
+        if (reason === 'restock') {
+            item.lastRestocked = new Date().toISOString().split('T')[0];
+        }
+
+        this.saveData();
+        this.renderModule();
+        
+        // SYNC WITH PROFILE - Update stats after stock change
+        this.syncStatsWithProfile();
+        
+        if (window.coreModule) {
+            const change = newStock - oldStock;
+            const changeText = change > 0 ? `+${change}` : change;
+            window.coreModule.showNotification(`Stock updated: ${changeText} ${item.unit} (${reason})`, 'success');
+        }
+    },
+
+    deleteItem(id) {
+        const item = this.inventory.find(item => item.id === id);
+        if (!item) return;
+
+        if (confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`)) {
+            this.inventory = this.inventory.filter(item => item.id !== id);
+            this.saveData();
+            this.renderModule();
+            
+            // SYNC WITH PROFILE - Update stats after deletion
+            this.syncStatsWithProfile();
+            
+            if (window.coreModule) {
+                window.coreModule.showNotification('Item deleted successfully!', 'success');
+            }
+        }
+    },
+
+    quickRestock(id) {
+        const item = this.inventory.find(item => item.id === id);
+        if (!item) return;
+
+        const suggestedRestock = Math.max(item.minStock * 2, item.currentStock + 10);
+        const restockAmount = prompt(`Restock "${item.name}"\nCurrent: ${item.currentStock} ${item.unit}\nMin: ${item.minStock} ${item.unit}\nEnter amount to add:`, suggestedRestock.toString());
+        
+        if (restockAmount !== null && !isNaN(restockAmount)) {
+            const amount = parseInt(restockAmount);
+            item.currentStock += amount;
+            item.lastRestocked = new Date().toISOString().split('T')[0];
+            
+            this.saveData();
+            this.renderModule();
+            
+            // SYNC WITH PROFILE - Update stats after restock
+            this.syncStatsWithProfile();
+            
+            if (window.coreModule) {
+                window.coreModule.showNotification(`Restocked ${amount} ${item.unit} of ${item.name}`, 'success');
+            }
+        }
+    },
+
+    filterByCategory(category) {
+        const items = document.querySelectorAll('#inventory-list > div > div');
+        items.forEach(item => {
+            const itemCategory = item.querySelector('div > div:nth-child(2) > div:nth-child(2)')?.textContent;
+            if (!category || (itemCategory && itemCategory.includes(this.formatCategory(category)))) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    },
+
+    // REPLACE THE ALERT-BASED REPORT METHODS WITH MODAL VERSIONS:
     showStockCheck() {
         let report = '<div class="report-content">';
         report += '<h4 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">📦 Stock Check Report</h4>';
@@ -509,6 +872,7 @@ const InventoryCheckModule = {
         this.showReportsModal('Complete Inventory Report', report);
     },
 
+    // ADD THE NEW MODAL CONTROL METHODS:
     showReportsModal(title, content) {
         const modal = document.getElementById('reports-modal');
         const modalTitle = document.getElementById('reports-modal-title');
@@ -563,7 +927,31 @@ const InventoryCheckModule = {
         }
     },
 
-    // ... (previous syncStatsWithProfile, formatCurrency, saveData methods remain the same) ...
+    // KEEP THE EXISTING SYNC AND UTILITY METHODS:
+    syncStatsWithProfile() {
+        const stats = this.calculateStats();
+        
+        if (window.ProfileModule && window.profileInstance) {
+            window.profileInstance.updateStats({
+                totalInventoryItems: stats.totalItems,
+                inStockItems: stats.inStock,
+                lowStockItems: stats.lowStockItems,
+                outOfStockItems: stats.outOfStockItems,
+                inventoryValue: stats.totalValue
+            });
+        }
+    },
+
+    formatCurrency(amount) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(amount);
+    },
+
+    saveData() {
+        localStorage.setItem('farm-inventory', JSON.stringify(this.inventory));
+    }
 };
 
 if (window.FarmModules) {
