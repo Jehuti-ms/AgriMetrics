@@ -12,6 +12,26 @@ const DashboardModule = {
         return true;
     },
 
+     // Update profile stats with current data on dashboard load
+    if (window.ProfileModule && window.profileInstance) {
+        const sales = FarmModules.appData.sales || [];
+        const inventory = FarmModules.appData.inventory || [];
+        const feedRecords = FarmModules.appData.feedRecords || [];
+        const orders = FarmModules.appData.orders || [];
+        
+        const totalSalesValue = sales.reduce((sum, sale) => sum + (sale.amount || 0), 0);
+        const totalOrderValue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+        
+        window.profileInstance.updateStats({
+            totalTransactions: sales.length,
+            totalInventory: inventory.length,
+            totalFeedRecords: feedRecords.length,
+            totalOrders: orders.length,
+            totalSales: totalSalesValue + totalOrderValue
+        });
+    }
+}
+
     renderDashboard() {
         const contentArea = document.getElementById('content-area');
         if (!contentArea) return;
