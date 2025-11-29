@@ -1,4 +1,4 @@
-// modules/dashboard.js - UPDATED WITH PROFILE SYNC
+// modules/dashboard.js - UPDATED WITH SHARED DATA PATTERN
 console.log('Loading dashboard module...');
 
 const DashboardModule = {
@@ -10,7 +10,7 @@ const DashboardModule = {
         this.renderDashboard();
         this.initialized = true;
         
-        // Load and display stats from profile
+        // Load and display stats from shared data
         this.loadAndDisplayStats();
         
         return true;
@@ -372,9 +372,9 @@ const DashboardModule = {
         }
     },
 
-    // NEW METHOD: Load and display stats from profile
+    // UPDATED METHOD: Load and display stats from shared data
     loadAndDisplayStats() {
-        // Get stats from profile module
+        // Get stats from shared data
         const profileStats = this.getProfileStats();
         
         // Update dashboard stats
@@ -384,7 +384,7 @@ const DashboardModule = {
         this.updateRecentActivity(profileStats);
     },
 
-    // NEW METHOD: Get stats from profile module
+    // UPDATED METHOD: Get stats from shared data (no ProfileModule dependency)
     getProfileStats() {
         let stats = {
             totalIncome: 0,
@@ -400,15 +400,15 @@ const DashboardModule = {
             completedOrders: 0
         };
 
-        // Try to get stats from profile module
-        if (window.ProfileModule && window.profileInstance) {
-            const profileData = window.profileInstance.getProfileData();
-            if (profileData && profileData.stats) {
-                stats = { ...stats, ...profileData.stats };
+        // Try to get stats from shared FarmModules data
+        if (window.FarmModules && window.FarmModules.appData) {
+            const sharedStats = window.FarmModules.appData.profile?.dashboardStats;
+            if (sharedStats) {
+                stats = { ...stats, ...sharedStats };
             }
         }
 
-        // Fallback to localStorage if profile module not available
+        // Fallback to localStorage if shared data not available
         if (stats.totalIncome === 0) {
             const savedStats = localStorage.getItem('farm-dashboard-stats');
             if (savedStats) {
@@ -419,8 +419,57 @@ const DashboardModule = {
         return stats;
     },
 
-    // NEW METHOD: Update dashboard with current stats
-    updateDashboardStats(stats) {
+    // NEW METHOD: Update shared data (for other modules to call)
+    updateDashboardStats(newStats) {
+        // Update shared data structure
+        if (window.FarmModules && window.FarmModules.appData) {
+            if (!window.FarmModules.appData.profile) {
+                window.FarmModules.appData.profile = {};
+            }
+            if (!window.FarmModules.appData.profile.dashboardStats) {
+                window.FarmModules.appData.profile.dashboardStats = {};
+            }
+            
+            Object.assign(window.FarmModules.appData.profile.dashboardStats, newStats);
+        }
+
+        // Update the UI
+        this.updateDashboardDisplay(newStats);
+    },
+
+    // NEW METHOD: Add recent activity (for other modules to call)
+    addRecentActivity(activity) {
+        if (!window.FarmModules || !window.FarmModules.appData) return;
+
+        if (!window.FarmModules.appData.profile) {
+            window.FarmModules.appData.profile = {};
+        }
+        if (!window.FarmModules.appData.profile.dashboardStats) {
+            window.FarmModules.appData.profile.dashboardStats = {};
+        }
+        if (!window.FarmModules.appData.profile.dashboardStats.recentActivities) {
+            window.FarmModules.appData.profile.dashboardStats.recentActivities = [];
+        }
+
+        // Add new activity to beginning of array
+        window.FarmModules.appData.profile.dashboardStats.recentActivities.unshift({
+            id: Date.now(),
+            timestamp: new Date().toISOString(),
+            ...activity
+        });
+
+        // Keep only last 10 activities
+        if (window.FarmModules.appData.profile.dashboardStats.recentActivities.length > 10) {
+            window.FarmModules.appData.profile.dashboardStats.recentActivities = 
+                window.FarmModules.appData.profile.dashboardStats.recentActivities.slice(0, 10);
+        }
+
+        // Update UI
+        this.updateRecentActivity(this.getProfileStats());
+    },
+
+    // UPDATED METHOD: Update dashboard display with current stats
+    updateDashboardDisplay(stats) {
         // Update main stats cards
         this.updateStatCard('total-revenue', this.formatCurrency(stats.totalRevenue || stats.totalIncome || 0));
         this.updateStatCard('total-expenses', this.formatCurrency(stats.totalExpenses || 0));
@@ -451,7 +500,7 @@ const DashboardModule = {
         }
     },
 
-    // NEW METHOD: Update individual stat card
+    // UPDATED METHOD: Update individual stat card
     updateStatCard(elementId, value) {
         const element = document.getElementById(elementId);
         if (element) {
@@ -464,52 +513,65 @@ const DashboardModule = {
         }
     },
 
-    // NEW METHOD: Update recent activity section
+    // UPDATED METHOD: Update recent activity section
     updateRecentActivity(stats) {
         const activityContent = document.getElementById('activity-content');
         if (!activityContent) return;
 
+        // Get activities from shared data
         const activities = [];
+        const recentActivities = window.FarmModules?.appData?.profile?.dashboardStats?.recentActivities || [];
 
-        // Generate activity items based on stats
-        if (stats.totalOrders > 0) {
-            activities.push({
-                icon: '📋',
-                text: `${stats.completedOrders || 0} orders completed`,
-                time: 'Recently'
+        if (recentActivities.length > 0) {
+            // Use activities from shared data
+            recentActivities.forEach(activity => {
+                activities.push({
+                    icon: activity.icon || '📊',
+                    text: activity.message || activity.text || 'Activity',
+                    time: this.formatTimeAgo(activity.timestamp)
+                });
             });
-        }
+        } else {
+            // Generate activity items based on stats as fallback
+            if (stats.totalOrders > 0) {
+                activities.push({
+                    icon: '📋',
+                    text: `${stats.completedOrders || 0} orders completed`,
+                    time: 'Recently'
+                });
+            }
 
-        if (stats.totalRevenue > 0) {
-            activities.push({
-                icon: '💰',
-                text: `${this.formatCurrency(stats.totalRevenue)} total revenue`,
-                time: 'Updated'
-            });
-        }
+            if (stats.totalRevenue > 0) {
+                activities.push({
+                    icon: '💰',
+                    text: `${this.formatCurrency(stats.totalRevenue)} total revenue`,
+                    time: 'Updated'
+                });
+            }
 
-        if (stats.totalInventoryItems > 0) {
-            activities.push({
-                icon: '📦',
-                text: `${stats.totalInventoryItems} inventory items managed`,
-                time: 'Current'
-            });
-        }
+            if (stats.totalInventoryItems > 0) {
+                activities.push({
+                    icon: '📦',
+                    text: `${stats.totalInventoryItems} inventory items managed`,
+                    time: 'Current'
+                });
+            }
 
-        if (stats.totalBirds > 0) {
-            activities.push({
-                icon: '🐔',
-                text: `${stats.totalBirds} birds in stock`,
-                time: 'Active'
-            });
-        }
+            if (stats.totalBirds > 0) {
+                activities.push({
+                    icon: '🐔',
+                    text: `${stats.totalBirds} birds in stock`,
+                    time: 'Active'
+                });
+            }
 
-        if (stats.totalCustomers > 0) {
-            activities.push({
-                icon: '👥',
-                text: `${stats.totalCustomers} customers registered`,
-                time: 'Total'
-            });
+            if (stats.totalCustomers > 0) {
+                activities.push({
+                    icon: '👥',
+                    text: `${stats.totalCustomers} customers registered`,
+                    time: 'Total'
+                });
+            }
         }
 
         if (activities.length === 0) {
@@ -540,7 +602,19 @@ const DashboardModule = {
         `;
     },
 
-    // NEW METHOD: Force refresh stats (can be called from other modules)
+    // NEW METHOD: Format time ago for activity timestamps
+    formatTimeAgo(timestamp) {
+        const now = new Date();
+        const time = new Date(timestamp);
+        const diffInSeconds = Math.floor((now - time) / 1000);
+        
+        if (diffInSeconds < 60) return 'Just now';
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    },
+
+    // UPDATED METHOD: Force refresh stats (can be called from other modules)
     refreshStats() {
         this.loadAndDisplayStats();
     },
