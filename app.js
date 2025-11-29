@@ -1,4 +1,4 @@
-// app.js - PROPER MOBILE PWA NAVIGATION WITH USER PREFERENCES
+// app.js - UPDATED WITH COMPLETE PROFILEMODULE FALLBACK
 console.log('Loading main app...');
 
 class FarmManagementApp {
@@ -72,7 +72,7 @@ class FarmManagementApp {
                 this.userPreferences = savedPrefs ? JSON.parse(savedPrefs) : this.getDefaultPreferences();
                 console.log('⚠️ ProfileModule not available, using localStorage fallback');
                 
-                // Create a simple ProfileModule fallback for other modules to use
+                // Create a complete ProfileModule fallback for other modules to use
                 this.createProfileModuleFallback();
             }
             
@@ -101,16 +101,23 @@ class FarmManagementApp {
                 totalRevenue: 0,
                 pendingOrders: 0,
                 totalCustomers: 0,
-                totalProducts: 0
+                totalProducts: 0,
+                monthlyRevenue: 0,
+                monthlyOrders: 0,
+                avgOrderValue: 0,
+                completedOrders: 0,
+                paidOrders: 0
             }
         };
     }
 
     createProfileModuleFallback() {
-        // Create a simple ProfileModule for other modules to use
+        // Create a complete ProfileModule with all methods modules expect
         if (typeof ProfileModule === 'undefined') {
             window.ProfileModule = {
                 userPreferences: this.userPreferences,
+                
+                // Core methods
                 loadUserPreferences: () => this.userPreferences,
                 getUserPreferences: () => this.userPreferences,
                 updatePreference: (key, value) => {
@@ -118,6 +125,8 @@ class FarmManagementApp {
                     localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
                     console.log(`⚙️ Preference updated: ${key} = ${value}`);
                 },
+                
+                // Stats methods that modules expect
                 updateBusinessStats: (module, stats) => {
                     if (!this.userPreferences.dashboardStats) {
                         this.userPreferences.dashboardStats = {};
@@ -127,10 +136,59 @@ class FarmManagementApp {
                     });
                     localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
                     console.log('📊 Stats updated for', module + ':', stats);
+                },
+                
+                updateStats: (stats) => {
+                    if (!this.userPreferences.dashboardStats) {
+                        this.userPreferences.dashboardStats = {};
+                    }
+                    Object.keys(stats).forEach(key => {
+                        this.userPreferences.dashboardStats[key] = stats[key];
+                    });
+                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
+                    console.log('📊 Stats updated:', stats);
+                },
+                
+                getStats: () => {
+                    return this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
+                },
+                
+                // Dashboard module expects this method
+                getProfileData: () => {
+                    return {
+                        farmName: this.userPreferences.businessName || 'My Farm',
+                        farmerName: 'Farm Manager',
+                        stats: this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats
+                    };
+                },
+                
+                getProfileStats: () => {
+                    return this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
+                },
+                
+                // For compatibility with existing modules
+                getBusinessOverview: () => {
+                    const stats = this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
+                    return {
+                        totalOrders: stats.totalOrders || 0,
+                        totalRevenue: stats.totalRevenue || 0,
+                        pendingOrders: stats.pendingOrders || 0,
+                        totalCustomers: stats.totalCustomers || 0,
+                        totalProducts: stats.totalProducts || 0,
+                        monthlyRevenue: stats.monthlyRevenue || 0,
+                        monthlyOrders: stats.monthlyOrders || 0
+                    };
+                },
+                
+                // Initialize method for compatibility
+                initialize: () => {
+                    console.log('✅ ProfileModule fallback initialized');
+                    return true;
                 }
             };
+            
             window.profileInstance = window.ProfileModule;
-            console.log('✅ ProfileModule fallback created');
+            console.log('✅ Complete ProfileModule fallback created');
         }
     }
 
