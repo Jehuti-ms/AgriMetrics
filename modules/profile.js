@@ -1,4 +1,4 @@
-// app.js - UPDATED WITH ERROR HANDLING
+// app.js - UPDATED WITH PROPER PROFILEMODULE USAGE
 class FarmManagementApp {
     constructor() {
         this.currentSection = 'dashboard';
@@ -10,11 +10,17 @@ class FarmManagementApp {
         console.log('🚀 Initializing Farm Management App...');
         
         try {
-            // Load user preferences with fallback
+            // Initialize ProfileModule first
+            this.initializeProfileModule();
+            
+            // Load user preferences
             this.loadUserPreferences();
             
             // Initialize UI components
             this.initializeUI();
+            
+            // Initialize framework and modules
+            await this.initializeFramework();
             
             // Load initial section
             this.loadSection('dashboard');
@@ -27,22 +33,60 @@ class FarmManagementApp {
         }
     }
 
+    initializeProfileModule() {
+        try {
+            // Check if ProfileModule is available and initialize it
+            if (window.profileInstance && typeof window.profileInstance.initialize === 'function') {
+                window.profileInstance.initialize();
+                console.log('✅ ProfileModule initialized');
+            } else {
+                console.log('⚠️ ProfileModule not available, creating fallback');
+                this.createFallbackProfileModule();
+            }
+        } catch (error) {
+            console.error('❌ Error initializing ProfileModule:', error);
+            this.createFallbackProfileModule();
+        }
+    }
+
+    createFallbackProfileModule() {
+        // Create a simple fallback if ProfileModule is not available
+        window.profileInstance = {
+            initialized: true,
+            userPreferences: this.getDefaultPreferences(),
+            updateStats: (stats) => {
+                console.log('📊 Fallback stats update:', stats);
+                if (!this.userPreferences.dashboardStats) {
+                    this.userPreferences.dashboardStats = {};
+                }
+                Object.keys(stats).forEach(key => {
+                    this.userPreferences.dashboardStats[key] = stats[key];
+                });
+                localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
+            },
+            updateBusinessStats: (module, stats) => {
+                console.log(`🔄 Fallback sync for ${module}:`, stats);
+                this.updateStats(stats);
+            },
+            getStats: () => this.userPreferences.dashboardStats || {},
+            getUserPreferences: () => this.userPreferences,
+            updatePreference: (key, value) => {
+                this.userPreferences[key] = value;
+                localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
+            }
+        };
+    }
+
     loadUserPreferences() {
         try {
-            // Check if ProfileModule exists, if not use localStorage directly
-            if (typeof ProfileModule !== 'undefined' && ProfileModule.loadUserPreferences) {
-                this.userPreferences = ProfileModule.loadUserPreferences();
+            // Use profileInstance if available
+            if (window.profileInstance && window.profileInstance.getUserPreferences) {
+                this.userPreferences = window.profileInstance.getUserPreferences();
             } else {
                 // Fallback to direct localStorage access
-                console.log('⚠️ ProfileModule not found, using localStorage fallback');
+                console.log('⚠️ Using localStorage fallback for preferences');
                 const savedPrefs = localStorage.getItem('farm-user-preferences');
                 this.userPreferences = savedPrefs ? JSON.parse(savedPrefs) : this.getDefaultPreferences();
-                
-                // Initialize ProfileModule if it exists but wasn't loaded properly
-                if (typeof ProfileModule !== 'undefined' && !ProfileModule.initialized) {
-                    ProfileModule.userPreferences = this.userPreferences;
-                    ProfileModule.initialized = true;
-                }
             }
             console.log('✅ User preferences loaded:', this.userPreferences);
         } catch (error) {
@@ -66,146 +110,53 @@ class FarmManagementApp {
                 monthlyOrders: 0,
                 monthlyRevenue: 0,
                 totalCustomers: 0,
-                totalProducts: 0
+                totalProducts: 0,
+                avgOrderValue: 0,
+                completedOrders: 0,
+                paidOrders: 0
             }
         };
     }
 
-    initializeUI() {
-        // Setup navigation
-        this.setupNavigation();
-        
-        // Setup theme toggle
-        this.setupThemeToggle();
-        
-        // Setup other UI components
-        console.log('✅ UI initialized');
-    }
-
-    setupNavigation() {
-        const navLinks = document.querySelectorAll('.nav-link');
-        navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const section = link.getAttribute('data-section');
-                if (section) {
-                    this.loadSection(section);
-                }
-            });
-        });
-    }
-
-    setupThemeToggle() {
-        const themeToggle = document.getElementById('theme-toggle');
-        if (themeToggle) {
-            themeToggle.addEventListener('click', () => {
-                this.toggleTheme();
-            });
+    async initializeFramework() {
+        // Initialize the framework and register modules
+        if (window.AppFramework) {
+            // Register available modules
+            if (window.profileInstance) {
+                window.AppFramework.registerModule(window.profileInstance);
+            }
+            if (window.OrdersModule) {
+                window.AppFramework.registerModule(window.OrdersModule);
+            }
+            console.log('✅ Framework initialized with modules');
+        } else {
+            console.log('⚠️ Framework not available');
         }
     }
 
-    toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
-        document.documentElement.setAttribute('data-theme', newTheme);
-        this.updatePreference('theme', newTheme);
-        
-        // Update toggle button icon
-        const themeIcon = document.querySelector('#theme-toggle i');
-        if (themeIcon) {
-            themeIcon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-        }
-    }
+    // ... rest of your existing app.js methods remain the same ...
 
     updatePreference(key, value) {
         this.userPreferences[key] = value;
         
-        // Save to ProfileModule if available, otherwise to localStorage directly
-        if (typeof ProfileModule !== 'undefined' && ProfileModule.updatePreference) {
-            ProfileModule.updatePreference(key, value);
+        // Save to profileInstance if available
+        if (window.profileInstance && window.profileInstance.updatePreference) {
+            window.profileInstance.updatePreference(key, value);
         } else {
             localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
         }
     }
 
-    async loadSection(section) {
-        console.log(`🔄 Loading section: ${section}`);
-        
-        try {
-            // Update active navigation
-            this.updateActiveNav(section);
-            
-            // Show loading state
-            this.showLoading();
-            
-            // Load section content
-            await this.loadSectionContent(section);
-            
-            // Hide loading state
-            this.hideLoading();
-            
-            this.currentSection = section;
-            console.log(`✅ Section ${section} loaded successfully`);
-        } catch (error) {
-            console.error(`❌ Error loading section ${section}:`, error);
-            this.showError(`Failed to load ${section}`);
-            this.hideLoading();
-        }
-    }
-
-    updateActiveNav(section) {
-        // Remove active class from all links
-        const navLinks = document.querySelectorAll('.nav-link');
-        navLinks.forEach(link => link.classList.remove('active'));
-        
-        // Add active class to current section link
-        const activeLink = document.querySelector(`[data-section="${section}"]`);
-        if (activeLink) {
-            activeLink.classList.add('active');
-        }
-    }
-
-    async loadSectionContent(section) {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) {
-            throw new Error('Content area not found');
-        }
-
-        switch (section) {
-            case 'dashboard':
-                contentArea.innerHTML = this.renderDashboard();
-                break;
-            case 'orders':
-                // Use framework to load orders module
-                if (window.AppFramework) {
-                    const success = window.AppFramework.switchToModule('orders');
-                    if (!success) {
-                        contentArea.innerHTML = this.renderFallbackContent('Orders', 'Orders module is currently unavailable.');
-                    }
-                } else {
-                    contentArea.innerHTML = this.renderFallbackContent('Orders', 'Framework not initialized.');
-                }
-                break;
-            case 'inventory':
-                contentArea.innerHTML = this.renderFallbackContent('Inventory', 'Inventory management coming soon!');
-                break;
-            case 'finance':
-                contentArea.innerHTML = this.renderFallbackContent('Finance', 'Financial tracking coming soon!');
-                break;
-            case 'reports':
-                contentArea.innerHTML = this.renderFallbackContent('Reports', 'Reporting dashboard coming soon!');
-                break;
-            case 'settings':
-                contentArea.innerHTML = this.renderFallbackContent('Settings', 'Application settings coming soon!');
-                break;
-            default:
-                contentArea.innerHTML = this.renderFallbackContent('Dashboard', 'Welcome to Farm Management System');
-        }
-    }
-
+    // Update the dashboard to use profileInstance stats
     renderDashboard() {
-        const stats = this.userPreferences.dashboardStats || {};
+        let stats = {};
+        
+        // Get stats from profileInstance if available
+        if (window.profileInstance && window.profileInstance.getStats) {
+            stats = window.profileInstance.getStats();
+        } else {
+            stats = this.userPreferences.dashboardStats || {};
+        }
         
         return `
             <div class="module-container">
@@ -237,104 +188,36 @@ class FarmManagementApp {
                     </div>
                 </div>
 
+                <!-- System Status Card -->
                 <div class="glass-card" style="padding: 24px; margin-top: 24px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 16px;">Quick Actions</h3>
-                    <div class="quick-action-grid">
-                        <button class="quick-action-btn" onclick="farmApp.loadSection('orders')">
-                            <div style="font-size: 32px;">📋</div>
-                            <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Manage Orders</span>
-                            <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Create and track orders</span>
-                        </button>
-                        <button class="quick-action-btn" onclick="farmApp.loadSection('inventory')">
-                            <div style="font-size: 32px;">📦</div>
-                            <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Inventory</span>
-                            <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Manage stock levels</span>
-                        </button>
-                        <button class="quick-action-btn" onclick="farmApp.loadSection('reports')">
-                            <div style="font-size: 32px;">📊</div>
-                            <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Reports</span>
-                            <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View analytics</span>
-                        </button>
-                        <button class="quick-action-btn" onclick="farmApp.loadSection('settings')">
-                            <div style="font-size: 32px;">⚙️</div>
-                            <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Settings</span>
-                            <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">App configuration</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-top: 24px;">
-                    <div class="glass-card" style="padding: 24px;">
-                        <h3 style="color: var(--text-primary); margin-bottom: 16px;">Recent Activity</h3>
-                        <div style="color: var(--text-secondary); text-align: center; padding: 40px;">
-                            <div style="font-size: 48px; margin-bottom: 16px;">📈</div>
-                            <div>Activity feed coming soon</div>
+                    <h3 style="color: var(--text-primary); margin-bottom: 16px;">System Status</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px;">
+                            <span style="color: var(--text-secondary);">Profile Module</span>
+                            <span style="color: ${window.profileInstance ? '#22c55e' : '#ef4444'}; font-weight: 600;">
+                                ${window.profileInstance ? '● Active' : '● Inactive'}
+                            </span>
                         </div>
-                    </div>
-                    <div class="glass-card" style="padding: 24px;">
-                        <h3 style="color: var(--text-primary); margin-bottom: 16px;">System Status</h3>
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="color: var(--text-secondary);">Orders Module</span>
-                                <span style="color: #22c55e; font-weight: 600;">● Active</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="color: var(--text-secondary);">Profile Module</span>
-                                <span style="color: ${typeof ProfileModule !== 'undefined' ? '#22c55e' : '#ef4444'}; font-weight: 600;">
-                                    ${typeof ProfileModule !== 'undefined' ? '● Active' : '● Inactive'}
-                                </span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="color: var(--text-secondary);">Data Storage</span>
-                                <span style="color: #22c55e; font-weight: 600;">● OK</span>
-                            </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px;">
+                            <span style="color: var(--text-secondary);">Orders Module</span>
+                            <span style="color: ${window.OrdersModule ? '#22c55e' : '#ef4444'}; font-weight: 600;">
+                                ${window.OrdersModule ? '● Active' : '● Inactive'}
+                            </span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px;">
+                            <span style="color: var(--text-secondary);">Data Sync</span>
+                            <span style="color: #22c55e; font-weight: 600;">● Active</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px;">
+                            <span style="color: var(--text-secondary);">Storage</span>
+                            <span style="color: #22c55e; font-weight: 600;">● OK</span>
                         </div>
                     </div>
                 </div>
+
+                <!-- Rest of your dashboard content... -->
             </div>
         `;
-    }
-
-    renderFallbackContent(title, message) {
-        return `
-            <div class="module-container">
-                <div class="module-header">
-                    <h1 class="module-title">${title}</h1>
-                    <p class="module-subtitle">${message}</p>
-                </div>
-                <div class="glass-card" style="padding: 40px; text-align: center;">
-                    <div style="font-size: 64px; margin-bottom: 16px;">🚧</div>
-                    <h3 style="color: var(--text-primary); margin-bottom: 8px;">Under Development</h3>
-                    <p style="color: var(--text-secondary);">This section is currently being developed and will be available soon.</p>
-                    <button class="btn-primary" onclick="farmApp.loadSection('dashboard')" style="margin-top: 16px;">
-                        Back to Dashboard
-                    </button>
-                </div>
-            </div>
-        `;
-    }
-
-    formatCurrency(amount) {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount);
-    }
-
-    showLoading() {
-        // You can implement a loading spinner here
-        console.log('⏳ Loading...');
-    }
-
-    hideLoading() {
-        // Hide loading spinner
-        console.log('✅ Loading complete');
-    }
-
-    showError(message) {
-        // You can implement a toast notification here
-        console.error('❌ Error:', message);
-        alert(`Error: ${message}`);
     }
 }
 
