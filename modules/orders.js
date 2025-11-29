@@ -1,4 +1,4 @@
-// modules/orders.js - UPDATED WITH SHARED DATA PATTERN
+// modules/orders.js - COMPLETE WORKING VERSION
 console.log('Loading orders module...');
 
 const OrdersModule = {
@@ -6,93 +6,43 @@ const OrdersModule = {
     initialized: false,
     orders: [],
     customers: [],
-    products: [],
-    currentView: 'orders-overview',
 
     initialize() {
         console.log('📋 Initializing orders...');
         this.loadData();
         this.renderModule();
         this.initialized = true;
-        this.syncStatsWithDashboard();
         return true;
     },
 
     loadData() {
         const savedOrders = localStorage.getItem('farm-orders');
         const savedCustomers = localStorage.getItem('farm-customers');
-        const savedProducts = localStorage.getItem('farm-products');
         
         this.orders = savedOrders ? JSON.parse(savedOrders) : this.getDemoOrders();
         this.customers = savedCustomers ? JSON.parse(savedCustomers) : this.getDemoCustomers();
-        this.products = savedProducts ? JSON.parse(savedProducts) : this.getDemoProducts();
     },
 
     getDemoOrders() {
         return [
             {
                 id: 1,
-                orderNumber: 'ORD-001',
                 customerId: 1,
                 date: '2024-03-15',
+                items: [
+                    { productId: 1, productName: 'Fresh Eggs', quantity: 50, price: 0.25 }
+                ],
+                totalAmount: 12.50,
                 status: 'completed',
-                items: [
-                    { productId: 1, quantity: 20, unitPrice: 8.50, total: 170 },
-                    { productId: 2, quantity: 5, unitPrice: 12.00, total: 60 }
-                ],
-                totalAmount: 230,
-                paymentStatus: 'paid',
-                deliveryDate: '2024-03-16',
-                notes: 'Regular customer - prompt payment'
-            },
-            {
-                id: 2,
-                orderNumber: 'ORD-002',
-                customerId: 2,
-                date: '2024-03-14',
-                status: 'processing',
-                items: [
-                    { productId: 3, quantity: 100, unitPrice: 0.25, total: 25 }
-                ],
-                totalAmount: 25,
-                paymentStatus: 'pending',
-                deliveryDate: '2024-03-17',
-                notes: 'New customer - follow up'
-            },
-            {
-                id: 3,
-                orderNumber: 'ORD-003',
-                customerId: 3,
-                date: '2024-03-13',
-                status: 'pending',
-                items: [
-                    { productId: 1, quantity: 50, unitPrice: 8.00, total: 400 },
-                    { productId: 4, quantity: 10, unitPrice: 5.00, total: 50 }
-                ],
-                totalAmount: 450,
-                paymentStatus: 'pending',
-                deliveryDate: '2024-03-20',
-                notes: 'Bulk order - confirm stock'
+                notes: 'Regular weekly order'
             }
         ];
     },
 
     getDemoCustomers() {
         return [
-            { id: 1, name: 'Restaurant A', email: 'orders@restauranta.com', phone: '+1234567890', address: '123 Main St, City', type: 'restaurant' },
-            { id: 2, name: 'Local Market', email: 'produce@localmarket.com', phone: '+1234567891', address: '456 Market Ave, Town', type: 'retail' },
-            { id: 3, name: 'Hotel Grand', email: 'procurement@hotelgrand.com', phone: '+1234567892', address: '789 Luxury Blvd, City', type: 'hotel' },
-            { id: 4, name: 'Individual Customer', email: 'john@email.com', phone: '+1234567893', address: '321 Home St, Village', type: 'individual' }
-        ];
-    },
-
-    getDemoProducts() {
-        return [
-            { id: 1, name: 'Broilers', category: 'poultry', unit: 'birds', price: 8.50, inStock: true, stock: 150, minStock: 20 },
-            { id: 2, name: 'Layers', category: 'poultry', unit: 'birds', price: 12.00, inStock: true, stock: 45, minStock: 10 },
-            { id: 3, name: 'Eggs', category: 'eggs', unit: 'pieces', price: 0.25, inStock: true, stock: 500, minStock: 100 },
-            { id: 4, name: 'Manure', category: 'fertilizer', unit: 'bags', price: 5.00, inStock: true, stock: 30, minStock: 5 },
-            { id: 5, name: 'Chicken Feed', category: 'feed', unit: 'kg', price: 2.50, inStock: false, stock: 0, minStock: 50 }
+            { id: 1, name: 'Local Market', contact: '555-0123', address: '123 Main St' },
+            { id: 2, name: 'Restaurant A', contact: '555-0456', address: '456 Oak Ave' }
         ];
     },
 
@@ -100,478 +50,369 @@ const OrdersModule = {
         const contentArea = document.getElementById('content-area');
         if (!contentArea) return;
 
-        if (this.currentView === 'customer-management') {
-            contentArea.innerHTML = this.renderCustomerManagement();
-            this.setupCustomerManagementListeners();
-            return;
+        contentArea.innerHTML = `
+            <div class="module-container">
+                <div class="module-header">
+                    <h1 class="module-title">Orders Management</h1>
+                    <p class="module-subtitle">Manage customer orders and deliveries</p>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-action-grid">
+                    <button class="quick-action-btn" id="create-order-btn">
+                        <div style="font-size: 32px;">➕</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">New Order</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Create new order</span>
+                    </button>
+                    <button class="quick-action-btn" id="manage-customers-btn">
+                        <div style="font-size: 32px;">👥</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Customers</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Manage customers</span>
+                    </button>
+                    <button class="quick-action-btn" id="view-orders-btn">
+                        <div style="font-size: 32px;">📋</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">All Orders</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View all orders</span>
+                    </button>
+                </div>
+
+                <!-- Order Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.orders.length}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Orders</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.formatCurrency(this.getTotalRevenue())}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Revenue</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">👥</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.customers.length}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Customers</div>
+                    </div>
+                </div>
+
+                <!-- Create Order Form -->
+                <div id="order-form-container" class="hidden">
+                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                        <h3 style="color: var(--text-primary); margin-bottom: 20px;">Create New Order</h3>
+                        <form id="order-form">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Customer</label>
+                                    <select class="form-input" id="order-customer" required>
+                                        <option value="">Select Customer</option>
+                                        ${this.customers.map(customer => `
+                                            <option value="${customer.id}">${customer.name}</option>
+                                        `).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">Order Date</label>
+                                    <input type="date" class="form-input" id="order-date" required>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 16px;">
+                                <label class="form-label">Order Items</label>
+                                <div id="order-items">
+                                    <div class="order-item" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; margin-bottom: 12px;">
+                                        <select class="form-input product-select">
+                                            <option value="">Select Product</option>
+                                            <option value="eggs">Fresh Eggs</option>
+                                            <option value="broilers">Broiler Chickens</option>
+                                            <option value="layers">Layer Hens</option>
+                                        </select>
+                                        <input type="number" class="form-input quantity-input" placeholder="Qty" min="1">
+                                        <input type="number" class="form-input price-input" placeholder="Price" step="0.01" min="0">
+                                        <button type="button" class="btn-outline remove-item" style="padding: 8px 12px;">✕</button>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-outline" id="add-item-btn" style="margin-top: 8px;">+ Add Item</button>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label class="form-label">Total Amount</label>
+                                <input type="number" class="form-input" id="order-total" step="0.01" min="0" readonly>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label class="form-label">Notes</label>
+                                <textarea class="form-input" id="order-notes" rows="2" placeholder="Order notes..."></textarea>
+                            </div>
+                            
+                            <div style="display: flex; gap: 12px;">
+                                <button type="submit" class="btn-primary">Create Order</button>
+                                <button type="button" class="btn-outline" id="cancel-order-form">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Recent Orders -->
+                <div class="glass-card" style="padding: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: var(--text-primary); font-size: 20px;">Recent Orders</h3>
+                        <button class="btn-primary" id="show-order-form">New Order</button>
+                    </div>
+                    <div id="orders-list">
+                        ${this.renderOrdersList()}
+                    </div>
+                </div>
+
+                <!-- Customers List -->
+                <div class="glass-card" style="padding: 24px; margin-top: 24px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Customers</h3>
+                    <div id="customers-list">
+                        ${this.renderCustomersList()}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        this.setupEventListeners();
+    },
+
+    getTotalRevenue() {
+        return this.orders.reduce((sum, order) => sum + order.totalAmount, 0);
+    },
+
+    renderOrdersList() {
+        if (this.orders.length === 0) {
+            return `
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No orders yet</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Create your first order to get started</div>
+                </div>
+            `;
         }
 
-        if (this.currentView === 'product-management') {
-            contentArea.innerHTML = this.renderProductManagement();
-            this.setupProductManagementListeners();
-            return;
+        return `
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                ${this.orders.slice(0, 5).map(order => {
+                    const customer = this.customers.find(c => c.id === order.customerId);
+                    return `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary);">
+                                    Order #${order.id} - ${customer?.name || 'Unknown Customer'}
+                                </div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">
+                                    ${order.date} • ${order.items.length} item${order.items.length > 1 ? 's' : ''}
+                                </div>
+                                ${order.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${order.notes}</div>` : ''}
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: bold; color: var(--text-primary);">${this.formatCurrency(order.totalAmount)}</div>
+                                <div style="font-size: 12px; padding: 2px 8px; border-radius: 8px; background: ${this.getStatusColor(order.status)}20; color: ${this.getStatusColor(order.status)}; margin-top: 4px;">
+                                    ${this.formatStatus(order.status)}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    },
+
+    renderCustomersList() {
+        if (this.customers.length === 0) {
+            return `
+                <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">👥</div>
+                    <div style="font-size: 14px;">No customers</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">Add your first customer</div>
+                </div>
+            `;
         }
 
-        const stats = this.calculateStats();
-        const recentOrders = this.orders.slice(0, 5);
-        contentArea.innerHTML = this.renderOrdersOverview(stats, recentOrders);
-        this.setupOrdersListeners();
+        return `
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                ${this.customers.map(customer => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <div>
+                            <div style="font-weight: 600; color: var(--text-primary);">${customer.name}</div>
+                            <div style="font-size: 14px; color: var(--text-secondary);">${customer.contact}</div>
+                            ${customer.address ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${customer.address}</div>` : ''}
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 14px; color: var(--text-secondary);">
+                                ${this.getCustomerOrderCount(customer.id)} orders
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
     },
 
-    // KEEP ALL RENDER METHODS EXACTLY AS THEY WERE
-    renderOrdersOverview(stats, recentOrders) {
-        // ... (keep the entire renderOrdersOverview method exactly as is)
+    getCustomerOrderCount(customerId) {
+        return this.orders.filter(order => order.customerId === customerId).length;
     },
 
-    renderCustomerManagement() {
-        // ... (keep the entire renderCustomerManagement method exactly as is)
+    getStatusColor(status) {
+        const colors = {
+            'pending': '#f59e0b',
+            'completed': '#22c55e',
+            'cancelled': '#ef4444',
+            'shipped': '#3b82f6'
+        };
+        return colors[status] || '#6b7280';
     },
 
-    renderProductManagement() {
-        // ... (keep the entire renderProductManagement method exactly as is)
+    formatStatus(status) {
+        const statuses = {
+            'pending': 'Pending',
+            'completed': 'Completed',
+            'cancelled': 'Cancelled',
+            'shipped': 'Shipped'
+        };
+        return statuses[status] || status;
     },
 
-    // KEEP ALL MODAL CONTROL METHODS EXACTLY AS THEY WERE
-    showConfirmationModal(title, message, confirmCallback) {
-        // ... (keep the entire showConfirmationModal method exactly as is)
+    setupEventListeners() {
+        // Form buttons
+        document.getElementById('show-order-form')?.addEventListener('click', () => this.showOrderForm());
+        document.getElementById('create-order-btn')?.addEventListener('click', () => this.showOrderForm());
+        document.getElementById('cancel-order-form')?.addEventListener('click', () => this.hideOrderForm());
+        
+        // Form submission
+        document.getElementById('order-form')?.addEventListener('submit', (e) => this.handleOrderSubmit(e));
+        
+        // Add item button
+        document.getElementById('add-item-btn')?.addEventListener('click', () => this.addOrderItem());
+        
+        // Set today's date
+        const today = new Date().toISOString().split('T')[0];
+        const orderDate = document.getElementById('order-date');
+        if (orderDate) orderDate.value = today;
+        
+        // Calculate total when items change
+        this.setupTotalCalculation();
     },
 
-    hideConfirmationModal() {
-        // ... (keep the entire hideConfirmationModal method exactly as is)
-    },
-
-    showOrderDetailsModal(order) {
-        // ... (keep the entire showOrderDetailsModal method exactly as is)
-    },
-
-    hideOrderDetailsModal() {
-        // ... (keep the entire hideOrderDetailsModal method exactly as is)
-    },
-
-    showOrdersReportModal() {
-        // ... (keep the entire showOrdersReportModal method exactly as is)
-    },
-
-    hideOrdersReportModal() {
-        // ... (keep the entire hideOrdersReportModal method exactly as is)
-    },
-
-    // KEEP ALL SETUP LISTENERS EXACTLY AS THEY WERE
-    setupOrdersListeners() {
-        // ... (keep the entire setupOrdersListeners method exactly as is)
-    },
-
-    setupCustomerManagementListeners() {
-        // ... (keep the entire setupCustomerManagementListeners method exactly as is)
-    },
-
-    setupProductManagementListeners() {
-        // ... (keep the entire setupProductManagementListeners method exactly as is)
-    },
-
-    // KEEP ALL ORDER MANAGEMENT METHODS EXACTLY AS THEY WERE
     showOrderForm() {
-        // ... (keep the entire showOrderForm method exactly as is)
+        document.getElementById('order-form-container').classList.remove('hidden');
+        document.getElementById('order-form').reset();
+        
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('order-date').value = today;
+        
+        document.getElementById('order-form-container').scrollIntoView({ behavior: 'smooth' });
     },
 
     hideOrderForm() {
-        // ... (keep the entire hideOrderForm method exactly as is)
+        document.getElementById('order-form-container').classList.add('hidden');
     },
 
     addOrderItem() {
-        // ... (keep the entire addOrderItem method exactly as is)
+        const itemsContainer = document.getElementById('order-items');
+        const newItem = document.createElement('div');
+        newItem.className = 'order-item';
+        newItem.innerHTML = `
+            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; margin-bottom: 12px;">
+                <select class="form-input product-select">
+                    <option value="">Select Product</option>
+                    <option value="eggs">Fresh Eggs</option>
+                    <option value="broilers">Broiler Chickens</option>
+                    <option value="layers">Layer Hens</option>
+                </select>
+                <input type="number" class="form-input quantity-input" placeholder="Qty" min="1">
+                <input type="number" class="form-input price-input" placeholder="Price" step="0.01" min="0">
+                <button type="button" class="btn-outline remove-item" style="padding: 8px 12px;">✕</button>
+            </div>
+        `;
+        itemsContainer.appendChild(newItem);
+        
+        // Add event listener to remove button
+        newItem.querySelector('.remove-item').addEventListener('click', () => {
+            newItem.remove();
+            this.calculateTotal();
+        });
+        
+        // Add event listeners for total calculation
+        newItem.querySelector('.quantity-input').addEventListener('input', () => this.calculateTotal());
+        newItem.querySelector('.price-input').addEventListener('input', () => this.calculateTotal());
     },
 
-    calculateItemTotal(itemRow) {
-        // ... (keep the entire calculateItemTotal method exactly as is)
+    setupTotalCalculation() {
+        // Add event listeners to existing inputs
+        document.querySelectorAll('.quantity-input, .price-input').forEach(input => {
+            input.addEventListener('input', () => this.calculateTotal());
+        });
+        
+        // Add event listeners for remove buttons
+        document.querySelectorAll('.remove-item').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.target.closest('.order-item').remove();
+                this.calculateTotal();
+            });
+        });
     },
 
-    calculateOrderTotal() {
-        // ... (keep the entire calculateOrderTotal method exactly as is)
+    calculateTotal() {
+        let total = 0;
+        document.querySelectorAll('.order-item').forEach(item => {
+            const quantity = parseFloat(item.querySelector('.quantity-input').value) || 0;
+            const price = parseFloat(item.querySelector('.price-input').value) || 0;
+            total += quantity * price;
+        });
+        
+        document.getElementById('order-total').value = total.toFixed(2);
     },
 
     handleOrderSubmit(e) {
         e.preventDefault();
         
         const customerId = parseInt(document.getElementById('order-customer').value);
-        const orderDate = document.getElementById('order-date').value;
-        const deliveryDate = document.getElementById('delivery-date').value;
-        const paymentStatus = document.getElementById('payment-status').value;
+        const date = document.getElementById('order-date').value;
         const notes = document.getElementById('order-notes').value;
-
+        
         // Collect order items
         const items = [];
-        const itemRows = document.querySelectorAll('.order-item-row');
-        
-        itemRows.forEach(row => {
-            const productId = parseInt(row.querySelector('.order-item-product').value);
-            const quantity = parseInt(row.querySelector('.order-item-quantity').value);
-            const unitPrice = parseFloat(row.querySelector('.order-item-price').value);
+        document.querySelectorAll('.order-item').forEach(item => {
+            const productSelect = item.querySelector('.product-select');
+            const quantityInput = item.querySelector('.quantity-input');
+            const priceInput = item.querySelector('.price-input');
             
-            if (productId && quantity && unitPrice) {
+            if (productSelect.value && quantityInput.value && priceInput.value) {
                 items.push({
-                    productId,
-                    quantity,
-                    unitPrice,
-                    total: quantity * unitPrice
+                    productId: productSelect.value,
+                    productName: productSelect.options[productSelect.selectedIndex].text,
+                    quantity: parseFloat(quantityInput.value),
+                    price: parseFloat(priceInput.value)
                 });
             }
         });
-
+        
         if (items.length === 0) {
-            this.showNotification('Please add at least one item to the order.', 'error');
+            alert('Please add at least one item to the order.');
             return;
         }
-
-        const totalAmount = items.reduce((sum, item) => sum + item.total, 0);
-        const orderNumber = `ORD-${String(this.orders.length + 1).padStart(3, '0')}`;
-
-        const newOrder = {
+        
+        const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+        
+        const orderData = {
             id: Date.now(),
-            orderNumber,
-            customerId,
-            date: orderDate,
+            customerId: customerId,
+            date: date,
+            items: items,
+            totalAmount: totalAmount,
             status: 'pending',
-            items,
-            totalAmount,
-            paymentStatus,
-            deliveryDate: deliveryDate || null,
-            notes: notes || ''
+            notes: notes
         };
 
-        this.orders.unshift(newOrder);
+        this.orders.unshift(orderData);
         this.saveData();
         this.renderModule();
         
-        // SYNC WITH DASHBOARD - Update order stats
-        this.syncStatsWithDashboard();
-        
-        // Add recent activity
-        this.addRecentActivity({
-            type: 'order_created',
-            order: newOrder
-        });
-        
-        this.showNotification(`Order ${orderNumber} created successfully!`, 'success');
-        this.hideOrderForm();
-    },
-
-    deleteOrder(id) {
-        const order = this.orders.find(order => order.id === id);
-        if (!order) return;
-
-        this.showConfirmationModal(
-            'Delete Order',
-            `Are you sure you want to delete order ${order.orderNumber}? This action cannot be undone.`,
-            () => {
-                this.orders = this.orders.filter(order => order.id !== id);
-                this.saveData();
-                this.renderModule();
-                
-                // SYNC WITH DASHBOARD - Update stats after deletion
-                this.syncStatsWithDashboard();
-                
-                // Add recent activity
-                this.addRecentActivity({
-                    type: 'order_deleted',
-                    order: order
-                });
-                
-                this.showNotification(`Order ${order.orderNumber} deleted!`, 'success');
-            }
-        );
-    },
-
-    viewOrder(id) {
-        const order = this.orders.find(order => order.id === id);
-        if (order) {
-            this.showOrderDetailsModal(order);
+        if (window.coreModule) {
+            window.coreModule.showNotification(`Order created successfully!`, 'success');
         }
-    },
-
-    editOrder(id) {
-        this.showNotification('Edit order functionality coming soon! For now, you can delete and recreate the order.', 'info');
-    },
-
-    filterOrders(status) {
-        // ... (keep the entire filterOrders method exactly as is)
-    },
-
-    searchOrders(query) {
-        // ... (keep the entire searchOrders method exactly as is)
-    },
-
-    // KEEP ALL CUSTOMER & PRODUCT MANAGEMENT METHODS EXACTLY AS THEY WERE
-    manageCustomers() {
-        // ... (keep the entire manageCustomers method exactly as is)
-    },
-
-    manageProducts() {
-        // ... (keep the entire manageProducts method exactly as is)
-    },
-
-    handleCustomerSubmit() {
-        const customer = {
-            id: Date.now(),
-            name: document.getElementById('customer-name').value,
-            email: document.getElementById('customer-email').value,
-            phone: document.getElementById('customer-phone').value,
-            type: document.getElementById('customer-type').value,
-            address: document.getElementById('customer-address').value
-        };
-
-        this.customers.push(customer);
-        this.saveData();
-        
-        // SYNC WITH DASHBOARD - Update customer stats
-        this.syncStatsWithDashboard();
-        
-        // Add recent activity
-        this.addRecentActivity({
-            type: 'customer_added',
-            customer: customer
-        });
-        
-        document.getElementById('customer-form').reset();
-        document.getElementById('customer-form-container').classList.add('hidden');
-        
-        this.showNotification('Customer added successfully!', 'success');
-        this.renderModule();
-    },
-
-    handleProductSubmit() {
-        const stock = parseInt(document.getElementById('product-stock').value);
-        const product = {
-            id: Date.now(),
-            name: document.getElementById('product-name').value,
-            category: document.getElementById('product-category').value,
-            price: parseFloat(document.getElementById('product-price').value),
-            unit: document.getElementById('product-unit').value,
-            stock: stock,
-            minStock: parseInt(document.getElementById('product-min-stock').value),
-            inStock: stock > 0
-        };
-
-        this.products.push(product);
-        this.saveData();
-        
-        // SYNC WITH DASHBOARD - Update product stats
-        this.syncStatsWithDashboard();
-        
-        // Add recent activity
-        this.addRecentActivity({
-            type: 'product_added',
-            product: product
-        });
-        
-        document.getElementById('product-form').reset();
-        document.getElementById('product-form-container').classList.add('hidden');
-        
-        this.showNotification('Product added successfully!', 'success');
-        this.renderModule();
-    },
-
-    // KEEP ALL REPORTS & ANALYTICS METHODS EXACTLY AS THEY WERE
-    generateOrdersReport() {
-        // ... (keep the entire generateOrdersReport method exactly as is)
-    },
-
-    printOrdersReport() {
-        // ... (keep the entire printOrdersReport method exactly as is)
-    },
-
-    // KEEP ALL RENDER METHODS EXACTLY AS THEY WERE
-    renderRecentOrders(orders) {
-        // ... (keep the entire renderRecentOrders method exactly as is)
-    },
-
-    renderOrdersSummary(stats) {
-        // ... (keep the entire renderOrdersSummary method exactly as is)
-    },
-
-    renderAllOrdersTable() {
-        // ... (keep the entire renderAllOrdersTable method exactly as is)
-    },
-
-    renderCustomersList() {
-        // ... (keep the entire renderCustomersList method exactly as is)
-    },
-
-    renderProductsList() {
-        // ... (keep the entire renderProductsList method exactly as is)
-    },
-
-    // UPDATED METHOD: Sync order stats with dashboard (no ProfileModule dependency)
-    syncStatsWithDashboard() {
-        const stats = this.calculateStats();
-        
-        // Update shared data structure
-        if (window.FarmModules && window.FarmModules.appData) {
-            if (!window.FarmModules.appData.profile) {
-                window.FarmModules.appData.profile = {};
-            }
-            if (!window.FarmModules.appData.profile.dashboardStats) {
-                window.FarmModules.appData.profile.dashboardStats = {};
-            }
-            
-            // Update order stats in shared data
-            Object.assign(window.FarmModules.appData.profile.dashboardStats, {
-                totalOrders: stats.totalOrders,
-                totalRevenue: stats.totalRevenue,
-                totalCustomers: stats.totalCustomers,
-                totalProducts: stats.totalProducts,
-                completedOrders: stats.statusCounts.completed,
-                monthlyRevenue: stats.monthlyRevenue
-            });
-        }
-        
-        // Notify dashboard module if available
-        if (window.FarmModules && window.FarmModules.modules.dashboard) {
-            window.FarmModules.modules.dashboard.updateDashboardStats({
-                totalOrders: stats.totalOrders,
-                totalRevenue: stats.totalRevenue,
-                totalCustomers: stats.totalCustomers,
-                totalProducts: stats.totalProducts,
-                completedOrders: stats.statusCounts.completed,
-                monthlyRevenue: stats.monthlyRevenue
-            });
-        }
-    },
-
-    // NEW METHOD: Add recent activity to dashboard
-    addRecentActivity(activityData) {
-        if (!window.FarmModules || !window.FarmModules.modules.dashboard) return;
-        
-        let activity;
-        
-        switch (activityData.type) {
-            case 'order_created':
-                activity = {
-                    type: 'order_created',
-                    message: `New order: ${activityData.order.orderNumber} - ${this.formatCurrency(activityData.order.totalAmount)}`,
-                    icon: '📋'
-                };
-                break;
-            case 'order_deleted':
-                activity = {
-                    type: 'order_deleted',
-                    message: `Deleted order: ${activityData.order.orderNumber}`,
-                    icon: '🗑️'
-                };
-                break;
-            case 'customer_added':
-                activity = {
-                    type: 'customer_added',
-                    message: `New customer: ${activityData.customer.name}`,
-                    icon: '👥'
-                };
-                break;
-            case 'product_added':
-                activity = {
-                    type: 'product_added',
-                    message: `New product: ${activityData.product.name}`,
-                    icon: '📦'
-                };
-                break;
-        }
-        
-        if (activity) {
-            window.FarmModules.modules.dashboard.addRecentActivity(activity);
-        }
-    },
-
-    // NEW METHOD: Get orders summary for other modules
-    getOrdersSummary() {
-        const stats = this.calculateStats();
-        return {
-            ...stats,
-            recentOrders: this.orders.slice(0, 5),
-            topCustomers: this.getTopCustomers(3),
-            lowStockProducts: this.products.filter(p => p.stock <= p.minStock)
-        };
-    },
-
-    // NEW METHOD: Get top customers by revenue
-    getTopCustomers(limit = 5) {
-        const customerRevenue = {};
-        
-        this.orders.forEach(order => {
-            const customer = this.customers.find(c => c.id === order.customerId);
-            if (customer) {
-                customerRevenue[customer.name] = (customerRevenue[customer.name] || 0) + order.totalAmount;
-            }
-        });
-
-        return Object.entries(customerRevenue)
-            .sort(([,a], [,b]) => b - a)
-            .slice(0, limit)
-            .map(([name, revenue]) => ({ name, revenue }));
-    },
-
-    // NEW METHOD: Check if product is available for order
-    isProductAvailable(productId, quantity) {
-        const product = this.products.find(p => p.id === productId);
-        return product && product.inStock && product.stock >= quantity;
-    },
-
-    // KEEP ALL UTILITY METHODS EXACTLY AS THEY WERE
-    calculateStats() {
-        const totalOrders = this.orders.length;
-        const totalRevenue = this.orders.reduce((sum, order) => sum + order.totalAmount, 0);
-        const pendingOrders = this.orders.filter(order => order.status === 'pending').length;
-        const avgOrderValue = totalOrders > 0 ? this.formatCurrency(totalRevenue / totalOrders) : '$0.00';
-
-        const statusCounts = {
-            pending: this.orders.filter(order => order.status === 'pending').length,
-            processing: this.orders.filter(order => order.status === 'processing').length,
-            completed: this.orders.filter(order => order.status === 'completed').length,
-            cancelled: this.orders.filter(order => order.status === 'cancelled').length
-        };
-
-        const paymentCounts = {
-            paid: this.orders.filter(order => order.paymentStatus === 'paid').length,
-            pending: this.orders.filter(order => order.paymentStatus === 'pending').length,
-            partial: this.orders.filter(order => order.paymentStatus === 'partial').length,
-            overdue: this.orders.filter(order => order.paymentStatus === 'overdue').length
-        };
-
-        const recentMonth = new Date();
-        recentMonth.setMonth(recentMonth.getMonth() - 1);
-        const monthlyOrders = this.orders.filter(order => new Date(order.date) >= recentMonth);
-        const monthlyRevenue = monthlyOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-
-        return {
-            totalOrders,
-            totalRevenue,
-            pendingOrders,
-            avgOrderValue,
-            statusCounts,
-            paymentCounts,
-            monthlyOrders: monthlyOrders.length,
-            monthlyRevenue,
-            totalCustomers: this.customers.length,
-            totalProducts: this.products.length
-        };
-    },
-
-    getStatusColor(status) {
-        const colors = {
-            'pending': '#f59e0b',
-            'processing': '#3b82f6',
-            'completed': '#22c55e',
-            'cancelled': '#ef4444'
-        };
-        return colors[status] || '#6b7280';
-    },
-
-    getPaymentColor(status) {
-        const colors = {
-            'pending': '#f59e0b',
-            'paid': '#22c55e',
-            'partial': '#3b82f6',
-            'overdue': '#ef4444'
-        };
-        return colors[status] || '#6b7280';
     },
 
     formatCurrency(amount) {
@@ -584,20 +425,9 @@ const OrdersModule = {
     saveData() {
         localStorage.setItem('farm-orders', JSON.stringify(this.orders));
         localStorage.setItem('farm-customers', JSON.stringify(this.customers));
-        localStorage.setItem('farm-products', JSON.stringify(this.products));
-    },
-
-    showNotification(message, type = 'info') {
-        if (window.coreModule) {
-            window.coreModule.showNotification(message, type);
-        } else {
-            // Fallback notification
-            console.log(`${type}: ${message}`);
-        }
     }
 };
 
 if (window.FarmModules) {
     window.FarmModules.registerModule('orders', OrdersModule);
-    console.log('✅ Orders module registered');
 }
