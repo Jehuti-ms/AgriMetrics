@@ -11,6 +11,10 @@ const ProductionModule = {
         this.loadData();
         this.renderModule();
         this.initialized = true;
+        
+        // Update profile stats on initial load
+        this.updateProfileStats();
+        
         return true;
     },
 
@@ -457,6 +461,9 @@ const ProductionModule = {
         this.saveData();
         this.renderModule();
         
+        // ✅ UPDATE PROFILE STATS AFTER SAVING PRODUCTION RECORD
+        this.updateProfileStats();
+        
         if (window.coreModule && window.coreModule.showNotification) {
             window.coreModule.showNotification('Production record added successfully!', 'success');
         } else {
@@ -469,6 +476,9 @@ const ProductionModule = {
             this.productionRecords = this.productionRecords.filter(record => record.id !== id);
             this.saveData();
             this.renderModule();
+            
+            // ✅ UPDATE PROFILE STATS AFTER DELETING PRODUCTION RECORD
+            this.updateProfileStats();
             
             if (window.coreModule && window.coreModule.showNotification) {
                 window.coreModule.showNotification('Production record deleted!', 'success');
@@ -487,9 +497,23 @@ const ProductionModule = {
             this.saveData();
             this.renderModule();
             
+            // ✅ UPDATE PROFILE STATS AFTER EDITING PRODUCTION RECORD
+            this.updateProfileStats();
+            
             if (window.coreModule && window.coreModule.showNotification) {
                 window.coreModule.showNotification('Production record updated!', 'success');
             }
+        }
+    },
+
+    // ✅ NEW METHOD: Update Profile Stats
+    updateProfileStats() {
+        if (window.ProfileModule && window.profileInstance) {
+            const productionRecords = this.productionRecords || [];
+            
+            window.profileInstance.updateStats({
+                activeProduction: productionRecords.length
+            });
         }
     },
 
