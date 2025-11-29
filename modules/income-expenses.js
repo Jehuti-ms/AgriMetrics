@@ -343,15 +343,16 @@ const IncomeExpensesModule = {
             });
         }
         
-        // Notify dashboard module if available
-        if (window.FarmModules && window.FarmModules.modules.dashboard) {
-            window.FarmModules.modules.dashboard.updateDashboardStats({
-                totalIncome: stats.totalIncome,
-                totalExpenses: stats.totalExpenses,
-                totalRevenue: stats.totalIncome,
-                netProfit: stats.netProfit
+        // Notify dashboard via custom event instead of direct method call
+            const statsUpdateEvent = new CustomEvent('financialStatsUpdated', {
+                detail: {
+                    totalIncome: stats.totalIncome,
+                    totalExpenses: stats.totalExpenses, 
+                    totalRevenue: stats.totalIncome,
+                    netProfit: stats.netProfit
+                }
             });
-        }
+            document.dispatchEvent(statsUpdateEvent);
     },
 
     // NEW METHOD: Add recent activity to dashboard
