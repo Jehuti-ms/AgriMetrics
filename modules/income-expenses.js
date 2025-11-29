@@ -1,4 +1,4 @@
-// modules/income-expenses.js - FULLY WORKING
+// modules/income-expenses.js - UPDATED WITH PROFILE SYNC
 console.log('Loading income-expenses module...');
 
 const IncomeExpensesModule = {
@@ -11,6 +11,10 @@ const IncomeExpensesModule = {
         this.loadData();
         this.renderModule();
         this.initialized = true;
+        
+        // Sync initial stats with profile
+        this.syncStatsWithProfile();
+        
         return true;
     },
 
@@ -257,6 +261,9 @@ const IncomeExpensesModule = {
         this.saveData();
         this.renderModule();
         
+        // SYNC WITH PROFILE - Update financial stats
+        this.syncStatsWithProfile();
+        
         if (window.coreModule) {
             window.coreModule.showNotification('Transaction added successfully!', 'success');
         }
@@ -266,6 +273,9 @@ const IncomeExpensesModule = {
         this.transactions = this.transactions.filter(t => t.id !== id);
         this.saveData();
         this.renderModule();
+        
+        // SYNC WITH PROFILE - Update stats after deletion
+        this.syncStatsWithProfile();
         
         if (window.coreModule) {
             window.coreModule.showNotification('Transaction deleted!', 'success');
@@ -278,6 +288,9 @@ const IncomeExpensesModule = {
             this.saveData();
             this.renderModule();
             
+            // SYNC WITH PROFILE - Reset financial stats
+            this.syncStatsWithProfile();
+            
             if (window.coreModule) {
                 window.coreModule.showNotification('All transactions cleared!', 'success');
             }
@@ -286,6 +299,20 @@ const IncomeExpensesModule = {
 
     saveData() {
         localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+    },
+
+    // NEW METHOD: Sync financial stats with user profile
+    syncStatsWithProfile() {
+        const stats = this.calculateStats();
+        
+        if (window.ProfileModule && window.profileInstance) {
+            window.profileInstance.updateStats({
+                totalIncome: stats.totalIncome,
+                totalExpenses: stats.totalExpenses,
+                netProfit: stats.netProfit,
+                totalTransactions: this.transactions.length
+            });
+        }
     },
 
     formatCurrency(amount) {
