@@ -30,72 +30,46 @@ const BroilerMortalityModule = {
         ];
     },
 
-    renderModule() {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
+// In your existing broiler-mortality.js, make sure this method exists:
+renderModule() {
+    const contentArea = document.getElementById('content-area');
+    if (!contentArea) return;
 
-        const stats = this.calculateStats();
+    const stats = this.calculateStats();
 
-        contentArea.innerHTML = `
-            <div class="module-container">
-                <div class="module-header">
-                    <h1 class="module-title">Broiler Health & Mortality</h1>
-                    <p class="module-subtitle">Track bird health and losses</p>
+    contentArea.innerHTML = `
+        <div class="module-container">
+            <div class="module-header">
+                <h1 class="module-title">Broiler Health & Mortality</h1>
+                <p class="module-subtitle">Track bird health and losses</p>
+            </div>
+
+            <!-- Health Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div style="font-size: 24px; margin-bottom: 8px;">🐔</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.currentStock.toLocaleString()}</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Current Stock</div>
                 </div>
-
-                <!-- Stats -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">🐔</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.currentStock}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Current Stock</div>
-                    </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">😔</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.totalLosses}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Total Losses</div>
-                    </div>
+                <div class="stat-card">
+                    <div style="font-size: 24px; margin-bottom: 8px;">😔</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.totalLosses}</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Total Losses</div>
                 </div>
-
-                <!-- Simple Form -->
-                <div class="glass-card" style="padding: 24px; margin: 24px 0;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px;">Record Mortality</h3>
-                    <form id="mortality-form">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                            <div>
-                                <label class="form-label">Number of Birds</label>
-                                <input type="number" class="form-input" id="mortality-quantity" min="1" max="${this.currentStock}" required>
-                            </div>
-                            <div>
-                                <label class="form-label">Cause</label>
-                                <select class="form-input" id="mortality-cause" required>
-                                    <option value="natural">Natural Causes</option>
-                                    <option value="disease">Disease</option>
-                                    <option value="predator">Predator</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div style="margin-bottom: 20px;">
-                            <label class="form-label">Notes</label>
-                            <textarea class="form-input" id="mortality-notes" rows="2" placeholder="Observations..."></textarea>
-                        </div>
-                        <button type="submit" class="btn-primary">Record Loss</button>
-                    </form>
-                </div>
-
-                <!-- Recent Records -->
-                <div class="glass-card" style="padding: 24px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Recent Mortality Records</h3>
-                    <div id="mortality-records-list">
-                        ${this.renderMortalityList()}
-                    </div>
+                <div class="stat-card">
+                    <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                    <div style="font-size: 24px; font-weight: bold; color: ${stats.mortalityRate < 2 ? '#22c55e' : stats.mortalityRate < 5 ? '#f59e0b' : '#ef4444'}; margin-bottom: 4px;">${stats.mortalityRate}%</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Mortality Rate</div>
                 </div>
             </div>
-        `;
 
-        this.setupEventListeners();
-    },
+            <!-- Rest of your existing HTML content here -->
+            ${/* KEEP ALL YOUR EXISTING HTML CONTENT EXACTLY AS IS */''}
+        </div>
+    `;
 
+    this.setupEventListeners();
+},
     calculateStats() {
         const totalLosses = this.mortalityRecords.reduce((sum, record) => sum + record.quantity, 0);
         return { totalLosses };
