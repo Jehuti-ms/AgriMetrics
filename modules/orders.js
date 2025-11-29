@@ -1,4 +1,4 @@
-// modules/orders.js - FULLY WORKING WITH CUSTOMER & PRODUCT MANAGEMENT
+// modules/orders.js - UPDATED WITH PROFILE SYNC
 console.log('Loading orders module...');
 
 const OrdersModule = {
@@ -14,6 +14,10 @@ const OrdersModule = {
         this.loadData();
         this.renderModule();
         this.initialized = true;
+        
+        // Sync initial stats with profile
+        this.syncStatsWithProfile();
+        
         return true;
     },
 
@@ -605,12 +609,31 @@ const OrdersModule = {
             cancelled: this.orders.filter(order => order.status === 'cancelled').length
         };
 
+        // Payment status breakdown
+        const paymentCounts = {
+            paid: this.orders.filter(order => order.paymentStatus === 'paid').length,
+            pending: this.orders.filter(order => order.paymentStatus === 'pending').length,
+            partial: this.orders.filter(order => order.paymentStatus === 'partial').length,
+            overdue: this.orders.filter(order => order.paymentStatus === 'overdue').length
+        };
+
+        // Recent month stats
+        const recentMonth = new Date();
+        recentMonth.setMonth(recentMonth.getMonth() - 1);
+        const monthlyOrders = this.orders.filter(order => new Date(order.date) >= recentMonth);
+        const monthlyRevenue = monthlyOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+
         return {
             totalOrders,
             totalRevenue,
             pendingOrders,
             avgOrderValue: this.formatCurrency(avgOrderValue),
-            statusCounts
+            statusCounts,
+            paymentCounts,
+            monthlyOrders: monthlyOrders.length,
+            monthlyRevenue,
+            totalCustomers: this.customers.length,
+            totalProducts: this.products.length
         };
     },
 
@@ -902,6 +925,9 @@ const OrdersModule = {
         this.customers.push(customer);
         this.saveData();
         
+        // SYNC WITH PROFILE - Update customer stats
+        this.syncStatsWithProfile();
+        
         document.getElementById('customer-form').reset();
         document.getElementById('customer-form-container').classList.add('hidden');
         
@@ -924,6 +950,9 @@ const OrdersModule = {
 
         this.products.push(product);
         this.saveData();
+        
+        // SYNC WITH PROFILE - Update product stats
+        this.syncStatsWithProfile();
         
         document.getElementById('product-form').reset();
         document.getElementById('product-form-container').classList.add('hidden');
@@ -1084,6 +1113,9 @@ const OrdersModule = {
         this.saveData();
         this.renderModule();
         
+        // SYNC WITH PROFILE - Update order stats
+        this.syncStatsWithProfile();
+        
         this.showNotification(`Order ${orderNumber} created successfully!`, 'success');
     },
 
@@ -1095,6 +1127,9 @@ const OrdersModule = {
             this.orders = this.orders.filter(order => order.id !== id);
             this.saveData();
             this.renderModule();
+            
+            // SYNC WITH PROFILE - Update order stats after deletion
+            this.syncStatsWithProfile();
             
             this.showNotification(`Order ${order.orderNumber} deleted!`, 'success');
         }
@@ -1203,6 +1238,26 @@ const OrdersModule = {
         });
 
         alert(report);
+    },
+
+    // NEW METHOD: Sync order stats with user profile
+    syncStatsWithProfile() {
+        const stats = this.calculateStats();
+        
+        if (window.ProfileModule && window.profileInstance) {
+            window.profileInstance.updateStats({
+                totalOrders: stats.totalOrders,
+                totalRevenue: stats.totalRevenue,
+                pendingOrders: stats.pendingOrders,
+                monthlyOrders: stats.monthlyOrders,
+                monthlyRevenue: stats.monthlyRevenue,
+                totalCustomers: stats.totalCustomers,
+                totalProducts: stats.totalProducts,
+                avgOrderValue: parseFloat(stats.avgOrderValue.replace(/[^\d.-]/g, '')),
+                completedOrders: stats.statusCounts.completed,
+                paidOrders: stats.paymentCounts.paid
+            });
+        }
     },
 
     formatCurrency(amount) {
