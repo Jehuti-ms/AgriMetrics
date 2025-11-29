@@ -1,4 +1,4 @@
-// modules/income-expenses.js - UPDATED WITH PROFILE SYNC
+// modules/income-expenses.js - UPDATED WITH SHARED DATA PATTERN
 console.log('Loading income-expenses module...');
 
 const IncomeExpensesModule = {
@@ -12,8 +12,8 @@ const IncomeExpensesModule = {
         this.renderModule();
         this.initialized = true;
         
-        // Sync initial stats with profile
-        this.syncStatsWithProfile();
+        // Sync initial stats with shared data
+        this.syncStatsWithDashboard();
         
         return true;
     },
@@ -154,7 +154,8 @@ const IncomeExpensesModule = {
         return {
             totalIncome,
             totalExpenses,
-            netProfit: totalIncome - totalExpenses
+            netProfit: totalIncome - totalExpenses,
+            totalTransactions: this.transactions.length
         };
     },
 
@@ -261,8 +262,11 @@ const IncomeExpensesModule = {
         this.saveData();
         this.renderModule();
         
-        // SYNC WITH PROFILE - Update financial stats
-        this.syncStatsWithProfile();
+        // SYNC WITH DASHBOARD - Update financial stats
+        this.syncStatsWithDashboard();
+        
+        // Add recent activity
+        this.addRecentActivity(formData);
         
         if (window.coreModule) {
             window.coreModule.showNotification('Transaction added successfully!', 'success');
@@ -270,12 +274,22 @@ const IncomeExpensesModule = {
     },
 
     deleteTransaction(id) {
+        const transaction = this.transactions.find(t => t.id === id);
         this.transactions = this.transactions.filter(t => t.id !== id);
         this.saveData();
         this.renderModule();
         
-        // SYNC WITH PROFILE - Update stats after deletion
-        this.syncStatsWithProfile();
+        // SYNC WITH DASHBOARD - Update stats after deletion
+        this.syncStatsWithDashboard();
+        
+        // Add deletion activity
+        if (transaction) {
+            this.addRecentActivity({
+                ...transaction,
+                type: 'deletion',
+                message: `Deleted ${transaction.type}: ${transaction.description}`
+            });
+        }
         
         if (window.coreModule) {
             window.coreModule.showNotification('Transaction deleted!', 'success');
@@ -288,8 +302,14 @@ const IncomeExpensesModule = {
             this.saveData();
             this.renderModule();
             
-            // SYNC WITH PROFILE - Reset financial stats
-            this.syncStatsWithProfile();
+            // SYNC WITH DASHBOARD - Reset financial stats
+            this.syncStatsWithDashboard();
+            
+            // Add clear activity
+            this.addRecentActivity({
+                type: 'clear',
+                message: 'Cleared all transactions'
+            });
             
             if (window.coreModule) {
                 window.coreModule.showNotification('All transactions cleared!', 'success');
@@ -301,18 +321,98 @@ const IncomeExpensesModule = {
         localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
     },
 
-    // NEW METHOD: Sync financial stats with user profile
-    syncStatsWithProfile() {
+    // UPDATED METHOD: Sync financial stats with dashboard (no ProfileModule dependency)
+    syncStatsWithDashboard() {
         const stats = this.calculateStats();
         
-        if (window.ProfileModule && window.profileInstance) {
-            window.profileInstance.updateStats({
+        // Update shared data structure
+        if (window.FarmModules && window.FarmModules.appData) {
+            if (!window.FarmModules.appData.profile) {
+                window.FarmModules.appData.profile = {};
+            }
+            if (!window.FarmModules.appData.profile.dashboardStats) {
+                window.FarmModules.appData.profile.dashboardStats = {};
+            }
+            
+            // Update financial stats in shared data
+            Object.assign(window.FarmModules.appData.profile.dashboardStats, {
                 totalIncome: stats.totalIncome,
                 totalExpenses: stats.totalExpenses,
-                netProfit: stats.netProfit,
-                totalTransactions: this.transactions.length
+                totalRevenue: stats.totalIncome, // For dashboard compatibility
+                netProfit: stats.netProfit
             });
         }
+        
+        // Notify dashboard module if available
+        if (window.FarmModules && window.FarmModules.modules.dashboard) {
+            window.FarmModules.modules.dashboard.updateDashboardStats({
+                totalIncome: stats.totalIncome,
+                totalExpenses: stats.totalExpenses,
+                totalRevenue: stats.totalIncome,
+                netProfit: stats.netProfit
+            });
+        }
+    },
+
+    // NEW METHOD: Add recent activity to dashboard
+    addRecentActivity(transaction) {
+        if (!window.FarmModules || !window.FarmModules.modules.dashboard) return;
+        
+        let activity;
+        
+        if (transaction.type === 'income') {
+            activity = {
+                type: 'income_added',
+                message: `Income: ${transaction.description} - ${this.formatCurrency(transaction.amount)}`,
+                icon: '💰'
+            };
+        } else if (transaction.type === 'expense') {
+            activity = {
+                type: 'expense_added',
+                message: `Expense: ${transaction.description} - ${this.formatCurrency(transaction.amount)}`,
+                icon: '💸'
+            };
+        } else if (transaction.type === 'deletion') {
+            activity = {
+                type: 'transaction_deleted',
+                message: transaction.message,
+                icon: '🗑️'
+            };
+        } else if (transaction.type === 'clear') {
+            activity = {
+                type: 'transactions_cleared',
+                message: transaction.message,
+                icon: '📋'
+            };
+        }
+        
+        if (activity) {
+            window.FarmModules.modules.dashboard.addRecentActivity(activity);
+        }
+    },
+
+    // NEW METHOD: Get financial summary for other modules
+    getFinancialSummary() {
+        const stats = this.calculateStats();
+        return {
+            ...stats,
+            transactions: this.transactions.length,
+            recentTransactions: this.transactions.slice(0, 5) // Last 5 transactions
+        };
+    },
+
+    // NEW METHOD: Import transactions from other sources
+    importTransactions(newTransactions) {
+        this.transactions = [...this.transactions, ...newTransactions];
+        this.saveData();
+        this.renderModule();
+        this.syncStatsWithDashboard();
+        
+        // Add import activity
+        this.addRecentActivity({
+            type: 'import',
+            message: `Imported ${newTransactions.length} transactions`
+        });
     },
 
     formatCurrency(amount) {
@@ -325,4 +425,5 @@ const IncomeExpensesModule = {
 
 if (window.FarmModules) {
     window.FarmModules.registerModule('income-expenses', IncomeExpensesModule);
+    console.log('✅ Income & Expenses module registered');
 }
