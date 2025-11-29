@@ -3969,6 +3969,40 @@ header, .top-nav {
   opacity: 0.9;
 }
 
+/* Add to your CSS */
+.profile-meta-pwa {
+    font-size: 14px;
+    opacity: 0.8;
+    margin-top: 8px;
+}
+
+.checkbox-label-pwa {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.checkbox-label-pwa input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-color);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* Dark mode adjustments for form elements */
+.dark-mode .form-input-pwa:read-only {
+    background: rgba(30, 41, 59, 0.6) !important;
+    color: var(--dm-text-secondary) !important;
+}
+
 /* Profile Sections */
 .profile-section-pwa {
   background: rgba(255, 255, 255, 0.95);
