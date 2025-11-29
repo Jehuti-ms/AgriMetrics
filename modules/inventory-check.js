@@ -1,4 +1,4 @@
-// modules/inventory-check.js - UPDATED WITH SHARED DATA PATTERN
+// modules/inventory-check.js - COMPLETE WORKING VERSION
 console.log('Loading inventory-check module...');
 
 const InventoryCheckModule = {
@@ -12,10 +12,6 @@ const InventoryCheckModule = {
         this.loadData();
         this.renderModule();
         this.initialized = true;
-        
-        // Sync initial stats with dashboard
-        this.syncStatsWithDashboard();
-        
         return true;
     },
 
@@ -321,7 +317,6 @@ const InventoryCheckModule = {
         this.setupEventListeners();
     },
 
-    // KEEP ALL THE EXISTING METHODS EXACTLY AS THEY WERE WORKING
     calculateStats() {
         const totalItems = this.inventory.length;
         const inStock = this.inventory.filter(item => item.currentStock > 0).length;
@@ -578,15 +573,6 @@ const InventoryCheckModule = {
         this.saveData();
         this.renderModule();
         
-        // SYNC WITH DASHBOARD - Update inventory stats
-        this.syncStatsWithDashboard();
-        
-        // Add recent activity
-        this.addRecentActivity({
-            type: 'item_added',
-            item: formData
-        });
-        
         if (window.coreModule) {
             window.coreModule.showNotification('Inventory item added successfully!', 'success');
         }
@@ -612,18 +598,6 @@ const InventoryCheckModule = {
         this.saveData();
         this.renderModule();
         
-        // SYNC WITH DASHBOARD - Update stats after stock change
-        this.syncStatsWithDashboard();
-        
-        // Add recent activity
-        this.addRecentActivity({
-            type: 'stock_updated',
-            item: item,
-            oldStock: oldStock,
-            newStock: newStock,
-            reason: reason
-        });
-        
         if (window.coreModule) {
             const change = newStock - oldStock;
             const changeText = change > 0 ? `+${change}` : change;
@@ -640,15 +614,6 @@ const InventoryCheckModule = {
             this.saveData();
             this.renderModule();
             
-            // SYNC WITH DASHBOARD - Update stats after deletion
-            this.syncStatsWithDashboard();
-            
-            // Add recent activity
-            this.addRecentActivity({
-                type: 'item_deleted',
-                item: item
-            });
-            
             if (window.coreModule) {
                 window.coreModule.showNotification('Item deleted successfully!', 'success');
             }
@@ -664,22 +629,11 @@ const InventoryCheckModule = {
         
         if (restockAmount !== null && !isNaN(restockAmount)) {
             const amount = parseInt(restockAmount);
-            const oldStock = item.currentStock;
             item.currentStock += amount;
             item.lastRestocked = new Date().toISOString().split('T')[0];
             
             this.saveData();
             this.renderModule();
-            
-            // SYNC WITH DASHBOARD - Update stats after restock
-            this.syncStatsWithDashboard();
-            
-            // Add recent activity
-            this.addRecentActivity({
-                type: 'restocked',
-                item: item,
-                amount: amount
-            });
             
             if (window.coreModule) {
                 window.coreModule.showNotification(`Restocked ${amount} ${item.unit} of ${item.name}`, 'success');
@@ -699,126 +653,305 @@ const InventoryCheckModule = {
         });
     },
 
-    // KEEP ALL THE MODAL REPORT METHODS EXACTLY AS THEY WERE
     showStockCheck() {
-        // ... (keep all the existing showStockCheck code exactly as is)
+        const lowStockItems = this.getLowStockItems();
+        const outOfStockItems = this.getOutOfStockItems();
+        const stats = this.calculateStats();
+
+        let reportContent = `
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: var(--text-primary); margin-bottom: 12px;">Stock Check Summary</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                    <div style="padding: 12px; background: #f0f9ff; border-radius: 8px;">
+                        <div style="font-weight: 600; color: #1e40af;">Total Items</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #1e40af;">${stats.totalItems}</div>
+                    </div>
+                    <div style="padding: 12px; background: #f0fdf4; border-radius: 8px;">
+                        <div style="font-weight: 600; color: #166534;">In Stock</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #166534;">${stats.inStock}</div>
+                    </div>
+                    <div style="padding: 12px; background: #fef3c7; border-radius: 8px;">
+                        <div style="font-weight: 600; color: #92400e;">Low Stock</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #92400e;">${lowStockItems.length}</div>
+                    </div>
+                    <div style="padding: 12px; background: #fef2f2; border-radius: 8px;">
+                        <div style="font-weight: 600; color: #dc2626;">Out of Stock</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #dc2626;">${outOfStockItems.length}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        if (lowStockItems.length > 0) {
+            reportContent += `
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: var(--text-primary); margin-bottom: 12px;">⚠️ Low Stock Items</h4>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        ${lowStockItems.map(item => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #fef3c7; border-radius: 6px;">
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">${item.name}</div>
+                                    <div style="font-size: 12px; color: #92400e;">${item.currentStock} ${item.unit} • Min: ${item.minStock} ${item.unit}</div>
+                                </div>
+                                <button class="btn-outline restock-from-report" data-id="${item.id}" style="padding: 4px 8px; font-size: 12px;">
+                                    Restock
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        if (outOfStockItems.length > 0) {
+            reportContent += `
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: var(--text-primary); margin-bottom: 12px;">❌ Out of Stock Items</h4>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        ${outOfStockItems.map(item => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #fef2f2; border-radius: 6px;">
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">${item.name}</div>
+                                    <div style="font-size: 12px; color: #dc2626;">0 ${item.unit} • Min: ${item.minStock} ${item.unit}</div>
+                                </div>
+                                <button class="btn-outline restock-from-report" data-id="${item.id}" style="padding: 4px 8px; font-size: 12px;">
+                                    Restock
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        this.showReportsModal('Stock Check Report', reportContent);
+
+        // Add event listeners for restock buttons in the report
+        document.querySelectorAll('.restock-from-report').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = parseInt(e.target.dataset.id);
+                this.hideReportsModal();
+                this.quickRestock(id);
+            });
+        });
     },
 
     generateLowStockReport() {
-        // ... (keep all the existing generateLowStockReport code exactly as is)
+        const lowStockItems = this.getLowStockItems();
+        const outOfStockItems = this.getOutOfStockItems();
+        const allCriticalItems = [...lowStockItems, ...outOfStockItems];
+
+        if (allCriticalItems.length === 0) {
+            this.showReportsModal('Low Stock Report', `
+                <div style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
+                    <div style="font-size: 16px; color: var(--text-primary); margin-bottom: 8px;">No Low Stock Items</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">All inventory items are adequately stocked</div>
+                </div>
+            `);
+            return;
+        }
+
+        let reportContent = `
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: var(--text-primary); margin-bottom: 12px;">Critical Stock Items</h4>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    ${allCriticalItems.map(item => {
+                        const isOutOfStock = item.currentStock === 0;
+                        const bgColor = isOutOfStock ? '#fef2f2' : '#fef3c7';
+                        const borderColor = isOutOfStock ? '#fecaca' : '#fcd34d';
+                        const status = isOutOfStock ? 'OUT OF STOCK' : 'LOW STOCK';
+                        const statusColor = isOutOfStock ? '#dc2626' : '#d97706';
+                        
+                        return `
+                            <div style="padding: 16px; background: ${bgColor}; border: 1px solid ${borderColor}; border-radius: 8px;">
+                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                    <div>
+                                        <div style="font-weight: 600; color: var(--text-primary);">${item.name}</div>
+                                        <div style="font-size: 14px; color: var(--text-secondary);">
+                                            ${this.formatCategory(item.category)} • ${item.supplier || 'No supplier'}
+                                        </div>
+                                    </div>
+                                    <div style="padding: 4px 8px; background: ${statusColor}; color: white; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                                        ${status}
+                                    </div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 14px;">
+                                    <div>
+                                        <span style="color: var(--text-secondary);">Current:</span>
+                                        <span style="font-weight: 600; color: ${isOutOfStock ? '#dc2626' : '#d97706'};">${item.currentStock} ${item.unit}</span>
+                                    </div>
+                                    <div>
+                                        <span style="color: var(--text-secondary);">Minimum:</span>
+                                        <span style="font-weight: 600; color: var(--text-primary);">${item.minStock} ${item.unit}</span>
+                                    </div>
+                                    <div>
+                                        <span style="color: var(--text-secondary);">To Order:</span>
+                                        <span style="font-weight: 600; color: #059669;">${Math.max(item.minStock - item.currentStock, item.minStock * 0.5)} ${item.unit}</span>
+                                    </div>
+                                    <div>
+                                        <span style="color: var(--text-secondary);">Cost:</span>
+                                        <span style="font-weight: 600; color: var(--text-primary);">${this.formatCurrency(item.cost)}/${item.unit}</span>
+                                    </div>
+                                </div>
+                                ${item.notes ? `<div style="margin-top: 8px; padding: 8px; background: white; border-radius: 4px; font-size: 12px; color: var(--text-secondary);">${item.notes}</div>` : ''}
+                                <button class="btn-outline restock-from-report" data-id="${item.id}" style="margin-top: 12px; width: 100%; padding: 8px;">
+                                    Restock This Item
+                                </button>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+
+        this.showReportsModal('Low Stock Report', reportContent);
+
+        // Add event listeners for restock buttons
+        document.querySelectorAll('.restock-from-report').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = parseInt(e.target.dataset.id);
+                this.hideReportsModal();
+                this.quickRestock(id);
+            });
+        });
     },
 
     generateInventoryReport() {
-        // ... (keep all the existing generateInventoryReport code exactly as is)
+        const stats = this.calculateStats();
+        const categorySummary = this.renderCategorySummaryForReport();
+
+        let reportContent = `
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: var(--text-primary); margin-bottom: 12px;">Inventory Overview</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                    <div style="padding: 12px; background: #f0f9ff; border-radius: 8px;">
+                        <div style="font-weight: 600; color: #1e40af;">Total Items</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #1e40af;">${stats.totalItems}</div>
+                    </div>
+                    <div style="padding: 12px; background: #f0fdf4; border-radius: 8px;">
+                        <div style="font-weight: 600; color: #166534;">In Stock</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #166534;">${stats.inStock}</div>
+                    </div>
+                    <div style="padding: 12px; background: #fef3c7; border-radius: 8px;">
+                        <div style="font-weight: 600; color: #92400e;">Low Stock</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #92400e;">${stats.lowStockItems}</div>
+                    </div>
+                    <div style="padding: 12px; background: #faf5ff; border-radius: 8px;">
+                        <div style="font-weight: 600; color: #7c3aed;">Total Value</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #7c3aed;">${this.formatCurrency(stats.totalValue)}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: var(--text-primary); margin-bottom: 12px;">Category Summary</h4>
+                ${categorySummary}
+            </div>
+
+            <div>
+                <h4 style="color: var(--text-primary); margin-bottom: 12px;">Inventory Value Breakdown</h4>
+                <div style="padding: 16px; background: #f8fafc; border-radius: 8px;">
+                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Total Inventory Value</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(stats.totalValue)}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Based on current stock levels and unit costs</div>
+                </div>
+            </div>
+        `;
+
+        this.showReportsModal('Complete Inventory Report', reportContent);
+    },
+
+    renderCategorySummaryForReport() {
+        const categoryData = {};
+        this.categories.forEach(cat => {
+            categoryData[cat] = {
+                count: 0,
+                totalValue: 0,
+                lowStock: 0
+            };
+        });
+
+        this.inventory.forEach(item => {
+            if (categoryData[item.category]) {
+                categoryData[item.category].count++;
+                categoryData[item.category].totalValue += item.currentStock * item.cost;
+                if (item.currentStock <= item.minStock) {
+                    categoryData[item.category].lowStock++;
+                }
+            }
+        });
+
+        return `
+            <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+                ${this.categories.map(cat => {
+                    const data = categoryData[cat];
+                    if (data.count === 0) return '';
+                    
+                    return `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 6px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="font-size: 16px;">${this.getCategoryIcon(cat)}</div>
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">${this.formatCategory(cat)}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">
+                                        ${data.count} items • ${data.lowStock} low stock
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 600; color: var(--text-primary);">${this.formatCurrency(data.totalValue)}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">${((data.totalValue / this.calculateStats().totalValue) * 100).toFixed(1)}% of total</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
     },
 
     showReportsModal(title, content) {
-        // ... (keep all the existing showReportsModal code exactly as is)
+        document.getElementById('reports-modal-title').textContent = title;
+        document.getElementById('reports-content').innerHTML = content;
+        document.getElementById('reports-modal').classList.remove('hidden');
     },
 
     hideReportsModal() {
-        // ... (keep all the existing hideReportsModal code exactly as is)
+        document.getElementById('reports-modal').classList.add('hidden');
     },
 
     printReport() {
-        // ... (keep all the existing printReport code exactly as is)
-    },
-
-    // UPDATED METHOD: Sync inventory stats with dashboard (no ProfileModule dependency)
-    syncStatsWithDashboard() {
-        const stats = this.calculateStats();
+        const reportContent = document.getElementById('reports-content').innerHTML;
+        const reportTitle = document.getElementById('reports-modal-title').textContent;
         
-        // Update shared data structure
-        if (window.FarmModules && window.FarmModules.appData) {
-            if (!window.FarmModules.appData.profile) {
-                window.FarmModules.appData.profile = {};
-            }
-            if (!window.FarmModules.appData.profile.dashboardStats) {
-                window.FarmModules.appData.profile.dashboardStats = {};
-            }
-            
-            // Update inventory stats in shared data
-            Object.assign(window.FarmModules.appData.profile.dashboardStats, {
-                totalInventoryItems: stats.totalItems,
-                inventoryValue: stats.totalValue
-            });
-        }
-        
-        // Notify dashboard module if available
-        if (window.FarmModules && window.FarmModules.modules.dashboard) {
-            window.FarmModules.modules.dashboard.updateDashboardStats({
-                totalInventoryItems: stats.totalItems,
-                inventoryValue: stats.totalValue
-            });
-        }
-    },
-
-    // NEW METHOD: Add recent activity to dashboard
-    addRecentActivity(activityData) {
-        if (!window.FarmModules || !window.FarmModules.modules.dashboard) return;
-        
-        let activity;
-        
-        switch (activityData.type) {
-            case 'item_added':
-                activity = {
-                    type: 'inventory_item_added',
-                    message: `Added: ${activityData.item.name}`,
-                    icon: '📦'
-                };
-                break;
-            case 'stock_updated':
-                const change = activityData.newStock - activityData.oldStock;
-                const changeText = change > 0 ? `+${change}` : change;
-                activity = {
-                    type: 'stock_updated',
-                    message: `Stock ${changeText} ${activityData.item.unit}: ${activityData.item.name}`,
-                    icon: '✏️'
-                };
-                break;
-            case 'item_deleted':
-                activity = {
-                    type: 'inventory_item_deleted',
-                    message: `Deleted: ${activityData.item.name}`,
-                    icon: '🗑️'
-                };
-                break;
-            case 'restocked':
-                activity = {
-                    type: 'inventory_restocked',
-                    message: `Restocked +${activityData.amount} ${activityData.item.unit}: ${activityData.item.name}`,
-                    icon: '📈'
-                };
-                break;
-        }
-        
-        if (activity) {
-            window.FarmModules.modules.dashboard.addRecentActivity(activity);
-        }
-    },
-
-    // NEW METHOD: Get inventory summary for other modules
-    getInventorySummary() {
-        const stats = this.calculateStats();
-        return {
-            ...stats,
-            lowStockItems: this.getLowStockItems(),
-            outOfStockItems: this.getOutOfStockItems(),
-            categories: this.categories.map(cat => {
-                const items = this.inventory.filter(item => item.category === cat);
-                return {
-                    name: cat,
-                    count: items.length,
-                    value: items.reduce((sum, item) => sum + (item.currentStock * item.cost), 0)
-                };
-            })
-        };
-    },
-
-    // NEW METHOD: Check if specific item is low stock
-    isLowStock(itemId) {
-        const item = this.inventory.find(item => item.id === itemId);
-        return item ? item.currentStock <= item.minStock : false;
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>${reportTitle}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
+                        h4 { color: #1a1a1a; margin-bottom: 10px; }
+                        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+                        .stat-item { padding: 10px; border-radius: 6px; }
+                        .item-list { margin-bottom: 20px; }
+                        .item-card { padding: 12px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 8px; }
+                        @media print {
+                            body { margin: 0.5in; }
+                            button { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h2>${reportTitle}</h2>
+                    <div>Generated on: ${new Date().toLocaleDateString()}</div>
+                    <hr>
+                    ${reportContent}
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
     },
 
     formatCurrency(amount) {
@@ -835,5 +968,4 @@ const InventoryCheckModule = {
 
 if (window.FarmModules) {
     window.FarmModules.registerModule('inventory-check', InventoryCheckModule);
-    console.log('✅ Inventory Check module registered');
 }
