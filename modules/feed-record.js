@@ -1,4 +1,4 @@
-// modules/feed-record.js - UPDATED WITH SHARED DATA PATTERN
+// modules/feed-record.js - CORRECTED VERSION
 console.log('Loading feed-record module...');
 
 const FeedRecordModule = {
@@ -6,17 +6,14 @@ const FeedRecordModule = {
     initialized: false,
     feedRecords: [],
     feedInventory: [],
-    birdsStock: 1000, // Current number of birds
+    birdsStock: 1000,
 
     initialize() {
         console.log('🌾 Initializing feed records...');
         this.loadData();
         this.renderModule();
         this.initialized = true;
-        
-        // Sync initial stats with shared data
         this.syncStatsWithSharedData();
-        
         return true;
     },
 
@@ -47,145 +44,161 @@ const FeedRecordModule = {
         ];
     },
 
-    // ... (ALL THE RENDER METHODS REMAIN EXACTLY THE SAME - no changes needed)
-    // calculateStats(), renderFeedInventoryList(), renderFeedRecordsList(), etc.
-    // ALL UI CODE STAYS THE SAME
+    renderModule() {
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
 
-    // ... (ALL EVENT HANDLER METHODS REMAIN EXACTLY THE SAME)
-    // setupEventListeners(), showFeedForm(), handleFeedRecordSubmit(), etc.
-
-    // ... (ALL HELPER METHODS REMAIN EXACTLY THE SAME)
-    // getStockStatus(), getFeedUsage(), formatFeedType(), etc.
-
-    // UPDATED METHOD: Sync feed stats with shared app data
-    syncStatsWithSharedData() {
         const stats = this.calculateStats();
-        
-        // Update shared app data
-        if (window.FarmModules && window.FarmModules.appData) {
-            window.FarmModules.appData.profile = window.FarmModules.appData.profile || {};
-            window.FarmModules.appData.profile.dashboardStats = window.FarmModules.appData.profile.dashboardStats || {};
-            
-            // Update feed-related stats in shared data
-            window.FarmModules.appData.profile.dashboardStats.totalBirds = this.birdsStock;
-            window.FarmModules.appData.profile.dashboardStats.totalFeedStock = stats.totalStock;
-            window.FarmModules.appData.profile.dashboardStats.lowFeedStockItems = stats.lowStockItems;
-            window.FarmModules.appData.profile.dashboardStats.outOfFeedStockItems = stats.outOfStockItems;
-            window.FarmModules.appData.profile.dashboardStats.totalFeedUsed = stats.totalFeedUsed;
-            window.FarmModules.appData.profile.dashboardStats.totalFeedCost = stats.totalFeedCost;
-            window.FarmModules.appData.profile.dashboardStats.totalFeedRecords = stats.totalFeedRecords;
-            window.FarmModules.appData.profile.dashboardStats.weeklyFeedUsage = parseFloat(stats.thisWeekUsage);
-            
-            console.log('📊 Feed stats synced with shared data:', {
-                totalBirds: this.birdsStock,
-                totalFeedStock: stats.totalStock,
-                weeklyFeedUsage: stats.thisWeekUsage
-            });
-            
-            // Notify other modules that feed data has been updated
-            this.notifyDataUpdate();
+
+        contentArea.innerHTML = `
+            <div class="module-container">
+                <div class="module-header">
+                    <h1 class="module-title">Feed Records</h1>
+                    <p class="module-subtitle">Track feed usage and inventory</p>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-action-grid">
+                    <button class="quick-action-btn" id="record-feed-btn">
+                        <div style="font-size: 32px;">📝</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Record Feed</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Log feed usage</span>
+                    </button>
+                    <button class="quick-action-btn" id="add-stock-btn">
+                        <div style="font-size: 32px;">📦</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Stock</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Add feed to inventory</span>
+                    </button>
+                    <button class="quick-action-btn" id="adjust-birds-btn">
+                        <div style="font-size: 32px;">🐔</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Adjust Birds</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Update bird count</span>
+                    </button>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">🌾</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.totalStock} kg</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Current Stock</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">🐔</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.birdsStock}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Birds to Feed</div>
+                    </div>
+                </div>
+
+                <!-- Simple Form -->
+                <div class="glass-card" style="padding: 24px; margin: 24px 0;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px;">Record Feed Usage</h3>
+                    <form id="feed-record-form">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <label class="form-label">Feed Type</label>
+                                <select class="form-input" id="feed-type" required>
+                                    <option value="starter">Starter Feed</option>
+                                    <option value="grower">Grower Feed</option>
+                                    <option value="finisher">Finisher Feed</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Quantity (kg)</label>
+                                <input type="number" class="form-input" id="feed-quantity" step="0.1" min="0.1" required>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-input" id="feed-notes" rows="2" placeholder="Feeding details..."></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary">Save Record</button>
+                    </form>
+                </div>
+
+                <!-- Recent Records -->
+                <div class="glass-card" style="padding: 24px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Recent Feed Records</h3>
+                    <div id="feed-records-list">
+                        ${this.renderFeedRecordsList()}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        this.setupEventListeners();
+    },
+
+    calculateStats() {
+        const totalStock = this.feedInventory.reduce((sum, item) => sum + item.currentStock, 0);
+        return { totalStock };
+    },
+
+    renderFeedRecordsList() {
+        if (this.feedRecords.length === 0) {
+            return `<div style="text-align: center; color: var(--text-secondary); padding: 20px;">No feed records yet</div>`;
         }
+
+        return this.feedRecords.slice(0, 5).map(record => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; margin-bottom: 8px;">
+                <div>
+                    <div style="font-weight: 600; color: var(--text-primary); text-transform: capitalize;">
+                        ${record.feedType} Feed
+                    </div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">
+                        ${record.date} • ${record.quantity}kg
+                    </div>
+                </div>
+                <div style="color: var(--text-primary); font-weight: bold;">
+                    ${this.formatCurrency(record.cost)}
+                </div>
+            </div>
+        `).join('');
     },
 
-    // NEW METHOD: Notify other modules about data updates
-    notifyDataUpdate() {
-        // Dispatch a custom event that other modules can listen for
-        const event = new CustomEvent('feedDataUpdated', {
-            detail: {
-                birdsStock: this.birdsStock,
-                feedRecords: this.feedRecords.length,
-                feedInventory: this.feedInventory
-            }
-        });
-        document.dispatchEvent(event);
+    setupEventListeners() {
+        document.getElementById('feed-record-form')?.addEventListener('submit', (e) => this.handleFeedRecordSubmit(e));
+        document.getElementById('record-feed-btn')?.addEventListener('click', () => this.showFeedForm());
     },
 
-    // UPDATED METHOD: Handle feed record submission
     handleFeedRecordSubmit(e) {
         e.preventDefault();
         
-        const feedType = document.getElementById('feed-type').value;
-        const quantity = parseFloat(document.getElementById('feed-quantity').value);
-        const selectedOption = document.getElementById('feed-type').options[document.getElementById('feed-type').selectedIndex];
-        const availableStock = parseFloat(selectedOption.dataset.stock);
-
-        if (quantity > availableStock) {
-            alert(`Cannot use ${quantity}kg. Only ${availableStock}kg available.`);
-            return;
-        }
-
         const formData = {
             id: Date.now(),
-            date: document.getElementById('feed-date').value,
-            feedType: feedType,
-            quantity: quantity,
-            birdsFed: parseInt(document.getElementById('birds-fed').value),
-            cost: parseFloat(document.getElementById('feed-cost').value),
-            notes: document.getElementById('feed-notes').value
+            date: new Date().toISOString().split('T')[0],
+            feedType: document.getElementById('feed-type').value,
+            quantity: parseFloat(document.getElementById('feed-quantity').value),
+            cost: parseFloat(document.getElementById('feed-quantity').value) * 2.5, // Simple calculation
+            notes: document.getElementById('feed-notes').value,
+            birdsFed: this.birdsStock
         };
-
-        // Update inventory
-        this.updateInventory(feedType, -quantity);
 
         this.feedRecords.unshift(formData);
         this.saveData();
         this.renderModule();
         
-        // SYNC WITH SHARED DATA - Update feed stats
-        this.syncStatsWithSharedData();
-        
         if (window.coreModule) {
-            window.coreModule.showNotification(`Recorded ${quantity}kg feed usage!`, 'success');
+            window.coreModule.showNotification(`Recorded ${formData.quantity}kg feed usage!`, 'success');
         }
     },
 
-    // UPDATED METHOD: Handle stock submission
-    handleStockSubmit(e) {
-        e.preventDefault();
-        
-        const feedType = document.getElementById('stock-feed-type').value;
-        const quantity = parseFloat(document.getElementById('add-quantity').value);
-        const costPerKg = parseFloat(document.getElementById('cost-per-kg').value);
-
-        // Update inventory
-        this.updateInventory(feedType, quantity, costPerKg);
-
-        this.saveData();
-        this.renderModule();
-        
-        // SYNC WITH SHARED DATA - Update feed stats
-        this.syncStatsWithSharedData();
-        
-        if (window.coreModule) {
-            window.coreModule.showNotification(`Added ${quantity}kg to ${this.formatFeedType(feedType)} feed stock!`, 'success');
-        }
+    showFeedForm() {
+        // Simple form show logic
+        document.getElementById('feed-record-form').scrollIntoView({ behavior: 'smooth' });
     },
 
-    // UPDATED METHOD: Handle birds submission
-    handleBirdsSubmit(e) {
-        e.preventDefault();
+    syncStatsWithSharedData() {
+        const stats = this.calculateStats();
         
-        const newCount = parseInt(document.getElementById('new-birds-count').value);
-        const reason = document.getElementById('birds-change-reason').value;
-        
-        const oldCount = this.birdsStock;
-        this.birdsStock = newCount;
-
-        this.saveData();
-        this.renderModule();
-        
-        // SYNC WITH SHARED DATA - Update bird count
-        this.syncStatsWithSharedData();
-        
-        if (window.coreModule) {
-            const change = newCount - oldCount;
-            const changeText = change > 0 ? `+${change}` : change;
-            window.coreModule.showNotification(`Bird count updated: ${changeText} birds (${reason})`, 'success');
+        if (window.FarmModules && window.FarmModules.appData) {
+            window.FarmModules.appData.profile = window.FarmModules.appData.profile || {};
+            window.FarmModules.appData.profile.dashboardStats = window.FarmModules.appData.profile.dashboardStats || {};
+            
+            window.FarmModules.appData.profile.dashboardStats.totalBirds = this.birdsStock;
+            window.FarmModules.appData.profile.dashboardStats.totalFeedStock = stats.totalStock;
         }
     },
-
-    // ... (ALL OTHER METHODS REMAIN EXACTLY THE SAME)
-    // updateInventory(), getDefaultMinStock(), generateFeedReport(), etc.
 
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
