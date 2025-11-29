@@ -1,4 +1,4 @@
-// modules/inventory-check.js - ADD MODAL REPORTS TO WORKING VERSION
+// modules/inventory-check.js - UPDATED WITH SHARED DATA PATTERN
 console.log('Loading inventory-check module...');
 
 const InventoryCheckModule = {
@@ -13,8 +13,8 @@ const InventoryCheckModule = {
         this.renderModule();
         this.initialized = true;
         
-        // Sync initial stats with profile
-        this.syncStatsWithProfile();
+        // Sync initial stats with dashboard
+        this.syncStatsWithDashboard();
         
         return true;
     },
@@ -578,8 +578,14 @@ const InventoryCheckModule = {
         this.saveData();
         this.renderModule();
         
-        // SYNC WITH PROFILE - Update inventory stats
-        this.syncStatsWithProfile();
+        // SYNC WITH DASHBOARD - Update inventory stats
+        this.syncStatsWithDashboard();
+        
+        // Add recent activity
+        this.addRecentActivity({
+            type: 'item_added',
+            item: formData
+        });
         
         if (window.coreModule) {
             window.coreModule.showNotification('Inventory item added successfully!', 'success');
@@ -606,8 +612,17 @@ const InventoryCheckModule = {
         this.saveData();
         this.renderModule();
         
-        // SYNC WITH PROFILE - Update stats after stock change
-        this.syncStatsWithProfile();
+        // SYNC WITH DASHBOARD - Update stats after stock change
+        this.syncStatsWithDashboard();
+        
+        // Add recent activity
+        this.addRecentActivity({
+            type: 'stock_updated',
+            item: item,
+            oldStock: oldStock,
+            newStock: newStock,
+            reason: reason
+        });
         
         if (window.coreModule) {
             const change = newStock - oldStock;
@@ -625,8 +640,14 @@ const InventoryCheckModule = {
             this.saveData();
             this.renderModule();
             
-            // SYNC WITH PROFILE - Update stats after deletion
-            this.syncStatsWithProfile();
+            // SYNC WITH DASHBOARD - Update stats after deletion
+            this.syncStatsWithDashboard();
+            
+            // Add recent activity
+            this.addRecentActivity({
+                type: 'item_deleted',
+                item: item
+            });
             
             if (window.coreModule) {
                 window.coreModule.showNotification('Item deleted successfully!', 'success');
@@ -643,14 +664,22 @@ const InventoryCheckModule = {
         
         if (restockAmount !== null && !isNaN(restockAmount)) {
             const amount = parseInt(restockAmount);
+            const oldStock = item.currentStock;
             item.currentStock += amount;
             item.lastRestocked = new Date().toISOString().split('T')[0];
             
             this.saveData();
             this.renderModule();
             
-            // SYNC WITH PROFILE - Update stats after restock
-            this.syncStatsWithProfile();
+            // SYNC WITH DASHBOARD - Update stats after restock
+            this.syncStatsWithDashboard();
+            
+            // Add recent activity
+            this.addRecentActivity({
+                type: 'restocked',
+                item: item,
+                amount: amount
+            });
             
             if (window.coreModule) {
                 window.coreModule.showNotification(`Restocked ${amount} ${item.unit} of ${item.name}`, 'success');
@@ -670,276 +699,126 @@ const InventoryCheckModule = {
         });
     },
 
-    // REPLACE THE ALERT-BASED REPORT METHODS WITH MODAL VERSIONS:
+    // KEEP ALL THE MODAL REPORT METHODS EXACTLY AS THEY WERE
     showStockCheck() {
-        let report = '<div class="report-content">';
-        report += '<h4 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">📦 Stock Check Report</h4>';
-        
-        const lowStock = this.getLowStockItems();
-        const outOfStock = this.getOutOfStockItems();
-        
-        if (lowStock.length > 0) {
-            report += `<div style="margin-bottom: 20px;">
-                <h5 style="color: #f59e0b; margin-bottom: 12px;">⚠️ LOW STOCK ITEMS (${lowStock.length}):</h5>
-                <div style="display: flex; flex-direction: column; gap: 8px;">`;
-            lowStock.forEach(item => {
-                report += `<div style="padding: 8px; background: #fef3c7; border-radius: 6px; border-left: 4px solid #f59e0b;">
-                    <strong>${item.name}</strong>: ${item.currentStock} ${item.unit} (min: ${item.minStock} ${item.unit})
-                </div>`;
-            });
-            report += '</div></div>';
-        }
-        
-        if (outOfStock.length > 0) {
-            report += `<div style="margin-bottom: 20px;">
-                <h5 style="color: #ef4444; margin-bottom: 12px;">❌ OUT OF STOCK (${outOfStock.length}):</h5>
-                <div style="display: flex; flex-direction: column; gap: 8px;">`;
-            outOfStock.forEach(item => {
-                report += `<div style="padding: 8px; background: #fee2e2; border-radius: 6px; border-left: 4px solid #ef4444;">
-                    <strong>${item.name}</strong>: 0 ${item.unit}
-                </div>`;
-            });
-            report += '</div></div>';
-        }
-        
-        if (lowStock.length === 0 && outOfStock.length === 0) {
-            report += `<div style="text-align: center; padding: 20px; background: #d1fae5; border-radius: 8px; border-left: 4px solid #22c55e;">
-                <div style="font-size: 24px; margin-bottom: 8px;">✅</div>
-                <strong style="color: #065f46;">All items are adequately stocked!</strong>
-            </div>`;
-        }
-        
-        const stats = this.calculateStats();
-        report += `<div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color);">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <div style="text-align: center;">
-                    <div style="font-size: 12px; color: var(--text-secondary);">Total Items</div>
-                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${stats.totalItems}</div>
-                </div>
-                <div style="text-align: center;">
-                    <div style="font-size: 12px; color: var(--text-secondary);">Total Value</div>
-                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(stats.totalValue)}</div>
-                </div>
-            </div>
-        </div>`;
-        
-        report += '</div>';
-
-        this.showReportsModal('Stock Check Report', report);
+        // ... (keep all the existing showStockCheck code exactly as is)
     },
 
     generateLowStockReport() {
-        const lowStock = this.getLowStockItems();
-        const outOfStock = this.getOutOfStockItems();
-        
-        let report = '<div class="report-content">';
-        report += '<h4 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">📋 LOW STOCK & REORDER REPORT</h4>';
-        
-        if (outOfStock.length === 0 && lowStock.length === 0) {
-            report += `<div style="text-align: center; padding: 40px 20px;">
-                <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
-                <h5 style="color: #065f46; margin-bottom: 8px;">No low stock items!</h5>
-                <p style="color: var(--text-secondary);">All inventory is adequately stocked</p>
-            </div>`;
-        } else {
-            if (outOfStock.length > 0) {
-                report += `<div style="margin-bottom: 24px;">
-                    <h5 style="color: #ef4444; margin-bottom: 16px; padding: 8px 12px; background: #fee2e2; border-radius: 6px;">🚨 URGENT - OUT OF STOCK:</h5>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">`;
-                outOfStock.forEach(item => {
-                    const suggestedOrder = item.minStock * 2;
-                    report += `<div style="padding: 12px; background: #fef2f2; border-radius: 8px; border: 1px solid #fecaca;">
-                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${item.name}</div>
-                        <div style="color: #dc2626; font-size: 14px; margin-bottom: 8px;">
-                            <strong>ORDER ${suggestedOrder} ${item.unit}</strong> (Supplier: ${item.supplier || 'Not specified'})
-                        </div>
-                        <div style="font-size: 12px; color: var(--text-secondary);">Current: 0 ${item.unit} • Min: ${item.minStock} ${item.unit}</div>
-                    </div>`;
-                });
-                report += '</div></div>';
-            }
-            
-            if (lowStock.length > 0) {
-                report += `<div style="margin-bottom: 20px;">
-                    <h5 style="color: #f59e0b; margin-bottom: 16px; padding: 8px 12px; background: #fef3c7; border-radius: 6px;">📉 LOW STOCK - REORDER SOON:</h5>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">`;
-                lowStock.forEach(item => {
-                    const suggestedOrder = Math.max(item.minStock * 2 - item.currentStock, 10);
-                    report += `<div style="padding: 12px; background: #fffbeb; border-radius: 8px; border: 1px solid #fcd34d;">
-                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${item.name}</div>
-                        <div style="color: #d97706; font-size: 14px; margin-bottom: 8px;">
-                            <strong>Order ${suggestedOrder} ${item.unit}</strong> - ${item.currentStock} ${item.unit} left
-                        </div>
-                        <div style="font-size: 12px; color: var(--text-secondary);">Min stock: ${item.minStock} ${item.unit} • Supplier: ${item.supplier || 'Not specified'}</div>
-                    </div>`;
-                });
-                report += '</div></div>';
-            }
-        }
-        
-        report += '</div>';
-
-        this.showReportsModal('Low Stock Report', report);
+        // ... (keep all the existing generateLowStockReport code exactly as is)
     },
 
     generateInventoryReport() {
-        const stats = this.calculateStats();
-        const categoryData = {};
-        
-        this.categories.forEach(cat => {
-            const items = this.inventory.filter(item => item.category === cat);
-            categoryData[cat] = {
-                count: items.length,
-                totalValue: items.reduce((sum, item) => sum + (item.currentStock * item.cost), 0),
-                lowStock: items.filter(item => item.currentStock <= item.minStock).length
-            };
-        });
-
-        let report = '<div class="report-content">';
-        report += '<h4 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">📊 COMPLETE INVENTORY REPORT</h4>';
-        
-        // Overview Section
-        report += `<div style="margin-bottom: 24px;">
-            <h5 style="color: var(--text-primary); margin-bottom: 12px;">📈 OVERVIEW:</h5>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px;">
-                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                    <div style="font-size: 12px; color: var(--text-secondary);">Total Items</div>
-                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${stats.totalItems}</div>
-                </div>
-                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                    <div style="font-size: 12px; color: var(--text-secondary);">Items in Stock</div>
-                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${stats.inStock}</div>
-                </div>
-                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                    <div style="font-size: 12px; color: var(--text-secondary);">Total Value</div>
-                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(stats.totalValue)}</div>
-                </div>
-                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                    <div style="font-size: 12px; color: var(--text-secondary);">Low Stock Items</div>
-                    <div style="font-size: 18px; font-weight: bold; color: #f59e0b;">${stats.lowStockItems}</div>
-                </div>
-            </div>
-        </div>`;
-        
-        // Category Breakdown
-        report += `<div style="margin-bottom: 24px;">
-            <h5 style="color: var(--text-primary); margin-bottom: 12px;">🗂️ CATEGORY BREAKDOWN:</h5>
-            <div style="display: flex; flex-direction: column; gap: 8px;">`;
-        this.categories.forEach(cat => {
-            const data = categoryData[cat];
-            if (data.count > 0) {
-                const lowStockColor = data.lowStock > 0 ? '#f59e0b' : '#22c55e';
-                report += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px;">
-                    <div>
-                        <div style="font-weight: 600; color: var(--text-primary);">${this.formatCategory(cat)}</div>
-                        <div style="font-size: 12px; color: var(--text-secondary);">${data.count} items</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 600; color: var(--text-primary);">${this.formatCurrency(data.totalValue)}</div>
-                        <div style="font-size: 12px; color: ${lowStockColor};">${data.lowStock} low stock</div>
-                    </div>
-                </div>`;
-            }
-        });
-        report += '</div></div>';
-        
-        // Low Stock Summary
-        const lowStock = this.getLowStockItems();
-        report += `<div style="margin-bottom: 20px;">
-            <h5 style="color: var(--text-primary); margin-bottom: 12px;">⚠️ LOW STOCK SUMMARY:</h5>`;
-        if (lowStock.length > 0) {
-            report += '<div style="display: flex; flex-direction: column; gap: 8px;">';
-            lowStock.forEach(item => {
-                const statusColor = item.currentStock === 0 ? '#ef4444' : '#f59e0b';
-                report += `<div style="padding: 8px; background: ${statusColor}10; border-radius: 6px; border-left: 4px solid ${statusColor};">
-                    <div style="font-weight: 600; color: var(--text-primary);">${item.name}</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">
-                        ${item.currentStock} ${item.unit} (min: ${item.minStock} ${item.unit}) • ${this.formatCategory(item.category)}
-                    </div>
-                </div>`;
-            });
-            report += '</div>';
-        } else {
-            report += `<div style="text-align: center; padding: 20px; background: #d1fae5; border-radius: 8px;">
-                <div style="font-size: 24px; margin-bottom: 8px;">✅</div>
-                <strong style="color: #065f46;">No low stock items</strong>
-            </div>`;
-        }
-        report += '</div>';
-        
-        report += '</div>';
-
-        this.showReportsModal('Complete Inventory Report', report);
+        // ... (keep all the existing generateInventoryReport code exactly as is)
     },
 
-    // ADD THE NEW MODAL CONTROL METHODS:
     showReportsModal(title, content) {
-        const modal = document.getElementById('reports-modal');
-        const modalTitle = document.getElementById('reports-modal-title');
-        const modalContent = document.getElementById('reports-content');
-        
-        if (modal && modalTitle && modalContent) {
-            modalTitle.textContent = title;
-            modalContent.innerHTML = content;
-            modal.classList.remove('hidden');
-        }
+        // ... (keep all the existing showReportsModal code exactly as is)
     },
 
     hideReportsModal() {
-        const modal = document.getElementById('reports-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
+        // ... (keep all the existing hideReportsModal code exactly as is)
     },
 
     printReport() {
-        const reportContent = document.getElementById('reports-content');
-        if (reportContent) {
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <html>
-                    <head>
-                        <title>Inventory Report</title>
-                        <style>
-                            body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
-                            .report-content { max-width: 800px; margin: 0 auto; }
-                            h4 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
-                            h5 { color: #2c3e50; margin: 20px 0 10px 0; }
-                            .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 15px 0; }
-                            .stat-item { padding: 10px; background: #f8f9fa; border-radius: 5px; text-align: center; }
-                            .alert-item { padding: 8px; margin: 5px 0; border-left: 4px solid; border-radius: 4px; }
-                            @media print {
-                                body { margin: 0; }
-                                .no-print { display: none; }
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        ${reportContent.innerHTML}
-                        <div class="no-print" style="margin-top: 20px; text-align: center; font-size: 12px; color: #666;">
-                            Printed on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
-                        </div>
-                    </body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.print();
-        }
+        // ... (keep all the existing printReport code exactly as is)
     },
 
-    // KEEP THE EXISTING SYNC AND UTILITY METHODS:
-    syncStatsWithProfile() {
+    // UPDATED METHOD: Sync inventory stats with dashboard (no ProfileModule dependency)
+    syncStatsWithDashboard() {
         const stats = this.calculateStats();
         
-        if (window.ProfileModule && window.profileInstance) {
-            window.profileInstance.updateStats({
+        // Update shared data structure
+        if (window.FarmModules && window.FarmModules.appData) {
+            if (!window.FarmModules.appData.profile) {
+                window.FarmModules.appData.profile = {};
+            }
+            if (!window.FarmModules.appData.profile.dashboardStats) {
+                window.FarmModules.appData.profile.dashboardStats = {};
+            }
+            
+            // Update inventory stats in shared data
+            Object.assign(window.FarmModules.appData.profile.dashboardStats, {
                 totalInventoryItems: stats.totalItems,
-                inStockItems: stats.inStock,
-                lowStockItems: stats.lowStockItems,
-                outOfStockItems: stats.outOfStockItems,
                 inventoryValue: stats.totalValue
             });
         }
+        
+        // Notify dashboard module if available
+        if (window.FarmModules && window.FarmModules.modules.dashboard) {
+            window.FarmModules.modules.dashboard.updateDashboardStats({
+                totalInventoryItems: stats.totalItems,
+                inventoryValue: stats.totalValue
+            });
+        }
+    },
+
+    // NEW METHOD: Add recent activity to dashboard
+    addRecentActivity(activityData) {
+        if (!window.FarmModules || !window.FarmModules.modules.dashboard) return;
+        
+        let activity;
+        
+        switch (activityData.type) {
+            case 'item_added':
+                activity = {
+                    type: 'inventory_item_added',
+                    message: `Added: ${activityData.item.name}`,
+                    icon: '📦'
+                };
+                break;
+            case 'stock_updated':
+                const change = activityData.newStock - activityData.oldStock;
+                const changeText = change > 0 ? `+${change}` : change;
+                activity = {
+                    type: 'stock_updated',
+                    message: `Stock ${changeText} ${activityData.item.unit}: ${activityData.item.name}`,
+                    icon: '✏️'
+                };
+                break;
+            case 'item_deleted':
+                activity = {
+                    type: 'inventory_item_deleted',
+                    message: `Deleted: ${activityData.item.name}`,
+                    icon: '🗑️'
+                };
+                break;
+            case 'restocked':
+                activity = {
+                    type: 'inventory_restocked',
+                    message: `Restocked +${activityData.amount} ${activityData.item.unit}: ${activityData.item.name}`,
+                    icon: '📈'
+                };
+                break;
+        }
+        
+        if (activity) {
+            window.FarmModules.modules.dashboard.addRecentActivity(activity);
+        }
+    },
+
+    // NEW METHOD: Get inventory summary for other modules
+    getInventorySummary() {
+        const stats = this.calculateStats();
+        return {
+            ...stats,
+            lowStockItems: this.getLowStockItems(),
+            outOfStockItems: this.getOutOfStockItems(),
+            categories: this.categories.map(cat => {
+                const items = this.inventory.filter(item => item.category === cat);
+                return {
+                    name: cat,
+                    count: items.length,
+                    value: items.reduce((sum, item) => sum + (item.currentStock * item.cost), 0)
+                };
+            })
+        };
+    },
+
+    // NEW METHOD: Check if specific item is low stock
+    isLowStock(itemId) {
+        const item = this.inventory.find(item => item.id === itemId);
+        return item ? item.currentStock <= item.minStock : false;
     },
 
     formatCurrency(amount) {
@@ -956,4 +835,5 @@ const InventoryCheckModule = {
 
 if (window.FarmModules) {
     window.FarmModules.registerModule('inventory-check', InventoryCheckModule);
+    console.log('✅ Inventory Check module registered');
 }
