@@ -4658,3 +4658,156 @@ header, .top-nav {
     font-size: 12px !important;
     color: #666 !important;
 }
+
+/*===============DARK MODE======================*/
+/* ===== DARK MODE FIXES FOR MAIN CONTENT ===== */
+
+/* Main app container and content area */
+.dark-mode #app-container,
+.dark-mode #content-area {
+    background: var(--dm-background) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+/* All module containers */
+.dark-mode .dashboard-container,
+.dark-mode .income-expenses-module,
+.dark-mode .module-container,
+.dark-mode .orders-module,
+.dark-mode .feed-module,
+.dark-mode .production-module,
+.dark-mode .sales-module,
+.dark-mode .profile-module,
+.dark-mode .section.active {
+    background: var(--dm-background) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+/* Fix all text colors in dark mode */
+.dark-mode h1,
+.dark-mode h2,
+.dark-mode h3,
+.dark-mode h4,
+.dark-mode h5,
+.dark-mode h6,
+.dark-mode p,
+.dark-mode span,
+.dark-mode div {
+    color: var(--dm-text-primary) !important;
+}
+
+/* Fix specific text elements that might be overriding */
+.dark-mode .module-title-pwa,
+.dark-mode .module-subtitle-pwa,
+.dark-mode .module-title,
+.dark-mode .module-subtitle,
+.dark-mode .section-title-pwa,
+.dark-mode .form-title-pwa,
+.dark-mode .stat-value-pwa,
+.dark-mode .stat-label-pwa,
+.dark-mode .quick-title-pwa,
+.dark-mode .quick-desc-pwa {
+    color: var(--dm-text-primary) !important;
+}
+
+/* Fix secondary text */
+.dark-mode .transaction-meta-pwa,
+.dark-mode .inventory-meta-pwa,
+.dark-mode .record-meta-pwa,
+.dark-mode .order-meta-pwa,
+.dark-mode .empty-desc-pwa,
+.dark-mode .form-help-pwa {
+    color: var(--dm-text-secondary) !important;
+}
+
+/* Fix all card backgrounds */
+.dark-mode .stat-card,
+.dark-mode .stat-card-pwa,
+.dark-mode .glass-card,
+.dark-mode .quick-action-btn,
+.dark-mode .quick-action-btn-pwa,
+.dark-mode .form-container-pwa,
+.dark-mode .section-card-pwa,
+.dark-mode .transactions-section-pwa,
+.dark-mode .recent-orders-pwa,
+.dark-mode .orders-filters-pwa,
+.dark-mode .priority-orders-pwa,
+.dark-mode .report-type-card,
+.dark-mode .report-output,
+.dark-mode .profile-section-pwa,
+.dark-mode .production-stat-pwa,
+.dark-mode .production-trends-pwa {
+    background: rgba(30, 41, 59, 0.95) !important;
+    border: 1px solid var(--dm-border) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+/* Fix list items */
+.dark-mode .transaction-item-pwa,
+.dark-mode .inventory-item-pwa,
+.dark-mode .record-item-pwa,
+.dark-mode .order-item-pwa,
+.dark-mode .alert-item-pwa,
+.dark-mode .priority-item-pwa,
+.dark-mode .trend-item-pwa,
+.dark-mode .metric-row {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border: 1px solid var(--dm-border) !important;
+}
+
+/* Fix form elements */
+.dark-mode .form-input,
+.dark-mode .form-select,
+.dark-mode .form-input-pwa,
+.dark-mode .form-select-pwa,
+.dark-mode .orders-filter-input-pwa,
+.dark-mode .orders-filter-select-pwa {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border: 1.5px solid var(--dm-border) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+.dark-mode .form-input:focus,
+.dark-mode .form-input-pwa:focus {
+    border-color: #14b8a6 !important;
+    background: rgba(30, 41, 59, 0.9) !important;
+}
+
+/* Fix empty states */
+.dark-mode .empty-state,
+.dark-mode .empty-state-pwa {
+    color: var(--dm-text-secondary) !important;
+}
+
+.dark-mode .empty-icon,
+.dark-mode .empty-icon-pwa {
+    color: var(--dm-text-secondary) !important;
+    opacity: 0.5;
+}
+
+/* Fix notifications for dark mode */
+.dark-mode .notification {
+    background: rgba(30, 41, 59, 0.95) !important;
+    border: 1px solid var(--dm-border) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+.dark-mode .notification.success {
+    border-left-color: #22c55e;
+    background: rgba(34, 197, 94, 0.15) !important;
+}
+
+.dark-mode .notification.error {
+    border-left-color: #ef4444;
+    background: rgba(239, 68, 68, 0.15) !important;
+}
+
+.dark-mode .notification.info {
+    border-left-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.15) !important;
+}
+
+.dark-mode .notification.warning {
+    border-left-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.15) !important;
+}
