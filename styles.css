@@ -4854,12 +4854,12 @@ header, .top-nav {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(8px);
 }
 
 .popout-modal.hidden {
@@ -4867,16 +4867,15 @@ header, .top-nav {
 }
 
 .popout-modal-content {
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--border-color, #e5e7eb);
     border-radius: 16px;
     width: 90%;
     max-width: 800px;
     max-height: 90vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     animation: modalSlideIn 0.3s ease-out;
 }
 
@@ -4896,13 +4895,16 @@ header, .top-nav {
     justify-content: space-between;
     align-items: center;
     padding: 24px;
-    border-bottom: 1px solid var(--glass-border);
+    border-bottom: 1px solid var(--border-color, #e5e7eb);
+    background: var(--header-bg, #f8fafc);
+    border-radius: 16px 16px 0 0;
 }
 
 .popout-modal-title {
-    color: var(--text-primary);
+    color: var(--text-primary, #1f2937);
     margin: 0;
     font-size: 24px;
+    font-weight: 700;
 }
 
 .popout-modal-close {
@@ -4910,21 +4912,28 @@ header, .top-nav {
     border: none;
     font-size: 24px;
     cursor: pointer;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #6b7280);
     padding: 8px;
     border-radius: 8px;
     transition: all 0.2s;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .popout-modal-close:hover {
-    background: var(--glass-bg);
-    color: var(--text-primary);
+    background: var(--hover-bg, #f3f4f6);
+    color: var(--text-primary, #1f2937);
 }
 
 .popout-modal-body {
     padding: 24px;
     overflow-y: auto;
     flex: 1;
+    background: var(--card-bg, #ffffff);
+    color: var(--text-primary, #1f2937);
 }
 
 .popout-modal-footer {
@@ -4932,6 +4941,221 @@ header, .top-nav {
     justify-content: flex-end;
     gap: 12px;
     padding: 24px;
-    border-top: 1px solid var(--glass-border);
+    border-top: 1px solid var(--border-color, #e5e7eb);
+    background: var(--footer-bg, #f8fafc);
+    border-radius: 0 0 16px 16px;
+}
+
+/* Ensure good text contrast in modals */
+.popout-modal-body h4 {
+    color: var(--text-primary, #1f2937) !important;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.popout-modal-body .form-label {
+    color: var(--text-primary, #374151) !important;
+    font-weight: 500;
+}
+
+.popout-modal-body .form-input {
+    background: var(--input-bg, #ffffff) !important;
+    border: 1px solid var(--border-color, #d1d5db) !important;
+    color: var(--text-primary, #1f2937) !important;
+}
+
+.popout-modal-body .form-input::placeholder {
+    color: var(--text-secondary, #6b7280) !important;
+}
+
+/* Report content styling */
+.popout-modal-body [style*="color: var(--text-primary)"] {
+    color: var(--text-primary, #1f2937) !important;
+}
+
+.popout-modal-body [style*="color: var(--text-secondary)"] {
+    color: var(--text-secondary, #6b7280) !important;
+}
+
+/* Stats in reports */
+.popout-modal-body [style*="background: #f0f9ff"] {
+    background: rgba(59, 130, 246, 0.1) !important;
+    border: 1px solid rgba(59, 130, 246, 0.2) !important;
+}
+
+.popout-modal-body [style*="background: #f0fdf4"] {
+    background: rgba(34, 197, 94, 0.1) !important;
+    border: 1px solid rgba(34, 197, 94, 0.2) !important;
+}
+
+.popout-modal-body [style*="background: #fef3c7"] {
+    background: rgba(245, 158, 11, 0.1) !important;
+    border: 1px solid rgba(245, 158, 11, 0.2) !important;
+}
+
+.popout-modal-body [style*="background: #faf5ff"] {
+    background: rgba(124, 58, 237, 0.1) !important;
+    border: 1px solid rgba(124, 58, 237, 0.2) !important;
+}
+
+.popout-modal-body [style*="background: #fef2f2"] {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border: 1px solid rgba(239, 68, 68, 0.2) !important;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .popout-modal-content {
+        background: var(--card-bg, #1f2937);
+        border-color: var(--border-color, #374151);
+    }
+    
+    .popout-modal-header {
+        background: var(--header-bg, #111827);
+    }
+    
+    .popout-modal-footer {
+        background: var(--footer-bg, #111827);
+    }
+    
+    .popout-modal-body .form-input {
+        background: var(--input-bg, #374151) !important;
+        border-color: var(--border-color, #4b5563) !important;
+        color: var(--text-primary, #f9fafb) !important;
+    }
+}
+
+/*===============Report Content =======================*/
+/* Report Content Styles */
+.report-section {
+    margin-bottom: 24px;
+}
+
+.report-section-title {
+    color: var(--text-primary) !important;
+    font-weight: 600;
+    font-size: 18px;
+    margin-bottom: 16px;
+    border-bottom: 2px solid var(--primary-color, #3b82f6);
+    padding-bottom: 8px;
+}
+
+.stats-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.stat-card-compact {
+    padding: 16px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-primary {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.stat-success {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.stat-warning {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.stat-info {
+    background: rgba(124, 58, 237, 0.1);
+    border: 1px solid rgba(124, 58, 237, 0.2);
+}
+
+.stat-label {
+    font-size: 14px;
+    color: var(--text-secondary) !important;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary) !important;
+}
+
+.category-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 8px;
+}
+
+.category-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.category-icon {
+    font-size: 20px;
+}
+
+.category-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.category-name {
+    font-weight: 600;
+    color: var(--text-primary) !important;
+    font-size: 14px;
+}
+
+.category-count {
+    font-size: 12px;
+    color: var(--text-secondary) !important;
+}
+
+.category-value {
+    font-weight: 600;
+    color: var(--text-primary) !important;
+    font-size: 16px;
+}
+
+/* Ensure good contrast in all text */
+.popout-modal-body * {
+    color: inherit !important;
+}
+
+/* Button styles for modals */
+.popout-modal-footer .btn-primary {
+    background: var(--primary-color, #3b82f6) !important;
+    color: white !important;
+    border: none !important;
+}
+
+.popout-modal-footer .btn-outline {
+    background: transparent !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.popout-modal-footer .btn-primary:hover {
+    background: var(--primary-dark, #2563eb) !important;
+}
+
+.popout-modal-footer .btn-outline:hover {
+    background: var(--hover-bg) !important;
 }
 
