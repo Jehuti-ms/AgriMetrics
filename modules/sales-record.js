@@ -1,4 +1,4 @@
-// modules/sales-record.js
+// modules/sales-record.js - UPDATED WITH PROFILE SYNC
 FarmModules.registerModule('sales-record', {
     name: 'Sales Records',
     icon: '💰',
@@ -407,6 +407,9 @@ FarmModules.registerModule('sales-record', {
         this.updateSummary();
         this.renderSalesTable();
         
+        // Sync initial stats with profile
+        this.syncStatsWithProfile();
+        
         // Use setTimeout to ensure DOM is ready
         setTimeout(() => {
             this.attachEventListeners();
@@ -462,6 +465,27 @@ FarmModules.registerModule('sales-record', {
         this.updateElement('month-sales', this.formatCurrency(monthSales));
         this.updateElement('top-product', topProduct);
         this.updateElement('top-product-revenue', this.formatCurrency(topRevenue));
+
+        // Calculate additional stats for profile sync
+        const totalSales = sales.length;
+        const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+        const avgSaleValue = totalSales > 0 ? totalRevenue / totalSales : 0;
+        const paidSales = sales.filter(sale => sale.paymentStatus === 'paid').length;
+        const pendingSales = sales.filter(sale => sale.paymentStatus === 'pending').length;
+
+        // Store stats for sync
+        this.currentStats = {
+            totalSales,
+            totalRevenue,
+            todaySales,
+            weekSales,
+            monthSales,
+            avgSaleValue,
+            paidSales,
+            pendingSales,
+            topProduct,
+            topProductRevenue: topRevenue
+        };
     },
 
     getSalesForPeriod: function(sales, days) {
@@ -769,6 +793,9 @@ FarmModules.registerModule('sales-record', {
         this.updateSummary();
         this.renderSalesTable();
         
+        // SYNC WITH PROFILE - Update sales stats
+        this.syncStatsWithProfile();
+        
         this.showNotification('Sale recorded successfully!', 'success');
         console.log('✅ Sale added:', saleData);
     },
@@ -821,6 +848,10 @@ FarmModules.registerModule('sales-record', {
             
             this.updateSummary();
             this.renderSalesTable();
+            
+            // SYNC WITH PROFILE - Update sales stats
+            this.syncStatsWithProfile();
+            
             this.showNotification('Sale updated successfully!', 'success');
             console.log('✅ Sale updated:', saleId);
         }
@@ -841,6 +872,10 @@ FarmModules.registerModule('sales-record', {
             
             this.updateSummary();
             this.renderSalesTable();
+            
+            // SYNC WITH PROFILE - Update sales stats after deletion
+            this.syncStatsWithProfile();
+            
             this.showNotification('Sale deleted successfully', 'success');
             console.log('✅ Sale deleted:', saleId);
         }
@@ -858,6 +893,31 @@ FarmModules.registerModule('sales-record', {
         
         this.showNotification('Sales exported successfully!', 'success');
         console.log('✅ Sales exported');
+    },
+
+    // NEW METHOD: Sync sales stats with user profile
+    syncStatsWithProfile: function() {
+        const stats = this.currentStats;
+        
+        if (window.ProfileModule && window.profileInstance) {
+            window.profileInstance.updateStats({
+                totalSales: stats.totalSales,
+                totalRevenue: stats.totalRevenue,
+                todaySales: stats.todaySales,
+                weeklySales: stats.weekSales,
+                monthlySales: stats.monthSales,
+                avgSaleValue: stats.avgSaleValue,
+                paidSales: stats.paidSales,
+                pendingSales: stats.pendingSales,
+                topProduct: stats.topProduct,
+                topProductRevenue: stats.topProductRevenue
+            });
+        }
+        
+        // Also update dashboard if available
+        if (window.DashboardModule && window.DashboardModule.refreshStats) {
+            window.DashboardModule.refreshStats();
+        }
     },
 
     convertToCSV: function(sales) {
