@@ -104,7 +104,7 @@ async initializeApp() {
     header.innerHTML = `
         <nav class="top-nav">
             <div class="nav-brand">
-                <img src="icons/icon-128x128.png" alt="AgriMetrics">
+                <img src="icons/icon-96x96.png" alt="AgriMetrics">
                 <span class="brand-text">AgriMetrics</span>
                 <span class="brand-subtitle">Farm Management System</span>
             </div>
