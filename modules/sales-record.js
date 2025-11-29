@@ -1,4 +1,4 @@
-// modules/sales-record.js - UPDATED WITH PROFILE SYNC
+// modules/sales-record.js - UPDATED WITH SHARED DATA PATTERN
 FarmModules.registerModule('sales-record', {
     name: 'Sales Records',
     icon: '💰',
@@ -407,8 +407,8 @@ FarmModules.registerModule('sales-record', {
         this.updateSummary();
         this.renderSalesTable();
         
-        // Sync initial stats with profile
-        this.syncStatsWithProfile();
+        // Sync initial stats with dashboard
+        this.syncStatsWithDashboard();
         
         // Use setTimeout to ensure DOM is ready
         setTimeout(() => {
@@ -466,7 +466,7 @@ FarmModules.registerModule('sales-record', {
         this.updateElement('top-product', topProduct);
         this.updateElement('top-product-revenue', this.formatCurrency(topRevenue));
 
-        // Calculate additional stats for profile sync
+        // Calculate additional stats for dashboard sync
         const totalSales = sales.length;
         const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
         const avgSaleValue = totalSales > 0 ? totalRevenue / totalSales : 0;
@@ -793,8 +793,14 @@ FarmModules.registerModule('sales-record', {
         this.updateSummary();
         this.renderSalesTable();
         
-        // SYNC WITH PROFILE - Update sales stats
-        this.syncStatsWithProfile();
+        // SYNC WITH DASHBOARD - Update sales stats
+        this.syncStatsWithDashboard();
+        
+        // Add recent activity
+        this.addRecentActivity({
+            type: 'sale_recorded',
+            sale: saleData
+        });
         
         this.showNotification('Sale recorded successfully!', 'success');
         console.log('✅ Sale added:', saleData);
@@ -849,8 +855,14 @@ FarmModules.registerModule('sales-record', {
             this.updateSummary();
             this.renderSalesTable();
             
-            // SYNC WITH PROFILE - Update sales stats
-            this.syncStatsWithProfile();
+            // SYNC WITH DASHBOARD - Update sales stats
+            this.syncStatsWithDashboard();
+            
+            // Add recent activity
+            this.addRecentActivity({
+                type: 'sale_updated',
+                sale: sales[saleIndex]
+            });
             
             this.showNotification('Sale updated successfully!', 'success');
             console.log('✅ Sale updated:', saleId);
@@ -868,13 +880,24 @@ FarmModules.registerModule('sales-record', {
 
     deleteSaleRecord: function(saleId) {
         if (confirm('Are you sure you want to delete this sale?')) {
-            FarmModules.appData.sales = FarmModules.appData.sales.filter(s => s.id !== saleId);
+            const sales = FarmModules.appData.sales || [];
+            const sale = sales.find(s => s.id === saleId);
+            
+            FarmModules.appData.sales = sales.filter(s => s.id !== saleId);
             
             this.updateSummary();
             this.renderSalesTable();
             
-            // SYNC WITH PROFILE - Update sales stats after deletion
-            this.syncStatsWithProfile();
+            // SYNC WITH DASHBOARD - Update sales stats after deletion
+            this.syncStatsWithDashboard();
+            
+            // Add recent activity
+            if (sale) {
+                this.addRecentActivity({
+                    type: 'sale_deleted',
+                    sale: sale
+                });
+            }
             
             this.showNotification('Sale deleted successfully', 'success');
             console.log('✅ Sale deleted:', saleId);
@@ -895,29 +918,142 @@ FarmModules.registerModule('sales-record', {
         console.log('✅ Sales exported');
     },
 
-    // NEW METHOD: Sync sales stats with user profile
-    syncStatsWithProfile: function() {
+    // UPDATED METHOD: Sync sales stats with dashboard (no ProfileModule dependency)
+    syncStatsWithDashboard: function() {
         const stats = this.currentStats;
         
-        if (window.ProfileModule && window.profileInstance) {
-            window.profileInstance.updateStats({
+        // Update shared data structure
+        if (window.FarmModules && window.FarmModules.appData) {
+            if (!window.FarmModules.appData.profile) {
+                window.FarmModules.appData.profile = {};
+            }
+            if (!window.FarmModules.appData.profile.dashboardStats) {
+                window.FarmModules.appData.profile.dashboardStats = {};
+            }
+            
+            // Update sales stats in shared data
+            Object.assign(window.FarmModules.appData.profile.dashboardStats, {
                 totalSales: stats.totalSales,
                 totalRevenue: stats.totalRevenue,
                 todaySales: stats.todaySales,
                 weeklySales: stats.weekSales,
                 monthlySales: stats.monthSales,
-                avgSaleValue: stats.avgSaleValue,
-                paidSales: stats.paidSales,
-                pendingSales: stats.pendingSales,
-                topProduct: stats.topProduct,
-                topProductRevenue: stats.topProductRevenue
+                avgSaleValue: stats.avgSaleValue
             });
         }
         
-        // Also update dashboard if available
-        if (window.DashboardModule && window.DashboardModule.refreshStats) {
-            window.DashboardModule.refreshStats();
+        // Notify dashboard module if available
+        if (window.FarmModules && window.FarmModules.modules.dashboard) {
+            window.FarmModules.modules.dashboard.updateDashboardStats({
+                totalSales: stats.totalSales,
+                totalRevenue: stats.totalRevenue,
+                todaySales: stats.todaySales,
+                weeklySales: stats.weekSales,
+                monthlySales: stats.monthSales,
+                avgSaleValue: stats.avgSaleValue
+            });
         }
+    },
+
+    // NEW METHOD: Add recent activity to dashboard
+    addRecentActivity: function(activityData) {
+        if (!window.FarmModules || !window.FarmModules.modules.dashboard) return;
+        
+        let activity;
+        
+        switch (activityData.type) {
+            case 'sale_recorded':
+                activity = {
+                    type: 'sale_recorded',
+                    message: `Sale: ${this.formatProductName(activityData.sale.product)} - ${this.formatCurrency(activityData.sale.totalAmount)}`,
+                    icon: '💰'
+                };
+                break;
+            case 'sale_updated':
+                activity = {
+                    type: 'sale_updated',
+                    message: `Updated sale: ${this.formatProductName(activityData.sale.product)}`,
+                    icon: '✏️'
+                };
+                break;
+            case 'sale_deleted':
+                activity = {
+                    type: 'sale_deleted',
+                    message: `Deleted sale: ${this.formatProductName(activityData.sale.product)}`,
+                    icon: '🗑️'
+                };
+                break;
+        }
+        
+        if (activity) {
+            window.FarmModules.modules.dashboard.addRecentActivity(activity);
+        }
+    },
+
+    // NEW METHOD: Get sales summary for other modules
+    getSalesSummary: function() {
+        const stats = this.currentStats;
+        const sales = FarmModules.appData.sales || [];
+        
+        return {
+            ...stats,
+            recentSales: sales.slice(0, 10), // Last 10 sales
+            topProducts: this.getTopProducts(5),
+            salesTrend: this.getSalesTrend(30) // Last 30 days
+        };
+    },
+
+    // NEW METHOD: Get top products by revenue
+    getTopProducts: function(limit = 5) {
+        const productSales = {};
+        const sales = FarmModules.appData.sales || [];
+        
+        sales.forEach(sale => {
+            if (!productSales[sale.product]) {
+                productSales[sale.product] = {
+                    revenue: 0,
+                    quantity: 0,
+                    salesCount: 0
+                };
+            }
+            productSales[sale.product].revenue += sale.totalAmount;
+            productSales[sale.product].quantity += sale.quantity;
+            productSales[sale.product].salesCount += 1;
+        });
+
+        return Object.entries(productSales)
+            .sort(([,a], [,b]) => b.revenue - a.revenue)
+            .slice(0, limit)
+            .map(([product, data]) => ({
+                product: this.formatProductName(product),
+                revenue: data.revenue,
+                quantity: data.quantity,
+                salesCount: data.salesCount
+            }));
+    },
+
+    // NEW METHOD: Get sales trend data
+    getSalesTrend: function(days = 30) {
+        const sales = FarmModules.appData.sales || [];
+        const trend = [];
+        
+        for (let i = days - 1; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dateString = date.toISOString().split('T')[0];
+            
+            const dailySales = sales
+                .filter(sale => sale.date === dateString)
+                .reduce((sum, sale) => sum + sale.totalAmount, 0);
+            
+            trend.push({
+                date: dateString,
+                revenue: dailySales,
+                salesCount: sales.filter(sale => sale.date === dateString).length
+            });
+        }
+        
+        return trend;
     },
 
     convertToCSV: function(sales) {
