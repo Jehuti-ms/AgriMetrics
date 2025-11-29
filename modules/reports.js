@@ -1,4 +1,4 @@
-// modules/reports.js - UPDATED WITH SHARED DATA PATTERN
+// modules/reports.js - COMPLETE FIXED VERSION
 console.log('Loading reports module...');
 
 const ReportsModule = {
@@ -155,7 +155,6 @@ const ReportsModule = {
     },
 
     renderQuickStats() {
-        // Use shared data when available, fallback to localStorage
         const stats = this.getFarmStats();
         
         return `
@@ -186,9 +185,7 @@ const ReportsModule = {
         `;
     },
 
-    // NEW METHOD: Get farm stats from shared data or localStorage
     getFarmStats() {
-        // Try to get from shared data first
         if (window.FarmModules && window.FarmModules.appData && window.FarmModules.appData.profile && window.FarmModules.appData.profile.dashboardStats) {
             const sharedStats = window.FarmModules.appData.profile.dashboardStats;
             return {
@@ -201,7 +198,6 @@ const ReportsModule = {
             };
         }
 
-        // Fallback to localStorage calculation
         const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
         const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
         const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
@@ -266,7 +262,6 @@ const ReportsModule = {
         `;
     },
 
-    // NEW METHOD: Get recent activities from multiple sources
     getRecentActivities() {
         const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]').slice(0, 3);
         const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]').slice(0, 3);
@@ -276,7 +271,6 @@ const ReportsModule = {
 
         const activities = [];
 
-        // Add transactions
         transactions.forEach(transaction => {
             activities.push({
                 type: 'transaction',
@@ -287,7 +281,6 @@ const ReportsModule = {
             });
         });
 
-        // Add sales
         sales.forEach(sale => {
             activities.push({
                 type: 'sale',
@@ -298,7 +291,6 @@ const ReportsModule = {
             });
         });
 
-        // Add production
         production.forEach(record => {
             activities.push({
                 type: 'production',
@@ -309,7 +301,6 @@ const ReportsModule = {
             });
         });
 
-        // Add feed records
         feedRecords.forEach(record => {
             activities.push({
                 type: 'feed',
@@ -320,7 +311,6 @@ const ReportsModule = {
             });
         });
 
-        // Add mortality records
         mortalityRecords.forEach(record => {
             activities.push({
                 type: 'mortality',
@@ -331,13 +321,11 @@ const ReportsModule = {
             });
         });
 
-        // Sort by date and take latest 5
         activities.sort((a, b) => new Date(b.date) - new Date(a.date));
         return activities.slice(0, 5);
     },
 
     setupEventListeners() {
-        // Report generation buttons
         document.querySelector('.generate-financial-report')?.addEventListener('click', () => this.generateFinancialReport());
         document.querySelector('.generate-production-report')?.addEventListener('click', () => this.generateProductionReport());
         document.querySelector('.generate-inventory-report')?.addEventListener('click', () => this.generateInventoryReport());
@@ -346,134 +334,214 @@ const ReportsModule = {
         document.querySelector('.generate-feed-report')?.addEventListener('click', () => this.generateFeedReport());
         document.querySelector('.generate-comprehensive-report')?.addEventListener('click', () => this.generateComprehensiveReport());
         
-        // Report actions
         document.getElementById('print-report')?.addEventListener('click', () => this.printReport());
         document.getElementById('export-report')?.addEventListener('click', () => this.exportReport());
         document.getElementById('close-report')?.addEventListener('click', () => this.closeReport());
     },
 
-    // UPDATED METHOD: Use shared data for financial report
-    generateFinancialReport() {
-        const stats = this.getFarmStats();
-        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
+    // MISSING METHODS - NOW IMPLEMENTED:
+    generateInventoryReport() {
+        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+        const feedInventory = JSON.parse(localStorage.getItem('farm-feed-inventory') || '[]');
         
-        // Category breakdown
-        const incomeByCategory = {};
-        const expensesByCategory = {};
-        
-        transactions.forEach(transaction => {
-            if (transaction.type === 'income') {
-                incomeByCategory[transaction.category] = (incomeByCategory[transaction.category] || 0) + transaction.amount;
-            } else {
-                expensesByCategory[transaction.category] = (expensesByCategory[transaction.category] || 0) + transaction.amount;
-            }
-        });
-
-        const profitMargin = stats.totalRevenue > 0 ? (stats.netProfit / stats.totalRevenue) * 100 : 0;
+        const lowStockItems = inventory.filter(item => item.currentStock <= item.minStock);
+        const totalInventoryValue = inventory.reduce((sum, item) => sum + (item.currentStock * item.unitPrice), 0);
 
         const reportContent = `
             <div class="report-section">
-                <h4>💰 Financial Performance Summary</h4>
+                <h4>📦 Inventory Overview</h4>
+                <div class="metric-row">
+                    <span class="metric-label">Total Items</span>
+                    <span class="metric-value">${inventory.length + feedInventory.length}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Low Stock Items</span>
+                    <span class="metric-value ${lowStockItems.length > 0 ? 'warning' : 'profit'}">${lowStockItems.length}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Total Inventory Value</span>
+                    <span class="metric-value income">${this.formatCurrency(totalInventoryValue)}</span>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h4>⚠️ Low Stock Alerts</h4>
+                ${lowStockItems.length > 0 ? lowStockItems.map(item => `
+                    <div class="metric-row">
+                        <span class="metric-label">${item.name}</span>
+                        <span class="metric-value warning">${item.currentStock} / ${item.minStock}</span>
+                    </div>
+                `).join('') : '<p style="color: #22c55e;">✅ All items are sufficiently stocked</p>'}
+            </div>
+
+            <div class="report-section">
+                <h4>🌾 Feed Inventory</h4>
+                ${feedInventory.map(item => `
+                    <div class="metric-row">
+                        <span class="metric-label">${this.formatFeedType(item.feedType)}</span>
+                        <span class="metric-value ${item.currentStock <= item.minStock ? 'warning' : ''}">${item.currentStock} kg</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        this.showReport('Inventory Analysis Report', reportContent);
+    },
+
+    generateSalesReport() {
+        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
+        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
+        
+        const incomeTransactions = transactions.filter(t => t.type === 'income');
+        const totalSales = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+        const totalIncome = incomeTransactions.reduce((sum, t) => sum + t.amount, 0);
+
+        const reportContent = `
+            <div class="report-section">
+                <h4>📊 Sales Performance</h4>
+                <div class="metric-row">
+                    <span class="metric-label">Total Sales</span>
+                    <span class="metric-value income">${this.formatCurrency(totalSales)}</span>
+                </div>
                 <div class="metric-row">
                     <span class="metric-label">Total Income</span>
-                    <span class="metric-value income">${this.formatCurrency(stats.totalRevenue)}</span>
+                    <span class="metric-value income">${this.formatCurrency(totalIncome)}</span>
                 </div>
                 <div class="metric-row">
-                    <span class="metric-label">Total Expenses</span>
-                    <span class="metric-value expense">${this.formatCurrency(stats.totalRevenue - stats.netProfit)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Net Profit</span>
-                    <span class="metric-value ${stats.netProfit >= 0 ? 'profit' : 'expense'}">${this.formatCurrency(stats.netProfit)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Profit Margin</span>
-                    <span class="metric-value ${profitMargin >= 0 ? 'profit' : 'expense'}">${profitMargin.toFixed(1)}%</span>
+                    <span class="metric-label">Number of Sales</span>
+                    <span class="metric-value">${sales.length}</span>
                 </div>
             </div>
 
             <div class="report-section">
-                <h4>📊 Income by Category</h4>
-                ${Object.entries(incomeByCategory).map(([category, amount]) => `
+                <h4>📈 Recent Sales</h4>
+                ${sales.slice(0, 5).map(sale => `
                     <div class="metric-row">
-                        <span class="metric-label">${this.formatCategory(category)}</span>
-                        <span class="metric-value income">${this.formatCurrency(amount)}</span>
+                        <span class="metric-label">${sale.date} - ${sale.customer || 'Walk-in'}</span>
+                        <span class="metric-value income">${this.formatCurrency(sale.totalAmount)}</span>
                     </div>
                 `).join('')}
             </div>
 
             <div class="report-section">
-                <h4>📊 Expenses by Category</h4>
-                ${Object.entries(expensesByCategory).map(([category, amount]) => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatCategory(category)}</span>
-                        <span class="metric-value expense">${this.formatCurrency(amount)}</span>
-                    </div>
-                `).join('')}
-            </div>
-
-            <div class="report-section">
-                <h4>💡 Financial Insights</h4>
+                <h4>💡 Sales Insights</h4>
                 <div style="padding: 16px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
                     <p style="margin: 0; color: #1e40af;">
-                        ${this.getFinancialInsights(stats.totalRevenue, stats.totalRevenue - stats.netProfit, stats.netProfit, profitMargin)}
+                        ${this.getSalesInsights(sales.length, totalSales)}
                     </p>
                 </div>
             </div>
         `;
 
-        this.showReport('Financial Performance Report', reportContent);
+        this.showReport('Sales Performance Report', reportContent);
     },
 
-    // UPDATED METHOD: Use shared data for production report
-    generateProductionReport() {
-        const stats = this.getFarmStats();
-        const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
+    generateHealthReport() {
+        const mortalityRecords = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
+        const birdsStock = parseInt(localStorage.getItem('farm-birds-stock') || '1000');
         
-        // Quality breakdown
-        const qualityCounts = {};
-        production.forEach(record => {
-            qualityCounts[record.quality] = (qualityCounts[record.quality] || 0) + record.quantity;
+        const totalMortality = mortalityRecords.reduce((sum, record) => sum + record.quantity, 0);
+        const mortalityRate = birdsStock > 0 ? (totalMortality / birdsStock) * 100 : 0;
+
+        const causeBreakdown = {};
+        mortalityRecords.forEach(record => {
+            causeBreakdown[record.cause] = (causeBreakdown[record.cause] || 0) + record.quantity;
         });
 
         const reportContent = `
             <div class="report-section">
-                <h4>🚜 Production Overview</h4>
+                <h4>🐔 Flock Health Overview</h4>
                 <div class="metric-row">
-                    <span class="metric-label">Total Production</span>
-                    <span class="metric-value">${stats.totalProduction} units</span>
+                    <span class="metric-label">Current Bird Count</span>
+                    <span class="metric-value">${birdsStock}</span>
                 </div>
                 <div class="metric-row">
-                    <span class="metric-label">Production Records</span>
-                    <span class="metric-value">${production.length}</span>
+                    <span class="metric-label">Total Mortality</span>
+                    <span class="metric-value">${totalMortality} birds</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Mortality Rate</span>
+                    <span class="metric-value ${mortalityRate > 5 ? 'expense' : 'profit'}">${mortalityRate.toFixed(2)}%</span>
                 </div>
             </div>
 
             <div class="report-section">
-                <h4>📈 Production Quality</h4>
-                ${Object.entries(qualityCounts).map(([quality, count]) => `
+                <h4>📊 Mortality by Cause</h4>
+                ${Object.entries(causeBreakdown).map(([cause, count]) => `
                     <div class="metric-row">
-                        <span class="metric-label">${this.formatQuality(quality)}</span>
-                        <span class="metric-value">${count} units</span>
+                        <span class="metric-label">${this.formatCause(cause)}</span>
+                        <span class="metric-value">${count} birds</span>
                     </div>
                 `).join('')}
             </div>
 
             <div class="report-section">
-                <h4>📅 Recent Production Activity</h4>
-                ${production.slice(0, 5).map(record => `
+                <h4>💡 Health Recommendations</h4>
+                <div style="padding: 16px; background: #fef7ed; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                    <p style="margin: 0; color: #92400e;">
+                        ${this.getHealthRecommendations(mortalityRate, causeBreakdown)}
+                    </p>
+                </div>
+            </div>
+        `;
+
+        this.showReport('Flock Health Report', reportContent);
+    },
+
+    generateFeedReport() {
+        const feedRecords = JSON.parse(localStorage.getItem('farm-feed-records') || '[]');
+        const feedInventory = JSON.parse(localStorage.getItem('farm-feed-inventory') || '[]');
+        
+        const totalFeedUsed = feedRecords.reduce((sum, record) => sum + record.quantity, 0);
+        const totalFeedCost = feedRecords.reduce((sum, record) => sum + record.cost, 0);
+        
+        const feedTypeBreakdown = {};
+        feedRecords.forEach(record => {
+            feedTypeBreakdown[record.feedType] = (feedTypeBreakdown[record.feedType] || 0) + record.quantity;
+        });
+
+        const reportContent = `
+            <div class="report-section">
+                <h4>🌾 Feed Consumption Summary</h4>
+                <div class="metric-row">
+                    <span class="metric-label">Total Feed Used</span>
+                    <span class="metric-value">${totalFeedUsed} kg</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Total Feed Cost</span>
+                    <span class="metric-value expense">${this.formatCurrency(totalFeedCost)}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Average Cost per kg</span>
+                    <span class="metric-value">${this.formatCurrency(totalFeedCost / totalFeedUsed)}</span>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h4>📊 Feed Usage by Type</h4>
+                ${Object.entries(feedTypeBreakdown).map(([feedType, quantity]) => `
                     <div class="metric-row">
-                        <span class="metric-label">${record.date} - ${record.product}</span>
-                        <span class="metric-value">${record.quantity} ${record.unit}</span>
+                        <span class="metric-label">${this.formatFeedType(feedType)}</span>
+                        <span class="metric-value">${quantity} kg</span>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div class="report-section">
+                <h4>📦 Current Feed Inventory</h4>
+                ${feedInventory.map(item => `
+                    <div class="metric-row">
+                        <span class="metric-label">${this.formatFeedType(item.feedType)}</span>
+                        <span class="metric-value ${item.currentStock <= item.minStock ? 'warning' : ''}">
+                            ${item.currentStock} kg (min: ${item.minStock}kg)
+                        </span>
                     </div>
                 `).join('')}
             </div>
         `;
 
-        this.showReport('Production Analysis Report', reportContent);
+        this.showReport('Feed Consumption Report', reportContent);
     },
-
-    // ... (ALL OTHER REPORT GENERATION METHODS REMAIN SIMILAR BUT USE getFarmStats() WHERE POSSIBLE)
 
     generateComprehensiveReport() {
         const stats = this.getFarmStats();
@@ -546,10 +614,20 @@ const ReportsModule = {
         this.showReport('Comprehensive Farm Report', reportContent);
     },
 
-    // ... (ALL HELPER METHODS REMAIN EXACTLY THE SAME)
-    // showReport(), closeReport(), printReport(), exportReport()
-    // formatCurrency(), formatCategory(), formatQuality(), formatCause(), formatFeedType()
-    // getFinancialInsights(), getSalesInsights(), getHealthRecommendations()
+    // HELPER METHODS
+    getSalesInsights(salesCount, totalSales) {
+        if (salesCount === 0) return "No sales recorded yet. Focus on marketing and customer acquisition.";
+        if (totalSales < 1000) return "Sales are starting. Consider expanding product offerings and marketing efforts.";
+        if (totalSales > 5000) return "Strong sales performance! Consider scaling operations and exploring new markets.";
+        return "Steady sales performance. Continue current strategies and monitor customer feedback.";
+    },
+
+    getHealthRecommendations(mortalityRate, causeBreakdown) {
+        if (mortalityRate > 10) return "⚠️ High mortality rate detected! Immediate veterinary consultation recommended.";
+        if (mortalityRate > 5) return "Monitor flock health closely. Review feeding, housing, and environmental conditions.";
+        if (causeBreakdown.disease > 0) return "Disease cases detected. Implement biosecurity measures and consider vaccination.";
+        return "✅ Good flock health. Maintain current management practices and regular monitoring.";
+    },
 
     showReport(title, content) {
         document.getElementById('report-title').textContent = title;
@@ -615,7 +693,6 @@ const ReportsModule = {
         }
     },
 
-    // Helper methods
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -632,12 +709,7 @@ const ReportsModule = {
             'medication': 'Medication',
             'equipment': 'Equipment',
             'labor': 'Labor',
-            'other': 'Other',
-            'feed': 'Feed',
-            'medical': 'Medical',
-            'packaging': 'Packaging',
-            'equipment': 'Equipment',
-            'cleaning': 'Cleaning'
+            'other': 'Other'
         };
         return categories[category] || category;
     },
