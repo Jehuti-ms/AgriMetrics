@@ -1,4 +1,4 @@
-// modules/dashboard.js
+// modules/dashboard.js - UPDATED WITH PROFILE SYNC
 console.log('Loading dashboard module...');
 
 const DashboardModule = {
@@ -9,28 +9,12 @@ const DashboardModule = {
         console.log('📊 Initializing dashboard...');
         this.renderDashboard();
         this.initialized = true;
+        
+        // Load and display stats from profile
+        this.loadAndDisplayStats();
+        
         return true;
     },
-
-     // Update profile stats with current data on dashboard load
-    if (window.ProfileModule && window.profileInstance) {
-        const sales = FarmModules.appData.sales || [];
-        const inventory = FarmModules.appData.inventory || [];
-        const feedRecords = FarmModules.appData.feedRecords || [];
-        const orders = FarmModules.appData.orders || [];
-        
-        const totalSalesValue = sales.reduce((sum, sale) => sum + (sale.amount || 0), 0);
-        const totalOrderValue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
-        
-        window.profileInstance.updateStats({
-            totalTransactions: sales.length,
-            totalInventory: inventory.length,
-            totalFeedRecords: feedRecords.length,
-            totalOrders: orders.length,
-            totalSales: totalSalesValue + totalOrderValue
-        });
-    }
-}
 
     renderDashboard() {
         const contentArea = document.getElementById('content-area');
@@ -56,7 +40,7 @@ const DashboardModule = {
                         <button class="quick-action-btn" data-action="add-income" style="
                             background: rgba(255, 255, 255, 0.9);
                             backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
                             border: 1px solid rgba(0, 0, 0, 0.1);
                             border-radius: 16px;
                             padding: 24px 16px;
@@ -76,7 +60,7 @@ const DashboardModule = {
                         <button class="quick-action-btn" data-action="add-expense" style="
                             background: rgba(255, 255, 255, 0.9);
                             backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
                             border: 1px solid rgba(0, 0, 0, 0.1);
                             border-radius: 16px;
                             padding: 24px 16px;
@@ -96,7 +80,7 @@ const DashboardModule = {
                         <button class="quick-action-btn" data-action="check-inventory" style="
                             background: rgba(255, 255, 255, 0.9);
                             backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
                             border: 1px solid rgba(0, 0, 0, 0.1);
                             border-radius: 16px;
                             padding: 24px 16px;
@@ -116,7 +100,7 @@ const DashboardModule = {
                         <button class="quick-action-btn" data-action="record-feed" style="
                             background: rgba(255, 255, 255, 0.9);
                             backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
                             border: 1px solid rgba(0, 0, 0, 0.1);
                             border-radius: 16px;
                             padding: 24px 16px;
@@ -136,7 +120,7 @@ const DashboardModule = {
                         <button class="quick-action-btn" data-action="add-production" style="
                             background: rgba(255, 255, 255, 0.9);
                             backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
                             border: 1px solid rgba(0, 0, 0, 0.1);
                             border-radius: 16px;
                             padding: 24px 16px;
@@ -156,7 +140,7 @@ const DashboardModule = {
                         <button class="quick-action-btn" data-action="view-reports" style="
                             background: rgba(255, 255, 255, 0.9);
                             backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
                             border: 1px solid rgba(0, 0, 0, 0.1);
                             border-radius: 16px;
                             padding: 24px 16px;
@@ -183,60 +167,117 @@ const DashboardModule = {
                         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
                         gap: 16px;
                     ">
-                        <div class="stat-card" style="
+                        <div class="stat-card" id="revenue-card" style="
                             background: rgba(255, 255, 255, 0.9);
                             backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
                             border: 1px solid rgba(0, 0, 0, 0.1);
                             border-radius: 16px;
                             padding: 20px;
                             text-align: center;
                         ">
                             <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;">$0.00</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="total-revenue">$0.00</div>
                             <div style="font-size: 14px; color: #666;">Total Revenue</div>
                         </div>
 
-                        <div class="stat-card" style="
+                        <div class="stat-card" id="expense-card" style="
                             background: rgba(255, 255, 255, 0.9);
                             backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
                             border: 1px solid rgba(0, 0, 0, 0.1);
                             border-radius: 16px;
                             padding: 20px;
                             text-align: center;
                         ">
                             <div style="font-size: 24px; margin-bottom: 8px;">💸</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;">$0.00</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="total-expenses">$0.00</div>
                             <div style="font-size: 14px; color: #666;">Total Expenses</div>
                         </div>
 
-                        <div class="stat-card" style="
+                        <div class="stat-card" id="inventory-card" style="
                             background: rgba(255, 255, 255, 0.9);
                             backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
                             border: 1px solid rgba(0, 0, 0, 0.1);
                             border-radius: 16px;
                             padding: 20px;
                             text-align: center;
                         ">
                             <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;">0</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="inventory-items">0</div>
                             <div style="font-size: 14px; color: #666;">Inventory Items</div>
                         </div>
 
-                        <div class="stat-card" style="
+                        <div class="stat-card" id="birds-card" style="
                             background: rgba(255, 255, 255, 0.9);
                             backdrop-filter: blur(20px);
-                            -webkit-backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
                             border: 1px solid rgba(0, 0, 0, 0.1);
                             border-radius: 16px;
                             padding: 20px;
                             text-align: center;
                         ">
                             <div style="font-size: 24px; margin-bottom: 8px;">🐔</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;">0</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="active-birds">0</div>
                             <div style="font-size: 14px; color: #666;">Active Birds</div>
+                        </div>
+
+                        <!-- Additional Stats Cards -->
+                        <div class="stat-card" id="orders-card" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 20px;
+                            text-align: center;
+                        ">
+                            <div style="font-size: 24px; margin-bottom: 8px;">📋</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="total-orders">0</div>
+                            <div style="font-size: 14px; color: #666;">Total Orders</div>
+                        </div>
+
+                        <div class="stat-card" id="profit-card" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 20px;
+                            text-align: center;
+                        ">
+                            <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="net-profit">$0.00</div>
+                            <div style="font-size: 14px; color: #666;">Net Profit</div>
+                        </div>
+
+                        <div class="stat-card" id="customers-card" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 20px;
+                            text-align: center;
+                        ">
+                            <div style="font-size: 24px; margin-bottom: 8px;">👥</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="total-customers">0</div>
+                            <div style="font-size: 14px; color: #666;">Customers</div>
+                        </div>
+
+                        <div class="stat-card" id="products-card" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 20px;
+                            text-align: center;
+                        ">
+                            <div style="font-size: 24px; margin-bottom: 8px;">🛒</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="total-products">0</div>
+                            <div style="font-size: 14px; color: #666;">Products</div>
                         </div>
                     </div>
                 </div>
@@ -247,23 +288,43 @@ const DashboardModule = {
                     <div class="activity-list" style="
                         background: rgba(255, 255, 255, 0.9);
                         backdrop-filter: blur(20px);
-                        -webkit-backdrop-filter: blur(20px);
+                        -webkit-backup-filter: blur(20px);
                         border: 1px solid rgba(0, 0, 0, 0.1);
                         border-radius: 16px;
                         padding: 20px;
                     ">
-                        <div style="text-align: center; color: #666; padding: 40px 20px;">
-                            <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                            <div style="font-size: 16px; margin-bottom: 8px;">No recent activity</div>
-                            <div style="font-size: 14px; color: #999;">Start by adding your first record</div>
+                        <div id="activity-content">
+                            <div style="text-align: center; color: #666; padding: 40px 20px;">
+                                <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                                <div style="font-size: 16px; margin-bottom: 8px;">No recent activity</div>
+                                <div style="font-size: 14px; color: #999;">Start by adding your first record</div>
+                            </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Refresh Button -->
+                <div style="text-align: center; margin-top: 30px;">
+                    <button id="refresh-stats-btn" class="btn-outline" style="
+                        background: rgba(255, 255, 255, 0.9);
+                        backdrop-filter: blur(20px);
+                        border: 1px solid rgba(0, 0, 0, 0.1);
+                        border-radius: 12px;
+                        padding: 12px 24px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        color: #666;
+                        transition: all 0.3s ease;
+                    ">
+                        🔄 Refresh Stats
+                    </button>
                 </div>
             </div>
         `;
 
         // Add event listeners to quick action buttons
         this.setupQuickActions();
+        this.setupRefreshButton();
     },
 
     setupQuickActions() {
@@ -286,6 +347,202 @@ const DashboardModule = {
                 e.currentTarget.style.boxShadow = 'none';
             });
         });
+    },
+
+    setupRefreshButton() {
+        const refreshBtn = document.getElementById('refresh-stats-btn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.loadAndDisplayStats();
+                if (window.coreModule && window.coreModule.showNotification) {
+                    window.coreModule.showNotification('Stats refreshed!', 'success');
+                }
+            });
+
+            // Add hover effect
+            refreshBtn.addEventListener('mouseenter', (e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+            });
+
+            refreshBtn.addEventListener('mouseleave', (e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+            });
+        }
+    },
+
+    // NEW METHOD: Load and display stats from profile
+    loadAndDisplayStats() {
+        // Get stats from profile module
+        const profileStats = this.getProfileStats();
+        
+        // Update dashboard stats
+        this.updateDashboardStats(profileStats);
+        
+        // Update recent activity
+        this.updateRecentActivity(profileStats);
+    },
+
+    // NEW METHOD: Get stats from profile module
+    getProfileStats() {
+        let stats = {
+            totalIncome: 0,
+            totalExpenses: 0,
+            netProfit: 0,
+            totalInventoryItems: 0,
+            totalBirds: 0,
+            totalOrders: 0,
+            totalRevenue: 0,
+            totalCustomers: 0,
+            totalProducts: 0,
+            monthlyRevenue: 0,
+            completedOrders: 0
+        };
+
+        // Try to get stats from profile module
+        if (window.ProfileModule && window.profileInstance) {
+            const profileData = window.profileInstance.getProfileData();
+            if (profileData && profileData.stats) {
+                stats = { ...stats, ...profileData.stats };
+            }
+        }
+
+        // Fallback to localStorage if profile module not available
+        if (stats.totalIncome === 0) {
+            const savedStats = localStorage.getItem('farm-dashboard-stats');
+            if (savedStats) {
+                stats = { ...stats, ...JSON.parse(savedStats) };
+            }
+        }
+
+        return stats;
+    },
+
+    // NEW METHOD: Update dashboard with current stats
+    updateDashboardStats(stats) {
+        // Update main stats cards
+        this.updateStatCard('total-revenue', this.formatCurrency(stats.totalRevenue || stats.totalIncome || 0));
+        this.updateStatCard('total-expenses', this.formatCurrency(stats.totalExpenses || 0));
+        this.updateStatCard('inventory-items', stats.totalInventoryItems || 0);
+        this.updateStatCard('active-birds', stats.totalBirds || 0);
+        this.updateStatCard('total-orders', stats.totalOrders || 0);
+        this.updateStatCard('net-profit', this.formatCurrency(stats.netProfit || (stats.totalIncome - stats.totalExpenses) || 0));
+        this.updateStatCard('total-customers', stats.totalCustomers || 0);
+        this.updateStatCard('total-products', stats.totalProducts || 0);
+
+        // Update profit card color based on value
+        const profitCard = document.getElementById('profit-card');
+        if (profitCard) {
+            const netProfit = stats.netProfit || (stats.totalIncome - stats.totalExpenses) || 0;
+            const profitColor = netProfit >= 0 ? '#22c55e' : '#ef4444';
+            profitCard.style.borderLeft = `4px solid ${profitColor}`;
+        }
+
+        // Update revenue card with monthly indicator
+        const revenueCard = document.getElementById('revenue-card');
+        if (revenueCard && stats.monthlyRevenue > 0) {
+            const monthlyIndicator = document.createElement('div');
+            monthlyIndicator.style.fontSize = '12px';
+            monthlyIndicator.style.color = '#22c55e';
+            monthlyIndicator.style.marginTop = '4px';
+            monthlyIndicator.textContent = `+${this.formatCurrency(stats.monthlyRevenue)} this month`;
+            revenueCard.appendChild(monthlyIndicator);
+        }
+    },
+
+    // NEW METHOD: Update individual stat card
+    updateStatCard(elementId, value) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            // Add animation
+            element.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                element.style.transform = 'scale(1)';
+                element.textContent = value;
+            }, 150);
+        }
+    },
+
+    // NEW METHOD: Update recent activity section
+    updateRecentActivity(stats) {
+        const activityContent = document.getElementById('activity-content');
+        if (!activityContent) return;
+
+        const activities = [];
+
+        // Generate activity items based on stats
+        if (stats.totalOrders > 0) {
+            activities.push({
+                icon: '📋',
+                text: `${stats.completedOrders || 0} orders completed`,
+                time: 'Recently'
+            });
+        }
+
+        if (stats.totalRevenue > 0) {
+            activities.push({
+                icon: '💰',
+                text: `${this.formatCurrency(stats.totalRevenue)} total revenue`,
+                time: 'Updated'
+            });
+        }
+
+        if (stats.totalInventoryItems > 0) {
+            activities.push({
+                icon: '📦',
+                text: `${stats.totalInventoryItems} inventory items managed`,
+                time: 'Current'
+            });
+        }
+
+        if (stats.totalBirds > 0) {
+            activities.push({
+                icon: '🐔',
+                text: `${stats.totalBirds} birds in stock`,
+                time: 'Active'
+            });
+        }
+
+        if (stats.totalCustomers > 0) {
+            activities.push({
+                icon: '👥',
+                text: `${stats.totalCustomers} customers registered`,
+                time: 'Total'
+            });
+        }
+
+        if (activities.length === 0) {
+            // Show default message if no activities
+            activityContent.innerHTML = `
+                <div style="text-align: center; color: #666; padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No recent activity</div>
+                    <div style="font-size: 14px; color: #999;">Start by adding your first record</div>
+                </div>
+            `;
+            return;
+        }
+
+        // Show activity items
+        activityContent.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                ${activities.map(activity => `
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(0,0,0,0.03); border-radius: 8px;">
+                        <div style="font-size: 20px;">${activity.icon}</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #1a1a1a; font-size: 14px;">${activity.text}</div>
+                            <div style="font-size: 12px; color: #666;">${activity.time}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    },
+
+    // NEW METHOD: Force refresh stats (can be called from other modules)
+    refreshStats() {
+        this.loadAndDisplayStats();
     },
 
     handleQuickAction(action) {
@@ -321,6 +578,13 @@ const DashboardModule = {
             'view-reports': 'Reports'
         };
         return names[action] || action;
+    },
+
+    formatCurrency(amount) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(amount);
     }
 };
 
