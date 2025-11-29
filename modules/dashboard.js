@@ -619,40 +619,53 @@ const DashboardModule = {
         this.loadAndDisplayStats();
     },
 
-    handleQuickAction(action) {
-        console.log(`Quick action: ${action}`);
-        
-        const actionMap = {
-            'add-income': 'income-expenses',
-            'add-expense': 'income-expenses',
-            'check-inventory': 'inventory-check',
-            'record-feed': 'feed-record',
-            'add-production': 'production',
-            'view-reports': 'reports'
-        };
+   // REPLACE JUST THESE 2 METHODS - KEEP EVERYTHING ELSE EXACTLY AS IS
 
-        const targetModule = actionMap[action];
-        if (targetModule && window.app) {
+handleQuickAction(action) {
+    console.log(`Quick action: ${action}`);
+    
+    const actionMap = {
+        'add-income': 'income-expenses',
+        'add-expense': 'income-expenses', 
+        'check-inventory': 'inventory-check',
+        'record-feed': 'feed-record',
+        'add-production': 'production',
+        'view-reports': 'reports'
+    };
+
+    const targetModule = actionMap[action];
+    if (targetModule) {
+        // FIX: Use the correct method to switch sections
+        if (window.FarmManagementApp) {
+            window.FarmManagementApp.showSection(targetModule);
+        } else if (window.app && window.app.showSection) {
             window.app.showSection(targetModule);
-            
-            // Show notification
-            if (window.coreModule && window.coreModule.showNotification) {
-                window.coreModule.showNotification(`Opening ${this.getActionName(action)}...`, 'info');
-            }
+        } else {
+            // Fallback: manually trigger navigation
+            const event = new CustomEvent('sectionChange', { 
+                detail: { section: targetModule } 
+            });
+            document.dispatchEvent(event);
         }
-    },
+        
+        // Show notification
+        if (window.coreModule && window.coreModule.showNotification) {
+            window.coreModule.showNotification(`Opening ${this.getActionName(action)}...`, 'info');
+        }
+    }
+},
 
-    getActionName(action) {
-        const names = {
-            'add-income': 'Income',
-            'add-expense': 'Expenses',
-            'check-inventory': 'Inventory',
-            'record-feed': 'Feed Record',
-            'add-production': 'Production',
-            'view-reports': 'Reports'
-        };
-        return names[action] || action;
-    },
+getActionName(action) {
+    const names = {
+        'add-income': 'Income & Expenses',
+        'add-expense': 'Income & Expenses', 
+        'check-inventory': 'Inventory Check',
+        'record-feed': 'Feed Records',
+        'add-production': 'Production',
+        'view-reports': 'Reports'
+    };
+    return names[action] || action;
+},
 
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
