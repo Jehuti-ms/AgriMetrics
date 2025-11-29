@@ -1,4 +1,4 @@
-// app.js - PROPER MOBILE PWA NAVIGATION
+// app.js - PROPER MOBILE PWA NAVIGATION WITH USER PREFERENCES
 console.log('Loading main app...');
 
 class FarmManagementApp {
@@ -6,6 +6,7 @@ class FarmManagementApp {
         this.currentUser = null;
         this.currentSection = 'dashboard';
         this.isDemoMode = false;
+        this.userPreferences = {};
         this.init();
     }
 
@@ -21,54 +22,190 @@ class FarmManagementApp {
         }
     }
 
-async initializeApp() {
-    console.log('✅ Initializing app...');
-    this.isDemoMode = true;
-    
-    // Show the app interface
-    this.showApp();
-    
-    // Setup navigation and events
-    this.createTopNavigation();
-    
-    // Small delay to ensure DOM is fully rendered
-    setTimeout(() => {
-        this.setupHamburgerMenu();
-        this.setupSideMenuEvents();
-        this.setupEventListeners();
-        this.setupDarkMode();
+    async initializeApp() {
+        console.log('✅ Initializing app...');
+        this.isDemoMode = true;
+        
+        // Load user preferences FIRST
+        await this.loadUserPreferences();
+        
+        // Show the app interface
+        this.showApp();
+        
+        // Setup navigation and events
+        this.createTopNavigation();
+        
+        // Small delay to ensure DOM is fully rendered
+        setTimeout(() => {
+            this.setupHamburgerMenu();
+            this.setupSideMenuEvents();
+            this.setupEventListeners();
+            this.setupDarkMode();
 
-        // Load user preferences and apply theme
-        this.loadUserPreferences();
+            // Test if hamburger is working
+            const hamburger = document.getElementById('hamburger-menu');
+            const sideMenu = document.getElementById('side-menu');
+            console.log('🔍 Debug - Hamburger exists:', !!hamburger);
+            console.log('🔍 Debug - Side menu exists:', !!sideMenu);
+            
+            if (hamburger) {
+                console.log('🔍 Debug - Hamburger classes:', hamburger.className);
+                console.log('🔍 Debug - Hamburger styles:', window.getComputedStyle(hamburger));
+            }
+        }, 100);
         
-        // Test if hamburger is working
-        const hamburger = document.getElementById('hamburger-menu');
-        const sideMenu = document.getElementById('side-menu');
-        console.log('🔍 Debug - Hamburger exists:', !!hamburger);
-        console.log('🔍 Debug - Side menu exists:', !!sideMenu);
+        // Load initial section
+        this.showSection(this.currentSection);
         
-        if (hamburger) {
-            console.log('🔍 Debug - Hamburger classes:', hamburger.className);
-            console.log('🔍 Debug - Hamburger styles:', window.getComputedStyle(hamburger));
-        }
-    }, 100);
-    
-    // Load initial section
-    this.showSection(this.currentSection);
-    
-    console.log('✅ App initialized successfully');
-}
+        console.log('✅ App initialized successfully');
+    }
 
     async loadUserPreferences() {
-    // Load user data and apply preferences
-    const profileModule = new ProfileModule();
-    await profileModule.loadUserData();
-    
-    // Apply theme preference
-    if (profileModule.userData.preferences.theme) {
-        profileModule.applyThemePreference(profileModule.userData.preferences.theme);
+        try {
+            // Try to use ProfileModule if available
+            if (typeof ProfileModule !== 'undefined' && ProfileModule.loadUserPreferences) {
+                this.userPreferences = ProfileModule.loadUserPreferences();
+                console.log('✅ User preferences loaded via ProfileModule');
+            } else {
+                // Fallback to direct localStorage access
+                const savedPrefs = localStorage.getItem('farm-user-preferences');
+                this.userPreferences = savedPrefs ? JSON.parse(savedPrefs) : this.getDefaultPreferences();
+                console.log('⚠️ ProfileModule not available, using localStorage fallback');
+                
+                // Create a simple ProfileModule fallback for other modules to use
+                this.createProfileModuleFallback();
+            }
+            
+            // Apply theme preference immediately
+            this.applyUserTheme();
+            
+        } catch (error) {
+            console.error('❌ Error loading user preferences:', error);
+            this.userPreferences = this.getDefaultPreferences();
+            this.createProfileModuleFallback();
+        }
     }
-}
+
+    getDefaultPreferences() {
+        return {
+            theme: 'auto',
+            language: 'en',
+            currency: 'USD',
+            notifications: true,
+            businessName: 'My Farm',
+            businessType: 'poultry',
+            lowStockThreshold: 10,
+            autoSync: true,
+            dashboardStats: {
+                totalOrders: 0,
+                totalRevenue: 0,
+                pendingOrders: 0,
+                totalCustomers: 0,
+                totalProducts: 0
+            }
+        };
+    }
+
+    createProfileModuleFallback() {
+        // Create a simple ProfileModule for other modules to use
+        if (typeof ProfileModule === 'undefined') {
+            window.ProfileModule = {
+                userPreferences: this.userPreferences,
+                loadUserPreferences: () => this.userPreferences,
+                getUserPreferences: () => this.userPreferences,
+                updatePreference: (key, value) => {
+                    this.userPreferences[key] = value;
+                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
+                    console.log(`⚙️ Preference updated: ${key} = ${value}`);
+                },
+                updateBusinessStats: (module, stats) => {
+                    if (!this.userPreferences.dashboardStats) {
+                        this.userPreferences.dashboardStats = {};
+                    }
+                    Object.keys(stats).forEach(key => {
+                        this.userPreferences.dashboardStats[key] = stats[key];
+                    });
+                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
+                    console.log('📊 Stats updated for', module + ':', stats);
+                }
+            };
+            window.profileInstance = window.ProfileModule;
+            console.log('✅ ProfileModule fallback created');
+        }
+    }
+
+    applyUserTheme() {
+        const theme = this.userPreferences.theme || 'auto';
+        
+        if (theme === 'dark') {
+            document.body.classList.add('dark-mode');
+            this.updateDarkModeIcon(true);
+        } else if (theme === 'light') {
+            document.body.classList.remove('dark-mode');
+            this.updateDarkModeIcon(false);
+        } else {
+            // Auto mode - follow system preference
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.body.classList.toggle('dark-mode', prefersDark);
+            this.updateDarkModeIcon(prefersDark);
+        }
+        
+        console.log('🎨 Applied user theme:', theme);
+    }
+
+    setupDarkMode() {
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+        
+        // Theme is already applied from user preferences, just setup the toggle
+        
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                
+                // Save preference
+                const newTheme = isDarkMode ? 'dark' : 'light';
+                this.userPreferences.theme = newTheme;
+                localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
+                
+                // Update ProfileModule if available
+                if (window.ProfileModule && window.ProfileModule.updatePreference) {
+                    window.ProfileModule.updatePreference('theme', newTheme);
+                }
+                
+                // Update icon
+                this.updateDarkModeIcon(isDarkMode);
+                
+                console.log('🎨 Theme changed to:', newTheme);
+            });
+        }
+        
+        // Listen for system theme changes (only if theme is set to auto)
+        prefersDarkScheme.addEventListener('change', (e) => {
+            if (this.userPreferences.theme === 'auto') {
+                document.body.classList.toggle('dark-mode', e.matches);
+                this.updateDarkModeIcon(e.matches);
+            }
+        });
+    }
+
+    updateDarkModeIcon(isDarkMode) {
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        if (darkModeToggle) {
+            const icon = darkModeToggle.querySelector('span:first-child');
+            const label = darkModeToggle.querySelector('.nav-label');
+            
+            if (isDarkMode) {
+                icon.textContent = '☀️';
+                label.textContent = 'Light';
+            } else {
+                icon.textContent = '🌙';
+                label.textContent = 'Dark';
+            }
+        }
+    }
+
     setupEventListeners() {
         document.addEventListener('click', (e) => {
             // Handle main nav items
@@ -90,55 +227,6 @@ async initializeApp() {
             }
         });
     }
-        // Add to your initializeApp() method
-setupDarkMode() {
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-    const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-    
-    // Check for saved theme or prefer OS setting
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark' || (!savedTheme && prefersDarkScheme.matches)) {
-        document.body.classList.add('dark-mode');
-        this.updateDarkModeIcon(true);
-    }
-    
-    if (darkModeToggle) {
-        darkModeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            const isDarkMode = document.body.classList.contains('dark-mode');
-            
-            // Save preference
-            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-            
-            // Update icon
-            this.updateDarkModeIcon(isDarkMode);
-        });
-    }
-    
-    // Listen for system theme changes
-    prefersDarkScheme.addEventListener('change', (e) => {
-        if (!localStorage.getItem('theme')) {
-            document.body.classList.toggle('dark-mode', e.matches);
-            this.updateDarkModeIcon(e.matches);
-        }
-    });
-}
-
-updateDarkModeIcon(isDarkMode) {
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-    if (darkModeToggle) {
-        const icon = darkModeToggle.querySelector('span:first-child');
-        const label = darkModeToggle.querySelector('.nav-label');
-        
-        if (isDarkMode) {
-            icon.textContent = '☀️';
-            label.textContent = 'Light';
-        } else {
-            icon.textContent = '🌙';
-            label.textContent = 'Dark';
-        }
-    }
-}
 
     showApp() {
         const authContainer = document.getElementById('auth-container');
@@ -150,137 +238,137 @@ updateDarkModeIcon(isDarkMode) {
         console.log('🏠 App container shown');
     }
 
-   createTopNavigation() {
-    const appContainer = document.getElementById('app-container');
-    if (!appContainer) return;
+    createTopNavigation() {
+        const appContainer = document.getElementById('app-container');
+        if (!appContainer) return;
 
-    // Remove existing header if any
-    let header = appContainer.querySelector('header');
-    if (header) {
-        header.remove();
-    }
-    
-    // Create new header
-    header = document.createElement('header');
-    appContainer.insertBefore(header, appContainer.firstChild);
+        // Remove existing header if any
+        let header = appContainer.querySelector('header');
+        if (header) {
+            header.remove();
+        }
+        
+        // Create new header
+        header = document.createElement('header');
+        appContainer.insertBefore(header, appContainer.firstChild);
 
-    header.innerHTML = `
-        <nav class="top-nav">
-            <div class="nav-brand">
-                <img src="icons/icon-96x96.png" alt="AgriMetrics">
-                <span class="brand-text">AgriMetrics</span>
-                <span class="brand-subtitle">Farm Management System</span>
-            </div>
-            
-            <div class="nav-items">
-                <button class="nav-item" data-view="dashboard" title="Dashboard">
-                    <span>📊</span>
-                    <span class="nav-label">Dashboard</span>
-                </button>
+        header.innerHTML = `
+            <nav class="top-nav">
+                <div class="nav-brand">
+                    <img src="icons/icon-96x96.png" alt="AgriMetrics">
+                    <span class="brand-text">AgriMetrics</span>
+                    <span class="brand-subtitle">Farm Management System</span>
+                </div>
+                
+                <div class="nav-items">
+                    <button class="nav-item" data-view="dashboard" title="Dashboard">
+                        <span>📊</span>
+                        <span class="nav-label">Dashboard</span>
+                    </button>
 
-                <button class="nav-item" data-view="income-expenses" title="Income & Expenses">
-                    <span>💰</span>
-                    <span class="nav-label">Income</span>
-                </button>
+                    <button class="nav-item" data-view="income-expenses" title="Income & Expenses">
+                        <span>💰</span>
+                        <span class="nav-label">Income</span>
+                    </button>
 
-                <button class="nav-item" data-view="inventory-check" title="Inventory">
-                    <span>📦</span>
-                    <span class="nav-label">Inventory</span>
-                </button>
+                    <button class="nav-item" data-view="inventory-check" title="Inventory">
+                        <span>📦</span>
+                        <span class="nav-label">Inventory</span>
+                    </button>
 
-                <button class="nav-item" data-view="orders" title="Orders">
-                    <span>📋</span>
-                    <span class="nav-label">Orders</span>
-                </button>
+                    <button class="nav-item" data-view="orders" title="Orders">
+                        <span>📋</span>
+                        <span class="nav-label">Orders</span>
+                    </button>
 
-                <button class="nav-item" data-view="sales-record" title="Sales">
-                    <span>🛒</span>
-                    <span class="nav-label">Sales</span>
-                </button>
+                    <button class="nav-item" data-view="sales-record" title="Sales">
+                        <span>🛒</span>
+                        <span class="nav-label">Sales</span>
+                    </button>
 
-                <button class="nav-item" data-view="profile" title="Profile">
-                    <span>👤</span>
-                    <span class="nav-label">Profile</span>
-                </button>
+                    <button class="nav-item" data-view="profile" title="Profile">
+                        <span>👤</span>
+                        <span class="nav-label">Profile</span>
+                    </button>
 
                     <!-- Dark Mode Toggle -->
-                <button class="nav-item dark-mode-toggle" id="dark-mode-toggle" title="Toggle Dark Mode">
-                    <span>🌙</span>
-                    <span class="nav-label">Theme</span>
-                </button>
-                
-                <!-- Hamburger menu as a proper nav-item -->
-                <button class="nav-item hamburger-menu" id="hamburger-menu" title="Farm Operations">
-                    <span>☰</span>
-                    <span class="nav-label">More</span>
-                </button>
-            </div>
-        </nav>
-    `;
+                    <button class="nav-item dark-mode-toggle" id="dark-mode-toggle" title="Toggle Dark Mode">
+                        <span>🌙</span>
+                        <span class="nav-label">Theme</span>
+                    </button>
+                    
+                    <!-- Hamburger menu as a proper nav-item -->
+                    <button class="nav-item hamburger-menu" id="hamburger-menu" title="Farm Operations">
+                        <span>☰</span>
+                        <span class="nav-label">More</span>
+                    </button>
+                </div>
+            </nav>
+        `;
 
-    // Setup hamburger menu functionality
-    this.setupHamburgerMenu();
-    
-    // Adjust main content padding
-    const main = appContainer.querySelector('main');
-    if (main) {
-        main.style.paddingTop = '80px';
-    }
-    
-    console.log('✅ Top Navigation created');
-}
-    
-setupHamburgerMenu() {
-    const hamburger = document.getElementById('hamburger-menu');
-    const sideMenu = document.getElementById('side-menu');
-    
-    if (hamburger && sideMenu) {
-        // Ensure sidebar is hidden by default and positioned on right
-        sideMenu.style.left = 'auto';
-        sideMenu.style.right = '0';
-        sideMenu.style.transform = 'translateX(100%)';
-        sideMenu.classList.remove('active');
+        // Setup hamburger menu functionality
+        this.setupHamburgerMenu();
         
-        // Remove any existing event listeners to prevent duplicates
-        hamburger.replaceWith(hamburger.cloneNode(true));
-        const newHamburger = document.getElementById('hamburger-menu');
-        
-        newHamburger.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('🍔 Hamburger clicked, toggling sidebar');
-            sideMenu.classList.toggle('active');
-        });
-        
-        console.log('✅ Hamburger menu connected to sidebar');
-    } else {
-        console.log('❌ Hamburger or side menu not found:', { hamburger, sideMenu });
-    }
-    
-    // Close sidebar when clicking outside
-    document.addEventListener('click', (e) => {
-        const sideMenu = document.getElementById('side-menu');
-        const hamburger = document.getElementById('hamburger-menu');
-        
-        if (sideMenu && sideMenu.classList.contains('active') && hamburger) {
-            if (!sideMenu.contains(e.target) && !hamburger.contains(e.target)) {
-                console.log('📱 Click outside, closing sidebar');
-                sideMenu.classList.remove('active');
-            }
+        // Adjust main content padding
+        const main = appContainer.querySelector('main');
+        if (main) {
+            main.style.paddingTop = '80px';
         }
-    });
+        
+        console.log('✅ Top Navigation created');
+    }
     
-    // Close sidebar when clicking on sidebar items
-    const sideMenuItems = document.querySelectorAll('.side-menu-item');
-    sideMenuItems.forEach(item => {
-        item.addEventListener('click', () => {
+    setupHamburgerMenu() {
+        const hamburger = document.getElementById('hamburger-menu');
+        const sideMenu = document.getElementById('side-menu');
+        
+        if (hamburger && sideMenu) {
+            // Ensure sidebar is hidden by default and positioned on right
+            sideMenu.style.left = 'auto';
+            sideMenu.style.right = '0';
+            sideMenu.style.transform = 'translateX(100%)';
+            sideMenu.classList.remove('active');
+            
+            // Remove any existing event listeners to prevent duplicates
+            hamburger.replaceWith(hamburger.cloneNode(true));
+            const newHamburger = document.getElementById('hamburger-menu');
+            
+            newHamburger.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🍔 Hamburger clicked, toggling sidebar');
+                sideMenu.classList.toggle('active');
+            });
+            
+            console.log('✅ Hamburger menu connected to sidebar');
+        } else {
+            console.log('❌ Hamburger or side menu not found:', { hamburger, sideMenu });
+        }
+        
+        // Close sidebar when clicking outside
+        document.addEventListener('click', (e) => {
             const sideMenu = document.getElementById('side-menu');
-            if (sideMenu) {
-                sideMenu.classList.remove('active');
+            const hamburger = document.getElementById('hamburger-menu');
+            
+            if (sideMenu && sideMenu.classList.contains('active') && hamburger) {
+                if (!sideMenu.contains(e.target) && !hamburger.contains(e.target)) {
+                    console.log('📱 Click outside, closing sidebar');
+                    sideMenu.classList.remove('active');
+                }
             }
         });
-    });
-}
+        
+        // Close sidebar when clicking on sidebar items
+        const sideMenuItems = document.querySelectorAll('.side-menu-item');
+        sideMenuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const sideMenu = document.getElementById('side-menu');
+                if (sideMenu) {
+                    sideMenu.classList.remove('active');
+                }
+            });
+        });
+    }
 
     setupSideMenuEvents() {
         const sideMenuItems = document.querySelectorAll('.side-menu-item');
