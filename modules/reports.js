@@ -23,6 +23,14 @@ const ReportsModule = {
                     <p class="module-subtitle">Comprehensive insights and analytics for your farm operations</p>
                 </div>
 
+                <!-- Quick Stats Overview -->
+                <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Quick Stats Overview</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                        ${this.renderQuickStats()}
+                    </div>
+                </div>
+
                 <!-- Report Categories -->
                 <div class="reports-grid">
                     <!-- Financial Reports -->
@@ -130,14 +138,6 @@ const ReportsModule = {
                         <div id="report-content">
                             <!-- Report content will be generated here -->
                         </div>
-                    </div>
-                </div>
-
-                <!-- Quick Stats Overview -->
-                <div class="glass-card" style="padding: 24px; margin-top: 32px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Quick Stats Overview</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                        ${this.renderQuickStats()}
                     </div>
                 </div>
 
@@ -339,187 +339,156 @@ const ReportsModule = {
         document.getElementById('close-report')?.addEventListener('click', () => this.closeReport());
     },
 
-    // MISSING METHODS - NOW IMPLEMENTED:
-    // Add these missing methods to your original ReportsModule:
+    generateFinancialReport() {
+        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
+        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
+        
+        const incomeTransactions = transactions.filter(t => t.type === 'income');
+        const expenseTransactions = transactions.filter(t => t.type === 'expense');
+        
+        const totalIncome = incomeTransactions.reduce((sum, t) => sum + t.amount, 0);
+        const totalExpenses = expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
+        const netProfit = totalIncome - totalExpenses;
+        const profitMargin = totalIncome > 0 ? (netProfit / totalIncome) * 100 : 0;
 
-generateFinancialReport() {
-    const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
-    const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
-    
-    const incomeTransactions = transactions.filter(t => t.type === 'income');
-    const expenseTransactions = transactions.filter(t => t.type === 'expense');
-    
-    const totalIncome = incomeTransactions.reduce((sum, t) => sum + t.amount, 0);
-    const totalExpenses = expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
-    const netProfit = totalIncome - totalExpenses;
-    const profitMargin = totalIncome > 0 ? (netProfit / totalIncome) * 100 : 0;
+        const incomeByCategory = {};
+        incomeTransactions.forEach(transaction => {
+            incomeByCategory[transaction.category] = (incomeByCategory[transaction.category] || 0) + transaction.amount;
+        });
 
-    // Calculate income by category
-    const incomeByCategory = {};
-    incomeTransactions.forEach(transaction => {
-        incomeByCategory[transaction.category] = (incomeByCategory[transaction.category] || 0) + transaction.amount;
-    });
+        const expensesByCategory = {};
+        expenseTransactions.forEach(transaction => {
+            expensesByCategory[transaction.category] = (expensesByCategory[transaction.category] || 0) + transaction.amount;
+        });
 
-    // Calculate expenses by category
-    const expensesByCategory = {};
-    expenseTransactions.forEach(transaction => {
-        expensesByCategory[transaction.category] = (expensesByCategory[transaction.category] || 0) + transaction.amount;
-    });
-
-    const reportContent = `
-        <div class="report-section">
-            <h4>💰 Financial Overview</h4>
-            <div class="metric-row">
-                <span class="metric-label">Total Income</span>
-                <span class="metric-value income">${this.formatCurrency(totalIncome)}</span>
-            </div>
-            <div class="metric-row">
-                <span class="metric-label">Total Expenses</span>
-                <span class="metric-value expense">${this.formatCurrency(totalExpenses)}</span>
-            </div>
-            <div class="metric-row">
-                <span class="metric-label">Net Profit</span>
-                <span class="metric-value ${netProfit >= 0 ? 'profit' : 'expense'}">${this.formatCurrency(netProfit)}</span>
-            </div>
-            <div class="metric-row">
-                <span class="metric-label">Profit Margin</span>
-                <span class="metric-value ${profitMargin >= 0 ? 'profit' : 'expense'}">${profitMargin.toFixed(1)}%</span>
-            </div>
-        </div>
-
-        <div class="report-section">
-            <h4>📈 Income by Category</h4>
-            ${Object.entries(incomeByCategory).map(([category, amount]) => `
+        const reportContent = `
+            <div class="report-section">
+                <h4>💰 Financial Overview</h4>
                 <div class="metric-row">
-                    <span class="metric-label">${this.formatCategory(category)}</span>
-                    <span class="metric-value income">${this.formatCurrency(amount)}</span>
+                    <span class="metric-label">Total Income</span>
+                    <span class="metric-value income">${this.formatCurrency(totalIncome)}</span>
                 </div>
-            `).join('')}
-        </div>
-
-        <div class="report-section">
-            <h4>📉 Expenses by Category</h4>
-            ${Object.entries(expensesByCategory).map(([category, amount]) => `
                 <div class="metric-row">
-                    <span class="metric-label">${this.formatCategory(category)}</span>
-                    <span class="metric-value expense">${this.formatCurrency(amount)}</span>
+                    <span class="metric-label">Total Expenses</span>
+                    <span class="metric-value expense">${this.formatCurrency(totalExpenses)}</span>
                 </div>
-            `).join('')}
-        </div>
-
-        <div class="report-section">
-            <h4>💡 Financial Insights</h4>
-            <div style="padding: 16px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #22c55e;">
-                <p style="margin: 0; color: #166534;">
-                    ${this.getFinancialInsights(totalIncome, totalExpenses, netProfit, profitMargin)}
-                </p>
-            </div>
-        </div>
-    `;
-
-    this.showReport('Financial Performance Report', reportContent);
-},
-
-generateProductionReport() {
-    const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
-    const mortality = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
-    
-    const totalProduction = production.reduce((sum, record) => sum + record.quantity, 0);
-    const totalMortality = mortality.reduce((sum, record) => sum + record.quantity, 0);
-    
-    // Calculate production by product type
-    const productionByProduct = {};
-    production.forEach(record => {
-        productionByProduct[record.product] = (productionByProduct[record.product] || 0) + record.quantity;
-    });
-
-    // Calculate quality distribution
-    const qualityDistribution = {};
-    production.forEach(record => {
-        qualityDistribution[record.quality] = (qualityDistribution[record.quality] || 0) + 1;
-    });
-
-    // Get current stock
-    const currentStock = parseInt(localStorage.getItem('farm-birds-stock') || '1000');
-    const mortalityRate = currentStock > 0 ? (totalMortality / currentStock) * 100 : 0;
-
-    const reportContent = `
-        <div class="report-section">
-            <h4>🚜 Production Overview</h4>
-            <div class="metric-row">
-                <span class="metric-label">Total Production</span>
-                <span class="metric-value">${totalProduction} units</span>
-            </div>
-            <div class="metric-row">
-                <span class="metric-label">Current Stock</span>
-                <span class="metric-value">${currentStock} birds</span>
-            </div>
-            <div class="metric-row">
-                <span class="metric-label">Total Mortality</span>
-                <span class="metric-value">${totalMortality} birds</span>
-            </div>
-            <div class="metric-row">
-                <span class="metric-label">Mortality Rate</span>
-                <span class="metric-value ${mortalityRate > 5 ? 'expense' : 'profit'}">${mortalityRate.toFixed(2)}%</span>
-            </div>
-        </div>
-
-        <div class="report-section">
-            <h4>📊 Production by Product</h4>
-            ${Object.entries(productionByProduct).map(([product, quantity]) => `
                 <div class="metric-row">
-                    <span class="metric-label">${this.formatProductName(product)}</span>
-                    <span class="metric-value">${quantity} units</span>
+                    <span class="metric-label">Net Profit</span>
+                    <span class="metric-value ${netProfit >= 0 ? 'profit' : 'expense'}">${this.formatCurrency(netProfit)}</span>
                 </div>
-            `).join('')}
-        </div>
-
-        <div class="report-section">
-            <h4>⭐ Quality Distribution</h4>
-            ${Object.entries(qualityDistribution).map(([quality, count]) => `
                 <div class="metric-row">
-                    <span class="metric-label">${this.formatQuality(quality)}</span>
-                    <span class="metric-value">${count} records</span>
+                    <span class="metric-label">Profit Margin</span>
+                    <span class="metric-value ${profitMargin >= 0 ? 'profit' : 'expense'}">${profitMargin.toFixed(1)}%</span>
                 </div>
-            `).join('')}
-        </div>
-
-        <div class="report-section">
-            <h4>📈 Production Insights</h4>
-            <div style="padding: 16px; background: #eff6ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
-                <p style="margin: 0; color: #1e40af;">
-                    ${this.getProductionInsights(totalProduction, mortalityRate, qualityDistribution)}
-                </p>
             </div>
-        </div>
-    `;
 
-    this.showReport('Production Analysis Report', reportContent);
-},
+            <div class="report-section">
+                <h4>📈 Income by Category</h4>
+                ${Object.entries(incomeByCategory).map(([category, amount]) => `
+                    <div class="metric-row">
+                        <span class="metric-label">${this.formatCategory(category)}</span>
+                        <span class="metric-value income">${this.formatCurrency(amount)}</span>
+                    </div>
+                `).join('')}
+            </div>
 
-// Add this helper method too:
-getProductionInsights(totalProduction, mortalityRate, qualityDistribution) {
-    if (totalProduction === 0) return "No production data recorded. Start tracking your farm's output.";
-    if (mortalityRate > 10) return "⚠️ High mortality rate affecting production. Review flock management practices.";
-    if (qualityDistribution['excellent'] > qualityDistribution['grade-b']) {
-        return "✅ Excellent quality production! Maintain current standards and practices.";
-    }
-    return "Good production levels. Focus on quality improvement and mortality reduction.";
-},
+            <div class="report-section">
+                <h4>📉 Expenses by Category</h4>
+                ${Object.entries(expensesByCategory).map(([category, amount]) => `
+                    <div class="metric-row">
+                        <span class="metric-label">${this.formatCategory(category)}</span>
+                        <span class="metric-value expense">${this.formatCurrency(amount)}</span>
+                    </div>
+                `).join('')}
+            </div>
 
-formatProductName(product) {
-    const products = {
-        'eggs': 'Eggs',
-        'broilers': 'Broilers',
-        'layers': 'Layers',
-        'pork': 'Pork',
-        'beef': 'Beef',
-        'milk': 'Milk',
-        'other': 'Other'
-    };
-    return products[product] || product;
-},
-    
+            <div class="report-section">
+                <h4>💡 Financial Insights</h4>
+                <div style="padding: 16px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #22c55e;">
+                    <p style="margin: 0; color: #166534;">
+                        ${this.getFinancialInsights(totalIncome, totalExpenses, netProfit, profitMargin)}
+                    </p>
+                </div>
+            </div>
+        `;
+
+        this.showReport('Financial Performance Report', reportContent);
+    },
+
+    generateProductionReport() {
+        const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
+        const mortality = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
+        
+        const totalProduction = production.reduce((sum, record) => sum + record.quantity, 0);
+        const totalMortality = mortality.reduce((sum, record) => sum + record.quantity, 0);
+        
+        const productionByProduct = {};
+        production.forEach(record => {
+            productionByProduct[record.product] = (productionByProduct[record.product] || 0) + record.quantity;
+        });
+
+        const qualityDistribution = {};
+        production.forEach(record => {
+            qualityDistribution[record.quality] = (qualityDistribution[record.quality] || 0) + 1;
+        });
+
+        const currentStock = parseInt(localStorage.getItem('farm-birds-stock') || '1000');
+        const mortalityRate = currentStock > 0 ? (totalMortality / currentStock) * 100 : 0;
+
+        const reportContent = `
+            <div class="report-section">
+                <h4>🚜 Production Overview</h4>
+                <div class="metric-row">
+                    <span class="metric-label">Total Production</span>
+                    <span class="metric-value">${totalProduction} units</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Current Stock</span>
+                    <span class="metric-value">${currentStock} birds</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Total Mortality</span>
+                    <span class="metric-value">${totalMortality} birds</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Mortality Rate</span>
+                    <span class="metric-value ${mortalityRate > 5 ? 'expense' : 'profit'}">${mortalityRate.toFixed(2)}%</span>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h4>📊 Production by Product</h4>
+                ${Object.entries(productionByProduct).map(([product, quantity]) => `
+                    <div class="metric-row">
+                        <span class="metric-label">${this.formatProductName(product)}</span>
+                        <span class="metric-value">${quantity} units</span>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div class="report-section">
+                <h4>⭐ Quality Distribution</h4>
+                ${Object.entries(qualityDistribution).map(([quality, count]) => `
+                    <div class="metric-row">
+                        <span class="metric-label">${this.formatQuality(quality)}</span>
+                        <span class="metric-value">${count} records</span>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div class="report-section">
+                <h4>📈 Production Insights</h4>
+                <div style="padding: 16px; background: #eff6ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                    <p style="margin: 0; color: #1e40af;">
+                        ${this.getProductionInsights(totalProduction, mortalityRate, qualityDistribution)}
+                    </p>
+                </div>
+            </div>
+        `;
+
+        this.showReport('Production Analysis Report', reportContent);
+    },
+
     generateInventoryReport() {
         const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
         const feedInventory = JSON.parse(localStorage.getItem('farm-feed-inventory') || '[]');
@@ -723,7 +692,6 @@ formatProductName(product) {
         this.showReport('Feed Consumption Report', reportContent);
     },
 
-    
     generateComprehensiveReport() {
         const stats = this.getFarmStats();
         
@@ -793,21 +761,6 @@ formatProductName(product) {
         `;
 
         this.showReport('Comprehensive Farm Report', reportContent);
-    },
-
-    // HELPER METHODS
-    getSalesInsights(salesCount, totalSales) {
-        if (salesCount === 0) return "No sales recorded yet. Focus on marketing and customer acquisition.";
-        if (totalSales < 1000) return "Sales are starting. Consider expanding product offerings and marketing efforts.";
-        if (totalSales > 5000) return "Strong sales performance! Consider scaling operations and exploring new markets.";
-        return "Steady sales performance. Continue current strategies and monitor customer feedback.";
-    },
-
-    getHealthRecommendations(mortalityRate, causeBreakdown) {
-        if (mortalityRate > 10) return "⚠️ High mortality rate detected! Immediate veterinary consultation recommended.";
-        if (mortalityRate > 5) return "Monitor flock health closely. Review feeding, housing, and environmental conditions.";
-        if (causeBreakdown.disease > 0) return "Disease cases detected. Implement biosecurity measures and consider vaccination.";
-        return "✅ Good flock health. Maintain current management practices and regular monitoring.";
     },
 
     showReport(title, content) {
@@ -895,6 +848,19 @@ formatProductName(product) {
         return categories[category] || category;
     },
 
+    formatProductName(product) {
+        const products = {
+            'eggs': 'Eggs',
+            'broilers': 'Broilers',
+            'layers': 'Layers',
+            'pork': 'Pork',
+            'beef': 'Beef',
+            'milk': 'Milk',
+            'other': 'Other'
+        };
+        return products[product] || product;
+    },
+
     formatQuality(quality) {
         const qualities = {
             'excellent': 'Excellent',
@@ -938,11 +904,32 @@ formatProductName(product) {
         } else {
             return "✅ Healthy financial performance. Maintain current operations and monitor trends.";
         }
+    },
+
+    getProductionInsights(totalProduction, mortalityRate, qualityDistribution) {
+        if (totalProduction === 0) return "No production data recorded. Start tracking your farm's output.";
+        if (mortalityRate > 10) return "⚠️ High mortality rate affecting production. Review flock management practices.";
+        if (qualityDistribution['excellent'] > qualityDistribution['grade-b']) {
+            return "✅ Excellent quality production! Maintain current standards and practices.";
+        }
+        return "Good production levels. Focus on quality improvement and mortality reduction.";
+    },
+
+    getSalesInsights(salesCount, totalSales) {
+        if (salesCount === 0) return "No sales recorded yet. Focus on marketing and customer acquisition.";
+        if (totalSales < 1000) return "Sales are starting. Consider expanding product offerings and marketing efforts.";
+        if (totalSales > 5000) return "Strong sales performance! Consider scaling operations and exploring new markets.";
+        return "Steady sales performance. Continue current strategies and monitor customer feedback.";
+    },
+
+    getHealthRecommendations(mortalityRate, causeBreakdown) {
+        if (mortalityRate > 10) return "⚠️ High mortality rate detected! Immediate veterinary consultation recommended.";
+        if (mortalityRate > 5) return "Monitor flock health closely. Review feeding, housing, and environmental conditions.";
+        if (causeBreakdown.disease > 0) return "Disease cases detected. Implement biosecurity measures and consider vaccination.";
+        return "✅ Good flock health. Maintain current management practices and regular monitoring.";
     }
 };
 
 if (window.FarmModules) {
     window.FarmModules.registerModule('reports', ReportsModule);
 }
-
-
