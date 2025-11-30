@@ -1,21 +1,40 @@
-// modules/income-expenses.js - UPDATED WITH SHARED DATA PATTERN
+// modules/income-expenses.js - UPDATED WITH STYLE MANAGER INTEGRATION
 console.log('Loading income-expenses module...');
 
 const IncomeExpensesModule = {
     name: 'income-expenses',
     initialized: false,
     transactions: [],
+    element: null,
 
     initialize() {
-        console.log('💰 Initializing income & expenses...');
+        console.log('💰 Initializing Income & Expenses...');
+        
+        // ✅ ADDED: Get the content area element
+        this.element = document.getElementById('content-area');
+        if (!this.element) return false;
+
+        // ✅ ADDED: Register with StyleManager
+        if (window.StyleManager) {
+            StyleManager.registerModule(this.id, this.element, this);
+        }
+
         this.loadData();
         this.renderModule();
+        this.setupEventListeners();
         this.initialized = true;
         
         // Sync initial stats with shared data
         this.syncStatsWithDashboard();
         
+        console.log('✅ Income & Expenses initialized with StyleManager');
         return true;
+    },
+
+    // ✅ ADDED: Theme change handler (optional)
+    onThemeChange(theme) {
+        console.log(`Income & Expenses updating for theme: ${theme}`);
+        // You can add theme-specific logic here if needed
     },
 
     loadData() {
@@ -33,12 +52,11 @@ const IncomeExpensesModule = {
     },
 
     renderModule() {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
+        if (!this.element) return;
 
         const stats = this.calculateStats();
 
-        contentArea.innerHTML = `
+        this.element.innerHTML = `
             <div class="module-container">
                 <div class="module-header">
                     <h1 class="module-title">Income & Expenses</h1>
@@ -344,15 +362,15 @@ const IncomeExpensesModule = {
         }
         
         // Notify dashboard via custom event instead of direct method call
-            const statsUpdateEvent = new CustomEvent('financialStatsUpdated', {
-                detail: {
-                    totalIncome: stats.totalIncome,
-                    totalExpenses: stats.totalExpenses, 
-                    totalRevenue: stats.totalIncome,
-                    netProfit: stats.netProfit
-                }
-            });
-            document.dispatchEvent(statsUpdateEvent);
+        const statsUpdateEvent = new CustomEvent('financialStatsUpdated', {
+            detail: {
+                totalIncome: stats.totalIncome,
+                totalExpenses: stats.totalExpenses, 
+                totalRevenue: stats.totalIncome,
+                netProfit: stats.netProfit
+            }
+        });
+        document.dispatchEvent(statsUpdateEvent);
     },
 
     // NEW METHOD: Add recent activity to dashboard
