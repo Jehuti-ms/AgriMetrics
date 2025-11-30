@@ -177,19 +177,108 @@ const StyleManager = {
      * Inject modern PWA base styles
      */
     injectBaseStyles() {
-        const style = document.createElement('style');
-        style.id = 'style-manager-base';
-        style.textContent = `
-            /* Modern PWA Base Styles */
-            .module-container {
-                max-width: 1200px;
-                margin: 0 auto;
-                padding: 20px;
-                min-height: calc(100vh - 80px);
-                background: var(--module-bg);
-            }
+    const style = document.createElement('style');
+    style.id = 'style-manager-base';
+    style.textContent = `
+        /* ... existing styles ... */
 
-            .module-header {
+        /* MODERN PWA BUTTONS - GREEN GRADIENT FOR ALL MODULES */
+        .btn-primary, 
+        .btn.btn-primary, 
+        button[class*="primary"],
+        button[class*="btn-primary"] {
+            background: var(--gradient-primary) !important;
+            color: white !important;
+            border: none !important;
+            padding: 14px 28px !important;
+            border-radius: var(--radius-lg) !important;
+            font-weight: 700 !important;
+            font-size: 14px !important;
+            cursor: pointer !important;
+            transition: var(--transition-normal) !important;
+            box-shadow: var(--shadow-primary) !important;
+            position: relative !important;
+            overflow: hidden !important;
+            backdrop-filter: var(--backdrop-blur-light) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            min-height: 48px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+        }
+
+        .btn-primary::before,
+        .btn.btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: var(--transition-slow);
+        }
+
+        .btn-primary:hover, 
+        .btn.btn-primary:hover, 
+        button[class*="primary"]:hover,
+        button[class*="btn-primary"]:hover {
+            background: var(--gradient-primary-hover) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: var(--shadow-primary-hover) !important;
+        }
+
+        .btn-primary:hover::before,
+        .btn.btn-primary:hover::before {
+            left: 100%;
+        }
+
+        /* Ensure no blue overrides */
+        .btn-primary[style*="background"],
+        .btn-primary[style*="blue"],
+        button[style*="blue"] {
+            background: var(--gradient-primary) !important;
+        }
+
+        /* Secondary buttons */
+        .btn-secondary {
+            background: var(--card-bg) !important;
+            color: var(--text-primary) !important;
+            border: 1px solid var(--glass-border) !important;
+            padding: 14px 28px !important;
+            border-radius: var(--radius-lg) !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: var(--transition-normal) !important;
+            backdrop-filter: var(--backdrop-blur-light) !important;
+        }
+
+        .btn-secondary:hover {
+            background: var(--card-bg-hover) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: var(--shadow-md) !important;
+        }
+
+        /* Outline buttons */
+        .btn-outline {
+            background: transparent !important;
+            color: var(--text-primary) !important;
+            border: 2px solid var(--primary-500) !important;
+            padding: 12px 26px !important;
+            border-radius: var(--radius-lg) !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: var(--transition-normal) !important;
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-500) !important;
+            color: white !important;
+            transform: translateY(-2px) !important;
+        }
+
+        .module-header {
                 background: var(--header-gradient, var(--gradient-primary));
                 margin: -20px -20px 20px -20px;
                 padding: 25px 20px;
