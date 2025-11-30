@@ -1,4 +1,4 @@
-// modules/feed-record.js - COMPLETE FIXED VERSION
+// modules/feed-record.js - UPDATED WITH STYLE MANAGER INTEGRATION
 console.log('Loading feed-record module...');
 
 const FeedRecordModule = {
@@ -7,14 +7,34 @@ const FeedRecordModule = {
     feedRecords: [],
     feedInventory: [],
     birdsStock: 1000,
+    element: null,
 
     initialize() {
-        console.log('🌾 Initializing feed records...');
+        console.log('🌾 Initializing Feed Records...');
+        
+        // ✅ ADDED: Get the content area element
+        this.element = document.getElementById('content-area');
+        if (!this.element) return false;
+
+        // ✅ ADDED: Register with StyleManager
+        if (window.StyleManager) {
+            StyleManager.registerModule(this.id, this.element, this);
+        }
+
         this.loadData();
         this.renderModule();
+        this.setupEventListeners();
         this.initialized = true;
         this.syncStatsWithSharedData();
+        
+        console.log('✅ Feed Records initialized with StyleManager');
         return true;
+    },
+
+    // ✅ ADDED: Theme change handler (optional)
+    onThemeChange(theme) {
+        console.log(`Feed Records updating for theme: ${theme}`);
+        // You can add theme-specific logic here if needed
     },
 
     loadData() {
@@ -45,12 +65,11 @@ const FeedRecordModule = {
     },
 
     renderModule() {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
+        if (!this.element) return;
 
         const stats = this.calculateStats();
 
-        contentArea.innerHTML = `
+        this.element.innerHTML = `
             <div class="module-container">
                 <div class="module-header">
                     <h1 class="module-title">Feed Records</h1>
@@ -248,6 +267,9 @@ const FeedRecordModule = {
         this.saveData();
         this.renderModule();
         
+        // Sync stats with shared data
+        this.syncStatsWithSharedData();
+        
         if (window.coreModule) {
             window.coreModule.showNotification(`Recorded ${formData.quantity}kg ${feedType} feed usage!`, 'success');
         }
@@ -290,6 +312,7 @@ const FeedRecordModule = {
             inventoryItem.currentStock += quantity;
             this.saveData();
             this.renderModule();
+            this.syncStatsWithSharedData();
             if (window.coreModule) {
                 window.coreModule.showNotification(`Added ${quantity}kg to ${feedType} inventory!`, 'success');
             }
@@ -306,6 +329,7 @@ const FeedRecordModule = {
             this.feedInventory.push(newItem);
             this.saveData();
             this.renderModule();
+            this.syncStatsWithSharedData();
             if (window.coreModule) {
                 window.coreModule.showNotification(`Created new ${feedType} inventory with ${quantity}kg!`, 'success');
             }
@@ -316,6 +340,7 @@ const FeedRecordModule = {
         this.birdsStock = newCount;
         this.saveData();
         this.renderModule();
+        this.syncStatsWithSharedData();
         if (window.coreModule) {
             window.coreModule.showNotification(`Adjusted bird count to ${newCount}!`, 'success');
         }
@@ -355,4 +380,5 @@ const FeedRecordModule = {
 
 if (window.FarmModules) {
     window.FarmModules.registerModule('feed-record', FeedRecordModule);
+    console.log('✅ Feed Records module registered');
 }
