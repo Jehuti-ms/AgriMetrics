@@ -1,4 +1,4 @@
-// modules/inventory-check.js - ADD POPOUT MODALS TO WORKING VERSION
+// modules/inventory-check.js - UPDATED WITH STYLE MANAGER INTEGRATION
 console.log('Loading inventory-check module...');
 
 const InventoryCheckModule = {
@@ -6,17 +6,36 @@ const InventoryCheckModule = {
     initialized: false,
     inventory: [],
     categories: ['feed', 'medical', 'packaging', 'equipment', 'cleaning', 'other'],
+    element: null,
 
     initialize() {
-        console.log('📦 Initializing inventory check...');
+        console.log('📦 Initializing Inventory Check...');
+        
+        // ✅ ADDED: Get the content area element
+        this.element = document.getElementById('content-area');
+        if (!this.element) return false;
+
+        // ✅ ADDED: Register with StyleManager
+        if (window.StyleManager) {
+            StyleManager.registerModule(this.id, this.element, this);
+        }
+
         this.loadData();
         this.renderModule();
+        this.setupEventListeners();
         this.initialized = true;
         
         // Sync initial stats with profile
         this.syncStatsWithProfile();
         
+        console.log('✅ Inventory Check initialized with StyleManager');
         return true;
+    },
+
+    // ✅ ADDED: Theme change handler (optional)
+    onThemeChange(theme) {
+        console.log(`Inventory Check updating for theme: ${theme}`);
+        // You can add theme-specific logic here if needed
     },
 
     loadData() {
@@ -90,13 +109,12 @@ const InventoryCheckModule = {
     },
 
     renderModule() {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
+        if (!this.element) return;
 
         const stats = this.calculateStats();
         const lowStockItems = this.getLowStockItems();
 
-        contentArea.innerHTML = `
+        this.element.innerHTML = `
             <div class="module-container">
                 <div class="module-header">
                     <h1 class="module-title">Inventory Check</h1>
@@ -1075,4 +1093,5 @@ const InventoryCheckModule = {
 
 if (window.FarmModules) {
     window.FarmModules.registerModule('inventory-check', InventoryCheckModule);
+    console.log('✅ Inventory Check module registered');
 }
