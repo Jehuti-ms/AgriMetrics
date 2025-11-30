@@ -272,6 +272,8 @@ const BroilerMortalityModule = {
                     </div>
                 </div>
 
+                // In the renderModule() function, replace the modal section with this:
+
                 <!-- Health Report Modal -->
                 <div id="health-report-modal" class="modal hidden">
                     <div class="modal-content">
@@ -280,7 +282,7 @@ const BroilerMortalityModule = {
                             <button class="modal-close">&times;</button>
                         </div>
                         <div class="modal-body">
-                            <div id="health-report-content">
+                            <div id="health-report-content" class="modal-report-content">
                                 <!-- Report content will be inserted here -->
                             </div>
                         </div>
