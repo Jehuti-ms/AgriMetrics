@@ -1,4 +1,4 @@
-/* Enhanced Modal Theme Variables with Dark Mode Fixes */
+/* Modal Theme Variables with Proper Dark Mode Inheritance */
 :root {
   /* Modal Background */
   --modal-backdrop: rgba(0, 0, 0, 0.5);
@@ -7,7 +7,7 @@
   --modal-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   
   /* Modal Header */
-  --modal-header-bg: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  --modal-header-bg: linear-gradient(135deg, #3b82f6, #8b5cf6);
   --modal-header-text: #ffffff;
   --modal-header-border: rgba(255, 255, 255, 0.2);
   
@@ -27,9 +27,9 @@
   --modal-close-color: #ffffff;
   
   /* Modal Buttons */
-  --modal-btn-primary-bg: var(--primary-color);
+  --modal-btn-primary-bg: #3b82f6;
   --modal-btn-primary-text: #ffffff;
-  --modal-btn-primary-hover: var(--primary-color-dark);
+  --modal-btn-primary-hover: #2563eb;
   
   --modal-btn-secondary-bg: #6c757d;
   --modal-btn-secondary-text: #ffffff;
@@ -53,7 +53,10 @@
   --modal-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-[data-theme="dark"] {
+/* FORCE DARK MODE - This will ensure dark mode works */
+[data-theme="dark"],
+.dark-mode,
+.dark {
   /* Modal Background */
   --modal-backdrop: rgba(0, 0, 0, 0.8);
   --modal-bg: #1f2937;
@@ -61,7 +64,7 @@
   --modal-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
   
   /* Modal Header - Ensure text contrast */
-  --modal-header-bg: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  --modal-header-bg: linear-gradient(135deg, #1e40af, #7c3aed);
   --modal-header-text: #ffffff;
   --modal-header-border: rgba(255, 255, 255, 0.1);
   
@@ -81,9 +84,9 @@
   --modal-close-color: #f9fafb;
   
   /* Modal Buttons - Fixed contrast */
-  --modal-btn-primary-bg: var(--primary-color);
+  --modal-btn-primary-bg: #3b82f6;
   --modal-btn-primary-text: #ffffff;
-  --modal-btn-primary-hover: var(--primary-color-light);
+  --modal-btn-primary-hover: #60a5fa;
   
   --modal-btn-secondary-bg: #4b5563;
   --modal-btn-secondary-text: #ffffff;
@@ -164,7 +167,7 @@
   width: 95vw;
 }
 
-/* Modal Header - Fixed text contrast */
+/* Modal Header */
 .modal-header {
   background: var(--modal-header-bg);
   color: var(--modal-header-text);
@@ -208,7 +211,7 @@
   transform: scale(1.1);
 }
 
-/* Modal Body - Fixed text contrast */
+/* Modal Body - Force text color inheritance */
 .modal-body {
   padding: 2rem;
   background: var(--modal-body-bg);
@@ -221,9 +224,10 @@
   scroll-padding-top: 1rem;
 }
 
-/* Ensure all text in modal body uses correct colors */
-.modal-body * {
-  color: inherit;
+/* CRITICAL: Force all text inside modal body to use the correct colors */
+.modal-body,
+.modal-body *:not(.modal-close):not(.modal-header *):not(.modal-footer *) {
+  color: var(--modal-body-text) !important;
 }
 
 .modal-body h1,
@@ -232,25 +236,25 @@
 .modal-body h4,
 .modal-body h5,
 .modal-body h6 {
-  color: var(--modal-body-text);
+  color: var(--modal-body-text) !important;
   margin-top: 0;
 }
 
 .modal-body p {
-  color: var(--modal-body-text);
+  color: var(--modal-body-text) !important;
   line-height: 1.6;
 }
 
 .modal-body strong {
-  color: var(--modal-body-text);
+  color: var(--modal-body-text) !important;
   font-weight: 600;
 }
 
 .modal-body em {
-  color: var(--modal-body-text);
+  color: var(--modal-body-text) !important;
 }
 
-/* Modal Footer - Fixed contrast */
+/* Modal Footer */
 .modal-footer {
   background: var(--modal-footer-bg);
   color: var(--modal-footer-text);
@@ -265,7 +269,7 @@
   z-index: 10;
 }
 
-/* Enhanced Button Styles with Fixed Colors */
+/* Enhanced Button Styles */
 .modal .btn {
   padding: 10px 20px;
   border: none;
@@ -283,7 +287,7 @@
 
 .modal .btn-primary {
   background: var(--modal-btn-primary-bg);
-  color: var(--modal-btn-primary-text);
+  color: var(--modal-btn-primary-text) !important;
   border: 1px solid transparent;
 }
 
@@ -295,7 +299,7 @@
 
 .modal .btn-secondary {
   background: var(--modal-btn-secondary-bg);
-  color: var(--modal-btn-secondary-text);
+  color: var(--modal-btn-secondary-text) !important;
   border: 1px solid transparent;
 }
 
@@ -306,24 +310,24 @@
 
 .modal .btn-text {
   background: var(--modal-btn-text-bg);
-  color: var(--modal-btn-text-color);
+  color: var(--modal-btn-text-color) !important;
   border: 1px solid transparent;
 }
 
 .modal .btn-text:hover {
   background: var(--modal-btn-text-hover);
-  color: var(--modal-body-text);
+  color: var(--modal-body-text) !important;
 }
 
-/* Form Elements in Modals - Fixed Contrast */
+/* Form Elements in Modals */
 .modal-body input:not([type="checkbox"]):not([type="radio"]),
 .modal-body select,
 .modal-body textarea {
   width: 100%;
   padding: 0.75rem 1rem;
-  background: var(--modal-input-bg);
-  border: 1px solid var(--modal-input-border);
-  color: var(--modal-input-text);
+  background: var(--modal-input-bg) !important;
+  border: 1px solid var(--modal-input-border) !important;
+  color: var(--modal-input-text) !important;
   border-radius: 8px;
   font-size: 0.875rem;
   transition: all 0.2s ease;
@@ -334,20 +338,20 @@
 .modal-body select:focus,
 .modal-body textarea:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
+  border-color: var(--modal-btn-primary-bg) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .modal-body input::placeholder,
 .modal-body textarea::placeholder {
-  color: var(--modal-input-placeholder);
+  color: var(--modal-input-placeholder) !important;
   opacity: 1;
 }
 
 .modal-body label {
   display: block;
   margin-bottom: 0.5rem;
-  color: var(--modal-label-text);
+  color: var(--modal-label-text) !important;
   font-weight: 500;
   font-size: 0.875rem;
 }
@@ -360,16 +364,16 @@
 }
 
 .modal-body legend {
-  color: var(--modal-body-text);
+  color: var(--modal-body-text) !important;
   font-weight: 600;
   padding: 0 0.5rem;
 }
 
 /* Cards within Modals */
 .modal-body .card {
-  background: var(--modal-card-bg);
-  color: var(--modal-card-text);
-  border: 1px solid var(--modal-card-border);
+  background: var(--modal-card-bg) !important;
+  color: var(--modal-card-text) !important;
+  border: 1px solid var(--modal-card-border) !important;
   border-radius: 12px;
   padding: 1.5rem;
   margin: 1rem 0;
@@ -377,33 +381,33 @@
 }
 
 .modal-body .card-header {
-  background: transparent;
-  color: var(--modal-card-text);
-  border-bottom: 1px solid var(--modal-card-border);
+  background: transparent !important;
+  color: var(--modal-card-text) !important;
+  border-bottom: 1px solid var(--modal-card-border) !important;
   padding-bottom: 1rem;
   margin-bottom: 1rem;
 }
 
 .modal-body .card-title {
-  color: var(--modal-card-text);
+  color: var(--modal-card-text) !important;
   margin: 0;
   font-size: 1.1rem;
   font-weight: 600;
 }
 
 .modal-body .card-body {
-  color: var(--modal-card-text);
+  color: var(--modal-card-text) !important;
 }
 
 /* Lists in Modals */
 .modal-body ul,
 .modal-body ol {
-  color: var(--modal-body-text);
+  color: var(--modal-body-text) !important;
   padding-left: 1.5rem;
 }
 
 .modal-body li {
-  color: var(--modal-body-text);
+  color: var(--modal-body-text) !important;
   margin-bottom: 0.25rem;
 }
 
@@ -411,32 +415,32 @@
 .modal-body table {
   width: 100%;
   border-collapse: collapse;
-  color: var(--modal-body-text);
+  color: var(--modal-body-text) !important;
 }
 
 .modal-body th {
-  background: var(--modal-footer-bg);
-  color: var(--modal-footer-text);
+  background: var(--modal-footer-bg) !important;
+  color: var(--modal-footer-text) !important;
   padding: 0.75rem;
   text-align: left;
   font-weight: 600;
-  border-bottom: 2px solid var(--modal-border);
+  border-bottom: 2px solid var(--modal-border) !important;
 }
 
 .modal-body td {
   padding: 0.75rem;
-  border-bottom: 1px solid var(--modal-border);
-  color: var(--modal-body-text);
+  border-bottom: 1px solid var(--modal-border) !important;
+  color: var(--modal-body-text) !important;
 }
 
 .modal-body tr:hover {
-  background: var(--modal-footer-bg);
+  background: var(--modal-footer-bg) !important;
 }
 
 /* Code and Pre elements */
 .modal-body code {
-  background: var(--modal-footer-bg);
-  color: var(--modal-body-text);
+  background: var(--modal-footer-bg) !important;
+  color: var(--modal-body-text) !important;
   padding: 0.2rem 0.4rem;
   border-radius: 4px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
@@ -444,12 +448,12 @@
 }
 
 .modal-body pre {
-  background: var(--modal-footer-bg);
-  color: var(--modal-body-text);
+  background: var(--modal-footer-bg) !important;
+  color: var(--modal-body-text) !important;
   padding: 1rem;
   border-radius: 8px;
   overflow-x: auto;
-  border: 1px solid var(--modal-border);
+  border: 1px solid var(--modal-border) !important;
 }
 
 /* Scrollbar Styling */
@@ -468,7 +472,7 @@
 }
 
 .modal-body::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-color);
+  background: var(--modal-btn-primary-bg);
 }
 
 /* Modal Animations */
@@ -485,46 +489,6 @@
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
-  }
-}
-
-/* High Contrast Mode Support */
-@media (prefers-contrast: high) {
-  .modal-content {
-    border: 2px solid currentColor;
-  }
-  
-  .modal-header {
-    border-bottom: 2px solid currentColor;
-  }
-  
-  .modal-footer {
-    border-top: 2px solid currentColor;
-  }
-  
-  .modal-body input,
-  .modal-body select,
-  .modal-body textarea {
-    border: 2px solid currentColor;
-  }
-}
-
-/* Reduced Motion Support */
-@media (prefers-reduced-motion: reduce) {
-  .modal {
-    animation: none;
-  }
-  
-  .modal-content {
-    animation: none;
-  }
-  
-  .modal-close:hover {
-    transform: none;
-  }
-  
-  .btn:hover {
-    transform: none;
   }
 }
 
@@ -579,5 +543,20 @@
   .modal-content[data-modal-size="large"] {
     max-width: 95vw;
     width: 95vw;
+  }
+}
+
+/* Emergency dark mode fix - if nothing else works */
+@media (prefers-color-scheme: dark) {
+  .modal:not([data-theme="light"]) {
+    --modal-backdrop: rgba(0, 0, 0, 0.8);
+    --modal-bg: #1f2937;
+    --modal-body-text: #f9fafb;
+    --modal-border: #374151;
+  }
+  
+  .modal:not([data-theme="light"]) .modal-body,
+  .modal:not([data-theme="light"]) .modal-body * {
+    color: #f9fafb !important;
   }
 }
