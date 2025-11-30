@@ -1,4 +1,4 @@
-// app.js - UPDATED WITH PROPER STYLEMANAGER INITIALIZATION
+// app.js - FIXED FARM MODULES INITIALIZATION
 console.log('Loading main app...');
 
 class FarmManagementApp {
@@ -78,15 +78,35 @@ class FarmManagementApp {
     }
 
     initializeFarmModules() {
-        // Ensure FarmModules core is initialized
-        if (window.FarmModules && typeof FarmModules.initialize === 'function') {
-            FarmModules.initialize();
-            console.log('🔧 FarmModules core initialized');
+        // FIXED: Check if FarmModules exists and initialize all modules
+        if (window.FarmModules) {
+            // Check if initializeAll method exists (for newer versions)
+            if (typeof FarmModules.initializeAll === 'function') {
+                FarmModules.initializeAll();
+                console.log('🔧 FarmModules initialized all modules');
+            } 
+            // If no initializeAll method, just log that modules are ready
+            else {
+                console.log('🔧 FarmModules core ready - modules can register');
+            }
         } else {
             console.warn('⚠️ FarmModules core not available');
+            
+            // Create a basic FarmModules if it doesn't exist
+            window.FarmModules = {
+                modules: {},
+                registerModule: function(name, module) {
+                    console.log(`✅ Registering module: ${name}`);
+                    this.modules[name] = module;
+                },
+                getModule: function(name) {
+                    return this.modules[name];
+                }
+            };
+            console.log('🔧 Created basic FarmModules fallback');
         }
     }
-
+    
     async loadUserPreferences() {
         try {
             // Try to use ProfileModule if available
