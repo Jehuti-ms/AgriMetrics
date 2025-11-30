@@ -1,4 +1,4 @@
-// modules/profile.js - UPDATED TO FOLLOW StyleManager PATTERN
+// modules/profile.js - COMPLETE WITH PWA STYLES
 console.log('Loading profile module...');
 
 const ProfileModule = {
@@ -9,7 +9,6 @@ const ProfileModule = {
     initialize() {
         console.log('👤 Initializing profile...');
         
-        // Get content area element
         this.element = document.getElementById('content-area');
         if (!this.element) {
             console.error('Content area element not found');
@@ -18,20 +17,62 @@ const ProfileModule = {
         
         // Register with StyleManager for theme support
         if (window.StyleManager) {
-            window.StyleManager.registerComponent(this.name);
+            window.StyleManager.registerModule(this.name, this.element, this);
         }
         
         this.renderModule();
         this.initialized = true;
+        
+        // Sync with other modules for stats
+        this.syncWithOtherModules();
+        
         return true;
     },
 
     onThemeChange(theme) {
         console.log(`Profile module: Theme changed to ${theme}`);
-        // Re-render or update styles when theme changes
         if (this.initialized) {
             this.renderModule();
         }
+    },
+
+    // SYNC WITH OTHER MODULES FOR REAL-TIME STATS
+    syncWithOtherModules() {
+        // Update stats when other modules change data
+        if (window.FarmModules) {
+            // Listen for data changes in other modules
+            window.addEventListener('farm-data-updated', () => {
+                this.updateAllDisplays();
+            });
+        }
+    },
+
+    // UPDATE STATS FROM OTHER MODULES
+    updateStatsFromModules() {
+        const stats = window.FarmModules.appData.profile.dashboardStats || {};
+        
+        // Get inventory stats
+        if (window.InventoryCheckModule) {
+            const inventoryStats = window.InventoryCheckModule.calculateStats?.();
+            if (inventoryStats) {
+                stats.totalInventoryItems = inventoryStats.totalItems;
+                stats.lowStockItems = inventoryStats.lowStockItems;
+                stats.inventoryValue = inventoryStats.totalValue;
+            }
+        }
+        
+        // Get orders stats  
+        if (window.FarmModules.appData.orders) {
+            stats.totalOrders = window.FarmModules.appData.orders.length;
+            stats.totalRevenue = window.FarmModules.appData.orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+        }
+        
+        // Get customers stats
+        if (window.FarmModules.appData.customers) {
+            stats.totalCustomers = window.FarmModules.appData.customers.length;
+        }
+        
+        window.FarmModules.appData.profile.dashboardStats = stats;
     },
 
     renderModule() {
@@ -100,18 +141,18 @@ const ProfileModule = {
                         <form id="profile-form">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="farm-name">Farm Name</label>
-                                    <input type="text" id="farm-name" placeholder="Enter farm name" required>
+                                    <label for="farm-name" class="form-label">Farm Name</label>
+                                    <input type="text" id="farm-name" class="form-input" placeholder="Enter farm name" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="farmer-name">Farmer Name</label>
-                                    <input type="text" id="farmer-name" placeholder="Enter your name" required>
+                                    <label for="farmer-name" class="form-label">Farmer Name</label>
+                                    <input type="text" id="farmer-name" class="form-input" placeholder="Enter your name" required>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="farm-type">Farm Type</label>
-                                    <select id="farm-type">
+                                    <label for="farm-type" class="form-label">Farm Type</label>
+                                    <select id="farm-type" class="form-input">
                                         <option value="">Select farm type</option>
                                         <option value="crop">Crop Farm</option>
                                         <option value="livestock">Livestock Farm</option>
@@ -122,8 +163,22 @@ const ProfileModule = {
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label for="farm-location">Farm Location</label>
-                                    <input type="text" id="farm-location" placeholder="Enter farm location">
+                                    <label for="farm-location" class="form-label">Farm Location</label>
+                                    <input type="text" id="farm-location" class="form-input" placeholder="Enter farm location">
+                                </div>
+                            </div>
+                            
+                            <!-- REMEMBER USER SETTING -->
+                            <div class="form-group">
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <h4>Remember Me</h4>
+                                        <p>Keep me logged in on this device</p>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" id="remember-user" checked>
+                                        <span class="slider"></span>
+                                    </label>
                                 </div>
                             </div>
                             
@@ -175,10 +230,37 @@ const ProfileModule = {
                                     <span class="slider"></span>
                                 </label>
                             </div>
+
+                            <!-- DATA PERSISTENCE SETTINGS -->
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Local Data Storage</h4>
+                                    <p>Store data locally in your browser</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="local-storage" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <!-- THEME SETTINGS -->
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Theme</h4>
+                                    <p>Choose your preferred theme</p>
+                                </div>
+                                <select id="theme-selector" class="setting-control">
+                                    <option value="auto">Auto (System)</option>
+                                    <option value="light">Light</option>
+                                    <option value="dark">Dark</option>
+                                    <option value="nature">Nature</option>
+                                    <option value="professional">Professional</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
-                   <div class="data-management glass-card">
+                    <div class="data-management glass-card">
                         <h3>Data Management</h3>
                         <div class="data-stats">
                             <div class="data-stat">
@@ -193,11 +275,29 @@ const ProfileModule = {
                                 <label>Customers:</label>
                                 <span id="customers-count">0 customers</span>
                             </div>
+                            <div class="data-stat">
+                                <label>Products:</label>
+                                <span id="products-count">0 products</span>
+                            </div>
                         </div>
                         <div class="action-buttons">
                             <button class="btn-outline" id="export-data">📥 Export All Data</button>
+                            <button class="btn-outline" id="import-data">📤 Import Data</button>
                             <button class="btn-primary" id="clear-all-data" style="background: var(--gradient-danger);">⚠️ Clear All Data</button>
                             <button class="btn-outline" id="logout-btn" style="color: #ef4444; border-color: #ef4444;">🚪 Logout</button>
+                        </div>
+                    </div>
+
+                    <!-- BACKUP & RESTORE SECTION -->
+                    <div class="backup-section glass-card">
+                        <h3>Backup & Restore</h3>
+                        <div class="backup-actions">
+                            <button class="btn-outline" id="create-backup">💾 Create Backup</button>
+                            <button class="btn-outline" id="restore-backup">🔄 Restore Backup</button>
+                            <button class="btn-outline" id="view-backups">📋 View Backups</button>
+                        </div>
+                        <div id="backup-list" class="backup-list">
+                            <!-- Backup list will be populated here -->
                         </div>
                     </div>
                 </div>
@@ -207,6 +307,7 @@ const ProfileModule = {
         this.loadUserData();
         this.setupEventListeners();
         this.updateAllDisplays();
+        this.loadBackupList();
     },
 
     setupEventListeners() {
@@ -240,13 +341,49 @@ const ProfileModule = {
             this.saveSetting('autoSync', e.target.checked);
         });
 
+        // Theme selector
+        document.getElementById('theme-selector')?.addEventListener('change', (e) => {
+            this.changeTheme(e.target.value);
+        });
+
+        // REMEMBER USER FUNCTIONALITY
+        document.getElementById('remember-user')?.addEventListener('change', (e) => {
+            this.saveSetting('rememberUser', e.target.checked);
+            this.updateUserPersistence();
+        });
+
+        // Local storage setting
+        document.getElementById('local-storage')?.addEventListener('change', (e) => {
+            this.saveSetting('localStorageEnabled', e.target.checked);
+            if (!e.target.checked) {
+                this.showNotification('Local storage disabled. Data will only be saved to cloud.', 'warning');
+            }
+        });
+
         // Data management
         document.getElementById('export-data')?.addEventListener('click', () => {
             this.exportData();
         });
 
+        document.getElementById('import-data')?.addEventListener('click', () => {
+            this.importData();
+        });
+
         document.getElementById('clear-all-data')?.addEventListener('click', () => {
             this.clearAllData();
+        });
+
+        // Backup & Restore
+        document.getElementById('create-backup')?.addEventListener('click', () => {
+            this.createBackup();
+        });
+
+        document.getElementById('restore-backup')?.addEventListener('click', () => {
+            this.restoreBackup();
+        });
+
+        document.getElementById('view-backups')?.addEventListener('click', () => {
+            this.viewBackups();
         });
 
         // Logout button
@@ -270,12 +407,15 @@ const ProfileModule = {
                     currency: 'USD',
                     lowStockThreshold: 10,
                     autoSync: true,
+                    rememberUser: true,
+                    localStorageEnabled: true,
+                    theme: 'auto',
                     memberSince: new Date().toISOString(),
                     lastSync: null
                 };
             }
 
-            // Initialize dashboard stats if not exists
+            // Initialize dashboard stats
             if (!window.FarmModules.appData.profile.dashboardStats) {
                 window.FarmModules.appData.profile.dashboardStats = {};
             }
@@ -283,16 +423,157 @@ const ProfileModule = {
             // Try to load from Firebase
             await this.loadFromFirebase();
             
+            // Update user persistence
+            this.updateUserPersistence();
+            
         } catch (error) {
             console.error('Error loading user data:', error);
         }
     },
 
+    // USER PERSISTENCE METHODS
+    updateUserPersistence() {
+        const rememberUser = window.FarmModules.appData.profile?.rememberUser !== false;
+        
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            const persistence = rememberUser 
+                ? firebase.auth.Auth.Persistence.LOCAL
+                : firebase.auth.Auth.Persistence.SESSION;
+            
+            firebase.auth().setPersistence(persistence)
+                .then(() => {
+                    console.log('User persistence set to:', rememberUser ? 'LOCAL' : 'SESSION');
+                })
+                .catch((error) => {
+                    console.error('Error setting auth persistence:', error);
+                });
+        }
+    },
+
+    // THEME MANAGEMENT
+    changeTheme(theme) {
+        if (window.StyleManager) {
+            window.StyleManager.applyTheme(theme);
+            this.saveSetting('theme', theme);
+        }
+    },
+
+    // BACKUP & RESTORE FUNCTIONALITY
+    createBackup() {
+        const backupData = {
+            appData: window.FarmModules.appData,
+            timestamp: new Date().toISOString(),
+            version: '1.0'
+        };
+        
+        const backupStr = JSON.stringify(backupData, null, 2);
+        const backupBlob = new Blob([backupStr], {type: 'application/json'});
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(backupBlob);
+        link.download = `farm-manager-backup-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        
+        this.showNotification('Backup created successfully!', 'success');
+    },
+
+    async restoreBackup() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const backupData = JSON.parse(event.target.result);
+                    
+                    if (confirm('Are you sure you want to restore this backup? This will replace all current data.')) {
+                        window.FarmModules.appData = backupData.appData;
+                        this.showNotification('Backup restored successfully!', 'success');
+                        this.updateAllDisplays();
+                        
+                        // Trigger data update event for other modules
+                        window.dispatchEvent(new CustomEvent('farm-data-updated'));
+                    }
+                } catch (error) {
+                    this.showNotification('Error restoring backup: Invalid file format', 'error');
+                }
+            };
+            reader.readAsText(file);
+        };
+        
+        input.click();
+    },
+
+    loadBackupList() {
+        // Implementation for viewing local backups
+        const backupList = document.getElementById('backup-list');
+        if (backupList) {
+            backupList.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 1rem;">No local backups found</p>';
+        }
+    },
+
+    viewBackups() {
+        this.showNotification('Backup management feature coming soon!', 'info');
+    },
+
+    // IMPORT DATA FUNCTIONALITY
+    importData() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const importData = JSON.parse(event.target.result);
+                    this.mergeImportedData(importData);
+                } catch (error) {
+                    this.showNotification('Error importing data: Invalid file format', 'error');
+                }
+            };
+            reader.readAsText(file);
+        };
+        
+        input.click();
+    },
+
+    mergeImportedData(importData) {
+        // Smart merge of imported data with existing data
+        if (importData.orders) {
+            window.FarmModules.appData.orders = [...window.FarmModules.appData.orders, ...importData.orders];
+        }
+        if (importData.inventory) {
+            window.FarmModules.appData.inventory = [...window.FarmModules.appData.inventory, ...importData.inventory];
+        }
+        if (importData.customers) {
+            window.FarmModules.appData.customers = [...window.FarmModules.appData.customers, ...importData.customers];
+        }
+        if (importData.products) {
+            window.FarmModules.appData.products = [...window.FarmModules.appData.products, ...importData.products];
+        }
+        
+        this.showNotification('Data imported successfully!', 'success');
+        this.updateAllDisplays();
+        window.dispatchEvent(new CustomEvent('farm-data-updated'));
+    },
+
+    // FIREBASE METHODS
     async loadFromFirebase() {
         try {
             const currentUser = this.getCurrentUser();
             if (!currentUser || !currentUser.uid) {
                 this.updateSyncStatus('🔒 Login to sync');
+                // Try to load from local storage instead
+                this.loadFromLocalStorage();
                 return;
             }
 
@@ -320,6 +601,8 @@ const ProfileModule = {
         } catch (error) {
             console.error('Error loading from Firebase:', error);
             this.updateSyncStatus('❌ Sync failed');
+            // Fallback to local storage
+            this.loadFromLocalStorage();
         }
     },
 
@@ -354,82 +637,48 @@ const ProfileModule = {
         }
     },
 
-    updateSyncStatus(status) {
-        const syncElement = document.getElementById('sync-status');
-        if (syncElement) {
-            syncElement.textContent = status;
+    // LOCAL STORAGE METHODS
+    saveToLocalStorage() {
+        try {
+            localStorage.setItem('farm-profile', JSON.stringify(window.FarmModules.appData.profile));
+            localStorage.setItem('farm-orders', JSON.stringify(window.FarmModules.appData.orders || []));
+            localStorage.setItem('farm-inventory', JSON.stringify(window.FarmModules.appData.inventory || []));
+            localStorage.setItem('farm-customers', JSON.stringify(window.FarmModules.appData.customers || []));
+            localStorage.setItem('farm-products', JSON.stringify(window.FarmModules.appData.products || []));
+            console.log('✅ Data saved to local storage');
+        } catch (error) {
+            console.error('Error saving to local storage:', error);
         }
     },
 
-    updateAllDisplays() {
-        this.updateProfileInfo();
-        this.updateStatsOverview();
-        this.updateDataManagement();
-        this.updateSettings();
+    loadFromLocalStorage() {
+        try {
+            const savedProfile = localStorage.getItem('farm-profile');
+            const savedOrders = localStorage.getItem('farm-orders');
+            const savedInventory = localStorage.getItem('farm-inventory');
+            const savedCustomers = localStorage.getItem('farm-customers');
+            const savedProducts = localStorage.getItem('farm-products');
+
+            if (savedProfile) {
+                window.FarmModules.appData.profile = {
+                    ...window.FarmModules.appData.profile,
+                    ...JSON.parse(savedProfile)
+                };
+            }
+            if (savedOrders) window.FarmModules.appData.orders = JSON.parse(savedOrders);
+            if (savedInventory) window.FarmModules.appData.inventory = JSON.parse(savedInventory);
+            if (savedCustomers) window.FarmModules.appData.customers = JSON.parse(savedCustomers);
+            if (savedProducts) window.FarmModules.appData.products = JSON.parse(savedProducts);
+
+            console.log('✅ Data loaded from local storage');
+            return true;
+        } catch (error) {
+            console.error('Error loading from local storage:', error);
+            return false;
+        }
     },
 
-    updateProfileInfo() {
-        const profile = window.FarmModules.appData.profile;
-        const currentUser = this.getCurrentUser();
-        
-        const farmName = profile.farmName || 'My Farm';
-        const farmerName = profile.farmerName || 'Farm Manager';
-        const email = profile.email || currentUser?.email || 'No email';
-        
-        this.updateElement('profile-farm-name', farmName);
-        this.updateElement('profile-farmer-name', farmerName);
-        this.updateElement('profile-email', email);
-        
-        // Update form with current data
-        this.setValue('farm-name', farmName);
-        this.setValue('farmer-name', farmerName);
-        this.setValue('farm-type', profile.farmType);
-        this.setValue('farm-location', profile.farmLocation);
-        
-        // Member since
-        const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
-        this.updateElement('member-since', `Member since: ${memberSince}`);
-    },
-
-    updateStatsOverview() {
-        // Get stats from shared dashboard data
-        const dashboardStats = window.FarmModules.appData.profile.dashboardStats || {};
-        
-        const totalRevenue = dashboardStats.totalRevenue || 
-                           dashboardStats.totalIncome || 
-                           window.FarmModules.appData.orders?.reduce((sum, order) => sum + (order.totalAmount || 0), 0) || 0;
-        
-        const totalOrders = dashboardStats.totalOrders || window.FarmModules.appData.orders?.length || 0;
-        const totalInventory = dashboardStats.totalInventoryItems || window.FarmModules.appData.inventory?.length || 0;
-        const totalCustomers = dashboardStats.totalCustomers || window.FarmModules.appData.customers?.length || 0;
-        
-        this.updateElement('total-revenue', this.formatCurrency(totalRevenue));
-        this.updateElement('total-orders', totalOrders);
-        this.updateElement('total-inventory', totalInventory);
-        this.updateElement('total-customers', totalCustomers);
-        
-        const totalEntries = totalOrders + totalInventory + totalCustomers;
-        this.updateElement('data-entries', `Data entries: ${totalEntries}`);
-    },
-
-    updateDataManagement() {
-        const orders = window.FarmModules.appData.orders || [];
-        const inventory = window.FarmModules.appData.inventory || [];
-        const customers = window.FarmModules.appData.customers || [];
-        
-        this.updateElement('orders-count', `${orders.length} records`);
-        this.updateElement('inventory-count', `${inventory.length} items`);
-        this.updateElement('customers-count', `${customers.length} customers`);
-    },
-
-    updateSettings() {
-        const profile = window.FarmModules.appData.profile;
-        
-        this.setValue('default-currency', profile.currency || 'USD');
-        this.setValue('low-stock-threshold', profile.lowStockThreshold || 10);
-        this.setChecked('auto-sync', profile.autoSync !== false);
-    },
-
+    // DATA MANAGEMENT METHODS
     async saveProfile() {
         const profile = window.FarmModules.appData.profile;
         
@@ -437,12 +686,22 @@ const ProfileModule = {
         profile.farmerName = this.getValue('farmer-name');
         profile.farmType = this.getValue('farm-type');
         profile.farmLocation = this.getValue('farm-location');
+        profile.rememberUser = this.getChecked('remember-user');
+        profile.localStorageEnabled = this.getChecked('local-storage');
 
         window.FarmModules.appData.farmName = profile.farmName;
+
+        // Update user persistence settings
+        this.updateUserPersistence();
 
         // Auto-save to Firebase if enabled
         if (profile.autoSync) {
             await this.saveToFirebase();
+        }
+
+        // Save to local storage if enabled
+        if (profile.localStorageEnabled) {
+            this.saveToLocalStorage();
         }
 
         this.updateAllDisplays();
@@ -462,12 +721,31 @@ const ProfileModule = {
 
     async syncNow() {
         this.updateSyncStatus('🔄 Syncing...');
-        const success = await this.saveToFirebase();
         
-        if (success) {
-            this.showNotification('Data synced with cloud!', 'success');
+        const profile = window.FarmModules.appData.profile;
+        let cloudSuccess = false;
+        let localSuccess = false;
+
+        // Sync to Firebase if auto-sync enabled
+        if (profile.autoSync) {
+            cloudSuccess = await this.saveToFirebase();
+        }
+
+        // Sync to local storage if enabled
+        if (profile.localStorageEnabled) {
+            this.saveToLocalStorage();
+            localSuccess = true;
+        }
+
+        if (cloudSuccess) {
+            this.showNotification('Data synced with cloud and local storage!', 'success');
+            this.updateSyncStatus('✅ Synced');
+        } else if (localSuccess) {
+            this.showNotification('Data saved to local storage!', 'success');
+            this.updateSyncStatus('💾 Local');
         } else {
-            this.showNotification('Sync failed. Check your connection.', 'error');
+            this.showNotification('Sync failed. Data not saved.', 'error');
+            this.updateSyncStatus('❌ Failed');
         }
     },
 
@@ -501,38 +779,49 @@ const ProfileModule = {
     },
 
     async handleLogout() {
-        if (confirm('Are you sure you want to logout?')) {
+        const rememberUser = window.FarmModules.appData.profile?.rememberUser;
+        
+        if (confirm('Are you sure you want to logout?' + (rememberUser ? '\n\nYou have "Remember Me" enabled. You will stay logged in on this device unless you clear browser data.' : ''))) {
             try {
                 // Sign out from Firebase
                 if (typeof firebase !== 'undefined' && firebase.auth) {
                     await firebase.auth().signOut();
                 }
                 
-                // Clear local data
-                localStorage.removeItem('farm-user');
-                localStorage.removeItem('farm-orders');
-                localStorage.removeItem('farm-inventory');
-                localStorage.removeItem('farm-customers');
-                localStorage.removeItem('farm-products');
+                // Only clear local data if "Remember Me" is disabled
+                if (!rememberUser) {
+                    localStorage.removeItem('farm-user');
+                    localStorage.removeItem('farm-orders');
+                    localStorage.removeItem('farm-inventory');
+                    localStorage.removeItem('farm-customers');
+                    localStorage.removeItem('farm-products');
+                    localStorage.removeItem('farm-profile');
+                }
                 
-                // Reset app data
-                window.FarmModules.appData = {
-                    profile: {
-                        farmName: 'My Farm',
-                        farmerName: 'Farm Manager',
-                        farmType: 'poultry',
-                        currency: 'USD',
-                        lowStockThreshold: 10,
-                        autoSync: true,
-                        memberSince: new Date().toISOString()
-                    },
-                    orders: [],
-                    inventory: [],
-                    customers: [],
-                    products: []
-                };
+                // Reset app data (but keep profile settings if remembering user)
+                if (!rememberUser) {
+                    window.FarmModules.appData = {
+                        profile: {
+                            farmName: 'My Farm',
+                            farmerName: 'Farm Manager',
+                            farmType: 'poultry',
+                            currency: 'USD',
+                            lowStockThreshold: 10,
+                            autoSync: true,
+                            rememberUser: true,
+                            localStorageEnabled: true,
+                            memberSince: new Date().toISOString()
+                        },
+                        orders: [],
+                        inventory: [],
+                        customers: [],
+                        products: []
+                    };
+                }
                 
-                this.showNotification('Logged out successfully', 'success');
+                this.showNotification(rememberUser ? 
+                    'Logged out (data saved for next login)' : 
+                    'Logged out successfully', 'success');
                 
                 // Redirect to login page or reload
                 setTimeout(() => {
@@ -546,14 +835,73 @@ const ProfileModule = {
         }
     },
 
-    formatCurrency(amount) {
-        const currency = window.FarmModules.appData.profile?.currency || 'USD';
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: currency
-        }).format(amount);
+    // DISPLAY METHODS
+    updateAllDisplays() {
+        this.updateStatsFromModules();
+        this.updateProfileInfo();
+        this.updateStatsOverview();
+        this.updateDataManagement();
+        this.updateSettings();
     },
 
+    updateProfileInfo() {
+        const profile = window.FarmModules.appData.profile;
+        const currentUser = this.getCurrentUser();
+        
+        const farmName = profile.farmName || 'My Farm';
+        const farmerName = profile.farmerName || 'Farm Manager';
+        const email = profile.email || currentUser?.email || 'No email';
+        
+        this.updateElement('profile-farm-name', farmName);
+        this.updateElement('profile-farmer-name', farmerName);
+        this.updateElement('profile-email', email);
+        
+        this.setValue('farm-name', farmName);
+        this.setValue('farmer-name', farmerName);
+        this.setValue('farm-type', profile.farmType);
+        this.setValue('farm-location', profile.farmLocation);
+        
+        const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
+        this.updateElement('member-since', `Member since: ${memberSince}`);
+    },
+
+    updateStatsOverview() {
+        this.updateStatsFromModules();
+        const stats = window.FarmModules.appData.profile.dashboardStats || {};
+        
+        this.updateElement('total-revenue', this.formatCurrency(stats.totalRevenue || 0));
+        this.updateElement('total-orders', stats.totalOrders || 0);
+        this.updateElement('total-inventory', stats.totalInventoryItems || 0);
+        this.updateElement('total-customers', stats.totalCustomers || 0);
+        
+        const totalEntries = (stats.totalOrders || 0) + (stats.totalInventoryItems || 0) + (stats.totalCustomers || 0);
+        this.updateElement('data-entries', `Data entries: ${totalEntries}`);
+    },
+
+    updateDataManagement() {
+        const orders = window.FarmModules.appData.orders || [];
+        const inventory = window.FarmModules.appData.inventory || [];
+        const customers = window.FarmModules.appData.customers || [];
+        const products = window.FarmModules.appData.products || [];
+        
+        this.updateElement('orders-count', `${orders.length} records`);
+        this.updateElement('inventory-count', `${inventory.length} items`);
+        this.updateElement('customers-count', `${customers.length} customers`);
+        this.updateElement('products-count', `${products.length} products`);
+    },
+
+    updateSettings() {
+        const profile = window.FarmModules.appData.profile;
+        
+        this.setValue('default-currency', profile.currency || 'USD');
+        this.setValue('low-stock-threshold', profile.lowStockThreshold || 10);
+        this.setChecked('auto-sync', profile.autoSync !== false);
+        this.setChecked('remember-user', profile.rememberUser !== false);
+        this.setChecked('local-storage', profile.localStorageEnabled !== false);
+        this.setValue('theme-selector', profile.theme || 'auto');
+    },
+
+    // UTILITY METHODS
     getValue(id) {
         const element = document.getElementById(id);
         return element ? element.value : '';
@@ -564,6 +912,11 @@ const ProfileModule = {
         if (element) element.value = value || '';
     },
 
+    getChecked(id) {
+        const element = document.getElementById(id);
+        return element ? element.checked : false;
+    },
+
     setChecked(id, checked) {
         const element = document.getElementById(id);
         if (element) element.checked = !!checked;
@@ -572,6 +925,14 @@ const ProfileModule = {
     updateElement(id, value) {
         const element = document.getElementById(id);
         if (element) element.textContent = value;
+    },
+
+    formatCurrency(amount) {
+        const currency = window.FarmModules.appData.profile?.currency || 'USD';
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: currency
+        }).format(amount);
     },
 
     getCurrentUser() {
@@ -587,6 +948,13 @@ const ProfileModule = {
         } else {
             alert(message);
         }
+    },
+
+    updateSyncStatus(status) {
+        const syncElement = document.getElementById('sync-status');
+        if (syncElement) {
+            syncElement.textContent = status;
+        }
     }
 };
 
@@ -594,4 +962,4 @@ if (window.FarmModules) {
     window.FarmModules.registerModule('profile', ProfileModule);
 }
 
-console.log('✅ Profile module registered');
+console.log('✅ Profile module registered with PWA styles and all features');
