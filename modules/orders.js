@@ -1,4 +1,4 @@
-// modules/orders.js - UPDATED WITH STYLE MANAGER INTEGRATION
+// modules/orders.js - FIXED MANAGE CUSTOMERS BUTTON
 console.log('Loading orders module...');
 
 const OrdersModule = {
@@ -16,11 +16,9 @@ const OrdersModule = {
     initialize() {
         console.log('📋 Initializing Orders Management...');
         
-        // ✅ ADDED: Get the content area element
         this.element = document.getElementById('content-area');
         if (!this.element) return false;
 
-        // ✅ ADDED: Register with StyleManager
         if (window.StyleManager) {
             StyleManager.registerModule(this.id, this.element, this);
         }
@@ -34,10 +32,8 @@ const OrdersModule = {
         return true;
     },
 
-    // ✅ ADDED: Theme change handler (optional)
     onThemeChange(theme) {
         console.log(`Orders Management updating for theme: ${theme}`);
-        // You can add theme-specific logic here if needed
     },
 
     loadData() {
@@ -104,8 +100,8 @@ const OrdersModule = {
                     </button>
                     <button class="quick-action-btn" id="manage-customers-btn">
                         <div style="font-size: 32px;">👥</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Customers</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Manage customers</span>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Manage Customers</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View all customers</span>
                     </button>
                     <button class="quick-action-btn" id="view-orders-btn">
                         <div style="font-size: 32px;">📋</div>
@@ -257,7 +253,7 @@ const OrdersModule = {
                 </div>
 
                 <!-- Customers List -->
-                <div class="glass-card" style="padding: 24px; margin-top: 24px;">
+                <div class="glass-card" id="customers-section" style="padding: 24px; margin-top: 24px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3 style="color: var(--text-primary); font-size: 20px;">Customers</h3>
                         <button class="btn-primary" id="show-customer-form">Add Customer</button>
@@ -270,7 +266,7 @@ const OrdersModule = {
         `;
 
         this.setupEventListeners();
-        this.calculateTotal(); // Initialize total
+        this.calculateTotal();
     },
 
     calculateStats() {
@@ -426,7 +422,7 @@ const OrdersModule = {
         document.getElementById('add-customer-btn')?.addEventListener('click', () => this.showCustomerForm());
         document.getElementById('cancel-customer-form')?.addEventListener('click', () => this.hideCustomerForm());
         
-        // Action buttons
+        // Action buttons - FIXED: Proper event listeners for manage customers
         document.getElementById('manage-customers-btn')?.addEventListener('click', () => this.showCustomersSection());
         document.getElementById('view-orders-btn')?.addEventListener('click', () => this.showAllOrders());
         document.getElementById('export-orders-btn')?.addEventListener('click', () => this.exportOrders());
@@ -480,11 +476,19 @@ const OrdersModule = {
         document.getElementById('customer-form-container').classList.add('hidden');
     },
 
+    // FIXED: showCustomersSection function
     showCustomersSection() {
-        const customersSection = document.querySelector('.glass-card:last-of-type');
+        const customersSection = document.getElementById('customers-section');
         if (customersSection) {
-            customersSection.scrollIntoView({ behavior: 'smooth' });
-            customersSection.style.boxShadow = '0 0 0 2px #3b82f6';
+            customersSection.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start'
+            });
+            
+            // Add visual highlight
+            customersSection.style.transition = 'all 0.3s ease';
+            customersSection.style.boxShadow = '0 0 0 3px #3b82f6';
+            
             setTimeout(() => {
                 customersSection.style.boxShadow = 'none';
             }, 2000);
@@ -495,11 +499,19 @@ const OrdersModule = {
         }
     },
 
+    // FIXED: showAllOrders function
     showAllOrders() {
         const ordersSection = document.querySelector('.glass-card:nth-last-of-type(2)');
         if (ordersSection) {
-            ordersSection.scrollIntoView({ behavior: 'smooth' });
-            ordersSection.style.boxShadow = '0 0 0 2px #3b82f6';
+            ordersSection.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start'
+            });
+            
+            // Add visual highlight
+            ordersSection.style.transition = 'all 0.3s ease';
+            ordersSection.style.boxShadow = '0 0 0 3px #3b82f6';
+            
             setTimeout(() => {
                 ordersSection.style.boxShadow = 'none';
             }, 2000);
