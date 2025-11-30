@@ -1,26 +1,49 @@
-// modules/dashboard.js - UPDATED WITH SHARED DATA PATTERN
+// modules/dashboard.js - UPDATED WITH STYLE MANAGER INTEGRATION
 console.log('Loading dashboard module...');
 
 const DashboardModule = {
     name: 'dashboard',
     initialized: false,
+    element: null,
 
     initialize() {
-        console.log('📊 Initializing dashboard...');
+        console.log('📊 Initializing Dashboard...');
+        
+        // ✅ ADDED: Get the content area element
+        this.element = document.getElementById('content-area');
+        if (!this.element) return false;
+
+        // ✅ ADDED: Register with StyleManager
+        if (window.StyleManager) {
+            StyleManager.registerModule(this.id, this.element, this);
+        }
+
         this.renderDashboard();
+        this.setupEventListeners();
         this.initialized = true;
         
         // Load and display stats from shared data
         this.loadAndDisplayStats();
         
+        console.log('✅ Dashboard initialized with StyleManager');
         return true;
     },
 
-    renderDashboard() {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
+    // ✅ ADDED: Theme change handler (optional)
+    onThemeChange(theme) {
+        console.log(`Dashboard updating for theme: ${theme}`);
+        // You can add theme-specific logic here if needed
+    },
 
-        contentArea.innerHTML = `
+    setupEventListeners() {
+        this.setupQuickActions();
+        this.setupRefreshButton();
+    },
+
+    renderDashboard() {
+        if (!this.element) return;
+
+        this.element.innerHTML = `
             <div class="dashboard-container" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
                 <!-- Welcome Section -->
                 <div class="welcome-section" style="margin-bottom: 30px;">
@@ -619,53 +642,51 @@ const DashboardModule = {
         this.loadAndDisplayStats();
     },
 
-   // REPLACE JUST THESE 2 METHODS - KEEP EVERYTHING ELSE EXACTLY AS IS
-
-handleQuickAction(action) {
-    console.log(`Quick action: ${action}`);
-    
-    const actionMap = {
-        'add-income': 'income-expenses',
-        'add-expense': 'income-expenses', 
-        'check-inventory': 'inventory-check',
-        'record-feed': 'feed-record',
-        'add-production': 'production',
-        'view-reports': 'reports'
-    };
-
-    const targetModule = actionMap[action];
-    if (targetModule) {
-        // FIX: Use the correct method to switch sections
-        if (window.FarmManagementApp) {
-            window.FarmManagementApp.showSection(targetModule);
-        } else if (window.app && window.app.showSection) {
-            window.app.showSection(targetModule);
-        } else {
-            // Fallback: manually trigger navigation
-            const event = new CustomEvent('sectionChange', { 
-                detail: { section: targetModule } 
-            });
-            document.dispatchEvent(event);
-        }
+    handleQuickAction(action) {
+        console.log(`Quick action: ${action}`);
         
-        // Show notification
-        if (window.coreModule && window.coreModule.showNotification) {
-            window.coreModule.showNotification(`Opening ${this.getActionName(action)}...`, 'info');
-        }
-    }
-},
+        const actionMap = {
+            'add-income': 'income-expenses',
+            'add-expense': 'income-expenses', 
+            'check-inventory': 'inventory-check',
+            'record-feed': 'feed-record',
+            'add-production': 'production',
+            'view-reports': 'reports'
+        };
 
-getActionName(action) {
-    const names = {
-        'add-income': 'Income & Expenses',
-        'add-expense': 'Income & Expenses', 
-        'check-inventory': 'Inventory Check',
-        'record-feed': 'Feed Records',
-        'add-production': 'Production',
-        'view-reports': 'Reports'
-    };
-    return names[action] || action;
-},
+        const targetModule = actionMap[action];
+        if (targetModule) {
+            // FIX: Use the correct method to switch sections
+            if (window.FarmManagementApp) {
+                window.FarmManagementApp.showSection(targetModule);
+            } else if (window.app && window.app.showSection) {
+                window.app.showSection(targetModule);
+            } else {
+                // Fallback: manually trigger navigation
+                const event = new CustomEvent('sectionChange', { 
+                    detail: { section: targetModule } 
+                });
+                document.dispatchEvent(event);
+            }
+            
+            // Show notification
+            if (window.coreModule && window.coreModule.showNotification) {
+                window.coreModule.showNotification(`Opening ${this.getActionName(action)}...`, 'info');
+            }
+        }
+    },
+
+    getActionName(action) {
+        const names = {
+            'add-income': 'Income & Expenses',
+            'add-expense': 'Income & Expenses', 
+            'check-inventory': 'Inventory Check',
+            'record-feed': 'Feed Records',
+            'add-production': 'Production',
+            'view-reports': 'Reports'
+        };
+        return names[action] || action;
+    },
 
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
