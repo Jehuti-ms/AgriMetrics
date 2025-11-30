@@ -1,21 +1,27 @@
-// modules/broiler-mortality.js - UPDATED WITH STYLE MANAGER INTEGRATION
+// modules/broiler-mortality.js - COMPLETE WITH MODALS AND REPORTS
 console.log('Loading broiler mortality module...');
 
 const BroilerMortalityModule = {
     name: 'broiler-mortality',
     initialized: false,
     element: null,
+    mortalityData: [],
 
     initialize() {
         console.log('😔 Initializing Broiler Health & Mortality...');
         
-        // ✅ ADDED: Get the content area element
         this.element = document.getElementById('content-area');
-        if (!this.element) return false;
+        if (!this.element) {
+            console.error('❌ Content area not found for broiler-mortality module');
+            return false;
+        }
 
-        // ✅ ADDED: Register with StyleManager
+        // ✅ FIXED: Use this.name instead of this.id
         if (window.StyleManager) {
-            StyleManager.registerModule(this.id, this.element, this);
+            StyleManager.registerModule(this.name, this.element, this);
+            console.log('🎨 Broiler-mortality module registered with StyleManager');
+        } else {
+            console.warn('⚠️ StyleManager not available');
         }
 
         this.loadData();
@@ -23,211 +29,28 @@ const BroilerMortalityModule = {
         this.setupEventListeners();
         this.initialized = true;
         
-        console.log('✅ Broiler Health & Mortality initialized with StyleManager');
+        console.log('✅ Broiler Health & Mortality initialized');
         return true;
     },
 
-    // ✅ ADDED: Theme change handler (optional)
     onThemeChange(theme) {
         console.log(`Broiler Health & Mortality updating for theme: ${theme}`);
-        // You can add theme-specific logic here if needed
-    },
-
-    renderModule() {
-        if (!this.element) return;
-
-        this.element.innerHTML = `
-            <div class="section active">
-                <div class="module-header">
-                    <h1>Broiler Health & Mortality</h1>
-                    <p>Monitor flock health and track losses</p>
-                    <div class="header-actions">
-                        <button class="btn btn-primary" id="generate-health-report">
-                            📊 Health Report
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Mortality Stats -->
-                <div class="mortality-stats">
-                    <div class="stat-card">
-                        <div class="stat-icon">😔</div>
-                        <div class="stat-content">
-                            <h3>Total Losses</h3>
-                            <div class="stat-value" id="total-losses">0</div>
-                            <div class="stat-period">birds</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">📊</div>
-                        <div class="stat-content">
-                            <h3>Mortality Rate</h3>
-                            <div class="stat-value" id="mortality-rate">0%</div>
-                            <div class="stat-period">current rate</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">🐔</div>
-                        <div class="stat-content">
-                            <h3>Current Birds</h3>
-                            <div class="stat-value" id="current-birds">0</div>
-                            <div class="stat-period">in stock</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">📈</div>
-                        <div class="stat-content">
-                            <h3>Records</h3>
-                            <div class="stat-value" id="records-count">0</div>
-                            <div class="stat-period">entries</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="quick-actions-grid">
-                    <button class="quick-action-card" id="record-mortality-btn">
-                        <div class="quick-action-icon">📝</div>
-                        <div class="quick-action-content">
-                            <h4>Record Mortality</h4>
-                            <p>Log bird losses and causes</p>
-                        </div>
-                    </button>
-                    <button class="quick-action-card" id="trend-analysis-btn">
-                        <div class="quick-action-icon">📈</div>
-                        <div class="quick-action-content">
-                            <h4>Trend Analysis</h4>
-                            <p>View mortality patterns</p>
-                        </div>
-                    </button>
-                    <button class="quick-action-card" id="cause-analysis-btn">
-                        <div class="quick-action-icon">🔍</div>
-                        <div class="quick-action-content">
-                            <h4>Cause Analysis</h4>
-                            <p>Analyze death causes</p>
-                        </div>
-                    </button>
-                </div>
-
-                <!-- Mortality Form -->
-                <div class="mortality-form card">
-                    <h3>Record Mortality</h3>
-                    <form id="mortality-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="mortality-date">Date *</label>
-                                <input type="date" id="mortality-date" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="mortality-quantity">Number of Birds *</label>
-                                <input type="number" id="mortality-quantity" min="1" required placeholder="0">
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="mortality-cause">Cause of Death *</label>
-                                <select id="mortality-cause" required>
-                                    <option value="">Select Cause</option>
-                                    <option value="natural">Natural Causes</option>
-                                    <option value="disease">Disease</option>
-                                    <option value="predator">Predator</option>
-                                    <option value="accident">Accident</option>
-                                    <option value="heat-stress">Heat Stress</option>
-                                    <option value="cold-stress">Cold Stress</option>
-                                    <option value="nutritional">Nutritional Issues</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="mortality-age">Bird Age (days)</label>
-                                <input type="number" id="mortality-age" min="1" max="70" placeholder="Optional">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="mortality-notes">Observations & Notes</label>
-                            <textarea id="mortality-notes" rows="3" placeholder="Symptoms, location, time of discovery, environmental conditions..."></textarea>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary">Save Mortality Record</button>
-                    </form>
-                </div>
-
-                <!-- Recent Mortality Records -->
-                <div class="mortality-records card">
-                    <div class="card-header">
-                        <h3>Recent Mortality Records</h3>
-                        <div class="filter-controls">
-                            <select id="mortality-filter">
-                                <option value="all">All Causes</option>
-                                <option value="disease">Disease</option>
-                                <option value="predator">Predator</option>
-                                <option value="natural">Natural</option>
-                                <option value="stress">Stress</option>
-                            </select>
-                            <button class="btn btn-text" id="export-mortality">Export</button>
-                        </div>
-                    </div>
-                    <div class="table-container">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Cause</th>
-                                    <th>Quantity</th>
-                                    <th>Age</th>
-                                    <th>Notes</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="mortality-body">
-                                <!-- Mortality records will be rendered here -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Health Report Modal -->
-                <div id="health-report-modal" class="modal hidden">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h3 id="health-report-title">Health Report</h3>
-                            <button class="modal-close">&times;</button>
-                        </div>
-                        <div class="modal-body">
-                            <div id="health-report-content">
-                                <!-- Report content will be inserted here -->
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-text" id="print-health-report">🖨️ Print</button>
-                            <button class="btn btn-primary modal-close">Close</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        this.updateStats();
-        this.renderMortalityTable();
-        
-        setTimeout(() => {
-            this.attachEventListeners();
-            console.log('✅ Mortality event listeners attached');
-        }, 100);
     },
 
     loadData() {
-        if (!window.FarmModules || !window.FarmModules.appData) {
-            window.FarmModules = window.FarmModules || {};
-            window.FarmModules.appData = window.FarmModules.appData || {};
+        // Load from localStorage or use demo data
+        const savedData = localStorage.getItem('farm-mortality-data');
+        if (savedData) {
+            this.mortalityData = JSON.parse(savedData);
+        } else {
+            this.mortalityData = this.getDemoData();
+            this.saveData();
         }
-        
-        if (!window.FarmModules.appData.mortality) {
-            window.FarmModules.appData.mortality = this.getDemoData();
-        }
-        console.log('📊 Loaded mortality data:', window.FarmModules.appData.mortality.length, 'records');
+        console.log('📊 Loaded mortality data:', this.mortalityData.length, 'records');
+    },
+
+    saveData() {
+        localStorage.setItem('farm-mortality-data', JSON.stringify(this.mortalityData));
     },
 
     getDemoData() {
@@ -255,15 +78,228 @@ const BroilerMortalityModule = {
                 cause: 'disease', 
                 age: 28,
                 notes: 'Respiratory symptoms observed, isolated immediately' 
+            },
+            { 
+                id: 4, 
+                date: '2024-03-12', 
+                quantity: 2, 
+                cause: 'heat-stress', 
+                age: 45,
+                notes: 'High temperatures, increased ventilation needed' 
+            },
+            { 
+                id: 5, 
+                date: '2024-03-11', 
+                quantity: 1, 
+                cause: 'nutritional', 
+                age: 30,
+                notes: 'Underweight, poor feed conversion' 
             }
         ];
     },
 
+    renderModule() {
+        if (!this.element) return;
+
+        this.element.innerHTML = `
+            <div class="module-container" data-module="broiler-mortality">
+                <!-- Module Header -->
+                <div class="module-header">
+                    <div class="module-header-content">
+                        <h1 class="module-title">Broiler Health & Mortality</h1>
+                        <p class="module-subtitle">Monitor flock health and track losses</p>
+                    </div>
+                    <div class="module-header-actions">
+                        <button class="btn btn-primary" id="generate-health-report">
+                            <span class="btn-icon">📊</span>
+                            Health Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="glass-card stat-card">
+                        <div class="stat-icon">😔</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="total-losses">0</div>
+                            <div class="stat-label">Total Losses</div>
+                            <div class="stat-subtitle">birds</div>
+                        </div>
+                    </div>
+                    <div class="glass-card stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="mortality-rate">0%</div>
+                            <div class="stat-label">Mortality Rate</div>
+                            <div class="stat-subtitle">current rate</div>
+                        </div>
+                    </div>
+                    <div class="glass-card stat-card">
+                        <div class="stat-icon">🐔</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="current-birds">0</div>
+                            <div class="stat-label">Current Birds</div>
+                            <div class="stat-subtitle">in stock</div>
+                        </div>
+                    </div>
+                    <div class="glass-card stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="records-count">0</div>
+                            <div class="stat-label">Records</div>
+                            <div class="stat-subtitle">entries</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-action-grid">
+                    <button class="glass-card quick-action-card" id="record-mortality-btn">
+                        <div class="quick-action-icon">📝</div>
+                        <div class="quick-action-content">
+                            <h3>Record Mortality</h3>
+                            <p>Log bird losses and causes</p>
+                        </div>
+                    </button>
+                    <button class="glass-card quick-action-card" id="trend-analysis-btn">
+                        <div class="quick-action-icon">📈</div>
+                        <div class="quick-action-content">
+                            <h3>Trend Analysis</h3>
+                            <p>View mortality patterns</p>
+                        </div>
+                    </button>
+                    <button class="glass-card quick-action-card" id="cause-analysis-btn">
+                        <div class="quick-action-icon">🔍</div>
+                        <div class="quick-action-content">
+                            <h3>Cause Analysis</h3>
+                            <p>Analyze death causes</p>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Mortality Form -->
+                <div class="glass-card form-card">
+                    <div class="card-header">
+                        <h2>📝 Record Mortality</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="mortality-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="mortality-date" class="form-label">Date *</label>
+                                    <input type="date" id="mortality-date" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="mortality-quantity" class="form-label">Number of Birds *</label>
+                                    <input type="number" id="mortality-quantity" class="form-input" min="1" required placeholder="0">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="mortality-cause" class="form-label">Cause of Death *</label>
+                                    <select id="mortality-cause" class="form-select" required>
+                                        <option value="">Select Cause</option>
+                                        <option value="natural">Natural Causes</option>
+                                        <option value="disease">Disease</option>
+                                        <option value="predator">Predator</option>
+                                        <option value="accident">Accident</option>
+                                        <option value="heat-stress">Heat Stress</option>
+                                        <option value="cold-stress">Cold Stress</option>
+                                        <option value="nutritional">Nutritional Issues</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="mortality-age" class="form-label">Bird Age (days)</label>
+                                    <input type="number" id="mortality-age" class="form-input" min="1" max="70" placeholder="Optional">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="mortality-notes" class="form-label">Observations & Notes</label>
+                                <textarea id="mortality-notes" class="form-textarea" rows="3" placeholder="Symptoms, location, time of discovery, environmental conditions..."></textarea>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <span class="btn-icon">💾</span>
+                                    Save Mortality Record
+                                </button>
+                                <button type="reset" class="btn btn-text">Clear Form</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Recent Mortality Records -->
+                <div class="glass-card table-card">
+                    <div class="card-header">
+                        <h2>📊 Recent Mortality Records</h2>
+                        <div class="card-actions">
+                            <select id="mortality-filter" class="form-select">
+                                <option value="all">All Causes</option>
+                                <option value="disease">Disease</option>
+                                <option value="predator">Predator</option>
+                                <option value="natural">Natural</option>
+                                <option value="stress">Stress</option>
+                            </select>
+                            <button class="btn btn-text" id="export-mortality">
+                                <span class="btn-icon">📤</span>
+                                Export
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Cause</th>
+                                        <th>Quantity</th>
+                                        <th>Age</th>
+                                        <th>Notes</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mortality-body">
+                                    <!-- Mortality records will be rendered here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health Report Modal -->
+                <div id="health-report-modal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 id="health-report-title">Health Report</h3>
+                            <button class="modal-close">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="health-report-content">
+                                <!-- Report content will be inserted here -->
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-text" id="print-health-report">🖨️ Print</button>
+                            <button class="btn btn-primary modal-close">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        this.updateStats();
+        this.renderMortalityTable();
+        this.setupEventListeners();
+    },
+
     updateStats() {
-        const mortality = window.FarmModules?.appData?.mortality || [];
-        const totalLosses = mortality.reduce((sum, record) => sum + record.quantity, 0);
-        
-        // Get current stock from inventory or use default
+        const totalLosses = this.mortalityData.reduce((sum, record) => sum + record.quantity, 0);
         const currentStock = this.getCurrentStock();
         const mortalityRate = currentStock > 0 ? ((totalLosses / currentStock) * 100).toFixed(2) : '0.00';
 
@@ -271,7 +307,7 @@ const BroilerMortalityModule = {
         this.updateElement('total-losses', totalLosses.toLocaleString());
         this.updateElement('mortality-rate', mortalityRate + '%');
         this.updateElement('current-birds', currentStock.toLocaleString());
-        this.updateElement('records-count', mortality.length.toLocaleString());
+        this.updateElement('records-count', this.mortalityData.length.toLocaleString());
 
         // Update mortality rate color based on threshold
         const mortalityRateElement = document.getElementById('mortality-rate');
@@ -287,16 +323,7 @@ const BroilerMortalityModule = {
     },
 
     getCurrentStock() {
-        // Try to get from inventory first, then fallback to localStorage, then default
-        if (window.FarmModules?.appData?.inventory) {
-            const broilerStock = window.FarmModules.appData.inventory.find(item => 
-                item.type === 'broilers' || item.name?.toLowerCase().includes('broiler')
-            );
-            if (broilerStock) {
-                return broilerStock.quantity || 1000;
-            }
-        }
-        
+        // Try to get from localStorage first, then fallback to default
         const savedStock = localStorage.getItem('farm-birds-stock');
         return savedStock ? parseInt(savedStock) : 1000;
     },
@@ -304,17 +331,15 @@ const BroilerMortalityModule = {
     renderMortalityTable(filter = 'all') {
         const tbody = document.getElementById('mortality-body');
         if (!tbody) return;
-
-        const mortality = window.FarmModules?.appData?.mortality || [];
         
-        let filteredMortality = mortality;
+        let filteredMortality = this.mortalityData;
         if (filter !== 'all') {
             if (filter === 'stress') {
-                filteredMortality = mortality.filter(record => 
+                filteredMortality = this.mortalityData.filter(record => 
                     record.cause === 'heat-stress' || record.cause === 'cold-stress'
                 );
             } else {
-                filteredMortality = mortality.filter(record => record.cause === filter);
+                filteredMortality = this.mortalityData.filter(record => record.cause === filter);
             }
         }
 
@@ -343,17 +368,21 @@ const BroilerMortalityModule = {
                 <tr>
                     <td>${this.formatDate(record.date)}</td>
                     <td>
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <span style="font-size: 1.2rem;">${this.getCauseIcon(record.cause)}</span>
+                        <div class="cause-cell">
+                            <span class="cause-icon">${this.getCauseIcon(record.cause)}</span>
                             <span class="${causeClass}">${this.formatCause(record.cause)}</span>
                         </div>
                     </td>
                     <td><strong class="loss">${record.quantity}</strong> birds</td>
                     <td>${record.age ? record.age + ' days' : '-'}</td>
-                    <td>${record.notes || '-'}</td>
-                    <td class="mortality-actions">
-                        <button class="btn-icon edit-mortality" data-id="${record.id}" title="Edit">✏️</button>
-                        <button class="btn-icon delete-mortality" data-id="${record.id}" title="Delete">🗑️</button>
+                    <td class="notes-cell">${record.notes || '-'}</td>
+                    <td class="actions-cell">
+                        <button class="btn-icon edit-mortality" data-id="${record.id}" title="Edit">
+                            <span class="icon">✏️</span>
+                        </button>
+                        <button class="btn-icon delete-mortality" data-id="${record.id}" title="Delete">
+                            <span class="icon">🗑️</span>
+                        </button>
                     </td>
                 </tr>
             `;
@@ -361,17 +390,10 @@ const BroilerMortalityModule = {
     },
 
     setupEventListeners() {
-        this.attachEventListeners();
-    },
-
-    attachEventListeners() {
-        console.log('🔗 Attaching mortality event listeners...');
-
         // Mortality form
         const mortalityForm = document.getElementById('mortality-form');
         if (mortalityForm) {
             mortalityForm.addEventListener('submit', (e) => this.handleMortalitySubmit(e));
-            console.log('✅ Mortality form listener attached');
         }
 
         // Set default date to today
@@ -382,7 +404,7 @@ const BroilerMortalityModule = {
 
         // Quick action buttons
         document.getElementById('record-mortality-btn')?.addEventListener('click', () => {
-            document.getElementById('mortality-form').scrollIntoView({ behavior: 'smooth' });
+            document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth' });
         });
 
         document.getElementById('trend-analysis-btn')?.addEventListener('click', () => {
@@ -407,11 +429,6 @@ const BroilerMortalityModule = {
             this.exportMortality();
         });
 
-        // Report modal buttons
-        document.getElementById('print-health-report')?.addEventListener('click', () => {
-            this.printHealthReport();
-        });
-
         // Mortality actions (delegated)
         document.addEventListener('click', (e) => {
             if (e.target.closest('.edit-mortality')) {
@@ -424,12 +441,24 @@ const BroilerMortalityModule = {
             }
         });
 
-        console.log('✅ All mortality event listeners attached');
+        // Modal close handlers
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-close') || e.target.closest('.modal-close')) {
+                this.closeModal('health-report-modal');
+            }
+            if (e.target.classList.contains('modal')) {
+                this.closeModal('health-report-modal');
+            }
+        });
+
+        // Print report
+        document.getElementById('print-health-report')?.addEventListener('click', () => {
+            this.printHealthReport();
+        });
     },
 
     handleMortalitySubmit(e) {
         e.preventDefault();
-        console.log('💾 Saving mortality record...');
         
         const formData = {
             id: Date.now(),
@@ -461,31 +490,16 @@ const BroilerMortalityModule = {
     },
 
     addMortality(mortalityData) {
-        if (!window.FarmModules?.appData?.mortality) {
-            if (!window.FarmModules) window.FarmModules = {};
-            if (!window.FarmModules.appData) window.FarmModules.appData = {};
-            window.FarmModules.appData.mortality = [];
-        }
-
-        window.FarmModules.appData.mortality.unshift(mortalityData);
-        
+        this.mortalityData.unshift(mortalityData);
+        this.saveData();
         this.updateStats();
         this.renderMortalityTable();
-        
-        // Add recent activity
-        this.addRecentActivity({
-            type: 'mortality_recorded',
-            mortality: mortalityData
-        });
         
         console.log('✅ Mortality record added:', mortalityData);
     },
 
     editMortality(recordId) {
-        console.log('✏️ Editing mortality record:', recordId);
-        
-        const mortality = window.FarmModules?.appData?.mortality || [];
-        const record = mortality.find(r => r.id == recordId);
+        const record = this.mortalityData.find(r => r.id == recordId);
         
         if (!record) {
             console.error('❌ Mortality record not found:', recordId);
@@ -500,38 +514,22 @@ const BroilerMortalityModule = {
         document.getElementById('mortality-notes').value = record.notes || '';
 
         // Scroll to form
-        document.getElementById('mortality-form').scrollIntoView({ behavior: 'smooth' });
-        
-        console.log('✅ Mortality form populated for editing');
+        document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth' });
     },
 
     deleteMortality(recordId) {
         if (confirm('Are you sure you want to delete this mortality record?')) {
-            const mortality = window.FarmModules?.appData?.mortality || [];
-            const record = mortality.find(r => r.id == recordId);
-            
-            window.FarmModules.appData.mortality = mortality.filter(r => r.id != recordId);
-            
+            this.mortalityData = this.mortalityData.filter(r => r.id != recordId);
+            this.saveData();
             this.updateStats();
             this.renderMortalityTable();
-            
-            // Add recent activity
-            if (record) {
-                this.addRecentActivity({
-                    type: 'mortality_deleted',
-                    mortality: record
-                });
-            }
-            
             this.showNotification('Mortality record deleted successfully', 'success');
-            console.log('✅ Mortality record deleted:', recordId);
         }
     },
 
     generateHealthReport(type = 'overview') {
         console.log('📊 Generating health report:', type);
         
-        const mortality = window.FarmModules?.appData?.mortality || [];
         const stats = this.calculateDetailedStats();
 
         let reportTitle = 'Health Overview Report';
@@ -540,25 +538,25 @@ const BroilerMortalityModule = {
         switch (type) {
             case 'trends':
                 reportTitle = 'Mortality Trends Analysis';
-                reportContent = this.generateTrendsReport(stats, mortality);
+                reportContent = this.generateTrendsReport(stats);
                 break;
             case 'causes':
                 reportTitle = 'Cause Analysis Report';
-                reportContent = this.generateCausesReport(stats, mortality);
+                reportContent = this.generateCausesReport(stats);
                 break;
             default:
                 reportTitle = 'Health Overview Report';
-                reportContent = this.generateOverviewReport(stats, mortality);
+                reportContent = this.generateOverviewReport(stats);
         }
 
         this.showHealthReportModal(reportTitle, reportContent);
     },
 
-    generateOverviewReport(stats, mortality) {
+    generateOverviewReport(stats) {
         return `
             <div class="report-section">
                 <h4>📊 Flock Health Overview</h4>
-                <div class="stats-grid">
+                <div class="stats-grid compact">
                     <div class="stat-item">
                         <div class="stat-label">Current Bird Count</div>
                         <div class="stat-number">${stats.currentStock}</div>
@@ -602,8 +600,8 @@ const BroilerMortalityModule = {
         `;
     },
 
-    generateTrendsReport(stats, mortality) {
-        const weeklyTrends = this.calculateWeeklyTrends(mortality);
+    generateTrendsReport(stats) {
+        const weeklyTrends = this.calculateWeeklyTrends();
         
         return `
             <div class="report-section">
@@ -622,7 +620,7 @@ const BroilerMortalityModule = {
             <div class="report-section">
                 <h4>📅 Recent Mortality Activity</h4>
                 <div class="activity-list">
-                    ${mortality.slice(0, 8).map(record => `
+                    ${this.mortalityData.slice(0, 8).map(record => `
                         <div class="activity-item">
                             <div class="activity-date">${this.formatDate(record.date)}</div>
                             <div class="activity-details">
@@ -636,7 +634,7 @@ const BroilerMortalityModule = {
         `;
     },
 
-    generateCausesReport(stats, mortality) {
+    generateCausesReport(stats) {
         return `
             <div class="report-section">
                 <h4>🔍 Detailed Cause Analysis</h4>
@@ -669,14 +667,13 @@ const BroilerMortalityModule = {
     },
 
     calculateDetailedStats() {
-        const mortality = window.FarmModules?.appData?.mortality || [];
-        const totalLosses = mortality.reduce((sum, record) => sum + record.quantity, 0);
+        const totalLosses = this.mortalityData.reduce((sum, record) => sum + record.quantity, 0);
         const currentStock = this.getCurrentStock();
         const mortalityRate = currentStock > 0 ? ((totalLosses / currentStock) * 100).toFixed(2) : '0.00';
 
         // Cause distribution
         const causeDistribution = {};
-        mortality.forEach(record => {
+        this.mortalityData.forEach(record => {
             causeDistribution[record.cause] = (causeDistribution[record.cause] || 0) + record.quantity;
         });
 
@@ -684,12 +681,12 @@ const BroilerMortalityModule = {
             totalLosses,
             mortalityRate,
             currentStock,
-            recordsCount: mortality.length,
+            recordsCount: this.mortalityData.length,
             causeDistribution
         };
     },
 
-    calculateWeeklyTrends(mortality) {
+    calculateWeeklyTrends() {
         const weeks = [];
         for (let i = 3; i >= 0; i--) {
             const startDate = new Date();
@@ -698,7 +695,7 @@ const BroilerMortalityModule = {
             endDate.setDate(endDate.getDate() + 6);
             
             const weekStr = `Week ${4-i}`;
-            const weekMortality = mortality.filter(record => {
+            const weekMortality = this.mortalityData.filter(record => {
                 const recordDate = new Date(record.date);
                 return recordDate >= startDate && recordDate <= endDate;
             });
@@ -841,8 +838,7 @@ const BroilerMortalityModule = {
     },
 
     exportMortality() {
-        const mortality = window.FarmModules?.appData?.mortality || [];
-        const csv = this.convertToCSV(mortality);
+        const csv = this.convertToCSV(this.mortalityData);
         const blob = new Blob([csv], { type: 'text/csv' });
         
         const link = document.createElement('a');
@@ -863,61 +859,23 @@ const BroilerMortalityModule = {
             record.notes
         ]);
         
-        return [headers, ...rows].map(row => row.join(',')).join('\n');
-    },
-
-    addRecentActivity(activityData) {
-        if (!window.FarmModules || !window.FarmModules.modules.dashboard) return;
-        
-        let activity;
-        
-        switch (activityData.type) {
-            case 'mortality_recorded':
-                activity = {
-                    type: 'mortality_recorded',
-                    message: `Mortality: ${activityData.mortality.quantity} birds - ${this.formatCause(activityData.mortality.cause)}`,
-                    icon: '😔'
-                };
-                break;
-            case 'mortality_deleted':
-                activity = {
-                    type: 'mortality_deleted',
-                    message: `Deleted mortality record: ${this.formatCause(activityData.mortality.cause)}`,
-                    icon: '🗑️'
-                };
-                break;
-        }
-        
-        if (activity) {
-            window.FarmModules.modules.dashboard.addRecentActivity(activity);
-        }
+        return [headers, ...rows].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
     },
 
     // Utility methods
     getCauseIcon(cause) {
         const icons = {
-            'natural': '🌿',
-            'disease': '🤒',
-            'predator': '🦊',
-            'accident': '⚠️',
-            'heat-stress': '🔥',
-            'cold-stress': '❄️',
-            'nutritional': '🍽️',
-            'other': '❓'
+            'natural': '🌿', 'disease': '🤒', 'predator': '🦊', 'accident': '⚠️',
+            'heat-stress': '🔥', 'cold-stress': '❄️', 'nutritional': '🍽️', 'other': '❓'
         };
         return icons[cause] || '❓';
     },
 
     formatCause(cause) {
         const causes = {
-            'natural': 'Natural Causes',
-            'disease': 'Disease',
-            'predator': 'Predator',
-            'accident': 'Accident',
-            'heat-stress': 'Heat Stress',
-            'cold-stress': 'Cold Stress',
-            'nutritional': 'Nutritional',
-            'other': 'Other'
+            'natural': 'Natural Causes', 'disease': 'Disease', 'predator': 'Predator',
+            'accident': 'Accident', 'heat-stress': 'Heat Stress', 'cold-stress': 'Cold Stress',
+            'nutritional': 'Nutritional', 'other': 'Other'
         };
         return causes[cause] || cause;
     },
@@ -951,5 +909,5 @@ if (window.FarmModules) {
     window.FarmModules.registerModule('broiler-mortality', BroilerMortalityModule);
     console.log('✅ Broiler Health & Mortality module registered');
 } else {
-    console.error('FarmModules framework not found');
+    console.error('❌ FarmModules framework not found');
 }
