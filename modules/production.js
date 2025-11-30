@@ -316,7 +316,7 @@ const ProductionModule = {
                             <button class="modal-close">&times;</button>
                         </div>
                         <div class="modal-body">
-                            <div id="production-report-content">
+                            <div id="production-report-content" class="modal-report-content">
                                 <!-- Report content will be inserted here -->
                             </div>
                         </div>
