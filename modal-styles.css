@@ -560,3 +560,42 @@
     color: #f9fafb !important;
   }
 }
+
+/* ============== DARKMODE ===============*/
+/* Dark Mode Styles */
+[data-theme="dark"] .modal-content,
+.dark .modal-content,
+.dark-mode .modal-content {
+  background: #1f2937;
+  color: #f9fafb;
+  border: 1px solid #374151;
+}
+
+[data-theme="dark"] .modal-body,
+.dark .modal-body,
+.dark-mode .modal-body {
+  background: #1f2937;
+  color: #f9fafb;
+}
+
+[data-theme="dark"] .modal-header,
+.dark .modal-header,
+.dark-mode .modal-header {
+  background: linear-gradient(135deg, #1e40af, #7c3aed);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .modal-footer,
+.dark .modal-footer,
+.dark-mode .modal-footer {
+  background: #111827;
+  color: #f9fafb;
+}
+
+/* Add text color fixes */
+[data-theme="dark"] .modal-body *,
+.dark .modal-body *,
+.dark-mode .modal-body * {
+  color: #f9fafb !important;
+}
+
