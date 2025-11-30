@@ -1,4 +1,4 @@
-// app.js - UPDATED WITH COMPLETE PROFILEMODULE FALLBACK
+// app.js - UPDATED WITH PROPER STYLEMANAGER INITIALIZATION
 console.log('Loading main app...');
 
 class FarmManagementApp {
@@ -24,9 +24,16 @@ class FarmManagementApp {
 
     async initializeApp() {
         console.log('✅ Initializing app...');
+        
+        // CRITICAL: Initialize StyleManager FIRST before any modules
+        this.initializeStyleManager();
+        
+        // CRITICAL: Initialize FarmModules core system
+        this.initializeFarmModules();
+        
         this.isDemoMode = true;
         
-        // Load user preferences FIRST
+        // Load user preferences
         await this.loadUserPreferences();
         
         // Show the app interface
@@ -58,6 +65,26 @@ class FarmManagementApp {
         this.showSection(this.currentSection);
         
         console.log('✅ App initialized successfully');
+    }
+
+    initializeStyleManager() {
+        // Initialize StyleManager IMMEDIATELY when app starts
+        if (window.StyleManager && typeof StyleManager.init === 'function') {
+            StyleManager.init();
+            console.log('🎨 StyleManager initialized');
+        } else {
+            console.warn('⚠️ StyleManager not available - modules may not style properly');
+        }
+    }
+
+    initializeFarmModules() {
+        // Ensure FarmModules core is initialized
+        if (window.FarmModules && typeof FarmModules.initialize === 'function') {
+            FarmModules.initialize();
+            console.log('🔧 FarmModules core initialized');
+        } else {
+            console.warn('⚠️ FarmModules core not available');
+        }
     }
 
     async loadUserPreferences() {
@@ -214,8 +241,6 @@ class FarmManagementApp {
     setupDarkMode() {
         const darkModeToggle = document.getElementById('dark-mode-toggle');
         const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-        
-        // Theme is already applied from user preferences, just setup the toggle
         
         if (darkModeToggle) {
             darkModeToggle.addEventListener('click', () => {
@@ -436,6 +461,7 @@ class FarmManagementApp {
                 const section = item.getAttribute('data-section');
                 if (section) {
                     console.log('📱 Side menu item clicked:', section);
+                    this.showSection(section);
                     
                     // Close sidebar after selection
                     const sideMenu = document.getElementById('side-menu');
