@@ -257,7 +257,8 @@ const OrdersModule = {
                 </div>
 
                 <!-- Customers List -->
-                <div class="glass-card" style="padding: 24px; margin-top: 24px;">
+                <!-- <div class="glass-card" style="padding: 24px; margin-top: 24px;"> -->
+                <div class="glass-card" id="customers-section" style="padding: 24px; margin-top: 24px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3 style="color: var(--text-primary); font-size: 20px;">Customers</h3>
                         <button class="btn-primary" id="show-customer-form">Add Customer</button>
@@ -480,21 +481,28 @@ const OrdersModule = {
         document.getElementById('customer-form-container').classList.add('hidden');
     },
 
-    showCustomersSection() {
-        const customersSection = document.querySelector('.glass-card:last-of-type');
-        if (customersSection) {
-            customersSection.scrollIntoView({ behavior: 'smooth' });
-            customersSection.style.boxShadow = '0 0 0 2px #3b82f6';
-            setTimeout(() => {
-                customersSection.style.boxShadow = 'none';
-            }, 2000);
-        }
+ showCustomersSection() {
+    const customersSection = document.getElementById('customers-section');
+    if (customersSection) {
+        customersSection.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start'
+        });
         
-        if (window.coreModule) {
-            window.coreModule.showNotification('Showing customers section', 'info');
-        }
-    },
-
+        // Add visual highlight
+        customersSection.style.transition = 'all 0.3s ease';
+        customersSection.style.boxShadow = '0 0 0 3px #3b82f6';
+        
+        setTimeout(() => {
+            customersSection.style.boxShadow = 'none';
+        }, 2000);
+    }
+    
+    if (window.coreModule) {
+        window.coreModule.showNotification('Showing customers section', 'info');
+    }
+},
+    
     showAllOrders() {
         const ordersSection = document.querySelector('.glass-card:nth-last-of-type(2)');
         if (ordersSection) {
