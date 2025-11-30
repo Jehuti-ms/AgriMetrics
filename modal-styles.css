@@ -224,3 +224,213 @@
 .modal-body label {
   color: var(--text-color);
 }
+
+/*=============NEW HEADERS ETC ===============*/
+/* Add these styles to your existing modal CSS */
+
+/* Enhanced Modal Base Styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--modal-backdrop);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Changed from center to flex-start */
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  animation: modalFadeIn 0.3s ease;
+  padding: 1rem;
+  box-sizing: border-box;
+  overflow-y: auto; /* Enable backdrop scrolling */
+}
+
+.modal-content {
+  background: var(--modal-bg);
+  border-radius: 20px;
+  box-shadow: var(--modal-shadow);
+  border: 1px solid var(--modal-border);
+  width: 90%;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: modalSlideIn 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  margin: 2rem 0; /* Add vertical margin for better positioning */
+  position: relative;
+}
+
+/* Sticky Header for better navigation */
+.modal-header {
+  background: var(--modal-header-bg);
+  color: var(--modal-header-text);
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--modal-header-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* Enhanced Modal Body with better scrolling */
+.modal-body {
+  padding: 2rem;
+  background: var(--modal-body-bg);
+  color: var(--modal-body-text);
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  max-height: calc(90vh - 140px); /* Account for header and footer */
+  
+  /* Better scrolling experience */
+  scroll-behavior: smooth;
+  scroll-padding-top: 1rem;
+}
+
+/* Sticky Footer for consistent action access */
+.modal-footer {
+  background: var(--modal-footer-bg);
+  padding: 1.5rem 2rem;
+  border-top: 1px solid var(--modal-footer-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+/* Improved scrolling indicators for long content */
+.modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: var(--modal-footer-bg);
+  border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: var(--modal-border);
+  border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color);
+}
+
+/* Section headings styling for better hierarchy */
+.modal-body h4 {
+  margin: 2rem 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--primary-color);
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.modal-body h4:first-child {
+  margin-top: 0;
+}
+
+.modal-body p {
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+/* Enhanced responsive design */
+@media (max-width: 768px) {
+  .modal {
+    padding: 0.5rem;
+    align-items: stretch; /* Full height on mobile */
+  }
+  
+  .modal-content {
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    max-height: 100vh;
+    height: 100vh;
+  }
+  
+  .modal-header {
+    padding: 1.25rem 1.5rem;
+    position: relative; /* Not sticky on mobile */
+  }
+  
+  .modal-body {
+    padding: 1.5rem;
+    max-height: none;
+    flex: 1;
+  }
+  
+  .modal-footer {
+    padding: 1.25rem 1.5rem;
+    flex-direction: column;
+    position: relative; /* Not sticky on mobile */
+  }
+  
+  /* Restore rounded corners on larger mobile devices */
+  @media (min-height: 600px) {
+    .modal-content {
+      border-radius: 16px;
+      margin: 1rem;
+      height: auto;
+      max-height: 90vh;
+    }
+  }
+}
+
+/* High DPI screen optimizations */
+@media (min-resolution: 2dppx) {
+  .modal {
+    backdrop-filter: blur(8px); /* Sharper blur on retina */
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .modal {
+    animation: none;
+  }
+  
+  .modal-content {
+    animation: none;
+  }
+  
+  .modal-close:hover {
+    transform: none;
+  }
+}
+
+/* Large screen optimizations */
+@media (min-width: 1200px) {
+  .modal-content[data-modal-size="large"] {
+    max-width: 1000px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .modal {
+    position: absolute;
+    background: white;
+    backdrop-filter: none;
+  }
+  
+  .modal-content {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+  
+  .modal-close {
+    display: none;
+  }
+}
+
+
