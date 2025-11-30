@@ -1,414 +1,240 @@
-// modules/production.js - UPDATED WITH MODAL MANAGER
+// modules/production.js - UPDATED WITH STYLE MANAGER INTEGRATION
 console.log('Loading production module...');
 
 const ProductionModule = {
-    name: 'Production Records',
-    icon: '🚜',
-    
-    template: `
-        <div class="section active">
-            <div class="module-header">
-                <h1>Production Records</h1>
-                <p>Track your farm production and yields</p>
-                <div class="header-actions">
-                    <button class="btn btn-primary" id="generate-report-btn">
-                        📊 Generate Report
+    name: 'production',
+    initialized: false,
+    element: null,
+
+    initialize() {
+        console.log('🚜 Initializing Production Records...');
+        
+        // ✅ ADDED: Get the content area element
+        this.element = document.getElementById('content-area');
+        if (!this.element) return false;
+
+        // ✅ ADDED: Register with StyleManager
+        if (window.StyleManager) {
+            StyleManager.registerModule(this.id, this.element, this);
+        }
+
+        this.loadData();
+        this.renderModule();
+        this.setupEventListeners();
+        this.initialized = true;
+        
+        console.log('✅ Production Records initialized with StyleManager');
+        return true;
+    },
+
+    // ✅ ADDED: Theme change handler (optional)
+    onThemeChange(theme) {
+        console.log(`Production Records updating for theme: ${theme}`);
+        // You can add theme-specific logic here if needed
+    },
+
+    renderModule() {
+        if (!this.element) return;
+
+        this.element.innerHTML = `
+            <div class="section active">
+                <div class="module-header">
+                    <h1>Production Records</h1>
+                    <p>Track your farm production and yields</p>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="generate-report-btn">
+                            📊 Generate Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Production Stats -->
+                <div class="production-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon">🥚</div>
+                        <div class="stat-content">
+                            <h3>Eggs Today</h3>
+                            <div class="stat-value" id="today-eggs">0</div>
+                            <div class="stat-period">pieces</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🐔</div>
+                        <div class="stat-content">
+                            <h3>Birds This Week</h3>
+                            <div class="stat-value" id="week-birds">0</div>
+                            <div class="stat-period">birds</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-content">
+                            <h3>Total Records</h3>
+                            <div class="stat-value" id="total-records">0</div>
+                            <div class="stat-period">entries</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-content">
+                            <h3>Avg Quality</h3>
+                            <div class="stat-value" id="avg-quality">0.0</div>
+                            <div class="stat-period">/5.0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions-grid">
+                    <button class="quick-action-card" id="record-production-btn">
+                        <div class="quick-action-icon">📝</div>
+                        <div class="quick-action-content">
+                            <h4>Record Production</h4>
+                            <p>Log daily production data</p>
+                        </div>
+                    </button>
+                    <button class="quick-action-card" id="view-trends-btn">
+                        <div class="quick-action-icon">📈</div>
+                        <div class="quick-action-content">
+                            <h4>View Trends</h4>
+                            <p>Analyze production patterns</p>
+                        </div>
+                    </button>
+                    <button class="quick-action-card" id="quality-report-btn">
+                        <div class="quick-action-icon">⭐</div>
+                        <div class="quick-action-content">
+                            <h4>Quality Report</h4>
+                            <p>Product quality analysis</p>
+                        </div>
                     </button>
                 </div>
-            </div>
 
-            <!-- Production Stats -->
-            <div class="production-stats">
-                <div class="stat-card">
-                    <div class="stat-icon">🥚</div>
-                    <div class="stat-content">
-                        <h3>Eggs Today</h3>
-                        <div class="stat-value" id="today-eggs">0</div>
-                        <div class="stat-period">pieces</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">🐔</div>
-                    <div class="stat-content">
-                        <h3>Birds This Week</h3>
-                        <div class="stat-value" id="week-birds">0</div>
-                        <div class="stat-period">birds</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📊</div>
-                    <div class="stat-content">
-                        <h3>Total Records</h3>
-                        <div class="stat-value" id="total-records">0</div>
-                        <div class="stat-period">entries</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">⭐</div>
-                    <div class="stat-content">
-                        <h3>Avg Quality</h3>
-                        <div class="stat-value" id="avg-quality">0.0</div>
-                        <div class="stat-period">/5.0</div>
-                    </div>
-                </div>
-            </div>
+                <!-- Production Form -->
+                <div class="production-form card">
+                    <h3>Record Production</h3>
+                    <form id="production-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="product-type">Product Type *</label>
+                                <select id="product-type" required>
+                                    <option value="">Select Product</option>
+                                    <option value="eggs">Eggs</option>
+                                    <option value="broilers">Broilers</option>
+                                    <option value="layers">Layers</option>
+                                    <option value="pork">Pork</option>
+                                    <option value="beef">Beef</option>
+                                    <option value="milk">Milk</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="production-date">Date *</label>
+                                <input type="date" id="production-date" required>
+                            </div>
+                        </div>
 
-            <!-- Quick Actions -->
-            <div class="quick-actions-grid">
-                <button class="quick-action-card" id="record-production-btn">
-                    <div class="quick-action-icon">📝</div>
-                    <div class="quick-action-content">
-                        <h4>Record Production</h4>
-                        <p>Log daily production data</p>
-                    </div>
-                </button>
-                <button class="quick-action-card" id="view-trends-btn">
-                    <div class="quick-action-icon">📈</div>
-                    <div class="quick-action-content">
-                        <h4>View Trends</h4>
-                        <p>Analyze production patterns</p>
-                    </div>
-                </button>
-                <button class="quick-action-card" id="quality-report-btn">
-                    <div class="quick-action-icon">⭐</div>
-                    <div class="quick-action-content">
-                        <h4>Quality Report</h4>
-                        <p>Product quality analysis</p>
-                    </div>
-                </button>
-            </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="production-quantity">Quantity *</label>
+                                <input type="number" id="production-quantity" min="1" required placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="production-unit">Unit *</label>
+                                <select id="production-unit" required>
+                                    <option value="pieces">Pieces</option>
+                                    <option value="birds">Birds</option>
+                                    <option value="kg">Kilograms</option>
+                                    <option value="lbs">Pounds</option>
+                                    <option value="liters">Liters</option>
+                                    <option value="crates">Crates</option>
+                                    <option value="cartons">Cartons</option>
+                                    <option value="dozen">Dozen</option>
+                                </select>
+                            </div>
+                        </div>
 
-            <!-- Production Form -->
-            <div class="production-form card">
-                <h3>Record Production</h3>
-                <form id="production-form">
-                    <div class="form-row">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="production-quality">Quality *</label>
+                                <select id="production-quality" required>
+                                    <option value="excellent">Excellent</option>
+                                    <option value="grade-a">Grade A</option>
+                                    <option value="grade-b">Grade B</option>
+                                    <option value="standard">Standard</option>
+                                    <option value="rejects">Rejects</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="production-batch">Batch ID</label>
+                                <input type="text" id="production-batch" placeholder="Optional batch number">
+                            </div>
+                        </div>
+
                         <div class="form-group">
-                            <label for="product-type">Product Type *</label>
-                            <select id="product-type" required>
-                                <option value="">Select Product</option>
+                            <label for="production-notes">Notes</label>
+                            <textarea id="production-notes" rows="3" placeholder="Production details, observations, special conditions..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Save Production Record</button>
+                    </form>
+                </div>
+
+                <!-- Recent Production -->
+                <div class="production-records card">
+                    <div class="card-header">
+                        <h3>Recent Production</h3>
+                        <div class="filter-controls">
+                            <select id="production-filter">
+                                <option value="all">All Products</option>
                                 <option value="eggs">Eggs</option>
                                 <option value="broilers">Broilers</option>
                                 <option value="layers">Layers</option>
-                                <option value="pork">Pork</option>
-                                <option value="beef">Beef</option>
                                 <option value="milk">Milk</option>
-                                <option value="other">Other</option>
                             </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="production-date">Date *</label>
-                            <input type="date" id="production-date" required>
+                            <button class="btn btn-text" id="export-production">Export</button>
                         </div>
                     </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="production-quantity">Quantity *</label>
-                            <input type="number" id="production-quantity" min="1" required placeholder="0">
-                        </div>
-                        <div class="form-group">
-                            <label for="production-unit">Unit *</label>
-                            <select id="production-unit" required>
-                                <option value="pieces">Pieces</option>
-                                <option value="birds">Birds</option>
-                                <option value="kg">Kilograms</option>
-                                <option value="lbs">Pounds</option>
-                                <option value="liters">Liters</option>
-                                <option value="crates">Crates</option>
-                                <option value="cartons">Cartons</option>
-                                <option value="dozen">Dozen</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="production-quality">Quality *</label>
-                            <select id="production-quality" required>
-                                <option value="excellent">Excellent</option>
-                                <option value="grade-a">Grade A</option>
-                                <option value="grade-b">Grade B</option>
-                                <option value="standard">Standard</option>
-                                <option value="rejects">Rejects</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="production-batch">Batch ID</label>
-                            <input type="text" id="production-batch" placeholder="Optional batch number">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="production-notes">Notes</label>
-                        <textarea id="production-notes" rows="3" placeholder="Production details, observations, special conditions..."></textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">Save Production Record</button>
-                </form>
-            </div>
-
-            <!-- Recent Production -->
-            <div class="production-records card">
-                <div class="card-header">
-                    <h3>Recent Production</h3>
-                    <div class="filter-controls">
-                        <select id="production-filter">
-                            <option value="all">All Products</option>
-                            <option value="eggs">Eggs</option>
-                            <option value="broilers">Broilers</option>
-                            <option value="layers">Layers</option>
-                            <option value="milk">Milk</option>
-                        </select>
-                        <button class="btn btn-text" id="export-production">Export</button>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Quality</th>
+                                    <th>Batch</th>
+                                    <th>Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="production-body">
+                                <!-- Production records will be rendered here -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Product</th>
-                                <th>Quantity</th>
-                                <th>Quality</th>
-                                <th>Batch</th>
-                                <th>Notes</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="production-body">
-                            <!-- Production records will be rendered here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
 
-            <!-- Production Report Modal -->
-            <div id="production-report-modal" class="modal hidden">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 id="production-report-title">Production Report</h3>
-                        <button class="modal-close">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="production-report-content">
-                            <!-- Report content will be inserted here -->
+                <!-- Production Report Modal -->
+                <div id="production-report-modal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 id="production-report-title">Production Report</h3>
+                            <button class="modal-close">&times;</button>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-text" id="print-production-report">🖨️ Print</button>
-                        <button class="btn btn-primary modal-close">Close</button>
+                        <div class="modal-body">
+                            <div id="production-report-content">
+                                <!-- Report content will be inserted here -->
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-text" id="print-production-report">🖨️ Print</button>
+                            <button class="btn btn-primary modal-close">Close</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    `,
+        `;
 
-    styles: `
-        .production-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            margin: 2rem 0;
-        }
-
-        .stat-card {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 1.75rem;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-        }
-
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-        }
-
-        .stat-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            opacity: 0.9;
-        }
-
-        .stat-content h3 {
-            margin: 0 0 0.75rem 0;
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .stat-value {
-            font-size: 1.75rem;
-            font-weight: 800;
-            color: var(--text-color);
-            margin-bottom: 0.5rem;
-            line-height: 1.2;
-        }
-
-        .stat-period {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .quick-actions-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin: 2rem 0;
-        }
-
-        .quick-action-card {
-            background: var(--card-bg);
-            border: 2px dashed var(--border-color);
-            border-radius: 16px;
-            padding: 2rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .quick-action-card:hover {
-            border-color: var(--primary-color);
-            background: var(--bg-color);
-            transform: translateY(-2px);
-        }
-
-        .quick-action-icon {
-            font-size: 3rem;
-            opacity: 0.8;
-        }
-
-        .quick-action-content h4 {
-            margin: 0 0 0.5rem 0;
-            color: var(--text-color);
-            font-weight: 700;
-        }
-
-        .quick-action-content p {
-            margin: 0;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .production-form {
-            margin: 2rem 0;
-        }
-
-        .production-records {
-            margin: 2rem 0;
-        }
-
-        .production-records .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        .quality-badge {
-            padding: 0.4rem 1rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: capitalize;
-            letter-spacing: 0.5px;
-        }
-
-        .quality-excellent {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-        }
-
-        .quality-grade-a {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            color: white;
-        }
-
-        .quality-grade-b {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: white;
-        }
-
-        .quality-standard {
-            background: linear-gradient(135deg, #6b7280, #4b5563);
-            color: white;
-        }
-
-        .quality-rejects {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: white;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: var(--text-muted);
-        }
-
-        .empty-icon {
-            font-size: 4rem;
-            opacity: 0.3;
-            margin-bottom: 1.5rem;
-            display: block;
-        }
-
-        .empty-content h4 {
-            margin: 0 0 1rem 0;
-            font-size: 1.4rem;
-            font-weight: 600;
-            color: var(--text-color);
-        }
-
-        .empty-content p {
-            margin: 0;
-            opacity: 0.8;
-            font-size: 1rem;
-        }
-
-        @media (max-width: 768px) {
-            .production-stats {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-
-            .quick-actions-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .production-records .card-header {
-                flex-direction: column;
-                gap: 1rem;
-                align-items: stretch;
-            }
-        }
-    `,
-
-    initialize() {
-        console.log('🚜 Initializing production module...');
-        this.loadData();
         this.updateStats();
         this.renderProductionTable();
         
@@ -419,10 +245,15 @@ const ProductionModule = {
     },
 
     loadData() {
-        if (!FarmModules.appData.production) {
-            FarmModules.appData.production = this.getDemoData();
+        if (!window.FarmModules || !window.FarmModules.appData) {
+            window.FarmModules = window.FarmModules || {};
+            window.FarmModules.appData = window.FarmModules.appData || {};
         }
-        console.log('📊 Loaded production data:', FarmModules.appData.production.length, 'records');
+        
+        if (!window.FarmModules.appData.production) {
+            window.FarmModules.appData.production = this.getDemoData();
+        }
+        console.log('📊 Loaded production data:', window.FarmModules.appData.production.length, 'records');
     },
 
     getDemoData() {
@@ -461,7 +292,7 @@ const ProductionModule = {
     },
 
     updateStats() {
-        const production = FarmModules.appData.production || [];
+        const production = window.FarmModules?.appData?.production || [];
         const today = new Date().toISOString().split('T')[0];
         
         // Calculate today's eggs
@@ -503,7 +334,7 @@ const ProductionModule = {
         const tbody = document.getElementById('production-body');
         if (!tbody) return;
 
-        const production = FarmModules.appData.production || [];
+        const production = window.FarmModules?.appData?.production || [];
         
         let filteredProduction = production;
         if (filter !== 'all') {
@@ -551,6 +382,10 @@ const ProductionModule = {
                 </tr>
             `;
         }).join('');
+    },
+
+    setupEventListeners() {
+        this.attachEventListeners();
     },
 
     attachEventListeners() {
@@ -652,11 +487,13 @@ const ProductionModule = {
     },
 
     addProduction(productionData) {
-        if (!FarmModules.appData.production) {
-            FarmModules.appData.production = [];
+        if (!window.FarmModules?.appData?.production) {
+            if (!window.FarmModules) window.FarmModules = {};
+            if (!window.FarmModules.appData) window.FarmModules.appData = {};
+            window.FarmModules.appData.production = [];
         }
 
-        FarmModules.appData.production.unshift(productionData);
+        window.FarmModules.appData.production.unshift(productionData);
         
         this.updateStats();
         this.renderProductionTable();
@@ -673,7 +510,7 @@ const ProductionModule = {
     editProduction(recordId) {
         console.log('✏️ Editing production record:', recordId);
         
-        const production = FarmModules.appData.production || [];
+        const production = window.FarmModules?.appData?.production || [];
         const record = production.find(r => r.id == recordId);
         
         if (!record) {
@@ -698,10 +535,10 @@ const ProductionModule = {
 
     deleteProduction(recordId) {
         if (confirm('Are you sure you want to delete this production record?')) {
-            const production = FarmModules.appData.production || [];
+            const production = window.FarmModules?.appData?.production || [];
             const record = production.find(r => r.id == recordId);
             
-            FarmModules.appData.production = production.filter(r => r.id != recordId);
+            window.FarmModules.appData.production = production.filter(r => r.id != recordId);
             
             this.updateStats();
             this.renderProductionTable();
@@ -722,7 +559,7 @@ const ProductionModule = {
     generateProductionReport(type = 'overview') {
         console.log('📊 Generating production report:', type);
         
-        const production = FarmModules.appData.production || [];
+        const production = window.FarmModules?.appData?.production || [];
         const stats = this.calculateDetailedStats();
 
         let reportTitle = 'Production Overview';
@@ -881,7 +718,7 @@ const ProductionModule = {
     },
 
     calculateDetailedStats() {
-        const production = FarmModules.appData.production || [];
+        const production = window.FarmModules?.appData?.production || [];
         const today = new Date().toISOString().split('T')[0];
         
         const todayEggs = production
@@ -967,7 +804,34 @@ const ProductionModule = {
     showProductionReportModal(title, content) {
         document.getElementById('production-report-title').textContent = title;
         document.getElementById('production-report-content').innerHTML = content;
-        ModalManager.open('production-report-modal');
+        this.openModal('production-report-modal');
+    },
+
+    openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('hidden');
+            
+            // Add close handlers
+            const closeButtons = modal.querySelectorAll('.modal-close');
+            closeButtons.forEach(btn => {
+                btn.onclick = () => this.closeModal(modalId);
+            });
+            
+            // Close when clicking outside
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    this.closeModal(modalId);
+                }
+            };
+        }
+    },
+
+    closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add('hidden');
+        }
     },
 
     printProductionReport() {
@@ -1002,7 +866,7 @@ const ProductionModule = {
     },
 
     exportProduction() {
-        const production = FarmModules.appData.production || [];
+        const production = window.FarmModules?.appData?.production || [];
         const csv = this.convertToCSV(production);
         const blob = new Blob([csv], { type: 'text/csv' });
         
@@ -1121,6 +985,7 @@ const ProductionModule = {
 // Register with FarmModules framework
 if (window.FarmModules) {
     window.FarmModules.registerModule('production', ProductionModule);
+    console.log('✅ Production Records module registered');
 } else {
     console.error('FarmModules framework not found');
 }
