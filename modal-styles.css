@@ -1016,3 +1016,36 @@
     color: var(--text-color) !important;
 }
 
+/* ==============Black Background White Text ====================*/
+/* Fix for pop-out modals in dark mode */
+[data-theme="dark"] .modal-content,
+.dark .modal-content {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .modal-body,
+.dark .modal-body {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .modal-body *,
+.dark .modal-body * {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .modal-header,
+.dark .modal-header {
+    background: #111111 !important;
+    color: #ffffff !important;
+    border-bottom: 1px solid #333333 !important;
+}
+
+[data-theme="dark"] .modal-footer,
+.dark .modal-footer {
+    background: #111111 !important;
+    color: #ffffff !important;
+    border-top: 1px solid #333333 !important;
+}
+
