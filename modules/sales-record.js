@@ -1,4 +1,4 @@
-// modules/sales-record.js - UPDATED WITH SHARED DATA PATTERN
+// modules/sales-record.js - UPDATED WITH MODAL MANAGER
 FarmModules.registerModule('sales-record', {
     name: 'Sales Records',
     icon: '💰',
@@ -152,7 +152,7 @@ FarmModules.registerModule('sales-record', {
                 <div class="modal-content">
                     <div class="modal-header">
                         <h3 id="sale-modal-title">Record Sale</h3>
-                        <button class="btn-icon close-modal">&times;</button>
+                        <button class="modal-close">&times;</button>
                     </div>
                     <div class="modal-body">
                         <form id="sale-form">
@@ -266,7 +266,7 @@ FarmModules.registerModule('sales-record', {
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-text close-modal">Cancel</button>
+                        <button type="button" class="btn btn-text modal-close">Cancel</button>
                         <button type="button" class="btn btn-danger" id="delete-sale" style="display: none;">Delete</button>
                         <button type="button" class="btn btn-primary" id="save-sale">Save Sale</button>
                     </div>
@@ -278,56 +278,137 @@ FarmModules.registerModule('sales-record', {
     styles: `
         .sales-summary {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
-            margin: 1.5rem 0;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
         }
 
         .summary-card {
             background: var(--card-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
+            border-radius: 16px;
+            padding: 1.75rem;
             border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .summary-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         }
 
         .summary-icon {
-            font-size: 2rem;
-            opacity: 0.8;
-            margin-bottom: 0.5rem;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+            display: inline-block;
+            padding: 0.75rem;
+            background: var(--bg-color);
+            border-radius: 12px;
         }
 
         .summary-content h3 {
-            margin: 0 0 0.5rem 0;
-            font-size: 0.9rem;
+            margin: 0 0 0.75rem 0;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+
+        .summary-period {
+            font-size: 0.85rem;
             color: var(--text-muted);
             font-weight: 500;
         }
 
-        .summary-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-color);
-            margin-bottom: 0.25rem;
-        }
-
-        .summary-period {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
         .quick-sale {
-            margin: 1.5rem 0;
+            margin: 2rem 0;
+            border-radius: 16px;
+            border: 2px dashed var(--border-color);
+            background: var(--bg-color);
+            transition: all 0.3s ease;
+        }
+
+        .quick-sale:hover {
+            border-color: var(--primary-color);
+            background: var(--card-bg);
+        }
+
+        .quick-sale h3 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quick-sale h3::before {
+            content: '⚡';
+            font-size: 1.2em;
         }
 
         .quick-sale .form-row.compact {
             margin-bottom: 0;
+            gap: 1rem;
+        }
+
+        .quick-sale .form-group {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .quick-sale .btn-compact {
+            white-space: nowrap;
+            padding: 0.75rem 1.5rem;
+        }
+
+        .sales-records {
+            margin: 2rem 0;
+            border-radius: 16px;
+            overflow: hidden;
         }
 
         .sales-records .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .sales-records .card-header h3 {
+            color: var(--text-color);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sales-records .card-header h3::before {
+            content: '📋';
+            font-size: 1.2em;
         }
 
         .filter-controls {
@@ -336,68 +417,137 @@ FarmModules.registerModule('sales-record', {
             align-items: center;
         }
 
-        .sale-total {
+        .filter-controls select {
             background: var(--bg-color);
-            padding: 1rem;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
-            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            color: var(--text-color);
+            font-size: 0.9rem;
+        }
+
+        .sale-total {
+            background: linear-gradient(135deg, var(--success-light), var(--bg-color));
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
             text-align: center;
+            border: 2px solid var(--success-color);
         }
 
         .sale-total h4 {
             margin: 0;
             color: var(--text-color);
+            font-size: 1.2rem;
         }
 
         #sale-total-amount {
             color: var(--success-color);
-            font-weight: 700;
+            font-weight: 800;
+            font-size: 1.5rem;
         }
 
         .payment-badge {
-            padding: 0.25rem 0.75rem;
+            padding: 0.4rem 1rem;
             border-radius: 20px;
             font-size: 0.8rem;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: capitalize;
+            letter-spacing: 0.5px;
         }
 
         .payment-paid {
-            background: var(--success-light);
-            color: var(--success-color);
+            background: linear-gradient(135deg, var(--success-color), #10b981);
+            color: white;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
         }
 
         .payment-pending {
-            background: var(--warning-light);
-            color: var(--warning-dark);
+            background: linear-gradient(135deg, var(--warning-color), #f59e0b);
+            color: white;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
         }
 
         .payment-partial {
-            background: var(--info-light);
-            color: var(--info-dark);
+            background: linear-gradient(135deg, var(--info-color), #3b82f6);
+            color: white;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
         }
 
         .empty-state {
             text-align: center;
-            padding: 2rem;
+            padding: 4rem 2rem;
             color: var(--text-muted);
         }
 
         .empty-icon {
-            font-size: 3rem;
-            opacity: 0.5;
-            margin-bottom: 1rem;
+            font-size: 4rem;
+            opacity: 0.3;
+            margin-bottom: 1.5rem;
             display: block;
         }
 
         .empty-content h4 {
-            margin: 0 0 0.5rem 0;
-            font-size: 1.2rem;
+            margin: 0 0 1rem 0;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-color);
         }
 
         .empty-content p {
             margin: 0;
             opacity: 0.8;
+            font-size: 1rem;
+        }
+
+        .sale-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1.1rem;
+        }
+
+        .btn-icon:hover {
+            background: var(--bg-color);
+            transform: scale(1.1);
+        }
+
+        .edit-sale:hover {
+            color: var(--primary-color);
+        }
+
+        .delete-sale:hover {
+            color: var(--danger-color);
+        }
+
+        @media (max-width: 768px) {
+            .sales-summary {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .summary-card {
+                padding: 1.5rem;
+            }
+            
+            .sales-records .card-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+            
+            .filter-controls {
+                justify-content: space-between;
+            }
         }
     `,
 
@@ -573,7 +723,7 @@ FarmModules.registerModule('sales-record', {
             console.log('✅ Quick sale form listener attached');
         }
 
-        // Modal buttons
+        // Modal buttons - UPDATED TO USE MODALMANAGER
         const addSaleBtn = document.getElementById('add-sale');
         if (addSaleBtn) {
             addSaleBtn.addEventListener('click', () => this.showSaleModal());
@@ -591,11 +741,6 @@ FarmModules.registerModule('sales-record', {
             deleteSaleBtn.addEventListener('click', () => this.deleteSale());
             console.log('✅ Delete sale button listener attached');
         }
-
-        // Modal events
-        document.querySelectorAll('.close-modal').forEach(btn => {
-            btn.addEventListener('click', () => this.hideModal());
-        });
 
         // Real-time total calculation
         const quantityInput = document.getElementById('sale-quantity');
@@ -640,16 +785,6 @@ FarmModules.registerModule('sales-record', {
             }
         });
 
-        // Modal backdrop
-        const modal = document.getElementById('sale-modal');
-        if (modal) {
-            modal.addEventListener('click', (e) => {
-                if (e.target === e.currentTarget) {
-                    this.hideModal();
-                }
-            });
-        }
-
         console.log('✅ All sales event listeners attached successfully');
     },
 
@@ -686,33 +821,29 @@ FarmModules.registerModule('sales-record', {
         this.showNotification('Sale recorded successfully!', 'success');
     },
 
-    showSaleModal: function() {
-        console.log('📱 Showing sale modal...');
+    // UPDATED: Using ModalManager instead of custom modal handling
+    showSaleModal: function(saleId = null) {
+        console.log('📱 Showing sale modal with ModalManager...');
         
-        const modal = document.getElementById('sale-modal');
-        const title = document.getElementById('sale-modal-title');
+        // Reset form and prepare modal
         const form = document.getElementById('sale-form');
-
-        if (modal && title && form) {
+        if (form) {
             form.reset();
             document.getElementById('sale-id').value = '';
             document.getElementById('sale-date').value = new Date().toISOString().split('T')[0];
             document.getElementById('delete-sale').style.display = 'none';
             document.getElementById('sale-total-amount').textContent = '$0.00';
+            document.getElementById('sale-modal-title').textContent = 'Record Sale';
             
-            modal.classList.remove('hidden');
-            console.log('✅ Sale modal shown');
-        } else {
-            console.error('❌ Sale modal elements not found');
+            // If editing existing sale, populate the form
+            if (saleId) {
+                this.editSale(saleId);
+            }
         }
-    },
-
-    hideModal: function() {
-        const modal = document.getElementById('sale-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-            console.log('✅ Sale modal hidden');
-        }
+        
+        // Use ModalManager to open the modal
+        ModalManager.open('sale-modal');
+        console.log('✅ Sale modal shown with ModalManager');
     },
 
     calculateSaleTotal: function() {
@@ -780,7 +911,8 @@ FarmModules.registerModule('sales-record', {
             this.addSale(saleData);
         }
 
-        this.hideModal();
+        // UPDATED: Use ModalManager to close modal
+        ModalManager.close('sale-modal');
     },
 
     addSale: function(saleData) {
@@ -817,29 +949,23 @@ FarmModules.registerModule('sales-record', {
             return;
         }
 
-        const modal = document.getElementById('sale-modal');
-        const title = document.getElementById('sale-modal-title');
-
-        if (modal && title) {
-            document.getElementById('sale-id').value = sale.id;
-            document.getElementById('sale-date').value = sale.date;
-            document.getElementById('sale-customer').value = sale.customer || '';
-            document.getElementById('sale-product').value = sale.product;
-            document.getElementById('sale-unit').value = sale.unit;
-            document.getElementById('sale-quantity').value = sale.quantity;
-            document.getElementById('sale-price').value = sale.unitPrice;
-            document.getElementById('sale-payment').value = sale.paymentMethod;
-            document.getElementById('sale-status').value = sale.paymentStatus || 'paid';
-            document.getElementById('sale-notes').value = sale.notes || '';
-            document.getElementById('delete-sale').style.display = 'block';
-            
-            this.calculateSaleTotal();
-            
-            title.textContent = 'Edit Sale';
-            modal.classList.remove('hidden');
-            
-            console.log('✅ Sale modal populated for editing');
-        }
+        // Populate form fields
+        document.getElementById('sale-id').value = sale.id;
+        document.getElementById('sale-date').value = sale.date;
+        document.getElementById('sale-customer').value = sale.customer || '';
+        document.getElementById('sale-product').value = sale.product;
+        document.getElementById('sale-unit').value = sale.unit;
+        document.getElementById('sale-quantity').value = sale.quantity;
+        document.getElementById('sale-price').value = sale.unitPrice;
+        document.getElementById('sale-payment').value = sale.paymentMethod;
+        document.getElementById('sale-status').value = sale.paymentStatus || 'paid';
+        document.getElementById('sale-notes').value = sale.notes || '';
+        document.getElementById('delete-sale').style.display = 'block';
+        document.getElementById('sale-modal-title').textContent = 'Edit Sale';
+        
+        this.calculateSaleTotal();
+        
+        console.log('✅ Sale form populated for editing');
     },
 
     updateSale: function(saleId, saleData) {
@@ -874,7 +1000,8 @@ FarmModules.registerModule('sales-record', {
         
         if (confirm('Are you sure you want to delete this sale?')) {
             this.deleteSaleRecord(saleId);
-            this.hideModal();
+            // UPDATED: Use ModalManager to close modal
+            ModalManager.close('sale-modal');
         }
     },
 
