@@ -178,7 +178,7 @@ const ProfileModule = {
                         </div>
                     </div>
 
-                    <div class="data-management glass-card">
+                   <div class="data-management glass-card">
                         <h3>Data Management</h3>
                         <div class="data-stats">
                             <div class="data-stat">
@@ -195,8 +195,8 @@ const ProfileModule = {
                             </div>
                         </div>
                         <div class="action-buttons">
-                            <button class="btn-secondary" id="export-data">📥 Export All Data</button>
-                            <button class="btn-danger" id="clear-all-data">⚠️ Clear All Data</button>
+                            <button class="btn-outline" id="export-data">📥 Export All Data</button>
+                            <button class="btn-primary" id="clear-all-data" style="background: var(--gradient-danger);">⚠️ Clear All Data</button>
                             <button class="btn-outline" id="logout-btn" style="color: #ef4444; border-color: #ef4444;">🚪 Logout</button>
                         </div>
                     </div>
