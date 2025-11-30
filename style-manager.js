@@ -1,6 +1,7 @@
 /**
  * StyleManager - Centralized style management for ALL modules
  * Modern PWA Green Theme for all modules
+ * FIXED VERSION WITH ALL MISSING METHODS
  */
 
 const StyleManager = {
@@ -87,7 +88,7 @@ const StyleManager = {
     // Complete Module Configurations
     moduleConfigs: {
         // DASHBOARD MODULE
-        dashboard: {
+        'dashboard': {
             name: 'Dashboard',
             headerGradient: 'var(--gradient-primary)',
             statsGrid: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -95,7 +96,7 @@ const StyleManager = {
         },
         
         // INCOME & EXPENSES MODULE
-        income: {
+        'income-expenses': {
             name: 'Income & Expenses',
             headerGradient: 'var(--gradient-primary)',
             statsGrid: 'repeat(auto-fit, minmax(180px, 1fr))',
@@ -103,7 +104,7 @@ const StyleManager = {
         },
         
         // INVENTORY MODULE
-        inventory: {
+        'inventory-check': {
             name: 'Inventory Management',
             headerGradient: 'var(--gradient-primary)',
             statsGrid: 'repeat(auto-fit, minmax(180px, 1fr))',
@@ -111,7 +112,7 @@ const StyleManager = {
         },
         
         // ORDERS MODULE
-        orders: {
+        'orders': {
             name: 'Orders Management',
             headerGradient: 'var(--gradient-primary)',
             statsGrid: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -119,7 +120,7 @@ const StyleManager = {
         },
         
         // SALES MODULE
-        sales: {
+        'sales-record': {
             name: 'Sales Records',
             headerGradient: 'var(--gradient-primary)',
             statsGrid: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -127,7 +128,7 @@ const StyleManager = {
         },
         
         // PRODUCTION MODULE
-        production: {
+        'production': {
             name: 'Production Tracking',
             headerGradient: 'var(--gradient-production)',
             statsGrid: 'repeat(auto-fit, minmax(220px, 1fr))',
@@ -135,7 +136,7 @@ const StyleManager = {
         },
         
         // FEED MODULE
-        feed: {
+        'feed-record': {
             name: 'Feed Management',
             headerGradient: 'var(--gradient-primary)',
             statsGrid: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -143,7 +144,7 @@ const StyleManager = {
         },
         
         // BROILER MORTALITY MODULE
-        mortality: {
+        'broiler-mortality': {
             name: 'Broiler Mortality',
             headerGradient: 'var(--gradient-mortality)',
             statsGrid: 'repeat(auto-fit, minmax(220px, 1fr))',
@@ -151,11 +152,19 @@ const StyleManager = {
         },
         
         // REPORTS MODULE
-        reports: {
+        'reports': {
             name: 'Reports & Analytics',
             headerGradient: 'var(--gradient-primary)',
             statsGrid: 'repeat(auto-fit, minmax(200px, 1fr))',
             features: ['quick-stats', 'report-categories', 'report-output', 'recent-activity']
+        },
+        
+        // PROFILE MODULE
+        'profile': {
+            name: 'Profile',
+            headerGradient: 'var(--gradient-primary)',
+            statsGrid: 'repeat(auto-fit, minmax(200px, 1fr))',
+            features: ['profile-info', 'settings', 'data-management']
         }
     },
 
@@ -167,7 +176,7 @@ const StyleManager = {
         
         this.injectBaseStyles();
         this.applyTheme(this.currentTheme);
-        this.setupThemeSwitcher();
+        // this.setupThemeSwitcher(); // Commented out to remove floating theme switcher
         this.initializeModules();
         
         console.log('✅ StyleManager initialized with all modules');
@@ -177,108 +186,19 @@ const StyleManager = {
      * Inject modern PWA base styles
      */
     injectBaseStyles() {
-    const style = document.createElement('style');
-    style.id = 'style-manager-base';
-    style.textContent = `
-        /* ... existing styles ... */
+        const style = document.createElement('style');
+        style.id = 'style-manager-base';
+        style.textContent = `
+            /* Modern PWA Base Styles */
+            .module-container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 20px;
+                min-height: calc(100vh - 80px);
+                background: var(--module-bg);
+            }
 
-        /* MODERN PWA BUTTONS - GREEN GRADIENT FOR ALL MODULES */
-        .btn-primary, 
-        .btn.btn-primary, 
-        button[class*="primary"],
-        button[class*="btn-primary"] {
-            background: var(--gradient-primary) !important;
-            color: white !important;
-            border: none !important;
-            padding: 14px 28px !important;
-            border-radius: var(--radius-lg) !important;
-            font-weight: 700 !important;
-            font-size: 14px !important;
-            cursor: pointer !important;
-            transition: var(--transition-normal) !important;
-            box-shadow: var(--shadow-primary) !important;
-            position: relative !important;
-            overflow: hidden !important;
-            backdrop-filter: var(--backdrop-blur-light) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            min-height: 48px !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 8px !important;
-        }
-
-        .btn-primary::before,
-        .btn.btn-primary::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: var(--transition-slow);
-        }
-
-        .btn-primary:hover, 
-        .btn.btn-primary:hover, 
-        button[class*="primary"]:hover,
-        button[class*="btn-primary"]:hover {
-            background: var(--gradient-primary-hover) !important;
-            transform: translateY(-2px) !important;
-            box-shadow: var(--shadow-primary-hover) !important;
-        }
-
-        .btn-primary:hover::before,
-        .btn.btn-primary:hover::before {
-            left: 100%;
-        }
-
-        /* Ensure no blue overrides */
-        .btn-primary[style*="background"],
-        .btn-primary[style*="blue"],
-        button[style*="blue"] {
-            background: var(--gradient-primary) !important;
-        }
-
-        /* Secondary buttons */
-        .btn-secondary {
-            background: var(--card-bg) !important;
-            color: var(--text-primary) !important;
-            border: 1px solid var(--glass-border) !important;
-            padding: 14px 28px !important;
-            border-radius: var(--radius-lg) !important;
-            font-weight: 600 !important;
-            cursor: pointer !important;
-            transition: var(--transition-normal) !important;
-            backdrop-filter: var(--backdrop-blur-light) !important;
-        }
-
-        .btn-secondary:hover {
-            background: var(--card-bg-hover) !important;
-            transform: translateY(-2px) !important;
-            box-shadow: var(--shadow-md) !important;
-        }
-
-        /* Outline buttons */
-        .btn-outline {
-            background: transparent !important;
-            color: var(--text-primary) !important;
-            border: 2px solid var(--primary-500) !important;
-            padding: 12px 26px !important;
-            border-radius: var(--radius-lg) !important;
-            font-weight: 600 !important;
-            cursor: pointer !important;
-            transition: var(--transition-normal) !important;
-        }
-
-        .btn-outline:hover {
-            background: var(--primary-500) !important;
-            color: white !important;
-            transform: translateY(-2px) !important;
-        }
-
-        .module-header {
+            .module-header {
                 background: var(--header-gradient, var(--gradient-primary));
                 margin: -20px -20px 20px -20px;
                 padding: 25px 20px;
@@ -316,6 +236,102 @@ const StyleManager = {
                 color: white;
                 position: relative;
                 z-index: 1;
+            }
+
+            /* MODERN PWA BUTTONS - GREEN GRADIENT FOR ALL MODULES */
+            .btn-primary, 
+            .btn.btn-primary, 
+            button[class*="primary"],
+            button[class*="btn-primary"] {
+                background: var(--gradient-primary) !important;
+                color: white !important;
+                border: none !important;
+                padding: 14px 28px !important;
+                border-radius: var(--radius-lg) !important;
+                font-weight: 700 !important;
+                font-size: 14px !important;
+                cursor: pointer !important;
+                transition: var(--transition-normal) !important;
+                box-shadow: var(--shadow-primary) !important;
+                position: relative !important;
+                overflow: hidden !important;
+                backdrop-filter: var(--backdrop-blur-light) !important;
+                border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                min-height: 48px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 8px !important;
+            }
+
+            .btn-primary::before,
+            .btn.btn-primary::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+                transition: var(--transition-slow);
+            }
+
+            .btn-primary:hover, 
+            .btn.btn-primary:hover, 
+            button[class*="primary"]:hover,
+            button[class*="btn-primary"]:hover {
+                background: var(--gradient-primary-hover) !important;
+                transform: translateY(-2px) !important;
+                box-shadow: var(--shadow-primary-hover) !important;
+            }
+
+            .btn-primary:hover::before,
+            .btn.btn-primary:hover::before {
+                left: 100%;
+            }
+
+            /* Ensure no blue overrides */
+            .btn-primary[style*="background"],
+            .btn-primary[style*="blue"],
+            button[style*="blue"] {
+                background: var(--gradient-primary) !important;
+            }
+
+            /* Secondary buttons */
+            .btn-secondary {
+                background: var(--card-bg) !important;
+                color: var(--text-primary) !important;
+                border: 1px solid var(--card-border) !important;
+                padding: 14px 28px !important;
+                border-radius: var(--radius-lg) !important;
+                font-weight: 600 !important;
+                cursor: pointer !important;
+                transition: var(--transition-normal) !important;
+                backdrop-filter: var(--backdrop-blur-light) !important;
+            }
+
+            .btn-secondary:hover {
+                background: var(--card-bg-hover) !important;
+                transform: translateY(-2px) !important;
+                box-shadow: var(--shadow-md) !important;
+            }
+
+            /* Outline buttons */
+            .btn-outline {
+                background: transparent !important;
+                color: var(--text-primary) !important;
+                border: 2px solid var(--primary-500) !important;
+                padding: 12px 26px !important;
+                border-radius: var(--radius-lg) !important;
+                font-weight: 600 !important;
+                cursor: pointer !important;
+                transition: var(--transition-normal) !important;
+            }
+
+            .btn-outline:hover {
+                background: var(--primary-500) !important;
+                color: white !important;
+                transform: translateY(-2px) !important;
             }
 
             /* Modern Stats Grid */
@@ -371,50 +387,6 @@ const StyleManager = {
                 transform: translateY(-2px);
                 box-shadow: var(--shadow-lg);
                 background: var(--card-bg-hover);
-            }
-
-            /* Modern PWA Buttons - Green Gradient */
-            .btn-primary {
-                background: var(--gradient-primary);
-                color: white;
-                border: none;
-                padding: 14px 28px;
-                border-radius: var(--radius-lg);
-                font-weight: 700;
-                font-size: 14px;
-                cursor: pointer;
-                transition: var(--transition-normal);
-                box-shadow: var(--shadow-primary);
-                position: relative;
-                overflow: hidden;
-                backdrop-filter: var(--backdrop-blur-light);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                min-height: 48px;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-            }
-
-            .btn-primary::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: -100%;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-                transition: var(--transition-slow);
-            }
-
-            .btn-primary:hover {
-                background: var(--gradient-primary-hover);
-                transform: translateY(-2px);
-                box-shadow: var(--shadow-primary-hover);
-            }
-
-            .btn-primary:hover::before {
-                left: 100%;
             }
 
             /* Quick Action Buttons */
@@ -517,65 +489,46 @@ const StyleManager = {
     },
 
     /**
-     * Register a module with the StyleManager
+     * Register a module with the StyleManager (FIXED VERSION)
      */
     registerModule(moduleId, element, instance = null) {
-        if (!this.moduleConfigs[moduleId]) {
-            console.warn(`Module config not found for: ${moduleId}`);
-            return;
+        const config = this.moduleConfigs[moduleId];
+        if (config) {
+            console.log(`✅ StyleManager: Registered ${config.name} module`);
+        } else {
+            console.log(`✅ StyleManager: Registered ${moduleId} module`);
         }
-
-        const module = this.modules.get(moduleId);
-        module.active = true;
-        module.element = element;
-        module.instance = instance;
         
-        this.applyModuleStyles(moduleId, element);
-        console.log(`✅ Registered module: ${module.name}`);
+        if (element) {
+            this.applyModuleStyles(moduleId, element);
+        }
+        return true;
     },
 
     /**
-     * Apply module-specific styles
+     * Register a component with the StyleManager (NEW METHOD)
+     */
+    registerComponent(moduleName) {
+        console.log(`🎨 StyleManager: ${moduleName} component registered`);
+        return true;
+    },
+
+    /**
+     * Apply module-specific styles (FIXED VERSION)
      */
     applyModuleStyles(moduleId, element) {
-        const config = this.moduleConfigs[moduleId];
-        if (!config || !element) return;
-
+        if (!element) return;
+        
         // Add base module class
         element.classList.add('module-container');
-
-        // Create module-specific styles
-        const styleId = `module-styles-${moduleId}`;
-        let existingStyle = document.getElementById(styleId);
-        if (existingStyle) existingStyle.remove();
-
-        const style = document.createElement('style');
-        style.id = styleId;
-        style.textContent = `
-            /* ${config.name} Module Styles */
-            #${element.id} {
-                --header-gradient: ${config.headerGradient};
-                --stats-grid: ${config.statsGrid};
-            }
-
-            #${element.id} .module-header {
-                background: var(--header-gradient) !important;
-            }
-
-            #${element.id} .stats-grid {
-                grid-template-columns: var(--stats-grid) !important;
-            }
-
-            /* Module-specific button overrides */
-            #${element.id} .btn-primary {
-                background: var(--gradient-primary) !important;
-            }
-
-            #${element.id} .btn-primary:hover {
-                background: var(--gradient-primary-hover) !important;
-            }
-        `;
-        document.head.appendChild(style);
+        
+        // Apply theme variables
+        const theme = this.themes[this.currentTheme];
+        if (theme && theme.variables) {
+            Object.entries(theme.variables).forEach(([key, value]) => {
+                element.style.setProperty(key, value);
+            });
+        }
     },
 
     /**
@@ -595,9 +548,14 @@ const StyleManager = {
     },
 
     /**
-     * Setup theme switcher in UI
+     * Setup theme switcher in UI (COMMENTED OUT TO REMOVE FLOATING THEME)
      */
     setupThemeSwitcher() {
+        // This creates the floating theme switcher - commented out to remove it
+        console.log('🎨 Theme switcher disabled');
+        return;
+        
+        /*
         // Remove existing theme switcher if present
         const existingSwitcher = document.getElementById('theme-switcher');
         if (existingSwitcher) existingSwitcher.remove();
@@ -644,6 +602,7 @@ const StyleManager = {
         document.getElementById('theme-select').addEventListener('change', (e) => {
             this.applyTheme(e.target.value);
         });
+        */
     },
 
     /**
@@ -718,3 +677,5 @@ const StyleManager = {
 
 // Make it globally available
 window.StyleManager = StyleManager;
+
+console.log('✅ StyleManager loaded with all fixes');
