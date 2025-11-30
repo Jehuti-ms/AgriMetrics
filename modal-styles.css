@@ -986,3 +986,33 @@
     color: #d1d5db !important;
 }
 
+/*================== DARK MODE TABLES & CARDS ======================*/
+/* Simple Dark Mode Fix for Modals and Tables */
+[data-theme="dark"] .modal-content,
+.dark .modal-content {
+    background: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .modal-body,
+.dark .modal-body {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .data-table,
+.dark .data-table {
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .data-table th,
+.dark .data-table th {
+    background: var(--bg-color) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .data-table td,
+.dark .data-table td {
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
