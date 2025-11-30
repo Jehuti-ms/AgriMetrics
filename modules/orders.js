@@ -1,4 +1,4 @@
-// modules/orders.js - COMPLETE REWRITE WITH ALL FUNCTIONALITY
+// modules/orders.js - UPDATED WITH STYLE MANAGER INTEGRATION
 console.log('Loading orders module...');
 
 const OrdersModule = {
@@ -11,13 +11,33 @@ const OrdersModule = {
         { id: 'broilers', name: 'Broiler Chickens', price: 8.50 },
         { id: 'layers', name: 'Layer Hens', price: 12.00 }
     ],
+    element: null,
 
     initialize() {
-        console.log('📋 Initializing orders...');
+        console.log('📋 Initializing Orders Management...');
+        
+        // ✅ ADDED: Get the content area element
+        this.element = document.getElementById('content-area');
+        if (!this.element) return false;
+
+        // ✅ ADDED: Register with StyleManager
+        if (window.StyleManager) {
+            StyleManager.registerModule(this.id, this.element, this);
+        }
+
         this.loadData();
         this.renderModule();
+        this.setupEventListeners();
         this.initialized = true;
+        
+        console.log('✅ Orders Management initialized with StyleManager');
         return true;
+    },
+
+    // ✅ ADDED: Theme change handler (optional)
+    onThemeChange(theme) {
+        console.log(`Orders Management updating for theme: ${theme}`);
+        // You can add theme-specific logic here if needed
     },
 
     loadData() {
@@ -64,12 +84,11 @@ const OrdersModule = {
     },
 
     renderModule() {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
+        if (!this.element) return;
 
         const stats = this.calculateStats();
 
-        contentArea.innerHTML = `
+        this.element.innerHTML = `
             <div class="module-container">
                 <div class="module-header">
                     <h1 class="module-title">Orders Management</h1>
@@ -767,4 +786,5 @@ const OrdersModule = {
 
 if (window.FarmModules) {
     window.FarmModules.registerModule('orders', OrdersModule);
+    console.log('✅ Orders Management module registered');
 }
