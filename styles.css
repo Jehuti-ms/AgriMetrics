@@ -7834,3 +7834,7 @@ header, .top-nav {
 }
 
 
+/* TEST: Green Button Fix - Add this to the very end of your styles.css */
+.btn-primary {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+}
