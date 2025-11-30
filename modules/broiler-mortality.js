@@ -1,411 +1,214 @@
-// modules/broiler-mortality.js - UPDATED WITH MODAL MANAGER
+// modules/broiler-mortality.js - UPDATED WITH STYLE MANAGER INTEGRATION
 console.log('Loading broiler mortality module...');
 
 const BroilerMortalityModule = {
-    name: 'Broiler Health & Mortality',
-    icon: '😔',
-    
-    template: `
-        <div class="section active">
-            <div class="module-header">
-                <h1>Broiler Health & Mortality</h1>
-                <p>Monitor flock health and track losses</p>
-                <div class="header-actions">
-                    <button class="btn btn-primary" id="generate-health-report">
-                        📊 Health Report
-                    </button>
-                </div>
-            </div>
-
-            <!-- Mortality Stats -->
-            <div class="mortality-stats">
-                <div class="stat-card">
-                    <div class="stat-icon">😔</div>
-                    <div class="stat-content">
-                        <h3>Total Losses</h3>
-                        <div class="stat-value" id="total-losses">0</div>
-                        <div class="stat-period">birds</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📊</div>
-                    <div class="stat-content">
-                        <h3>Mortality Rate</h3>
-                        <div class="stat-value" id="mortality-rate">0%</div>
-                        <div class="stat-period">current rate</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">🐔</div>
-                    <div class="stat-content">
-                        <h3>Current Birds</h3>
-                        <div class="stat-value" id="current-birds">0</div>
-                        <div class="stat-period">in stock</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📈</div>
-                    <div class="stat-content">
-                        <h3>Records</h3>
-                        <div class="stat-value" id="records-count">0</div>
-                        <div class="stat-period">entries</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="quick-actions-grid">
-                <button class="quick-action-card" id="record-mortality-btn">
-                    <div class="quick-action-icon">📝</div>
-                    <div class="quick-action-content">
-                        <h4>Record Mortality</h4>
-                        <p>Log bird losses and causes</p>
-                    </div>
-                </button>
-                <button class="quick-action-card" id="trend-analysis-btn">
-                    <div class="quick-action-icon">📈</div>
-                    <div class="quick-action-content">
-                        <h4>Trend Analysis</h4>
-                        <p>View mortality patterns</p>
-                    </div>
-                </button>
-                <button class="quick-action-card" id="cause-analysis-btn">
-                    <div class="quick-action-icon">🔍</div>
-                    <div class="quick-action-content">
-                        <h4>Cause Analysis</h4>
-                        <p>Analyze death causes</p>
-                    </div>
-                </button>
-            </div>
-
-            <!-- Mortality Form -->
-            <div class="mortality-form card">
-                <h3>Record Mortality</h3>
-                <form id="mortality-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="mortality-date">Date *</label>
-                            <input type="date" id="mortality-date" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="mortality-quantity">Number of Birds *</label>
-                            <input type="number" id="mortality-quantity" min="1" required placeholder="0">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="mortality-cause">Cause of Death *</label>
-                            <select id="mortality-cause" required>
-                                <option value="">Select Cause</option>
-                                <option value="natural">Natural Causes</option>
-                                <option value="disease">Disease</option>
-                                <option value="predator">Predator</option>
-                                <option value="accident">Accident</option>
-                                <option value="heat-stress">Heat Stress</option>
-                                <option value="cold-stress">Cold Stress</option>
-                                <option value="nutritional">Nutritional Issues</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="mortality-age">Bird Age (days)</label>
-                            <input type="number" id="mortality-age" min="1" max="70" placeholder="Optional">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="mortality-notes">Observations & Notes</label>
-                        <textarea id="mortality-notes" rows="3" placeholder="Symptoms, location, time of discovery, environmental conditions..."></textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">Save Mortality Record</button>
-                </form>
-            </div>
-
-            <!-- Recent Mortality Records -->
-            <div class="mortality-records card">
-                <div class="card-header">
-                    <h3>Recent Mortality Records</h3>
-                    <div class="filter-controls">
-                        <select id="mortality-filter">
-                            <option value="all">All Causes</option>
-                            <option value="disease">Disease</option>
-                            <option value="predator">Predator</option>
-                            <option value="natural">Natural</option>
-                            <option value="stress">Stress</option>
-                        </select>
-                        <button class="btn btn-text" id="export-mortality">Export</button>
-                    </div>
-                </div>
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Cause</th>
-                                <th>Quantity</th>
-                                <th>Age</th>
-                                <th>Notes</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="mortality-body">
-                            <!-- Mortality records will be rendered here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Health Report Modal -->
-            <div id="health-report-modal" class="modal hidden">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 id="health-report-title">Health Report</h3>
-                        <button class="modal-close">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="health-report-content">
-                            <!-- Report content will be inserted here -->
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-text" id="print-health-report">🖨️ Print</button>
-                        <button class="btn btn-primary modal-close">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `,
-
-    styles: `
-        .mortality-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            margin: 2rem 0;
-        }
-
-        .stat-card {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 1.75rem;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-        }
-
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-        }
-
-        .stat-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            opacity: 0.9;
-        }
-
-        .stat-content h3 {
-            margin: 0 0 0.75rem 0;
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .stat-value {
-            font-size: 1.75rem;
-            font-weight: 800;
-            color: var(--text-color);
-            margin-bottom: 0.5rem;
-            line-height: 1.2;
-        }
-
-        .stat-period {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .quick-actions-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin: 2rem 0;
-        }
-
-        .quick-action-card {
-            background: var(--card-bg);
-            border: 2px dashed var(--border-color);
-            border-radius: 16px;
-            padding: 2rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .quick-action-card:hover {
-            border-color: var(--primary-color);
-            background: var(--bg-color);
-            transform: translateY(-2px);
-        }
-
-        .quick-action-icon {
-            font-size: 3rem;
-            opacity: 0.8;
-        }
-
-        .quick-action-content h4 {
-            margin: 0 0 0.5rem 0;
-            color: var(--text-color);
-            font-weight: 700;
-        }
-
-        .quick-action-content p {
-            margin: 0;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .mortality-form {
-            margin: 2rem 0;
-        }
-
-        .mortality-records {
-            margin: 2rem 0;
-        }
-
-        .mortality-records .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        .cause-badge {
-            padding: 0.4rem 1rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: capitalize;
-            letter-spacing: 0.5px;
-        }
-
-        .cause-natural {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-        }
-
-        .cause-disease {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: white;
-        }
-
-        .cause-predator {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: white;
-        }
-
-        .cause-accident {
-            background: linear-gradient(135deg, #6b7280, #4b5563);
-            color: white;
-        }
-
-        .cause-heat-stress {
-            background: linear-gradient(135deg, #ea580c, #c2410c);
-            color: white;
-        }
-
-        .cause-cold-stress {
-            background: linear-gradient(135deg, #0ea5e9, #0284c7);
-            color: white;
-        }
-
-        .cause-nutritional {
-            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-            color: white;
-        }
-
-        .cause-other {
-            background: linear-gradient(135deg, #6b7280, #4b5563);
-            color: white;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: var(--text-muted);
-        }
-
-        .empty-icon {
-            font-size: 4rem;
-            opacity: 0.3;
-            margin-bottom: 1.5rem;
-            display: block;
-        }
-
-        .empty-content h4 {
-            margin: 0 0 1rem 0;
-            font-size: 1.4rem;
-            font-weight: 600;
-            color: var(--text-color);
-        }
-
-        .empty-content p {
-            margin: 0;
-            opacity: 0.8;
-            font-size: 1rem;
-        }
-
-        .mortality-rate-warning {
-            color: var(--danger-color) !important;
-        }
-
-        .mortality-rate-normal {
-            color: var(--success-color) !important;
-        }
-
-        @media (max-width: 768px) {
-            .mortality-stats {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-
-            .quick-actions-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .mortality-records .card-header {
-                flex-direction: column;
-                gap: 1rem;
-                align-items: stretch;
-            }
-        }
-    `,
+    name: 'broiler-mortality',
+    initialized: false,
+    element: null,
 
     initialize() {
-        console.log('😔 Initializing broiler mortality module...');
+        console.log('😔 Initializing Broiler Health & Mortality...');
+        
+        // ✅ ADDED: Get the content area element
+        this.element = document.getElementById('content-area');
+        if (!this.element) return false;
+
+        // ✅ ADDED: Register with StyleManager
+        if (window.StyleManager) {
+            StyleManager.registerModule(this.id, this.element, this);
+        }
+
         this.loadData();
+        this.renderModule();
+        this.setupEventListeners();
+        this.initialized = true;
+        
+        console.log('✅ Broiler Health & Mortality initialized with StyleManager');
+        return true;
+    },
+
+    // ✅ ADDED: Theme change handler (optional)
+    onThemeChange(theme) {
+        console.log(`Broiler Health & Mortality updating for theme: ${theme}`);
+        // You can add theme-specific logic here if needed
+    },
+
+    renderModule() {
+        if (!this.element) return;
+
+        this.element.innerHTML = `
+            <div class="section active">
+                <div class="module-header">
+                    <h1>Broiler Health & Mortality</h1>
+                    <p>Monitor flock health and track losses</p>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="generate-health-report">
+                            📊 Health Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mortality Stats -->
+                <div class="mortality-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon">😔</div>
+                        <div class="stat-content">
+                            <h3>Total Losses</h3>
+                            <div class="stat-value" id="total-losses">0</div>
+                            <div class="stat-period">birds</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-content">
+                            <h3>Mortality Rate</h3>
+                            <div class="stat-value" id="mortality-rate">0%</div>
+                            <div class="stat-period">current rate</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🐔</div>
+                        <div class="stat-content">
+                            <h3>Current Birds</h3>
+                            <div class="stat-value" id="current-birds">0</div>
+                            <div class="stat-period">in stock</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-content">
+                            <h3>Records</h3>
+                            <div class="stat-value" id="records-count">0</div>
+                            <div class="stat-period">entries</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions-grid">
+                    <button class="quick-action-card" id="record-mortality-btn">
+                        <div class="quick-action-icon">📝</div>
+                        <div class="quick-action-content">
+                            <h4>Record Mortality</h4>
+                            <p>Log bird losses and causes</p>
+                        </div>
+                    </button>
+                    <button class="quick-action-card" id="trend-analysis-btn">
+                        <div class="quick-action-icon">📈</div>
+                        <div class="quick-action-content">
+                            <h4>Trend Analysis</h4>
+                            <p>View mortality patterns</p>
+                        </div>
+                    </button>
+                    <button class="quick-action-card" id="cause-analysis-btn">
+                        <div class="quick-action-icon">🔍</div>
+                        <div class="quick-action-content">
+                            <h4>Cause Analysis</h4>
+                            <p>Analyze death causes</p>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Mortality Form -->
+                <div class="mortality-form card">
+                    <h3>Record Mortality</h3>
+                    <form id="mortality-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="mortality-date">Date *</label>
+                                <input type="date" id="mortality-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="mortality-quantity">Number of Birds *</label>
+                                <input type="number" id="mortality-quantity" min="1" required placeholder="0">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="mortality-cause">Cause of Death *</label>
+                                <select id="mortality-cause" required>
+                                    <option value="">Select Cause</option>
+                                    <option value="natural">Natural Causes</option>
+                                    <option value="disease">Disease</option>
+                                    <option value="predator">Predator</option>
+                                    <option value="accident">Accident</option>
+                                    <option value="heat-stress">Heat Stress</option>
+                                    <option value="cold-stress">Cold Stress</option>
+                                    <option value="nutritional">Nutritional Issues</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="mortality-age">Bird Age (days)</label>
+                                <input type="number" id="mortality-age" min="1" max="70" placeholder="Optional">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mortality-notes">Observations & Notes</label>
+                            <textarea id="mortality-notes" rows="3" placeholder="Symptoms, location, time of discovery, environmental conditions..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Save Mortality Record</button>
+                    </form>
+                </div>
+
+                <!-- Recent Mortality Records -->
+                <div class="mortality-records card">
+                    <div class="card-header">
+                        <h3>Recent Mortality Records</h3>
+                        <div class="filter-controls">
+                            <select id="mortality-filter">
+                                <option value="all">All Causes</option>
+                                <option value="disease">Disease</option>
+                                <option value="predator">Predator</option>
+                                <option value="natural">Natural</option>
+                                <option value="stress">Stress</option>
+                            </select>
+                            <button class="btn btn-text" id="export-mortality">Export</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Cause</th>
+                                    <th>Quantity</th>
+                                    <th>Age</th>
+                                    <th>Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mortality-body">
+                                <!-- Mortality records will be rendered here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Health Report Modal -->
+                <div id="health-report-modal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 id="health-report-title">Health Report</h3>
+                            <button class="modal-close">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="health-report-content">
+                                <!-- Report content will be inserted here -->
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-text" id="print-health-report">🖨️ Print</button>
+                            <button class="btn btn-primary modal-close">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
         this.updateStats();
         this.renderMortalityTable();
         
@@ -416,10 +219,15 @@ const BroilerMortalityModule = {
     },
 
     loadData() {
-        if (!FarmModules.appData.mortality) {
-            FarmModules.appData.mortality = this.getDemoData();
+        if (!window.FarmModules || !window.FarmModules.appData) {
+            window.FarmModules = window.FarmModules || {};
+            window.FarmModules.appData = window.FarmModules.appData || {};
         }
-        console.log('📊 Loaded mortality data:', FarmModules.appData.mortality.length, 'records');
+        
+        if (!window.FarmModules.appData.mortality) {
+            window.FarmModules.appData.mortality = this.getDemoData();
+        }
+        console.log('📊 Loaded mortality data:', window.FarmModules.appData.mortality.length, 'records');
     },
 
     getDemoData() {
@@ -452,7 +260,7 @@ const BroilerMortalityModule = {
     },
 
     updateStats() {
-        const mortality = FarmModules.appData.mortality || [];
+        const mortality = window.FarmModules?.appData?.mortality || [];
         const totalLosses = mortality.reduce((sum, record) => sum + record.quantity, 0);
         
         // Get current stock from inventory or use default
@@ -480,8 +288,8 @@ const BroilerMortalityModule = {
 
     getCurrentStock() {
         // Try to get from inventory first, then fallback to localStorage, then default
-        if (FarmModules.appData.inventory) {
-            const broilerStock = FarmModules.appData.inventory.find(item => 
+        if (window.FarmModules?.appData?.inventory) {
+            const broilerStock = window.FarmModules.appData.inventory.find(item => 
                 item.type === 'broilers' || item.name?.toLowerCase().includes('broiler')
             );
             if (broilerStock) {
@@ -497,7 +305,7 @@ const BroilerMortalityModule = {
         const tbody = document.getElementById('mortality-body');
         if (!tbody) return;
 
-        const mortality = FarmModules.appData.mortality || [];
+        const mortality = window.FarmModules?.appData?.mortality || [];
         
         let filteredMortality = mortality;
         if (filter !== 'all') {
@@ -550,6 +358,10 @@ const BroilerMortalityModule = {
                 </tr>
             `;
         }).join('');
+    },
+
+    setupEventListeners() {
+        this.attachEventListeners();
     },
 
     attachEventListeners() {
@@ -649,11 +461,13 @@ const BroilerMortalityModule = {
     },
 
     addMortality(mortalityData) {
-        if (!FarmModules.appData.mortality) {
-            FarmModules.appData.mortality = [];
+        if (!window.FarmModules?.appData?.mortality) {
+            if (!window.FarmModules) window.FarmModules = {};
+            if (!window.FarmModules.appData) window.FarmModules.appData = {};
+            window.FarmModules.appData.mortality = [];
         }
 
-        FarmModules.appData.mortality.unshift(mortalityData);
+        window.FarmModules.appData.mortality.unshift(mortalityData);
         
         this.updateStats();
         this.renderMortalityTable();
@@ -670,7 +484,7 @@ const BroilerMortalityModule = {
     editMortality(recordId) {
         console.log('✏️ Editing mortality record:', recordId);
         
-        const mortality = FarmModules.appData.mortality || [];
+        const mortality = window.FarmModules?.appData?.mortality || [];
         const record = mortality.find(r => r.id == recordId);
         
         if (!record) {
@@ -693,10 +507,10 @@ const BroilerMortalityModule = {
 
     deleteMortality(recordId) {
         if (confirm('Are you sure you want to delete this mortality record?')) {
-            const mortality = FarmModules.appData.mortality || [];
+            const mortality = window.FarmModules?.appData?.mortality || [];
             const record = mortality.find(r => r.id == recordId);
             
-            FarmModules.appData.mortality = mortality.filter(r => r.id != recordId);
+            window.FarmModules.appData.mortality = mortality.filter(r => r.id != recordId);
             
             this.updateStats();
             this.renderMortalityTable();
@@ -717,7 +531,7 @@ const BroilerMortalityModule = {
     generateHealthReport(type = 'overview') {
         console.log('📊 Generating health report:', type);
         
-        const mortality = FarmModules.appData.mortality || [];
+        const mortality = window.FarmModules?.appData?.mortality || [];
         const stats = this.calculateDetailedStats();
 
         let reportTitle = 'Health Overview Report';
@@ -855,7 +669,7 @@ const BroilerMortalityModule = {
     },
 
     calculateDetailedStats() {
-        const mortality = FarmModules.appData.mortality || [];
+        const mortality = window.FarmModules?.appData?.mortality || [];
         const totalLosses = mortality.reduce((sum, record) => sum + record.quantity, 0);
         const currentStock = this.getCurrentStock();
         const mortalityRate = currentStock > 0 ? ((totalLosses / currentStock) * 100).toFixed(2) : '0.00';
@@ -958,7 +772,34 @@ const BroilerMortalityModule = {
     showHealthReportModal(title, content) {
         document.getElementById('health-report-title').textContent = title;
         document.getElementById('health-report-content').innerHTML = content;
-        ModalManager.open('health-report-modal');
+        this.openModal('health-report-modal');
+    },
+
+    openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('hidden');
+            
+            // Add close handlers
+            const closeButtons = modal.querySelectorAll('.modal-close');
+            closeButtons.forEach(btn => {
+                btn.onclick = () => this.closeModal(modalId);
+            });
+            
+            // Close when clicking outside
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    this.closeModal(modalId);
+                }
+            };
+        }
+    },
+
+    closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add('hidden');
+        }
     },
 
     printHealthReport() {
@@ -1000,7 +841,7 @@ const BroilerMortalityModule = {
     },
 
     exportMortality() {
-        const mortality = FarmModules.appData.mortality || [];
+        const mortality = window.FarmModules?.appData?.mortality || [];
         const csv = this.convertToCSV(mortality);
         const blob = new Blob([csv], { type: 'text/csv' });
         
@@ -1108,6 +949,7 @@ const BroilerMortalityModule = {
 // Register with FarmModules framework
 if (window.FarmModules) {
     window.FarmModules.registerModule('broiler-mortality', BroilerMortalityModule);
+    console.log('✅ Broiler Health & Mortality module registered');
 } else {
     console.error('FarmModules framework not found');
 }
