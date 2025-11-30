@@ -288,25 +288,7 @@ class FarmManagementApp {
             }
         }
     }
-
-    // Add this to your main JavaScript file
-function forceModalDarkMode() {
-    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark' ||
-                      document.documentElement.classList.contains('dark') ||
-                      document.documentElement.classList.contains('dark-mode') ||
-                      window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (isDarkMode) {
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.setAttribute('data-theme', 'dark');
-        });
-    }
-}
-
-// Run on load and when theme changes
-document.addEventListener('DOMContentLoaded', forceModalDarkMode);
-window.matchMedia('(prefers-color-scheme: dark)').addListener(forceModalDarkMode);
-    
+  
     setupEventListeners() {
         document.addEventListener('click', (e) => {
             // Handle main nav items
