@@ -1,22 +1,43 @@
-// modules/reports.js - COMPLETE FIXED VERSION
+// modules/reports.js - UPDATED TO FOLLOW StyleManager PATTERN
 console.log('Loading reports module...');
 
 const ReportsModule = {
     name: 'reports',
     initialized: false,
+    element: null,
 
     initialize() {
         console.log('📈 Initializing reports...');
+        
+        // Get content area element
+        this.element = document.getElementById('content-area');
+        if (!this.element) {
+            console.error('Content area element not found');
+            return false;
+        }
+        
+        // Register with StyleManager for theme support
+        if (window.StyleManager) {
+            window.StyleManager.registerComponent(this.name);
+        }
+        
         this.renderModule();
         this.initialized = true;
         return true;
     },
 
-    renderModule() {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
+    onThemeChange(theme) {
+        console.log(`Reports module: Theme changed to ${theme}`);
+        // Re-render or update styles when theme changes
+        if (this.initialized) {
+            this.renderModule();
+        }
+    },
 
-        contentArea.innerHTML = `
+    renderModule() {
+        if (!this.element) return;
+
+        this.element.innerHTML = `
             <div class="module-container">
                 <div class="module-header">
                     <h1 class="module-title">Farm Reports & Analytics</h1>
@@ -152,6 +173,22 @@ const ReportsModule = {
         `;
 
         this.setupEventListeners();
+    },
+
+    setupEventListeners() {
+        // Report generation buttons
+        document.querySelector('.generate-financial-report')?.addEventListener('click', () => this.generateFinancialReport());
+        document.querySelector('.generate-production-report')?.addEventListener('click', () => this.generateProductionReport());
+        document.querySelector('.generate-inventory-report')?.addEventListener('click', () => this.generateInventoryReport());
+        document.querySelector('.generate-sales-report')?.addEventListener('click', () => this.generateSalesReport());
+        document.querySelector('.generate-health-report')?.addEventListener('click', () => this.generateHealthReport());
+        document.querySelector('.generate-feed-report')?.addEventListener('click', () => this.generateFeedReport());
+        document.querySelector('.generate-comprehensive-report')?.addEventListener('click', () => this.generateComprehensiveReport());
+        
+        // Report action buttons
+        document.getElementById('print-report')?.addEventListener('click', () => this.printReport());
+        document.getElementById('export-report')?.addEventListener('click', () => this.exportReport());
+        document.getElementById('close-report')?.addEventListener('click', () => this.closeReport());
     },
 
     renderQuickStats() {
@@ -323,20 +360,6 @@ const ReportsModule = {
 
         activities.sort((a, b) => new Date(b.date) - new Date(a.date));
         return activities.slice(0, 5);
-    },
-
-    setupEventListeners() {
-        document.querySelector('.generate-financial-report')?.addEventListener('click', () => this.generateFinancialReport());
-        document.querySelector('.generate-production-report')?.addEventListener('click', () => this.generateProductionReport());
-        document.querySelector('.generate-inventory-report')?.addEventListener('click', () => this.generateInventoryReport());
-        document.querySelector('.generate-sales-report')?.addEventListener('click', () => this.generateSalesReport());
-        document.querySelector('.generate-health-report')?.addEventListener('click', () => this.generateHealthReport());
-        document.querySelector('.generate-feed-report')?.addEventListener('click', () => this.generateFeedReport());
-        document.querySelector('.generate-comprehensive-report')?.addEventListener('click', () => this.generateComprehensiveReport());
-        
-        document.getElementById('print-report')?.addEventListener('click', () => this.printReport());
-        document.getElementById('export-report')?.addEventListener('click', () => this.exportReport());
-        document.getElementById('close-report')?.addEventListener('click', () => this.closeReport());
     },
 
     generateFinancialReport() {
