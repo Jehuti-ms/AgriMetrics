@@ -1,7 +1,5 @@
-// modules/reports.js - COMPLETE REWRITE WITH SUPERIOR UX
-console.log('Loading reports module...');
-
-const ReportsModule = {
+// modules/reports.js - UPDATED WITH CORRECT STRUCTURE
+FarmModules.registerModule('reports', {
     name: 'Reports & Analytics',
     icon: '📊',
     
@@ -184,13 +182,12 @@ const ReportsModule = {
         }
 
         .stat-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            background: var(--card-bg);
             border-radius: 16px;
             padding: 1.5rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             gap: 1rem;
@@ -204,13 +201,13 @@ const ReportsModule = {
             top: 0;
             left: 0;
             right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #22c55e, #14b8a6);
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
         }
 
         .stat-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         }
 
         .stat-icon {
@@ -244,18 +241,18 @@ const ReportsModule = {
         }
 
         .stat-trend.positive {
-            background: rgba(34, 197, 94, 0.1);
-            color: #16a34a;
+            background: var(--success-light);
+            color: var(--success-color);
         }
 
         .stat-trend.negative {
-            background: rgba(239, 68, 68, 0.1);
-            color: #dc2626;
+            background: var(--danger-light);
+            color: var(--danger-color);
         }
 
         .stat-trend.neutral {
-            background: rgba(100, 116, 139, 0.1);
-            color: #475569;
+            background: var(--bg-color);
+            color: var(--text-muted);
         }
 
         /* Reports Grid */
@@ -267,13 +264,12 @@ const ReportsModule = {
         }
 
         .report-type-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            background: var(--card-bg);
             border-radius: 16px;
             padding: 2rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -290,24 +286,24 @@ const ReportsModule = {
             top: 0;
             left: 0;
             right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #22c55e, #14b8a6);
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
         }
 
         .report-type-card:hover {
             transform: translateY(-6px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-            border-color: rgba(34, 197, 94, 0.3);
+            border-color: var(--primary-color);
         }
 
         .report-type-card.comprehensive {
             grid-column: 1 / -1;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
+            background: var(--card-bg);
         }
 
         .report-type-card.comprehensive::before {
-            height: 3px;
-            background: linear-gradient(90deg, #22c55e, #3b82f6, #8b5cf6);
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--info-color));
         }
 
         .report-icon {
@@ -327,24 +323,23 @@ const ReportsModule = {
         .report-content h3 {
             font-size: 1.2rem;
             font-weight: 700;
-            color: #1e293b;
+            color: var(--text-color);
             margin-bottom: 0.75rem;
             line-height: 1.3;
         }
 
         .report-content p {
             font-size: 0.9rem;
-            color: #64748b;
+            color: var(--text-muted);
             line-height: 1.5;
             margin: 0;
         }
 
         /* Report Output */
         .report-output {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            background: var(--card-bg);
             border-radius: 16px;
+            border: 1px solid var(--border-color);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             margin: 2rem 0;
             overflow: hidden;
@@ -355,19 +350,19 @@ const ReportsModule = {
             justify-content: space-between;
             align-items: center;
             padding: 1.5rem 2rem;
-            background: rgba(248, 250, 252, 0.8);
-            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+            background: var(--bg-color);
+            border-bottom: 1px solid var(--border-color);
         }
 
         .header-content h3 {
             margin: 0 0 0.25rem 0;
-            color: #1e293b;
+            color: var(--text-color);
             font-weight: 700;
         }
 
         .header-content p {
             margin: 0;
-            color: #64748b;
+            color: var(--text-muted);
             font-size: 0.9rem;
         }
 
@@ -389,11 +384,11 @@ const ReportsModule = {
         }
 
         .report-section h4 {
-            color: #1e293b;
+            color: var(--text-color);
             font-weight: 600;
             margin-bottom: 1rem;
             padding-bottom: 0.5rem;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 2px solid var(--border-color);
         }
 
         .metric-grid {
@@ -404,16 +399,16 @@ const ReportsModule = {
         }
 
         .metric-card {
-            background: rgba(248, 250, 252, 0.8);
+            background: var(--bg-color);
             border-radius: 12px;
             padding: 1.5rem;
             text-align: center;
-            border: 1px solid rgba(226, 232, 240, 0.8);
+            border: 1px solid var(--border-color);
         }
 
         .metric-label {
             font-size: 0.9rem;
-            color: #64748b;
+            color: var(--text-muted);
             margin-bottom: 0.5rem;
             font-weight: 500;
         }
@@ -421,23 +416,23 @@ const ReportsModule = {
         .metric-value {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #1e293b;
+            color: var(--text-color);
         }
 
         .metric-value.income {
-            color: #16a34a;
+            color: var(--success-color);
         }
 
         .metric-value.expense {
-            color: #dc2626;
+            color: var(--danger-color);
         }
 
         .metric-value.profit {
-            color: #16a34a;
+            color: var(--success-color);
         }
 
         .metric-value.warning {
-            color: #d97706;
+            color: var(--warning-color);
         }
 
         .data-table {
@@ -447,28 +442,27 @@ const ReportsModule = {
         }
 
         .data-table th {
-            background: rgba(248, 250, 252, 0.8);
-            color: #475569;
+            background: var(--bg-color);
+            color: var(--text-muted);
             font-weight: 600;
             padding: 1rem;
             text-align: left;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 2px solid var(--border-color);
         }
 
         .data-table td {
             padding: 1rem;
-            border-bottom: 1px solid #e2e8f0;
-            color: #475569;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-color);
         }
 
         /* Recent Activity */
         .recent-activity {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            background: var(--card-bg);
             border-radius: 16px;
             padding: 2rem;
             margin: 2rem 0;
+            border: 1px solid var(--border-color);
         }
 
         .section-header {
@@ -479,7 +473,7 @@ const ReportsModule = {
         }
 
         .section-header h3 {
-            color: #1e293b;
+            color: var(--text-color);
             font-weight: 700;
             margin: 0;
         }
@@ -495,14 +489,14 @@ const ReportsModule = {
             align-items: center;
             gap: 1rem;
             padding: 1rem;
-            background: rgba(248, 250, 252, 0.8);
+            background: var(--bg-color);
             border-radius: 12px;
-            border: 1px solid rgba(226, 232, 240, 0.8);
+            border: 1px solid var(--border-color);
             transition: all 0.2s ease;
         }
 
         .activity-item:hover {
-            background: rgba(241, 245, 249, 0.8);
+            background: var(--card-bg);
             transform: translateX(4px);
         }
 
@@ -516,17 +510,17 @@ const ReportsModule = {
 
         .activity-title {
             font-weight: 600;
-            color: #1e293b;
+            color: var(--text-color);
             margin-bottom: 0.25rem;
         }
 
         .activity-description {
-            color: #64748b;
+            color: var(--text-muted);
             font-size: 0.9rem;
         }
 
         .activity-time {
-            color: #94a3b8;
+            color: var(--text-muted);
             font-size: 0.8rem;
         }
 
@@ -557,18 +551,19 @@ const ReportsModule = {
         }
     `,
 
-    initialize() {
+    initialize: function() {
         console.log('📈 Initializing reports module...');
         this.updateQuickStats();
         this.renderRecentActivity();
         
+        // Use setTimeout to ensure DOM is ready
         setTimeout(() => {
             this.attachEventListeners();
             console.log('✅ Reports event listeners attached');
         }, 100);
     },
 
-    updateQuickStats() {
+    updateQuickStats: function() {
         const stats = this.calculateQuickStats();
         
         this.updateElement('total-revenue', this.formatCurrency(stats.totalRevenue));
@@ -577,25 +572,25 @@ const ReportsModule = {
         this.updateElement('flock-status', stats.flockStatus);
     },
 
-    calculateQuickStats() {
-        // Get data from other modules or localStorage
-        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
-        const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
-        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
-        const mortality = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
+    calculateQuickStats: function() {
+        // Get data from FarmModules shared data or localStorage
+        const transactions = FarmModules.appData.transactions || [];
+        const production = FarmModules.appData.production || [];
+        const inventory = FarmModules.appData.inventory || [];
+        const mortality = FarmModules.appData.mortality || [];
         
         const totalRevenue = transactions
             .filter(t => t.type === 'income')
             .reduce((sum, t) => sum + t.amount, 0);
             
-        const totalProduction = production.reduce((sum, record) => sum + record.quantity, 0);
+        const totalProduction = production.reduce((sum, record) => sum + (record.quantity || 0), 0);
         
         const totalItems = inventory.length;
         const lowStockItems = inventory.filter(item => item.currentStock <= item.minStock).length;
         const inventoryHealth = totalItems > 0 ? Math.round(((totalItems - lowStockItems) / totalItems) * 100) : 100;
         
-        const totalBirds = parseInt(localStorage.getItem('farm-birds-stock') || '1000');
-        const totalMortality = mortality.reduce((sum, record) => sum + record.quantity, 0);
+        const totalBirds = 1000; // Default value
+        const totalMortality = mortality.reduce((sum, record) => sum + (record.quantity || 0), 0);
         const mortalityRate = totalBirds > 0 ? (totalMortality / totalBirds) * 100 : 0;
         const flockStatus = mortalityRate < 2 ? 'Excellent' : mortalityRate < 5 ? 'Good' : 'Needs Attention';
 
@@ -607,7 +602,7 @@ const ReportsModule = {
         };
     },
 
-    renderRecentActivity() {
+    renderRecentActivity: function() {
         const activities = this.getRecentActivities();
         const container = document.getElementById('activity-list');
         
@@ -617,8 +612,8 @@ const ReportsModule = {
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">📊</div>
-                    <div class="empty-title">No recent activity</div>
-                    <div class="empty-subtitle">Start using farm modules to see activity here</div>
+                    <h4>No recent activity</h4>
+                    <p>Start using farm modules to see activity here</p>
                 </div>
             `;
             return;
@@ -636,9 +631,8 @@ const ReportsModule = {
         `).join('');
     },
 
-    getRecentActivities() {
+    getRecentActivities: function() {
         const activities = [];
-        const now = new Date();
         
         // Sample activities - in real implementation, pull from actual module data
         activities.push({
@@ -679,11 +673,12 @@ const ReportsModule = {
         return activities;
     },
 
-    attachEventListeners() {
+    attachEventListeners: function() {
         console.log('🔗 Attaching reports event listeners...');
 
         // Report generation buttons
-        document.querySelectorAll('.generate-report').forEach(button => {
+        const reportButtons = document.querySelectorAll('.generate-report');
+        reportButtons.forEach(button => {
             button.addEventListener('click', (e) => {
                 const reportType = e.target.dataset.reportType;
                 this.generateReport(reportType);
@@ -691,13 +686,19 @@ const ReportsModule = {
         });
 
         // Report actions
-        document.getElementById('print-report')?.addEventListener('click', () => this.printReport());
-        document.getElementById('export-report')?.addEventListener('click', () => this.exportReport());
-        document.getElementById('close-report')?.addEventListener('click', () => this.closeReport());
-        document.getElementById('refresh-activity')?.addEventListener('click', () => this.refreshActivity());
+        const printBtn = document.getElementById('print-report');
+        const exportBtn = document.getElementById('export-report');
+        const closeBtn = document.getElementById('close-report');
+        const refreshBtn = document.getElementById('refresh-activity');
+
+        if (printBtn) printBtn.addEventListener('click', () => this.printReport());
+        if (exportBtn) exportBtn.addEventListener('click', () => this.exportReport());
+        if (closeBtn) closeBtn.addEventListener('click', () => this.closeReport());
+        if (refreshBtn) refreshBtn.addEventListener('click', () => this.refreshActivity());
 
         // Card click handlers
-        document.querySelectorAll('.report-type-card').forEach(card => {
+        const reportCards = document.querySelectorAll('.report-type-card');
+        reportCards.forEach(card => {
             card.addEventListener('click', (e) => {
                 if (!e.target.classList.contains('generate-report')) {
                     const button = card.querySelector('.generate-report');
@@ -712,7 +713,7 @@ const ReportsModule = {
         console.log('✅ All reports event listeners attached');
     },
 
-    generateReport(reportType) {
+    generateReport: function(reportType) {
         console.log(`📊 Generating ${reportType} report...`);
         
         let reportData;
@@ -763,15 +764,15 @@ const ReportsModule = {
         this.showReport(title, content);
     },
 
-    generateFinancialData() {
-        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
-        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
+    generateFinancialData: function() {
+        const transactions = FarmModules.appData.transactions || [];
+        const sales = FarmModules.appData.sales || [];
         
         const income = transactions.filter(t => t.type === 'income');
         const expenses = transactions.filter(t => t.type === 'expense');
         
-        const totalIncome = income.reduce((sum, t) => sum + t.amount, 0);
-        const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
+        const totalIncome = income.reduce((sum, t) => sum + (t.amount || 0), 0);
+        const totalExpenses = expenses.reduce((sum, t) => sum + (t.amount || 0), 0);
         const netProfit = totalIncome - totalExpenses;
         const profitMargin = totalIncome > 0 ? (netProfit / totalIncome) * 100 : 0;
 
@@ -786,7 +787,7 @@ const ReportsModule = {
         };
     },
 
-    renderFinancialReport(data) {
+    renderFinancialReport: function(data) {
         return `
             <div class="report-section">
                 <h4>💰 Financial Overview</h4>
@@ -825,7 +826,7 @@ const ReportsModule = {
                             <tr>
                                 <td>${this.formatCategory(category)}</td>
                                 <td class="income">${this.formatCurrency(amount)}</td>
-                                <td>${((amount / data.totalIncome) * 100).toFixed(1)}%</td>
+                                <td>${data.totalIncome > 0 ? ((amount / data.totalIncome) * 100).toFixed(1) : 0}%</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -847,7 +848,7 @@ const ReportsModule = {
                             <tr>
                                 <td>${this.formatCategory(category)}</td>
                                 <td class="expense">${this.formatCurrency(amount)}</td>
-                                <td>${((amount / data.totalExpenses) * 100).toFixed(1)}%</td>
+                                <td>${data.totalExpenses > 0 ? ((amount / data.totalExpenses) * 100).toFixed(1) : 0}%</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -856,20 +857,19 @@ const ReportsModule = {
         `;
     },
 
-    // Add other report generation methods similarly...
-    generateProductionData() {
-        const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
-        const mortality = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
+    generateProductionData: function() {
+        const production = FarmModules.appData.production || [];
+        const mortality = FarmModules.appData.mortality || [];
         
         return {
-            totalProduction: production.reduce((sum, record) => sum + record.quantity, 0),
+            totalProduction: production.reduce((sum, record) => sum + (record.quantity || 0), 0),
             productionByProduct: this.groupByProduct(production),
             qualityDistribution: this.groupByQuality(production),
             mortalityData: this.calculateMortalityStats(mortality)
         };
     },
 
-    renderProductionReport(data) {
+    renderProductionReport: function(data) {
         return `
             <div class="report-section">
                 <h4>🚜 Production Overview</h4>
@@ -904,7 +904,7 @@ const ReportsModule = {
                             <tr>
                                 <td>${this.formatProductName(product)}</td>
                                 <td>${quantity.toLocaleString()} units</td>
-                                <td>${((quantity / data.totalProduction) * 100).toFixed(1)}%</td>
+                                <td>${data.totalProduction > 0 ? ((quantity / data.totalProduction) * 100).toFixed(1) : 0}%</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -913,20 +913,49 @@ const ReportsModule = {
         `;
     },
 
-    // Add placeholder methods for other report types
-    generateInventoryData() { return {}; }
-    generateSalesData() { return {}; }
-    generateHealthData() { return {}; }
-    generateFeedData() { return {}; }
-    generateComprehensiveData() { return {}; }
+    // Add other report generation methods
+    generateInventoryData: function() { 
+        const inventory = FarmModules.appData.inventory || [];
+        return {
+            totalItems: inventory.length,
+            lowStockItems: inventory.filter(item => item.currentStock <= item.minStock).length,
+            inventoryValue: inventory.reduce((sum, item) => sum + (item.currentStock * (item.unitPrice || 0)), 0)
+        };
+    },
 
-    renderInventoryReport(data) { return '<p>Inventory report content</p>'; }
-    renderSalesReport(data) { return '<p>Sales report content</p>'; }
-    renderHealthReport(data) { return '<p>Health report content</p>'; }
-    renderFeedReport(data) { return '<p>Feed report content</p>'; }
-    renderComprehensiveReport(data) { return '<p>Comprehensive report content</p>'; }
+    renderInventoryReport: function(data) {
+        return `
+            <div class="report-section">
+                <h4>📦 Inventory Overview</h4>
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">Total Items</div>
+                        <div class="metric-value">${data.totalItems}</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Low Stock Items</div>
+                        <div class="metric-value ${data.lowStockItems > 0 ? 'warning' : ''}">${data.lowStockItems}</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Inventory Value</div>
+                        <div class="metric-value income">${this.formatCurrency(data.inventoryValue)}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
 
-    showReport(title, content) {
+    generateSalesData: function() { return {}; }
+    generateHealthData: function() { return {}; }
+    generateFeedData: function() { return {}; }
+    generateComprehensiveData: function() { return {}; }
+
+    renderSalesReport: function(data) { return '<p>Sales report coming soon...</p>'; }
+    renderHealthReport: function(data) { return '<p>Health report coming soon...</p>'; }
+    renderFeedReport: function(data) { return '<p>Feed report coming soon...</p>'; }
+    renderComprehensiveReport: function(data) { return '<p>Comprehensive report coming soon...</p>'; }
+
+    showReport: function(title, content) {
         document.getElementById('report-title').textContent = title;
         document.getElementById('report-subtitle').textContent = `Generated on ${new Date().toLocaleDateString()}`;
         document.getElementById('report-content').innerHTML = content;
@@ -934,11 +963,11 @@ const ReportsModule = {
         document.getElementById('report-output').scrollIntoView({ behavior: 'smooth' });
     },
 
-    closeReport() {
+    closeReport: function() {
         document.getElementById('report-output').classList.add('hidden');
     },
 
-    printReport() {
+    printReport: function() {
         const reportContent = document.getElementById('report-content').innerHTML;
         const reportTitle = document.getElementById('report-title').textContent;
         
@@ -973,7 +1002,7 @@ const ReportsModule = {
         printWindow.print();
     },
 
-    exportReport() {
+    exportReport: function() {
         const reportTitle = document.getElementById('report-title').textContent;
         const reportContent = document.getElementById('report-content').textContent;
         
@@ -993,39 +1022,42 @@ const ReportsModule = {
         this.showNotification('Report exported successfully!', 'success');
     },
 
-    refreshActivity() {
+    refreshActivity: function() {
         this.renderRecentActivity();
         this.showNotification('Activity refreshed', 'success');
     },
 
     // Utility methods
-    groupByCategory(transactions) {
+    groupByCategory: function(transactions) {
         const groups = {};
         transactions.forEach(transaction => {
-            groups[transaction.category] = (groups[transaction.category] || 0) + transaction.amount;
+            const category = transaction.category || 'other';
+            groups[category] = (groups[category] || 0) + (transaction.amount || 0);
         });
         return groups;
     },
 
-    groupByProduct(production) {
+    groupByProduct: function(production) {
         const groups = {};
         production.forEach(record => {
-            groups[record.product] = (groups[record.product] || 0) + record.quantity;
+            const product = record.product || 'other';
+            groups[product] = (groups[product] || 0) + (record.quantity || 0);
         });
         return groups;
     },
 
-    groupByQuality(production) {
+    groupByQuality: function(production) {
         const groups = {};
         production.forEach(record => {
-            groups[record.quality] = (groups[record.quality] || 0) + 1;
+            const quality = record.quality || 'unknown';
+            groups[quality] = (groups[quality] || 0) + 1;
         });
         return groups;
     },
 
-    calculateMortalityStats(mortality) {
-        const totalBirds = parseInt(localStorage.getItem('farm-birds-stock') || '1000');
-        const totalMortality = mortality.reduce((sum, record) => sum + record.quantity, 0);
+    calculateMortalityStats: function(mortality) {
+        const totalBirds = 1000; // Default value
+        const totalMortality = mortality.reduce((sum, record) => sum + (record.quantity || 0), 0);
         const rate = totalBirds > 0 ? (totalMortality / totalBirds) * 100 : 0;
         
         return {
@@ -1035,22 +1067,23 @@ const ReportsModule = {
         };
     },
 
-    groupByCause(mortality) {
+    groupByCause: function(mortality) {
         const groups = {};
         mortality.forEach(record => {
-            groups[record.cause] = (groups[record.cause] || 0) + record.quantity;
+            const cause = record.cause || 'unknown';
+            groups[cause] = (groups[cause] || 0) + (record.quantity || 0);
         });
         return groups;
     },
 
-    formatCurrency(amount) {
+    formatCurrency: function(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD'
         }).format(amount);
     },
 
-    formatCategory(category) {
+    formatCategory: function(category) {
         const categories = {
             'egg-sales': 'Egg Sales',
             'poultry-sales': 'Poultry Sales',
@@ -1064,7 +1097,7 @@ const ReportsModule = {
         return categories[category] || category;
     },
 
-    formatProductName(product) {
+    formatProductName: function(product) {
         const products = {
             'eggs': 'Eggs',
             'broilers': 'Broilers',
@@ -1077,25 +1110,18 @@ const ReportsModule = {
         return products[product] || product;
     },
 
-    updateElement(id, value) {
+    updateElement: function(id, value) {
         const element = document.getElementById(id);
         if (element) {
             element.textContent = value;
         }
     },
 
-    showNotification(message, type) {
+    showNotification: function(message, type) {
         if (window.coreModule && window.coreModule.showNotification) {
             window.coreModule.showNotification(message, type);
         } else {
             alert(message);
         }
     }
-};
-
-// Register with FarmModules framework
-if (window.FarmModules) {
-    window.FarmModules.registerModule('reports', ReportsModule);
-} else {
-    console.error('FarmModules framework not found');
-}
+});
