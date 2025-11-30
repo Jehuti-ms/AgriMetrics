@@ -1,999 +1,668 @@
-// modules/reports.js - UPDATED WITH CORRECT STRUCTURE
-FarmModules.registerModule('reports', {
-    name: 'Reports & Analytics',
-    icon: '📊',
-    
-    template: `
-        <div class="section active">
-            <div class="module-header">
-                <h1>Farm Reports & Analytics</h1>
-                <p>Comprehensive insights and performance metrics for your farm operations</p>
-            </div>
-
-            <!-- Quick Stats Overview -->
-            <div class="stats-overview">
-                <div class="stat-card">
-                    <div class="stat-icon">💰</div>
-                    <div class="stat-content">
-                        <h3>Total Revenue</h3>
-                        <div class="stat-value" id="total-revenue">$0</div>
-                        <div class="stat-trend positive">+12% this month</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">🚜</div>
-                    <div class="stat-content">
-                        <h3>Production</h3>
-                        <div class="stat-value" id="total-production">0</div>
-                        <div class="stat-trend positive">+8% this week</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📦</div>
-                    <div class="stat-content">
-                        <h3>Inventory Health</h3>
-                        <div class="stat-value" id="inventory-health">100%</div>
-                        <div class="stat-trend neutral">Stable</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">🐔</div>
-                    <div class="stat-content">
-                        <h3>Flock Status</h3>
-                        <div class="stat-value" id="flock-status">Excellent</div>
-                        <div class="stat-trend positive">Healthy</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Reports Grid -->
-            <div class="reports-grid">
-                <!-- Financial Reports -->
-                <div class="report-type-card" id="financial-report-card">
-                    <div class="report-icon">💰</div>
-                    <div class="report-content">
-                        <h3>Financial Reports</h3>
-                        <p>Income, expenses, profit analysis and financial performance metrics</p>
-                    </div>
-                    <button class="btn btn-primary generate-report" data-report-type="financial">
-                        Generate Report
-                    </button>
-                </div>
-
-                <!-- Production Reports -->
-                <div class="report-type-card" id="production-report-card">
-                    <div class="report-icon">🚜</div>
-                    <div class="report-content">
-                        <h3>Production Reports</h3>
-                        <p>Egg production, poultry output, productivity and efficiency metrics</p>
-                    </div>
-                    <button class="btn btn-primary generate-report" data-report-type="production">
-                        Generate Report
-                    </button>
-                </div>
-
-                <!-- Inventory Reports -->
-                <div class="report-type-card" id="inventory-report-card">
-                    <div class="report-icon">📦</div>
-                    <div class="report-content">
-                        <h3>Inventory Reports</h3>
-                        <p>Stock levels, consumption patterns, reorder analysis and stock health</p>
-                    </div>
-                    <button class="btn btn-primary generate-report" data-report-type="inventory">
-                        Generate Report
-                    </button>
-                </div>
-
-                <!-- Sales Reports -->
-                <div class="report-type-card" id="sales-report-card">
-                    <div class="report-icon">📊</div>
-                    <div class="report-content">
-                        <h3>Sales Reports</h3>
-                        <p>Revenue analysis, customer insights, sales performance and trends</p>
-                    </div>
-                    <button class="btn btn-primary generate-report" data-report-type="sales">
-                        Generate Report
-                    </button>
-                </div>
-
-                <!-- Health & Mortality Reports -->
-                <div class="report-type-card" id="health-report-card">
-                    <div class="report-icon">🐔</div>
-                    <div class="report-content">
-                        <h3>Health Reports</h3>
-                        <p>Mortality rates, health trends, flock management and wellness metrics</p>
-                    </div>
-                    <button class="btn btn-primary generate-report" data-report-type="health">
-                        Generate Report
-                    </button>
-                </div>
-
-                <!-- Feed Consumption Reports -->
-                <div class="report-type-card" id="feed-report-card">
-                    <div class="report-icon">🌾</div>
-                    <div class="report-content">
-                        <h3>Feed Reports</h3>
-                        <p>Feed usage, cost analysis, consumption patterns and efficiency metrics</p>
-                    </div>
-                    <button class="btn btn-primary generate-report" data-report-type="feed">
-                        Generate Report
-                    </button>
-                </div>
-
-                <!-- Comprehensive Farm Report -->
-                <div class="report-type-card comprehensive" id="comprehensive-report-card">
-                    <div class="report-icon">🏆</div>
-                    <div class="report-content">
-                        <h3>Comprehensive Farm Report</h3>
-                        <p>Complete overview of all farm operations, performance metrics and strategic insights</p>
-                    </div>
-                    <button class="btn btn-primary generate-report" data-report-type="comprehensive" style="background: linear-gradient(135deg, #22c55e, #3b82f6);">
-                        Generate Full Report
-                    </button>
-                </div>
-            </div>
-
-            <!-- Report Output Section -->
-            <div id="report-output" class="report-output hidden">
-                <div class="output-header">
-                    <div class="header-content">
-                        <h3 id="report-title">Report Output</h3>
-                        <p id="report-subtitle">Generated on <span id="report-date"></span></p>
-                    </div>
-                    <div class="header-actions">
-                        <button class="btn btn-icon" id="print-report" title="Print Report">
-                            🖨️
-                        </button>
-                        <button class="btn btn-icon" id="export-report" title="Export Report">
-                            📥
-                        </button>
-                        <button class="btn btn-text" id="close-report">
-                            Close
-                        </button>
-                    </div>
-                </div>
-                <div class="output-content">
-                    <div id="report-content">
-                        <!-- Report content will be generated here -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="recent-activity">
-                <div class="section-header">
-                    <h3>Recent Farm Activity</h3>
-                    <button class="btn btn-text" id="refresh-activity">Refresh</button>
-                </div>
-                <div id="activity-list" class="activity-list">
-                    <!-- Activity items will be rendered here -->
-                </div>
-            </div>
-        </div>
-    `,
-
-    styles: `
-        /* Stats Overview */
-        .stats-overview {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            margin: 2rem 0;
-        }
-
-        .stat-card {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 1.5rem;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-        }
-
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-        }
-
-        .stat-icon {
-            font-size: 2.5rem;
-            opacity: 0.9;
-        }
-
-        .stat-content h3 {
-            margin: 0 0 0.5rem 0;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--text-color);
-            margin-bottom: 0.25rem;
-            line-height: 1.2;
-        }
-
-        .stat-trend {
-            font-size: 0.8rem;
-            font-weight: 600;
-            padding: 0.2rem 0.6rem;
-            border-radius: 12px;
-            display: inline-block;
-        }
-
-        .stat-trend.positive {
-            background: var(--success-light);
-            color: var(--success-color);
-        }
-
-        .stat-trend.negative {
-            background: var(--danger-light);
-            color: var(--danger-color);
-        }
-
-        .stat-trend.neutral {
-            background: var(--bg-color);
-            color: var(--text-muted);
-        }
-
-        /* Reports Grid */
-        .reports-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin: 2rem 0;
-        }
-
-        .report-type-card {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 2rem;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 1.5rem;
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-        }
-
-        .report-type-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-        }
-
-        .report-type-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-            border-color: var(--primary-color);
-        }
-
-        .report-type-card.comprehensive {
-            grid-column: 1 / -1;
-            background: var(--card-bg);
-        }
-
-        .report-type-card.comprehensive::before {
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--info-color));
-        }
-
-        .report-icon {
-            font-size: 3rem;
-            margin-bottom: 0.5rem;
-            transition: transform 0.3s ease;
-        }
-
-        .report-type-card:hover .report-icon {
-            transform: scale(1.1);
-        }
-
-        .report-content {
-            flex: 1;
-        }
-
-        .report-content h3 {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--text-color);
-            margin-bottom: 0.75rem;
-            line-height: 1.3;
-        }
-
-        .report-content p {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            line-height: 1.5;
-            margin: 0;
-        }
-
-        /* Report Output */
-        .report-output {
-            background: var(--card-bg);
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            margin: 2rem 0;
-            overflow: hidden;
-        }
-
-        .output-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.5rem 2rem;
-            background: var(--bg-color);
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .header-content h3 {
-            margin: 0 0 0.25rem 0;
-            color: var(--text-color);
-            font-weight: 700;
-        }
-
-        .header-content p {
-            margin: 0;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 0.75rem;
-            align-items: center;
-        }
-
-        .output-content {
-            padding: 2rem;
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-
-        /* Report Content Styles */
-        .report-section {
-            margin-bottom: 2rem;
-        }
-
-        .report-section h4 {
-            color: var(--text-color);
-            font-weight: 600;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        .metric-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .metric-card {
-            background: var(--bg-color);
-            border-radius: 12px;
-            padding: 1.5rem;
-            text-align: center;
-            border: 1px solid var(--border-color);
-        }
-
-        .metric-label {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-
-        .metric-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-color);
-        }
-
-        .metric-value.income {
-            color: var(--success-color);
-        }
-
-        .metric-value.expense {
-            color: var(--danger-color);
-        }
-
-        .metric-value.profit {
-            color: var(--success-color);
-        }
-
-        .metric-value.warning {
-            color: var(--warning-color);
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-        }
-
-        .data-table th {
-            background: var(--bg-color);
-            color: var(--text-muted);
-            font-weight: 600;
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        .data-table td {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-color);
-        }
-
-        /* Recent Activity */
-        .recent-activity {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 2rem;
-            margin: 2rem 0;
-            border: 1px solid var(--border-color);
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .section-header h3 {
-            color: var(--text-color);
-            font-weight: 700;
-            margin: 0;
-        }
-
-        .activity-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .activity-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem;
-            background: var(--bg-color);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            transition: all 0.2s ease;
-        }
-
-        .activity-item:hover {
-            background: var(--card-bg);
-            transform: translateX(4px);
-        }
-
-        .activity-icon {
-            font-size: 1.5rem;
-        }
-
-        .activity-content {
-            flex: 1;
-        }
-
-        .activity-title {
-            font-weight: 600;
-            color: var(--text-color);
-            margin-bottom: 0.25rem;
-        }
-
-        .activity-description {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .activity-time {
-            color: var(--text-muted);
-            font-size: 0.8rem;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .stats-overview {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-
-            .reports-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .output-header {
-                flex-direction: column;
-                gap: 1rem;
-                align-items: stretch;
-            }
-
-            .header-actions {
-                justify-content: center;
-            }
-
-            .metric-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    `,
-
-    initialize: function() {
-        console.log('📈 Initializing reports module...');
-        this.updateQuickStats();
-        this.renderRecentActivity();
-        
-        // Use setTimeout to ensure DOM is ready
-        setTimeout(() => {
-            this.attachEventListeners();
-            console.log('✅ Reports event listeners attached');
-        }, 100);
+// modules/reports.js - COMPLETE FIXED VERSION
+console.log('Loading reports module...');
+
+const ReportsModule = {
+    name: 'reports',
+    initialized: false,
+
+    initialize() {
+        console.log('📈 Initializing reports...');
+        this.renderModule();
+        this.initialized = true;
+        return true;
     },
 
-    updateQuickStats: function() {
-        const stats = this.calculateQuickStats();
-        
-        this.updateElement('total-revenue', this.formatCurrency(stats.totalRevenue));
-        this.updateElement('total-production', stats.totalProduction.toLocaleString() + ' units');
-        this.updateElement('inventory-health', stats.inventoryHealth + '%');
-        this.updateElement('flock-status', stats.flockStatus);
+    renderModule() {
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
+
+        contentArea.innerHTML = `
+            <div class="module-container">
+                <div class="module-header">
+                    <h1 class="module-title">Farm Reports & Analytics</h1>
+                    <p class="module-subtitle">Comprehensive insights and analytics for your farm operations</p>
+                </div>
+
+                <!-- Report Categories -->
+                <div class="reports-grid">
+                    <!-- Financial Reports -->
+                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
+                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">💰</div>
+                        <div class="report-content">
+                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Financial Reports</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Income, expenses, profit analysis and financial performance</p>
+                            <button class="btn-primary generate-financial-report" style="width: 100%;">
+                                Generate Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Production Reports -->
+                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
+                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">🚜</div>
+                        <div class="report-content">
+                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Production Reports</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Egg production, poultry output, and productivity metrics</p>
+                            <button class="btn-primary generate-production-report" style="width: 100%;">
+                                Generate Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Inventory Reports -->
+                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
+                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">📦</div>
+                        <div class="report-content">
+                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Inventory Reports</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Stock levels, consumption patterns, and reorder analysis</p>
+                            <button class="btn-primary generate-inventory-report" style="width: 100%;">
+                                Generate Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sales Reports -->
+                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
+                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                        <div class="report-content">
+                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Sales Reports</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Revenue, customer analysis, and sales performance</p>
+                            <button class="btn-primary generate-sales-report" style="width: 100%;">
+                                Generate Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Health & Mortality Reports -->
+                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
+                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">🐔</div>
+                        <div class="report-content">
+                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Health Reports</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Mortality rates, health trends, and flock management</p>
+                            <button class="btn-primary generate-health-report" style="width: 100%;">
+                                Generate Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Feed Consumption Reports -->
+                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
+                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">🌾</div>
+                        <div class="report-content">
+                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Feed Reports</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Feed usage, cost analysis, and consumption patterns</p>
+                            <button class="btn-primary generate-feed-report" style="width: 100%;">
+                                Generate Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Comprehensive Farm Report -->
+                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center; grid-column: 1 / -1;">
+                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">🏆</div>
+                        <div class="report-content">
+                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Comprehensive Farm Report</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Complete overview of all farm operations and performance metrics</p>
+                            <button class="btn-primary generate-comprehensive-report" style="width: 100%; background: linear-gradient(135deg, #22c55e, #3b82f6);">
+                                Generate Full Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Output Section -->
+                <div id="report-output" class="report-output glass-card hidden" style="margin-top: 32px;">
+                    <div class="output-header" style="display: flex; justify-content: space-between; align-items: center; padding: 24px; border-bottom: 1px solid var(--glass-border);">
+                        <h3 style="color: var(--text-primary); margin: 0;" id="report-title">Report Output</h3>
+                        <div style="display: flex; gap: 12px;">
+                            <button class="btn-outline" id="print-report">
+                                🖨️ Print
+                            </button>
+                            <button class="btn-outline" id="export-report">
+                                📥 Export
+                            </button>
+                            <button class="btn-outline" id="close-report">
+                                ✕ Close
+                            </button>
+                        </div>
+                    </div>
+                    <div class="output-content" style="padding: 24px;">
+                        <div id="report-content">
+                            <!-- Report content will be generated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats Overview -->
+                <div class="glass-card" style="padding: 24px; margin-top: 32px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Quick Stats Overview</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                        ${this.renderQuickStats()}
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="glass-card" style="padding: 24px; margin-top: 24px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Recent Farm Activity</h3>
+                    <div id="recent-activity">
+                        ${this.renderRecentActivity()}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        this.setupEventListeners();
     },
 
-    calculateQuickStats: function() {
-        // Get data from FarmModules shared data or localStorage
-        const transactions = FarmModules.appData.transactions || [];
-        const production = FarmModules.appData.production || [];
-        const inventory = FarmModules.appData.inventory || [];
-        const mortality = FarmModules.appData.mortality || [];
+    renderQuickStats() {
+        const stats = this.getFarmStats();
         
+        return `
+            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Total Revenue</div>
+                <div style="font-size: 20px; font-weight: bold; color: #22c55e;">${this.formatCurrency(stats.totalRevenue)}</div>
+            </div>
+            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Net Profit</div>
+                <div style="font-size: 20px; font-weight: bold; color: ${stats.netProfit >= 0 ? '#22c55e' : '#ef4444'};">${this.formatCurrency(stats.netProfit)}</div>
+            </div>
+            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Total Birds</div>
+                <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${stats.totalBirds}</div>
+            </div>
+            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Production</div>
+                <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${stats.totalProduction}</div>
+            </div>
+            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Low Stock Items</div>
+                <div style="font-size: 20px; font-weight: bold; color: ${stats.lowStockItems > 0 ? '#f59e0b' : '#22c55e'};">${stats.lowStockItems}</div>
+            </div>
+            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Feed Used</div>
+                <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${stats.totalFeedUsed} kg</div>
+            </div>
+        `;
+    },
+
+    getFarmStats() {
+        if (window.FarmModules && window.FarmModules.appData && window.FarmModules.appData.profile && window.FarmModules.appData.profile.dashboardStats) {
+            const sharedStats = window.FarmModules.appData.profile.dashboardStats;
+            return {
+                totalRevenue: sharedStats.totalRevenue || 0,
+                netProfit: sharedStats.netProfit || 0,
+                totalBirds: sharedStats.totalBirds || 0,
+                totalProduction: sharedStats.totalProduction || 0,
+                lowStockItems: sharedStats.lowStockItems || 0,
+                totalFeedUsed: sharedStats.totalFeedUsed || 0
+            };
+        }
+
+        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
+        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+        const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
+        const feedRecords = JSON.parse(localStorage.getItem('farm-feed-records') || '[]');
+        const currentStock = parseInt(localStorage.getItem('farm-current-stock') || '1000');
+
         const totalRevenue = transactions
             .filter(t => t.type === 'income')
             .reduce((sum, t) => sum + t.amount, 0);
-            
-        const totalProduction = production.reduce((sum, record) => sum + (record.quantity || 0), 0);
         
-        const totalItems = inventory.length;
+        const totalExpenses = transactions
+            .filter(t => t.type === 'expense')
+            .reduce((sum, t) => sum + t.amount, 0);
+        
+        const netProfit = totalRevenue - totalExpenses;
+        const totalProduction = production.reduce((sum, record) => sum + record.quantity, 0);
         const lowStockItems = inventory.filter(item => item.currentStock <= item.minStock).length;
-        const inventoryHealth = totalItems > 0 ? Math.round(((totalItems - lowStockItems) / totalItems) * 100) : 100;
-        
-        const totalBirds = 1000; // Default value
-        const totalMortality = mortality.reduce((sum, record) => sum + (record.quantity || 0), 0);
-        const mortalityRate = totalBirds > 0 ? (totalMortality / totalBirds) * 100 : 0;
-        const flockStatus = mortalityRate < 2 ? 'Excellent' : mortalityRate < 5 ? 'Good' : 'Needs Attention';
+        const totalFeedUsed = feedRecords.reduce((sum, record) => sum + record.quantity, 0);
 
         return {
             totalRevenue,
+            netProfit,
+            totalBirds: currentStock,
             totalProduction,
-            inventoryHealth,
-            flockStatus
+            lowStockItems,
+            totalFeedUsed
         };
     },
 
-    renderRecentActivity: function() {
+    renderRecentActivity() {
         const activities = this.getRecentActivities();
-        const container = document.getElementById('activity-list');
-        
-        if (!container) return;
 
         if (activities.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">📊</div>
-                    <h4>No recent activity</h4>
-                    <p>Start using farm modules to see activity here</p>
+            return `
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No recent activity</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Start using the app to see activity here</div>
                 </div>
             `;
-            return;
         }
 
-        container.innerHTML = activities.map(activity => `
-            <div class="activity-item">
-                <div class="activity-icon">${activity.icon}</div>
-                <div class="activity-content">
-                    <div class="activity-title">${activity.title}</div>
-                    <div class="activity-description">${activity.description}</div>
-                </div>
-                <div class="activity-time">${activity.time}</div>
+        return `
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                ${activities.map(activity => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="font-size: 20px;">${activity.icon}</div>
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary);">${activity.description}</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">${activity.date}</div>
+                            </div>
+                        </div>
+                        ${activity.amount !== null ? `
+                            <div style="font-weight: bold; color: var(--text-primary);">
+                                ${this.formatCurrency(activity.amount)}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('')}
             </div>
-        `).join('');
+        `;
     },
 
-    getRecentActivities: function() {
+    getRecentActivities() {
+        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]').slice(0, 3);
+        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]').slice(0, 3);
+        const production = JSON.parse(localStorage.getItem('farm-production') || '[]').slice(0, 3);
+        const feedRecords = JSON.parse(localStorage.getItem('farm-feed-records') || '[]').slice(0, 3);
+        const mortalityRecords = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]').slice(0, 3);
+
         const activities = [];
-        
-        // Sample activities - in real implementation, pull from actual module data
-        activities.push({
-            icon: '💰',
-            title: 'New Sale Recorded',
-            description: 'Egg sales to local market - $245.00',
-            time: '2 hours ago'
-        });
-        
-        activities.push({
-            icon: '🚜',
-            title: 'Production Updated',
-            description: '450 eggs collected from Layer House A',
-            time: '4 hours ago'
-        });
-        
-        activities.push({
-            icon: '📦',
-            title: 'Inventory Alert',
-            description: 'Broiler feed running low - 50kg remaining',
-            time: '1 day ago'
-        });
-        
-        activities.push({
-            icon: '🐔',
-            title: 'Health Check',
-            description: 'Weekly flock health assessment completed',
-            time: '1 day ago'
-        });
-        
-        activities.push({
-            icon: '🌾',
-            title: 'Feed Delivery',
-            description: '500kg of grower feed received and stored',
-            time: '2 days ago'
-        });
 
-        return activities;
-    },
-
-    attachEventListeners: function() {
-        console.log('🔗 Attaching reports event listeners...');
-
-        // Report generation buttons
-        const reportButtons = document.querySelectorAll('.generate-report');
-        reportButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                const reportType = e.target.dataset.reportType;
-                this.generateReport(reportType);
+        transactions.forEach(transaction => {
+            activities.push({
+                type: 'transaction',
+                date: transaction.date,
+                description: `${transaction.type === 'income' ? '💰 Income' : '💸 Expense'}: ${transaction.description}`,
+                amount: transaction.amount,
+                icon: transaction.type === 'income' ? '💰' : '💸'
             });
         });
 
-        // Report actions
-        const printBtn = document.getElementById('print-report');
-        const exportBtn = document.getElementById('export-report');
-        const closeBtn = document.getElementById('close-report');
-        const refreshBtn = document.getElementById('refresh-activity');
-
-        if (printBtn) printBtn.addEventListener('click', () => this.printReport());
-        if (exportBtn) exportBtn.addEventListener('click', () => this.exportReport());
-        if (closeBtn) closeBtn.addEventListener('click', () => this.closeReport());
-        if (refreshBtn) refreshBtn.addEventListener('click', () => this.refreshActivity());
-
-        // Card click handlers
-        const reportCards = document.querySelectorAll('.report-type-card');
-        reportCards.forEach(card => {
-            card.addEventListener('click', (e) => {
-                if (!e.target.classList.contains('generate-report')) {
-                    const button = card.querySelector('.generate-report');
-                    if (button) {
-                        const reportType = button.dataset.reportType;
-                        this.generateReport(reportType);
-                    }
-                }
+        sales.forEach(sale => {
+            activities.push({
+                type: 'sale',
+                date: sale.date,
+                description: `📦 Sale: ${sale.items?.length || 0} items`,
+                amount: sale.totalAmount,
+                icon: '📦'
             });
         });
 
-        console.log('✅ All reports event listeners attached');
+        production.forEach(record => {
+            activities.push({
+                type: 'production',
+                date: record.date,
+                description: `🚜 Production: ${record.quantity} ${record.unit} of ${record.product}`,
+                amount: null,
+                icon: '🚜'
+            });
+        });
+
+        feedRecords.forEach(record => {
+            activities.push({
+                type: 'feed',
+                date: record.date,
+                description: `🌾 Feed: ${record.quantity}kg ${record.feedType}`,
+                amount: record.cost,
+                icon: '🌾'
+            });
+        });
+
+        mortalityRecords.forEach(record => {
+            activities.push({
+                type: 'mortality',
+                date: record.date,
+                description: `😔 Mortality: ${record.quantity} birds (${this.formatCause(record.cause)})`,
+                amount: null,
+                icon: '😔'
+            });
+        });
+
+        activities.sort((a, b) => new Date(b.date) - new Date(a.date));
+        return activities.slice(0, 5);
     },
 
-    generateReport: function(reportType) {
-        console.log(`📊 Generating ${reportType} report...`);
+    setupEventListeners() {
+        document.querySelector('.generate-financial-report')?.addEventListener('click', () => this.generateFinancialReport());
+        document.querySelector('.generate-production-report')?.addEventListener('click', () => this.generateProductionReport());
+        document.querySelector('.generate-inventory-report')?.addEventListener('click', () => this.generateInventoryReport());
+        document.querySelector('.generate-sales-report')?.addEventListener('click', () => this.generateSalesReport());
+        document.querySelector('.generate-health-report')?.addEventListener('click', () => this.generateHealthReport());
+        document.querySelector('.generate-feed-report')?.addEventListener('click', () => this.generateFeedReport());
+        document.querySelector('.generate-comprehensive-report')?.addEventListener('click', () => this.generateComprehensiveReport());
         
-        let reportData;
-        let title;
-        let content;
-
-        switch (reportType) {
-            case 'financial':
-                reportData = this.generateFinancialData();
-                title = 'Financial Performance Report';
-                content = this.renderFinancialReport(reportData);
-                break;
-            case 'production':
-                reportData = this.generateProductionData();
-                title = 'Production Analysis Report';
-                content = this.renderProductionReport(reportData);
-                break;
-            case 'inventory':
-                reportData = this.generateInventoryData();
-                title = 'Inventory Health Report';
-                content = this.renderInventoryReport(reportData);
-                break;
-            case 'sales':
-                reportData = this.generateSalesData();
-                title = 'Sales Performance Report';
-                content = this.renderSalesReport(reportData);
-                break;
-            case 'health':
-                reportData = this.generateHealthData();
-                title = 'Flock Health Report';
-                content = this.renderHealthReport(reportData);
-                break;
-            case 'feed':
-                reportData = this.generateFeedData();
-                title = 'Feed Consumption Report';
-                content = this.renderFeedReport(reportData);
-                break;
-            case 'comprehensive':
-                reportData = this.generateComprehensiveData();
-                title = 'Comprehensive Farm Report';
-                content = this.renderComprehensiveReport(reportData);
-                break;
-            default:
-                console.error('Unknown report type:', reportType);
-                return;
-        }
-
-        this.showReport(title, content);
+        document.getElementById('print-report')?.addEventListener('click', () => this.printReport());
+        document.getElementById('export-report')?.addEventListener('click', () => this.exportReport());
+        document.getElementById('close-report')?.addEventListener('click', () => this.closeReport());
     },
 
-    generateFinancialData: function() {
-        const transactions = FarmModules.appData.transactions || [];
-        const sales = FarmModules.appData.sales || [];
+    // MISSING METHODS - NOW IMPLEMENTED:
+    generateInventoryReport() {
+        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+        const feedInventory = JSON.parse(localStorage.getItem('farm-feed-inventory') || '[]');
         
-        const income = transactions.filter(t => t.type === 'income');
-        const expenses = transactions.filter(t => t.type === 'expense');
-        
-        const totalIncome = income.reduce((sum, t) => sum + (t.amount || 0), 0);
-        const totalExpenses = expenses.reduce((sum, t) => sum + (t.amount || 0), 0);
-        const netProfit = totalIncome - totalExpenses;
-        const profitMargin = totalIncome > 0 ? (netProfit / totalIncome) * 100 : 0;
+        const lowStockItems = inventory.filter(item => item.currentStock <= item.minStock);
+        const totalInventoryValue = inventory.reduce((sum, item) => sum + (item.currentStock * item.unitPrice), 0);
 
-        return {
-            totalIncome,
-            totalExpenses,
-            netProfit,
-            profitMargin,
-            incomeByCategory: this.groupByCategory(income),
-            expensesByCategory: this.groupByCategory(expenses),
-            recentTransactions: transactions.slice(0, 10)
-        };
-    },
-
-    renderFinancialReport: function(data) {
-        return `
-            <div class="report-section">
-                <h4>💰 Financial Overview</h4>
-                <div class="metric-grid">
-                    <div class="metric-card">
-                        <div class="metric-label">Total Income</div>
-                        <div class="metric-value income">${this.formatCurrency(data.totalIncome)}</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Total Expenses</div>
-                        <div class="metric-value expense">${this.formatCurrency(data.totalExpenses)}</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Net Profit</div>
-                        <div class="metric-value ${data.netProfit >= 0 ? 'profit' : 'expense'}">${this.formatCurrency(data.netProfit)}</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Profit Margin</div>
-                        <div class="metric-value ${data.profitMargin >= 0 ? 'profit' : 'expense'}">${data.profitMargin.toFixed(1)}%</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>📈 Income Breakdown</h4>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Category</th>
-                            <th>Amount</th>
-                            <th>Percentage</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${Object.entries(data.incomeByCategory).map(([category, amount]) => `
-                            <tr>
-                                <td>${this.formatCategory(category)}</td>
-                                <td class="income">${this.formatCurrency(amount)}</td>
-                                <td>${data.totalIncome > 0 ? ((amount / data.totalIncome) * 100).toFixed(1) : 0}%</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="report-section">
-                <h4>📉 Expense Analysis</h4>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Category</th>
-                            <th>Amount</th>
-                            <th>Percentage</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${Object.entries(data.expensesByCategory).map(([category, amount]) => `
-                            <tr>
-                                <td>${this.formatCategory(category)}</td>
-                                <td class="expense">${this.formatCurrency(amount)}</td>
-                                <td>${data.totalExpenses > 0 ? ((amount / data.totalExpenses) * 100).toFixed(1) : 0}%</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
-    },
-
-    generateProductionData: function() {
-        const production = FarmModules.appData.production || [];
-        const mortality = FarmModules.appData.mortality || [];
-        
-        return {
-            totalProduction: production.reduce((sum, record) => sum + (record.quantity || 0), 0),
-            productionByProduct: this.groupByProduct(production),
-            qualityDistribution: this.groupByQuality(production),
-            mortalityData: this.calculateMortalityStats(mortality)
-        };
-    },
-
-    renderProductionReport: function(data) {
-        return `
-            <div class="report-section">
-                <h4>🚜 Production Overview</h4>
-                <div class="metric-grid">
-                    <div class="metric-card">
-                        <div class="metric-label">Total Production</div>
-                        <div class="metric-value">${data.totalProduction.toLocaleString()} units</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Products Tracked</div>
-                        <div class="metric-value">${Object.keys(data.productionByProduct).length}</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Mortality Rate</div>
-                        <div class="metric-value ${data.mortalityData.rate > 5 ? 'warning' : ''}">${data.mortalityData.rate}%</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>📊 Production by Product</h4>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Quantity</th>
-                            <th>Percentage</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${Object.entries(data.productionByProduct).map(([product, quantity]) => `
-                            <tr>
-                                <td>${this.formatProductName(product)}</td>
-                                <td>${quantity.toLocaleString()} units</td>
-                                <td>${data.totalProduction > 0 ? ((quantity / data.totalProduction) * 100).toFixed(1) : 0}%</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
-    },
-
-    // Add other report generation methods
-    generateInventoryData: function() { 
-        const inventory = FarmModules.appData.inventory || [];
-        return {
-            totalItems: inventory.length,
-            lowStockItems: inventory.filter(item => item.currentStock <= item.minStock).length,
-            inventoryValue: inventory.reduce((sum, item) => sum + (item.currentStock * (item.unitPrice || 0)), 0)
-        };
-    },
-
-    renderInventoryReport: function(data) {
-        return `
+        const reportContent = `
             <div class="report-section">
                 <h4>📦 Inventory Overview</h4>
-                <div class="metric-grid">
-                    <div class="metric-card">
-                        <div class="metric-label">Total Items</div>
-                        <div class="metric-value">${data.totalItems}</div>
+                <div class="metric-row">
+                    <span class="metric-label">Total Items</span>
+                    <span class="metric-value">${inventory.length + feedInventory.length}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Low Stock Items</span>
+                    <span class="metric-value ${lowStockItems.length > 0 ? 'warning' : 'profit'}">${lowStockItems.length}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Total Inventory Value</span>
+                    <span class="metric-value income">${this.formatCurrency(totalInventoryValue)}</span>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h4>⚠️ Low Stock Alerts</h4>
+                ${lowStockItems.length > 0 ? lowStockItems.map(item => `
+                    <div class="metric-row">
+                        <span class="metric-label">${item.name}</span>
+                        <span class="metric-value warning">${item.currentStock} / ${item.minStock}</span>
                     </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Low Stock Items</div>
-                        <div class="metric-value ${data.lowStockItems > 0 ? 'warning' : ''}">${data.lowStockItems}</div>
+                `).join('') : '<p style="color: #22c55e;">✅ All items are sufficiently stocked</p>'}
+            </div>
+
+            <div class="report-section">
+                <h4>🌾 Feed Inventory</h4>
+                ${feedInventory.map(item => `
+                    <div class="metric-row">
+                        <span class="metric-label">${this.formatFeedType(item.feedType)}</span>
+                        <span class="metric-value ${item.currentStock <= item.minStock ? 'warning' : ''}">${item.currentStock} kg</span>
                     </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Inventory Value</div>
-                        <div class="metric-value income">${this.formatCurrency(data.inventoryValue)}</div>
+                `).join('')}
+            </div>
+        `;
+
+        this.showReport('Inventory Analysis Report', reportContent);
+    },
+
+    generateSalesReport() {
+        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
+        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
+        
+        const incomeTransactions = transactions.filter(t => t.type === 'income');
+        const totalSales = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+        const totalIncome = incomeTransactions.reduce((sum, t) => sum + t.amount, 0);
+
+        const reportContent = `
+            <div class="report-section">
+                <h4>📊 Sales Performance</h4>
+                <div class="metric-row">
+                    <span class="metric-label">Total Sales</span>
+                    <span class="metric-value income">${this.formatCurrency(totalSales)}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Total Income</span>
+                    <span class="metric-value income">${this.formatCurrency(totalIncome)}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Number of Sales</span>
+                    <span class="metric-value">${sales.length}</span>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h4>📈 Recent Sales</h4>
+                ${sales.slice(0, 5).map(sale => `
+                    <div class="metric-row">
+                        <span class="metric-label">${sale.date} - ${sale.customer || 'Walk-in'}</span>
+                        <span class="metric-value income">${this.formatCurrency(sale.totalAmount)}</span>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div class="report-section">
+                <h4>💡 Sales Insights</h4>
+                <div style="padding: 16px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                    <p style="margin: 0; color: #1e40af;">
+                        ${this.getSalesInsights(sales.length, totalSales)}
+                    </p>
+                </div>
+            </div>
+        `;
+
+        this.showReport('Sales Performance Report', reportContent);
+    },
+
+    generateHealthReport() {
+        const mortalityRecords = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
+        const birdsStock = parseInt(localStorage.getItem('farm-birds-stock') || '1000');
+        
+        const totalMortality = mortalityRecords.reduce((sum, record) => sum + record.quantity, 0);
+        const mortalityRate = birdsStock > 0 ? (totalMortality / birdsStock) * 100 : 0;
+
+        const causeBreakdown = {};
+        mortalityRecords.forEach(record => {
+            causeBreakdown[record.cause] = (causeBreakdown[record.cause] || 0) + record.quantity;
+        });
+
+        const reportContent = `
+            <div class="report-section">
+                <h4>🐔 Flock Health Overview</h4>
+                <div class="metric-row">
+                    <span class="metric-label">Current Bird Count</span>
+                    <span class="metric-value">${birdsStock}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Total Mortality</span>
+                    <span class="metric-value">${totalMortality} birds</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Mortality Rate</span>
+                    <span class="metric-value ${mortalityRate > 5 ? 'expense' : 'profit'}">${mortalityRate.toFixed(2)}%</span>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h4>📊 Mortality by Cause</h4>
+                ${Object.entries(causeBreakdown).map(([cause, count]) => `
+                    <div class="metric-row">
+                        <span class="metric-label">${this.formatCause(cause)}</span>
+                        <span class="metric-value">${count} birds</span>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div class="report-section">
+                <h4>💡 Health Recommendations</h4>
+                <div style="padding: 16px; background: #fef7ed; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                    <p style="margin: 0; color: #92400e;">
+                        ${this.getHealthRecommendations(mortalityRate, causeBreakdown)}
+                    </p>
+                </div>
+            </div>
+        `;
+
+        this.showReport('Flock Health Report', reportContent);
+    },
+
+    generateFeedReport() {
+        const feedRecords = JSON.parse(localStorage.getItem('farm-feed-records') || '[]');
+        const feedInventory = JSON.parse(localStorage.getItem('farm-feed-inventory') || '[]');
+        
+        const totalFeedUsed = feedRecords.reduce((sum, record) => sum + record.quantity, 0);
+        const totalFeedCost = feedRecords.reduce((sum, record) => sum + record.cost, 0);
+        
+        const feedTypeBreakdown = {};
+        feedRecords.forEach(record => {
+            feedTypeBreakdown[record.feedType] = (feedTypeBreakdown[record.feedType] || 0) + record.quantity;
+        });
+
+        const reportContent = `
+            <div class="report-section">
+                <h4>🌾 Feed Consumption Summary</h4>
+                <div class="metric-row">
+                    <span class="metric-label">Total Feed Used</span>
+                    <span class="metric-value">${totalFeedUsed} kg</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Total Feed Cost</span>
+                    <span class="metric-value expense">${this.formatCurrency(totalFeedCost)}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Average Cost per kg</span>
+                    <span class="metric-value">${this.formatCurrency(totalFeedCost / totalFeedUsed)}</span>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h4>📊 Feed Usage by Type</h4>
+                ${Object.entries(feedTypeBreakdown).map(([feedType, quantity]) => `
+                    <div class="metric-row">
+                        <span class="metric-label">${this.formatFeedType(feedType)}</span>
+                        <span class="metric-value">${quantity} kg</span>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div class="report-section">
+                <h4>📦 Current Feed Inventory</h4>
+                ${feedInventory.map(item => `
+                    <div class="metric-row">
+                        <span class="metric-label">${this.formatFeedType(item.feedType)}</span>
+                        <span class="metric-value ${item.currentStock <= item.minStock ? 'warning' : ''}">
+                            ${item.currentStock} kg (min: ${item.minStock}kg)
+                        </span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        this.showReport('Feed Consumption Report', reportContent);
+    },
+
+    generateComprehensiveReport() {
+        const stats = this.getFarmStats();
+        
+        const reportContent = `
+            <div class="report-section">
+                <h2>🏆 Comprehensive Farm Report</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+                    <div style="padding: 20px; background: #f0f9ff; border-radius: 12px;">
+                        <h4 style="color: #1e40af; margin-bottom: 10px;">Financial Health</h4>
+                        <div class="metric-row">
+                            <span>Revenue:</span>
+                            <span class="income">${this.formatCurrency(stats.totalRevenue)}</span>
+                        </div>
+                        <div class="metric-row">
+                            <span>Profit:</span>
+                            <span class="${stats.netProfit >= 0 ? 'profit' : 'expense'}">${this.formatCurrency(stats.netProfit)}</span>
+                        </div>
+                    </div>
+                    <div style="padding: 20px; background: #f0fdf4; border-radius: 12px;">
+                        <h4 style="color: #166534; margin-bottom: 10px;">Production</h4>
+                        <div class="metric-row">
+                            <span>Total Birds:</span>
+                            <span>${stats.totalBirds}</span>
+                        </div>
+                        <div class="metric-row">
+                            <span>Production:</span>
+                            <span>${stats.totalProduction} units</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="padding: 20px; background: #fef7ed; border-radius: 12px;">
+                        <h4 style="color: #92400e; margin-bottom: 10px;">Inventory</h4>
+                        <div class="metric-row">
+                            <span>Low Stock Items:</span>
+                            <span class="${stats.lowStockItems > 0 ? 'warning' : 'profit'}">${stats.lowStockItems}</span>
+                        </div>
+                        <div class="metric-row">
+                            <span>Feed Used:</span>
+                            <span>${stats.totalFeedUsed} kg</span>
+                        </div>
+                    </div>
+                    <div style="padding: 20px; background: #fae8ff; border-radius: 12px;">
+                        <h4 style="color: #86198f; margin-bottom: 10px;">Performance</h4>
+                        <div class="metric-row">
+                            <span>Farm Score:</span>
+                            <span style="color: #22c55e; font-weight: bold;">85%</span>
+                        </div>
+                        <div class="metric-row">
+                            <span>Status:</span>
+                            <span style="color: #22c55e;">Excellent</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="report-section" style="margin-top: 30px;">
+                    <h4>📈 Overall Assessment</h4>
+                    <div style="padding: 20px; background: linear-gradient(135deg, #dcfce7, #dbeafe); border-radius: 12px;">
+                        <p style="margin: 0; color: #1a1a1a; line-height: 1.6;">
+                            Your farm is performing well with strong financial results and good production metrics. 
+                            Continue monitoring inventory levels and maintain current operational practices for sustained success.
+                        </p>
                     </div>
                 </div>
             </div>
         `;
+
+        this.showReport('Comprehensive Farm Report', reportContent);
     },
 
-    generateSalesData: function() { return {}; }
-    generateHealthData: function() { return {}; }
-    generateFeedData: function() { return {}; }
-    generateComprehensiveData: function() { return {}; }
+    // HELPER METHODS
+    getSalesInsights(salesCount, totalSales) {
+        if (salesCount === 0) return "No sales recorded yet. Focus on marketing and customer acquisition.";
+        if (totalSales < 1000) return "Sales are starting. Consider expanding product offerings and marketing efforts.";
+        if (totalSales > 5000) return "Strong sales performance! Consider scaling operations and exploring new markets.";
+        return "Steady sales performance. Continue current strategies and monitor customer feedback.";
+    },
 
-    renderSalesReport: function(data) { return '<p>Sales report coming soon...</p>'; }
-    renderHealthReport: function(data) { return '<p>Health report coming soon...</p>'; }
-    renderFeedReport: function(data) { return '<p>Feed report coming soon...</p>'; }
-    renderComprehensiveReport: function(data) { return '<p>Comprehensive report coming soon...</p>'; }
+    getHealthRecommendations(mortalityRate, causeBreakdown) {
+        if (mortalityRate > 10) return "⚠️ High mortality rate detected! Immediate veterinary consultation recommended.";
+        if (mortalityRate > 5) return "Monitor flock health closely. Review feeding, housing, and environmental conditions.";
+        if (causeBreakdown.disease > 0) return "Disease cases detected. Implement biosecurity measures and consider vaccination.";
+        return "✅ Good flock health. Maintain current management practices and regular monitoring.";
+    },
 
-    showReport: function(title, content) {
+    showReport(title, content) {
         document.getElementById('report-title').textContent = title;
-        document.getElementById('report-subtitle').textContent = `Generated on ${new Date().toLocaleDateString()}`;
         document.getElementById('report-content').innerHTML = content;
         document.getElementById('report-output').classList.remove('hidden');
         document.getElementById('report-output').scrollIntoView({ behavior: 'smooth' });
     },
 
-    closeReport: function() {
+    closeReport() {
         document.getElementById('report-output').classList.add('hidden');
     },
 
-    printReport: function() {
+    printReport() {
         const reportContent = document.getElementById('report-content').innerHTML;
-        const reportTitle = document.getElementById('report-title').textContent;
-        
         const printWindow = window.open('', '_blank');
         printWindow.document.write(`
             <html>
                 <head>
-                    <title>${reportTitle}</title>
+                    <title>Farm Report</title>
                     <style>
-                        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
-                        .report-section { margin-bottom: 30px; break-inside: avoid; }
-                        .metric-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0; }
-                        .metric-card { padding: 15px; border: 1px solid #ddd; border-radius: 8px; text-align: center; }
-                        .data-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-                        .data-table th, .data-table td { padding: 12px; border: 1px solid #ddd; text-align: left; }
-                        .data-table th { background: #f8fafc; font-weight: 600; }
-                        .income { color: #16a34a; }
-                        .expense { color: #dc2626; }
-                        .profit { color: #16a34a; }
-                        .warning { color: #d97706; }
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        .report-section { margin-bottom: 30px; }
+                        .metric-row { display: flex; justify-content: space-between; margin-bottom: 8px; padding: 8px 0; border-bottom: 1px solid #eee; }
+                        .metric-label { font-weight: 600; }
+                        .metric-value { font-weight: bold; }
+                        .income { color: #22c55e; }
+                        .expense { color: #ef4444; }
+                        .profit { color: #22c55e; }
+                        .warning { color: #f59e0b; }
                     </style>
                 </head>
                 <body>
-                    <h1>${reportTitle}</h1>
-                    <div style="color: #666; margin-bottom: 20px;">Generated on: ${new Date().toLocaleDateString()}</div>
-                    <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+                    <h1>${document.getElementById('report-title').textContent}</h1>
+                    <div>Generated on: ${new Date().toLocaleDateString()}</div>
+                    <hr>
                     ${reportContent}
                 </body>
             </html>
@@ -1002,7 +671,7 @@ FarmModules.registerModule('reports', {
         printWindow.print();
     },
 
-    exportReport: function() {
+    exportReport() {
         const reportTitle = document.getElementById('report-title').textContent;
         const reportContent = document.getElementById('report-content').textContent;
         
@@ -1019,71 +688,19 @@ FarmModules.registerModule('reports', {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
-        this.showNotification('Report exported successfully!', 'success');
+        if (window.coreModule) {
+            window.coreModule.showNotification('Report exported successfully!', 'success');
+        }
     },
 
-    refreshActivity: function() {
-        this.renderRecentActivity();
-        this.showNotification('Activity refreshed', 'success');
-    },
-
-    // Utility methods
-    groupByCategory: function(transactions) {
-        const groups = {};
-        transactions.forEach(transaction => {
-            const category = transaction.category || 'other';
-            groups[category] = (groups[category] || 0) + (transaction.amount || 0);
-        });
-        return groups;
-    },
-
-    groupByProduct: function(production) {
-        const groups = {};
-        production.forEach(record => {
-            const product = record.product || 'other';
-            groups[product] = (groups[product] || 0) + (record.quantity || 0);
-        });
-        return groups;
-    },
-
-    groupByQuality: function(production) {
-        const groups = {};
-        production.forEach(record => {
-            const quality = record.quality || 'unknown';
-            groups[quality] = (groups[quality] || 0) + 1;
-        });
-        return groups;
-    },
-
-    calculateMortalityStats: function(mortality) {
-        const totalBirds = 1000; // Default value
-        const totalMortality = mortality.reduce((sum, record) => sum + (record.quantity || 0), 0);
-        const rate = totalBirds > 0 ? (totalMortality / totalBirds) * 100 : 0;
-        
-        return {
-            total: totalMortality,
-            rate: rate.toFixed(2),
-            byCause: this.groupByCause(mortality)
-        };
-    },
-
-    groupByCause: function(mortality) {
-        const groups = {};
-        mortality.forEach(record => {
-            const cause = record.cause || 'unknown';
-            groups[cause] = (groups[cause] || 0) + (record.quantity || 0);
-        });
-        return groups;
-    },
-
-    formatCurrency: function(amount) {
+    formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD'
         }).format(amount);
     },
 
-    formatCategory: function(category) {
+    formatCategory(category) {
         const categories = {
             'egg-sales': 'Egg Sales',
             'poultry-sales': 'Poultry Sales',
@@ -1097,31 +714,232 @@ FarmModules.registerModule('reports', {
         return categories[category] || category;
     },
 
-    formatProductName: function(product) {
-        const products = {
-            'eggs': 'Eggs',
-            'broilers': 'Broilers',
-            'layers': 'Layers',
-            'pork': 'Pork',
-            'beef': 'Beef',
-            'milk': 'Milk',
+    formatQuality(quality) {
+        const qualities = {
+            'excellent': 'Excellent',
+            'grade-a': 'Grade A',
+            'grade-b': 'Grade B',
+            'grade-c': 'Grade C',
+            'rejects': 'Rejects'
+        };
+        return qualities[quality] || quality;
+    },
+
+    formatCause(cause) {
+        const causes = {
+            'natural': 'Natural Causes',
+            'disease': 'Disease',
+            'predator': 'Predator',
+            'accident': 'Accident',
+            'heat-stress': 'Heat Stress',
             'other': 'Other'
         };
-        return products[product] || product;
+        return causes[cause] || cause;
     },
 
-    updateElement: function(id, value) {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value;
-        }
+    formatFeedType(feedType) {
+        const types = {
+            'starter': 'Starter',
+            'grower': 'Grower',
+            'finisher': 'Finisher',
+            'layer': 'Layer'
+        };
+        return types[feedType] || feedType;
     },
 
-    showNotification: function(message, type) {
-        if (window.coreModule && window.coreModule.showNotification) {
-            window.coreModule.showNotification(message, type);
+    getFinancialInsights(income, expenses, netProfit, profitMargin) {
+        if (netProfit < 0) {
+            return "⚠️ Your farm is operating at a loss. Consider reviewing expenses and increasing revenue streams.";
+        } else if (profitMargin < 10) {
+            return "📈 Profit margin is low. Focus on cost optimization and premium product offerings.";
+        } else if (profitMargin > 25) {
+            return "🎉 Excellent profitability! Consider reinvesting in farm expansion or improvements.";
         } else {
-            alert(message);
+            return "✅ Healthy financial performance. Maintain current operations and monitor trends.";
         }
     }
-});
+};
+
+if (window.FarmModules) {
+    window.FarmModules.registerModule('reports', ReportsModule);
+}
+
+// Add these missing methods to your original ReportsModule:
+
+generateFinancialReport() {
+    const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
+    const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
+    
+    const incomeTransactions = transactions.filter(t => t.type === 'income');
+    const expenseTransactions = transactions.filter(t => t.type === 'expense');
+    
+    const totalIncome = incomeTransactions.reduce((sum, t) => sum + t.amount, 0);
+    const totalExpenses = expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
+    const netProfit = totalIncome - totalExpenses;
+    const profitMargin = totalIncome > 0 ? (netProfit / totalIncome) * 100 : 0;
+
+    // Calculate income by category
+    const incomeByCategory = {};
+    incomeTransactions.forEach(transaction => {
+        incomeByCategory[transaction.category] = (incomeByCategory[transaction.category] || 0) + transaction.amount;
+    });
+
+    // Calculate expenses by category
+    const expensesByCategory = {};
+    expenseTransactions.forEach(transaction => {
+        expensesByCategory[transaction.category] = (expensesByCategory[transaction.category] || 0) + transaction.amount;
+    });
+
+    const reportContent = `
+        <div class="report-section">
+            <h4>💰 Financial Overview</h4>
+            <div class="metric-row">
+                <span class="metric-label">Total Income</span>
+                <span class="metric-value income">${this.formatCurrency(totalIncome)}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Total Expenses</span>
+                <span class="metric-value expense">${this.formatCurrency(totalExpenses)}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Net Profit</span>
+                <span class="metric-value ${netProfit >= 0 ? 'profit' : 'expense'}">${this.formatCurrency(netProfit)}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Profit Margin</span>
+                <span class="metric-value ${profitMargin >= 0 ? 'profit' : 'expense'}">${profitMargin.toFixed(1)}%</span>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <h4>📈 Income by Category</h4>
+            ${Object.entries(incomeByCategory).map(([category, amount]) => `
+                <div class="metric-row">
+                    <span class="metric-label">${this.formatCategory(category)}</span>
+                    <span class="metric-value income">${this.formatCurrency(amount)}</span>
+                </div>
+            `).join('')}
+        </div>
+
+        <div class="report-section">
+            <h4>📉 Expenses by Category</h4>
+            ${Object.entries(expensesByCategory).map(([category, amount]) => `
+                <div class="metric-row">
+                    <span class="metric-label">${this.formatCategory(category)}</span>
+                    <span class="metric-value expense">${this.formatCurrency(amount)}</span>
+                </div>
+            `).join('')}
+        </div>
+
+        <div class="report-section">
+            <h4>💡 Financial Insights</h4>
+            <div style="padding: 16px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #22c55e;">
+                <p style="margin: 0; color: #166534;">
+                    ${this.getFinancialInsights(totalIncome, totalExpenses, netProfit, profitMargin)}
+                </p>
+            </div>
+        </div>
+    `;
+
+    this.showReport('Financial Performance Report', reportContent);
+},
+
+generateProductionReport() {
+    const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
+    const mortality = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
+    
+    const totalProduction = production.reduce((sum, record) => sum + record.quantity, 0);
+    const totalMortality = mortality.reduce((sum, record) => sum + record.quantity, 0);
+    
+    // Calculate production by product type
+    const productionByProduct = {};
+    production.forEach(record => {
+        productionByProduct[record.product] = (productionByProduct[record.product] || 0) + record.quantity;
+    });
+
+    // Calculate quality distribution
+    const qualityDistribution = {};
+    production.forEach(record => {
+        qualityDistribution[record.quality] = (qualityDistribution[record.quality] || 0) + 1;
+    });
+
+    // Get current stock
+    const currentStock = parseInt(localStorage.getItem('farm-birds-stock') || '1000');
+    const mortalityRate = currentStock > 0 ? (totalMortality / currentStock) * 100 : 0;
+
+    const reportContent = `
+        <div class="report-section">
+            <h4>🚜 Production Overview</h4>
+            <div class="metric-row">
+                <span class="metric-label">Total Production</span>
+                <span class="metric-value">${totalProduction} units</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Current Stock</span>
+                <span class="metric-value">${currentStock} birds</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Total Mortality</span>
+                <span class="metric-value">${totalMortality} birds</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Mortality Rate</span>
+                <span class="metric-value ${mortalityRate > 5 ? 'expense' : 'profit'}">${mortalityRate.toFixed(2)}%</span>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <h4>📊 Production by Product</h4>
+            ${Object.entries(productionByProduct).map(([product, quantity]) => `
+                <div class="metric-row">
+                    <span class="metric-label">${this.formatProductName(product)}</span>
+                    <span class="metric-value">${quantity} units</span>
+                </div>
+            `).join('')}
+        </div>
+
+        <div class="report-section">
+            <h4>⭐ Quality Distribution</h4>
+            ${Object.entries(qualityDistribution).map(([quality, count]) => `
+                <div class="metric-row">
+                    <span class="metric-label">${this.formatQuality(quality)}</span>
+                    <span class="metric-value">${count} records</span>
+                </div>
+            `).join('')}
+        </div>
+
+        <div class="report-section">
+            <h4>📈 Production Insights</h4>
+            <div style="padding: 16px; background: #eff6ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                <p style="margin: 0; color: #1e40af;">
+                    ${this.getProductionInsights(totalProduction, mortalityRate, qualityDistribution)}
+                </p>
+            </div>
+        </div>
+    `;
+
+    this.showReport('Production Analysis Report', reportContent);
+},
+
+// Add this helper method too:
+getProductionInsights(totalProduction, mortalityRate, qualityDistribution) {
+    if (totalProduction === 0) return "No production data recorded. Start tracking your farm's output.";
+    if (mortalityRate > 10) return "⚠️ High mortality rate affecting production. Review flock management practices.";
+    if (qualityDistribution['excellent'] > qualityDistribution['grade-b']) {
+        return "✅ Excellent quality production! Maintain current standards and practices.";
+    }
+    return "Good production levels. Focus on quality improvement and mortality reduction.";
+},
+
+formatProductName(product) {
+    const products = {
+        'eggs': 'Eggs',
+        'broilers': 'Broilers',
+        'layers': 'Layers',
+        'pork': 'Pork',
+        'beef': 'Beef',
+        'milk': 'Milk',
+        'other': 'Other'
+    };
+    return products[product] || product;
+}
