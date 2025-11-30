@@ -1,4 +1,4 @@
-// modules/production.js - COMPLETELY REWRITTEN WITH PROPER STYLEMANAGER INTEGRATION
+// modules/production.js - COMPLETE WITH MODALS AND REPORTS
 console.log('Loading production module...');
 
 const ProductionModule = {
@@ -84,6 +84,26 @@ const ProductionModule = {
                 quality: 'excellent', 
                 batch: 'BATCH-002',
                 notes: 'Weekly harvest' 
+            },
+            { 
+                id: 4, 
+                date: '2024-03-12', 
+                product: 'eggs', 
+                quantity: 380, 
+                unit: 'pieces', 
+                quality: 'grade-b', 
+                batch: 'BATCH-001',
+                notes: 'Lower yield due to weather' 
+            },
+            { 
+                id: 5, 
+                date: '2024-03-11', 
+                product: 'layers', 
+                quantity: 25, 
+                unit: 'birds', 
+                quality: 'standard', 
+                batch: 'BATCH-003',
+                notes: 'Regular replacement' 
             }
         ];
     },
@@ -287,6 +307,25 @@ const ProductionModule = {
                         </div>
                     </div>
                 </div>
+
+                <!-- Production Report Modal -->
+                <div id="production-report-modal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 id="production-report-title">Production Report</h3>
+                            <button class="modal-close">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="production-report-content">
+                                <!-- Report content will be inserted here -->
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-text" id="print-production-report">🖨️ Print</button>
+                            <button class="btn btn-primary modal-close">Close</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
 
@@ -440,6 +479,21 @@ const ProductionModule = {
                 this.deleteProduction(recordId);
             }
         });
+
+        // Modal close handlers
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-close') || e.target.closest('.modal-close')) {
+                this.closeModal('production-report-modal');
+            }
+            if (e.target.classList.contains('modal')) {
+                this.closeModal('production-report-modal');
+            }
+        });
+
+        // Print report
+        document.getElementById('print-production-report')?.addEventListener('click', () => {
+            this.printProductionReport();
+        });
     },
 
     handleProductionSubmit(e) {
@@ -517,7 +571,10 @@ const ProductionModule = {
     },
 
     generateProductionReport(type = 'overview') {
+        console.log('📊 Generating production report:', type);
+        
         const stats = this.calculateDetailedStats();
+
         let reportTitle = 'Production Overview';
         let reportContent = '';
 
@@ -561,6 +618,115 @@ const ProductionModule = {
                     </div>
                 </div>
             </div>
+
+            <div class="report-section">
+                <h4>📈 Product Distribution</h4>
+                <div class="distribution-list">
+                    ${Object.entries(stats.productDistribution).map(([product, quantity]) => `
+                        <div class="distribution-item">
+                            <div class="product-info">
+                                <span class="product-icon">${this.getProductIcon(product)}</span>
+                                <span class="product-name">${this.formatProductName(product)}</span>
+                            </div>
+                            <div class="product-quantity">${quantity} units</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h4>⭐ Quality Distribution</h4>
+                <div class="distribution-list">
+                    ${Object.entries(stats.qualityDistribution).map(([quality, count]) => `
+                        <div class="distribution-item">
+                            <span class="quality-name">${this.formatQuality(quality)}</span>
+                            <span class="quality-count">${count} records</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    },
+
+    generateTrendsReport(stats) {
+        // Calculate weekly trends
+        const weeklyTrends = this.calculateWeeklyTrends();
+        
+        return `
+            <div class="report-section">
+                <h4>📈 Weekly Production Trends</h4>
+                <div class="trends-grid">
+                    ${weeklyTrends.map(week => `
+                        <div class="trend-item">
+                            <div class="trend-week">${week.week}</div>
+                            <div class="trend-eggs">🥚 ${week.eggs}</div>
+                            <div class="trend-birds">🐔 ${week.birds}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h4>📅 Recent Activity</h4>
+                <div class="activity-list">
+                    ${this.productionData.slice(0, 8).map(record => `
+                        <div class="activity-item">
+                            <div class="activity-date">${this.formatDate(record.date)}</div>
+                            <div class="activity-product">${this.getProductIcon(record.product)} ${this.formatProductName(record.product)}</div>
+                            <div class="activity-quantity">${record.quantity} ${record.unit}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    },
+
+    generateQualityReport(stats) {
+        return `
+            <div class="report-section">
+                <h4>⭐ Quality Overview</h4>
+                <div class="quality-stats">
+                    <div class="quality-item excellent">
+                        <div class="quality-label">Excellent</div>
+                        <div class="quality-count">${stats.qualityDistribution.excellent || 0}</div>
+                    </div>
+                    <div class="quality-item grade-a">
+                        <div class="quality-label">Grade A</div>
+                        <div class="quality-count">${stats.qualityDistribution['grade-a'] || 0}</div>
+                    </div>
+                    <div class="quality-item grade-b">
+                        <div class="quality-label">Grade B</div>
+                        <div class="quality-count">${stats.qualityDistribution['grade-b'] || 0}</div>
+                    </div>
+                    <div class="quality-item standard">
+                        <div class="quality-label">Standard</div>
+                        <div class="quality-count">${stats.qualityDistribution.standard || 0}</div>
+                    </div>
+                    <div class="quality-item rejects">
+                        <div class="quality-label">Rejects</div>
+                        <div class="quality-count">${stats.qualityDistribution.rejects || 0}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h4>📊 Quality by Product</h4>
+                <div class="product-quality-list">
+                    ${Object.entries(stats.productQuality).map(([product, qualities]) => `
+                        <div class="product-quality-item">
+                            <div class="product-header">
+                                <span class="product-icon">${this.getProductIcon(product)}</span>
+                                <span class="product-name">${this.formatProductName(product)}</span>
+                            </div>
+                            <div class="quality-breakdown">
+                                ${Object.entries(qualities).map(([quality, count]) => `
+                                    <span class="quality-tag ${quality}">${this.formatQuality(quality)}: ${count}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
         `;
     },
 
@@ -580,6 +746,28 @@ const ProductionModule = {
                            (record.product === 'broilers' || record.product === 'layers'))
             .reduce((sum, record) => sum + record.quantity, 0);
 
+        // Product distribution
+        const productDistribution = {};
+        this.productionData.forEach(record => {
+            productDistribution[record.product] = (productDistribution[record.product] || 0) + record.quantity;
+        });
+
+        // Quality distribution
+        const qualityDistribution = {};
+        this.productionData.forEach(record => {
+            qualityDistribution[record.quality] = (qualityDistribution[record.quality] || 0) + 1;
+        });
+
+        // Product quality breakdown
+        const productQuality = {};
+        this.productionData.forEach(record => {
+            if (!productQuality[record.product]) {
+                productQuality[record.product] = {};
+            }
+            productQuality[record.product][record.quality] = (productQuality[record.product][record.quality] || 0) + 1;
+        });
+
+        // Average quality
         const qualityScores = {
             'excellent': 5, 'grade-a': 4, 'grade-b': 3, 'standard': 2, 'rejects': 1
         };
@@ -591,21 +779,104 @@ const ProductionModule = {
             totalRecords: this.productionData.length,
             todayEggs,
             weekBirds,
-            avgQuality
+            avgQuality,
+            productDistribution,
+            qualityDistribution,
+            productQuality
         };
     },
 
-    generateTrendsReport(stats) {
-        return `<div class="report-section"><p>Trends report coming soon...</p></div>`;
-    },
+    calculateWeeklyTrends() {
+        const weeks = [];
+        for (let i = 3; i >= 0; i--) {
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - (i * 7));
+            const endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + 6);
+            
+            const weekStr = `Week ${4-i}`;
+            const weekProduction = this.productionData.filter(record => {
+                const recordDate = new Date(record.date);
+                return recordDate >= startDate && recordDate <= endDate;
+            });
 
-    generateQualityReport(stats) {
-        return `<div class="report-section"><p>Quality report coming soon...</p></div>`;
+            const eggs = weekProduction
+                .filter(record => record.product === 'eggs')
+                .reduce((sum, record) => sum + record.quantity, 0);
+
+            const birds = weekProduction
+                .filter(record => record.product === 'broilers' || record.product === 'layers')
+                .reduce((sum, record) => sum + record.quantity, 0);
+
+            weeks.push({ week: weekStr, eggs, birds });
+        }
+        return weeks;
     },
 
     showProductionReportModal(title, content) {
-        // Simple alert for now - can be enhanced with proper modal
-        alert(`${title}\n\n${content.replace(/<[^>]*>/g, '')}`);
+        document.getElementById('production-report-title').textContent = title;
+        document.getElementById('production-report-content').innerHTML = content;
+        this.openModal('production-report-modal');
+    },
+
+    openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('hidden');
+            
+            // Add close handlers
+            const closeButtons = modal.querySelectorAll('.modal-close');
+            closeButtons.forEach(btn => {
+                btn.onclick = () => this.closeModal(modalId);
+            });
+            
+            // Close when clicking outside
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    this.closeModal(modalId);
+                }
+            };
+        }
+    },
+
+    closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    },
+
+    printProductionReport() {
+        const reportContent = document.getElementById('production-report-content').innerHTML;
+        const reportTitle = document.getElementById('production-report-title').textContent;
+        
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>${reportTitle}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
+                        h4 { color: #1a1a1a; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+                        .report-section { margin-bottom: 20px; break-inside: avoid; }
+                        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 10px 0; }
+                        .stat-item { padding: 10px; border: 1px solid #ddd; border-radius: 5px; text-align: center; }
+                        .stat-label { font-size: 12px; color: #666; }
+                        .stat-number { font-size: 18px; font-weight: bold; }
+                        .distribution-list { margin: 10px 0; }
+                        .distribution-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; }
+                    </style>
+                </head>
+                <body>
+                    <h2>${reportTitle}</h2>
+                    <div>Generated on: ${new Date().toLocaleDateString()}</div>
+                    <hr>
+                    ${reportContent}
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
     },
 
     exportProduction() {
