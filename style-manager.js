@@ -530,13 +530,12 @@ const StyleManager = {
         });
     }
 
-    // ✅ Inject module-specific grid layout
+    // ✅ Apply module-specific grid layout
     const config = this.moduleConfigs[moduleId];
     if (config?.statsGrid) {
         element.style.setProperty('--stats-grid', config.statsGrid);
     }
 },
-
 
     /**
      * Update all active modules with current theme
