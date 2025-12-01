@@ -1,4 +1,4 @@
-// modules/dashboard.js — HYBRID PATCH
+// modules/dashboard.js — FULL HYBRID IMPLEMENTATION
 console.log('Loading dashboard module...');
 
 const DashboardModule = {
@@ -12,7 +12,7 @@ const DashboardModule = {
         this.element = document.getElementById('content-area');
         if (!this.element) return false;
 
-        // Register with StyleManager but keep original look
+        // Register with StyleManager
         if (window.StyleManager?.registerModule) {
             StyleManager.registerModule(this.id, this.element, this);
             const cfg = StyleManager.moduleConfigs?.[this.id];
@@ -96,5 +96,100 @@ const DashboardModule = {
         `;
     },
 
-    // … keep your existing event handlers, stat updates, and activity logic unchanged …
-};
+    setupEventListeners() {
+        this.element.querySelectorAll('.quick-action-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.handleQuickAction(e.currentTarget.dataset.action));
+        });
+
+        const refreshBtn = this.element.querySelector('#refresh-stats-btn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.loadAndDisplayStats();
+                window.coreModule?.showNotification?.('Stats refreshed!', 'success');
+            });
+        }
+
+        document.addEventListener('financialStatsUpdated', (e) => {
+            if (e?.detail) this.updateDashboardStats(e.detail);
+        });
+    },
+
+    loadAndDisplayStats() {
+        const stats = this.getProfileStats();
+        this.updateDashboardStats(stats);
+        this.updateRecentActivity(stats);
+    },
+
+    getProfileStats() {
+        let stats = {
+            totalIncome: 0, totalExpenses: 0, netProfit: 0,
+            totalInventoryItems: 0, totalBirds: 0, totalOrders: 0,
+            totalRevenue: 0, totalCustomers: 0, totalProducts: 0,
+            monthlyRevenue: 0, completedOrders: 0
+        };
+
+        const shared = window.FarmModules?.appData?.profile?.dashboardStats;
+        if (shared) stats = { ...stats, ...shared };
+
+        const saved = localStorage.getItem('farm-dashboard-stats');
+        if (saved) {
+            try { stats = { ...stats, ...JSON.parse(saved) }; } catch {}
+        }
+
+        if (typeof stats.netProfit !== 'number') {
+            stats.netProfit = (stats.totalIncome || 0) - (stats.totalExpenses || 0);
+        }
+
+        return stats;
+    },
+
+    updateDashboardStats(newStats) {
+        if (window.FarmModules?.appData) {
+            const root = window.FarmModules.appData;
+            root.profile ||= {};
+            root.profile.dashboardStats ||= {};
+            Object.assign(root.profile.dashboardStats, newStats);
+        }
+        this.updateDashboardDisplay(newStats);
+    },
+
+    updateDashboardDisplay(stats) {
+        this.updateStat('total-revenue', this.formatCurrency(stats.totalRevenue || stats.totalIncome || 0));
+        this.updateStat('total-expenses', this.formatCurrency(stats.totalExpenses || 0));
+        this.updateStat('inventory-items', stats.totalInventoryItems || 0);
+        this.updateStat('active-birds', stats.totalBirds || 0);
+        this.updateStat('total-orders', stats.totalOrders || 0);
+        this.updateStat('net-profit', this.formatCurrency(stats.netProfit ?? ((stats.totalIncome || 0) - (stats.totalExpenses || 0))));
+        this.updateStat('total-customers', stats.totalCustomers || 0);
+        this.updateStat('total-products', stats.totalProducts || 0);
+
+        const profitCard = document.getElementById('profit-card');
+        if (profitCard) {
+            const net = stats.netProfit ?? ((stats.totalIncome || 0) - (stats.totalExpenses || 0));
+            profitCard.style.borderLeft = `4px solid ${net >= 0 ? '#22c55e' : '#ef4444'}`;
+        }
+    },
+
+    updateStat(id, value) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = value;
+    },
+
+    updateRecentActivity(stats) {
+        const container = document.getElementById('activity-content');
+        if (!container) return;
+
+        const list = window.FarmModules?.appData?.profile?.dashboardStats?.recentActivities || [];
+        if (!list.length) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div>📊</div>
+                    <div>No recent activity</div>
+                    <div>Start by adding your first record</div>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:12px;">
