@@ -7866,4 +7866,19 @@ header, .top-nav {
     background: var(--glass-bg, rgba(255, 255, 255, 0.95));
 }
 
+/* Remove any CSS-generated placeholders */
+.form-input::before,
+.form-input::after,
+.form-input-pwa::before, 
+.form-input-pwa::after,
+.form-select::before,
+.form-select::after {
+    content: none !important;
+}
 
+/* Ensure only HTML placeholders work */
+.form-input::placeholder,
+.form-input-pwa::placeholder,
+.form-select::placeholder {
+    opacity: 1 !important;
+}
