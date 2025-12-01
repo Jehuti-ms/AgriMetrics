@@ -1,6 +1,6 @@
 /**
- * StyleManager - Minimal Version
- * Handles theme variables and header gradients only
+ * StyleManager - Extended Version
+ * Handles theme variables, header gradients, global styles, and per-module overrides
  */
 
 const StyleManager = {
@@ -42,28 +42,55 @@ const StyleManager = {
     }
   },
 
-  // Module configs (only header gradients now)
+  // Module configs (header gradients only)
   moduleConfigs: {
     'dashboard':         { name: 'Dashboard', headerGradient: 'var(--gradient-primary)' },
-    'income-expenses':   { name: 'Income & Expenses', headerGradient: 'var(--gradient-primary)' },
-    'inventory-check':   { name: 'Inventory Management', headerGradient: 'var(--gradient-primary)' },
-    'orders':            { name: 'Orders Management', headerGradient: 'var(--gradient-primary)' },
-    'sales-record':      { name: 'Sales Records', headerGradient: 'var(--gradient-primary)' },
-    'production':        { name: 'Production Tracking', headerGradient: 'var(--gradient-production)' },
-    'feed-record':       { name: 'Feed Management', headerGradient: 'var(--gradient-primary)' },
-    'broiler-mortality': { name: 'Broiler Mortality', headerGradient: 'var(--gradient-mortality)' },
-    'reports':           { name: 'Reports & Analytics', headerGradient: 'var(--gradient-primary)' },
+    'income-expenses':   { name: 'Income & Expenses', headerGradient: 'linear-gradient(135deg, #22c55e, #16a34a)' },
+    'inventory-check':   { name: 'Inventory Management', headerGradient: 'linear-gradient(135deg, #3b82f6, #1e40af)' },
+    'orders':            { name: 'Orders Management', headerGradient: 'linear-gradient(135deg, #f97316, #c2410c)' },
+    'sales-record':      { name: 'Sales Records', headerGradient: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' },
+    'production':        { name: 'Production Tracking', headerGradient: 'linear-gradient(135deg, #10b981, #059669)' },
+    'feed-record':       { name: 'Feed Management', headerGradient: 'linear-gradient(135deg, #0ea5e9, #0369a1)' },
+    'broiler-mortality': { name: 'Broiler Mortality', headerGradient: 'linear-gradient(135deg, #ef4444, #b91c1c)' },
+    'reports':           { name: 'Reports & Analytics', headerGradient: 'linear-gradient(135deg, #14b8a6, #0f766e)' },
     'profile':           { name: 'Profile', headerGradient: 'var(--gradient-primary)' }
   },
 
+  // Global styles
+  globalStyles: {
+    '.btn-sm': {
+      padding: '8px 16px',
+      fontSize: '14px',
+      borderRadius: '8px'
+    },
+    '.glass-card': {
+      background: 'var(--card-bg)',
+      borderRadius: 'var(--radius-xl)',
+      boxShadow: 'var(--shadow-md)',
+      padding: '24px'
+    },
+    '.btn-outline': {
+      border: '1px solid var(--primary-500)',
+      background: 'transparent',
+      color: 'var(--primary-600)',
+      padding: '8px 16px',
+      borderRadius: '8px'
+    }
+  },
+
+  moduleStyles: {},
+
   // Init
   init() {
-    console.log('🎨 Initializing minimal StyleManager...');
+    console.log('🎨 Initializing StyleManager...');
     this.applyTheme(this.currentTheme);
+    this.injectStyles(this.globalStyles);
+    Object.entries(this.moduleStyles).forEach(([moduleId, styles]) => {
+      this.injectScopedStyles(moduleId, styles);
+    });
     console.log('✅ StyleManager ready');
   },
 
-  // Apply theme
   applyTheme(themeName) {
     const theme = this.themes[themeName];
     if (!theme) {
@@ -78,7 +105,6 @@ const StyleManager = {
     console.log(`🎨 Applied ${theme.name}`);
   },
 
-  // Register module (only applies header gradient)
   registerModule(moduleId, element) {
     const config = this.moduleConfigs[moduleId];
     if (config && element) {
@@ -86,9 +112,42 @@ const StyleManager = {
       element.style.setProperty('--header-gradient', config.headerGradient);
       console.log(`✅ StyleManager: Registered ${config.name}`);
     }
+  },
+
+  addGlobalStyles(styles) {
+    Object.assign(this.globalStyles, styles);
+    this.injectStyles(styles);
+  },
+
+  addModuleStyles(moduleId, styles) {
+    if (!this.moduleStyles[moduleId]) {
+      this.moduleStyles[moduleId] = {};
+    }
+    Object.assign(this.moduleStyles[moduleId], styles);
+    this.injectScopedStyles(moduleId, styles);
+  },
+
+  injectStyles(styles) {
+    const styleTag = document.createElement('style');
+    styleTag.setAttribute('data-style-manager', 'global');
+    styleTag.innerHTML = Object.entries(styles).map(([selector, rules]) => {
+      const ruleText = Object.entries(rules).map(([k, v]) => `${k}: ${v};`).join(' ');
+      return `${selector} { ${ruleText} }`;
+    }).join('\n');
+    document.head.appendChild(styleTag);
+  },
+
+  injectScopedStyles(moduleId, styles) {
+    const styleTag = document.createElement('style');
+    styleTag.setAttribute('data-style-manager', moduleId);
+    styleTag.innerHTML = Object.entries(styles).map(([selector, rules]) => {
+      const ruleText = Object.entries(rules).map(([k, v]) => `${k}: ${v};`).join(' ');
+      return `#${moduleId} ${selector} { ${ruleText} }`;
+    }).join('\n');
+    document.head.appendChild(styleTag);
   }
 };
 
 // Expose globally
 window.StyleManager = StyleManager;
-console.log('✅ Minimal StyleManager loaded');
+console.log('✅ Extended StyleManager loaded');
