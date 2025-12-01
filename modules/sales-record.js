@@ -80,6 +80,10 @@ const SalesRecordModule = {
                     <h3>Quick Sale</h3>
                     <form id="quick-sale-form" class="form-inline">
                         <!-- form fields here -->
+                        <input type="text" placeholder="Product name" required>
+                        <input type="number" placeholder="Quantity" required min="1">
+                        <input type="number" placeholder="Price per unit" required step="0.01" min="0">
+                        <button type="submit" class="btn btn-primary">Add Sale</button>
                     </form>
                 </div>
 
@@ -135,7 +139,22 @@ const SalesRecordModule = {
                         </div>
                         <div class="modal-body">
                             <form id="sale-form">
-                                <!-- full form fields here -->
+                                <div class="form-group">
+                                    <label>Product</label>
+                                    <input type="text" id="sale-product" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Quantity</label>
+                                    <input type="number" id="sale-quantity" required min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Unit Price</label>
+                                    <input type="number" id="sale-unit-price" required step="0.01" min="0">
+                                </div>
+                                <div class="form-group">
+                                    <label>Customer Name (Optional)</label>
+                                    <input type="text" id="sale-customer">
+                                </div>
                             </form>
                         </div>
                         <div class="modal-footer">
@@ -150,14 +169,20 @@ const SalesRecordModule = {
     },
 
     loadSalesData() {
-        if (!FarmModules.appData.sales) {
-            FarmModules.appData.sales = [];
+        if (!window.FarmModules || !window.FarmModules.appData) {
+            console.error('FarmModules or appData not found');
+            window.FarmModules = window.FarmModules || {};
+            window.FarmModules.appData = window.FarmModules.appData || {};
         }
-        console.log('📊 Loaded sales data:', FarmModules.appData.sales.length, 'records');
+        
+        if (!window.FarmModules.appData.sales) {
+            window.FarmModules.appData.sales = [];
+        }
+        console.log('📊 Loaded sales data:', window.FarmModules.appData.sales.length, 'records');
     },
 
     updateSummary() {
-        const sales = FarmModules.appData.sales || [];
+        const sales = window.FarmModules?.appData?.sales || [];
         const today = new Date().toISOString().split('T')[0];
 
         const todayElement = document.getElementById('today-date');
@@ -166,7 +191,7 @@ const SalesRecordModule = {
         }
 
         const todaySales = sales.filter(sale => sale.date === today)
-            .reduce((sum, sale) => sum + sale.totalAmount, 0);
+            .reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
 
         const weekSales = this.getSalesForPeriod(sales, 7);
         const monthSales = this.getSalesForPeriod(sales, 30);
@@ -174,7 +199,7 @@ const SalesRecordModule = {
         const productSales = {};
         sales.forEach(sale => {
             if (!productSales[sale.product]) productSales[sale.product] = 0;
-            productSales[sale.product] += sale.totalAmount;
+            productSales[sale.product] += (sale.totalAmount || 0);
         });
 
         let topProduct = '-';
@@ -194,11 +219,11 @@ const SalesRecordModule = {
 
         this.currentStats = {
             totalSales: sales.length,
-            totalRevenue: sales.reduce((sum, sale) => sum + sale.totalAmount, 0),
+            totalRevenue: sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0),
             todaySales,
             weekSales,
             monthSales,
-            avgSaleValue: sales.length > 0 ? sales.reduce((sum, sale) => sum + sale.totalAmount, 0) / sales.length : 0,
+            avgSaleValue: sales.length > 0 ? sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0) / sales.length : 0,
             paidSales: sales.filter(sale => sale.paymentStatus === 'paid').length,
             pendingSales: sales.filter(sale => sale.paymentStatus === 'pending').length,
             topProduct,
@@ -209,15 +234,17 @@ const SalesRecordModule = {
     getSalesForPeriod(sales, days) {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - days);
-        return sales.filter(sale => new Date(sale.date) >= cutoffDate)
-            .reduce((sum, sale) => sum + sale.totalAmount, 0);
+        return sales.filter(sale => {
+            const saleDate = new Date(sale.date);
+            return saleDate >= cutoffDate;
+        }).reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
     },
 
     renderSalesTable(period = 'today') {
         const tbody = document.getElementById('sales-body');
         if (!tbody) return;
 
-        const sales = FarmModules.appData.sales || [];
+        const sales = window.FarmModules?.appData?.sales || [];
         let filteredSales = sales;
 
         if (period !== 'all') {
@@ -225,31 +252,11 @@ const SalesRecordModule = {
             if (period === 'today') cutoffDate.setDate(cutoffDate.getDate() - 1);
             else if (period === 'week') cutoffDate.setDate(cutoffDate.getDate() - 7);
             else if (period === 'month') cutoffDate.setDate(cutoffDate.getDate() - 30);
-            filteredSales = sales.filter(sale => new Date(sale.date) >= cutoffDate);
-        }
-
-        if (filteredSales.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="8" class="empty-state">
-                        <div class="empty-content">
-                            <span class="empty-icon">💰</span>
-                            <h4>No sales found</h4>
-                            <p>${period === 'all' ? 'Start recording your sales' : `No sales in the ${period}`}</p>
-                        </div>
-                            renderSalesTable(period = 'today') {
-        const tbody = document.getElementById('sales-body');
-        if (!tbody) return;
-
-        const sales = FarmModules.appData.sales || [];
-        let filteredSales = sales;
-
-        if (period !== 'all') {
-            const cutoffDate = new Date();
-            if (period === 'today') cutoffDate.setDate(cutoffDate.getDate() - 1);
-            else if (period === 'week') cutoffDate.setDate(cutoffDate.getDate() - 7);
-            else if (period === 'month') cutoffDate.setDate(cutoffDate.getDate() - 30);
-            filteredSales = sales.filter(sale => new Date(sale.date) >= cutoffDate);
+            
+            filteredSales = sales.filter(sale => {
+                const saleDate = new Date(sale.date);
+                return saleDate >= cutoffDate;
+            });
         }
 
         if (filteredSales.length === 0) {
@@ -276,7 +283,7 @@ const SalesRecordModule = {
                     <td>${this.formatDate(sale.date)}</td>
                     <td>${this.formatProductName(sale.product)}</td>
                     <td>${sale.customer || 'Walk-in'}</td>
-                    <td>${sale.quantity} ${sale.unit}</td>
+                    <td>${sale.quantity} ${sale.unit || 'units'}</td>
                     <td>${this.formatCurrency(sale.unitPrice)}</td>
                     <td><strong>${this.formatCurrency(sale.totalAmount)}</strong></td>
                     <td><span class="${paymentClass}">${sale.paymentStatus || 'paid'}</span></td>
@@ -298,15 +305,20 @@ const SalesRecordModule = {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD'
-        }).format(amount);
+        }).format(amount || 0);
     },
 
     formatDate(dateStr) {
-        const d = new Date(dateStr);
-        return d.toLocaleDateString();
+        try {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString();
+        } catch (e) {
+            return dateStr;
+        }
     },
 
     formatProductName(product) {
+        if (!product) return 'Unknown';
         return product.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     },
 
@@ -342,6 +354,32 @@ const SalesRecordModule = {
                 this.renderSalesTable(e.target.value);
             });
         }
+
+        // Modal close buttons
+        const modalCloseBtns = document.querySelectorAll('.modal-close');
+        modalCloseBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('sale-modal').classList.add('hidden');
+            });
+        });
+
+        // Save sale button
+        const saveSaleBtn = document.getElementById('save-sale');
+        if (saveSaleBtn) {
+            saveSaleBtn.addEventListener('click', () => {
+                this.handleSaveSale();
+            });
+        }
+    },
+
+    handleQuickSale() {
+        console.log('Quick sale handler - implement this method');
+        // Implement quick sale logic here
+    },
+
+    handleSaveSale() {
+        console.log('Save sale handler - implement this method');
+        // Implement save sale logic here
     },
 
     syncStatsWithDashboard() {
@@ -374,7 +412,32 @@ const SalesRecordModule = {
     }
 };
 
+// Register the module
 if (window.FarmModules) {
+    // Make sure registerModule exists
+    if (typeof window.FarmModules.registerModule === 'function') {
+        window.FarmModules.registerModule('sales-record', SalesRecordModule);
+        console.log('✅ Sales Records module registered');
+    } else {
+        console.error('FarmModules.registerModule is not a function');
+        // Create it if it doesn't exist
+        window.FarmModules.registerModule = function(name, module) {
+            window.FarmModules.modules = window.FarmModules.modules || {};
+            window.FarmModules.modules[name] = module;
+            console.log(`Module ${name} registered manually`);
+        };
+        window.FarmModules.registerModule('sales-record', SalesRecordModule);
+    }
+} else {
+    console.error('FarmModules not found. Make sure framework.js is loaded first.');
+    // Create a global object if FarmModules doesn't exist
+    window.FarmModules = {
+        modules: {},
+        appData: {},
+        registerModule: function(name, module) {
+            this.modules[name] = module;
+            console.log(`Module ${name} registered in fallback`);
+        }
+    };
     window.FarmModules.registerModule('sales-record', SalesRecordModule);
-    console.log('✅ Sales Records module registered');
 }
