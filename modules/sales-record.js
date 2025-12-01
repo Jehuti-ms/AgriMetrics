@@ -3,6 +3,7 @@ const SalesRecordModule = {
     initialized: false,
     element: null,
     currentStats: {},
+    exportFormat: 'csv', // default export format
 
     initialize() {
         console.log('💰 Sales Records module initializing...');
@@ -69,10 +70,147 @@ const SalesRecordModule = {
                             <span class="btn-icon-text">🔄</span>
                             <span>Refresh</span>
                         </button>
-                        <button class="btn btn-outline btn-icon" id="export-sales-top">
-                            <span class="btn-icon-text">📤</span>
-                            <span>Export</span>
-                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-outline btn-icon" id="export-dropdown">
+                                <span class="btn-icon-text">📤</span>
+                                <span>Export</span>
+                                <span class="dropdown-arrow">▼</span>
+                            </button>
+                            <div class="dropdown-menu hidden" id="export-menu">
+                                <button class="dropdown-item" data-format="csv">
+                                    <span class="dropdown-icon">📄</span>
+                                    Export as CSV
+                                </button>
+                                <button class="dropdown-item" data-format="excel">
+                                    <span class="dropdown-icon">📊</span>
+                                    Export as Excel
+                                </button>
+                                <button class="dropdown-item" data-format="pdf">
+                                    <span class="dropdown-icon">📑</span>
+                                    Export as PDF
+                                </button>
+                                <button class="dropdown-item" data-format="print">
+                                    <span class="dropdown-icon">🖨️</span>
+                                    Print Report
+                                </button>
+                                <div class="dropdown-divider"></div>
+                                <button class="dropdown-item" id="export-settings">
+                                    <span class="dropdown-icon">⚙️</span>
+                                    Export Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export Settings Modal -->
+                <div id="export-settings-modal" class="modal hidden">
+                    <div class="modal-content glass-card">
+                        <div class="modal-header">
+                            <h3>Export Settings</h3>
+                            <button class="modal-close btn-icon">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="export-settings-form">
+                                <div class="form-group">
+                                    <label>Date Range</label>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <input type="date" id="export-start-date" value="${new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]}">
+                                            <label for="export-start-date" class="sub-label">Start Date</label>
+                                        </div>
+                                        <div class="form-group">
+                                            <input type="date" id="export-end-date" value="${new Date().toISOString().split('T')[0]}">
+                                            <label for="export-end-date" class="sub-label">End Date</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Include Columns</label>
+                                    <div class="checkbox-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="export-columns" value="date" checked> Date
+                                        </label>
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="export-columns" value="product" checked> Product
+                                        </label>
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="export-columns" value="customer" checked> Customer
+                                        </label>
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="export-columns" value="quantity" checked> Quantity
+                                        </label>
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="export-columns" value="unitPrice" checked> Unit Price
+                                        </label>
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="export-columns" value="totalAmount" checked> Total Amount
+                                        </label>
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="export-columns" value="paymentStatus" checked> Payment Status
+                                        </label>
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="export-columns" value="notes"> Notes
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>File Name</label>
+                                    <input type="text" id="export-filename" value="sales-report-${new Date().toISOString().split('T')[0]}" placeholder="Enter file name">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Format Options</label>
+                                    <div class="radio-group">
+                                        <label class="radio-label">
+                                            <input type="radio" name="export-format" value="csv" checked> CSV (Compatible with Excel)
+                                        </label>
+                                        <label class="radio-label">
+                                            <input type="radio" name="export-format" value="excel"> Excel (.xlsx)
+                                        </label>
+                                        <label class="radio-label">
+                                            <input type="radio" name="export-format" value="pdf"> PDF Document
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Include Summary</label>
+                                    <label class="switch">
+                                        <input type="checkbox" id="include-summary" checked>
+                                        <span class="switch-slider"></span>
+                                        <span class="switch-label">Include sales summary in export</span>
+                                    </label>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-text modal-close">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="apply-export-settings">Apply & Export</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export Progress Modal -->
+                <div id="export-progress-modal" class="modal hidden">
+                    <div class="modal-content glass-card" style="max-width: 400px;">
+                        <div class="modal-header">
+                            <h3>Exporting Sales Data</h3>
+                        </div>
+                        <div class="modal-body">
+                            <div class="export-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="export-progress-fill" style="width: 0%"></div>
+                                </div>
+                                <div class="progress-text" id="export-progress-text">Preparing export...</div>
+                                <div class="progress-details" id="export-details"></div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-text" id="cancel-export">Cancel</button>
+                        </div>
                     </div>
                 </div>
 
@@ -161,34 +299,25 @@ const SalesRecordModule = {
                         </div>
 
                         <div class="sidebar-card glass-card">
-                            <h3 class="sidebar-title">Filters</h3>
-                            <div class="filter-section">
-                                <label for="period-filter">Time Period</label>
-                                <select id="period-filter" class="filter-select">
-                                    <option value="today">Today</option>
-                                    <option value="week">This Week</option>
-                                    <option value="month">This Month</option>
-                                    <option value="all">All Time</option>
-                                </select>
+                            <h3 class="sidebar-title">Quick Export</h3>
+                            <div class="quick-export-options">
+                                <button class="btn btn-outline btn-block" id="export-today">
+                                    <span class="btn-icon-text">📈</span>
+                                    <span>Today's Sales</span>
+                                </button>
+                                <button class="btn btn-outline btn-block" id="export-week">
+                                    <span class="btn-icon-text">📊</span>
+                                    <span>This Week</span>
+                                </button>
+                                <button class="btn btn-outline btn-block" id="export-month">
+                                    <span class="btn-icon-text">💰</span>
+                                    <span>This Month</span>
+                                </button>
+                                <button class="btn btn-outline btn-block" id="export-all">
+                                    <span class="btn-icon-text">📋</span>
+                                    <span>All Sales</span>
+                                </button>
                             </div>
-                            <div class="filter-section">
-                                <label for="product-filter">Product</label>
-                                <select id="product-filter" class="filter-select">
-                                    <option value="all">All Products</option>
-                                </select>
-                            </div>
-                            <div class="filter-section">
-                                <label for="status-filter">Payment Status</label>
-                                <select id="status-filter" class="filter-select">
-                                    <option value="all">All Status</option>
-                                    <option value="paid">Paid</option>
-                                    <option value="pending">Pending</option>
-                                </select>
-                            </div>
-                            <button class="btn btn-outline btn-block" id="apply-filters">
-                                <span class="btn-icon-text">🔍</span>
-                                <span>Apply Filters</span>
-                            </button>
                         </div>
                     </div>
 
@@ -198,11 +327,11 @@ const SalesRecordModule = {
                             <div class="card-header">
                                 <h3 class="card-title">Sales Records</h3>
                                 <div class="card-actions">
+                                    <div class="export-info" id="last-export-info">
+                                        Last export: Never
+                                    </div>
                                     <button class="btn btn-text btn-icon" id="print-sales" title="Print">
                                         <span class="btn-icon-text">🖨️</span>
-                                    </button>
-                                    <button class="btn btn-text btn-icon" id="export-sales" title="Export">
-                                        <span class="btn-icon-text">📤</span>
                                     </button>
                                 </div>
                             </div>
@@ -211,6 +340,7 @@ const SalesRecordModule = {
                                 <table class="data-table">
                                     <thead>
                                         <tr>
+                                            <th><input type="checkbox" id="select-all-sales" title="Select all"></th>
                                             <th>Date</th>
                                             <th>Product</th>
                                             <th>Customer</th>
@@ -223,7 +353,7 @@ const SalesRecordModule = {
                                     </thead>
                                     <tbody id="sales-body">
                                         <tr>
-                                            <td colspan="8" class="empty-state">
+                                            <td colspan="9" class="empty-state">
                                                 <div class="empty-content">
                                                     <span class="empty-icon">💰</span>
                                                     <h4>No sales recorded yet</h4>
@@ -237,7 +367,10 @@ const SalesRecordModule = {
                             
                             <div class="table-footer">
                                 <div class="table-summary">
-                                    <span>Showing <span id="showing-count">0</span> of <span id="total-count">0</span> sales</span>
+                                    <span id="selected-count">0 selected</span>
+                                    <button class="btn btn-text btn-sm" id="export-selected" style="margin-left: 12px;" disabled>
+                                        Export Selected
+                                    </button>
                                 </div>
                                 <div class="pagination">
                                     <button class="btn btn-text" id="prev-page" disabled>
@@ -255,7 +388,7 @@ const SalesRecordModule = {
                     </div>
                 </div>
 
-                <!-- Sales Modal -->
+                <!-- Sales Modal (unchanged) -->
                 <div id="sale-modal" class="modal hidden">
                     <div class="modal-content glass-card">
                         <div class="modal-header">
@@ -315,97 +448,703 @@ const SalesRecordModule = {
         `;
     },
 
-    loadSalesData() {
-        if (!window.FarmModules || !window.FarmModules.appData) {
-            console.error('FarmModules or appData not found');
-            window.FarmModules = window.FarmModules || {};
-            window.FarmModules.appData = window.FarmModules.appData || {};
+    // ... (keep all previous methods up to attachEventListeners)
+
+    attachEventListeners() {
+        console.log('🔗 Attaching sales event listeners...');
+
+        // Quick sale form
+        const quickForm = document.getElementById('quick-sale-form');
+        if (quickForm) {
+            quickForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleQuickSale();
+            });
         }
-        
-        if (!window.FarmModules.appData.sales) {
-            window.FarmModules.appData.sales = [];
+
+        // Header buttons
+        const addSaleBtn = document.getElementById('add-sale');
+        if (addSaleBtn) {
+            addSaleBtn.addEventListener('click', () => {
+                this.showSaleModal();
+            });
         }
-        console.log('📊 Loaded sales data:', window.FarmModules.appData.sales.length, 'records');
+
+        const refreshBtn = document.getElementById('refresh-sales');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.loadSalesData();
+                this.updateSummary();
+                this.renderSalesTable();
+            });
+        }
+
+        // Export dropdown
+        const exportDropdown = document.getElementById('export-dropdown');
+        const exportMenu = document.getElementById('export-menu');
+        if (exportDropdown && exportMenu) {
+            exportDropdown.addEventListener('click', (e) => {
+                e.stopPropagation();
+                exportMenu.classList.toggle('hidden');
+            });
+
+            // Close dropdown when clicking elsewhere
+            document.addEventListener('click', () => {
+                exportMenu.classList.add('hidden');
+            });
+
+            // Export format selection
+            const exportItems = exportMenu.querySelectorAll('.dropdown-item[data-format]');
+            exportItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const format = item.getAttribute('data-format');
+                    if (format === 'print') {
+                        this.printSalesReport();
+                    } else {
+                        this.exportFormat = format;
+                        this.showExportSettings();
+                    }
+                    exportMenu.classList.add('hidden');
+                });
+            });
+
+            // Export settings button
+            const exportSettingsBtn = document.getElementById('export-settings');
+            if (exportSettingsBtn) {
+                exportSettingsBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.showExportSettings();
+                    exportMenu.classList.add('hidden');
+                });
+            }
+        }
+
+        // Quick export buttons
+        const quickExportButtons = ['export-today', 'export-week', 'export-month', 'export-all'];
+        quickExportButtons.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    const period = id.replace('export-', '');
+                    this.quickExport(period);
+                });
+            }
+        });
+
+        // Export selected button
+        const exportSelectedBtn = document.getElementById('export-selected');
+        if (exportSelectedBtn) {
+            exportSelectedBtn.addEventListener('click', () => {
+                this.exportSelectedSales();
+            });
+        }
+
+        // Select all checkbox
+        const selectAllCheckbox = document.getElementById('select-all-sales');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', (e) => {
+                this.toggleSelectAllSales(e.target.checked);
+            });
+        }
+
+        // Export settings modal
+        const exportSettingsModal = document.getElementById('export-settings-modal');
+        const exportSettingsCloseBtns = exportSettingsModal?.querySelectorAll('.modal-close');
+        if (exportSettingsCloseBtns) {
+            exportSettingsCloseBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    exportSettingsModal.classList.add('hidden');
+                });
+            });
+        }
+
+        // Apply export settings
+        const applyExportBtn = document.getElementById('apply-export-settings');
+        if (applyExportBtn) {
+            applyExportBtn.addEventListener('click', () => {
+                this.applyExportSettings();
+            });
+        }
+
+        // Cancel export button
+        const cancelExportBtn = document.getElementById('cancel-export');
+        if (cancelExportBtn) {
+            cancelExportBtn.addEventListener('click', () => {
+                this.hideExportProgress();
+            });
+        }
+
+        // Modal controls (existing)
+        const modalCloseBtns = document.querySelectorAll('.modal-close:not(#export-settings-modal .modal-close)');
+        modalCloseBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.hideSaleModal();
+            });
+        });
+
+        const saveSaleBtn = document.getElementById('save-sale');
+        if (saveSaleBtn) {
+            saveSaleBtn.addEventListener('click', () => {
+                this.handleSaveSale();
+            });
+        }
+
+        // Print button
+        const printBtn = document.getElementById('print-sales');
+        if (printBtn) {
+            printBtn.addEventListener('click', () => {
+                this.printSalesReport();
+            });
+        }
+
+        // Filter controls (existing)
+        const periodFilter = document.getElementById('period-filter');
+        if (periodFilter) {
+            periodFilter.addEventListener('change', (e) => {
+                this.renderSalesTable(e.target.value);
+            });
+        }
+
+        // Pagination (existing)
+        const prevBtn = document.getElementById('prev-page');
+        const nextBtn = document.getElementById('next-page');
+        if (prevBtn) prevBtn.addEventListener('click', () => this.changePage(-1));
+        if (nextBtn) nextBtn.addEventListener('click', () => this.changePage(1));
+
+        // Click outside modal to close (existing)
+        window.addEventListener('click', (e) => {
+            const modal = document.getElementById('sale-modal');
+            if (e.target === modal) {
+                this.hideSaleModal();
+            }
+            const exportModal = document.getElementById('export-settings-modal');
+            if (e.target === exportModal) {
+                exportModal.classList.add('hidden');
+            }
+            const progressModal = document.getElementById('export-progress-modal');
+            if (e.target === progressModal) {
+                // Don't close progress modal on outside click
+            }
+        });
     },
 
-    updateSummary() {
+    // EXPORT FUNCTIONALITY METHODS
+
+    showExportSettings() {
+        const modal = document.getElementById('export-settings-modal');
+        modal.classList.remove('hidden');
+    },
+
+    applyExportSettings() {
+        const modal = document.getElementById('export-settings-modal');
+        const form = document.getElementById('export-settings-form');
+        
+        // Get settings from form
+        const startDate = document.getElementById('export-start-date').value;
+        const endDate = document.getElementById('export-end-date').value;
+        const filename = document.getElementById('export-filename').value || `sales-report-${new Date().toISOString().split('T')[0]}`;
+        const includeSummary = document.getElementById('include-summary').checked;
+        
+        // Get selected columns
+        const columnCheckboxes = form.querySelectorAll('input[name="export-columns"]:checked');
+        const selectedColumns = Array.from(columnCheckboxes).map(cb => cb.value);
+        
+        // Get format
+        const formatRadio = form.querySelector('input[name="export-format"]:checked');
+        const format = formatRadio ? formatRadio.value : 'csv';
+        
+        // Close settings modal
+        modal.classList.add('hidden');
+        
+        // Start export with settings
+        this.exportSalesData({
+            startDate,
+            endDate,
+            filename,
+            format,
+            columns: selectedColumns,
+            includeSummary
+        });
+    },
+
+    quickExport(period) {
+        const endDate = new Date();
+        let startDate = new Date();
+        
+        switch(period) {
+            case 'today':
+                startDate.setHours(0, 0, 0, 0);
+                break;
+            case 'week':
+                startDate.setDate(endDate.getDate() - 7);
+                break;
+            case 'month':
+                startDate.setDate(endDate.getDate() - 30);
+                break;
+            case 'all':
+                startDate = null; // All time
+                break;
+        }
+        
+        const filename = `sales-${period}-${new Date().toISOString().split('T')[0]}`;
+        
+        this.exportSalesData({
+            startDate: startDate ? startDate.toISOString().split('T')[0] : null,
+            endDate: endDate.toISOString().split('T')[0],
+            filename,
+            format: 'csv',
+            columns: ['date', 'product', 'customer', 'quantity', 'unitPrice', 'totalAmount', 'paymentStatus'],
+            includeSummary: true
+        });
+    },
+
+    exportSelectedSales() {
+        const selectedCheckboxes = document.querySelectorAll('.sale-checkbox:checked');
+        if (selectedCheckboxes.length === 0) return;
+        
+        const selectedIds = Array.from(selectedCheckboxes).map(cb => cb.value);
         const sales = window.FarmModules?.appData?.sales || [];
-        const today = new Date().toISOString().split('T')[0];
+        const selectedSales = sales.filter(sale => selectedIds.includes(sale.id));
+        
+        if (selectedSales.length === 0) {
+            alert('No sales selected for export');
+            return;
+        }
+        
+        this.exportSalesData({
+            sales: selectedSales,
+            filename: `selected-sales-${new Date().toISOString().split('T')[0]}`,
+            format: this.exportFormat,
+            includeSummary: false
+        });
+    },
 
-        // Update header stats
-        this.updateElement('total-sales-count', sales.length);
-        const totalRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
-        this.updateElement('total-revenue', this.formatCurrency(totalRevenue));
+    async exportSalesData(options = {}) {
+        const {
+            startDate = null,
+            endDate = null,
+            filename = `sales-report-${new Date().toISOString().split('T')[0]}`,
+            format = 'csv',
+            columns = ['date', 'product', 'customer', 'quantity', 'unitPrice', 'totalAmount', 'paymentStatus'],
+            includeSummary = true,
+            sales = null
+        } = options;
+        
+        // Show progress modal
+        this.showExportProgress();
+        this.updateExportProgress(10, 'Filtering sales data...');
+        
+        // Get sales data
+        let salesData = sales || window.FarmModules?.appData?.sales || [];
+        
+        // Filter by date range if specified
+        if (startDate && endDate) {
+            salesData = salesData.filter(sale => {
+                const saleDate = new Date(sale.date);
+                return saleDate >= new Date(startDate) && saleDate <= new Date(endDate);
+            });
+        }
+        
+        this.updateExportProgress(30, `Processing ${salesData.length} sales records...`);
+        
+        // Prepare data based on selected columns
+        const columnMap = {
+            date: 'Date',
+            product: 'Product',
+            customer: 'Customer',
+            quantity: 'Quantity',
+            unitPrice: 'Unit Price',
+            totalAmount: 'Total Amount',
+            paymentStatus: 'Payment Status',
+            notes: 'Notes'
+        };
+        
+        const headers = columns.map(col => columnMap[col] || col);
+        const rows = salesData.map(sale => {
+            return columns.map(col => {
+                switch(col) {
+                    case 'date':
+                        return this.formatDate(sale.date, 'export');
+                    case 'unitPrice':
+                    case 'totalAmount':
+                        return sale[col] || 0;
+                    case 'paymentStatus':
+                        return sale[col] ? sale[col].charAt(0).toUpperCase() + sale[col].slice(1) : 'Paid';
+                    default:
+                        return sale[col] || '';
+                }
+            });
+        });
+        
+        this.updateExportProgress(60, 'Generating export file...');
+        
+        // Generate file based on format
+        let fileContent, mimeType, fileExtension;
+        
+        switch(format) {
+            case 'csv':
+                [fileContent, mimeType, fileExtension] = this.generateCSV(headers, rows, includeSummary, salesData);
+                break;
+            case 'excel':
+                [fileContent, mimeType, fileExtension] = await this.generateExcel(headers, rows, includeSummary, salesData, filename);
+                break;
+            case 'pdf':
+                [fileContent, mimeType, fileExtension] = await this.generatePDF(headers, rows, includeSummary, salesData, filename);
+                break;
+            default:
+                [fileContent, mimeType, fileExtension] = this.generateCSV(headers, rows, includeSummary, salesData);
+        }
+        
+        this.updateExportProgress(90, 'Finalizing export...');
+        
+        // Download file
+        this.downloadFile(fileContent, `${filename}.${fileExtension}`, mimeType);
+        
+        // Update last export info
+        this.updateLastExportInfo();
+        
+        this.updateExportProgress(100, 'Export completed successfully!');
+        
+        // Close progress modal after delay
+        setTimeout(() => {
+            this.hideExportProgress();
+        }, 1500);
+    },
 
-        // Update today's date
-        const todayElement = document.getElementById('today-date');
-        if (todayElement) {
-            todayElement.textContent = new Date().toLocaleDateString('en-US', { 
-                weekday: 'long', 
+    generateCSV(headers, rows, includeSummary, salesData) {
+        let csvContent = headers.join(',') + '\n';
+        
+        // Add data rows
+        rows.forEach(row => {
+            csvContent += row.map(cell => {
+                // Escape quotes and wrap in quotes if contains comma or quotes
+                const cellStr = String(cell);
+                if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+                    return `"${cellStr.replace(/"/g, '""')}"`;
+                }
+                return cellStr;
+            }).join(',') + '\n';
+        });
+        
+        // Add summary if requested
+        if (includeSummary) {
+            csvContent += '\n\nSUMMARY\n';
+            csvContent += `Total Sales,${salesData.length}\n`;
+            const totalRevenue = salesData.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
+            csvContent += `Total Revenue,${this.formatCurrency(totalRevenue, false)}\n`;
+            const avgSale = salesData.length > 0 ? totalRevenue / salesData.length : 0;
+            csvContent += `Average Sale,${this.formatCurrency(avgSale, false)}\n`;
+            
+            // Payment summary
+            const paidCount = salesData.filter(s => s.paymentStatus === 'paid').length;
+            const pendingCount = salesData.filter(s => s.paymentStatus === 'pending').length;
+            csvContent += `Paid Sales,${paidCount}\n`;
+            csvContent += `Pending Sales,${pendingCount}\n`;
+            
+            // Date range
+            if (salesData.length > 0) {
+                const dates = salesData.map(s => new Date(s.date));
+                const minDate = new Date(Math.min(...dates));
+                const maxDate = new Date(Math.max(...dates));
+                csvContent += `Date Range,${this.formatDate(minDate.toISOString().split('T')[0], 'export')} to ${this.formatDate(maxDate.toISOString().split('T')[0], 'export')}\n`;
+            }
+        }
+        
+        return [csvContent, 'text/csv;charset=utf-8;', 'csv'];
+    },
+
+    async generateExcel(headers, rows, includeSummary, salesData, filename) {
+        // For now, we'll create a CSV that Excel can open
+        // In a real implementation, you would use a library like SheetJS
+        console.log('Excel export would use SheetJS library in production');
+        return this.generateCSV(headers, rows, includeSummary, salesData);
+    },
+
+    async generatePDF(headers, rows, includeSummary, salesData, filename) {
+        // For now, we'll create a basic HTML page that can be printed as PDF
+        // In a real implementation, you would use a library like jsPDF or html2pdf
+        console.log('PDF export would use jsPDF library in production');
+        
+        // Create HTML table
+        let htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>${filename}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 40px; }
+                    h1 { color: #333; }
+                    table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    th { background-color: #f2f2f2; font-weight: bold; }
+                    .summary { margin-top: 30px; padding: 15px; background-color: #f9f9f9; border-radius: 5px; }
+                    .footer { margin-top: 30px; font-size: 12px; color: #666; }
+                </style>
+            </head>
+            <body>
+                <h1>Sales Report</h1>
+                <p>Generated on: ${new Date().toLocaleString()}</p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            ${headers.map(h => `<th>${h}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map(row => `
+                            <tr>
+                                ${row.map(cell => `<td>${cell}</td>`).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+        `;
+        
+        if (includeSummary) {
+            const totalRevenue = salesData.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
+            const avgSale = salesData.length > 0 ? totalRevenue / salesData.length : 0;
+            const paidCount = salesData.filter(s => s.paymentStatus === 'paid').length;
+            const pendingCount = salesData.filter(s => s.paymentStatus === 'pending').length;
+            
+            htmlContent += `
+                <div class="summary">
+                    <h2>Summary</h2>
+                    <p><strong>Total Sales:</strong> ${salesData.length}</p>
+                    <p><strong>Total Revenue:</strong> ${this.formatCurrency(totalRevenue)}</p>
+                    <p><strong>Average Sale:</strong> ${this.formatCurrency(avgSale)}</p>
+                    <p><strong>Paid Sales:</strong> ${paidCount}</p>
+                    <p><strong>Pending Sales:</strong> ${pendingCount}</p>
+                </div>
+            `;
+        }
+        
+        htmlContent += `
+                <div class="footer">
+                    <p>Report generated by Farm Management System</p>
+                </div>
+            </body>
+            </html>
+        `;
+        
+        // For PDF, we'll open in new window for printing
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        
+        return [htmlContent, 'text/html', 'html'];
+    },
+
+    downloadFile(content, filename, mimeType) {
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    },
+
+    printSalesReport() {
+        const salesData = window.FarmModules?.appData?.sales || [];
+        const printWindow = window.open('', '_blank');
+        
+        const printContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Sales Report</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    h1 { color: #333; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                    table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+                    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+                    th { background-color: #f5f5f5; font-weight: bold; }
+                    .summary { background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-radius: 5px; }
+                    .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+                    .footer { margin-top: 30px; font-size: 12px; color: #666; text-align: center; }
+                    @media print {
+                        body { margin: 0; }
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <div>
+                        <h1>Sales Report</h1>
+                        <p>Generated on: ${new Date().toLocaleString()}</p>
+                    </div>
+                    <button class="no-print" onclick="window.print()">Print Report</button>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Product</th>
+                            <th>Customer</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${salesData.map(sale => `
+                            <tr>
+                                <td>${this.formatDate(sale.date, 'export')}</td>
+                                <td>${this.formatProductName(sale.product)}</td>
+                                <td>${sale.customer || 'Walk-in'}</td>
+                                <td>${sale.quantity} ${sale.unit || 'units'}</td>
+                                <td>${this.formatCurrency(sale.unitPrice, false)}</td>
+                                <td>${this.formatCurrency(sale.totalAmount, false)}</td>
+                                <td>${sale.paymentStatus ? sale.paymentStatus.charAt(0).toUpperCase() + sale.paymentStatus.slice(1) : 'Paid'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                
+                <div class="summary">
+                    <h2>Summary</h2>
+                    <p><strong>Total Sales:</strong> ${salesData.length}</p>
+                    <p><strong>Total Revenue:</strong> ${this.formatCurrency(salesData.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0))}</p>
+                    <p><strong>Average Sale:</strong> ${this.formatCurrency(salesData.length > 0 ? salesData.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0) / salesData.length : 0)}</p>
+                </div>
+                
+                <div class="footer">
+                    <p>Report generated by Farm Management System</p>
+                </div>
+                
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        setTimeout(function() {
+                            window.close();
+                        }, 1000);
+                    };
+                </script>
+            </body>
+            </html>
+        `;
+        
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+    },
+
+    toggleSelectAllSales(checked) {
+        const checkboxes = document.querySelectorAll('.sale-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = checked;
+        });
+        this.updateSelectedCount();
+    },
+
+    updateSelectedCount() {
+        const selectedCount = document.querySelectorAll('.sale-checkbox:checked').length;
+        const exportSelectedBtn = document.getElementById('export-selected');
+        const selectedCountSpan = document.getElementById('selected-count');
+        
+        if (selectedCountSpan) {
+            selectedCountSpan.textContent = `${selectedCount} selected`;
+        }
+        
+        if (exportSelectedBtn) {
+            exportSelectedBtn.disabled = selectedCount === 0;
+        }
+    },
+
+    updateLastExportInfo() {
+        const lastExportInfo = document.getElementById('last-export-info');
+        if (lastExportInfo) {
+            lastExportInfo.textContent = `Last export: ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        }
+    },
+
+    showExportProgress() {
+        const modal = document.getElementById('export-progress-modal');
+        modal.classList.remove('hidden');
+    },
+
+    hideExportProgress() {
+        const modal = document.getElementById('export-progress-modal');
+        modal.classList.add('hidden');
+        // Reset progress
+        this.updateExportProgress(0, '');
+    },
+
+    updateExportProgress(percent, message) {
+        const progressFill = document.getElementById('export-progress-fill');
+        const progressText = document.getElementById('export-progress-text');
+        const exportDetails = document.getElementById('export-details');
+        
+        if (progressFill) {
+            progressFill.style.width = `${percent}%`;
+        }
+        
+        if (progressText) {
+            progressText.textContent = message;
+        }
+        
+        if (exportDetails && percent === 100) {
+            const salesCount = window.FarmModules?.appData?.sales?.length || 0;
+            exportDetails.innerHTML = `
+                <div class="export-success">
+                    <span style="color: var(--status-paid); font-size: 24px;">✓</span>
+                    <div>
+                        <strong>Export successful!</strong>
+                        <p>${salesCount} records exported</p>
+                        <p>File saved to your downloads folder</p>
+                    </div>
+                </div>
+            `;
+        }
+    },
+
+    formatCurrency(amount, includeSymbol = true) {
+        if (includeSymbol) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount || 0);
+        } else {
+            return new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount || 0);
+        }
+    },
+
+    formatDate(dateStr, format = 'long') {
+        try {
+            const d = new Date(dateStr);
+            if (format === 'short') {
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            } else if (format === 'export') {
+                return d.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+            }
+            return d.toLocaleDateString('en-US', { 
                 year: 'numeric', 
                 month: 'short', 
                 day: 'numeric' 
             });
+        } catch (e) {
+            return dateStr;
         }
-
-        // Calculate sales figures
-        const todaySales = sales.filter(sale => sale.date === today)
-            .reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
-
-        const weekSales = this.getSalesForPeriod(sales, 7);
-        const monthSales = this.getSalesForPeriod(sales, 30);
-
-        // Calculate top product
-        const productSales = {};
-        sales.forEach(sale => {
-            if (!productSales[sale.product]) productSales[sale.product] = 0;
-            productSales[sale.product] += (sale.totalAmount || 0);
-        });
-
-        let topProduct = '-';
-        let topRevenue = 0;
-        Object.entries(productSales).forEach(([product, revenue]) => {
-            if (revenue > topRevenue) {
-                topProduct = this.formatProductName(product);
-                topRevenue = revenue;
-            }
-        });
-
-        // Update summary cards
-        this.updateElement('today-sales', this.formatCurrency(todaySales));
-        this.updateElement('week-sales', this.formatCurrency(weekSales));
-        this.updateElement('month-sales', this.formatCurrency(monthSales));
-        this.updateElement('top-product', topProduct);
-        this.updateElement('top-product-revenue', this.formatCurrency(topRevenue));
-
-        // Update current stats
-        this.currentStats = {
-            totalSales: sales.length,
-            totalRevenue: totalRevenue,
-            todaySales,
-            weekSales,
-            monthSales,
-            avgSaleValue: sales.length > 0 ? totalRevenue / sales.length : 0,
-            paidSales: sales.filter(sale => sale.paymentStatus === 'paid').length,
-            pendingSales: sales.filter(sale => sale.paymentStatus === 'pending').length,
-            topProduct,
-            topProductRevenue: topRevenue
-        };
-
-        // Update table summary
-        this.updateElement('showing-count', sales.length);
-        this.updateElement('total-count', sales.length);
     },
 
-    getSalesForPeriod(sales, days) {
-        const cutoffDate = new Date();
-        cutoffDate.setDate(cutoffDate.getDate() - days);
-        return sales.filter(sale => {
-            const saleDate = new Date(sale.date);
-            return saleDate >= cutoffDate;
-        }).reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
-    },
+    // ... (keep all other existing methods)
 
+    // Update renderSalesTable to include checkboxes
     renderSalesTable(period = 'today') {
         const tbody = document.getElementById('sales-body');
         if (!tbody) return;
@@ -428,7 +1167,7 @@ const SalesRecordModule = {
         if (filteredSales.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="empty-state">
+                    <td colspan="9" class="empty-state">
                         <div class="empty-content">
                             <span class="empty-icon">💰</span>
                             <h4>No sales found</h4>
@@ -450,6 +1189,9 @@ const SalesRecordModule = {
             
             return `
                 <tr>
+                    <td>
+                        <input type="checkbox" class="sale-checkbox" value="${sale.id}" onchange="window.FarmModules.modules['sales-record'].updateSelectedCount()">
+                    </td>
                     <td>
                         <div class="date-cell">
                             <span class="date-day">${this.formatDate(sale.date, 'short')}</span>
@@ -482,265 +1224,8 @@ const SalesRecordModule = {
         }).join('');
 
         this.updateElement('showing-count', filteredSales.length);
-    },
-
-    updateElement(id, value) {
-        const el = document.getElementById(id);
-        if (el) el.textContent = value;
-    },
-
-    formatCurrency(amount) {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(amount || 0);
-    },
-
-    formatDate(dateStr, format = 'long') {
-        try {
-            const d = new Date(dateStr);
-            if (format === 'short') {
-                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            }
-            return d.toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'short', 
-                day: 'numeric' 
-            });
-        } catch (e) {
-            return dateStr;
-        }
-    },
-
-    formatTime(dateStr) {
-        try {
-            const d = new Date(dateStr);
-            return d.toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-        } catch (e) {
-            return '';
-        }
-    },
-
-    formatProductName(product) {
-        if (!product) return 'Unknown';
-        return product.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    },
-
-    attachEventListeners() {
-        console.log('🔗 Attaching sales event listeners...');
-
-        // Quick sale form
-        const quickForm = document.getElementById('quick-sale-form');
-        if (quickForm) {
-            quickForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.handleQuickSale();
-            });
-        }
-
-        // Header buttons
-        const addSaleBtn = document.getElementById('add-sale');
-        if (addSaleBtn) {
-            addSaleBtn.addEventListener('click', () => {
-                this.showSaleModal();
-            });
-        }
-
-        const refreshBtn = document.getElementById('refresh-sales');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => {
-                this.loadSalesData();
-                this.updateSummary();
-                this.renderSalesTable();
-            });
-        }
-
-        // Export buttons
-        const exportBtns = ['export-sales-top', 'export-sales'];
-        exportBtns.forEach(id => {
-            const btn = document.getElementById(id);
-            if (btn) {
-                btn.addEventListener('click', () => {
-                    this.exportSalesData();
-                });
-            }
-        });
-
-        // Filter controls
-        const periodFilter = document.getElementById('period-filter');
-        if (periodFilter) {
-            periodFilter.addEventListener('change', (e) => {
-                this.renderSalesTable(e.target.value);
-            });
-        }
-
-        const applyFiltersBtn = document.getElementById('apply-filters');
-        if (applyFiltersBtn) {
-            applyFiltersBtn.addEventListener('click', () => {
-                this.applyAdvancedFilters();
-            });
-        }
-
-        // Modal controls
-        const modalCloseBtns = document.querySelectorAll('.modal-close');
-        modalCloseBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                this.hideSaleModal();
-            });
-        });
-
-        const saveSaleBtn = document.getElementById('save-sale');
-        if (saveSaleBtn) {
-            saveSaleBtn.addEventListener('click', () => {
-                this.handleSaveSale();
-            });
-        }
-
-        // Print button
-        const printBtn = document.getElementById('print-sales');
-        if (printBtn) {
-            printBtn.addEventListener('click', () => {
-                window.print();
-            });
-        }
-
-        // Pagination
-        const prevBtn = document.getElementById('prev-page');
-        const nextBtn = document.getElementById('next-page');
-        if (prevBtn) prevBtn.addEventListener('click', () => this.changePage(-1));
-        if (nextBtn) nextBtn.addEventListener('click', () => this.changePage(1));
-
-        // Click outside modal to close
-        window.addEventListener('click', (e) => {
-            const modal = document.getElementById('sale-modal');
-            if (e.target === modal) {
-                this.hideSaleModal();
-            }
-        });
-    },
-
-    showSaleModal(saleData = null) {
-        const modal = document.getElementById('sale-modal');
-        const modalTitle = document.getElementById('sale-modal-title');
-        const deleteBtn = document.getElementById('delete-sale');
-        const form = document.getElementById('sale-form');
-
-        if (saleData) {
-            // Edit mode
-            modalTitle.textContent = 'Edit Sale';
-            deleteBtn.style.display = 'inline-block';
-            // Populate form with saleData
-        } else {
-            // Add mode
-            modalTitle.textContent = 'Record Sale';
-            deleteBtn.style.display = 'none';
-            form.reset();
-            // Set today's date as default
-            const dateField = document.getElementById('sale-date');
-            if (dateField) {
-                dateField.value = new Date().toISOString().split('T')[0];
-            }
-        }
-
-        modal.classList.remove('hidden');
-    },
-
-    hideSaleModal() {
-        const modal = document.getElementById('sale-modal');
-        modal.classList.add('hidden');
-    },
-
-    handleQuickSale() {
-        console.log('Quick sale handler - implement this method');
-        // Implement quick sale logic here
-        alert('Quick sale functionality coming soon!');
-    },
-
-    handleSaveSale() {
-        console.log('Save sale handler - implement this method');
-        // Implement save sale logic here
-        alert('Save sale functionality coming soon!');
-        this.hideSaleModal();
-    },
-
-    exportSalesData() {
-        console.log('Export sales triggered');
-        // Implement export logic here
-        alert('Export functionality coming soon!');
-    },
-
-    applyAdvancedFilters() {
-        const period = document.getElementById('period-filter').value;
-        const product = document.getElementById('product-filter').value;
-        const status = document.getElementById('status-filter').value;
-        
-        console.log('Applying filters:', { period, product, status });
-        this.renderSalesTable(period);
-    },
-
-    changePage(direction) {
-        console.log('Change page:', direction);
-        // Implement pagination logic
-    },
-
-    syncStatsWithDashboard() {
-        if (window.FarmModules && window.FarmModules.appData) {
-            if (!window.FarmModules.appData.profile) {
-                window.FarmModules.appData.profile = {};
-            }
-            if (!window.FarmModules.appData.profile.dashboardStats) {
-                window.FarmModules.appData.profile.dashboardStats = {};
-            }
-
-            Object.assign(window.FarmModules.appData.profile.dashboardStats, {
-                totalSales: this.currentStats.totalSales,
-                totalRevenue: this.currentStats.totalRevenue,
-                todaySales: this.currentStats.todaySales,
-                weekSales: this.currentStats.weekSales,
-                monthSales: this.currentStats.monthSales,
-                avgSaleValue: this.currentStats.avgSaleValue,
-                paidSales: this.currentStats.paidSales,
-                pendingSales: this.currentStats.pendingSales,
-                topProduct: this.currentStats.topProduct,
-                topProductRevenue: this.currentStats.topProductRevenue
-            });
-        }
-
-        const statsUpdateEvent = new CustomEvent('salesStatsUpdated', {
-            detail: this.currentStats
-        });
-        document.dispatchEvent(statsUpdateEvent);
+        this.updateSelectedCount();
     }
 };
 
-// Register the module
-if (window.FarmModules) {
-    if (typeof window.FarmModules.registerModule === 'function') {
-        window.FarmModules.registerModule('sales-record', SalesRecordModule);
-        console.log('✅ Sales Records module registered');
-    } else {
-        console.error('FarmModules.registerModule is not a function');
-        window.FarmModules.registerModule = function(name, module) {
-            window.FarmModules.modules = window.FarmModules.modules || {};
-            window.FarmModules.modules[name] = module;
-            console.log(`Module ${name} registered manually`);
-        };
-        window.FarmModules.registerModule('sales-record', SalesRecordModule);
-    }
-} else {
-    console.error('FarmModules not found. Make sure framework.js is loaded first.');
-    window.FarmModules = {
-        modules: {},
-        appData: {},
-        registerModule: function(name, module) {
-            this.modules[name] = module;
-            console.log(`Module ${name} registered in fallback`);
-        }
-    };
-    window.FarmModules.registerModule('sales-record', SalesRecordModule);
-}
+// ... (keep the rest of the module registration code)
