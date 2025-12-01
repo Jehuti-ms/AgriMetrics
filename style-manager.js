@@ -269,7 +269,7 @@ const StyleManager = {
     
     'select': {
       appearance: 'none',
-      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+      backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")",
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 12px center',
       paddingRight: '40px'
@@ -318,7 +318,7 @@ const StyleManager = {
     
     // Utility classes
     '.text-muted': {
-      color: 'var(--text-muted)'
+      color: 'var(--text-tertiary)'
     },
     
     '.hidden': {
@@ -689,9 +689,6 @@ const StyleManager = {
       // Table footer and pagination
       '.table-footer': {
         display: 'flex',
-        justify
-              '.table-footer': {
-        display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '16px 0 0 0',
@@ -782,610 +779,6 @@ const StyleManager = {
         background: 'rgba(var(--status-paid-rgb), 0.1)',
         borderRadius: '8px',
         marginTop: '12px'
-      },
-      
-      // Responsive adjustments for smaller screens
-      '@media (max-width: 1200px)': {
-        '.financial-summary': {
-          gridTemplateColumns: 'repeat(2, 1fr)'
-        }
-      },
-      
-      '@media (max-width: 1024px)': {
-        '.module-content': {
-          gridTemplateColumns: '1fr'
-        }
-      },
-      
-      '@media (max-width: 768px)': {
-        '.financial-summary': {
-          gridTemplateColumns: '1fr'
-        },
-        
-        '.module-header': {
-          flexDirection: 'column',
-          gap: '16px',
-          alignItems: 'stretch'
-        },
-        
-        '.header-content': {
-          flexDirection: 'column',
-          gap: '16px'
-        },
-        
-        '.header-stats': {
-          order: '2'
-        },
-        
-        '.header-actions': {
-          order: '1',
-          flexWrap: 'wrap',
-          justifyContent: 'center'
-        },
-        
-        '.filter-bar': {
-          flexDirection: 'column',
-          alignitems: 'stretch'
-        },
-        
-        '.filter-group': {
-          minWidth: '100%'
-        },
-        
-        '.table-footer': {
-          flexDirection: 'column',
-          gap: '16px',
-          alignItems: 'stretch'
-        },
-        
-        '.table-summary': {
-          textAlign: 'center'
-        },
-        
-        '.pagination': {
-          justifyContent: 'center'
-        },
-        
-        '.form-row': {
-          gridTemplateColumns: '1fr'
-        }
-      }
-    },
-    
-    'sales-record': {
-      // Module container
-      '.module-container': {
-        padding: '24px',
-        minHeight: '100vh',
-        background: 'var(--module-bg)'
-      },
-      
-      // Header styles
-      '.module-header': {
-        background: 'var(--header-gradient)',
-        borderRadius: 'var(--radius-xl)',
-        padding: '24px',
-        marginBottom: '32px',
-        color: 'white',
-        boxShadow: 'var(--shadow-lg)',
-        position: 'relative',
-        overflow: 'hidden'
-      },
-      
-      '.module-header::before': {
-        content: '""',
-        position: 'absolute',
-        top: '0',
-        left: '0',
-        right: '0',
-        bottom: '0',
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%)'
-      },
-      
-      '.header-content': {
-        position: 'relative',
-        zIndex: '1',
-        marginBottom: '20px'
-      },
-      
-      '.header-text': {
-        marginBottom: '16px'
-      },
-      
-      '.module-title': {
-        fontSize: '28px',
-        fontWeight: '700',
-        marginBottom: '8px',
-        letterSpacing: '-0.5px'
-      },
-      
-      '.module-subtitle': {
-        fontSize: '15px',
-        opacity: '0.9',
-        fontWeight: '400'
-      },
-      
-      '.header-stats': {
-        display: 'flex',
-        gap: '16px',
-        flexWrap: 'wrap'
-      },
-      
-      '.stat-badge': {
-        background: 'rgba(255, 255, 255, 0.2)',
-        backdropFilter: 'blur(10px)',
-        borderRadius: 'var(--radius-lg)',
-        padding: '12px 20px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        minWidth: '120px'
-      },
-      
-      '.stat-icon': {
-        fontSize: '20px',
-        marginBottom: '4px'
-      },
-      
-      '.stat-value': {
-        fontSize: '20px',
-        fontWeight: '700',
-        marginBottom: '2px'
-      },
-      
-      '.stat-label': {
-        fontSize: '12px',
-        opacity: '0.8',
-        textTransform: 'uppercase',
-        letterSpacing: '0.5px'
-      },
-      
-      '.header-actions': {
-        position: 'relative',
-        zIndex: '1',
-        display: 'flex',
-        gap: '12px',
-        flexWrap: 'wrap'
-      },
-      
-      // Summary cards
-      '.sales-summary': {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '20px',
-        marginBottom: '32px'
-      },
-      
-      '.summary-card': {
-        padding: '24px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '20px'
-      },
-      
-      '.summary-icon': {
-        fontSize: '36px',
-        width: '60px',
-        height: '60px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'rgba(34, 197, 94, 0.1)',
-        borderRadius: 'var(--radius-lg)',
-        flexShrink: '0'
-      },
-      
-      '.summary-content': {
-        flex: '1'
-      },
-      
-      '.summary-content h3': {
-        fontSize: '14px',
-        fontWeight: '600',
-        color: 'var(--text-secondary)',
-        marginBottom: '8px',
-        textTransform: 'uppercase',
-        letterSpacing: '0.5px'
-      },
-      
-      '.summary-value': {
-        fontSize: '24px',
-        fontWeight: '700',
-        color: 'var(--text-primary)',
-        marginBottom: '4px',
-        lineHeight: '1.2'
-      },
-      
-      '.summary-period': {
-        fontSize: '12px',
-        color: 'var(--text-muted)'
-      },
-      
-      '.summary-trend': {
-        textAlign: 'right',
-        flexShrink: '0'
-      },
-      
-      '.trend-indicator': {
-        fontSize: '14px',
-        fontWeight: '600'
-      },
-      
-      '.trend-indicator.up': {
-        color: 'var(--status-paid)'
-      },
-      
-      '.trend-indicator.down': {
-        color: 'var(--status-cancelled)'
-      },
-      
-      '.trend-value': {
-        display: 'block',
-        fontSize: '12px',
-        color: 'var(--text-muted)',
-        marginTop: '2px'
-      },
-      
-      // Content layout
-      '.module-content': {
-        display: 'grid',
-        gridTemplateColumns: '300px 1fr',
-        gap: '32px'
-      },
-      
-      '.content-sidebar': {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '24px'
-      },
-      
-      '.sidebar-card': {
-        padding: '24px'
-      },
-      
-      '.sidebar-title': {
-        fontSize: '16px',
-        fontWeight: '600',
-        marginBottom: '20px',
-        color: 'var(--text-primary)'
-      },
-      
-      '.filter-section': {
-        marginBottom: '16px'
-      },
-      
-      '.filter-select': {
-        width: '100%',
-        padding: '10px 12px'
-      },
-      
-      '.quick-form': {
-        marginTop: '16px'
-      },
-      
-      '.content-main': {
-        minWidth: '0' // Prevent grid overflow
-      },
-      
-      '.main-card': {
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column'
-      },
-      
-      '.card-header': {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '24px',
-        paddingBottom: '16px',
-        borderBottom: '1px solid var(--card-border)'
-      },
-      
-      '.card-title': {
-        fontSize: '18px',
-        fontWeight: '600',
-        color: 'var(--text-primary)'
-      },
-      
-      '.card-actions': {
-        display: 'flex',
-        gap: '8px'
-      },
-      
-      // Table styles
-      '.table-container': {
-        flex: '1',
-        overflowX: 'auto',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--card-border)'
-      },
-      
-      '.data-table': {
-        width: '100%',
-        borderCollapse: 'collapse',
-        fontSize: '14px'
-      },
-      
-      '.data-table thead': {
-        background: 'var(--primary-50)'
-      },
-      
-      '.data-table th': {
-        padding: '16px 20px',
-        textAlign: 'left',
-        fontWeight: '600',
-        color: 'var(--text-secondary)',
-        borderBottom: '1px solid var(--card-border)',
-        whiteSpace: 'nowrap'
-      },
-      
-      '.data-table td': {
-        padding: '16px 20px',
-        borderBottom: '1px solid var(--border-color)',
-        verticalAlign: 'middle'
-      },
-      
-      '.data-table tbody tr:hover': {
-        background: 'var(--primary-50)'
-      },
-      
-      '.data-table tbody tr:last-child td': {
-        borderBottom: 'none'
-      },
-      
-      '.date-cell': {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '2px'
-      },
-      
-      '.date-day': {
-        fontWeight: '500'
-      },
-      
-      '.date-time': {
-        fontSize: '12px',
-        color: 'var(--text-tertiary)'
-      },
-      
-      '.product-cell': {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px'
-      },
-      
-      '.product-name': {
-        fontWeight: '500'
-      },
-      
-      '.product-notes': {
-        color: 'var(--text-tertiary)',
-        cursor: 'help'
-      },
-      
-      '.status-badge': {
-        display: 'inline-block',
-        padding: '4px 12px',
-        borderRadius: '20px',
-        fontSize: '12px',
-        fontWeight: '600',
-        textTransform: 'uppercase',
-        letterSpacing: '0.5px'
-      },
-      
-      '.status-paid': {
-        background: 'rgba(var(--status-paid-rgb), 0.1)',
-        color: 'var(--status-paid)'
-      },
-      
-      '.status-pending': {
-        background: 'rgba(var(--status-pending-rgb), 0.1)',
-        color: 'var(--status-pending)'
-      },
-      
-      '.status-cancelled': {
-        background: 'rgba(var(--status-cancelled-rgb), 0.1)',
-        color: 'var(--status-cancelled)'
-      },
-      
-      '.actions-cell': {
-        whiteSpace: 'nowrap'
-      },
-      
-      '.action-buttons': {
-        display: 'flex',
-        gap: '8px'
-      },
-      
-      '.btn-icon': {
-        width: '32px',
-        height: '32px',
-        padding: '0',
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 'var(--radius-md)',
-        background: 'transparent',
-        border: 'none',
-        cursor: 'pointer',
-        transition: 'all 0.2s ease'
-      },
-      
-      '.btn-icon:hover': {
-        background: 'var(--primary-50)',
-        transform: 'scale(1.1)'
-      },
-      
-      '.btn-icon.edit-sale:hover': {
-        color: 'var(--primary-600)'
-      },
-      
-      '.btn-icon.delete-sale:hover': {
-        color: 'var(--status-cancelled)'
-      },
-      
-      // Table footer
-      '.table-footer': {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: '24px',
-        paddingTop: '16px',
-        borderTop: '1px solid var(--border-color)'
-      },
-      
-      '.table-summary': {
-        fontSize: '14px',
-        color: 'var(--text-tertiary)'
-      },
-      
-      '.pagination': {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '16px'
-      },
-      
-      '.page-info': {
-        fontSize: '14px',
-        color: 'var(--text-secondary)'
-      },
-      
-      // Modal styles
-      '.modal': {
-        position: 'fixed',
-        top: '0',
-        left: '0',
-        right: '0',
-        bottom: '0',
-        background: 'rgba(0, 0, 0, 0.5)',
-        backdropFilter: 'blur(4px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: '1000',
-        padding: '20px'
-      },
-      
-      '.modal.hidden': {
-        display: 'none'
-      },
-      
-      '.modal-content': {
-        width: '100%',
-        maxWidth: '500px',
-        maxHeight: '90vh',
-        overflowY: 'auto'
-      },
-      
-      '.modal-header': {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '24px',
-        paddingBottom: '16px',
-        borderBottom: '1px solid var(--border-color)'
-      },
-      
-      '.modal-header h3': {
-        fontSize: '20px',
-        fontWeight: '600',
-        color: 'var(--text-primary)'
-      },
-      
-      '.modal-body': {
-        marginBottom: '24px'
-      },
-      
-      '.modal-footer': {
-        display: 'flex',
-        justifyContent: 'flex-end',
-        gap: '12px',
-        paddingTop: '16px',
-        borderTop: '1px solid var(--border-color)'
-      },
-      
-      // Responsive styles
-      '@media (max-width: 1200px)': {
-        '.module-content': {
-          gridTemplateColumns: '1fr'
-        },
-        
-        '.content-sidebar': {
-          order: '2'
-        },
-        
-        '.content-main': {
-          order: '1'
-        }
-      },
-      
-      '@media (max-width: 768px)': {
-        '.module-header': {
-          padding: '20px'
-        },
-        
-        '.header-stats': {
-          flexDirection: 'column'
-        },
-        
-        '.stat-badge': {
-          minWidth: 'auto',
-          width: '100%'
-        },
-        
-        '.header-actions': {
-          flexDirection: 'column'
-        },
-        
-        '.sales-summary': {
-          gridTemplateColumns: '1fr'
-        },
-        
-        '.summary-card': {
-          flexDirection: 'column',
-          textAlign: 'center',
-          gap: '16px'
-        },
-        
-        '.summary-trend': {
-          textAlign: 'center'
-        },
-        
-        '.form-row': {
-          gridTemplateColumns: '1fr',
-          gap: '12px'
-        },
-        
-        '.card-header': {
-          flexDirection: 'column',
-          gap: '12px',
-          alignItems: 'stretch'
-        },
-        
-        '.card-actions': {
-          justifyContent: 'center'
-        },
-        
-        '.table-footer': {
-          flexDirection: 'column',
-          gap: '16px',
-          textAlign: 'center'
-        }
-      },
-      
-      '@media (max-width: 480px)': {
-        '.module-container': {
-          padding: '16px'
-        },
-        
-        '.data-table th, .data-table td': {
-          padding: '12px 16px'
-        },
-        
-        '.modal-content': {
-          padding: '20px'
-        }
       }
     }
   },
@@ -1395,7 +788,6 @@ const StyleManager = {
     console.log('🎨 Initializing StyleManager...');
     this.applyTheme(this.currentTheme);
     this.injectStyles(this.globalStyles);
-    this.injectModuleStyles();
     console.log('✅ StyleManager ready');
   },
 
@@ -1419,9 +811,9 @@ const StyleManager = {
       element.classList.add('module-container');
       element.style.setProperty('--header-gradient', config.headerGradient);
       
-      // Inject module-specific styles if not already injected
-      if (this.moduleStyles[moduleId] && !document.querySelector(`style[data-module="${moduleId}"]`)) {
-        this.injectScopedStyles(moduleId, this.moduleStyles[moduleId]);
+      // Apply module-specific styles
+      if (this.moduleStyles[moduleId]) {
+        this.applyModuleStyles(moduleId);
       }
       
       console.log(`✅ StyleManager: Registered ${config.name}`);
@@ -1439,10 +831,10 @@ const StyleManager = {
     }
     Object.assign(this.moduleStyles[moduleId], styles);
     
-    // If module is already rendered, inject styles immediately
+    // If module is already rendered, apply styles immediately
     const moduleElement = document.getElementById(moduleId);
     if (moduleElement) {
-      this.injectScopedStyles(moduleId, styles);
+      this.applyModuleStyles(moduleId);
     }
   },
 
@@ -1476,17 +868,10 @@ const StyleManager = {
     document.head.appendChild(styleTag);
   },
 
-  injectModuleStyles() {
-    // Remove existing module styles
-    document.querySelectorAll('style[data-module]').forEach(style => style.remove());
+  applyModuleStyles(moduleId) {
+    const styles = this.moduleStyles[moduleId];
+    if (!styles) return;
     
-    // Inject all module styles
-    Object.entries(this.moduleStyles).forEach(([moduleId, styles]) => {
-      this.injectScopedStyles(moduleId, styles);
-    });
-  },
-
-  injectScopedStyles(moduleId, styles) {
     // Remove existing styles for this module
     const existingStyle = document.querySelector(`style[data-module="${moduleId}"]`);
     if (existingStyle) {
@@ -1553,3 +938,4 @@ if (document.readyState === 'loading') {
 // Expose globally
 window.StyleManager = StyleManager;
 console.log('✅ Extended StyleManager loaded');
+
