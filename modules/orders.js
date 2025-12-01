@@ -90,7 +90,6 @@ const OrdersModule = {
 
         this.element.innerHTML = `
             <div id="orders" class="module-container">
-            <div class="module-container">
                 <div class="module-header">
                     <h1 class="module-title">Orders Management</h1>
                     <p class="module-subtitle">Manage customer orders and deliveries</p>
