@@ -128,7 +128,9 @@ const DashboardModule = {
                 <!-- Welcome Section with white header text -->
                 <div class="welcome-section">
                     <h1 class="welcome-header">Welcome to Farm Management</h1>
-                    <p class="welcome-subtitle">Manage your farm operations efficiently</p>
+                    <p class="welcome-subtitle" style="color: white; margin: 0; padding: 0;">
+                      Manage your farm operations efficiently
+                    </p>
                 </div>
 
                 <!-- Quick Actions Grid -->
