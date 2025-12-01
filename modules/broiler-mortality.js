@@ -272,8 +272,6 @@ const BroilerMortalityModule = {
                     </div>
                 </div>
 
-                // In the renderModule() function, replace the modal section with this:
-
                 <!-- Health Report Modal -->
                 <div id="health-report-modal" class="modal hidden">
                     <div class="modal-content">
