@@ -89,6 +89,7 @@ const OrdersModule = {
         const stats = this.calculateStats();
 
         this.element.innerHTML = `
+            <div id="orders" class="module-container">
             <div class="module-container">
                 <div class="module-header">
                     <h1 class="module-title">Orders Management</h1>
