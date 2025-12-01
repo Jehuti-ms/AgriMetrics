@@ -18,22 +18,51 @@ const StyleManager = {
         '--primary-100': '#dcfce7',
         '--primary-50': '#f0fdf4',
         
+        // Background Colors
+        '--bg-primary': '#ffffff',
+        '--bg-secondary': '#f8faf9',
+        '--bg-tertiary': '#f1f5f9',
+        
+        // Card Colors
+        '--card-bg': '#ffffff',
+        '--card-bg-hover': '#f8faf9',
+        
+        // Text Colors
+        '--text-primary': '#0f172a',
+        '--text-secondary': '#475569',
+        '--text-tertiary': '#94a3b8',
+        '--text-light': '#f8fafc',
+        
+        // Border Colors
+        '--border-color': '#e2e8f0',
+        '--border-color-dark': '#334155',
+        
+        // Dark Mode Card Colors
+        '--card-bg-dark': '#1e293b',
+        '--bg-secondary-dark': '#0f172a',
+        
+        // Status Colors (with RGB values for opacity)
+        '--status-paid': '#22c55e',
+        '--status-paid-rgb': '34, 197, 94',
+        '--status-pending': '#f59e0b',
+        '--status-pending-rgb': '245, 158, 11',
+        '--status-cancelled': '#ef4444',
+        '--status-cancelled-rgb': '239, 68, 68',
+        '--status-overdue': '#dc2626',
+        '--status-overdue-rgb': '220, 38, 38',
+        
         // Gradients
         '--gradient-primary': 'linear-gradient(135deg, #22c55e, #16a34a)',
         '--gradient-primary-hover': 'linear-gradient(135deg, #16a34a, #15803d)',
         '--gradient-card': 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,247,244,0.95) 100%)',
         '--gradient-sidebar': 'linear-gradient(180deg, #f8faf9 0%, #f0f7f4 100%)',
         
-        // Backgrounds
+        // Module Background
         '--module-bg': 'linear-gradient(135deg, #f8faf9 0%, #f0f7f4 100%)',
-        '--card-bg': 'rgba(255, 255, 255, 0.95)',
-        '--card-bg-hover': 'rgba(255, 255, 255, 1)',
-        '--sidebar-bg': 'rgba(248, 250, 249, 0.95)',
-        '--modal-bg': 'rgba(255, 255, 255, 0.98)',
-        
-        // Borders & Shadows
         '--card-border': 'rgba(34, 197, 94, 0.1)',
         '--card-border-hover': 'rgba(34, 197, 94, 0.2)',
+        
+        // Shadows
         '--shadow-sm': '0 2px 8px rgba(0, 0, 0, 0.08)',
         '--shadow-md': '0 4px 20px rgba(0, 0, 0, 0.1)',
         '--shadow-lg': '0 8px 32px rgba(0, 0, 0, 0.12)',
@@ -45,18 +74,6 @@ const StyleManager = {
         '--radius-lg': '16px',
         '--radius-xl': '20px',
         '--radius-2xl': '24px',
-        
-        // Text Colors
-        '--text-primary': '#0f172a',
-        '--text-secondary': '#475569',
-        '--text-muted': '#94a3b8',
-        '--text-light': '#f8fafc',
-        
-        // Status Colors
-        '--status-paid': '#22c55e',
-        '--status-pending': '#f59e0b',
-        '--status-cancelled': '#ef4444',
-        '--status-overdue': '#dc2626',
         
         // Spacing
         '--spacing-xs': '4px',
@@ -77,38 +94,55 @@ const StyleManager = {
         '--primary-100': '#166534',
         '--primary-50': '#052e16',
         
+        // Background Colors
+        '--bg-primary': '#0f172a',
+        '--bg-secondary': '#1e293b',
+        '--bg-tertiary': '#334155',
+        
+        // Card Colors
+        '--card-bg': '#1e293b',
+        '--card-bg-hover': '#334155',
+        
+        // Text Colors
+        '--text-primary': '#e5e7eb',
+        '--text-secondary': '#cbd5e1',
+        '--text-tertiary': '#94a3b8',
+        '--text-light': '#f8fafc',
+        
+        // Border Colors
+        '--border-color': '#334155',
+        '--border-color-dark': '#475569',
+        
+        // Dark Mode Card Colors
+        '--card-bg-dark': '#1e293b',
+        '--bg-secondary-dark': '#0f172a',
+        
+        // Status Colors (with RGB values for opacity)
+        '--status-paid': '#4ade80',
+        '--status-paid-rgb': '74, 222, 128',
+        '--status-pending': '#fbbf24',
+        '--status-pending-rgb': '251, 191, 36',
+        '--status-cancelled': '#f87171',
+        '--status-cancelled-rgb': '248, 113, 113',
+        '--status-overdue': '#dc2626',
+        '--status-overdue-rgb': '220, 38, 38',
+        
         // Gradients
         '--gradient-primary': 'linear-gradient(135deg, #4ade80, #22c55e)',
         '--gradient-primary-hover': 'linear-gradient(135deg, #22c55e, #16a34a)',
         '--gradient-card': 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
         '--gradient-sidebar': 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)',
         
-        // Backgrounds
+        // Module Background
         '--module-bg': 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-        '--card-bg': 'rgba(30, 41, 59, 0.95)',
-        '--card-bg-hover': 'rgba(30, 41, 59, 1)',
-        '--sidebar-bg': 'rgba(15, 23, 42, 0.95)',
-        '--modal-bg': 'rgba(15, 23, 42, 0.98)',
-        
-        // Borders & Shadows
         '--card-border': 'rgba(74, 222, 128, 0.1)',
         '--card-border-hover': 'rgba(74, 222, 128, 0.2)',
+        
+        // Shadows
         '--shadow-sm': '0 2px 8px rgba(0, 0, 0, 0.2)',
         '--shadow-md': '0 4px 20px rgba(0, 0, 0, 0.25)',
         '--shadow-lg': '0 8px 32px rgba(0, 0, 0, 0.3)',
-        '--shadow-xl': '0 12px 48px rgba(0, 0, 0, 0.35)',
-        
-        // Text Colors
-        '--text-primary': '#e5e7eb',
-        '--text-secondary': '#cbd5e1',
-        '--text-muted': '#94a3b8',
-        '--text-light': '#f8fafc',
-        
-        // Status Colors (same in dark mode)
-        '--status-paid': '#4ade80',
-        '--status-pending': '#fbbf24',
-        '--status-cancelled': '#f87171',
-        '--status-overdue': '#dc2626'
+        '--shadow-xl': '0 12px 48px rgba(0, 0, 0, 0.35)'
       }
     }
   },
@@ -221,8 +255,8 @@ const StyleManager = {
       fontSize: '14px',
       padding: '10px 12px',
       borderRadius: 'var(--radius-md)',
-      border: '1px solid var(--text-muted)',
-      backgroundColor: 'transparent',
+      border: '1px solid var(--border-color)',
+      backgroundColor: 'var(--bg-primary)',
       color: 'var(--text-primary)',
       transition: 'all 0.2s ease'
     },
@@ -311,6 +345,513 @@ const StyleManager = {
 
   // Module-specific styles
   moduleStyles: {
+    'income-expenses': {
+      // Module container
+      '.module-container': {
+        padding: '0',
+        margin: '0',
+        width: '100%'
+      },
+      
+      // Fix for header stats - horizontal on large screens
+      '.header-stats': {
+        display: 'flex',
+        gap: '16px',
+        flexWrap: 'nowrap',
+        overflowX: 'auto',
+        paddingBottom: '8px',
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'var(--border-color) transparent'
+      },
+      
+      '.header-stats::-webkit-scrollbar': {
+        height: '4px'
+      },
+      
+      '.header-stats::-webkit-scrollbar-track': {
+        background: 'transparent'
+      },
+      
+      '.header-stats::-webkit-scrollbar-thumb': {
+        backgroundColor: 'var(--border-color)',
+        borderRadius: '2px'
+      },
+      
+      '.header-stats .stat-badge': {
+        minWidth: '120px',
+        flexShrink: '0',
+        padding: '12px 16px',
+        background: 'var(--card-bg)',
+        border: '1px solid var(--border-color)',
+        borderRadius: '12px',
+        textAlign: 'center'
+      },
+      
+      // Fix for financial summary cards - horizontal on desktop, stacked on mobile
+      '.financial-summary': {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4, 1fr)',
+        gap: '16px',
+        margin: '24px 0'
+      },
+      
+      '.summary-card': {
+        padding: '20px',
+        background: 'var(--card-bg)',
+        border: '1px solid var(--border-color)',
+        borderRadius: '16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '16px',
+        transition: 'all 0.3s ease'
+      },
+      
+      '.summary-card:hover': {
+        transform: 'translateY(-2px)',
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)'
+      },
+      
+      '.summary-icon': {
+        fontSize: '32px',
+        width: '64px',
+        height: '64px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--primary-50)',
+        borderRadius: '12px'
+      },
+      
+      '.summary-content': {
+        flex: '1'
+      },
+      
+      '.summary-content h3': {
+        fontSize: '14px',
+        fontWeight: '500',
+        color: 'var(--text-secondary)',
+        margin: '0 0 4px 0'
+      },
+      
+      '.summary-value': {
+        fontSize: '24px',
+        fontWeight: '600',
+        color: 'var(--text-primary)',
+        margin: '4px 0'
+      },
+      
+      '.summary-period': {
+        fontSize: '12px',
+        color: 'var(--text-tertiary)'
+      },
+      
+      '.summary-trend': {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+        fontSize: '14px'
+      },
+      
+      '.trend-indicator.up': {
+        color: 'var(--status-paid)'
+      },
+      
+      '.trend-indicator.down': {
+        color: 'var(--status-cancelled)'
+      },
+      
+      // Fix for module content layout
+      '.module-content': {
+        display: 'grid',
+        gridTemplateColumns: '300px 1fr',
+        gap: '24px',
+        marginTop: '24px'
+      },
+      
+      '.content-sidebar': {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px'
+      },
+      
+      '.sidebar-card': {
+        padding: '20px',
+        background: 'var(--card-bg)',
+        border: '1px solid var(--border-color)',
+        borderRadius: '16px'
+      },
+      
+      '.sidebar-title': {
+        fontSize: '16px',
+        fontWeight: '600',
+        margin: '0 0 16px 0',
+        color: 'var(--text-primary)'
+      },
+      
+      // Quick transaction form fixes
+      '.quick-form .form-group': {
+        marginBottom: '16px'
+      },
+      
+      '.quick-form label': {
+        display: 'block',
+        fontSize: '13px',
+        fontWeight: '500',
+        color: 'var(--text-secondary)',
+        marginBottom: '6px'
+      },
+      
+      '.quick-form input, .quick-form select': {
+        width: '100%',
+        padding: '10px 12px',
+        border: '1px solid var(--border-color)',
+        borderRadius: '8px',
+        background: 'var(--bg-primary)',
+        color: 'var(--text-primary)',
+        fontSize: '14px'
+      },
+      
+      '.quick-export-options': {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px'
+      },
+      
+      // Category chart placeholder
+      '.category-chart': {
+        height: '200px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--bg-secondary)',
+        borderRadius: '12px',
+        textAlign: 'center'
+      },
+      
+      '.chart-placeholder': {
+        color: 'var(--text-tertiary)'
+      },
+      
+      '.chart-icon': {
+        fontSize: '48px',
+        opacity: '0.5',
+        marginBottom: '12px'
+      },
+      
+      // Main content area fixes
+      '.main-card': {
+        padding: '24px',
+        background: 'var(--card-bg)',
+        border: '1px solid var(--border-color)',
+        borderRadius: '16px'
+      },
+      
+      '.card-header': {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '20px'
+      },
+      
+      '.card-title': {
+        fontSize: '18px',
+        fontWeight: '600',
+        margin: '0',
+        color: 'var(--text-primary)'
+      },
+      
+      '.card-actions': {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px'
+      },
+      
+      '.export-info': {
+        fontSize: '12px',
+        color: 'var(--text-tertiary)'
+      },
+      
+      // Filter bar improvements
+      '.filter-bar': {
+        display: 'flex',
+        gap: '12px',
+        flexWrap: 'wrap',
+        padding: '16px',
+        background: 'var(--bg-secondary)',
+        borderRadius: '12px',
+        marginBottom: '20px'
+      },
+      
+      '.filter-group': {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+        minWidth: '150px',
+        flex: '1'
+      },
+      
+      '.filter-group label': {
+        fontSize: '12px',
+        fontWeight: '500',
+        color: 'var(--text-secondary)'
+      },
+      
+      '.filter-select': {
+        padding: '8px 12px',
+        border: '1px solid var(--border-color)',
+        borderRadius: '8px',
+        background: 'var(--bg-primary)',
+        color: 'var(--text-primary)',
+        fontSize: '14px'
+      },
+      
+      // Table improvements
+      '.table-container': {
+        overflowX: 'auto',
+        borderRadius: '12px',
+        border: '1px solid var(--border-color)'
+      },
+      
+      '.data-table': {
+        width: '100%',
+        borderCollapse: 'collapse'
+      },
+      
+      '.data-table th': {
+        background: 'var(--bg-secondary)',
+        padding: '12px 16px',
+        textAlign: 'left',
+        fontSize: '12px',
+        fontWeight: '600',
+        color: 'var(--text-secondary)',
+        borderBottom: '1px solid var(--border-color)'
+      },
+      
+      '.data-table td': {
+        padding: '12px 16px',
+        borderBottom: '1px solid var(--border-color)',
+        fontSize: '14px'
+      },
+      
+      '.data-table tr:hover': {
+        background: 'var(--bg-secondary)'
+      },
+      
+      // Type badges in table
+      '.type-badge': {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        padding: '4px 8px',
+        borderRadius: '6px',
+        fontSize: '12px',
+        fontWeight: '500'
+      },
+      
+      '.type-income': {
+        background: 'rgba(var(--status-paid-rgb), 0.1)',
+        color: 'var(--status-paid)'
+      },
+      
+      '.type-expense': {
+        background: 'rgba(var(--status-cancelled-rgb), 0.1)',
+        color: 'var(--status-cancelled)'
+      },
+      
+      '.amount-income': {
+        color: 'var(--status-paid)',
+        fontWeight: '600'
+      },
+      
+      '.amount-expense': {
+        color: 'var(--status-cancelled)',
+        fontWeight: '600'
+      },
+      
+      // Empty state styling
+      '.empty-state': {
+        textAlign: 'center',
+        padding: '40px 20px'
+      },
+      
+      '.empty-content': {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '12px'
+      },
+      
+      '.empty-icon': {
+        fontSize: '48px',
+        opacity: '0.3'
+      },
+      
+      // Table footer and pagination
+      '.table-footer': {
+        display: 'flex',
+        justify
+              '.table-footer': {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '16px 0 0 0',
+        borderTop: '1px solid var(--border-color)',
+        marginTop: '16px'
+      },
+      
+      '.table-summary': {
+        fontSize: '14px',
+        color: 'var(--text-secondary)'
+      },
+      
+      '.pagination': {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px'
+      },
+      
+      '.page-info': {
+        fontSize: '14px',
+        color: 'var(--text-secondary)'
+      },
+      
+      // Modal improvements
+      '.modal-content': {
+        maxWidth: '600px',
+        width: '90%',
+        margin: '40px auto'
+      },
+      
+      '.modal-header': {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '20px 24px',
+        borderBottom: '1px solid var(--border-color)'
+      },
+      
+      '.modal-body': {
+        padding: '24px',
+        maxHeight: '70vh',
+        overflowY: 'auto'
+      },
+      
+      '.form-row': {
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '16px',
+        marginBottom: '16px'
+      },
+      
+      // Export progress modal
+      '.export-progress': {
+        padding: '20px 0'
+      },
+      
+      '.progress-bar': {
+        height: '8px',
+        background: 'var(--bg-secondary)',
+        borderRadius: '4px',
+        overflow: 'hidden',
+        marginBottom: '12px'
+      },
+      
+      '.progress-fill': {
+        height: '100%',
+        background: 'var(--primary-500)',
+        borderRadius: '4px',
+        transition: 'width 0.3s ease'
+      },
+      
+      '.progress-text': {
+        fontSize: '14px',
+        color: 'var(--text-primary)',
+        marginBottom: '8px'
+      },
+      
+      '.progress-details': {
+        fontSize: '12px',
+        color: 'var(--text-secondary)'
+      },
+      
+      '.export-success': {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        padding: '12px',
+        background: 'rgba(var(--status-paid-rgb), 0.1)',
+        borderRadius: '8px',
+        marginTop: '12px'
+      },
+      
+      // Responsive adjustments for smaller screens
+      '@media (max-width: 1200px)': {
+        '.financial-summary': {
+          gridTemplateColumns: 'repeat(2, 1fr)'
+        }
+      },
+      
+      '@media (max-width: 1024px)': {
+        '.module-content': {
+          gridTemplateColumns: '1fr'
+        }
+      },
+      
+      '@media (max-width: 768px)': {
+        '.financial-summary': {
+          gridTemplateColumns: '1fr'
+        },
+        
+        '.module-header': {
+          flexDirection: 'column',
+          gap: '16px',
+          alignItems: 'stretch'
+        },
+        
+        '.header-content': {
+          flexDirection: 'column',
+          gap: '16px'
+        },
+        
+        '.header-stats': {
+          order: '2'
+        },
+        
+        '.header-actions': {
+          order: '1',
+          flexWrap: 'wrap',
+          justifyContent: 'center'
+        },
+        
+        '.filter-bar': {
+          flexDirection: 'column',
+          alignitems: 'stretch'
+        },
+        
+        '.filter-group': {
+          minWidth: '100%'
+        },
+        
+        '.table-footer': {
+          flexDirection: 'column',
+          gap: '16px',
+          alignItems: 'stretch'
+        },
+        
+        '.table-summary': {
+          textAlign: 'center'
+        },
+        
+        '.pagination': {
+          justifyContent: 'center'
+        },
+        
+        '.form-row': {
+          gridTemplateColumns: '1fr'
+        }
+      }
+    },
+    
     'sales-record': {
       // Module container
       '.module-container': {
@@ -581,7 +1122,7 @@ const StyleManager = {
       
       '.data-table td': {
         padding: '16px 20px',
-        borderBottom: '1px solid var(--card-border)',
+        borderBottom: '1px solid var(--border-color)',
         verticalAlign: 'middle'
       },
       
@@ -605,7 +1146,7 @@ const StyleManager = {
       
       '.date-time': {
         fontSize: '12px',
-        color: 'var(--text-muted)'
+        color: 'var(--text-tertiary)'
       },
       
       '.product-cell': {
@@ -619,7 +1160,7 @@ const StyleManager = {
       },
       
       '.product-notes': {
-        color: 'var(--text-muted)',
+        color: 'var(--text-tertiary)',
         cursor: 'help'
       },
       
@@ -634,17 +1175,17 @@ const StyleManager = {
       },
       
       '.status-paid': {
-        background: 'rgba(34, 197, 94, 0.1)',
+        background: 'rgba(var(--status-paid-rgb), 0.1)',
         color: 'var(--status-paid)'
       },
       
       '.status-pending': {
-        background: 'rgba(245, 158, 11, 0.1)',
+        background: 'rgba(var(--status-pending-rgb), 0.1)',
         color: 'var(--status-pending)'
       },
       
       '.status-cancelled': {
-        background: 'rgba(239, 68, 68, 0.1)',
+        background: 'rgba(var(--status-cancelled-rgb), 0.1)',
         color: 'var(--status-cancelled)'
       },
       
@@ -691,12 +1232,12 @@ const StyleManager = {
         alignItems: 'center',
         marginTop: '24px',
         paddingTop: '16px',
-        borderTop: '1px solid var(--card-border)'
+        borderTop: '1px solid var(--border-color)'
       },
       
       '.table-summary': {
         fontSize: '14px',
-        color: 'var(--text-muted)'
+        color: 'var(--text-tertiary)'
       },
       
       '.pagination': {
@@ -743,7 +1284,7 @@ const StyleManager = {
         alignItems: 'center',
         marginBottom: '24px',
         paddingBottom: '16px',
-        borderBottom: '1px solid var(--card-border)'
+        borderBottom: '1px solid var(--border-color)'
       },
       
       '.modal-header h3': {
@@ -761,7 +1302,7 @@ const StyleManager = {
         justifyContent: 'flex-end',
         gap: '12px',
         paddingTop: '16px',
-        borderTop: '1px solid var(--card-border)'
+        borderTop: '1px solid var(--border-color)'
       },
       
       // Responsive styles
