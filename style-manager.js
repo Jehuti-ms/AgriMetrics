@@ -511,7 +511,23 @@ const StyleManager = {
         textTransform: 'uppercase',
         letterSpacing: '0.8px'
       },
+
+      '.header-stats .stat-value': {
+        fontSize: '24px',
+        fontWeight: '700',
+        color: 'white !important',
+        lineHeight: '1.2',
+        textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
+      },
       
+      '.header-stats .stat-label': {
+        fontSize: '12px',
+        fontWeight: '600',
+        color: 'rgba(255, 255, 255, 0.9) !important',
+        textTransform: 'uppercase',
+        letterSpacing: '0.8px'
+      },
+
       '.header-stats::-webkit-scrollbar': {
         height: '4px'
       },
