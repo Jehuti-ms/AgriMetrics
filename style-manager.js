@@ -1235,7 +1235,7 @@ const StyleManager = {
   getModuleStyles(moduleId) {
     return this.moduleStyles[moduleId] || null;
   }
-};
+}
 
 // Auto-initialize when DOM is ready
 if (document.readyState === 'loading') {
