@@ -1,4 +1,4 @@
-// modules/income-expenses.js - UPDATED WITH STYLE MANAGER INTEGRATION
+// modules/income-expenses.js - UPDATED WITH HEADER STATS INTEGRATION
 console.log('Loading income-expenses module...');
 
 const IncomeExpensesModule = {
@@ -10,13 +10,13 @@ const IncomeExpensesModule = {
     initialize() {
         console.log('💰 Initializing Income & Expenses...');
         
-        // ✅ ADDED: Get the content area element
+        // ✅ Get the content area element
         this.element = document.getElementById('content-area');
         if (!this.element) return false;
 
-        // ✅ ADDED: Register with StyleManager
+        // ✅ Register with StyleManager
         if (window.StyleManager) {
-            StyleManager.registerModule(this.id, this.element, this);
+            StyleManager.registerModule('income-expenses', this.element);
         }
 
         this.loadData();
@@ -29,12 +29,6 @@ const IncomeExpensesModule = {
         
         console.log('✅ Income & Expenses initialized with StyleManager');
         return true;
-    },
-
-    // ✅ ADDED: Theme change handler (optional)
-    onThemeChange(theme) {
-        console.log(`Income & Expenses updating for theme: ${theme}`);
-        // You can add theme-specific logic here if needed
     },
 
     loadData() {
@@ -58,41 +52,67 @@ const IncomeExpensesModule = {
 
         this.element.innerHTML = `
             <div id="income-expenses" class="module-container">
+                <!-- Modern PWA Header with Stats -->
                 <div class="module-header">
-                    <h1 class="module-title">Income & Expenses</h1>
-                    <p class="module-subtitle">Manage your farm finances</p>
+                    <div class="header-content">
+                        <div class="header-text">
+                            <h1 class="module-title">Income & Expenses</h1>
+                            <p class="module-subtitle">Track your farm's financial health</p>
+                        </div>
+                        <!-- Header Stats -->
+                        <div class="header-stats">
+                            <div class="stat-badge">
+                                <span class="stat-icon">📈</span>
+                                <span class="stat-value" id="total-income">${this.formatCurrency(stats.totalIncome, false)}</span>
+                                <span class="stat-label">Total Income</span>
+                            </div>
+                            <div class="stat-badge">
+                                <span class="stat-icon">📊</span>
+                                <span class="stat-value" id="total-expenses">${this.formatCurrency(stats.totalExpenses, false)}</span>
+                                <span class="stat-label">Total Expenses</span>
+                            </div>
+                            <div class="stat-badge">
+                                <span class="stat-icon">💰</span>
+                                <span class="stat-value" id="net-profit" style="color: ${stats.netProfit >= 0 ? 'var(--status-paid)' : 'var(--status-cancelled)'}">
+                                    ${this.formatCurrency(stats.netProfit, false)}
+                                </span>
+                                <span class="stat-label">Net Profit</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-primary btn-icon" id="add-income-btn">
+                            <span class="btn-icon-text">💰</span>
+                            <span>Add Income</span>
+                        </button>
+                        <button class="btn btn-outline btn-icon" id="add-expense-btn">
+                            <span class="btn-icon-text">💸</span>
+                            <span>Add Expense</span>
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Quick Stats -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.formatCurrency(stats.totalIncome)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Total Income</div>
-                    </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">💸</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.formatCurrency(stats.totalExpenses)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Total Expenses</div>
-                    </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
-                        <div style="font-size: 24px; font-weight: bold; color: ${stats.netProfit >= 0 ? '#22c55e' : '#ef4444'}; margin-bottom: 4px;">${this.formatCurrency(stats.netProfit)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Net Profit</div>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
+                <!-- Quick Actions Grid -->
                 <div class="quick-action-grid">
-                    <button class="quick-action-btn" id="add-income-btn">
+                    <button class="quick-action-btn" id="quick-income-btn">
                         <div style="font-size: 32px;">💰</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Income</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record new income</span>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Quick Income</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record income instantly</span>
                     </button>
-                    <button class="quick-action-btn" id="add-expense-btn">
+                    <button class="quick-action-btn" id="quick-expense-btn">
                         <div style="font-size: 32px;">💸</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Expense</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record new expense</span>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Quick Expense</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record expense instantly</span>
+                    </button>
+                    <button class="quick-action-btn" id="view-reports-btn">
+                        <div style="font-size: 32px;">📊</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">View Reports</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Financial analytics</span>
+                    </button>
+                    <button class="quick-action-btn" id="export-data-btn">
+                        <div style="font-size: 32px;">📤</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Export Data</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Export transactions</span>
                     </button>
                 </div>
 
@@ -137,18 +157,18 @@ const IncomeExpensesModule = {
                                 <input type="date" class="form-input" id="transaction-date" required>
                             </div>
                             <div style="display: flex; gap: 12px;">
-                                <button type="submit" class="btn-primary">Save Transaction</button>
-                                <button type="button" class="btn-outline" id="cancel-form">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Save Transaction</button>
+                                <button type="button" class="btn btn-outline" id="cancel-form">Cancel</button>
                             </div>
                         </form>
                     </div>
                 </div>
 
                 <!-- Recent Transactions -->
-                <div class="glass-card" style="padding: 24px;">
+                <div class="glass-card" style="padding: 24px; margin-top: 24px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3 style="color: var(--text-primary); font-size: 20px;">Recent Transactions</h3>
-                        <button class="btn-outline" id="clear-all">Clear All</button>
+                        <button class="btn btn-outline" id="clear-all">Clear All</button>
                     </div>
                     <div id="transactions-list">
                         ${this.renderTransactionsList()}
@@ -191,16 +211,16 @@ const IncomeExpensesModule = {
         return `
             <div style="display: flex; flex-direction: column; gap: 12px;">
                 ${this.transactions.map(transaction => `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color);">
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <div style="font-size: 20px;">${transaction.type === 'income' ? '💰' : '💸'}</div>
                             <div>
                                 <div style="font-weight: 600; color: var(--text-primary);">${transaction.description}</div>
-                                <div style="font-size: 14px; color: var(--text-secondary);">${transaction.category} • ${transaction.date}</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">${this.formatCategoryName(transaction.category)} • ${transaction.date}</div>
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="font-weight: bold; color: ${transaction.type === 'income' ? '#22c55e' : '#ef4444'};">
+                            <div style="font-weight: bold; color: ${transaction.type === 'income' ? 'var(--status-paid)' : 'var(--status-cancelled)'};">
                                 ${transaction.type === 'income' ? '+' : '-'}${this.formatCurrency(transaction.amount)}
                             </div>
                             <button class="btn-icon delete-transaction" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; color: var(--text-secondary);">
@@ -218,6 +238,12 @@ const IncomeExpensesModule = {
         document.getElementById('add-income-btn')?.addEventListener('click', () => this.showTransactionForm('income'));
         document.getElementById('add-expense-btn')?.addEventListener('click', () => this.showTransactionForm('expense'));
         
+        // Quick action buttons
+        document.getElementById('quick-income-btn')?.addEventListener('click', () => this.showQuickIncomeForm());
+        document.getElementById('quick-expense-btn')?.addEventListener('click', () => this.showQuickExpenseForm());
+        document.getElementById('view-reports-btn')?.addEventListener('click', () => this.viewReports());
+        document.getElementById('export-data-btn')?.addEventListener('click', () => this.exportData());
+        
         // Form handlers
         document.getElementById('transaction-form')?.addEventListener('submit', (e) => this.handleTransactionSubmit(e));
         document.getElementById('cancel-form')?.addEventListener('click', () => this.hideTransactionForm());
@@ -233,9 +259,9 @@ const IncomeExpensesModule = {
             }
         });
 
-        // Hover effects
-        const buttons = document.querySelectorAll('.quick-action-btn');
-        buttons.forEach(button => {
+        // Hover effects for quick action buttons
+        const quickActionButtons = document.querySelectorAll('.quick-action-btn');
+        quickActionButtons.forEach(button => {
             button.addEventListener('mouseenter', (e) => {
                 e.currentTarget.style.transform = 'translateY(-4px)';
             });
@@ -257,6 +283,73 @@ const IncomeExpensesModule = {
         
         formContainer.classList.remove('hidden');
         formContainer.scrollIntoView({ behavior: 'smooth' });
+    },
+
+    showQuickIncomeForm() {
+        const amount = prompt('Enter income amount:');
+        if (amount && !isNaN(parseFloat(amount))) {
+            const transaction = {
+                id: Date.now(),
+                type: 'income',
+                amount: parseFloat(amount),
+                category: 'other',
+                description: 'Quick Income Entry',
+                date: new Date().toISOString().split('T')[0]
+            };
+            this.addQuickTransaction(transaction);
+        }
+    },
+
+    showQuickExpenseForm() {
+        const amount = prompt('Enter expense amount:');
+        if (amount && !isNaN(parseFloat(amount))) {
+            const transaction = {
+                id: Date.now(),
+                type: 'expense',
+                amount: parseFloat(amount),
+                category: 'other',
+                description: 'Quick Expense Entry',
+                date: new Date().toISOString().split('T')[0]
+            };
+            this.addQuickTransaction(transaction);
+        }
+    },
+
+    viewReports() {
+        // Navigate to reports module if available
+        if (window.FarmModules && window.FarmModules.modules.reports) {
+            window.FarmModules.showModule('reports');
+        } else {
+            alert('Reports module not available');
+        }
+    },
+
+    exportData() {
+        const dataStr = JSON.stringify(this.transactions, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `transactions-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        if (window.coreModule) {
+            window.coreModule.showNotification('Transactions exported successfully!', 'success');
+        }
+    },
+
+    addQuickTransaction(transaction) {
+        this.transactions.unshift(transaction);
+        this.saveData();
+        this.renderModule();
+        this.syncStatsWithDashboard();
+        
+        if (window.coreModule) {
+            window.coreModule.showNotification('Transaction added successfully!', 'success');
+        }
     },
 
     hideTransactionForm() {
@@ -339,7 +432,7 @@ const IncomeExpensesModule = {
         localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
     },
 
-    // UPDATED METHOD: Sync financial stats with dashboard (no ProfileModule dependency)
+    // Sync financial stats with dashboard
     syncStatsWithDashboard() {
         const stats = this.calculateStats();
         
@@ -361,7 +454,7 @@ const IncomeExpensesModule = {
             });
         }
         
-        // Notify dashboard via custom event instead of direct method call
+        // Notify dashboard via custom event
         const statsUpdateEvent = new CustomEvent('financialStatsUpdated', {
             detail: {
                 totalIncome: stats.totalIncome,
@@ -373,7 +466,7 @@ const IncomeExpensesModule = {
         document.dispatchEvent(statsUpdateEvent);
     },
 
-    // NEW METHOD: Add recent activity to dashboard
+    // Add recent activity to dashboard
     addRecentActivity(transaction) {
         if (!window.FarmModules || !window.FarmModules.modules.dashboard) return;
         
@@ -410,39 +503,30 @@ const IncomeExpensesModule = {
         }
     },
 
-    // NEW METHOD: Get financial summary for other modules
-    getFinancialSummary() {
-        const stats = this.calculateStats();
-        return {
-            ...stats,
-            transactions: this.transactions.length,
-            recentTransactions: this.transactions.slice(0, 5) // Last 5 transactions
-        };
+    // Helper method to format category names
+    formatCategoryName(category) {
+        if (!category) return 'Unknown';
+        return category.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
     },
 
-    // NEW METHOD: Import transactions from other sources
-    importTransactions(newTransactions) {
-        this.transactions = [...this.transactions, ...newTransactions];
-        this.saveData();
-        this.renderModule();
-        this.syncStatsWithDashboard();
-        
-        // Add import activity
-        this.addRecentActivity({
-            type: 'import',
-            message: `Imported ${newTransactions.length} transactions`
-        });
-    },
-
-    formatCurrency(amount) {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount);
+    formatCurrency(amount, includeSymbol = true) {
+        if (includeSymbol) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount);
+        } else {
+            return new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
     }
 };
 
 if (window.FarmModules) {
     window.FarmModules.registerModule('income-expenses', IncomeExpensesModule);
-    console.log('✅ Income & Expenses module registered');
+    console.log('✅ Income & Expenses module registered with header stats');
 }
