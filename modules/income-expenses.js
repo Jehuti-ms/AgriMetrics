@@ -26,7 +26,7 @@ const IncomeExpensesModule = {
                 this.element.style.setProperty('--header-gradient', cfg.headerGradient);
             }
         }
-    },
+    }
 
     this.loadData();
     this.renderModule();
