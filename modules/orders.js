@@ -22,14 +22,13 @@ const OrdersModule = {
 
         // ✅ ADDED: Register with StyleManager
         if (window.StyleManager) {
-            StyleManager.registerModule('sales-record', this.element, this);
+            StyleManager.registerModule(this.id, this.element, this);
         }
 
         this.loadData();
         this.renderModule();
         this.setupEventListeners();
         this.initialized = true;
-        this.id = 'orders';
         
         console.log('✅ Orders Management initialized with StyleManager');
         return true;
@@ -84,120 +83,196 @@ const OrdersModule = {
         ];
     },
 
- renderModule() {
-    if (!this.element) return;
+    renderModule() {
+        if (!this.element) return;
 
-    const stats = this.calculateStats();
+        const stats = this.calculateStats();
 
-    this.element.innerHTML = `
-        <div class="module-container">
-            <div class="module-header">
-                <h1 class="module-title">Orders Management</h1>
-                <p class="module-subtitle">Manage customer orders and deliveries</p>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="quick-action-grid">
-                <button class="quick-action-btn" id="create-order-btn">
-                    <div>➕</div>
-                    <span>New Order</span>
-                    <span>Create new order</span>
-                </button>
-                <button class="quick-action-btn" id="manage-customers-btn">
-                    <div>👥</div>
-                    <span>Customers</span>
-                    <span>Manage customers</span>
-                </button>
-                <button class="quick-action-btn" id="view-orders-btn">
-                    <div>📋</div>
-                    <span>All Orders</span>
-                    <span>View all orders</span>
-                </button>
-                <button class="quick-action-btn" id="add-customer-btn">
-                    <div>👤</div>
-                    <span>Add Customer</span>
-                    <span>Add new customer</span>
-                </button>
-            </div>
-
-            <!-- Order Stats -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div>📦</div>
-                    <div id="total-orders">${this.orders.length}</div>
-                    <div>Total Orders</div>
+        this.element.innerHTML = `
+            <div class="module-container">
+                <div class="module-header">
+                    <h1 class="module-title">Orders Management</h1>
+                    <p class="module-subtitle">Manage customer orders and deliveries</p>
                 </div>
-                <div class="stat-card">
-                    <div>💰</div>
-                    <div id="total-revenue">${this.formatCurrency(this.getTotalRevenue())}</div>
-                    <div>Total Revenue</div>
-                </div>
-                <div class="stat-card">
-                    <div>👥</div>
-                    <div id="total-customers">${this.customers.length}</div>
-                    <div>Customers</div>
-                </div>
-                <div class="stat-card">
-                    <div>⏳</div>
-                    <div id="pending-orders">${stats.pendingOrders}</div>
-                    <div>Pending</div>
-                </div>
-            </div>
 
-            <!-- Recent Orders -->
-            <div class="glass-card">
-                <div class="card-header">
-                    <h3>Recent Orders</h3>
-                    <div class="header-actions">
-                        <button class="btn-outline" id="export-orders-btn">Export</button>
-                        <button class="btn-primary" id="show-order-form">New Order</button>
+                <!-- Quick Actions -->
+                <div class="quick-action-grid">
+                    <button class="quick-action-btn" id="create-order-btn">
+                        <div style="font-size: 32px;">➕</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">New Order</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Create new order</span>
+                    </button>
+                    <button class="quick-action-btn" id="manage-customers-btn">
+                        <div style="font-size: 32px;">👥</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Customers</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Manage customers</span>
+                    </button>
+                    <button class="quick-action-btn" id="view-orders-btn">
+                        <div style="font-size: 32px;">📋</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">All Orders</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View all orders</span>
+                    </button>
+                    <button class="quick-action-btn" id="add-customer-btn">
+                        <div style="font-size: 32px;">👤</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Customer</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Add new customer</span>
+                    </button>
+                </div>
+
+                <!-- Order Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.orders.length}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Orders</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.formatCurrency(this.getTotalRevenue())}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Revenue</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">👥</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.customers.length}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Customers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">⏳</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.pendingOrders}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Pending</div>
                     </div>
                 </div>
-                <div id="orders-list">
-                    ${this.renderOrdersList()}
-                </div>
-            </div>
 
-            <!-- Customers List -->
-            <div class="glass-card" id="customers-section">
-                <div class="card-header">
-                    <h3>Customers</h3>
-                    <button class="btn-primary" id="show-customer-form">Add Customer</button>
-                </div>
-                <div id="customers-list">
-                    ${this.renderCustomersList()}
-                </div>
-            </div>
-
-            <!-- Create Order Form -->
-            <div id="order-form-container" class="glass-card hidden">
-                <h3>Create New Order</h3>
-                <form id="order-form">
-                    <!-- form fields here -->
-                    <div class="form-actions">
-                        <button type="submit" class="btn-primary">Create Order</button>
-                        <button type="button" class="btn-outline" id="cancel-order-form">Cancel</button>
+                <!-- Create Order Form -->
+                <div id="order-form-container" class="hidden">
+                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                        <h3 style="color: var(--text-primary); margin-bottom: 20px;">Create New Order</h3>
+                        <form id="order-form">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Customer</label>
+                                    <select class="form-input" id="order-customer" required>
+                                        <option value="">Select Customer</option>
+                                        ${this.customers.map(customer => `
+                                            <option value="${customer.id}">${customer.name}</option>
+                                        `).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">Order Date</label>
+                                    <input type="date" class="form-input" id="order-date" required>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 16px;">
+                                <label class="form-label">Order Items</label>
+                                <div id="order-items">
+                                    <div class="order-item" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; margin-bottom: 12px;">
+                                        <select class="form-input product-select" required>
+                                            <option value="">Select Product</option>
+                                            ${this.products.map(product => `
+                                                <option value="${product.id}" data-price="${product.price}">${product.name} - ${this.formatCurrency(product.price)}</option>
+                                            `).join('')}
+                                        </select>
+                                        <input type="number" class="form-input quantity-input" placeholder="Qty" min="1" value="1" required>
+                                        <input type="number" class="form-input price-input" placeholder="Price" step="0.01" min="0" required>
+                                        <button type="button" class="btn-outline remove-item" style="padding: 8px 12px;">✕</button>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-outline" id="add-item-btn" style="margin-top: 8px;">+ Add Item</button>
+                            </div>
+                            
+                            <div style="margin-bottom: 16px;">
+                                <label class="form-label">Status</label>
+                                <select class="form-input" id="order-status">
+                                    <option value="pending">Pending</option>
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="shipped">Shipped</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label class="form-label">Total Amount</label>
+                                <input type="number" class="form-input" id="order-total" step="0.01" min="0" readonly style="font-weight: bold; font-size: 16px;">
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label class="form-label">Notes</label>
+                                <textarea class="form-input" id="order-notes" rows="2" placeholder="Order notes, special instructions..."></textarea>
+                            </div>
+                            
+                            <div style="display: flex; gap: 12px;">
+                                <button type="submit" class="btn-primary">Create Order</button>
+                                <button type="button" class="btn-outline" id="cancel-order-form">Cancel</button>
+                            </div>
+                        </form>
                     </div>
-                </form>
-            </div>
+                </div>
 
-            <!-- Add Customer Form -->
-            <div id="customer-form-container" class="glass-card hidden">
-                <h3>Add New Customer</h3>
-                <form id="customer-form">
-                    <!-- form fields here -->
-                    <div class="form-actions">
-                        <button type="submit" class="btn-primary">Add Customer</button>
-                        <button type="button" class="btn-outline" id="cancel-customer-form">Cancel</button>
+                <!-- Add Customer Form -->
+                <div id="customer-form-container" class="hidden">
+                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                        <h3 style="color: var(--text-primary); margin-bottom: 20px;">Add New Customer</h3>
+                        <form id="customer-form">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Customer Name</label>
+                                    <input type="text" class="form-input" id="customer-name" required>
+                                </div>
+                                <div>
+                                    <label class="form-label">Contact Phone</label>
+                                    <input type="tel" class="form-input" id="customer-phone" required>
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 16px;">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" class="form-input" id="customer-email">
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <label class="form-label">Address</label>
+                                <textarea class="form-input" id="customer-address" rows="2" placeholder="Full address..."></textarea>
+                            </div>
+                            <div style="display: flex; gap: 12px;">
+                                <button type="submit" class="btn-primary">Add Customer</button>
+                                <button type="button" class="btn-outline" id="cancel-customer-form">Cancel</button>
+                            </div>
+                        </form>
                     </div>
-                </form>
-            </div>
-        </div>
-    `;
+                </div>
 
-    this.setupEventListeners();
-    this.calculateTotal();
-},
+                <!-- Recent Orders -->
+                <div class="glass-card" style="padding: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: var(--text-primary); font-size: 20px;">Recent Orders</h3>
+                        <div style="display: flex; gap: 12px;">
+                            <button class="btn-outline" id="export-orders-btn">Export</button>
+                            <button class="btn-primary" id="show-order-form">New Order</button>
+                        </div>
+                    </div>
+                    <div id="orders-list">
+                        ${this.renderOrdersList()}
+                    </div>
+                </div>
+
+                <!-- Customers List -->
+                <!-- <div class="glass-card" style="padding: 24px; margin-top: 24px;"> -->
+                <div class="glass-card" id="customers-section" style="padding: 24px; margin-top: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: var(--text-primary); font-size: 20px;">Customers</h3>
+                        <button class="btn-primary" id="show-customer-form">Add Customer</button>
+                    </div>
+                    <div id="customers-list">
+                        ${this.renderCustomersList()}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        this.setupEventListeners();
+        this.calculateTotal(); // Initialize total
+    },
 
     calculateStats() {
         const pendingOrders = this.orders.filter(order => order.status === 'pending').length;
