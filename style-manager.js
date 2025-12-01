@@ -389,6 +389,17 @@ const StyleManager = {
     lineHeight: '1.4',
     textShadow: '0 1px 2px rgba(0,0,0,0.2)'
   },    
+
+  '.module-container': {
+  margin: '0 !important',
+  padding: '0 !important',
+  height: '0 !important',
+  minHeight: '0 !important',
+  lineHeight: '0 !important',
+  overflow: 'hidden !important',
+  display: 'contents !important'
+},
+
     // ======== INCOME & EXPENSES MODULE ============
     'income-expenses': {
       // Module container
