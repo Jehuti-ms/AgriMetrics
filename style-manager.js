@@ -490,7 +490,19 @@ const StyleManager = {
         lineHeight: '1.2',
         textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
       },
-      
+
+      '.stat-badge': {
+        all: 'unset',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '4px',
+        padding: '0 !important',
+        background: 'transparent !important',
+        borderRadius: '0 !important',
+        minWidth: 'auto !important'
+      },
+
       // Stat label - light white text
       '.stat-label': {
         fontSize: '12px',
