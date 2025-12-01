@@ -346,7 +346,7 @@ const StyleManager = {
   // ==================== MODULE-SPECIFIC STYLES ====================
   moduleStyles: {
     // ==================== DASHBOARD MODULE ====================
-  'dashboard': {
+ 'dashboard': {
   // Reset container spacing
   '.module-container': {
     margin: '0',
@@ -389,8 +389,6 @@ const StyleManager = {
     lineHeight: '1.4',
     textShadow: '0 1px 2px rgba(0,0,0,0.2)'
   },
-
-
     
     // ======== INCOME & EXPENSES MODULE ============
     'income-expenses': {
