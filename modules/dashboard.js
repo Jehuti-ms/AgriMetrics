@@ -21,6 +21,7 @@ const DashboardModule = {
         this.renderDashboard();
         this.setupEventListeners();
         this.initialized = true;
+        this.id = 'dashboard';
         
         // Load and display stats from shared data
         this.loadAndDisplayStats();
