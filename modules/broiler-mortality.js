@@ -102,7 +102,7 @@ const BroilerMortalityModule = {
         if (!this.element) return;
 
         this.element.innerHTML = `
-            <div class="module-container" data-module="broiler-mortality">
+        <div id="broiler-mortality" class="module-container">
                 <!-- Module Header -->
                 <div class="module-header">
                     <div class="module-header-content">
