@@ -528,7 +528,7 @@ const StyleManager = {
         Object.entries(theme.variables).forEach(([key, value]) => {
             element.style.setProperty(key, value);
         });
-    },
+    }
 
     // ✅ Apply module-specific grid layout
     const config = this.moduleConfigs[moduleId];
