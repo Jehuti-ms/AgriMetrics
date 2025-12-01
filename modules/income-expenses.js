@@ -8,29 +8,37 @@ const IncomeExpensesModule = {
     element: null,
 
     initialize() {
-        console.log('💰 Initializing Income & Expenses...');
-        
-        // ✅ ADDED: Get the content area element
-        this.element = document.getElementById('content-area');
-        if (!this.element) return false;
+    console.log('💰 Initializing Income & Expenses...');
+    
+    this.id = 'income-expenses'; // ✅ set ID first
+    this.element = document.getElementById('content-area');
+    if (!this.element) return false;
 
-        // ✅ ADDED: Register with StyleManager
-        if (window.StyleManager) {
-            StyleManager.registerModule(this.id, this.element, this);
+    if (window.StyleManager) {
+        StyleManager.registerModule(this.id, this.element, this);
+
+        const cfg = StyleManager.moduleConfigs?.[this.id];
+        if (cfg) {
+            if (cfg.statsGrid) {
+                this.element.style.setProperty('--stats-grid', cfg.statsGrid);
+            }
+            if (cfg.headerGradient) {
+                this.element.style.setProperty('--header-gradient', cfg.headerGradient);
+            }
         }
+    }
 
-        this.loadData();
-        this.renderModule();
-        this.setupEventListeners();
-        this.initialized = true;
-        this.id = 'income-expenses';
-        
-        // Sync initial stats with shared data
-        this.syncStatsWithDashboard();
-        
-        console.log('✅ Income & Expenses initialized with StyleManager');
-        return true;
-    },
+    this.loadData();
+    this.renderModule();
+    this.setupEventListeners();
+    this.initialized = true;
+
+    this.syncStatsWithDashboard();
+    
+    console.log('✅ Income & Expenses initialized with StyleManager');
+    return true;
+},
+
 
     // ✅ ADDED: Theme change handler (optional)
     onThemeChange(theme) {
