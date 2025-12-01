@@ -41,309 +41,120 @@ const DashboardModule = {
     },
 
     renderDashboard() {
-        if (!this.element) return;
+    if (!this.element) return;
 
-        this.element.innerHTML = `
-            <div class="dashboard-container" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
-                <!-- Welcome Section -->
-                <div class="welcome-section" style="margin-bottom: 30px;">
-                    <h1 style="color: #1a1a1a; font-size: 28px; margin-bottom: 8px;">Welcome to Farm Management</h1>
-                    <p style="color: #666; font-size: 16px;">Manage your farm operations efficiently</p>
-                </div>
+    this.element.innerHTML = `
+        <div class="dashboard-container">
+            <!-- Welcome Section -->
+            <div class="welcome-section">
+                <h1>Welcome to Farm Management</h1>
+                <p>Manage your farm operations efficiently</p>
+            </div>
 
-                <!-- Quick Actions Grid -->
-                <div class="quick-actions" style="margin-bottom: 40px;">
-                    <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 20px;">Quick Actions</h2>
-                    <div class="actions-grid" style="
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                        gap: 16px;
-                        margin-bottom: 30px;
-                    ">
-                        <button class="quick-action-btn" data-action="add-income" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 16px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            gap: 12px;
-                            min-height: 120px;
-                        ">
-                            <div style="font-size: 32px;">💰</div>
-                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Add Income</span>
-                            <span style="font-size: 12px; color: #666; text-align: center;">Record new income</span>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="add-expense" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 16px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            gap: 12px;
-                            min-height: 120px;
-                        ">
-                            <div style="font-size: 32px;">💸</div>
-                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Add Expense</span>
-                            <span style="font-size: 12px; color: #666; text-align: center;">Record new expense</span>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="check-inventory" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 16px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            gap: 12px;
-                            min-height: 120px;
-                        ">
-                            <div style="font-size: 32px;">📦</div>
-                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Check Inventory</span>
-                            <span style="font-size: 12px; color: #666; text-align: center;">View stock levels</span>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="record-feed" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 16px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            gap: 12px;
-                            min-height: 120px;
-                        ">
-                            <div style="font-size: 32px;">🌾</div>
-                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Record Feed</span>
-                            <span style="font-size: 12px; color: #666; text-align: center;">Log feed usage</span>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="add-production" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 16px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            gap: 12px;
-                            min-height: 120px;
-                        ">
-                            <div style="font-size: 32px;">🚜</div>
-                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Production</span>
-                            <span style="font-size: 12px; color: #666; text-align: center;">Record production</span>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="view-reports" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 16px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            gap: 12px;
-                            min-height: 120px;
-                        ">
-                            <div style="font-size: 32px;">📈</div>
-                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">View Reports</span>
-                            <span style="font-size: 12px; color: #666; text-align: center;">Analytics & insights</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Stats Overview -->
-                <div class="stats-overview" style="margin-bottom: 40px;">
-                    <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 20px;">Overview</h2>
-                    <div class="stats-grid" style="
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                        gap: 16px;
-                    ">
-                        <div class="stat-card" id="revenue-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="total-revenue">$0.00</div>
-                            <div style="font-size: 14px; color: #666;">Total Revenue</div>
-                        </div>
-
-                        <div class="stat-card" id="expense-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">💸</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="total-expenses">$0.00</div>
-                            <div style="font-size: 14px; color: #666;">Total Expenses</div>
-                        </div>
-
-                        <div class="stat-card" id="inventory-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="inventory-items">0</div>
-                            <div style="font-size: 14px; color: #666;">Inventory Items</div>
-                        </div>
-
-                        <div class="stat-card" id="birds-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">🐔</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="active-birds">0</div>
-                            <div style="font-size: 14px; color: #666;">Active Birds</div>
-                        </div>
-
-                        <!-- Additional Stats Cards -->
-                        <div class="stat-card" id="orders-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">📋</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="total-orders">0</div>
-                            <div style="font-size: 14px; color: #666;">Total Orders</div>
-                        </div>
-
-                        <div class="stat-card" id="profit-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="net-profit">$0.00</div>
-                            <div style="font-size: 14px; color: #666;">Net Profit</div>
-                        </div>
-
-                        <div class="stat-card" id="customers-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">👥</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="total-customers">0</div>
-                            <div style="font-size: 14px; color: #666;">Customers</div>
-                        </div>
-
-                        <div class="stat-card" id="products-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">🛒</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="total-products">0</div>
-                            <div style="font-size: 14px; color: #666;">Products</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Activity -->
-                <div class="recent-activity">
-                    <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 20px;">Recent Activity</h2>
-                    <div class="activity-list" style="
-                        background: rgba(255, 255, 255, 0.9);
-                        backdrop-filter: blur(20px);
-                        -webkit-backup-filter: blur(20px);
-                        border: 1px solid rgba(0, 0, 0, 0.1);
-                        border-radius: 16px;
-                        padding: 20px;
-                    ">
-                        <div id="activity-content">
-                            <div style="text-align: center; color: #666; padding: 40px 20px;">
-                                <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                                <div style="font-size: 16px; margin-bottom: 8px;">No recent activity</div>
-                                <div style="font-size: 14px; color: #999;">Start by adding your first record</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Refresh Button -->
-                <div style="text-align: center; margin-top: 30px;">
-                    <button id="refresh-stats-btn" class="btn-outline" style="
-                        background: rgba(255, 255, 255, 0.9);
-                        backdrop-filter: blur(20px);
-                        border: 1px solid rgba(0, 0, 0, 0.1);
-                        border-radius: 12px;
-                        padding: 12px 24px;
-                        cursor: pointer;
-                        font-size: 14px;
-                        color: #666;
-                        transition: all 0.3s ease;
-                    ">
-                        🔄 Refresh Stats
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h2>Quick Actions</h2>
+                <div class="actions-grid">
+                    <button class="quick-action-btn" data-action="add-income">
+                        <div>💰</div>
+                        <span>Add Income</span>
+                        <span>Record new income</span>
+                    </button>
+                    <button class="quick-action-btn" data-action="add-expense">
+                        <div>💸</div>
+                        <span>Add Expense</span>
+                        <span>Record new expense</span>
+                    </button>
+                    <button class="quick-action-btn" data-action="check-inventory">
+                        <div>📦</div>
+                        <span>Check Inventory</span>
+                        <span>View stock levels</span>
+                    </button>
+                    <button class="quick-action-btn" data-action="record-feed">
+                        <div>🌾</div>
+                        <span>Record Feed</span>
+                        <span>Log feed usage</span>
+                    </button>
+                    <button class="quick-action-btn" data-action="add-production">
+                        <div>🚜</div>
+                        <span>Production</span>
+                        <span>Record production</span>
+                    </button>
+                    <button class="quick-action-btn" data-action="view-reports">
+                        <div>📈</div>
+                        <span>View Reports</span>
+                        <span>Analytics & insights</span>
                     </button>
                 </div>
             </div>
-        `;
+
+            <!-- Stats Overview -->
+            <div class="stats-overview">
+                <h2>Overview</h2>
+                <div class="stats-grid">
+                    <div class="stat-card" id="revenue-card">
+                        <div>💰</div>
+                        <div id="total-revenue">$0.00</div>
+                        <div>Total Revenue</div>
+                    </div>
+                    <div class="stat-card" id="expense-card">
+                        <div>💸</div>
+                        <div id="total-expenses">$0.00</div>
+                        <div>Total Expenses</div>
+                    </div>
+                    <div class="stat-card" id="inventory-card">
+                        <div>📦</div>
+                        <div id="inventory-items">0</div>
+                        <div>Inventory Items</div>
+                    </div>
+                    <div class="stat-card" id="birds-card">
+                        <div>🐔</div>
+                        <div id="active-birds">0</div>
+                        <div>Active Birds</div>
+                    </div>
+                    <div class="stat-card" id="orders-card">
+                        <div>📋</div>
+                        <div id="total-orders">0</div>
+                        <div>Total Orders</div>
+                    </div>
+                    <div class="stat-card" id="profit-card">
+                        <div>📊</div>
+                        <div id="net-profit">$0.00</div>
+                        <div>Net Profit</div>
+                    </div>
+                    <div class="stat-card" id="customers-card">
+                        <div>👥</div>
+                        <div id="total-customers">0</div>
+                        <div>Customers</div>
+                    </div>
+                    <div class="stat-card" id="products-card">
+                        <div>🛒</div>
+                        <div id="total-products">0</div>
+                        <div>Products</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="recent-activity">
+                <h2>Recent Activity</h2>
+                <div class="activity-list">
+                    <div id="activity-content">
+                        <div class="empty-state">
+                            <div>📊</div>
+                            <div>No recent activity</div>
+                            <div>Start by adding your first record</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Refresh Button -->
+            <div class="refresh-container">
+                <button id="refresh-stats-btn" class="btn-outline">🔄 Refresh Stats</button>
+            </div>
+        </div>
+    `;
 
         // Add event listeners to quick action buttons
         this.setupQuickActions();
