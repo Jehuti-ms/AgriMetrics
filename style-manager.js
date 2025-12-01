@@ -6,7 +6,7 @@
 const StyleManager = {
   currentTheme: 'modern-green',
 
-  // Themes
+  // ==================== THEMES ====================
   themes: {
     'modern-green': {
       name: 'Modern Green PWA',
@@ -147,7 +147,7 @@ const StyleManager = {
     }
   },
 
-  // Module configs (header gradients only)
+  // ==================== MODULE CONFIGS ====================
   moduleConfigs: {
     'dashboard':         { name: 'Dashboard', headerGradient: 'var(--gradient-primary)' },
     'income-expenses':   { name: 'Income & Expenses', headerGradient: 'linear-gradient(135deg, #22c55e, #16a34a)' },
@@ -161,7 +161,7 @@ const StyleManager = {
     'profile':           { name: 'Profile', headerGradient: 'var(--gradient-primary)' }
   },
 
-  // Global styles
+  // ==================== GLOBAL STYLES ====================
   globalStyles: {
     // Base reset
     '*': {
@@ -343,8 +343,10 @@ const StyleManager = {
     }
   },
 
-  // Module-specific styles
+  // ==================== MODULE-SPECIFIC STYLES ====================
   moduleStyles: {
+    
+    // ======== INCOME & EXPENSES MODULE ========
     'income-expenses': {
       // Module container
       '.module-container': {
@@ -353,6 +355,7 @@ const StyleManager = {
         width: '100%'
       },
       
+      // ======== HEADER STATS ========
       // Fix for header stats - horizontal on large screens
       '.header-stats': {
         display: 'flex',
@@ -377,17 +380,53 @@ const StyleManager = {
         borderRadius: '2px'
       },
       
+      // Stat badges with CLEAR TEXT
       '.header-stats .stat-badge': {
-        minWidth: '120px',
+        minWidth: '140px',
         flexShrink: '0',
-        padding: '12px 16px',
+        padding: '16px 20px',
         background: 'var(--card-bg)',
         border: '1px solid var(--border-color)',
         borderRadius: '12px',
-        textAlign: 'center'
+        textAlign: 'center',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '6px',
+        boxShadow: 'var(--shadow-sm)',
+        transition: 'all 0.2s ease'
       },
       
-      // Fix for financial summary cards - horizontal on desktop, stacked on mobile
+      '.header-stats .stat-badge:hover': {
+        transform: 'translateY(-2px)',
+        boxShadow: 'var(--shadow-md)',
+        borderColor: 'var(--primary-500)'
+      },
+      
+      // Stat value - LARGE, BOLD, VISIBLE
+      '.stat-value': {
+        fontSize: '22px',
+        fontWeight: '800',
+        color: 'var(--text-primary)',
+        display: 'block',
+        lineHeight: '1.2',
+        textShadow: '0 1px 2px rgba(0,0,0,0.05)'
+      },
+      
+      // Stat label - CLEAR AND DISTINCT
+      '.stat-label': {
+        fontSize: '13px',
+        fontWeight: '600',
+        color: 'var(--text-secondary)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.8px',
+        display: 'block',
+        opacity: '0.9'
+      },
+      
+      // ======== FINANCIAL SUMMARY CARDS ========
+      // Horizontal on desktop, stacked on mobile
       '.financial-summary': {
         display: 'grid',
         gridTemplateColumns: 'repeat(4, 1fr)',
@@ -460,7 +499,7 @@ const StyleManager = {
         color: 'var(--status-cancelled)'
       },
       
-      // Fix for module content layout
+      // ======== MODULE CONTENT LAYOUT ========
       '.module-content': {
         display: 'grid',
         gridTemplateColumns: '300px 1fr',
@@ -571,7 +610,7 @@ const StyleManager = {
         color: 'var(--text-tertiary)'
       },
       
-      // Filter bar improvements
+      // ======== FILTER BAR ========
       '.filter-bar': {
         display: 'flex',
         gap: '12px',
@@ -605,7 +644,7 @@ const StyleManager = {
         fontSize: '14px'
       },
       
-      // Table improvements
+      // ======== TABLE STYLES ========
       '.table-container': {
         overflowX: 'auto',
         borderRadius: '12px',
@@ -668,7 +707,7 @@ const StyleManager = {
         fontWeight: '600'
       },
       
-      // Empty state styling
+      // ======== EMPTY STATES ========
       '.empty-state': {
         textAlign: 'center',
         padding: '40px 20px'
@@ -686,7 +725,7 @@ const StyleManager = {
         opacity: '0.3'
       },
       
-      // Table footer and pagination
+      // ======== TABLE FOOTER ========
       '.table-footer': {
         display: 'flex',
         justifyContent: 'space-between',
@@ -712,7 +751,7 @@ const StyleManager = {
         color: 'var(--text-secondary)'
       },
       
-      // Modal improvements
+      // ======== MODALS ========
       '.modal-content': {
         maxWidth: '600px',
         width: '90%',
@@ -779,11 +818,204 @@ const StyleManager = {
         background: 'rgba(var(--status-paid-rgb), 0.1)',
         borderRadius: '8px',
         marginTop: '12px'
+      },
+      
+      // ======== RESPONSIVE BREAKPOINTS ========
+      '@media (max-width: 1200px)': {
+        '.financial-summary': {
+          gridTemplateColumns: 'repeat(2, 1fr)'
+        }
+      },
+      
+      '@media (max-width: 1024px)': {
+        '.module-content': {
+          gridTemplateColumns: '1fr'
+        }
+      },
+      
+      '@media (max-width: 768px)': {
+        '.financial-summary': {
+          gridTemplateColumns: '1fr'
+        },
+        
+        '.module-header': {
+          flexDirection: 'column',
+          gap: '16px',
+          alignItems: 'stretch'
+        },
+        
+        '.header-content': {
+          flexDirection: 'column',
+          gap: '16px'
+        },
+        
+        '.header-stats': {
+          order: '2'
+        },
+        
+        '.header-actions': {
+          order: '1',
+          flexWrap: 'wrap',
+          justifyContent: 'center'
+        },
+        
+        '.filter-bar': {
+          flexDirection: 'column',
+          alignItems: 'stretch'
+        },
+        
+        '.filter-group': {
+          minWidth: '100%'
+        },
+        
+        '.table-footer': {
+          flexDirection: 'column',
+          gap: '16px',
+          alignItems: 'stretch'
+        },
+        
+        '.table-summary': {
+          textAlign: 'center'
+        },
+        
+        '.pagination': {
+          justifyContent: 'center'
+        },
+        
+        '.form-row': {
+          gridTemplateColumns: '1fr'
+        }
+      },
+      
+      // ======== DARK MODE ADJUSTMENTS ========
+      '@media (prefers-color-scheme: dark)': {
+        '.header-stats .stat-badge': {
+          background: 'var(--bg-secondary)',
+          borderColor: 'var(--border-color-dark)'
+        },
+        
+        '.stat-value': {
+          color: 'var(--text-primary)',
+          textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+        },
+        
+        '.stat-label': {
+          color: 'var(--text-secondary)'
+        }
       }
+    },
+    
+    // ======== SALES RECORD MODULE ========
+    'sales-record': {
+      // ... existing sales-record styles (keep as is) ...
+      // Module container
+      '.module-container': {
+        padding: '24px',
+        minHeight: '100vh',
+        background: 'var(--module-bg)'
+      },
+      
+      // Header styles
+      '.module-header': {
+        background: 'var(--header-gradient)',
+        borderRadius: 'var(--radius-xl)',
+        padding: '24px',
+        marginBottom: '32px',
+        color: 'white',
+        boxShadow: 'var(--shadow-lg)',
+        position: 'relative',
+        overflow: 'hidden'
+      },
+      
+      '.module-header::before': {
+        content: '""',
+        position: 'absolute',
+        top: '0',
+        left: '0',
+        right: '0',
+        bottom: '0',
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%)'
+      },
+      
+      '.header-content': {
+        position: 'relative',
+        zIndex: '1',
+        marginBottom: '20px'
+      },
+      
+      '.header-text': {
+        marginBottom: '16px'
+      },
+      
+      '.module-title': {
+        fontSize: '28px',
+        fontWeight: '700',
+        marginBottom: '8px',
+        letterSpacing: '-0.5px'
+      },
+      
+      '.module-subtitle': {
+        fontSize: '15px',
+        opacity: '0.9',
+        fontWeight: '400'
+      },
+      
+      '.header-stats': {
+        display: 'flex',
+        gap: '16px',
+        flexWrap: 'wrap'
+      },
+      
+      '.stat-badge': {
+        background: 'rgba(255, 255, 255, 0.2)',
+        backdropFilter: 'blur(10px)',
+        borderRadius: 'var(--radius-lg)',
+        padding: '12px 20px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        minWidth: '120px'
+      },
+      
+      '.stat-icon': {
+        fontSize: '20px',
+        marginBottom: '4px'
+      },
+      
+      '.stat-value': {
+        fontSize: '20px',
+        fontWeight: '700',
+        marginBottom: '2px'
+      },
+      
+      '.stat-label': {
+        fontSize: '12px',
+        opacity: '0.8',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px'
+      },
+      
+      '.header-actions': {
+        position: 'relative',
+        zIndex: '1',
+        display: 'flex',
+        gap: '12px',
+        flexWrap: 'wrap'
+      },
+      
+      // ... rest of sales-record styles ...
     }
+    
+    // ======== OTHER MODULES ========
+    // You can add other modules here following the same structure
+    // 'dashboard': { ... },
+    // 'inventory-check': { ... },
+    // 'orders': { ... },
+    // etc.
+    
   },
 
-  // Init
+  // ==================== INITIALIZATION ====================
   init() {
     console.log('🎨 Initializing StyleManager...');
     this.applyTheme(this.currentTheme);
@@ -791,6 +1023,7 @@ const StyleManager = {
     console.log('✅ StyleManager ready');
   },
 
+  // ==================== THEME METHODS ====================
   applyTheme(themeName) {
     const theme = this.themes[themeName];
     if (!theme) {
@@ -805,6 +1038,13 @@ const StyleManager = {
     console.log(`🎨 Applied ${theme.name}`);
   },
 
+  toggleTheme() {
+    const newTheme = this.currentTheme === 'modern-green' ? 'dark-mode' : 'modern-green';
+    this.applyTheme(newTheme);
+    return newTheme;
+  },
+
+  // ==================== MODULE REGISTRATION ====================
   registerModule(moduleId, element) {
     const config = this.moduleConfigs[moduleId];
     if (config && element) {
@@ -820,6 +1060,22 @@ const StyleManager = {
     }
   },
 
+  getModuleConfig(moduleId) {
+    return this.moduleConfigs[moduleId] || null;
+  },
+
+  updateModuleGradient(moduleId, gradient) {
+    const config = this.moduleConfigs[moduleId];
+    if (config) {
+      config.headerGradient = gradient;
+      const moduleElement = document.getElementById(moduleId);
+      if (moduleElement) {
+        moduleElement.style.setProperty('--header-gradient', gradient);
+      }
+    }
+  },
+
+  // ==================== STYLE INJECTION ====================
   addGlobalStyles(styles) {
     Object.assign(this.globalStyles, styles);
     this.injectStyles(styles);
@@ -899,30 +1155,6 @@ const StyleManager = {
     
     styleTag.textContent = cssText;
     document.head.appendChild(styleTag);
-  },
-
-  // Utility method to toggle theme
-  toggleTheme() {
-    const newTheme = this.currentTheme === 'modern-green' ? 'dark-mode' : 'modern-green';
-    this.applyTheme(newTheme);
-    return newTheme;
-  },
-
-  // Utility method to get module config
-  getModuleConfig(moduleId) {
-    return this.moduleConfigs[moduleId] || null;
-  },
-
-  // Utility method to update module gradient
-  updateModuleGradient(moduleId, gradient) {
-    const config = this.moduleConfigs[moduleId];
-    if (config) {
-      config.headerGradient = gradient;
-      const moduleElement = document.getElementById(moduleId);
-      if (moduleElement) {
-        moduleElement.style.setProperty('--header-gradient', gradient);
-      }
-    }
   }
 };
 
@@ -938,4 +1170,3 @@ if (document.readyState === 'loading') {
 // Expose globally
 window.StyleManager = StyleManager;
 console.log('✅ Extended StyleManager loaded');
-
