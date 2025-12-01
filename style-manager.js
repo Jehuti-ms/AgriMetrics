@@ -403,11 +403,15 @@ const StyleManager = {
         textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
       }, */
 
-     '.module-header .header-text': {
+      '.welcome-subtitle': {
+        fontSize: '15px',
+        fontWeight: '400',
         color: 'white',
         opacity: '1',
         textShadow: '0 1px 2px rgba(0,0,0,0.2)'
-      }
+      },
+
+   
 
 
       // Activity board styling
