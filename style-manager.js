@@ -346,23 +346,51 @@ const StyleManager = {
   // ==================== MODULE-SPECIFIC STYLES ====================
   moduleStyles: {
     // ==================== DASHBOARD MODULE ====================
-   'dashboard': {
+  'dashboard': {
+  // Reset container spacing
   '.module-container': {
-    margin: '0 !important',
-    padding: '0 !important',
-    minHeight: 'auto !important',
-    gap: '0 !important',
-    background: 'transparent !important'
+    margin: '0',
+    padding: '0',
+    background: 'var(--module-bg)',
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start'
   },
+
+  // Welcome section: no extra space
   '.welcome-section': {
     margin: '0',
-    padding: '0'
+    padding: '0',
+    width: '100%',
+    display: 'block'
   },
-  '.welcome-header, .welcome-subtitle': {
+
+  // Header text: white, no margin
+  '.welcome-header': {
     margin: '0',
-    color: 'white !important'
-  }
-}
+    padding: '0',
+    fontSize: '28px',
+    fontWeight: '700',
+    color: 'white',
+    lineHeight: '1.2',
+    textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+  },
+
+  // Subtitle text: white, no margin
+  '.welcome-subtitle': {
+    margin: '0',
+    padding: '0',
+    fontSize: '15px',
+    fontWeight: '400',
+    color: 'white',
+    opacity: '1',
+    lineHeight: '1.4',
+    textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+  },
+
+
     
     // ======== INCOME & EXPENSES MODULE ============
     'income-expenses': {
