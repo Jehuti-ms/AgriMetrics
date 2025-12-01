@@ -348,32 +348,30 @@ const StyleManager = {
     // ==================== DASHBOARD MODULE ====================
    // ==================== DASHBOARD MODULE ====================
 'dashboard': {
-  // Module container
   '.module-container': {
-    padding: '24px',
-    minHeight: '100vh',
+    padding: '0',       // remove global padding
+    margin: '0',        // remove global margin
     background: 'var(--module-bg)'
   },
-
-  // Header styles
-  '.module-header': {
-    background: 'var(--header-gradient)',
-    borderRadius: 'var(--radius-xl)',
-    padding: '24px',
-    marginBottom: '32px',
-    color: 'white',
-    boxShadow: 'var(--shadow-lg)',
-    position: 'relative',
-    overflow: 'hidden'
+  '.welcome-section': {
+    margin: '0',
+    padding: '0'
   },
-
-  '.module-title': {
+  '.welcome-header': {
+    margin: '0',
     fontSize: '28px',
     fontWeight: '700',
-    marginBottom: '8px',
-    letterSpacing: '-0.5px',
-    color: 'white'
+    color: 'white !important',
+    textShadow: '0 1px 2px rgba(0,0,0,0.2)'
   },
+  '.welcome-subtitle': {
+    margin: '0',
+    fontSize: '15px',
+    fontWeight: '400',
+    color: 'white !important',
+    textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+  },
+
 
   // ✅ Subheading fix
   '.module-subtitle': {
