@@ -70,7 +70,7 @@ const FeedRecordModule = {
         const stats = this.calculateStats();
 
         this.element.innerHTML = `
-            <div class="module-container">
+            <div id="feed-record" class="module-container">
                 <div class="module-header">
                     <h1 class="module-title">Feed Records</h1>
                     <p class="module-subtitle">Track feed usage and inventory</p>
