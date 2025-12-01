@@ -91,8 +91,7 @@ const DashboardModule = {
             </div>
         </div>
     `;
-}
-
+},
 
     setupEventListeners() {
         this.element.querySelectorAll('.quick-action-btn').forEach(btn => {
