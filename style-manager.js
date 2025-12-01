@@ -349,9 +349,11 @@ const StyleManager = {
     'dashboard': {
       // Module container
       '.module-container': {
-        padding: '24px',
-        minHeight: '100vh',
-        background: 'var(--module-bg)'
+        padding: '0',
+        margin: '0',
+        minHeight: 'auto',
+        wdith: '100%'
+        
       },
 
       // Header styles
