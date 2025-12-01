@@ -119,13 +119,26 @@ const StyleManager = {
     this.injectStyles(styles);
   },
 
-  addModuleStyles(moduleId, styles) {
-    if (!this.moduleStyles[moduleId]) {
-      this.moduleStyles[moduleId] = {};
-    }
-    Object.assign(this.moduleStyles[moduleId], styles);
-    this.injectScopedStyles(moduleId, styles);
+  StyleManager.addModuleStyles('sales-record', {
+  '.sales-summary': {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+    gap: '1.5rem',
+    margin: '2rem 0'
   },
+  '.summary-card': {
+    background: 'var(--card-bg)',
+    borderRadius: 'var(--radius-xl)',
+    boxShadow: 'var(--shadow-md)',
+    padding: '1.75rem',
+    transition: 'all 0.3s ease'
+  },
+  '.summary-card:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)'
+  }
+});
+
 
   injectStyles(styles) {
     const styleTag = document.createElement('style');
