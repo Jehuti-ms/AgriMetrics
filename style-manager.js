@@ -77,6 +77,26 @@ const StyleManager = {
       borderRadius: '8px'
     }
   },
+StyleManager.addGlobalStyles({
+  '.module-header': {
+    background: 'var(--header-gradient)',
+    padding: '24px',
+    borderRadius: 'var(--radius-xl)',
+    marginBottom: '24px',
+    color: '#fff',
+    boxShadow: 'var(--shadow-md)'
+  },
+  '.module-title': {
+    fontSize: '24px',
+    fontWeight: '700',
+    marginBottom: '8px'
+  },
+  '.module-subtitle': {
+    fontSize: '14px',
+    opacity: '0.9',
+    margin: '0'
+  }
+});
 
   moduleStyles: {},
 
