@@ -1,335 +1,366 @@
-// app.js - REWRITTEN FARM MANAGEMENT APP
-console.log('🚀 Loading Farm Management App...');
+// app.js - FIXED FARM MODULES INITIALIZATION
+console.log('Loading main app...');
 
 class FarmManagementApp {
     constructor() {
         this.currentUser = null;
         this.currentSection = 'dashboard';
-        this.isDemoMode = true;
-        this.userPreferences = this.getDefaultPreferences();
-        this.modules = new Map();
+        this.isDemoMode = false;
+        this.userPreferences = {};
         this.init();
     }
 
     async init() {
-        console.log('🔧 Initializing Farm Management App...');
+        console.log('🚀 Starting Farm Management App...');
         
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this.initializeApp());
+            document.addEventListener('DOMContentLoaded', () => {
+                this.initializeApp();
+            });
         } else {
             this.initializeApp();
         }
     }
 
     async initializeApp() {
-        try {
-            // Phase 1: Core Setup
-            await this.initializeCoreSystems();
-            
-            // Phase 2: UI Setup
-            this.initializeUI();
-            
-            // Phase 3: Load Data & Start
-            await this.loadApplicationData();
-            
-            console.log('✅ Farm Management App initialized successfully');
-            
-        } catch (error) {
-            console.error('❌ App initialization failed:', error);
-            this.showErrorState();
-        }
-    }
-
-    async initializeCoreSystems() {
-        console.log('🔧 Initializing core systems...');
+        console.log('✅ Initializing app...');
         
-        // 1. Initialize Style Manager
+        // CRITICAL: Initialize StyleManager FIRST before any modules
         this.initializeStyleManager();
         
-        // 2. Initialize Module System
-        this.initializeModuleSystem();
+        // CRITICAL: Initialize FarmModules core system
+        this.initializeFarmModules();
         
-        // 3. Initialize Data Management
-        this.initializeDataManagement();
+        this.isDemoMode = true;
         
-        console.log('✅ Core systems initialized');
+        // Load user preferences
+        await this.loadUserPreferences();
+        
+        // Show the app interface
+        this.showApp();
+        
+        // Setup navigation and events
+        this.createTopNavigation();
+        
+        // Small delay to ensure DOM is fully rendered
+        setTimeout(() => {
+            this.setupHamburgerMenu();
+            this.setupSideMenuEvents();
+            this.setupEventListeners();
+            this.setupDarkMode();
+
+            // Test if hamburger is working
+            const hamburger = document.getElementById('hamburger-menu');
+            const sideMenu = document.getElementById('side-menu');
+            console.log('🔍 Debug - Hamburger exists:', !!hamburger);
+            console.log('🔍 Debug - Side menu exists:', !!sideMenu);
+            
+            if (hamburger) {
+                console.log('🔍 Debug - Hamburger classes:', hamburger.className);
+                console.log('🔍 Debug - Hamburger styles:', window.getComputedStyle(hamburger));
+            }
+        }, 100);
+        
+        // Load initial section
+        this.showSection(this.currentSection);
+        
+        console.log('✅ App initialized successfully');
     }
 
     initializeStyleManager() {
-        // Initialize global style management
+        // Initialize StyleManager IMMEDIATELY when app starts
         if (window.StyleManager && typeof StyleManager.init === 'function') {
             StyleManager.init();
             console.log('🎨 StyleManager initialized');
         } else {
-            console.log('🎨 Using built-in style management');
-            this.setupBuiltInStyleManager();
+            console.warn('⚠️ StyleManager not available - modules may not style properly');
         }
     }
 
-    setupBuiltInStyleManager() {
-        // Add global CSS for consistent styling
-        const style = document.createElement('style');
-        style.textContent = `
-            .farm-module-container {
-                max-width: 1200px;
-                margin: 0 auto;
-                padding: 20px;
-                min-height: calc(100vh - 80px);
+    initializeFarmModules() {
+        // FIXED: Check if FarmModules exists and initialize all modules
+        if (window.FarmModules) {
+            // Check if initializeAll method exists (for newer versions)
+            if (typeof FarmModules.initializeAll === 'function') {
+                FarmModules.initializeAll();
+                console.log('🔧 FarmModules initialized all modules');
+            } 
+            // If no initializeAll method, just log that modules are ready
+            else {
+                console.log('🔧 FarmModules core ready - modules can register');
+            }
+        } else {
+            console.warn('⚠️ FarmModules core not available');
+            
+            // Create a basic FarmModules if it doesn't exist
+            window.FarmModules = {
+                modules: {},
+                registerModule: function(name, module) {
+                    console.log(`✅ Registering module: ${name}`);
+                    this.modules[name] = module;
+                },
+                getModule: function(name) {
+                    return this.modules[name];
+                }
+            };
+            console.log('🔧 Created basic FarmModules fallback');
+        }
+    }
+    
+    async loadUserPreferences() {
+        try {
+            // Try to use ProfileModule if available
+            if (typeof ProfileModule !== 'undefined' && ProfileModule.loadUserPreferences) {
+                this.userPreferences = ProfileModule.loadUserPreferences();
+                console.log('✅ User preferences loaded via ProfileModule');
+            } else {
+                // Fallback to direct localStorage access
+                const savedPrefs = localStorage.getItem('farm-user-preferences');
+                this.userPreferences = savedPrefs ? JSON.parse(savedPrefs) : this.getDefaultPreferences();
+                console.log('⚠️ ProfileModule not available, using localStorage fallback');
+                
+                // Create a complete ProfileModule fallback for other modules to use
+                this.createProfileModuleFallback();
             }
             
-            .farm-module-header {
-                background: linear-gradient(135deg, #22c55e 0%, #14b8a6 100%);
-                margin: -20px -20px 20px -20px;
-                padding: 25px 20px;
-                border-radius: 0 0 20px 20px;
-                color: white;
-                position: relative;
-                overflow: hidden;
-            }
+            // Apply theme preference immediately
+            this.applyUserTheme();
             
-            .farm-input {
-                width: 100%;
-                padding: 12px;
-                border: 1.5px solid #e2e8f0;
-                border-radius: 8px;
-                background: rgba(255, 255, 255, 0.9);
-                color: #1e293b;
-                font-size: 14px;
-                transition: all 0.3s ease;
-            }
-            
-            .farm-input:focus {
-                outline: none;
-                border-color: #14b8a6;
-                background: rgba(255, 255, 255, 1);
-                box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
-            }
-            
-            .farm-btn {
-                padding: 12px 24px;
-                border: none;
-                border-radius: 8px;
-                cursor: pointer;
-                font-size: 14px;
-                font-weight: 600;
-                transition: all 0.3s ease;
-            }
-            
-            .farm-btn-primary {
-                background: linear-gradient(135deg, #22c55e, #14b8a6);
-                color: white;
-            }
-            
-            .farm-btn-primary:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 20px rgba(20, 184, 166, 0.3);
-            }
-        `;
-        document.head.appendChild(style);
+        } catch (error) {
+            console.error('❌ Error loading user preferences:', error);
+            this.userPreferences = this.getDefaultPreferences();
+            this.createProfileModuleFallback();
+        }
     }
 
-    initializeModuleSystem() {
-        console.log('🔧 Initializing module system...');
-        
-        // Create robust module management system
-        window.FarmModules = {
-            modules: new Map(),
-            initialized: false,
-            
-            register: (name, module) => {
-                console.log(`✅ Registering module: ${name}`);
-                
-                if (this.modules.has(name)) {
-                    console.warn(`⚠️ Module ${name} already registered, replacing`);
-                }
-                
-                // Validate module structure
-                if (!module || typeof module !== 'object') {
-                    console.error(`❌ Invalid module ${name}: must be an object`);
-                    return false;
-                }
-                
-                this.modules.set(name, module);
-                
-                // Auto-initialize if module has init method
-                if (typeof module.initialize === 'function') {
-                    try {
-                        module.initialize();
-                        console.log(`✅ Auto-initialized module: ${name}`);
-                    } catch (error) {
-                        console.error(`❌ Failed to auto-initialize module ${name}:`, error);
-                    }
-                }
-                
-                return true;
-            },
-            
-            get: (name) => {
-                return this.modules.get(name);
-            },
-            
-            initialize: (name) => {
-                console.log(`🔄 Initializing module: ${name}`);
-                const module = this.modules.get(name);
-                
-                if (!module) {
-                    console.warn(`⚠️ Module ${name} not found`);
-                    return false;
-                }
-                
-                try {
-                    if (typeof module.initialize === 'function') {
-                        module.initialize();
-                    } else if (typeof module.render === 'function') {
-                        module.render();
-                    } else {
-                        console.warn(`⚠️ Module ${name} has no initialize or render method`);
-                        return false;
-                    }
-                    
-                    console.log(`✅ Successfully initialized module: ${name}`);
-                    return true;
-                    
-                } catch (error) {
-                    console.error(`❌ Failed to initialize module ${name}:`, error);
-                    return false;
-                }
-            },
-            
-            initializeAll: () => {
-                console.log('🚀 Initializing all registered modules...');
-                let successCount = 0;
-                
-                this.modules.forEach((module, name) => {
-                    if (this.initialize(name)) {
-                        successCount++;
-                    }
-                });
-                
-                this.initialized = true;
-                console.log(`✅ Initialized ${successCount}/${this.modules.size} modules`);
-                return successCount;
-            },
-            
-            // Alias methods for compatibility
-            registerModule: (name, module) => this.register(name, module),
-            getModule: (name) => this.get(name),
-            initializeModule: (name) => this.initialize(name),
-            initializeModules: () => this.initializeAll(),
-            init: () => this.initializeAll()
-        };
-        
-        console.log('✅ Module system initialized');
-    }
-
-    initializeDataManagement() {
-        console.log('🔧 Initializing data management...');
-        
-        // Create data management system
-        window.FarmData = {
-            preferences: this.userPreferences,
-            
-            savePreferences: () => {
-                try {
-                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.preferences));
-                    console.log('💾 Preferences saved');
-                    return true;
-                } catch (error) {
-                    console.error('❌ Failed to save preferences:', error);
-                    return false;
-                }
-            },
-            
-            loadPreferences: () => {
-                try {
-                    const saved = localStorage.getItem('farm-user-preferences');
-                    if (saved) {
-                        this.preferences = { ...this.getDefaultPreferences(), ...JSON.parse(saved) };
-                        console.log('💾 Preferences loaded');
-                    }
-                    return this.preferences;
-                } catch (error) {
-                    console.error('❌ Failed to load preferences:', error);
-                    return this.getDefaultPreferences();
-                }
-            },
-            
-            updatePreference: (key, value) => {
-                this.preferences[key] = value;
-                this.savePreferences();
-                console.log(`⚙️ Preference updated: ${key} = ${value}`);
-            },
-            
-            getStats: () => {
-                return this.preferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
-            },
-            
-            updateStats: (newStats) => {
-                if (!this.preferences.dashboardStats) {
-                    this.preferences.dashboardStats = {};
-                }
-                
-                Object.keys(newStats).forEach(key => {
-                    this.preferences.dashboardStats[key] = newStats[key];
-                });
-                
-                this.savePreferences();
-                console.log('📊 Stats updated:', newStats);
+    getDefaultPreferences() {
+        return {
+            theme: 'auto',
+            language: 'en',
+            currency: 'USD',
+            notifications: true,
+            businessName: 'My Farm',
+            businessType: 'poultry',
+            lowStockThreshold: 10,
+            autoSync: true,
+            dashboardStats: {
+                totalOrders: 0,
+                totalRevenue: 0,
+                pendingOrders: 0,
+                totalCustomers: 0,
+                totalProducts: 0,
+                monthlyRevenue: 0,
+                monthlyOrders: 0,
+                avgOrderValue: 0,
+                completedOrders: 0,
+                paidOrders: 0
             }
         };
-        
-        console.log('✅ Data management initialized');
     }
 
-    initializeUI() {
-        console.log('🔧 Initializing UI...');
-        
-        // 1. Create navigation
-        this.createNavigation();
-        
-        // 2. Setup theme system
-        this.setupThemeSystem();
-        
-        // 3. Setup event handlers
-        this.setupEventHandlers();
-        
-        // 4. Show application
-        this.showApplication();
-        
-        console.log('✅ UI initialized');
+    createProfileModuleFallback() {
+        // Create a complete ProfileModule with all methods modules expect
+        if (typeof ProfileModule === 'undefined') {
+            window.ProfileModule = {
+                userPreferences: this.userPreferences,
+                
+                // Core methods
+                loadUserPreferences: () => this.userPreferences,
+                getUserPreferences: () => this.userPreferences,
+                updatePreference: (key, value) => {
+                    this.userPreferences[key] = value;
+                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
+                    console.log(`⚙️ Preference updated: ${key} = ${value}`);
+                },
+                
+                // Stats methods that modules expect
+                updateBusinessStats: (module, stats) => {
+                    if (!this.userPreferences.dashboardStats) {
+                        this.userPreferences.dashboardStats = {};
+                    }
+                    Object.keys(stats).forEach(key => {
+                        this.userPreferences.dashboardStats[key] = stats[key];
+                    });
+                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
+                    console.log('📊 Stats updated for', module + ':', stats);
+                },
+                
+                updateStats: (stats) => {
+                    if (!this.userPreferences.dashboardStats) {
+                        this.userPreferences.dashboardStats = {};
+                    }
+                    Object.keys(stats).forEach(key => {
+                        this.userPreferences.dashboardStats[key] = stats[key];
+                    });
+                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
+                    console.log('📊 Stats updated:', stats);
+                },
+                
+                getStats: () => {
+                    return this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
+                },
+                
+                // Dashboard module expects this method
+                getProfileData: () => {
+                    return {
+                        farmName: this.userPreferences.businessName || 'My Farm',
+                        farmerName: 'Farm Manager',
+                        stats: this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats
+                    };
+                },
+                
+                getProfileStats: () => {
+                    return this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
+                },
+                
+                // For compatibility with existing modules
+                getBusinessOverview: () => {
+                    const stats = this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
+                    return {
+                        totalOrders: stats.totalOrders || 0,
+                        totalRevenue: stats.totalRevenue || 0,
+                        pendingOrders: stats.pendingOrders || 0,
+                        totalCustomers: stats.totalCustomers || 0,
+                        totalProducts: stats.totalProducts || 0,
+                        monthlyRevenue: stats.monthlyRevenue || 0,
+                        monthlyOrders: stats.monthlyOrders || 0
+                    };
+                },
+                
+                // Initialize method for compatibility
+                initialize: () => {
+                    console.log('✅ ProfileModule fallback initialized');
+                    return true;
+                }
+            };
+            
+            window.profileInstance = window.ProfileModule;
+            console.log('✅ Complete ProfileModule fallback created');
+        }
     }
 
-    createNavigation() {
+    applyUserTheme() {
+        const theme = this.userPreferences.theme || 'auto';
+        
+        if (theme === 'dark') {
+            document.body.classList.add('dark-mode');
+            this.updateDarkModeIcon(true);
+        } else if (theme === 'light') {
+            document.body.classList.remove('dark-mode');
+            this.updateDarkModeIcon(false);
+        } else {
+            // Auto mode - follow system preference
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.body.classList.toggle('dark-mode', prefersDark);
+            this.updateDarkModeIcon(prefersDark);
+        }
+        
+        console.log('🎨 Applied user theme:', theme);
+    }
+
+    setupDarkMode() {
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+        
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                
+                // Save preference
+                const newTheme = isDarkMode ? 'dark' : 'light';
+                this.userPreferences.theme = newTheme;
+                localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
+                
+                // Update ProfileModule if available
+                if (window.ProfileModule && window.ProfileModule.updatePreference) {
+                    window.ProfileModule.updatePreference('theme', newTheme);
+                }
+                
+                // Update icon
+                this.updateDarkModeIcon(isDarkMode);
+                
+                console.log('🎨 Theme changed to:', newTheme);
+            });
+        }
+        
+        // Listen for system theme changes (only if theme is set to auto)
+        prefersDarkScheme.addEventListener('change', (e) => {
+            if (this.userPreferences.theme === 'auto') {
+                document.body.classList.toggle('dark-mode', e.matches);
+                this.updateDarkModeIcon(e.matches);
+            }
+        });
+    }
+
+    updateDarkModeIcon(isDarkMode) {
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        if (darkModeToggle) {
+            const icon = darkModeToggle.querySelector('span:first-child');
+            const label = darkModeToggle.querySelector('.nav-label');
+            
+            if (isDarkMode) {
+                icon.textContent = '☀️';
+                label.textContent = 'Light';
+            } else {
+                icon.textContent = '🌙';
+                label.textContent = 'Dark';
+            }
+        }
+    }
+  
+    setupEventListeners() {
+        document.addEventListener('click', (e) => {
+            // Handle main nav items
+            if (e.target.closest('.nav-item')) {
+                const navItem = e.target.closest('.nav-item');
+                const view = navItem.getAttribute('data-view');
+                if (view) {
+                    this.showSection(view);
+                }
+            }
+            
+            // Handle sidebar menu items (for the existing HTML sidebar)
+            if (e.target.closest('.side-menu-item')) {
+                const menuItem = e.target.closest('.side-menu-item');
+                const section = menuItem.getAttribute('data-section');
+                if (section) {
+                    this.showSection(section);
+                }
+            }
+        });
+    }
+
+    showApp() {
+        const authContainer = document.getElementById('auth-container');
         const appContainer = document.getElementById('app-container');
-        if (!appContainer) {
-            console.error('❌ App container not found');
-            return;
+        
+        if (authContainer) authContainer.classList.add('hidden');
+        if (appContainer) appContainer.classList.remove('hidden');
+        
+        console.log('🏠 App container shown');
+    }
+
+    createTopNavigation() {
+        const appContainer = document.getElementById('app-container');
+        if (!appContainer) return;
+
+        // Remove existing header if any
+        let header = appContainer.querySelector('header');
+        if (header) {
+            header.remove();
         }
-
-        // Remove existing header
-        const existingHeader = appContainer.querySelector('header');
-        if (existingHeader) existingHeader.remove();
-
+        
         // Create new header
-        const header = document.createElement('header');
-        header.innerHTML = this.getNavigationHTML();
+        header = document.createElement('header');
         appContainer.insertBefore(header, appContainer.firstChild);
 
-        // Setup navigation functionality
-        this.setupNavigationEvents();
-        
-        console.log('✅ Navigation created');
-    }
-
-    getNavigationHTML() {
-        return `
+        header.innerHTML = `
             <nav class="top-nav">
                 <div class="nav-brand">
-                    <img src="icons/icon-96x96.png" alt="AgriMetrics" width="32" height="32">
-                    <div class="brand-text-container">
-                        <span class="brand-text">AgriMetrics</span>
-                        <span class="brand-subtitle">Farm Management</span>
-                    </div>
+                    <img src="icons/icon-96x96.png" alt="AgriMetrics">
+                    <span class="brand-text">AgriMetrics</span>
+                    <span class="brand-subtitle">Farm Management System</span>
                 </div>
                 
                 <div class="nav-items">
@@ -363,69 +394,83 @@ class FarmManagementApp {
                         <span class="nav-label">Profile</span>
                     </button>
 
-                    <button class="nav-item" id="dark-mode-toggle" title="Toggle Dark Mode">
+                    <!-- Dark Mode Toggle -->
+                    <button class="nav-item dark-mode-toggle" id="dark-mode-toggle" title="Toggle Dark Mode">
                         <span>🌙</span>
                         <span class="nav-label">Theme</span>
                     </button>
                     
-                    <button class="nav-item" id="hamburger-menu" title="More Operations">
+                    <!-- Hamburger menu as a proper nav-item -->
+                    <button class="nav-item hamburger-menu" id="hamburger-menu" title="Farm Operations">
                         <span>☰</span>
                         <span class="nav-label">More</span>
                     </button>
                 </div>
             </nav>
         `;
-    }
 
-    setupNavigationEvents() {
-        // Main navigation clicks
-        document.addEventListener('click', (e) => {
-            const navItem = e.target.closest('.nav-item');
-            if (navItem && navItem.hasAttribute('data-view')) {
-                e.preventDefault();
-                const view = navItem.getAttribute('data-view');
-                this.showSection(view);
-            }
-        });
-
-        // Hamburger menu
+        // Setup hamburger menu functionality
         this.setupHamburgerMenu();
         
-        // Side menu items
-        this.setupSideMenuEvents();
+        // Adjust main content padding
+        const main = appContainer.querySelector('main');
+        if (main) {
+            main.style.paddingTop = '80px';
+        }
+        
+        console.log('✅ Top Navigation created');
     }
-
+    
     setupHamburgerMenu() {
         const hamburger = document.getElementById('hamburger-menu');
         const sideMenu = document.getElementById('side-menu');
         
-        if (!hamburger || !sideMenu) {
-            console.log('⚠️ Hamburger or side menu not found');
-            return;
+        if (hamburger && sideMenu) {
+            // Ensure sidebar is hidden by default and positioned on right
+            sideMenu.style.left = 'auto';
+            sideMenu.style.right = '0';
+            sideMenu.style.transform = 'translateX(100%)';
+            sideMenu.classList.remove('active');
+            
+            // Remove any existing event listeners to prevent duplicates
+            hamburger.replaceWith(hamburger.cloneNode(true));
+            const newHamburger = document.getElementById('hamburger-menu');
+            
+            newHamburger.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🍔 Hamburger clicked, toggling sidebar');
+                sideMenu.classList.toggle('active');
+            });
+            
+            console.log('✅ Hamburger menu connected to sidebar');
+        } else {
+            console.log('❌ Hamburger or side menu not found:', { hamburger, sideMenu });
         }
-
-        // Ensure proper initial state
-        sideMenu.style.transform = 'translateX(100%)';
-        sideMenu.classList.remove('active');
-
-        // Hamburger click handler
-        hamburger.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            sideMenu.classList.toggle('active');
-            console.log('🍔 Side menu toggled:', sideMenu.classList.contains('active'));
-        });
-
-        // Close when clicking outside
+        
+        // Close sidebar when clicking outside
         document.addEventListener('click', (e) => {
-            if (sideMenu.classList.contains('active') && 
-                !sideMenu.contains(e.target) && 
-                !hamburger.contains(e.target)) {
-                sideMenu.classList.remove('active');
+            const sideMenu = document.getElementById('side-menu');
+            const hamburger = document.getElementById('hamburger-menu');
+            
+            if (sideMenu && sideMenu.classList.contains('active') && hamburger) {
+                if (!sideMenu.contains(e.target) && !hamburger.contains(e.target)) {
+                    console.log('📱 Click outside, closing sidebar');
+                    sideMenu.classList.remove('active');
+                }
             }
         });
-
-        console.log('✅ Hamburger menu setup complete');
+        
+        // Close sidebar when clicking on sidebar items
+        const sideMenuItems = document.querySelectorAll('.side-menu-item');
+        sideMenuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const sideMenu = document.getElementById('side-menu');
+                if (sideMenu) {
+                    sideMenu.classList.remove('active');
+                }
+            });
+        });
     }
 
     setupSideMenuEvents() {
@@ -435,246 +480,86 @@ class FarmManagementApp {
                 e.preventDefault();
                 const section = item.getAttribute('data-section');
                 if (section) {
+                    console.log('📱 Side menu item clicked:', section);
                     this.showSection(section);
                     
-                    // Close side menu
+                    // Close sidebar after selection
                     const sideMenu = document.getElementById('side-menu');
-                    if (sideMenu) sideMenu.classList.remove('active');
+                    if (sideMenu) {
+                        sideMenu.classList.remove('active');
+                    }
                 }
             });
         });
+        
+        console.log('✅ Side menu events setup');
     }
-
-    setupThemeSystem() {
-        const toggle = document.getElementById('dark-mode-toggle');
-        if (!toggle) return;
-
-        // Load saved theme preference
-        const savedTheme = this.userPreferences.theme || 'auto';
-        this.applyTheme(savedTheme);
-
-        // Toggle click handler
-        toggle.addEventListener('click', () => {
-            const currentTheme = this.userPreferences.theme || 'auto';
-            let newTheme;
-            
-            if (currentTheme === 'auto') newTheme = 'dark';
-            else if (currentTheme === 'dark') newTheme = 'light';
-            else newTheme = 'auto';
-            
-            this.applyTheme(newTheme);
-            FarmData.updatePreference('theme', newTheme);
-        });
-
-        // System theme change listener
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-            if (this.userPreferences.theme === 'auto') {
-                this.applyTheme('auto');
-            }
-        });
-
-        console.log('✅ Theme system setup complete');
-    }
-
-    applyTheme(theme) {
-        const isDark = theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        
-        document.body.classList.toggle('dark-mode', isDark);
-        this.updateThemeIcon(isDark);
-        
-        console.log('🎨 Theme applied:', theme, '(dark mode:', isDark + ')');
-    }
-
-    updateThemeIcon(isDark) {
-        const toggle = document.getElementById('dark-mode-toggle');
-        if (!toggle) return;
-
-        const icon = toggle.querySelector('span:first-child');
-        const label = toggle.querySelector('.nav-label');
-        
-        if (isDark) {
-            icon.textContent = '☀️';
-            label.textContent = 'Light';
-        } else {
-            icon.textContent = '🌙';
-            label.textContent = 'Dark';
-        }
-    }
-
-    setupEventHandlers() {
-        // Global error handler
-        window.addEventListener('error', (e) => {
-            console.error('🚨 Global error:', e.error);
-        });
-
-        // Unhandled promise rejection handler
-        window.addEventListener('unhandledrejection', (e) => {
-            console.error('🚨 Unhandled promise rejection:', e.reason);
-        });
-
-        console.log('✅ Event handlers setup complete');
-    }
-
-    showApplication() {
-        const authContainer = document.getElementById('auth-container');
-        const appContainer = document.getElementById('app-container');
-        
-        if (authContainer) authContainer.classList.add('hidden');
-        if (appContainer) appContainer.classList.remove('hidden');
-        
-        console.log('🏠 Application shown');
-    }
-
-    async loadApplicationData() {
-        console.log('📊 Loading application data...');
-        
-        // Load user preferences
-        this.userPreferences = FarmData.loadPreferences();
-        
-        // Apply theme
-        this.applyTheme(this.userPreferences.theme);
-        
-        // Initialize all modules
-        if (window.FarmModules) {
-            FarmModules.initializeAll();
-        }
-        
-        // Show initial section
-        this.showSection(this.currentSection);
-        
-        console.log('✅ Application data loaded');
-    }
-
+    
     showSection(sectionId) {
-        console.log(`🔄 Showing section: ${sectionId}`);
+        console.log(`🔄 Switching to section: ${sectionId}`);
         
-        // Update navigation state
-        this.updateNavigationState(sectionId);
-        
-        // Update current section
-        this.currentSection = sectionId;
-        
-        // Load section content
-        this.loadSectionContent(sectionId);
-    }
-
-    updateNavigationState(sectionId) {
-        // Update top navigation
+        // Update active nav state for top navigation
         document.querySelectorAll('.nav-item').forEach(item => {
             item.classList.remove('active');
         });
         
         const activeNavItem = document.querySelector(`.nav-item[data-view="${sectionId}"]`);
-        if (activeNavItem) activeNavItem.classList.add('active');
+        if (activeNavItem) {
+            activeNavItem.classList.add('active');
+        }
 
-        // Update side menu
+        // Update active state for sidebar items
         document.querySelectorAll('.side-menu-item').forEach(item => {
             item.classList.remove('active');
         });
         
         const activeSideItem = document.querySelector(`.side-menu-item[data-section="${sectionId}"]`);
-        if (activeSideItem) activeSideItem.classList.add('active');
+        if (activeSideItem) {
+            activeSideItem.classList.add('active');
+        }
+
+        this.currentSection = sectionId;
+        
+        // Load the module content
+        if (window.FarmModules && typeof window.FarmModules.initializeModule === 'function') {
+            window.FarmModules.initializeModule(sectionId);
+        } else {
+            this.loadFallbackContent(sectionId);
+        }
     }
 
-    loadSectionContent(sectionId) {
+    loadFallbackContent(sectionId) {
         const contentArea = document.getElementById('content-area');
-        if (!contentArea) {
-            console.error('❌ Content area not found');
-            return;
-        }
+        if (!contentArea) return;
 
-        // Try to load via module system first
-        if (window.FarmModules && FarmModules.initialize(sectionId)) {
-            console.log(`✅ Section ${sectionId} loaded via module system`);
-            return;
-        }
-
-        // Fallback content
-        console.log(`⚠️ Using fallback content for ${sectionId}`);
-        this.showFallbackContent(sectionId, contentArea);
-    }
-
-    showFallbackContent(sectionId, contentArea) {
-        const sections = {
-            'dashboard': { title: 'Dashboard', icon: '📊', description: 'Farm overview and analytics' },
-            'income-expenses': { title: 'Income & Expenses', icon: '💰', description: 'Financial tracking' },
-            'inventory-check': { title: 'Inventory', icon: '📦', description: 'Stock management' },
-            'orders': { title: 'Orders', icon: '📋', description: 'Order management' },
-            'sales-record': { title: 'Sales', icon: '🛒', description: 'Sales tracking' },
-            'profile': { title: 'Profile', icon: '👤', description: 'Account settings' }
+        const sectionTitles = {
+            'dashboard': 'Dashboard',
+            'income-expenses': 'Income & Expenses',
+            'inventory-check': 'Inventory Check',
+            'feed-record': 'Feed Record',
+            'broiler-mortality': 'Broiler Mortality',
+            'production': 'Production Records',
+            'sales-record': 'Sales Record',
+            'orders': 'Orders',
+            'reports': 'Reports',
+            'profile': 'Profile'
         };
 
-        const section = sections[sectionId] || { title: sectionId, icon: '📄', description: 'Content section' };
-
         contentArea.innerHTML = `
-            <div class="farm-module-container">
-                <div class="farm-module-header">
-                    <h1 style="color: white; margin: 0 0 8px 0;">${section.icon} ${section.title}</h1>
-                    <p style="color: white; opacity: 0.9; margin: 0;">${section.description}</p>
-                </div>
-                
-                <div style="padding: 40px 20px; text-align: center; color: #666;">
-                    <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;">${section.icon}</div>
-                    <h3 style="color: #1a1a1a; margin-bottom: 8px;">Module Loading</h3>
-                    <p>The ${section.title} module is being initialized...</p>
-                    <p style="font-size: 14px; color: #999; margin-top: 20px;">
-                        This is fallback content. The actual module should load shortly.
-                    </p>
-                </div>
+            <div style="padding: 20px;">
+                <h2 style="color: #1a1a1a;">${sectionTitles[sectionId] || sectionId}</h2>
+                <p style="color: #666;">Content loading...</p>
+                <p style="color: #999; font-size: 14px;">Module system not loaded yet</p>
             </div>
         `;
     }
-
-    showErrorState() {
-        const contentArea = document.getElementById('content-area');
-        if (contentArea) {
-            contentArea.innerHTML = `
-                <div style="padding: 40px 20px; text-align: center;">
-                    <div style="font-size: 64px; margin-bottom: 20px;">😵</div>
-                    <h2 style="color: #dc2626; margin-bottom: 16px;">Application Error</h2>
-                    <p style="color: #666; margin-bottom: 24px;">
-                        Something went wrong while loading the application.
-                    </p>
-                    <button onclick="location.reload()" class="farm-btn farm-btn-primary">
-                        Reload Application
-                    </button>
-                </div>
-            `;
-        }
-    }
-
-    getDefaultPreferences() {
-        return {
-            theme: 'auto',
-            language: 'en',
-            currency: 'USD',
-            notifications: true,
-            businessName: 'My Farm',
-            businessType: 'poultry',
-            lowStockThreshold: 10,
-            autoSync: true,
-            dashboardStats: {
-                totalOrders: 0,
-                totalRevenue: 0,
-                pendingOrders: 0,
-                totalCustomers: 0,
-                totalProducts: 0,
-                monthlyRevenue: 0,
-                monthlyOrders: 0,
-                avgOrderValue: 0,
-                completedOrders: 0,
-                paidOrders: 0
-            }
-        };
-    }
 }
 
-// Initialize application
-document.addEventListener('DOMContentLoaded', () => {
-    window.farmApp = new FarmManagementApp();
-});
-
-// Export for module system
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = FarmManagementApp;
+// Initialize the app
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.app = new FarmManagementApp();
+    });
+} else {
+    window.app = new FarmManagementApp();
 }
