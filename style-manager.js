@@ -568,10 +568,12 @@ const StyleManager = {
       // Horizontal on desktop, stacked on mobile
      '.financial-summary': {
         display: 'flex',
+        justifyContent: 'center',       // centers the row of cards
+        alignItems: 'flex-start',
+        gap: '24px',
         flexWrap: 'wrap',
-        gap: '16px',
-        justifyContent: 'flex-start',
-        margin: '24px 0'
+        margin: '24px auto',
+        padding: '0'
       },
       
       '.summary-card': {
