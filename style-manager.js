@@ -347,109 +347,84 @@ const StyleManager = {
   moduleStyles: {
     // ==================== DASHBOARD MODULE ====================
     'dashboard': {
-      // Module container
-      '.module-container': {
-        padding: '24px',
-        minHeight: '100vh',
-        background: 'var(--module-bg)'
-      },
+  // Module container
+  '.module-container': {
+    padding: '24px',
+    minHeight: '100vh',
+    background: 'var(--module-bg)'
+  },
 
-      // Header styles
-      '.module-header': {
-        background: 'var(--header-gradient)',
-        borderRadius: 'var(--radius-xl)',
-        padding: '24px',
-        marginBottom: '32px',
-        color: 'white',
-        boxShadow: 'var(--shadow-lg)',
-        position: 'relative',
-        overflow: 'hidden'
-      },
+  // Welcome section styling
+  '.welcome-section': {
+    margin: '0',                // no extra space outside
+    padding: '0',               // no extra space inside
+  },
 
-      '.module-header::before': {
-        content: '""',
-        position: 'absolute',
-        top: '0',
-        left: '0',
-        right: '0',
-        bottom: '0',
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%)'
-      },
+  '.welcome-header': {
+    fontSize: '28px',
+    fontWeight: '700',
+    color: 'white',
+    margin: '0',                // removes default h1 margin
+    textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+  },
 
-      '.header-content': {
-        position: 'relative',
-        zIndex: '1',
-        marginBottom: '20px'
-      },
+  '.welcome-subtitle': {
+    fontSize: '15px',
+    fontWeight: '400',
+    color: 'white',
+    margin: '0',                // removes default p margin
+    opacity: '1',
+    textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+  },
 
-      '.header-text': {
-        marginBottom: '16px'
-      },
+  // Activity board styling
+  '.activity-board': {
+    padding: '24px',
+    background: 'var(--card-bg)',
+    border: '1px solid var(--border-color)',
+    borderRadius: '16px',
+    boxShadow: 'var(--shadow-md)',
+    marginTop: '24px'
+  },
 
-      '.module-title': {
-        fontSize: '28px',
-        fontWeight: '700',
-        marginBottom: '8px',
-        letterSpacing: '-0.5px',
-        color: 'white'
-      },
-     
-      // ✅ Subheading fix
-     /* '.module-subtitle': {
-        fontSize: '15px',
-        fontWeight: '400',
-        color: 'white',          // <-- this makes it white
-        opacity: '1',
-        textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
-      }, */
+  '.activity-title': {
+    fontSize: '18px',
+    fontWeight: '600',
+    marginBottom: '16px',
+    color: 'var(--text-primary)'
+  },
 
-      // Activity board styling
-      '.activity-board': {
-        padding: '24px',
-        background: 'var(--card-bg)',
-        border: '1px solid var(--border-color)',
-        borderRadius: '16px',
-        boxShadow: 'var(--shadow-md)',
-        marginTop: '24px'
-      },
+  '.activity-empty': {
+    textAlign: 'center',
+    padding: '40px 20px',
+    color: 'var(--text-tertiary)'
+  },
 
-      '.activity-title': {
-        fontSize: '18px',
-        fontWeight: '600',
-        marginBottom: '16px',
-        color: 'var(--text-primary)'
-      },
+  '.activity-empty p': {
+    fontSize: '14px',
+    marginBottom: '12px'
+  },
 
-      '.activity-empty': {
-        textAlign: 'center',
-        padding: '40px 20px',
-        color: 'var(--text-tertiary)'
-      },
+  '.refresh-button': {
+    marginTop: '16px',
+    display: 'inline-block',
+    padding: '10px 20px',
+    background: 'var(--gradient-primary)',
+    color: 'white',
+    borderRadius: 'var(--radius-md)',
+    fontWeight: '600',
+    cursor: 'pointer',
+    boxShadow: 'var(--shadow-sm)',
+    transition: 'all 0.2s ease'
+  },
 
-      '.activity-empty p': {
-        fontSize: '14px',
-        marginBottom: '12px'
-      },
+  '.refresh-button:hover': {
+    background: 'var(--gradient-primary-hover)',
+    transform: 'translateY(-1px)',
+    boxShadow: 'var(--shadow-md)'
+  }
+},
 
-      '.refresh-button': {
-        marginTop: '16px',
-        display: 'inline-block',
-        padding: '10px 20px',
-        background: 'var(--gradient-primary)',
-        color: 'white',
-        borderRadius: 'var(--radius-md)',
-        fontWeight: '600',
-        cursor: 'pointer',
-        boxShadow: 'var(--shadow-sm)',
-        transition: 'all 0.2s ease'
-      },
-
-      '.refresh-button:hover': {
-        background: 'var(--gradient-primary-hover)',
-        transform: 'translateY(-1px)',
-        boxShadow: 'var(--shadow-md)'
-      }
-    },
     
     // ======== INCOME & EXPENSES MODULE ============
     'income-expenses': {
