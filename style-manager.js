@@ -497,8 +497,8 @@ const StyleManager = {
     background: 'var(--gradient-primary-hover)',
     transform: 'translateY(-1px)',
     boxShadow: 'var(--shadow-md)'
-  },
-}
+  }
+},
 
   
     // ======== INCOME & EXPENSES MODULE ============
