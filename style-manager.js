@@ -346,15 +346,6 @@ const StyleManager = {
   // ==================== MODULE-SPECIFIC STYLES ====================
   moduleStyles: {
 
-    // ======== DASHBOARD MODULE ==================
-    'dashboard': {
-  // Module container
-  '.module-container': {
-    padding: '24px',
-    minHeight: '100vh',
-    background: 'var(--module-bg)'
-  },
-
   // Header styles
   '.module-header': {
     background: 'var(--header-gradient)',
@@ -404,7 +395,16 @@ const StyleManager = {
   }
 }
 
-    // ======== INCOME & EXPENSES MODULE ========
+ // ======== DASHBOARD MODULE ====================
+    'dashboard': {
+  // Module container
+  '.module-container': {
+    padding: '24px',
+    minHeight: '100vh',
+    background: 'var(--module-bg)'
+  },
+  
+    // ======== INCOME & EXPENSES MODULE ============
     'income-expenses': {
       // Module container
       '.module-container': {
