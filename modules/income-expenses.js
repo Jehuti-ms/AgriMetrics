@@ -8,37 +8,28 @@ const IncomeExpensesModule = {
     element: null,
 
     initialize() {
-    console.log('💰 Initializing Income & Expenses...');
-    
-    this.id = 'income-expenses'; // ✅ set ID first
-    this.element = document.getElementById('content-area');
-    if (!this.element) return false;
+        console.log('💰 Initializing Income & Expenses...');
+        
+        // ✅ ADDED: Get the content area element
+        this.element = document.getElementById('content-area');
+        if (!this.element) return false;
 
-    if (window.StyleManager) {
-        StyleManager.registerModule(this.id, this.element, this);
-
-        const cfg = StyleManager.moduleConfigs?.[this.id];
-        if (cfg) {
-            if (cfg.statsGrid) {
-                this.element.style.setProperty('--stats-grid', cfg.statsGrid);
-            }
-            if (cfg.headerGradient) {
-                this.element.style.setProperty('--header-gradient', cfg.headerGradient);
-            }
+        // ✅ ADDED: Register with StyleManager
+        if (window.StyleManager) {
+            StyleManager.registerModule(this.id, this.element, this);
         }
-    }
 
-    this.loadData();
-    this.renderModule();
-    this.setupEventListeners();
-    this.initialized = true;
-
-    this.syncStatsWithDashboard();
-    
-    console.log('✅ Income & Expenses initialized with StyleManager');
-    return true;
-},
-
+        this.loadData();
+        this.renderModule();
+        this.setupEventListeners();
+        this.initialized = true;
+        
+        // Sync initial stats with shared data
+        this.syncStatsWithDashboard();
+        
+        console.log('✅ Income & Expenses initialized with StyleManager');
+        return true;
+    },
 
     // ✅ ADDED: Theme change handler (optional)
     onThemeChange(theme) {
@@ -60,123 +51,114 @@ const IncomeExpensesModule = {
         ];
     },
 
-  renderModule() {
-    if (!this.element) return;
+    renderModule() {
+        if (!this.element) return;
 
-    const stats = this.calculateStats();
+        const stats = this.calculateStats();
 
-    this.element.innerHTML = `
-        <div class="income-container module-container">
-            <!-- Standard Header -->
-            <div class="module-header">
-                <h1 class="module-title">Income & Expenses</h1>
-                <p class="module-subtitle">Manage your farm finances</p>
-            </div>
+        this.element.innerHTML = `
+            <div class="module-container">
+                <div class="module-header">
+                    <h1 class="module-title">Income & Expenses</h1>
+                    <p class="module-subtitle">Manage your farm finances</p>
+                </div>
 
-            <!-- Stats Overview -->
-            <div class="stats-overview glass-card">
-                <h2>Overview</h2>
+                <!-- Quick Stats -->
                 <div class="stats-grid">
-                    <div class="summary-card stat-card">
-                        <div>💰</div>
-                        <div id="total-income">${this.formatCurrency(stats.totalIncome)}</div>
-                        <div>Total Income</div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.formatCurrency(stats.totalIncome)}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Income</div>
                     </div>
-                    <div class="summary-card stat-card">
-                        <div>💸</div>
-                        <div id="total-expenses">${this.formatCurrency(stats.totalExpenses)}</div>
-                        <div>Total Expenses</div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">💸</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.formatCurrency(stats.totalExpenses)}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Expenses</div>
                     </div>
-                    <div class="summary-card stat-card">
-                        <div>📊</div>
-                        <div id="net-profit" style="color:${stats.netProfit >= 0 ? '#22c55e' : '#ef4444'};">
-                            ${this.formatCurrency(stats.netProfit)}
-                        </div>
-                        <div>Net Profit</div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                        <div style="font-size: 24px; font-weight: bold; color: ${stats.netProfit >= 0 ? '#22c55e' : '#ef4444'}; margin-bottom: 4px;">${this.formatCurrency(stats.netProfit)}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Net Profit</div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Action Buttons -->
-            <div class="quick-actions glass-card">
-                <h2>Actions</h2>
+                <!-- Action Buttons -->
                 <div class="quick-action-grid">
                     <button class="quick-action-btn" id="add-income-btn">
-                        <div>💰</div>
-                        <span>Add Income</span>
-                        <span>Record new income</span>
+                        <div style="font-size: 32px;">💰</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Income</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record new income</span>
                     </button>
                     <button class="quick-action-btn" id="add-expense-btn">
-                        <div>💸</div>
-                        <span>Add Expense</span>
-                        <span>Record new expense</span>
+                        <div style="font-size: 32px;">💸</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Expense</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record new expense</span>
                     </button>
                 </div>
-            </div>
 
-            <!-- Transaction Form (Hidden by default) -->
-            <div id="transaction-form-container" class="hidden">
-                <div class="glass-card">
-                    <h3 id="form-title">Add Transaction</h3>
-                    <form id="transaction-form">
-                        <div class="form-row">
-                            <div>
-                                <label for="transaction-type">Type</label>
-                                <select id="transaction-type" required>
-                                    <option value="income">Income</option>
-                                    <option value="expense">Expense</option>
+                <!-- Transaction Form (Hidden by default) -->
+                <div id="transaction-form-container" class="hidden">
+                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                        <h3 style="color: var(--text-primary); margin-bottom: 20px;" id="form-title">Add Transaction</h3>
+                        <form id="transaction-form">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Type</label>
+                                    <select class="form-input" id="transaction-type" required>
+                                        <option value="income">Income</option>
+                                        <option value="expense">Expense</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">Amount</label>
+                                    <input type="number" class="form-input" id="transaction-amount" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 16px;">
+                                <label class="form-label">Category</label>
+                                <select class="form-input" id="transaction-category" required>
+                                    <option value="">Select category</option>
+                                    <option value="egg-sales">Egg Sales</option>
+                                    <option value="poultry-sales">Poultry Sales</option>
+                                    <option value="crop-sales">Crop Sales</option>
+                                    <option value="feed">Feed</option>
+                                    <option value="medication">Medication</option>
+                                    <option value="equipment">Equipment</option>
+                                    <option value="labor">Labor</option>
+                                    <option value="other">Other</option>
                                 </select>
                             </div>
-                            <div>
-                                <label for="transaction-amount">Amount</label>
-                                <input type="number" id="transaction-amount" step="0.01" min="0" required>
+                            <div style="margin-bottom: 16px;">
+                                <label class="form-label">Description</label>
+                                <input type="text" class="form-input" id="transaction-description" required>
                             </div>
-                        </div>
-                        <div>
-                            <label for="transaction-category">Category</label>
-                            <select id="transaction-category" required>
-                                <option value="">Select category</option>
-                                <option value="egg-sales">Egg Sales</option>
-                                <option value="poultry-sales">Poultry Sales</option>
-                                <option value="crop-sales">Crop Sales</option>
-                                <option value="feed">Feed</option>
-                                <option value="medication">Medication</option>
-                                <option value="equipment">Equipment</option>
-                                <option value="labor">Labor</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="transaction-description">Description</label>
-                            <input type="text" id="transaction-description" required>
-                        </div>
-                        <div>
-                            <label for="transaction-date">Date</label>
-                            <input type="date" id="transaction-date" required>
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" class="btn-primary">Save Transaction</button>
-                            <button type="button" class="btn-outline" id="cancel-form">Cancel</button>
-                        </div>
-                    </form>
+                            <div style="margin-bottom: 20px;">
+                                <label class="form-label">Date</label>
+                                <input type="date" class="form-input" id="transaction-date" required>
+                            </div>
+                            <div style="display: flex; gap: 12px;">
+                                <button type="submit" class="btn-primary">Save Transaction</button>
+                                <button type="button" class="btn-outline" id="cancel-form">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="glass-card" style="padding: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: var(--text-primary); font-size: 20px;">Recent Transactions</h3>
+                        <button class="btn-outline" id="clear-all">Clear All</button>
+                    </div>
+                    <div id="transactions-list">
+                        ${this.renderTransactionsList()}
+                    </div>
                 </div>
             </div>
+        `;
 
-            <!-- Recent Transactions -->
-            <div class="recent-transactions glass-card">
-                <div class="card-header">
-                    <h3>Recent Transactions</h3>
-                    <button class="btn-outline" id="clear-all">Clear All</button>
-                </div>
-                <div id="transactions-list">
-                    ${this.renderTransactionsList()}
-                </div>
-            </div>
-        </div>
-    `;
-
-    this.setupEventListeners();
-},
+        this.setupEventListeners();
+    },
 
     calculateStats() {
         const totalIncome = this.transactions
