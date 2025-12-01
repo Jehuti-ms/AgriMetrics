@@ -393,11 +393,12 @@ const StyleManager = {
         letterSpacing: '-0.5px',
         color: 'white'
       },
-
+     
+      // ✅ Subheading fix
       '.module-subtitle': {
         fontSize: '15px',
         fontWeight: '400',
-        color: 'white',
+        color: 'white',          // <-- this makes it white
         opacity: '1',
         textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
       },
