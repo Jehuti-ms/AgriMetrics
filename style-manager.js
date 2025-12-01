@@ -396,7 +396,7 @@ const StyleManager = {
 }
 
  // ==================== DASHBOARD MODULE ====================
-   'dashboard': {
+'dashboard': {
   // Module container
   '.module-container': {
     padding: '24px',
@@ -450,55 +450,56 @@ const StyleManager = {
     color: 'white',
     opacity: '1',
     textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
-  }
-}
+  },
 
+  // Activity board styling
   '.activity-board': {
-  padding: '24px',
-  background: 'var(--card-bg)',
-  border: '1px solid var(--border-color)',
-  borderRadius: '16px',
-  boxShadow: 'var(--shadow-md)',
-  marginTop: '24px'
-},
+    padding: '24px',
+    background: 'var(--card-bg)',
+    border: '1px solid var(--border-color)',
+    borderRadius: '16px',
+    boxShadow: 'var(--shadow-md)',
+    marginTop: '24px'
+  },
 
-'.activity-title': {
-  fontSize: '18px',
-  fontWeight: '600',
-  marginBottom: '16px',
-  color: 'var(--text-primary)'
-},
+  '.activity-title': {
+    fontSize: '18px',
+    fontWeight: '600',
+    marginBottom: '16px',
+    color: 'var(--text-primary)'
+  },
 
-'.activity-empty': {
-  textAlign: 'center',
-  padding: '40px 20px',
-  color: 'var(--text-tertiary)'
-},
+  '.activity-empty': {
+    textAlign: 'center',
+    padding: '40px 20px',
+    color: 'var(--text-tertiary)'
+  },
 
-'.activity-empty p': {
-  fontSize: '14px',
-  marginBottom: '12px'
-},
+  '.activity-empty p': {
+    fontSize: '14px',
+    marginBottom: '12px'
+  },
 
-'.refresh-button': {
-  marginTop: '16px',
-  display: 'inline-block',
-  padding: '10px 20px',
-  background: 'var(--gradient-primary)',
-  color: 'white',
-  borderRadius: 'var(--radius-md)',
-  fontWeight: '600',
-  cursor: 'pointer',
-  boxShadow: 'var(--shadow-sm)',
-  transition: 'all 0.2s ease'
-},
+  '.refresh-button': {
+    marginTop: '16px',
+    display: 'inline-block',
+    padding: '10px 20px',
+    background: 'var(--gradient-primary)',
+    color: 'white',
+    borderRadius: 'var(--radius-md)',
+    fontWeight: '600',
+    cursor: 'pointer',
+    boxShadow: 'var(--shadow-sm)',
+    transition: 'all 0.2s ease'
+  },
 
-'.refresh-button:hover': {
-  background: 'var(--gradient-primary-hover)',
-  transform: 'translateY(-1px)',
-  boxShadow: 'var(--shadow-md)'
-}
+  '.refresh-button:hover': {
+    background: 'var(--gradient-primary-hover)',
+    transform: 'translateY(-1px)',
+    boxShadow: 'var(--shadow-md)'
   }
+}
+
   
     // ======== INCOME & EXPENSES MODULE ============
     'income-expenses': {
