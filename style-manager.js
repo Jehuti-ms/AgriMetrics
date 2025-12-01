@@ -396,13 +396,63 @@ const StyleManager = {
 }
 
  // ======== DASHBOARD MODULE ====================
-    'dashboard': {
+   'dashboard': {
   // Module container
   '.module-container': {
     padding: '24px',
     minHeight: '100vh',
     background: 'var(--module-bg)'
   },
+
+  // Header styles
+  '.module-header': {
+    background: 'var(--header-gradient)',
+    borderRadius: 'var(--radius-xl)',
+    padding: '24px',
+    marginBottom: '32px',
+    color: 'white',
+    boxShadow: 'var(--shadow-lg)',
+    position: 'relative',
+    overflow: 'hidden'
+  },
+
+  '.module-header::before': {
+    content: '""',
+    position: 'absolute',
+    top: '0',
+    left: '0',
+    right: '0',
+    bottom: '0',
+    background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%)'
+  },
+
+  '.header-content': {
+    position: 'relative',
+    zIndex: '1',
+    marginBottom: '20px'
+  },
+
+  '.header-text': {
+    marginBottom: '16px'
+  },
+
+  '.module-title': {
+    fontSize: '28px',
+    fontWeight: '700',
+    marginBottom: '8px',
+    letterSpacing: '-0.5px',
+    color: 'white'
+  },
+
+  '.module-subtitle': {
+    fontSize: '15px',
+    fontWeight: '400',
+    color: 'white',
+    opacity: '1',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
+  }
+}
+
   
     // ======== INCOME & EXPENSES MODULE ============
     'income-expenses': {
