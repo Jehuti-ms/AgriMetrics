@@ -83,7 +83,7 @@ const OrdersModule = {
         ];
     },
 
-   renderModule() {
+  renderModule() {
     if (!this.element) return;
 
     const stats = this.calculateStats();
@@ -143,34 +143,6 @@ const OrdersModule = {
                 </div>
             </div>
 
-            <!-- Create Order Form -->
-            <div id="order-form-container" class="hidden">
-                <div class="glass-card">
-                    <h3>Create New Order</h3>
-                    <form id="order-form">
-                        <!-- form fields here -->
-                        <div class="form-actions">
-                            <button type="submit" class="btn-primary">Create Order</button>
-                            <button type="button" class="btn-outline" id="cancel-order-form">Cancel</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Add Customer Form -->
-            <div id="customer-form-container" class="hidden">
-                <div class="glass-card">
-                    <h3>Add New Customer</h3>
-                    <form id="customer-form">
-                        <!-- form fields here -->
-                        <div class="form-actions">
-                            <button type="submit" class="btn-primary">Add Customer</button>
-                            <button type="button" class="btn-outline" id="cancel-customer-form">Cancel</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
             <!-- Recent Orders -->
             <div class="glass-card">
                 <div class="card-header">
@@ -195,11 +167,35 @@ const OrdersModule = {
                     ${this.renderCustomersList()}
                 </div>
             </div>
+
+            <!-- Create Order Form -->
+            <div id="order-form-container" class="glass-card hidden">
+                <h3>Create New Order</h3>
+                <form id="order-form">
+                    <!-- form fields here -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Create Order</button>
+                        <button type="button" class="btn-outline" id="cancel-order-form">Cancel</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Add Customer Form -->
+            <div id="customer-form-container" class="glass-card hidden">
+                <h3>Add New Customer</h3>
+                <form id="customer-form">
+                    <!-- form fields here -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Add Customer</button>
+                        <button type="button" class="btn-outline" id="cancel-customer-form">Cancel</button>
+                    </div>
+                </form>
+            </div>
         </div>
     `;
 
     this.setupEventListeners();
-    this.calculateTotal(); // Initialize totals
+    this.calculateTotal();
 },
 
     calculateStats() {
