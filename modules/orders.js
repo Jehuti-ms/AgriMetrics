@@ -83,7 +83,7 @@ const OrdersModule = {
         ];
     },
 
-  renderModule() {
+ renderModule() {
     if (!this.element) return;
 
     const stats = this.calculateStats();
