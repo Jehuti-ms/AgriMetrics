@@ -1249,3 +1249,189 @@ label {
   flex: 1 1 240px;
 }
 
+/* Header (uses existing .module-header, .module-title, .module-subtitle) */
+.module-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background: var(--module-bg, linear-gradient(135deg, #f8faf9 0%, #f0f7f4 100%));
+}
+
+.module-header {
+  background: var(--header-gradient, var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)));
+  margin: -20px -20px 20px -20px;
+  padding: 24px 20px;
+  border-radius: 0 0 20px 20px;
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.module-title { font-size: 24px; font-weight: 700; margin: 0; }
+.module-subtitle { font-size: 14px; font-weight: 500; opacity: 0.9; margin: 0; }
+
+/* Stats grid (keep your original .stats-grid container) */
+.stats-grid {
+  display: grid !important;
+  grid-template-columns: var(--stats-grid, repeat(auto-fit, minmax(200px, 1fr))) !important;
+  gap: 16px !important;
+  margin-bottom: 20px !important;
+}
+
+/* Cards (matches .summary-card and .stat-card already in your files) */
+.summary-card,
+.stat-card {
+  background: var(--card-bg, rgba(255,255,255,0.95));
+  backdrop-filter: var(--backdrop-blur, blur(20px));
+  border: 1px solid var(--card-border, rgba(255,255,255,0.8));
+  border-radius: var(--radius-xl, 20px);
+  padding: 20px;
+  text-align: center;
+  transition: var(--transition-normal, all 0.3s ease);
+  box-shadow: var(--shadow-md, 0 4px 20px rgba(0,0,0,0.1));
+  position: relative;
+  overflow: hidden;
+}
+
+/* Decorative top bar for stat cards only */
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a));
+}
+
+.summary-card:hover,
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg, 0 8px 32px rgba(0,0,0,0.15));
+  background: var(--card-bg-hover, rgba(255,255,255,1));
+}
+
+/* Quick actions (keep .quick-action-btn as in your files) */
+.quick-action-btn {
+  background: var(--card-bg, rgba(255,255,255,0.95));
+  backdrop-filter: var(--backdrop-blur, blur(20px));
+  border: 1px solid var(--card-border, rgba(255,255,255,0.8));
+  border-radius: var(--radius-xl, 20px);
+  padding: 20px 12px;
+  cursor: pointer;
+  transition: var(--transition-normal, all 0.3s ease);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--shadow-md, 0 4px 20px rgba(0,0,0,0.1));
+  text-align: center;
+  min-height: 110px;
+}
+
+.quick-action-btn:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: var(--shadow-lg, 0 8px 32px rgba(0,0,0,0.15));
+  background: var(--card-bg-hover, rgba(255,255,255,1));
+}
+
+/* Buttons (match .btn.btn-primary and .btn-primary from your file) */
+.btn-primary,
+.btn.btn-primary,
+button[class*="btn-primary"],
+button[class*="primary"] {
+  background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 12px 24px !important;
+  border-radius: var(--radius-lg, 16px) !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  transition: var(--transition-normal, all 0.3s ease) !important;
+  box-shadow: var(--shadow-primary, 0 4px 12px rgba(34,197,94,0.3)) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.btn-primary:hover,
+.btn.btn-primary:hover,
+button[class*="btn-primary"]:hover {
+  background: var(--gradient-primary-hover, linear-gradient(135deg, #16a34a, #15803d)) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: var(--shadow-primary-hover, 0 6px 20px rgba(34,197,94,0.4)) !important;
+}
+
+/* Secondary and outline (keep existing classes) */
+.btn-secondary {
+  background: var(--card-bg, rgba(255,255,255,0.95)) !important;
+  color: var(--text-primary, #0f172a) !important;
+  border: 1px solid var(--card-border, rgba(255,255,255,0.8)) !important;
+  padding: 12px 24px !important;
+  border-radius: var(--radius-lg, 16px) !important;
+  font-weight: 600 !important;
+  transition: var(--transition-normal, all 0.3s ease) !important;
+}
+.btn-secondary:hover { transform: translateY(-2px) !important; background: var(--card-bg-hover, #fff) !important; box-shadow: var(--shadow-md, 0 4px 20px rgba(0,0,0,0.1)) !important; }
+
+.btn-outline {
+  background: transparent !important;
+  color: var(--text-primary, #0f172a) !important;
+  border: 2px solid var(--primary-500, #22c55e) !important;
+  padding: 10px 22px !important;
+  border-radius: var(--radius-lg, 16px) !important;
+  font-weight: 600 !important;
+  transition: var(--transition-normal, all 0.3s ease) !important;
+}
+.btn-outline:hover { background: var(--primary-500, #22c55e) !important; color: #fff !important; transform: translateY(-2px) !important; }
+
+/* Forms (keep .form-container and typical inputs) */
+.form-container {
+  background: var(--card-bg, rgba(255,255,255,0.95));
+  backdrop-filter: var(--backdrop-blur, blur(20px));
+  border: 1px solid var(--card-border, rgba(255,255,255,0.8));
+  border-radius: var(--radius-2xl, 24px);
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-md, 0 4px 20px rgba(0,0,0,0.1));
+  border-top: 3px solid var(--primary-500, #22c55e);
+}
+
+.form-row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
+.form-row > div { flex: 1 1 240px; }
+
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px solid var(--card-border, rgba(255,255,255,0.8));
+  border-radius: 12px;
+  background: var(--card-bg, rgba(255,255,255,0.95));
+  backdrop-filter: var(--backdrop-blur-light, blur(10px));
+  font-size: 14px;
+  color: var(--text-primary, #0f172a);
+  transition: var(--transition-normal, all 0.3s ease);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--primary-500, #22c55e);
+  box-shadow: 0 0 0 3px rgba(34,197,94,0.2);
+}
+
+/* Mobile – keep things clean */
+@media (max-width: 640px) {
+  .stats-grid { grid-template-columns: 1fr !important; }
+}
