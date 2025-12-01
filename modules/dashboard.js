@@ -124,7 +124,7 @@ const DashboardModule = {
 
         // Clean, semantic HTML without theme controls
         this.element.innerHTML = `
-            <div class="dashboard-container">
+            <div id="dashboard" class="module-container">
                 <!-- Welcome Section with white header text -->
                 <div class="welcome-section">
                     <h1 class="welcome-header">Welcome to Farm Management</h1>
