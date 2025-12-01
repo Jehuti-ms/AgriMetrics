@@ -1,4 +1,4 @@
-// modules/dashboard.js - STYLE MANAGER VERSION (Optimized)
+// modules/dashboard.js - FIXED StyleManager integration
 console.log('Loading dashboard module with Style Manager integration...');
 
 const DashboardModule = {
@@ -14,9 +14,9 @@ const DashboardModule = {
         this.element = document.getElementById('content-area');
         if (!this.element) return false;
 
-        // Register with StyleManager
-        if (window.StyleManager) {
-            StyleManager.registerModule(this.id, this.element, this);
+        // Register with StyleManager (use module name as key)
+        if (window.StyleManager && window.StyleManager.registerModule) {
+            window.StyleManager.registerModule(this.name, this.element, this);
         }
 
         this.renderDashboard();
@@ -44,8 +44,13 @@ const DashboardModule = {
     applyThemeStyles() {
         if (!this.element || !window.StyleManager) return;
         
-        const theme = StyleManager.getCurrentTheme();
-        const styles = StyleManager.getModuleStyles(this.id);
+        // Get current theme from StyleManager - check for correct method name
+        const theme = window.StyleManager.currentTheme || 
+                      (window.StyleManager.getCurrentTheme ? window.StyleManager.getCurrentTheme() : 'light');
+        
+        // Get module styles if available
+        const styles = window.StyleManager.getModuleStyles ? 
+                      window.StyleManager.getModuleStyles(this.name) : null;
         
         // Apply background styles
         this.element.style.backgroundColor = styles?.backgroundColor || 
@@ -57,15 +62,14 @@ const DashboardModule = {
             welcomeHeader.style.color = '#ffffff';
         }
         
-        // Apply module-specific styles from StyleManager
+        // Apply module-specific styles
         this.applyModuleStyles(theme, styles);
     },
 
     applyModuleStyles(theme, styles) {
-        // Apply styles to all elements using StyleManager's methods
-        // This allows StyleManager to handle both default and custom styles
+        // Apply styles based on theme or custom styles
         
-        // Section titles
+        // Section titles (except welcome header which stays white)
         const sectionTitles = this.element.querySelectorAll('.section-title, .welcome-subtitle');
         sectionTitles.forEach(el => {
             const textColor = styles?.textColor || 
@@ -249,9 +253,7 @@ const DashboardModule = {
         this.applyLayoutStyles();
         
         // Apply theme styles from StyleManager
-        if (window.StyleManager) {
-            this.applyThemeStyles();
-        }
+        this.applyThemeStyles();
         
         // Add event listeners
         this.setupQuickActions();
@@ -277,6 +279,8 @@ const DashboardModule = {
             welcomeHeader.style.fontSize = '28px';
             welcomeHeader.style.marginBottom = '8px';
             welcomeHeader.style.fontWeight = '600';
+            // Force white color - this overrides any theme
+            welcomeHeader.style.color = '#ffffff';
         }
 
         const welcomeSubtitle = this.element.querySelector('.welcome-subtitle');
@@ -487,7 +491,8 @@ const DashboardModule = {
         }
     },
 
-    // ... [rest of your methods remain exactly the same] ...
+    // ... [rest of your methods remain exactly the same - they're fine] ...
+
     loadAndDisplayStats() {
         const profileStats = this.getProfileStats();
         this.updateDashboardStats(profileStats);
@@ -759,7 +764,7 @@ const DashboardModule = {
 // Register the module
 if (window.FarmModules) {
     window.FarmModules.registerModule('dashboard', DashboardModule);
-    console.log('✅ Dashboard module registered with StyleManager integration');
+    console.log('✅ Dashboard module registered');
 }
 
 // Export for global access
