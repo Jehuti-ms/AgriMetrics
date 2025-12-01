@@ -29,6 +29,7 @@ const OrdersModule = {
         this.renderModule();
         this.setupEventListeners();
         this.initialized = true;
+        this.id = 'orders';this.id = 'orders';
         
         console.log('✅ Orders Management initialized with StyleManager');
         return true;
