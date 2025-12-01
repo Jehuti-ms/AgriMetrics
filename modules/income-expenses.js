@@ -52,51 +52,58 @@ const IncomeExpensesModule = {
         ];
     },
 
-   renderModule() {
+  renderModule() {
     if (!this.element) return;
 
     const stats = this.calculateStats();
 
     this.element.innerHTML = `
-        <div class="module-container">
+        <div class="income-container module-container">
+            <!-- Standard Header -->
             <div class="module-header">
                 <h1 class="module-title">Income & Expenses</h1>
                 <p class="module-subtitle">Manage your farm finances</p>
             </div>
 
-            <!-- Quick Stats -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div>💰</div>
-                    <div id="total-income">${this.formatCurrency(stats.totalIncome)}</div>
-                    <div>Total Income</div>
-                </div>
-                <div class="stat-card">
-                    <div>💸</div>
-                    <div id="total-expenses">${this.formatCurrency(stats.totalExpenses)}</div>
-                    <div>Total Expenses</div>
-                </div>
-                <div class="stat-card">
-                    <div>📊</div>
-                    <div id="net-profit" style="color:${stats.netProfit >= 0 ? '#22c55e' : '#ef4444'};">
-                        ${this.formatCurrency(stats.netProfit)}
+            <!-- Stats Overview -->
+            <div class="stats-overview glass-card">
+                <h2>Overview</h2>
+                <div class="stats-grid">
+                    <div class="summary-card stat-card">
+                        <div>💰</div>
+                        <div id="total-income">${this.formatCurrency(stats.totalIncome)}</div>
+                        <div>Total Income</div>
                     </div>
-                    <div>Net Profit</div>
+                    <div class="summary-card stat-card">
+                        <div>💸</div>
+                        <div id="total-expenses">${this.formatCurrency(stats.totalExpenses)}</div>
+                        <div>Total Expenses</div>
+                    </div>
+                    <div class="summary-card stat-card">
+                        <div>📊</div>
+                        <div id="net-profit" style="color:${stats.netProfit >= 0 ? '#22c55e' : '#ef4444'};">
+                            ${this.formatCurrency(stats.netProfit)}
+                        </div>
+                        <div>Net Profit</div>
+                    </div>
                 </div>
             </div>
 
             <!-- Action Buttons -->
-            <div class="quick-action-grid">
-                <button class="quick-action-btn" id="add-income-btn">
-                    <div>💰</div>
-                    <span>Add Income</span>
-                    <span>Record new income</span>
-                </button>
-                <button class="quick-action-btn" id="add-expense-btn">
-                    <div>💸</div>
-                    <span>Add Expense</span>
-                    <span>Record new expense</span>
-                </button>
+            <div class="quick-actions glass-card">
+                <h2>Actions</h2>
+                <div class="quick-action-grid">
+                    <button class="quick-action-btn" id="add-income-btn">
+                        <div>💰</div>
+                        <span>Add Income</span>
+                        <span>Record new income</span>
+                    </button>
+                    <button class="quick-action-btn" id="add-expense-btn">
+                        <div>💸</div>
+                        <span>Add Expense</span>
+                        <span>Record new expense</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Transaction Form (Hidden by default) -->
@@ -106,19 +113,19 @@ const IncomeExpensesModule = {
                     <form id="transaction-form">
                         <div class="form-row">
                             <div>
-                                <label>Type</label>
+                                <label for="transaction-type">Type</label>
                                 <select id="transaction-type" required>
                                     <option value="income">Income</option>
                                     <option value="expense">Expense</option>
                                 </select>
                             </div>
                             <div>
-                                <label>Amount</label>
+                                <label for="transaction-amount">Amount</label>
                                 <input type="number" id="transaction-amount" step="0.01" min="0" required>
                             </div>
                         </div>
                         <div>
-                            <label>Category</label>
+                            <label for="transaction-category">Category</label>
                             <select id="transaction-category" required>
                                 <option value="">Select category</option>
                                 <option value="egg-sales">Egg Sales</option>
@@ -132,11 +139,11 @@ const IncomeExpensesModule = {
                             </select>
                         </div>
                         <div>
-                            <label>Description</label>
+                            <label for="transaction-description">Description</label>
                             <input type="text" id="transaction-description" required>
                         </div>
                         <div>
-                            <label>Date</label>
+                            <label for="transaction-date">Date</label>
                             <input type="date" id="transaction-date" required>
                         </div>
                         <div class="form-actions">
@@ -148,7 +155,7 @@ const IncomeExpensesModule = {
             </div>
 
             <!-- Recent Transactions -->
-            <div class="glass-card">
+            <div class="recent-transactions glass-card">
                 <div class="card-header">
                     <h3>Recent Transactions</h3>
                     <button class="btn-outline" id="clear-all">Clear All</button>
@@ -161,7 +168,8 @@ const IncomeExpensesModule = {
     `;
 
     this.setupEventListeners();
-},
+}
+
 
 
     calculateStats() {
