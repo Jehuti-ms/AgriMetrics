@@ -160,7 +160,7 @@ const IncomeExpensesModule = {
     `;
 
     this.setupEventListeners();
-}
+},
 
 
     calculateStats() {
