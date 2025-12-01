@@ -64,6 +64,7 @@ const IncomeExpensesModule = {
                 </div>
 
                 <!-- Quick Stats -->
+                <div class="stat-card-group">
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
@@ -81,7 +82,8 @@ const IncomeExpensesModule = {
                         <div style="font-size: 14px; color: var(--text-secondary);">Net Profit</div>
                     </div>
                 </div>
-
+            </div>
+            
                 <!-- Action Buttons -->
                 <div class="quick-action-grid">
                     <button class="quick-action-btn" id="add-income-btn">
@@ -95,7 +97,7 @@ const IncomeExpensesModule = {
                         <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record new expense</span>
                     </button>
                 </div>
-
+            
                 <!-- Transaction Form (Hidden by default) -->
                 <div id="transaction-form-container" class="hidden">
                     <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
