@@ -554,23 +554,27 @@ const StyleManager = {
       
       // ======== FINANCIAL SUMMARY CARDS ========
       // Horizontal on desktop, stacked on mobile
-      '.financial-summary': {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
+     '.financial-summary': {
+        display: 'flex',
+        flexWrap: 'wrap',
         gap: '16px',
+        justifyContent: 'flex-start',
         margin: '24px 0'
       },
       
       '.summary-card': {
+        flex: '0 0 auto',
+        width: 'auto',
+        maxWidth: '240px',
         padding: '20px',
         background: 'var(--card-bg)',
         border: '1px solid var(--border-color)',
         borderRadius: '16px',
         display: 'flex',
         alignItems: 'center',
-        gap: '16px',
-        transition: 'all 0.3s ease'
+        gap: '16px'
       },
+
       
       '.summary-card:hover': {
         transform: 'translateY(-2px)',
