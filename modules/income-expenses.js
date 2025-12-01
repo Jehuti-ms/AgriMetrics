@@ -168,9 +168,7 @@ const IncomeExpensesModule = {
     `;
 
     this.setupEventListeners();
-}
-
-
+},
 
     calculateStats() {
         const totalIncome = this.transactions
