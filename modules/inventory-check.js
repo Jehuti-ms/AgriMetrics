@@ -246,7 +246,7 @@ const InventoryCheckModule = {
     `;
 
     this.setupEventListeners();
-}
+},
 
 
     // KEEP ALL THE EXISTING METHODS EXACTLY AS THEY WERE WORKING
