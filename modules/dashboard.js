@@ -123,15 +123,14 @@ const DashboardModule = {
 
         // Clean, semantic HTML with only essential layout styles
         this.element.innerHTML = `
-            <div id="dashboard" class="module-container">
-                <!-- Welcome Section with white header text -->
-                  <div class="welcome-section">
-                    <h1 class="welcome-header">Welcome to Farm Management</h1>
-                    <p class="welcome-subtitle">Manage your farm operations efficiently</p>
-                </div>
-            </div>
-            
-                      <!-- Quick Actions Grid -->
+                 <div id="dashboard" class="module-container">
+                    <div class="welcome-section">
+                      <h1 class="welcome-header">Welcome to Farm Management</h1>
+                      <p class="welcome-subtitle">Manage your farm operations efficiently</p>
+                    </div>
+                  </div>
+                  
+                 <!-- Quick Actions Grid -->
                 <div class="quick-actions">
                     <h2 class="section-title">Quick Actions</h2>
                     <div class="actions-grid">
