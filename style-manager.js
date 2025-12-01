@@ -403,12 +403,12 @@ const StyleManager = {
         textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
       }, */
 
-      '.module-header .module-subtitle': {
-        color: 'white !important',
-        fontSize: '15px',
-        fontWeight: '400',
+     '.module-header .header-text': {
+        color: 'white',
+        opacity: '1',
         textShadow: '0 1px 2px rgba(0,0,0,0.2)'
-      },
+      }
+
 
       // Activity board styling
       '.activity-board': {
