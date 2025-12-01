@@ -498,7 +498,7 @@ const StyleManager = {
   transform: 'translateY(-1px)',
   boxShadow: 'var(--shadow-md)'
 }
-
+  }
   
     // ======== INCOME & EXPENSES MODULE ============
     'income-expenses': {
