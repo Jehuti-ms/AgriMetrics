@@ -115,6 +115,7 @@ const InventoryCheckModule = {
         const lowStockItems = this.getLowStockItems();
 
         this.element.innerHTML = `
+         <div id="inventory-check" class="module-container">
             <div class="module-container">
                 <div class="module-header">
                     <h1 class="module-title">Inventory Check</h1>
@@ -373,6 +374,7 @@ const InventoryCheckModule = {
                     </div>
                 </div>
             </div>
+          </div>  
         `;
 
         this.setupEventListeners();
