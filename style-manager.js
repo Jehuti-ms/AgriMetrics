@@ -403,13 +403,11 @@ const StyleManager = {
         textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
       }, */
 
-      '.welcome-subtitle': {
-        fontSize: '15px',
-        fontWeight: '400',
+      '.welcome-header, .welcome-subtitle': {
         color: 'white',
-        opacity: '1',
         textShadow: '0 1px 2px rgba(0,0,0,0.2)'
       },
+
 
       '.welcome-subtitle': {
         color: 'white !important'
