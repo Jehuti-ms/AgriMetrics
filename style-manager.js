@@ -470,17 +470,17 @@ const StyleManager = {
       },
       
       // Stat badges with header green background
-      '.stat-badge': {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '4px',
-        padding: '12px 20px',
-        background: 'rgba(255, 255, 255, 0.2)',
-        backdropFilter: 'blur(10px)',
-        borderRadius: '12px',
-        minWidth: '140px'
-      },
+     '.stat-badge': {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '4px',
+      padding: '0',
+      background: 'transparent',
+      backdropFilter: 'none',
+      borderRadius: '0',
+      minWidth: 'auto'
+    },
       
       // Stat value - white text on green
       '.stat-value': {
@@ -513,22 +513,7 @@ const StyleManager = {
         borderRadius: '2px'
       },
       
-      // ======== CLEAN HEADER STATS (NO BOXES) ========
-      '.header-stats': {
-        display: 'flex',
-        gap: '32px',
-        flexWrap: 'nowrap',
-        alignItems: 'center'
-      },
-      
-      // Clean stat badges - NO boxes, just text
-      '.stat-badge': {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        gap: '4px'
-      },
-      
+         
       // Stat value - clean and prominent
       '.stat-value': {
         fontSize: '28px',
@@ -594,14 +579,14 @@ const StyleManager = {
       
       '.summary-icon': {
         fontSize: '32px',
-        width: '64px',
-        height: '64px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--primary-50)',
-        borderRadius: '12px'
+        width: 'auto',
+        height: 'auto',
+        background: 'transparent',
+        borderRadius: '0',
+        padding: '0',
+        margin: '0'
       },
+
       
       '.summary-content': {
         flex: '1'
