@@ -589,13 +589,14 @@ const StyleManager = {
         gap: '24px',
         flexWrap: 'wrap',
         margin: '32px auto 0',
-        padding: '0'
+        padding: '0',
+        maxWidth: '800px'               // limits total width so cards don’t stretch
       },
+
     
       '.summary-card': {
         flex: '0 0 auto',
-        width: 'auto',
-        maxWidth: '240px',
+        width: '220px',                 // fixed width per card
         padding: '20px',
         background: 'var(--card-bg)',
         border: '1px solid var(--border-color)',
@@ -606,6 +607,7 @@ const StyleManager = {
         boxShadow: 'var(--shadow-md)',
         transition: 'all 0.3s ease'
       },
+
     
       '.summary-icon': {
         fontSize: '32px',
