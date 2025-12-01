@@ -1,4 +1,4 @@
-// modules/dashboard.js - CORRECTED VERSION (No Theme Switching)
+// modules/dashboard.js - STYLE MANAGER VERSION (Optimized)
 console.log('Loading dashboard module with Style Manager integration...');
 
 const DashboardModule = {
@@ -52,23 +52,20 @@ const DashboardModule = {
             (theme === 'dark' ? '#1a1a1a' : '#f5f5f5');
         
         // ✅ Force white header text as requested
-        const welcomeHeader = this.element.querySelector('.welcome-section h1');
+        const welcomeHeader = this.element.querySelector('.welcome-header');
         if (welcomeHeader) {
             welcomeHeader.style.color = '#ffffff';
         }
         
-        // Update all other text elements based on theme
-        this.updateTextColors(theme, styles);
-        
-        // Update card backgrounds
-        this.updateCardStyles(theme, styles);
-        
-        // Update button styles
-        this.updateButtonStyles(theme, styles);
+        // Apply module-specific styles from StyleManager
+        this.applyModuleStyles(theme, styles);
     },
 
-    updateTextColors(theme, styles) {
-        // Update section titles (except welcome header which stays white)
+    applyModuleStyles(theme, styles) {
+        // Apply styles to all elements using StyleManager's methods
+        // This allows StyleManager to handle both default and custom styles
+        
+        // Section titles
         const sectionTitles = this.element.querySelectorAll('.section-title, .welcome-subtitle');
         sectionTitles.forEach(el => {
             const textColor = styles?.textColor || 
@@ -76,7 +73,7 @@ const DashboardModule = {
             el.style.color = textColor;
         });
 
-        // Update stat values
+        // Stat values
         const statValues = this.element.querySelectorAll('.stat-value');
         statValues.forEach(el => {
             const textColor = styles?.textColor || 
@@ -84,15 +81,14 @@ const DashboardModule = {
             el.style.color = textColor;
         });
 
-        // Update stat labels and subtitles
+        // Secondary text
         const secondaryText = this.element.querySelectorAll('.stat-label, .action-subtitle, .action-title, .empty-title, .empty-subtitle');
         secondaryText.forEach(el => {
             const secondaryColor = theme === 'dark' ? '#a0a0a0' : '#666666';
             el.style.color = secondaryColor;
         });
-    },
 
-    updateCardStyles(theme, styles) {
+        // Cards (stat cards, activity list, quick action buttons)
         const cards = this.element.querySelectorAll('.stat-card, .activity-list, .quick-action-btn');
         cards.forEach(card => {
             card.style.backgroundColor = styles?.cardBackground || 
@@ -100,9 +96,8 @@ const DashboardModule = {
             card.style.borderColor = styles?.borderColor || 
                 (theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)');
         });
-    },
 
-    updateButtonStyles(theme, styles) {
+        // Buttons
         const buttons = this.element.querySelectorAll('button');
         buttons.forEach(button => {
             button.style.backgroundColor = styles?.buttonBackground || 
@@ -122,7 +117,7 @@ const DashboardModule = {
     renderDashboard() {
         if (!this.element) return;
 
-        // Clean, semantic HTML without theme controls
+        // Clean, semantic HTML with only essential layout styles
         this.element.innerHTML = `
             <div id="dashboard" class="module-container">
                 <!-- Welcome Section with white header text -->
@@ -250,22 +245,22 @@ const DashboardModule = {
             </div>
         `;
 
-        // Apply initial layout styles
-        this.applyInitialStyles();
-        
-        // Add event listeners
-        this.setupQuickActions();
-        this.setupRefreshButton();
+        // Apply layout styles (these are structural, not theme-related)
+        this.applyLayoutStyles();
         
         // Apply theme styles from StyleManager
         if (window.StyleManager) {
             this.applyThemeStyles();
         }
+        
+        // Add event listeners
+        this.setupQuickActions();
+        this.setupRefreshButton();
     },
 
-    applyInitialStyles() {
-        // Layout-only styles (these won't be overridden by theme)
-        const container = this.element.querySelector('.dashboard-container');
+    applyLayoutStyles() {
+        // Only layout-related styles that never change
+        const container = this.element.querySelector('#dashboard');
         if (container) {
             container.style.padding = '20px';
             container.style.maxWidth = '1200px';
@@ -277,12 +272,10 @@ const DashboardModule = {
             welcomeSection.style.marginBottom = '30px';
         }
 
-        // ✅ Force white header text (fixed requirement)
         const welcomeHeader = this.element.querySelector('.welcome-header');
         if (welcomeHeader) {
             welcomeHeader.style.fontSize = '28px';
             welcomeHeader.style.marginBottom = '8px';
-            welcomeHeader.style.color = '#ffffff';
             welcomeHeader.style.fontWeight = '600';
         }
 
@@ -308,7 +301,7 @@ const DashboardModule = {
             actionsGrid.style.marginBottom = '30px';
         }
 
-        // Quick action buttons layout
+        // Quick action buttons - layout only
         const actionButtons = this.element.querySelectorAll('.quick-action-btn');
         actionButtons.forEach(btn => {
             btn.style.borderRadius = '16px';
@@ -320,10 +313,9 @@ const DashboardModule = {
             btn.style.alignItems = 'center';
             btn.style.gap = '12px';
             btn.style.minHeight = '120px';
-            btn.style.border = '1px solid';
+            btn.style.fontFamily = 'inherit';
             btn.style.backdropFilter = 'blur(20px)';
             btn.style.WebkitBackdropFilter = 'blur(20px)';
-            btn.style.fontFamily = 'inherit';
         });
 
         // Action icons layout
@@ -359,16 +351,15 @@ const DashboardModule = {
             statsGrid.style.marginBottom = '40px';
         }
 
-        // Stat cards layout
+        // Stat cards - layout only
         const statCards = this.element.querySelectorAll('.stat-card');
         statCards.forEach(card => {
             card.style.borderRadius = '16px';
             card.style.padding = '20px';
             card.style.textAlign = 'center';
-            card.style.border = '1px solid';
+            card.style.transition = 'transform 0.2s ease';
             card.style.backdropFilter = 'blur(20px)';
             card.style.WebkitBackdropFilter = 'blur(20px)';
-            card.style.transition = 'transform 0.2s ease';
         });
 
         // Stat icons layout
@@ -400,10 +391,9 @@ const DashboardModule = {
         if (activityList) {
             activityList.style.borderRadius = '16px';
             activityList.style.padding = '20px';
-            activityList.style.border = '1px solid';
+            activityList.style.minHeight = '200px';
             activityList.style.backdropFilter = 'blur(20px)';
             activityList.style.WebkitBackdropFilter = 'blur(20px)';
-            activityList.style.minHeight = '200px';
         }
 
         // Empty state layout
@@ -440,10 +430,9 @@ const DashboardModule = {
             refreshBtn.style.cursor = 'pointer';
             refreshBtn.style.fontSize = '14px';
             refreshBtn.style.transition = 'all 0.3s ease';
-            refreshBtn.style.border = '1px solid';
+            refreshBtn.style.fontFamily = 'inherit';
             refreshBtn.style.backdropFilter = 'blur(20px)';
             refreshBtn.style.WebkitBackdropFilter = 'blur(20px)';
-            refreshBtn.style.fontFamily = 'inherit';
         }
 
         const refreshSection = this.element.querySelector('.refresh-section');
@@ -462,7 +451,7 @@ const DashboardModule = {
                 this.handleQuickAction(action);
             });
 
-            // Add hover effects (these are behavioral, not theme-based)
+            // Hover effects (behavioral, not theme-based)
             button.addEventListener('mouseenter', (e) => {
                 e.currentTarget.style.transform = 'translateY(-4px)';
                 e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
@@ -485,7 +474,7 @@ const DashboardModule = {
                 }
             });
 
-            // Add hover effect
+            // Hover effect
             refreshBtn.addEventListener('mouseenter', (e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
                 e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
@@ -498,10 +487,7 @@ const DashboardModule = {
         }
     },
 
-    // ... [rest of the methods remain exactly the same as your original] ...
-    // All the stats loading, updating, and business logic methods
-    // from your original code remain unchanged
-
+    // ... [rest of your methods remain exactly the same] ...
     loadAndDisplayStats() {
         const profileStats = this.getProfileStats();
         this.updateDashboardStats(profileStats);
@@ -692,7 +678,7 @@ const DashboardModule = {
         activityContent.innerHTML = `
             <div style="display: flex; flex-direction: column; gap: 12px;">
                 ${activities.map(activity => `
-                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(0,0,0,0.03); border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px;">
                         <div style="font-size: 20px;">${activity.icon}</div>
                         <div style="flex: 1;">
                             <div style="font-weight: 600; font-size: 14px;">${activity.text}</div>
