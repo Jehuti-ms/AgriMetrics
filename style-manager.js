@@ -336,11 +336,12 @@ const StyleManager = {
 
             /* Modern Stats Grid */
             .stats-grid {
-                display: grid;
-                grid-template-columns: var(--stats-grid, repeat(auto-fit, minmax(200px, 1fr)));
-                gap: 16px;
-                margin-bottom: 20px;
-            }
+                  display: grid !important;
+                  grid-template-columns: var(--stats-grid, repeat(auto-fit, minmax(200px, 1fr))) !important;
+                  gap: 16px !important;
+                  margin-bottom: 20px !important;
+                }
+
 
             .stat-card {
                 background: var(--card-bg);
