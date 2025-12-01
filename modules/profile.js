@@ -113,7 +113,7 @@ const ProfileModule = {
         if (!this.element) return;
 
         this.element.innerHTML = `
-            <div class="module-container">
+            <div id="profile" class="module-container">
                 <div class="module-header">
                     <h1 class="module-title">Farm Profile</h1>
                     <p class="module-subtitle">Manage your farm information and settings</p>
