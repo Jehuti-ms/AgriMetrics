@@ -45,7 +45,7 @@ const DashboardModule = {
     if (!this.element) return;
 
     this.element.innerHTML = `
-        <div class="dashboard-container">
+        <div class="module-container">
             <!-- Welcome Section -->
             <div class="welcome-section">
                 <h1>Welcome to Farm Management</h1>
