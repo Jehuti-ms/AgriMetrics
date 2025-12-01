@@ -1,19 +1,20 @@
-// modules/dashboard.js - UPDATED WITH STYLE MANAGER INTEGRATION
-console.log('Loading dashboard module...');
+// modules/dashboard.js - CORRECTED VERSION (No Theme Switching)
+console.log('Loading dashboard module with Style Manager integration...');
 
 const DashboardModule = {
     name: 'dashboard',
+    id: 'dashboard',
     initialized: false,
     element: null,
 
     initialize() {
-        console.log('📊 Initializing Dashboard...');
+        console.log('📊 Initializing Dashboard with StyleManager...');
         
-        // ✅ ADDED: Get the content area element
+        // Get the content area element
         this.element = document.getElementById('content-area');
         if (!this.element) return false;
 
-        // ✅ ADDED: Register with StyleManager
+        // Register with StyleManager
         if (window.StyleManager) {
             StyleManager.registerModule(this.id, this.element, this);
         }
@@ -29,10 +30,88 @@ const DashboardModule = {
         return true;
     },
 
-    // ✅ ADDED: Theme change handler (optional)
+    // StyleManager integration methods
     onThemeChange(theme) {
         console.log(`Dashboard updating for theme: ${theme}`);
-        // You can add theme-specific logic here if needed
+        this.applyThemeStyles();
+    },
+
+    onStyleUpdate(styles) {
+        console.log('Dashboard styles updated:', styles);
+        this.applyThemeStyles();
+    },
+
+    applyThemeStyles() {
+        if (!this.element || !window.StyleManager) return;
+        
+        const theme = StyleManager.getCurrentTheme();
+        const styles = StyleManager.getModuleStyles(this.id);
+        
+        // Apply background styles
+        this.element.style.backgroundColor = styles?.backgroundColor || 
+            (theme === 'dark' ? '#1a1a1a' : '#f5f5f5');
+        
+        // ✅ Force white header text as requested
+        const welcomeHeader = this.element.querySelector('.welcome-section h1');
+        if (welcomeHeader) {
+            welcomeHeader.style.color = '#ffffff';
+        }
+        
+        // Update all other text elements based on theme
+        this.updateTextColors(theme, styles);
+        
+        // Update card backgrounds
+        this.updateCardStyles(theme, styles);
+        
+        // Update button styles
+        this.updateButtonStyles(theme, styles);
+    },
+
+    updateTextColors(theme, styles) {
+        // Update section titles (except welcome header which stays white)
+        const sectionTitles = this.element.querySelectorAll('.section-title, .welcome-subtitle');
+        sectionTitles.forEach(el => {
+            const textColor = styles?.textColor || 
+                (theme === 'dark' ? '#ffffff' : '#1a1a1a');
+            el.style.color = textColor;
+        });
+
+        // Update stat values
+        const statValues = this.element.querySelectorAll('.stat-value');
+        statValues.forEach(el => {
+            const textColor = styles?.textColor || 
+                (theme === 'dark' ? '#ffffff' : '#1a1a1a');
+            el.style.color = textColor;
+        });
+
+        // Update stat labels and subtitles
+        const secondaryText = this.element.querySelectorAll('.stat-label, .action-subtitle, .action-title, .empty-title, .empty-subtitle');
+        secondaryText.forEach(el => {
+            const secondaryColor = theme === 'dark' ? '#a0a0a0' : '#666666';
+            el.style.color = secondaryColor;
+        });
+    },
+
+    updateCardStyles(theme, styles) {
+        const cards = this.element.querySelectorAll('.stat-card, .activity-list, .quick-action-btn');
+        cards.forEach(card => {
+            card.style.backgroundColor = styles?.cardBackground || 
+                (theme === 'dark' ? 'rgba(30, 30, 30, 0.9)' : 'rgba(255, 255, 255, 0.9)');
+            card.style.borderColor = styles?.borderColor || 
+                (theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)');
+        });
+    },
+
+    updateButtonStyles(theme, styles) {
+        const buttons = this.element.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.style.backgroundColor = styles?.buttonBackground || 
+                (theme === 'dark' ? 'rgba(40, 40, 40, 0.9)' : 'rgba(255, 255, 255, 0.9)');
+            button.style.color = styles?.buttonTextColor || 
+                (theme === 'dark' ? '#ffffff' : '#1a1a1a');
+            button.style.borderColor = styles?.buttonBorderColor || 
+                (theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)');
+        });
     },
 
     setupEventListeners() {
@@ -43,311 +122,335 @@ const DashboardModule = {
     renderDashboard() {
         if (!this.element) return;
 
+        // Clean, semantic HTML without theme controls
         this.element.innerHTML = `
-            <div class="dashboard-container" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
-                <!-- Welcome Section -->
-                <div class="welcome-section" style="margin-bottom: 30px;">
-                    <h1 style="color: #1a1a1a; font-size: 28px; margin-bottom: 8px;">Welcome to Farm Management</h1>
-                    <p style="color: #666; font-size: 16px;">Manage your farm operations efficiently</p>
+            <div class="dashboard-container">
+                <!-- Welcome Section with white header text -->
+                <div class="welcome-section">
+                    <h1 class="welcome-header">Welcome to Farm Management</h1>
+                    <p class="welcome-subtitle">Manage your farm operations efficiently</p>
                 </div>
 
                 <!-- Quick Actions Grid -->
-                <div class="quick-actions" style="margin-bottom: 40px;">
-                    <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 20px;">Quick Actions</h2>
-                    <div class="actions-grid" style="
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                        gap: 16px;
-                        margin-bottom: 30px;
-                    ">
-                        <button class="quick-action-btn" data-action="add-income" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 16px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            gap: 12px;
-                            min-height: 120px;
-                        ">
-                            <div style="font-size: 32px;">💰</div>
-                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Add Income</span>
-                            <span style="font-size: 12px; color: #666; text-align: center;">Record new income</span>
+                <div class="quick-actions">
+                    <h2 class="section-title">Quick Actions</h2>
+                    <div class="actions-grid">
+                        <button class="quick-action-btn" data-action="add-income">
+                            <div class="action-icon">💰</div>
+                            <span class="action-title">Add Income</span>
+                            <span class="action-subtitle">Record new income</span>
                         </button>
 
-                        <button class="quick-action-btn" data-action="add-expense" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 16px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            gap: 12px;
-                            min-height: 120px;
-                        ">
-                            <div style="font-size: 32px;">💸</div>
-                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Add Expense</span>
-                            <span style="font-size: 12px; color: #666; text-align: center;">Record new expense</span>
+                        <button class="quick-action-btn" data-action="add-expense">
+                            <div class="action-icon">💸</div>
+                            <span class="action-title">Add Expense</span>
+                            <span class="action-subtitle">Record new expense</span>
                         </button>
 
-                        <button class="quick-action-btn" data-action="check-inventory" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 16px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            gap: 12px;
-                            min-height: 120px;
-                        ">
-                            <div style="font-size: 32px;">📦</div>
-                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Check Inventory</span>
-                            <span style="font-size: 12px; color: #666; text-align: center;">View stock levels</span>
+                        <button class="quick-action-btn" data-action="check-inventory">
+                            <div class="action-icon">📦</div>
+                            <span class="action-title">Check Inventory</span>
+                            <span class="action-subtitle">View stock levels</span>
                         </button>
 
-                        <button class="quick-action-btn" data-action="record-feed" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 16px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            gap: 12px;
-                            min-height: 120px;
-                        ">
-                            <div style="font-size: 32px;">🌾</div>
-                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Record Feed</span>
-                            <span style="font-size: 12px; color: #666; text-align: center;">Log feed usage</span>
+                        <button class="quick-action-btn" data-action="record-feed">
+                            <div class="action-icon">🌾</div>
+                            <span class="action-title">Record Feed</span>
+                            <span class="action-subtitle">Log feed usage</span>
                         </button>
 
-                        <button class="quick-action-btn" data-action="add-production" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 16px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            gap: 12px;
-                            min-height: 120px;
-                        ">
-                            <div style="font-size: 32px;">🚜</div>
-                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Production</span>
-                            <span style="font-size: 12px; color: #666; text-align: center;">Record production</span>
+                        <button class="quick-action-btn" data-action="add-production">
+                            <div class="action-icon">🚜</div>
+                            <span class="action-title">Production</span>
+                            <span class="action-subtitle">Record production</span>
                         </button>
 
-                        <button class="quick-action-btn" data-action="view-reports" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 24px 16px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            gap: 12px;
-                            min-height: 120px;
-                        ">
-                            <div style="font-size: 32px;">📈</div>
-                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">View Reports</span>
-                            <span style="font-size: 12px; color: #666; text-align: center;">Analytics & insights</span>
+                        <button class="quick-action-btn" data-action="view-reports">
+                            <div class="action-icon">📈</div>
+                            <span class="action-title">View Reports</span>
+                            <span class="action-subtitle">Analytics & insights</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- Stats Overview -->
-                <div class="stats-overview" style="margin-bottom: 40px;">
-                    <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 20px;">Overview</h2>
-                    <div class="stats-grid" style="
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                        gap: 16px;
-                    ">
-                        <div class="stat-card" id="revenue-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="total-revenue">$0.00</div>
-                            <div style="font-size: 14px; color: #666;">Total Revenue</div>
+                <div class="stats-overview">
+                    <h2 class="section-title">Overview</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card" id="revenue-card">
+                            <div class="stat-icon">💰</div>
+                            <div class="stat-value" id="total-revenue">$0.00</div>
+                            <div class="stat-label">Total Revenue</div>
                         </div>
 
-                        <div class="stat-card" id="expense-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">💸</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="total-expenses">$0.00</div>
-                            <div style="font-size: 14px; color: #666;">Total Expenses</div>
+                        <div class="stat-card" id="expense-card">
+                            <div class="stat-icon">💸</div>
+                            <div class="stat-value" id="total-expenses">$0.00</div>
+                            <div class="stat-label">Total Expenses</div>
                         </div>
 
-                        <div class="stat-card" id="inventory-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="inventory-items">0</div>
-                            <div style="font-size: 14px; color: #666;">Inventory Items</div>
+                        <div class="stat-card" id="inventory-card">
+                            <div class="stat-icon">📦</div>
+                            <div class="stat-value" id="inventory-items">0</div>
+                            <div class="stat-label">Inventory Items</div>
                         </div>
 
-                        <div class="stat-card" id="birds-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">🐔</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="active-birds">0</div>
-                            <div style="font-size: 14px; color: #666;">Active Birds</div>
+                        <div class="stat-card" id="birds-card">
+                            <div class="stat-icon">🐔</div>
+                            <div class="stat-value" id="active-birds">0</div>
+                            <div class="stat-label">Active Birds</div>
                         </div>
 
-                        <!-- Additional Stats Cards -->
-                        <div class="stat-card" id="orders-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">📋</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="total-orders">0</div>
-                            <div style="font-size: 14px; color: #666;">Total Orders</div>
+                        <div class="stat-card" id="orders-card">
+                            <div class="stat-icon">📋</div>
+                            <div class="stat-value" id="total-orders">0</div>
+                            <div class="stat-label">Total Orders</div>
                         </div>
 
-                        <div class="stat-card" id="profit-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="net-profit">$0.00</div>
-                            <div style="font-size: 14px; color: #666;">Net Profit</div>
+                        <div class="stat-card" id="profit-card">
+                            <div class="stat-icon">📊</div>
+                            <div class="stat-value" id="net-profit">$0.00</div>
+                            <div class="stat-label">Net Profit</div>
                         </div>
 
-                        <div class="stat-card" id="customers-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">👥</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="total-customers">0</div>
-                            <div style="font-size: 14px; color: #666;">Customers</div>
+                        <div class="stat-card" id="customers-card">
+                            <div class="stat-icon">👥</div>
+                            <div class="stat-value" id="total-customers">0</div>
+                            <div class="stat-label">Customers</div>
                         </div>
 
-                        <div class="stat-card" id="products-card" style="
-                            background: rgba(255, 255, 255, 0.9);
-                            backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
-                            border: 1px solid rgba(0, 0, 0, 0.1);
-                            border-radius: 16px;
-                            padding: 20px;
-                            text-align: center;
-                        ">
-                            <div style="font-size: 24px; margin-bottom: 8px;">🛒</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;" id="total-products">0</div>
-                            <div style="font-size: 14px; color: #666;">Products</div>
+                        <div class="stat-card" id="products-card">
+                            <div class="stat-icon">🛒</div>
+                            <div class="stat-value" id="total-products">0</div>
+                            <div class="stat-label">Products</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Recent Activity -->
                 <div class="recent-activity">
-                    <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 20px;">Recent Activity</h2>
-                    <div class="activity-list" style="
-                        background: rgba(255, 255, 255, 0.9);
-                        backdrop-filter: blur(20px);
-                        -webkit-backup-filter: blur(20px);
-                        border: 1px solid rgba(0, 0, 0, 0.1);
-                        border-radius: 16px;
-                        padding: 20px;
-                    ">
+                    <h2 class="section-title">Recent Activity</h2>
+                    <div class="activity-list">
                         <div id="activity-content">
-                            <div style="text-align: center; color: #666; padding: 40px 20px;">
-                                <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                                <div style="font-size: 16px; margin-bottom: 8px;">No recent activity</div>
-                                <div style="font-size: 14px; color: #999;">Start by adding your first record</div>
+                            <div class="empty-state">
+                                <div class="empty-icon">📊</div>
+                                <div class="empty-title">No recent activity</div>
+                                <div class="empty-subtitle">Start by adding your first record</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Refresh Button -->
-                <div style="text-align: center; margin-top: 30px;">
-                    <button id="refresh-stats-btn" class="btn-outline" style="
-                        background: rgba(255, 255, 255, 0.9);
-                        backdrop-filter: blur(20px);
-                        border: 1px solid rgba(0, 0, 0, 0.1);
-                        border-radius: 12px;
-                        padding: 12px 24px;
-                        cursor: pointer;
-                        font-size: 14px;
-                        color: #666;
-                        transition: all 0.3s ease;
-                    ">
+                <div class="refresh-section">
+                    <button id="refresh-stats-btn" class="btn-outline">
                         🔄 Refresh Stats
                     </button>
                 </div>
             </div>
         `;
 
-        // Add event listeners to quick action buttons
+        // Apply initial layout styles
+        this.applyInitialStyles();
+        
+        // Add event listeners
         this.setupQuickActions();
         this.setupRefreshButton();
+        
+        // Apply theme styles from StyleManager
+        if (window.StyleManager) {
+            this.applyThemeStyles();
+        }
+    },
+
+    applyInitialStyles() {
+        // Layout-only styles (these won't be overridden by theme)
+        const container = this.element.querySelector('.dashboard-container');
+        if (container) {
+            container.style.padding = '20px';
+            container.style.maxWidth = '1200px';
+            container.style.margin = '0 auto';
+        }
+
+        const welcomeSection = this.element.querySelector('.welcome-section');
+        if (welcomeSection) {
+            welcomeSection.style.marginBottom = '30px';
+        }
+
+        // ✅ Force white header text (fixed requirement)
+        const welcomeHeader = this.element.querySelector('.welcome-header');
+        if (welcomeHeader) {
+            welcomeHeader.style.fontSize = '28px';
+            welcomeHeader.style.marginBottom = '8px';
+            welcomeHeader.style.color = '#ffffff';
+            welcomeHeader.style.fontWeight = '600';
+        }
+
+        const welcomeSubtitle = this.element.querySelector('.welcome-subtitle');
+        if (welcomeSubtitle) {
+            welcomeSubtitle.style.fontSize = '16px';
+        }
+
+        // Section titles layout
+        const sectionTitles = this.element.querySelectorAll('.section-title');
+        sectionTitles.forEach(title => {
+            title.style.fontSize = '20px';
+            title.style.marginBottom = '20px';
+            title.style.fontWeight = '600';
+        });
+
+        // Quick actions grid layout
+        const actionsGrid = this.element.querySelector('.actions-grid');
+        if (actionsGrid) {
+            actionsGrid.style.display = 'grid';
+            actionsGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(150px, 1fr))';
+            actionsGrid.style.gap = '16px';
+            actionsGrid.style.marginBottom = '30px';
+        }
+
+        // Quick action buttons layout
+        const actionButtons = this.element.querySelectorAll('.quick-action-btn');
+        actionButtons.forEach(btn => {
+            btn.style.borderRadius = '16px';
+            btn.style.padding = '24px 16px';
+            btn.style.cursor = 'pointer';
+            btn.style.transition = 'all 0.3s ease';
+            btn.style.display = 'flex';
+            btn.style.flexDirection = 'column';
+            btn.style.alignItems = 'center';
+            btn.style.gap = '12px';
+            btn.style.minHeight = '120px';
+            btn.style.border = '1px solid';
+            btn.style.backdropFilter = 'blur(20px)';
+            btn.style.WebkitBackdropFilter = 'blur(20px)';
+            btn.style.fontFamily = 'inherit';
+        });
+
+        // Action icons layout
+        const actionIcons = this.element.querySelectorAll('.action-icon');
+        actionIcons.forEach(icon => {
+            icon.style.fontSize = '32px';
+            icon.style.lineHeight = '1';
+        });
+
+        // Action titles layout
+        const actionTitles = this.element.querySelectorAll('.action-title');
+        actionTitles.forEach(title => {
+            title.style.fontSize = '14px';
+            title.style.fontWeight = '600';
+            title.style.textAlign = 'center';
+            title.style.lineHeight = '1.2';
+        });
+
+        // Action subtitles layout
+        const actionSubtitles = this.element.querySelectorAll('.action-subtitle');
+        actionSubtitles.forEach(subtitle => {
+            subtitle.style.fontSize = '12px';
+            subtitle.style.textAlign = 'center';
+            subtitle.style.lineHeight = '1.3';
+        });
+
+        // Stats grid layout
+        const statsGrid = this.element.querySelector('.stats-grid');
+        if (statsGrid) {
+            statsGrid.style.display = 'grid';
+            statsGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
+            statsGrid.style.gap = '16px';
+            statsGrid.style.marginBottom = '40px';
+        }
+
+        // Stat cards layout
+        const statCards = this.element.querySelectorAll('.stat-card');
+        statCards.forEach(card => {
+            card.style.borderRadius = '16px';
+            card.style.padding = '20px';
+            card.style.textAlign = 'center';
+            card.style.border = '1px solid';
+            card.style.backdropFilter = 'blur(20px)';
+            card.style.WebkitBackdropFilter = 'blur(20px)';
+            card.style.transition = 'transform 0.2s ease';
+        });
+
+        // Stat icons layout
+        const statIcons = this.element.querySelectorAll('.stat-icon');
+        statIcons.forEach(icon => {
+            icon.style.fontSize = '24px';
+            icon.style.marginBottom = '8px';
+            icon.style.lineHeight = '1';
+        });
+
+        // Stat values layout
+        const statValues = this.element.querySelectorAll('.stat-value');
+        statValues.forEach(value => {
+            value.style.fontSize = '24px';
+            value.style.fontWeight = 'bold';
+            value.style.marginBottom = '4px';
+            value.style.lineHeight = '1.2';
+        });
+
+        // Stat labels layout
+        const statLabels = this.element.querySelectorAll('.stat-label');
+        statLabels.forEach(label => {
+            label.style.fontSize = '14px';
+            label.style.lineHeight = '1.3';
+        });
+
+        // Activity list layout
+        const activityList = this.element.querySelector('.activity-list');
+        if (activityList) {
+            activityList.style.borderRadius = '16px';
+            activityList.style.padding = '20px';
+            activityList.style.border = '1px solid';
+            activityList.style.backdropFilter = 'blur(20px)';
+            activityList.style.WebkitBackdropFilter = 'blur(20px)';
+            activityList.style.minHeight = '200px';
+        }
+
+        // Empty state layout
+        const emptyState = this.element.querySelector('.empty-state');
+        if (emptyState) {
+            emptyState.style.textAlign = 'center';
+            emptyState.style.padding = '40px 20px';
+        }
+
+        const emptyIcon = this.element.querySelector('.empty-icon');
+        if (emptyIcon) {
+            emptyIcon.style.fontSize = '48px';
+            emptyIcon.style.marginBottom = '16px';
+            emptyIcon.style.lineHeight = '1';
+        }
+
+        const emptyTitle = this.element.querySelector('.empty-title');
+        if (emptyTitle) {
+            emptyTitle.style.fontSize = '16px';
+            emptyTitle.style.marginBottom = '8px';
+            emptyTitle.style.fontWeight = '600';
+        }
+
+        const emptySubtitle = this.element.querySelector('.empty-subtitle');
+        if (emptySubtitle) {
+            emptySubtitle.style.fontSize = '14px';
+        }
+
+        // Refresh button layout
+        const refreshBtn = this.element.querySelector('#refresh-stats-btn');
+        if (refreshBtn) {
+            refreshBtn.style.borderRadius = '12px';
+            refreshBtn.style.padding = '12px 24px';
+            refreshBtn.style.cursor = 'pointer';
+            refreshBtn.style.fontSize = '14px';
+            refreshBtn.style.transition = 'all 0.3s ease';
+            refreshBtn.style.border = '1px solid';
+            refreshBtn.style.backdropFilter = 'blur(20px)';
+            refreshBtn.style.WebkitBackdropFilter = 'blur(20px)';
+            refreshBtn.style.fontFamily = 'inherit';
+        }
+
+        const refreshSection = this.element.querySelector('.refresh-section');
+        if (refreshSection) {
+            refreshSection.style.textAlign = 'center';
+            refreshSection.style.marginTop = '30px';
+        }
     },
 
     setupQuickActions() {
@@ -359,7 +462,7 @@ const DashboardModule = {
                 this.handleQuickAction(action);
             });
 
-            // Add hover effects
+            // Add hover effects (these are behavioral, not theme-based)
             button.addEventListener('mouseenter', (e) => {
                 e.currentTarget.style.transform = 'translateY(-4px)';
                 e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
@@ -395,19 +498,16 @@ const DashboardModule = {
         }
     },
 
-    // UPDATED METHOD: Load and display stats from shared data
+    // ... [rest of the methods remain exactly the same as your original] ...
+    // All the stats loading, updating, and business logic methods
+    // from your original code remain unchanged
+
     loadAndDisplayStats() {
-        // Get stats from shared data
         const profileStats = this.getProfileStats();
-        
-        // Update dashboard stats
         this.updateDashboardStats(profileStats);
-        
-        // Update recent activity
         this.updateRecentActivity(profileStats);
     },
 
-    // UPDATED METHOD: Get stats from shared data (no ProfileModule dependency)
     getProfileStats() {
         let stats = {
             totalIncome: 0,
@@ -423,7 +523,6 @@ const DashboardModule = {
             completedOrders: 0
         };
 
-        // Try to get stats from shared FarmModules data
         if (window.FarmModules && window.FarmModules.appData) {
             const sharedStats = window.FarmModules.appData.profile?.dashboardStats;
             if (sharedStats) {
@@ -431,7 +530,6 @@ const DashboardModule = {
             }
         }
 
-        // Fallback to localStorage if shared data not available
         if (stats.totalIncome === 0) {
             const savedStats = localStorage.getItem('farm-dashboard-stats');
             if (savedStats) {
@@ -442,9 +540,7 @@ const DashboardModule = {
         return stats;
     },
 
-    // NEW METHOD: Update shared data (for other modules to call)
     updateDashboardStats(newStats) {
-        // Update shared data structure
         if (window.FarmModules && window.FarmModules.appData) {
             if (!window.FarmModules.appData.profile) {
                 window.FarmModules.appData.profile = {};
@@ -456,11 +552,9 @@ const DashboardModule = {
             Object.assign(window.FarmModules.appData.profile.dashboardStats, newStats);
         }
 
-        // Update the UI
         this.updateDashboardDisplay(newStats);
     },
 
-    // NEW METHOD: Add recent activity (for other modules to call)
     addRecentActivity(activity) {
         if (!window.FarmModules || !window.FarmModules.appData) return;
 
@@ -474,26 +568,21 @@ const DashboardModule = {
             window.FarmModules.appData.profile.dashboardStats.recentActivities = [];
         }
 
-        // Add new activity to beginning of array
         window.FarmModules.appData.profile.dashboardStats.recentActivities.unshift({
             id: Date.now(),
             timestamp: new Date().toISOString(),
             ...activity
         });
 
-        // Keep only last 10 activities
         if (window.FarmModules.appData.profile.dashboardStats.recentActivities.length > 10) {
             window.FarmModules.appData.profile.dashboardStats.recentActivities = 
                 window.FarmModules.appData.profile.dashboardStats.recentActivities.slice(0, 10);
         }
 
-        // Update UI
         this.updateRecentActivity(this.getProfileStats());
     },
 
-    // UPDATED METHOD: Update dashboard display with current stats
     updateDashboardDisplay(stats) {
-        // Update main stats cards
         this.updateStatCard('total-revenue', this.formatCurrency(stats.totalRevenue || stats.totalIncome || 0));
         this.updateStatCard('total-expenses', this.formatCurrency(stats.totalExpenses || 0));
         this.updateStatCard('inventory-items', stats.totalInventoryItems || 0);
@@ -503,7 +592,6 @@ const DashboardModule = {
         this.updateStatCard('total-customers', stats.totalCustomers || 0);
         this.updateStatCard('total-products', stats.totalProducts || 0);
 
-        // Update profit card color based on value
         const profitCard = document.getElementById('profit-card');
         if (profitCard) {
             const netProfit = stats.netProfit || (stats.totalIncome - stats.totalExpenses) || 0;
@@ -511,7 +599,6 @@ const DashboardModule = {
             profitCard.style.borderLeft = `4px solid ${profitColor}`;
         }
 
-        // Update revenue card with monthly indicator
         const revenueCard = document.getElementById('revenue-card');
         if (revenueCard && stats.monthlyRevenue > 0) {
             const monthlyIndicator = document.createElement('div');
@@ -523,11 +610,9 @@ const DashboardModule = {
         }
     },
 
-    // UPDATED METHOD: Update individual stat card
     updateStatCard(elementId, value) {
         const element = document.getElementById(elementId);
         if (element) {
-            // Add animation
             element.style.transform = 'scale(1.1)';
             setTimeout(() => {
                 element.style.transform = 'scale(1)';
@@ -536,17 +621,14 @@ const DashboardModule = {
         }
     },
 
-    // UPDATED METHOD: Update recent activity section
     updateRecentActivity(stats) {
         const activityContent = document.getElementById('activity-content');
         if (!activityContent) return;
 
-        // Get activities from shared data
         const activities = [];
         const recentActivities = window.FarmModules?.appData?.profile?.dashboardStats?.recentActivities || [];
 
         if (recentActivities.length > 0) {
-            // Use activities from shared data
             recentActivities.forEach(activity => {
                 activities.push({
                     icon: activity.icon || '📊',
@@ -555,7 +637,6 @@ const DashboardModule = {
                 });
             });
         } else {
-            // Generate activity items based on stats as fallback
             if (stats.totalOrders > 0) {
                 activities.push({
                     icon: '📋',
@@ -598,26 +679,24 @@ const DashboardModule = {
         }
 
         if (activities.length === 0) {
-            // Show default message if no activities
             activityContent.innerHTML = `
-                <div style="text-align: center; color: #666; padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No recent activity</div>
-                    <div style="font-size: 14px; color: #999;">Start by adding your first record</div>
+                <div class="empty-state">
+                    <div class="empty-icon">📊</div>
+                    <div class="empty-title">No recent activity</div>
+                    <div class="empty-subtitle">Start by adding your first record</div>
                 </div>
             `;
             return;
         }
 
-        // Show activity items
         activityContent.innerHTML = `
             <div style="display: flex; flex-direction: column; gap: 12px;">
                 ${activities.map(activity => `
                     <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(0,0,0,0.03); border-radius: 8px;">
                         <div style="font-size: 20px;">${activity.icon}</div>
                         <div style="flex: 1;">
-                            <div style="font-weight: 600; color: #1a1a1a; font-size: 14px;">${activity.text}</div>
-                            <div style="font-size: 12px; color: #666;">${activity.time}</div>
+                            <div style="font-weight: 600; font-size: 14px;">${activity.text}</div>
+                            <div style="font-size: 12px; opacity: 0.7;">${activity.time}</div>
                         </div>
                     </div>
                 `).join('')}
@@ -625,7 +704,6 @@ const DashboardModule = {
         `;
     },
 
-    // NEW METHOD: Format time ago for activity timestamps
     formatTimeAgo(timestamp) {
         const now = new Date();
         const time = new Date(timestamp);
@@ -637,7 +715,6 @@ const DashboardModule = {
         return `${Math.floor(diffInSeconds / 86400)}d ago`;
     },
 
-    // UPDATED METHOD: Force refresh stats (can be called from other modules)
     refreshStats() {
         this.loadAndDisplayStats();
     },
@@ -656,20 +733,17 @@ const DashboardModule = {
 
         const targetModule = actionMap[action];
         if (targetModule) {
-            // FIX: Use the correct method to switch sections
             if (window.FarmManagementApp) {
                 window.FarmManagementApp.showSection(targetModule);
             } else if (window.app && window.app.showSection) {
                 window.app.showSection(targetModule);
             } else {
-                // Fallback: manually trigger navigation
                 const event = new CustomEvent('sectionChange', { 
                     detail: { section: targetModule } 
                 });
                 document.dispatchEvent(event);
             }
             
-            // Show notification
             if (window.coreModule && window.coreModule.showNotification) {
                 window.coreModule.showNotification(`Opening ${this.getActionName(action)}...`, 'info');
             }
@@ -699,5 +773,8 @@ const DashboardModule = {
 // Register the module
 if (window.FarmModules) {
     window.FarmModules.registerModule('dashboard', DashboardModule);
-    console.log('✅ Dashboard module registered');
+    console.log('✅ Dashboard module registered with StyleManager integration');
 }
+
+// Export for global access
+window.DashboardModule = DashboardModule;
