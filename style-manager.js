@@ -380,28 +380,37 @@ const StyleManager = {
         borderRadius: '2px'
       },
       
-      // Stat badges with CLEAR TEXT
-      '.header-stats .stat-badge': {
-        minWidth: '140px',
-        flexShrink: '0',
-        padding: '16px 20px',
-        background: 'var(--card-bg)',
-        border: '1px solid var(--border-color)',
-        borderRadius: '12px',
-        textAlign: 'center',
+     // ======== CLEAN HEADER STATS (NO BOXES) ========
+      '.header-stats': {
         display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '6px',
-        boxShadow: 'var(--shadow-sm)',
-        transition: 'all 0.2s ease'
+        gap: '32px',
+        flexWrap: 'nowrap',
+        alignItems: 'center'
       },
       
-      '.header-stats .stat-badge:hover': {
-        transform: 'translateY(-2px)',
-        boxShadow: 'var(--shadow-md)',
-        borderColor: 'var(--primary-500)'
+      // Clean stat badges - NO boxes, just text
+      '.stat-badge': {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        gap: '4px'
+      },
+      
+      // Stat value - clean and prominent
+      '.stat-value': {
+        fontSize: '28px',
+        fontWeight: '700',
+        color: 'var(--text-primary)',
+        lineHeight: '1.2'
+      },
+      
+      // Stat label - subtle but clear
+      '.stat-label': {
+        fontSize: '13px',
+        fontWeight: '500',
+        color: 'var(--text-secondary)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px'
       },
       
       // Stat value - LARGE, BOLD, VISIBLE
