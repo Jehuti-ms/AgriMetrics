@@ -1,48 +1,52 @@
-// modules/reports.js - FIXED StyleManager integration
-console.log('Loading reports module...');
+// modules/dashboard.js - FIXED StyleManager integration
+console.log('Loading dashboard module with Style Manager integration...');
 
-const ReportsModule = {
-    name: 'reports',
-    id: 'reports',
+const DashboardModule = {
+    name: 'dashboard',
+    id: 'dashboard',
     initialized: false,
     element: null,
 
     initialize() {
-        console.log('📈 Initializing Reports with StyleManager...');
+        console.log('📊 Initializing Dashboard with StyleManager...');
         
         // Get the content area element
         this.element = document.getElementById('content-area');
         if (!this.element) return false;
 
-        // FIXED: Use registerModule instead of registerComponent
+        // Register with StyleManager (use module name as key)
         if (window.StyleManager && window.StyleManager.registerModule) {
             window.StyleManager.registerModule(this.name, this.element, this);
         }
 
-        this.renderReports();
+        this.renderDashboard();
         this.setupEventListeners();
         this.initialized = true;
         
-        console.log('✅ Reports initialized with StyleManager');
+        // Load and display stats from shared data
+        this.loadAndDisplayStats();
+        
+        console.log('✅ Dashboard initialized with StyleManager');
         return true;
     },
 
     // StyleManager integration methods
     onThemeChange(theme) {
-        console.log(`Reports updating for theme: ${theme}`);
+        console.log(`Dashboard updating for theme: ${theme}`);
         this.applyThemeStyles();
     },
 
     onStyleUpdate(styles) {
-        console.log('Reports styles updated:', styles);
+        console.log('Dashboard styles updated:', styles);
         this.applyThemeStyles();
     },
 
     applyThemeStyles() {
         if (!this.element || !window.StyleManager) return;
         
-        // Get current theme from StyleManager
-        const theme = window.StyleManager.currentTheme || 'light';
+        // Get current theme from StyleManager - check for correct method name
+        const theme = window.StyleManager.currentTheme || 
+                      (window.StyleManager.getCurrentTheme ? window.StyleManager.getCurrentTheme() : 'light');
         
         // Get module styles if available
         const styles = window.StyleManager.getModuleStyles ? 
@@ -52,64 +56,222 @@ const ReportsModule = {
         this.element.style.backgroundColor = styles?.backgroundColor || 
             (theme === 'dark' ? '#1a1a1a' : '#f5f5f5');
         
+        // ✅ Force white header text as requested
+        const welcomeHeader = this.element.querySelector('.welcome-header');
+        if (welcomeHeader) {
+            welcomeHeader.style.color = '#ffffff';
+        }
+        
         // Apply module-specific styles
         this.applyModuleStyles(theme, styles);
     },
 
     applyModuleStyles(theme, styles) {
-        // Apply styles to reports elements
-        const sectionTitles = this.element.querySelectorAll('.section-title');
+        // Apply styles based on theme or custom styles
+        
+        // Section titles (except welcome header which stays white)
+        const sectionTitles = this.element.querySelectorAll('.section-title, .welcome-subtitle');
         sectionTitles.forEach(el => {
             const textColor = styles?.textColor || 
                 (theme === 'dark' ? '#ffffff' : '#1a1a1a');
             el.style.color = textColor;
         });
 
-        // Apply to charts container, etc.
-        const containers = this.element.querySelectorAll('.chart-container, .report-section');
-        containers.forEach(container => {
-            container.style.backgroundColor = styles?.cardBackground || 
+        // Stat values
+        const statValues = this.element.querySelectorAll('.stat-value');
+        statValues.forEach(el => {
+            const textColor = styles?.textColor || 
+                (theme === 'dark' ? '#ffffff' : '#1a1a1a');
+            el.style.color = textColor;
+        });
+
+        // Secondary text
+        const secondaryText = this.element.querySelectorAll('.stat-label, .action-subtitle, .action-title, .empty-title, .empty-subtitle');
+        secondaryText.forEach(el => {
+            const secondaryColor = theme === 'dark' ? '#a0a0a0' : '#666666';
+            el.style.color = secondaryColor;
+        });
+
+        // Cards (stat cards, activity list, quick action buttons)
+        const cards = this.element.querySelectorAll('.stat-card, .activity-list, .quick-action-btn');
+        cards.forEach(card => {
+            card.style.backgroundColor = styles?.cardBackground || 
                 (theme === 'dark' ? 'rgba(30, 30, 30, 0.9)' : 'rgba(255, 255, 255, 0.9)');
-            container.style.borderColor = styles?.borderColor || 
+            card.style.borderColor = styles?.borderColor || 
                 (theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)');
+        });
+
+        // Buttons
+        const buttons = this.element.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.style.backgroundColor = styles?.buttonBackground || 
+                (theme === 'dark' ? 'rgba(40, 40, 40, 0.9)' : 'rgba(255, 255, 255, 0.9)');
+            button.style.color = styles?.buttonTextColor || 
+                (theme === 'dark' ? '#ffffff' : '#1a1a1a');
+            button.style.borderColor = styles?.buttonBorderColor || 
+                (theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)');
         });
     },
 
     setupEventListeners() {
-        // Your reports event listeners here
+        this.setupQuickActions();
+        this.setupRefreshButton();
     },
 
-    renderReports() {
+    renderDashboard() {
         if (!this.element) return;
 
-        // Reports HTML structure
+        // Clean, semantic HTML with only essential layout styles
         this.element.innerHTML = `
-            <div id="reports" class="module-container">
-                <div class="reports-header">
-                    <h1 class="welcome-header" style="color: #ffffff;">Reports & Analytics</h1>
-                    <p class="welcome-subtitle">Analyze your farm performance</p>
+            <div id="dashboard" class="module-container">
+                <!-- Welcome Section with white header text -->
+                <div class="welcome-section">
+                    <h1 class="welcome-header">Welcome to Farm Management</h1>
+                    <p class="welcome-subtitle">Manage your farm operations efficiently</p>
                 </div>
 
-                <!-- Your reports content here -->
-                <div class="reports-content">
-                    <h2 class="section-title">Farm Reports</h2>
-                    <div class="chart-container">
-                        <p>Reports content will go here...</p>
+                <!-- Quick Actions Grid -->
+                <div class="quick-actions">
+                    <h2 class="section-title">Quick Actions</h2>
+                    <div class="actions-grid">
+                        <button class="quick-action-btn" data-action="add-income">
+                            <div class="action-icon">💰</div>
+                            <span class="action-title">Add Income</span>
+                            <span class="action-subtitle">Record new income</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="add-expense">
+                            <div class="action-icon">💸</div>
+                            <span class="action-title">Add Expense</span>
+                            <span class="action-subtitle">Record new expense</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="check-inventory">
+                            <div class="action-icon">📦</div>
+                            <span class="action-title">Check Inventory</span>
+                            <span class="action-subtitle">View stock levels</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="record-feed">
+                            <div class="action-icon">🌾</div>
+                            <span class="action-title">Record Feed</span>
+                            <span class="action-subtitle">Log feed usage</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="add-production">
+                            <div class="action-icon">🚜</div>
+                            <span class="action-title">Production</span>
+                            <span class="action-subtitle">Record production</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="view-reports">
+                            <div class="action-icon">📈</div>
+                            <span class="action-title">View Reports</span>
+                            <span class="action-subtitle">Analytics & insights</span>
+                        </button>
                     </div>
+                </div>
+
+                <!-- Stats Overview -->
+                <div class="stats-overview">
+                    <h2 class="section-title">Overview</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card" id="revenue-card">
+                            <div class="stat-icon">💰</div>
+                            <div class="stat-value" id="total-revenue">$0.00</div>
+                            <div class="stat-label">Total Revenue</div>
+                        </div>
+
+                        <div class="stat-card" id="expense-card">
+                            <div class="stat-icon">💸</div>
+                            <div class="stat-value" id="total-expenses">$0.00</div>
+                            <div class="stat-label">Total Expenses</div>
+                        </div>
+
+                        <div class="stat-card" id="inventory-card">
+                            <div class="stat-icon">📦</div>
+                            <div class="stat-value" id="inventory-items">0</div>
+                            <div class="stat-label">Inventory Items</div>
+                        </div>
+
+                        <div class="stat-card" id="birds-card">
+                            <div class="stat-icon">🐔</div>
+                            <div class="stat-value" id="active-birds">0</div>
+                            <div class="stat-label">Active Birds</div>
+                        </div>
+
+                        <div class="stat-card" id="orders-card">
+                            <div class="stat-icon">📋</div>
+                            <div class="stat-value" id="total-orders">0</div>
+                            <div class="stat-label">Total Orders</div>
+                        </div>
+
+                        <div class="stat-card" id="profit-card">
+                            <div class="stat-icon">📊</div>
+                            <div class="stat-value" id="net-profit">$0.00</div>
+                            <div class="stat-label">Net Profit</div>
+                        </div>
+
+                        <div class="stat-card" id="customers-card">
+                            <div class="stat-icon">👥</div>
+                            <div class="stat-value" id="total-customers">0</div>
+                            <div class="stat-label">Customers</div>
+                        </div>
+
+                        <div class="stat-card" id="products-card">
+                            <div class="stat-icon">🛒</div>
+                            <div class="stat-value" id="total-products">0</div>
+                            <div class="stat-label">Products</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="recent-activity">
+                    <h2 class="section-title">Recent Activity</h2>
+                    <div class="activity-list">
+                        <div id="activity-content">
+                            <div class="empty-state">
+                                <div class="empty-icon">📊</div>
+                                <div class="empty-title">No recent activity</div>
+                                <div class="empty-subtitle">Start by adding your first record</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Refresh Button -->
+                <div class="refresh-section">
+                    <button id="refresh-stats-btn" class="btn-outline">
+                        🔄 Refresh Stats
+                    </button>
                 </div>
             </div>
         `;
 
+        // Apply layout styles (these are structural, not theme-related)
         this.applyLayoutStyles();
+        
+        // Apply theme styles from StyleManager
         this.applyThemeStyles();
+        
+        // Add event listeners
+        this.setupQuickActions();
+        this.setupRefreshButton();
     },
 
     applyLayoutStyles() {
-        const container = this.element.querySelector('#reports');
+        // Only layout-related styles that never change
+        const container = this.element.querySelector('#dashboard');
         if (container) {
             container.style.padding = '20px';
             container.style.maxWidth = '1200px';
             container.style.margin = '0 auto';
+        }
+
+        const welcomeSection = this.element.querySelector('.welcome-section');
+        if (welcomeSection) {
+            welcomeSection.style.marginBottom = '30px';
         }
 
         const welcomeHeader = this.element.querySelector('.welcome-header');
@@ -117,9 +279,9 @@ const ReportsModule = {
             welcomeHeader.style.fontSize = '28px';
             welcomeHeader.style.marginBottom = '8px';
             welcomeHeader.style.fontWeight = '600';
-            welcomeHeader.style.color = '#ffffff'; // Force white
+            // Force white color - this overrides any theme
+            welcomeHeader.style.color = '#ffffff';
         }
-    },
 
         const welcomeSubtitle = this.element.querySelector('.welcome-subtitle');
         if (welcomeSubtitle) {
@@ -601,9 +763,9 @@ const ReportsModule = {
 
 // Register the module
 if (window.FarmModules) {
-    window.FarmModules.registerModule('reports', ReportsModule);
-    console.log('✅ Reports module registered');
+    window.FarmModules.registerModule('dashboard', DashboardModule);
+    console.log('✅ Dashboard module registered');
 }
 
 // Export for global access
-window.ReportsModule = ReportsModule;
+window.DashboardModule = DashboardModule;
