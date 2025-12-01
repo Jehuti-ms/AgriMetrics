@@ -125,14 +125,13 @@ const DashboardModule = {
         this.element.innerHTML = `
             <div id="dashboard" class="module-container">
                 <!-- Welcome Section with white header text -->
-                 <div class="module-header">
-                <div class="welcome-section">
+                  <div class="welcome-section">
                     <h1 class="welcome-header">Welcome to Farm Management</h1>
                     <p class="welcome-subtitle">Manage your farm operations efficiently</p>
                 </div>
             </div>
-        </div>
-                <!-- Quick Actions Grid -->
+            
+                      <!-- Quick Actions Grid -->
                 <div class="quick-actions">
                     <h2 class="section-title">Quick Actions</h2>
                     <div class="actions-grid">
