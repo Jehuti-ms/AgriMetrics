@@ -346,43 +346,23 @@ const StyleManager = {
   // ==================== MODULE-SPECIFIC STYLES ====================
   moduleStyles: {
     // ==================== DASHBOARD MODULE ====================
-   // ==================== DASHBOARD MODULE ====================
-'dashboard': {
+   'dashboard': {
   '.module-container': {
-    padding: '0',       // remove global padding
-    margin: '0',        // remove global margin
-    background: 'var(--module-bg)'
+    margin: '0 !important',
+    padding: '0 !important',
+    minHeight: 'auto !important',
+    gap: '0 !important',
+    background: 'transparent !important'
   },
   '.welcome-section': {
     margin: '0',
     padding: '0'
   },
-  '.welcome-header': {
+  '.welcome-header, .welcome-subtitle': {
     margin: '0',
-    fontSize: '28px',
-    fontWeight: '700',
-    color: 'white !important',
-    textShadow: '0 1px 2px rgba(0,0,0,0.2)'
-  },
-  '.welcome-subtitle': {
-    margin: '0',
-    fontSize: '15px',
-    fontWeight: '400',
-    color: 'white !important',
-    textShadow: '0 1px 2px rgba(0,0,0,0.2)'
-  },
-
-
-  // ✅ Subheading fix
-  '.module-subtitle': {
-    fontSize: '15px',
-    fontWeight: '400',
-    color: 'white',          // <-- this makes it white
-    opacity: '1',
-    textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
+    color: 'white !important'
   }
-
-  },
+}
     
     // ======== INCOME & EXPENSES MODULE ============
     'income-expenses': {
