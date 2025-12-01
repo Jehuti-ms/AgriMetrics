@@ -24,6 +24,7 @@ const InventoryCheckModule = {
         this.renderModule();
         this.setupEventListeners();
         this.initialized = true;
+        this.id = 'inventory-check';
         
         // Sync initial stats with profile
         this.syncStatsWithProfile();
