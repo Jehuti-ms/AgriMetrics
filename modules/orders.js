@@ -22,7 +22,7 @@ const OrdersModule = {
 
         // ✅ ADDED: Register with StyleManager
         if (window.StyleManager) {
-            StyleManager.registerModule(this.id, this.element, this);
+            StyleManager.registerModule('sales-record', this.element, this);
         }
 
         this.loadData();
