@@ -38,7 +38,7 @@ const ReportsModule = {
         if (!this.element) return;
 
         this.element.innerHTML = `
-            <div class="module-container">
+            <div id="income-expenses" class="module-container">
                 <div class="module-header">
                     <h1 class="module-title">Farm Reports & Analytics</h1>
                     <p class="module-subtitle">Comprehensive insights and analytics for your farm operations</p>
