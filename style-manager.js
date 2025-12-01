@@ -517,21 +517,18 @@ const StyleManager = {
     /**
      * Apply module-specific styles (FIXED VERSION)
      */
-   applyModuleStyles(moduleId, element) {
+  applyModuleStyles(moduleId, element) {
     if (!element) return;
 
-    // Add base module class
     element.classList.add('module-container');
 
-    // Apply theme variables
     const theme = this.themes[this.currentTheme];
-    if (theme && theme.variables) {
+    if (theme?.variables) {
         Object.entries(theme.variables).forEach(([key, value]) => {
             element.style.setProperty(key, value);
         });
     }
 
-    // ✅ Apply module-specific grid layout
     const config = this.moduleConfigs[moduleId];
     if (config?.statsGrid) {
         element.style.setProperty('--stats-grid', config.statsGrid);
