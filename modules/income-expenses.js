@@ -1,4 +1,4 @@
-// modules/income-expenses.js - UPDATED WITH HEADER STATS INTEGRATION
+// modules/income-expenses.js - COMPLETE WITH WORKING HEADER STATS
 console.log('Loading income-expenses module...');
 
 const IncomeExpensesModule = {
@@ -10,13 +10,12 @@ const IncomeExpensesModule = {
     initialize() {
         console.log('💰 Initializing Income & Expenses...');
         
-        // ✅ Get the content area element
         this.element = document.getElementById('content-area');
         if (!this.element) return false;
 
-        // ✅ Register with StyleManager
+        // Register with StyleManager
         if (window.StyleManager) {
-            StyleManager.registerModule('income-expenses', this.element);
+            window.StyleManager.registerModule('income-expenses', this.element);
         }
 
         this.loadData();
@@ -24,10 +23,9 @@ const IncomeExpensesModule = {
         this.setupEventListeners();
         this.initialized = true;
         
-        // Sync initial stats with shared data
         this.syncStatsWithDashboard();
         
-        console.log('✅ Income & Expenses initialized with StyleManager');
+        console.log('✅ Income & Expenses initialized');
         return true;
     },
 
@@ -41,7 +39,9 @@ const IncomeExpensesModule = {
         return [
             { id: 1, type: 'income', amount: 1500, category: 'egg-sales', description: 'Egg sales March', date: '2024-03-15' },
             { id: 2, type: 'expense', amount: 200, category: 'feed', description: 'Chicken feed', date: '2024-03-14' },
-            { id: 3, type: 'income', amount: 800, category: 'poultry-sales', description: 'Broiler sales', date: '2024-03-10' }
+            { id: 3, type: 'income', amount: 800, category: 'poultry-sales', description: 'Broiler sales', date: '2024-03-10' },
+            { id: 4, type: 'expense', amount: 150, category: 'medication', description: 'Vaccines', date: '2024-03-08' },
+            { id: 5, type: 'income', amount: 350, category: 'crop-sales', description: 'Vegetable sales', date: '2024-03-05' }
         ];
     },
 
@@ -52,14 +52,13 @@ const IncomeExpensesModule = {
 
         this.element.innerHTML = `
             <div id="income-expenses" class="module-container">
-                <!-- Modern PWA Header with Stats -->
+                <!-- Modern PWA Header -->
                 <div class="module-header">
                     <div class="header-content">
                         <div class="header-text">
                             <h1 class="module-title">Income & Expenses</h1>
                             <p class="module-subtitle">Track your farm's financial health</p>
                         </div>
-                        <!-- Header Stats -->
                         <div class="header-stats">
                             <div class="stat-badge">
                                 <span class="stat-icon">📈</span>
@@ -92,49 +91,85 @@ const IncomeExpensesModule = {
                     </div>
                 </div>
 
-                <!-- Quick Actions Grid -->
+                <!-- Financial Summary Cards -->
+                <div class="financial-summary">
+                    <div class="summary-card glass-card">
+                        <div class="summary-icon">📈</div>
+                        <div class="summary-content">
+                            <h3>Monthly Income</h3>
+                            <div class="summary-value" id="monthly-income">${this.formatCurrency(this.getMonthlyIncome())}</div>
+                            <div class="summary-period">This Month</div>
+                        </div>
+                    </div>
+                    <div class="summary-card glass-card">
+                        <div class="summary-icon">📊</div>
+                        <div class="summary-content">
+                            <h3>Monthly Expenses</h3>
+                            <div class="summary-value" id="monthly-expenses">${this.formatCurrency(this.getMonthlyExpenses())}</div>
+                            <div class="summary-period">This Month</div>
+                        </div>
+                    </div>
+                    <div class="summary-card glass-card">
+                        <div class="summary-icon">💰</div>
+                        <div class="summary-content">
+                            <h3>Profit Margin</h3>
+                            <div class="summary-value" id="profit-margin">${stats.totalIncome > 0 ? ((stats.netProfit / stats.totalIncome) * 100).toFixed(1) + '%' : '0%'}</div>
+                            <div class="summary-period">Efficiency</div>
+                        </div>
+                    </div>
+                    <div class="summary-card glass-card">
+                        <div class="summary-icon">🎯</div>
+                        <div class="summary-content">
+                            <h3>Top Category</h3>
+                            <div class="summary-value" id="top-category">${this.getTopCategory()}</div>
+                            <div class="summary-period">${this.formatCurrency(this.getTopCategoryAmount())}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
                 <div class="quick-action-grid">
                     <button class="quick-action-btn" id="quick-income-btn">
-                        <div style="font-size: 32px;">💰</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Quick Income</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record income instantly</span>
+                        <div class="quick-action-icon">💰</div>
+                        <span class="quick-action-title">Quick Income</span>
+                        <span class="quick-action-desc">Record income instantly</span>
                     </button>
                     <button class="quick-action-btn" id="quick-expense-btn">
-                        <div style="font-size: 32px;">💸</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Quick Expense</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record expense instantly</span>
+                        <div class="quick-action-icon">💸</div>
+                        <span class="quick-action-title">Quick Expense</span>
+                        <span class="quick-action-desc">Record expense instantly</span>
                     </button>
                     <button class="quick-action-btn" id="view-reports-btn">
-                        <div style="font-size: 32px;">📊</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">View Reports</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Financial analytics</span>
+                        <div class="quick-action-icon">📊</div>
+                        <span class="quick-action-title">View Reports</span>
+                        <span class="quick-action-desc">Financial analytics</span>
                     </button>
                     <button class="quick-action-btn" id="export-data-btn">
-                        <div style="font-size: 32px;">📤</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Export Data</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Export transactions</span>
+                        <div class="quick-action-icon">📤</div>
+                        <span class="quick-action-title">Export Data</span>
+                        <span class="quick-action-desc">Export transactions</span>
                     </button>
                 </div>
 
                 <!-- Transaction Form (Hidden by default) -->
                 <div id="transaction-form-container" class="hidden">
-                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                    <div class="glass-card" style="padding: 24px; margin: 24px 0;">
                         <h3 style="color: var(--text-primary); margin-bottom: 20px;" id="form-title">Add Transaction</h3>
                         <form id="transaction-form">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
+                            <div class="form-row">
+                                <div class="form-group">
                                     <label class="form-label">Type</label>
                                     <select class="form-input" id="transaction-type" required>
                                         <option value="income">Income</option>
                                         <option value="expense">Expense</option>
                                     </select>
                                 </div>
-                                <div>
+                                <div class="form-group">
                                     <label class="form-label">Amount</label>
                                     <input type="number" class="form-input" id="transaction-amount" step="0.01" min="0" required>
                                 </div>
                             </div>
-                            <div style="margin-bottom: 16px;">
+                            <div class="form-group">
                                 <label class="form-label">Category</label>
                                 <select class="form-input" id="transaction-category" required>
                                     <option value="">Select category</option>
@@ -148,11 +183,11 @@ const IncomeExpensesModule = {
                                     <option value="other">Other</option>
                                 </select>
                             </div>
-                            <div style="margin-bottom: 16px;">
+                            <div class="form-group">
                                 <label class="form-label">Description</label>
                                 <input type="text" class="form-input" id="transaction-description" required>
                             </div>
-                            <div style="margin-bottom: 20px;">
+                            <div class="form-group">
                                 <label class="form-label">Date</label>
                                 <input type="date" class="form-input" id="transaction-date" required>
                             </div>
@@ -166,8 +201,8 @@ const IncomeExpensesModule = {
 
                 <!-- Recent Transactions -->
                 <div class="glass-card" style="padding: 24px; margin-top: 24px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="color: var(--text-primary); font-size: 20px;">Recent Transactions</h3>
+                    <div class="card-header">
+                        <h3 class="card-title">Recent Transactions</h3>
                         <button class="btn btn-outline" id="clear-all">Clear All</button>
                     </div>
                     <div id="transactions-list">
@@ -183,11 +218,11 @@ const IncomeExpensesModule = {
     calculateStats() {
         const totalIncome = this.transactions
             .filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + t.amount, 0);
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
         
         const totalExpenses = this.transactions
             .filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + t.amount, 0);
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
         
         return {
             totalIncome,
@@ -197,33 +232,99 @@ const IncomeExpensesModule = {
         };
     },
 
+    getMonthlyIncome() {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        return this.transactions
+            .filter(t => {
+                if (t.type !== 'income') return false;
+                const date = new Date(t.date);
+                return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+            })
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+    },
+
+    getMonthlyExpenses() {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        return this.transactions
+            .filter(t => {
+                if (t.type !== 'expense') return false;
+                const date = new Date(t.date);
+                return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+            })
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+    },
+
+    getTopCategory() {
+        const categoryTotals = {};
+        this.transactions.forEach(t => {
+            if (!categoryTotals[t.category]) categoryTotals[t.category] = 0;
+            categoryTotals[t.category] += t.amount || 0;
+        });
+        
+        let topCategory = 'None';
+        let topAmount = 0;
+        
+        Object.entries(categoryTotals).forEach(([category, amount]) => {
+            if (amount > topAmount) {
+                topCategory = this.formatCategoryName(category);
+                topAmount = amount;
+            }
+        });
+        
+        return topCategory;
+    },
+
+    getTopCategoryAmount() {
+        const categoryTotals = {};
+        this.transactions.forEach(t => {
+            if (!categoryTotals[t.category]) categoryTotals[t.category] = 0;
+            categoryTotals[t.category] += t.amount || 0;
+        });
+        
+        let topAmount = 0;
+        Object.values(categoryTotals).forEach(amount => {
+            if (amount > topAmount) topAmount = amount;
+        });
+        
+        return topAmount;
+    },
+
     renderTransactionsList() {
         if (this.transactions.length === 0) {
             return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No transactions yet</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Add your first transaction to get started</div>
+                <div class="empty-state">
+                    <div class="empty-content">
+                        <span class="empty-icon">📋</span>
+                        <h4>No transactions yet</h4>
+                        <p>Add your first transaction to get started</p>
+                    </div>
                 </div>
             `;
         }
 
+        const recentTransactions = this.transactions.slice(0, 10); // Show only last 10
+
         return `
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${this.transactions.map(transaction => `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color);">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="font-size: 20px;">${transaction.type === 'income' ? '💰' : '💸'}</div>
-                            <div>
-                                <div style="font-weight: 600; color: var(--text-primary);">${transaction.description}</div>
-                                <div style="font-size: 14px; color: var(--text-secondary);">${this.formatCategoryName(transaction.category)} • ${transaction.date}</div>
+            <div class="transactions-list">
+                ${recentTransactions.map(transaction => `
+                    <div class="transaction-item">
+                        <div class="transaction-icon">${transaction.type === 'income' ? '💰' : '💸'}</div>
+                        <div class="transaction-details">
+                            <div class="transaction-description">${transaction.description}</div>
+                            <div class="transaction-meta">
+                                <span class="transaction-category">${this.formatCategoryName(transaction.category)}</span>
+                                <span class="transaction-date">${transaction.date}</span>
                             </div>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="font-weight: bold; color: ${transaction.type === 'income' ? 'var(--status-paid)' : 'var(--status-cancelled)'};">
-                                ${transaction.type === 'income' ? '+' : '-'}${this.formatCurrency(transaction.amount)}
-                            </div>
-                            <button class="btn-icon delete-transaction" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; color: var(--text-secondary);">
+                        <div class="transaction-amount ${transaction.type}">
+                            <span>${transaction.type === 'income' ? '+' : '-'}${this.formatCurrency(transaction.amount)}</span>
+                            <button class="btn-icon delete-transaction" data-id="${transaction.id}" title="Delete">
                                 🗑️
                             </button>
                         </div>
@@ -449,7 +550,7 @@ const IncomeExpensesModule = {
             Object.assign(window.FarmModules.appData.profile.dashboardStats, {
                 totalIncome: stats.totalIncome,
                 totalExpenses: stats.totalExpenses,
-                totalRevenue: stats.totalIncome, // For dashboard compatibility
+                totalRevenue: stats.totalIncome,
                 netProfit: stats.netProfit
             });
         }
@@ -458,7 +559,7 @@ const IncomeExpensesModule = {
         const statsUpdateEvent = new CustomEvent('financialStatsUpdated', {
             detail: {
                 totalIncome: stats.totalIncome,
-                totalExpenses: stats.totalExpenses, 
+                totalExpenses: stats.totalExpenses,
                 totalRevenue: stats.totalIncome,
                 netProfit: stats.netProfit
             }
@@ -516,17 +617,17 @@ const IncomeExpensesModule = {
             return new Intl.NumberFormat('en-US', {
                 style: 'currency',
                 currency: 'USD'
-            }).format(amount);
+            }).format(amount || 0);
         } else {
             return new Intl.NumberFormat('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
-            }).format(amount);
+            }).format(amount || 0);
         }
     }
 };
 
 if (window.FarmModules) {
     window.FarmModules.registerModule('income-expenses', IncomeExpensesModule);
-    console.log('✅ Income & Expenses module registered with header stats');
+    console.log('✅ Income & Expenses module registered');
 }
