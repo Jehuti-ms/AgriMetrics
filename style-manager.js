@@ -355,16 +355,43 @@ const StyleManager = {
         width: '100%'
       },
       
-      // ======== HEADER STATS ========
-      // Fix for header stats - horizontal on large screens
+            // ======== HEADER STATS WITH GREEN BACKGROUND ========
       '.header-stats': {
         display: 'flex',
-        gap: '16px',
+        gap: '32px',
         flexWrap: 'nowrap',
-        overflowX: 'auto',
-        paddingBottom: '8px',
-        scrollbarWidth: 'thin',
-        scrollbarColor: 'var(--border-color) transparent'
+        alignItems: 'center'
+      },
+      
+      // Stat badges with header green background
+      '.stat-badge': {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '4px',
+        padding: '12px 20px',
+        background: 'rgba(255, 255, 255, 0.2)',
+        backdropFilter: 'blur(10px)',
+        borderRadius: '12px',
+        minWidth: '140px'
+      },
+      
+      // Stat value - white text on green
+      '.stat-value': {
+        fontSize: '24px',
+        fontWeight: '700',
+        color: 'white',
+        lineHeight: '1.2',
+        textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)'
+      },
+      
+      // Stat label - light white text
+      '.stat-label': {
+        fontSize: '12px',
+        fontWeight: '600',
+        color: 'rgba(255, 255, 255, 0.9)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.8px'
       },
       
       '.header-stats::-webkit-scrollbar': {
