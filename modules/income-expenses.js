@@ -23,6 +23,7 @@ const IncomeExpensesModule = {
         this.renderModule();
         this.setupEventListeners();
         this.initialized = true;
+        this.id = 'income-expenses';
         
         // Sync initial stats with shared data
         this.syncStatsWithDashboard();
