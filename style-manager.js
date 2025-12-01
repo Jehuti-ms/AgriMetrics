@@ -535,7 +535,7 @@ const StyleManager = {
     if (config?.statsGrid) {
         element.style.setProperty('--stats-grid', config.statsGrid);
     }
-}
+},
 
     /**
      * Update all active modules with current theme
