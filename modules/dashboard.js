@@ -1,225 +1,252 @@
-// modules/dashboard.js - UPDATED WITH STYLE MANAGER INTEGRATION
+// modules/dashboard.js — CLEAN REWRITE WITH STYLE MANAGER INTEGRATION AND CONSISTENT CLASSES
 console.log('Loading dashboard module...');
 
 const DashboardModule = {
+    // Identity
+    id: 'dashboard',
     name: 'dashboard',
+
+    // State
     initialized: false,
     element: null,
 
+    // Initialization
     initialize() {
         console.log('📊 Initializing Dashboard...');
-        
-        // ✅ ADDED: Get the content area element
-        this.element = document.getElementById('content-area');
-        if (!this.element) return false;
 
-        // ✅ ADDED: Register with StyleManager
-        if (window.StyleManager) {
-            StyleManager.registerModule(this.id, this.element, this);
+        // Locate content area
+        this.element = document.getElementById('content-area');
+        if (!this.element) {
+            console.warn('❌ Dashboard: #content-area not found');
+            return false;
         }
 
+        // Register with StyleManager BEFORE rendering so grid and header styles apply
+        if (window.StyleManager && typeof StyleManager.registerModule === 'function') {
+            StyleManager.registerModule(this.id, this.element, this);
+            // Apply module-specific header and grid variables
+            const config = StyleManager.moduleConfigs?.[this.id];
+            if (config) {
+                this.element.style.setProperty('--header-gradient', config.headerGradient);
+                this.element.style.setProperty('--stats-grid', config.statsGrid);
+            }
+        }
+
+        // Render and wire up
         this.renderDashboard();
         this.setupEventListeners();
-        this.initialized = true;
-        this.id = 'dashboard';
-        
-        // Load and display stats from shared data
+
+        // Load stats and update UI
         this.loadAndDisplayStats();
-        
+
+        this.initialized = true;
         console.log('✅ Dashboard initialized with StyleManager');
         return true;
     },
 
-    // ✅ ADDED: Theme change handler (optional)
+    // StyleManager theme callback
     onThemeChange(theme) {
         console.log(`Dashboard updating for theme: ${theme}`);
-        // You can add theme-specific logic here if needed
     },
 
+    // Event setup (delegates to specific binders)
     setupEventListeners() {
         this.setupQuickActions();
         this.setupRefreshButton();
+
+        // Listen for cross-module stat sync events (optional but non-breaking)
+        document.addEventListener('financialStatsUpdated', (e) => {
+            if (e?.detail) this.updateDashboardStats(e.detail);
+        });
     },
 
+    // Render main dashboard view
     renderDashboard() {
-    if (!this.element) return;
+        if (!this.element) return;
 
-    this.element.innerHTML = `
-        <div class="module-container">
-            <!-- Welcome Section -->
-            <div class="welcome-section">
-                <h1>Welcome to Farm Management</h1>
-                <p>Manage your farm operations efficiently</p>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="quick-actions">
-                <h2>Quick Actions</h2>
-                <div class="actions-grid">
-                    <button class="quick-action-btn" data-action="add-income">
-                        <div>💰</div>
-                        <span>Add Income</span>
-                        <span>Record new income</span>
-                    </button>
-                    <button class="quick-action-btn" data-action="add-expense">
-                        <div>💸</div>
-                        <span>Add Expense</span>
-                        <span>Record new expense</span>
-                    </button>
-                    <button class="quick-action-btn" data-action="check-inventory">
-                        <div>📦</div>
-                        <span>Check Inventory</span>
-                        <span>View stock levels</span>
-                    </button>
-                    <button class="quick-action-btn" data-action="record-feed">
-                        <div>🌾</div>
-                        <span>Record Feed</span>
-                        <span>Log feed usage</span>
-                    </button>
-                    <button class="quick-action-btn" data-action="add-production">
-                        <div>🚜</div>
-                        <span>Production</span>
-                        <span>Record production</span>
-                    </button>
-                    <button class="quick-action-btn" data-action="view-reports">
-                        <div>📈</div>
-                        <span>View Reports</span>
-                        <span>Analytics & insights</span>
-                    </button>
+        this.element.innerHTML = `
+            <div class="module-container">
+                <!-- Header -->
+                <div class="module-header">
+                    <h1 class="module-title">Dashboard</h1>
+                    <p class="module-subtitle">Overview of your farm operations</p>
                 </div>
-            </div>
 
-            <!-- Stats Overview -->
-            <div class="stats-overview">
-                <h2>Overview</h2>
-                <div class="stats-grid">
-                    <div class="stat-card" id="revenue-card">
-                        <div>💰</div>
-                        <div id="total-revenue">$0.00</div>
-                        <div>Total Revenue</div>
+                <!-- Welcome -->
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h3>Welcome to Farm Management</h3>
                     </div>
-                    <div class="stat-card" id="expense-card">
-                        <div>💸</div>
-                        <div id="total-expenses">$0.00</div>
-                        <div>Total Expenses</div>
+                    <p>Manage your farm operations efficiently with quick actions and live stats.</p>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h3>Quick actions</h3>
                     </div>
-                    <div class="stat-card" id="inventory-card">
-                        <div>📦</div>
-                        <div id="inventory-items">0</div>
-                        <div>Inventory Items</div>
-                    </div>
-                    <div class="stat-card" id="birds-card">
-                        <div>🐔</div>
-                        <div id="active-birds">0</div>
-                        <div>Active Birds</div>
-                    </div>
-                    <div class="stat-card" id="orders-card">
-                        <div>📋</div>
-                        <div id="total-orders">0</div>
-                        <div>Total Orders</div>
-                    </div>
-                    <div class="stat-card" id="profit-card">
-                        <div>📊</div>
-                        <div id="net-profit">$0.00</div>
-                        <div>Net Profit</div>
-                    </div>
-                    <div class="stat-card" id="customers-card">
-                        <div>👥</div>
-                        <div id="total-customers">0</div>
-                        <div>Customers</div>
-                    </div>
-                    <div class="stat-card" id="products-card">
-                        <div>🛒</div>
-                        <div id="total-products">0</div>
-                        <div>Products</div>
+                    <div class="quick-action-grid">
+                        <button class="quick-action-btn" data-action="add-income">
+                            <div>💰</div>
+                            <span>Add Income</span>
+                            <span>Record new income</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="add-expense">
+                            <div>💸</div>
+                            <span>Add Expense</span>
+                            <span>Record new expense</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="check-inventory">
+                            <div>📦</div>
+                            <span>Check Inventory</span>
+                            <span>View stock levels</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="record-feed">
+                            <div>🌾</div>
+                            <span>Record Feed</span>
+                            <span>Log feed usage</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="add-production">
+                            <div>🚜</div>
+                            <span>Production</span>
+                            <span>Record production</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="view-reports">
+                            <div>📈</div>
+                            <span>View Reports</span>
+                            <span>Analytics & insights</span>
+                        </button>
                     </div>
                 </div>
-            </div>
 
-            <!-- Recent Activity -->
-            <div class="recent-activity">
-                <h2>Recent Activity</h2>
-                <div class="activity-list">
-                    <div id="activity-content">
-                        <div class="empty-state">
+                <!-- Stats Overview -->
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h3>Overview</h3>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card" id="revenue-card">
+                            <div>💰</div>
+                            <div id="total-revenue">$0.00</div>
+                            <div>Total Revenue</div>
+                        </div>
+                        <div class="stat-card" id="expense-card">
+                            <div>💸</div>
+                            <div id="total-expenses">$0.00</div>
+                            <div>Total Expenses</div>
+                        </div>
+                        <div class="stat-card" id="inventory-card">
+                            <div>📦</div>
+                            <div id="inventory-items">0</div>
+                            <div>Inventory Items</div>
+                        </div>
+                        <div class="stat-card" id="birds-card">
+                            <div>🐔</div>
+                            <div id="active-birds">0</div>
+                            <div>Active Birds</div>
+                        </div>
+                        <div class="stat-card" id="orders-card">
+                            <div>📋</div>
+                            <div id="total-orders">0</div>
+                            <div>Total Orders</div>
+                        </div>
+                        <div class="stat-card" id="profit-card">
                             <div>📊</div>
-                            <div>No recent activity</div>
-                            <div>Start by adding your first record</div>
+                            <div id="net-profit">$0.00</div>
+                            <div>Net Profit</div>
+                        </div>
+                        <div class="stat-card" id="customers-card">
+                            <div>👥</div>
+                            <div id="total-customers">0</div>
+                            <div>Customers</div>
+                        </div>
+                        <div class="stat-card" id="products-card">
+                            <div>🛒</div>
+                            <div id="total-products">0</div>
+                            <div>Products</div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Recent Activity -->
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h3>Recent activity</h3>
+                    </div>
+                    <div class="activity-list">
+                        <div id="activity-content">
+                            <div class="empty-state" style="text-align:center; color: var(--text-secondary); padding: 24px;">
+                                <div style="font-size: 40px; margin-bottom: 12px;">📊</div>
+                                <div style="font-weight: 600; color: var(--text-primary);">No recent activity</div>
+                                <div style="font-size: 14px;">Start by adding your first record</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Refresh -->
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h3>Actions</h3>
+                    </div>
+                    <div class="refresh-container" style="display:flex; justify-content:flex-end;">
+                        <button id="refresh-stats-btn" class="btn-outline">🔄 Refresh Stats</button>
+                    </div>
+                </div>
             </div>
+        `;
 
-            <!-- Refresh Button -->
-            <div class="refresh-container">
-                <button id="refresh-stats-btn" class="btn-outline">🔄 Refresh Stats</button>
-            </div>
-        </div>
-    `;
-
-        // Add event listeners to quick action buttons
-        this.setupQuickActions();
-        this.setupRefreshButton();
-    },
-
-    setupQuickActions() {
-        const quickActionButtons = document.querySelectorAll('.quick-action-btn');
-        
-        quickActionButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                const action = e.currentTarget.getAttribute('data-action');
-                this.handleQuickAction(action);
+        // Ensure hover effects (subtle; CSS already handles most)
+        const quickButtons = this.element.querySelectorAll('.quick-action-btn');
+        quickButtons.forEach((btn) => {
+            btn.addEventListener('mouseenter', (e) => {
+                e.currentTarget.style.transform = 'translateY(-3px)';
             });
-
-            // Add hover effects
-            button.addEventListener('mouseenter', (e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-            });
-
-            button.addEventListener('mouseleave', (e) => {
+            btn.addEventListener('mouseleave', (e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
             });
         });
     },
 
+    // Bind quick action navigation
+    setupQuickActions() {
+        const quickActionButtons = this.element?.querySelectorAll('.quick-action-btn') || [];
+        quickActionButtons.forEach((button) => {
+            button.addEventListener('click', (e) => {
+                const action = e.currentTarget.getAttribute('data-action');
+                this.handleQuickAction(action);
+            });
+        });
+    },
+
+    // Bind refresh button
     setupRefreshButton() {
-        const refreshBtn = document.getElementById('refresh-stats-btn');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => {
-                this.loadAndDisplayStats();
-                if (window.coreModule && window.coreModule.showNotification) {
-                    window.coreModule.showNotification('Stats refreshed!', 'success');
-                }
-            });
+        const refreshBtn = this.element?.querySelector('#refresh-stats-btn');
+        if (!refreshBtn) return;
 
-            // Add hover effect
-            refreshBtn.addEventListener('mouseenter', (e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-            });
+        refreshBtn.addEventListener('click', () => {
+            this.loadAndDisplayStats();
+            if (window.coreModule?.showNotification) {
+                window.coreModule.showNotification('Stats refreshed!', 'success');
+            }
+        });
 
-            refreshBtn.addEventListener('mouseleave', (e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-            });
-        }
+        refreshBtn.addEventListener('mouseenter', (e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+        });
+        refreshBtn.addEventListener('mouseleave', (e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+        });
     },
 
-    // UPDATED METHOD: Load and display stats from shared data
+    // Orchestrates stats reload + UI update
     loadAndDisplayStats() {
-        // Get stats from shared data
-        const profileStats = this.getProfileStats();
-        
-        // Update dashboard stats
-        this.updateDashboardStats(profileStats);
-        
-        // Update recent activity
-        this.updateRecentActivity(profileStats);
+        const stats = this.getProfileStats();
+        this.updateDashboardStats(stats);
+        this.updateRecentActivity(stats);
     },
 
-    // UPDATED METHOD: Get stats from shared data (no ProfileModule dependency)
+    // Read stats from shared appData or localStorage
     getProfileStats() {
         let stats = {
             totalIncome: 0,
@@ -235,98 +262,87 @@ const DashboardModule = {
             completedOrders: 0
         };
 
-        // Try to get stats from shared FarmModules data
-        if (window.FarmModules && window.FarmModules.appData) {
-            const sharedStats = window.FarmModules.appData.profile?.dashboardStats;
-            if (sharedStats) {
-                stats = { ...stats, ...sharedStats };
+        // Shared appData
+        const shared = window.FarmModules?.appData?.profile?.dashboardStats;
+        if (shared) stats = { ...stats, ...shared };
+
+        // Fallback: local storage snapshot
+        const saved = localStorage.getItem('farm-dashboard-stats');
+        if (saved) {
+            try {
+                stats = { ...stats, ...JSON.parse(saved) };
+            } catch (e) {
+                console.warn('⚠️ Failed to parse farm-dashboard-stats from localStorage');
             }
         }
 
-        // Fallback to localStorage if shared data not available
-        if (stats.totalIncome === 0) {
-            const savedStats = localStorage.getItem('farm-dashboard-stats');
-            if (savedStats) {
-                stats = { ...stats, ...JSON.parse(savedStats) };
-            }
+        // Compute netProfit if not present
+        if (typeof stats.netProfit !== 'number') {
+            stats.netProfit = (stats.totalIncome || 0) - (stats.totalExpenses || 0);
         }
 
         return stats;
     },
 
-    // NEW METHOD: Update shared data (for other modules to call)
+    // Persist to shared structure and update UI
     updateDashboardStats(newStats) {
-        // Update shared data structure
-        if (window.FarmModules && window.FarmModules.appData) {
-            if (!window.FarmModules.appData.profile) {
-                window.FarmModules.appData.profile = {};
-            }
-            if (!window.FarmModules.appData.profile.dashboardStats) {
-                window.FarmModules.appData.profile.dashboardStats = {};
-            }
-            
-            Object.assign(window.FarmModules.appData.profile.dashboardStats, newStats);
+        if (window.FarmModules?.appData) {
+            const root = window.FarmModules.appData;
+            root.profile ||= {};
+            root.profile.dashboardStats ||= {};
+            Object.assign(root.profile.dashboardStats, newStats);
         }
-
-        // Update the UI
         this.updateDashboardDisplay(newStats);
     },
 
-    // NEW METHOD: Add recent activity (for other modules to call)
+    // Append activity into shared log, then update UI
     addRecentActivity(activity) {
-        if (!window.FarmModules || !window.FarmModules.appData) return;
+        const root = window.FarmModules?.appData;
+        if (!root) return;
 
-        if (!window.FarmModules.appData.profile) {
-            window.FarmModules.appData.profile = {};
-        }
-        if (!window.FarmModules.appData.profile.dashboardStats) {
-            window.FarmModules.appData.profile.dashboardStats = {};
-        }
-        if (!window.FarmModules.appData.profile.dashboardStats.recentActivities) {
-            window.FarmModules.appData.profile.dashboardStats.recentActivities = [];
-        }
+        root.profile ||= {};
+        root.profile.dashboardStats ||= {};
+        root.profile.dashboardStats.recentActivities ||= [];
 
-        // Add new activity to beginning of array
-        window.FarmModules.appData.profile.dashboardStats.recentActivities.unshift({
+        root.profile.dashboardStats.recentActivities.unshift({
             id: Date.now(),
             timestamp: new Date().toISOString(),
             ...activity
         });
 
-        // Keep only last 10 activities
-        if (window.FarmModules.appData.profile.dashboardStats.recentActivities.length > 10) {
-            window.FarmModules.appData.profile.dashboardStats.recentActivities = 
-                window.FarmModules.appData.profile.dashboardStats.recentActivities.slice(0, 10);
-        }
+        // Trim to last 10
+        root.profile.dashboardStats.recentActivities =
+            root.profile.dashboardStats.recentActivities.slice(0, 10);
 
-        // Update UI
+        // Refresh UI view
         this.updateRecentActivity(this.getProfileStats());
     },
 
-    // UPDATED METHOD: Update dashboard display with current stats
+    // Update stat cards
     updateDashboardDisplay(stats) {
-        // Update main stats cards
+        // Cards
         this.updateStatCard('total-revenue', this.formatCurrency(stats.totalRevenue || stats.totalIncome || 0));
         this.updateStatCard('total-expenses', this.formatCurrency(stats.totalExpenses || 0));
         this.updateStatCard('inventory-items', stats.totalInventoryItems || 0);
         this.updateStatCard('active-birds', stats.totalBirds || 0);
         this.updateStatCard('total-orders', stats.totalOrders || 0);
-        this.updateStatCard('net-profit', this.formatCurrency(stats.netProfit || (stats.totalIncome - stats.totalExpenses) || 0));
+        this.updateStatCard('net-profit', this.formatCurrency(stats.netProfit || ((stats.totalIncome || 0) - (stats.totalExpenses || 0))));
         this.updateStatCard('total-customers', stats.totalCustomers || 0);
         this.updateStatCard('total-products', stats.totalProducts || 0);
 
-        // Update profit card color based on value
+        // Profit card accent
         const profitCard = document.getElementById('profit-card');
         if (profitCard) {
-            const netProfit = stats.netProfit || (stats.totalIncome - stats.totalExpenses) || 0;
+            const netProfit = stats.netProfit || ((stats.totalIncome || 0) - (stats.totalExpenses || 0));
             const profitColor = netProfit >= 0 ? '#22c55e' : '#ef4444';
             profitCard.style.borderLeft = `4px solid ${profitColor}`;
         }
 
-        // Update revenue card with monthly indicator
+        // Monthly indicator appended once
         const revenueCard = document.getElementById('revenue-card');
-        if (revenueCard && stats.monthlyRevenue > 0) {
+        if (revenueCard && stats.monthlyRevenue > 0 && !revenueCard.querySelector('.monthly-indicator')) {
             const monthlyIndicator = document.createElement('div');
+            monthlyIndicator.className = 'monthly-indicator';
             monthlyIndicator.style.fontSize = '12px';
             monthlyIndicator.style.color = '#22c55e';
             monthlyIndicator.style.marginTop = '4px';
@@ -335,31 +351,27 @@ const DashboardModule = {
         }
     },
 
-    // UPDATED METHOD: Update individual stat card
+    // Single stat cell animation and update
     updateStatCard(elementId, value) {
         const element = document.getElementById(elementId);
-        if (element) {
-            // Add animation
-            element.style.transform = 'scale(1.1)';
-            setTimeout(() => {
-                element.style.transform = 'scale(1)';
-                element.textContent = value;
-            }, 150);
-        }
+        if (!element) return;
+        element.style.transform = 'scale(1.06)';
+        setTimeout(() => {
+            element.style.transform = 'scale(1)';
+            element.textContent = value;
+        }, 140);
     },
 
-    // UPDATED METHOD: Update recent activity section
+    // Render activity list
     updateRecentActivity(stats) {
         const activityContent = document.getElementById('activity-content');
         if (!activityContent) return;
 
-        // Get activities from shared data
         const activities = [];
         const recentActivities = window.FarmModules?.appData?.profile?.dashboardStats?.recentActivities || [];
 
         if (recentActivities.length > 0) {
-            // Use activities from shared data
-            recentActivities.forEach(activity => {
+            recentActivities.forEach((activity) => {
                 activities.push({
                     icon: activity.icon || '📊',
                     text: activity.message || activity.text || 'Activity',
@@ -367,40 +379,36 @@ const DashboardModule = {
                 });
             });
         } else {
-            // Generate activity items based on stats as fallback
-            if (stats.totalOrders > 0) {
+            // Fallback derived items
+            if ((stats.totalOrders || 0) > 0) {
                 activities.push({
                     icon: '📋',
                     text: `${stats.completedOrders || 0} orders completed`,
                     time: 'Recently'
                 });
             }
-
-            if (stats.totalRevenue > 0) {
+            if ((stats.totalRevenue || 0) > 0) {
                 activities.push({
                     icon: '💰',
                     text: `${this.formatCurrency(stats.totalRevenue)} total revenue`,
                     time: 'Updated'
                 });
             }
-
-            if (stats.totalInventoryItems > 0) {
+            if ((stats.totalInventoryItems || 0) > 0) {
                 activities.push({
                     icon: '📦',
                     text: `${stats.totalInventoryItems} inventory items managed`,
                     time: 'Current'
                 });
             }
-
-            if (stats.totalBirds > 0) {
+            if ((stats.totalBirds || 0) > 0) {
                 activities.push({
                     icon: '🐔',
                     text: `${stats.totalBirds} birds in stock`,
                     time: 'Active'
                 });
             }
-
-            if (stats.totalCustomers > 0) {
+            if ((stats.totalCustomers || 0) > 0) {
                 activities.push({
                     icon: '👥',
                     text: `${stats.totalCustomers} customers registered`,
@@ -410,26 +418,24 @@ const DashboardModule = {
         }
 
         if (activities.length === 0) {
-            // Show default message if no activities
             activityContent.innerHTML = `
-                <div style="text-align: center; color: #666; padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No recent activity</div>
-                    <div style="font-size: 14px; color: #999;">Start by adding your first record</div>
+                <div style="text-align: center; color: var(--text-secondary); padding: 24px;">
+                    <div style="font-size: 40px; margin-bottom: 12px;">📊</div>
+                    <div style="font-weight: 600; color: var(--text-primary);">No recent activity</div>
+                    <div style="font-size: 14px;">Start by adding your first record</div>
                 </div>
             `;
             return;
         }
 
-        // Show activity items
         activityContent.innerHTML = `
             <div style="display: flex; flex-direction: column; gap: 12px;">
                 ${activities.map(activity => `
                     <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(0,0,0,0.03); border-radius: 8px;">
                         <div style="font-size: 20px;">${activity.icon}</div>
                         <div style="flex: 1;">
-                            <div style="font-weight: 600; color: #1a1a1a; font-size: 14px;">${activity.text}</div>
-                            <div style="font-size: 12px; color: #666;">${activity.time}</div>
+                            <div style="font-weight: 600; color: var(--text-primary); font-size: 14px;">${activity.text}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">${activity.time}</div>
                         </div>
                     </div>
                 `).join('')}
@@ -437,61 +443,56 @@ const DashboardModule = {
         `;
     },
 
-    // NEW METHOD: Format time ago for activity timestamps
+    // Utility: human-friendly time
     formatTimeAgo(timestamp) {
         const now = new Date();
         const time = new Date(timestamp);
         const diffInSeconds = Math.floor((now - time) / 1000);
-        
+
         if (diffInSeconds < 60) return 'Just now';
         if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
         if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
         return `${Math.floor(diffInSeconds / 86400)}d ago`;
     },
 
-    // UPDATED METHOD: Force refresh stats (can be called from other modules)
+    // External trigger hook
     refreshStats() {
         this.loadAndDisplayStats();
     },
 
+    // Navigation handling for quick actions
     handleQuickAction(action) {
-        console.log(`Quick action: ${action}`);
-        
         const actionMap = {
             'add-income': 'income-expenses',
-            'add-expense': 'income-expenses', 
+            'add-expense': 'income-expenses',
             'check-inventory': 'inventory-check',
             'record-feed': 'feed-record',
             'add-production': 'production',
             'view-reports': 'reports'
         };
 
-        const targetModule = actionMap[action];
-        if (targetModule) {
-            // FIX: Use the correct method to switch sections
-            if (window.FarmManagementApp) {
-                window.FarmManagementApp.showSection(targetModule);
-            } else if (window.app && window.app.showSection) {
-                window.app.showSection(targetModule);
-            } else {
-                // Fallback: manually trigger navigation
-                const event = new CustomEvent('sectionChange', { 
-                    detail: { section: targetModule } 
-                });
-                document.dispatchEvent(event);
-            }
-            
-            // Show notification
-            if (window.coreModule && window.coreModule.showNotification) {
-                window.coreModule.showNotification(`Opening ${this.getActionName(action)}...`, 'info');
-            }
+        const target = actionMap[action];
+        if (!target) return;
+
+        if (window.FarmManagementApp?.showSection) {
+            window.FarmManagementApp.showSection(target);
+        } else if (window.app?.showSection) {
+            window.app.showSection(target);
+        } else {
+            const event = new CustomEvent('sectionChange', { detail: { section: target } });
+            document.dispatchEvent(event);
+        }
+
+        if (window.coreModule?.showNotification) {
+            window.coreModule.showNotification(`Opening ${this.getActionName(action)}...`, 'info');
         }
     },
 
+    // Pretty names for quick action notifications
     getActionName(action) {
         const names = {
             'add-income': 'Income & Expenses',
-            'add-expense': 'Income & Expenses', 
+            'add-expense': 'Income & Expenses',
             'check-inventory': 'Inventory Check',
             'record-feed': 'Feed Records',
             'add-production': 'Production',
@@ -500,16 +501,17 @@ const DashboardModule = {
         return names[action] || action;
     },
 
+    // Currency formatter
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD'
-        }).format(amount);
+        }).format(amount || 0);
     }
 };
 
-// Register the module
-if (window.FarmModules) {
+// Register in FarmModules system
+if (window.FarmModules && typeof window.FarmModules.registerModule === 'function') {
     window.FarmModules.registerModule('dashboard', DashboardModule);
     console.log('✅ Dashboard module registered');
 }
