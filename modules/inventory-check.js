@@ -1,1099 +1,1396 @@
-// modules/inventory-check.js - UPDATED WITH STYLE MANAGER INTEGRATION
-console.log('Loading inventory-check module...');
+// modules/inventory.js - USING MODAL MANAGER
+console.log('Loading Inventory module with Modal Manager...');
 
-const InventoryCheckModule = {
-    name: 'inventory-check',
+const InventoryModule = {
+    name: 'inventory',
     initialized: false,
-    inventory: [],
-    categories: ['feed', 'medical', 'packaging', 'equipment', 'cleaning', 'other'],
+    inventoryItems: [],
     element: null,
+    currentFilter: 'all',
+    searchQuery: '',
 
     initialize() {
-        console.log('📦 Initializing Inventory Check...');
+        console.log('📦 Initializing Inventory...');
         
-        // ✅ ADDED: Get the content area element
         this.element = document.getElementById('content-area');
         if (!this.element) return false;
 
-        // ✅ ADDED: Register with StyleManager
-        if (window.StyleManager) {
-            StyleManager.registerModule(this.id, this.element, this);
-        }
+        // Load CSS if not already loaded
+        this.loadCSS();
 
         this.loadData();
         this.renderModule();
         this.setupEventListeners();
         this.initialized = true;
         
-        // Sync initial stats with profile
-        this.syncStatsWithProfile();
-        
-        console.log('✅ Inventory Check initialized with StyleManager');
+        console.log('✅ Inventory initialized');
         return true;
     },
 
-    // ✅ ADDED: Theme change handler (optional)
-    onThemeChange(theme) {
-        console.log(`Inventory Check updating for theme: ${theme}`);
-        // You can add theme-specific logic here if needed
+    loadCSS() {
+        // Check if module CSS is already loaded
+        if (document.querySelector('link[href*="inventory.css"]')) {
+            return;
+        }
+        
+        // Create link element for module-specific CSS
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'css/inventory.css';
+        document.head.appendChild(link);
     },
 
     loadData() {
+        // Load from localStorage or use demo data
         const saved = localStorage.getItem('farm-inventory');
-        this.inventory = saved ? JSON.parse(saved) : this.getDemoData();
+        this.inventoryItems = saved ? JSON.parse(saved) : this.getDemoData();
     },
 
     getDemoData() {
         return [
-            { 
-                id: 1, 
-                name: 'Chicken Feed - Starter', 
-                category: 'feed', 
-                currentStock: 50, 
-                unit: 'kg', 
-                minStock: 20, 
-                cost: 2.5,
-                supplier: 'FeedCo',
-                lastRestocked: '2024-03-10',
-                notes: 'For chicks 0-3 weeks'
+            {
+                id: 1,
+                name: 'Chicken Feed',
+                category: 'feed',
+                quantity: 42,
+                unit: 'bags',
+                lowStockThreshold: 10,
+                status: 'in-stock',
+                lastUpdated: '2024-03-15',
+                price: 25.99,
+                supplier: 'Farm Supplies Inc'
             },
-            { 
-                id: 2, 
-                name: 'Egg Cartons - Large', 
-                category: 'packaging', 
-                currentStock: 200, 
-                unit: 'pcs', 
-                minStock: 50, 
-                cost: 0.5,
-                supplier: 'Packaging Inc',
-                lastRestocked: '2024-03-12',
-                notes: '30-dozen capacity'
+            {
+                id: 2,
+                name: 'Egg Cartons',
+                category: 'packaging',
+                quantity: 8,
+                unit: 'cases',
+                lowStockThreshold: 5,
+                status: 'low-stock',
+                lastUpdated: '2024-03-14',
+                price: 12.50,
+                supplier: 'Packaging Plus'
             },
-            { 
-                id: 3, 
-                name: 'Poultry Vaccines', 
-                category: 'medical', 
-                currentStock: 5, 
-                unit: 'bottles', 
-                minStock: 10, 
-                cost: 15,
-                supplier: 'VetSupply',
-                lastRestocked: '2024-03-05',
-                notes: 'Keep refrigerated'
+            {
+                id: 3,
+                name: 'Poultry Vaccines',
+                category: 'medication',
+                quantity: 0,
+                unit: 'vials',
+                lowStockThreshold: 5,
+                status: 'out-of-stock',
+                lastUpdated: '2024-03-10',
+                price: 45.00,
+                supplier: 'Vet Supplies Co'
             },
-            { 
-                id: 4, 
-                name: 'Water Troughs', 
-                category: 'equipment', 
-                currentStock: 8, 
-                unit: 'pcs', 
-                minStock: 5, 
-                cost: 25,
-                supplier: 'FarmGear',
-                lastRestocked: '2024-02-28',
-                notes: '10L capacity'
+            {
+                id: 4,
+                name: 'Broiler Chicks',
+                category: 'livestock',
+                quantity: 120,
+                unit: 'birds',
+                lowStockThreshold: 50,
+                status: 'in-stock',
+                lastUpdated: '2024-03-12',
+                price: 3.50,
+                supplier: 'Hatchery Farms'
             },
-            { 
-                id: 5, 
-                name: 'Disinfectant Spray', 
-                category: 'cleaning', 
-                currentStock: 3, 
-                unit: 'bottles', 
-                minStock: 5, 
-                cost: 8,
-                supplier: 'CleanCo',
-                lastRestocked: '2024-03-08',
-                notes: 'For equipment cleaning'
+            {
+                id: 5,
+                name: 'Fertilizer',
+                category: 'crops',
+                quantity: 15,
+                unit: 'bags',
+                lowStockThreshold: 5,
+                status: 'in-stock',
+                lastUpdated: '2024-03-08',
+                price: 32.99,
+                supplier: 'Agri-Grow'
+            },
+            {
+                id: 6,
+                name: 'Water Troughs',
+                category: 'equipment',
+                quantity: 2,
+                unit: 'units',
+                lowStockThreshold: 2,
+                status: 'on-order',
+                lastUpdated: '2024-03-05',
+                price: 89.99,
+                supplier: 'Farm Equipment Ltd'
             }
         ];
+    },
+
+    calculateStats() {
+        const totalItems = this.inventoryItems.length;
+        const totalValue = this.inventoryItems.reduce((sum, item) => 
+            sum + (item.quantity * (item.price || 0)), 0);
+        
+        const lowStockItems = this.inventoryItems.filter(item => 
+            item.status === 'low-stock' || item.status === 'out-of-stock').length;
+        
+        const categories = [...new Set(this.inventoryItems.map(item => item.category))];
+        
+        return {
+            totalItems,
+            totalValue,
+            lowStockItems,
+            categories: categories.length,
+            inStockItems: this.inventoryItems.filter(item => item.status === 'in-stock').length
+        };
+    },
+
+    getFilteredItems() {
+        let filtered = this.inventoryItems;
+        
+        // Apply category filter
+        if (this.currentFilter !== 'all') {
+            filtered = filtered.filter(item => item.category === this.currentFilter);
+        }
+        
+        // Apply search filter
+        if (this.searchQuery) {
+            const query = this.searchQuery.toLowerCase();
+            filtered = filtered.filter(item => 
+                item.name.toLowerCase().includes(query) ||
+                item.category.toLowerCase().includes(query) ||
+                item.supplier?.toLowerCase().includes(query)
+            );
+        }
+        
+        return filtered;
+    },
+
+    getCategoryItems(category) {
+        return this.inventoryItems.filter(item => item.category === category);
     },
 
     renderModule() {
         if (!this.element) return;
 
         const stats = this.calculateStats();
-        const lowStockItems = this.getLowStockItems();
+        const filteredItems = this.getFilteredItems();
+        const categories = [...new Set(this.inventoryItems.map(item => item.category))];
 
         this.element.innerHTML = `
-         <div id="inventory-check" class="module-container">
-            <div class="module-container">
-                <div class="module-header">
-                    <h1 class="module-title">Inventory Check</h1>
-                    <p class="module-subtitle">Manage your farm inventory</p>
+            <div id="inventory" class="module-container">
+                <!-- Modern Header -->
+                <div class="inv-module-header">
+                    <div class="inv-header-content">
+                        <div class="inv-header-text">
+                            <h1 class="inv-module-title">Inventory Management</h1>
+                            <p class="inv-module-subtitle">Track and manage your farm's stock levels</p>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Inventory Overview -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.totalItems}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Total Items</div>
+                <!-- Inventory Stats -->
+                <div class="inv-stats-grid">
+                    <div class="inv-stat-card">
+                        <div class="inv-stat-icon">📦</div>
+                        <div class="inv-stat-value">${stats.totalItems}</div>
+                        <div class="inv-stat-label">Total Items</div>
                     </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">✅</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.inStock}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">In Stock</div>
+                    <div class="inv-stat-card">
+                        <div class="inv-stat-icon">💰</div>
+                        <div class="inv-stat-value">${this.formatCurrency(stats.totalValue)}</div>
+                        <div class="inv-stat-label">Total Value</div>
                     </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">⚠️</div>
-                        <div style="font-size: 24px; font-weight: bold; color: ${lowStockItems.length > 0 ? '#f59e0b' : '#22c55e'}; margin-bottom: 4px;">${lowStockItems.length}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Low Stock</div>
+                    <div class="inv-stat-card">
+                        <div class="inv-stat-icon">⚠️</div>
+                        <div class="inv-stat-value">${stats.lowStockItems}</div>
+                        <div class="inv-stat-label">Low Stock</div>
                     </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.formatCurrency(stats.totalValue)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Total Value</div>
+                    <div class="inv-stat-card">
+                        <div class="inv-stat-icon">📋</div>
+                        <div class="inv-stat-value">${stats.categories}</div>
+                        <div class="inv-stat-label">Categories</div>
                     </div>
                 </div>
 
                 <!-- Quick Actions -->
-                <div class="quick-action-grid">
-                    <button class="quick-action-btn" id="add-item-btn">
-                        <div style="font-size: 32px;">➕</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Item</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Add new inventory item</span>
+                <div class="inv-quick-actions">
+                    <button class="inv-quick-btn primary" id="add-item-btn">
+                        <div class="inv-quick-icon">➕</div>
+                        <div>
+                            <div class="inv-quick-title">Add Item</div>
+                            <div class="inv-quick-desc">Add new inventory item</div>
+                        </div>
                     </button>
-                    <button class="quick-action-btn" id="stock-check-btn">
-                        <div style="font-size: 32px;">🔍</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Stock Check</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Update stock levels</span>
+                    
+                    <button class="inv-quick-btn" id="quick-check-btn">
+                        <div class="inv-quick-icon">🔍</div>
+                        <div>
+                            <div class="inv-quick-title">Quick Check</div>
+                            <div class="inv-quick-desc">Check stock levels</div>
+                        </div>
                     </button>
-                    <button class="quick-action-btn" id="low-stock-report-btn">
-                        <div style="font-size: 32px;">📋</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Low Stock Report</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View items to reorder</span>
+                    
+                    <button class="inv-quick-btn" id="reorder-btn">
+                        <div class="inv-quick-icon">🔄</div>
+                        <div>
+                            <div class="inv-quick-title">Reorder</div>
+                            <div class="inv-quick-desc">Place reorder</div>
+                        </div>
                     </button>
-                    <button class="quick-action-btn" id="inventory-report-btn">
-                        <div style="font-size: 32px;">📈</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Inventory Report</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Full inventory analysis</span>
+                    
+                    <button class="inv-quick-btn" id="inventory-report-btn">
+                        <div class="inv-quick-icon">📊</div>
+                        <div>
+                            <div class="inv-quick-title">Reports</div>
+                            <div class="inv-quick-desc">View reports</div>
+                        </div>
                     </button>
                 </div>
 
-                <!-- Add Item Form -->
-                <div id="inventory-form-container" class="hidden">
-                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
-                        <h3 style="color: var(--text-primary); margin-bottom: 20px;">Add Inventory Item</h3>
-                        <form id="inventory-form">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Item Name</label>
-                                    <input type="text" class="form-input" id="item-name" required placeholder="e.g., Chicken Feed - Starter">
-                                </div>
-                                <div>
-                                    <label class="form-label">Category</label>
-                                    <select class="form-input" id="item-category" required>
-                                        <option value="">Select category</option>
-                                        ${this.categories.map(cat => `
-                                            <option value="${cat}">${this.formatCategory(cat)}</option>
-                                        `).join('')}
-                                    </select>
-                                </div>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Current Stock</label>
-                                    <input type="number" class="form-input" id="current-stock" min="0" required>
-                                </div>
-                                <div>
-                                    <label class="form-label">Unit</label>
-                                    <input type="text" class="form-input" id="item-unit" required placeholder="e.g., kg, pcs, bottles">
-                                </div>
-                                <div>
-                                    <label class="form-label">Min Stock Level</label>
-                                    <input type="number" class="form-input" id="min-stock" min="0" required>
-                                </div>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Cost per Unit ($)</label>
-                                    <input type="number" class="form-input" id="item-cost" step="0.01" min="0" required>
-                                </div>
-                                <div>
-                                    <label class="form-label">Supplier</label>
-                                    <input type="text" class="form-input" id="item-supplier" placeholder="Supplier name">
-                                </div>
-                            </div>
-                            <div style="margin-bottom: 20px;">
-                                <label class="form-label">Notes</label>
-                                <textarea class="form-input" id="item-notes" rows="3" placeholder="Storage instructions, usage notes, etc."></textarea>
-                            </div>
-                            <div style="display: flex; gap: 12px;">
-                                <button type="submit" class="btn-primary">Save Item</button>
-                                <button type="button" class="btn-outline" id="cancel-inventory-form">Cancel</button>
-                            </div>
-                        </form>
+                <!-- Search and Filters -->
+                <div class="inv-search-section">
+                    <div class="inv-search-row">
+                        <input type="text" 
+                               class="inv-search-input" 
+                               id="inventory-search" 
+                               placeholder="Search inventory items..."
+                               value="${this.searchQuery}">
+                        <button class="btn btn-outline" id="clear-search-btn">
+                            Clear
+                        </button>
+                    </div>
+                    
+                    <div class="inv-category-filters">
+                        <button class="inv-category-filter ${this.currentFilter === 'all' ? 'active' : ''}" 
+                                data-filter="all">
+                            All Items
+                        </button>
+                        ${categories.map(category => `
+                            <button class="inv-category-filter ${this.currentFilter === category ? 'active' : ''}" 
+                                    data-filter="${category}">
+                                ${this.formatCategoryName(category)}
+                            </button>
+                        `).join('')}
                     </div>
                 </div>
 
-                <!-- Stock Update Form -->
-                <div id="stock-update-container" class="hidden">
-                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
-                        <h3 style="color: var(--text-primary); margin-bottom: 20px;" id="stock-update-title">Update Stock Level</h3>
-                        <form id="stock-update-form">
-                            <input type="hidden" id="update-item-id">
-                            <div style="margin-bottom: 16px;">
-                                <div style="font-weight: 600; color: var(--text-primary); font-size: 18px;" id="update-item-name"></div>
-                                <div style="font-size: 14px; color: var(--text-secondary);" id="update-item-details"></div>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Current Stock</label>
-                                    <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; font-weight: 600; color: var(--text-primary);" id="current-stock-display"></div>
-                                </div>
-                                <div>
-                                    <label class="form-label">New Stock Level</label>
-                                    <input type="number" class="form-input" id="new-stock-level" min="0" required>
-                                </div>
-                            </div>
-                            <div style="margin-bottom: 20px;">
-                                <label class="form-label">Update Reason</label>
-                                <select class="form-input" id="stock-update-reason" required>
-                                    <option value="restock">Restock/New Delivery</option>
-                                    <option value="usage">Daily Usage</option>
-                                    <option value="damage">Damage/Loss</option>
-                                    <option value="adjustment">Stock Adjustment</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                            <div style="display: flex; gap: 12px;">
-                                <button type="submit" class="btn-primary">Update Stock</button>
-                                <button type="button" class="btn-outline" id="cancel-stock-update">Cancel</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Low Stock Alerts -->
-                ${lowStockItems.length > 0 ? `
-                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px; border-left: 4px solid #f59e0b;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                            <h3 style="color: var(--text-primary); font-size: 20px;">⚠️ Low Stock Alerts</h3>
-                            <span style="background: #f59e0b; color: white; padding: 4px 12px; border-radius: 12px; font-size: 14px; font-weight: 600;">
-                                ${lowStockItems.length} item${lowStockItems.length > 1 ? 's' : ''}
+                <!-- Inventory Table -->
+                <div class="inv-table-container">
+                    <div class="inv-table-header">
+                        <h3 class="inv-table-title">Inventory Items</h3>
+                        <div>
+                            <span class="text-tertiary text-sm">
+                                Showing ${filteredItems.length} of ${this.inventoryItems.length} items
                             </span>
                         </div>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
-                            ${lowStockItems.map(item => `
-                                <div style="padding: 12px; background: #fef3c7; border-radius: 8px; border: 1px solid #f59e0b;">
-                                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${item.name}</div>
-                                    <div style="font-size: 14px; color: #92400e;">
-                                        ${item.currentStock} ${item.unit} • Min: ${item.minStock} ${item.unit}
-                                    </div>
-                                    <button class="btn-outline restock-item" data-id="${item.id}" style="margin-top: 8px; padding: 4px 12px; font-size: 12px; width: 100%;">
-                                        Restock Now
-                                    </button>
-                                </div>
-                            `).join('')}
-                        </div>
                     </div>
-                ` : ''}
-
-                <!-- Inventory List -->
-                <div class="glass-card" style="padding: 24px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="color: var(--text-primary); font-size: 20px;">All Inventory Items</h3>
-                        <div style="display: flex; gap: 12px;">
-                            <select class="form-input" id="category-filter" style="width: auto;">
-                                <option value="">All Categories</option>
-                                ${this.categories.map(cat => `
-                                    <option value="${cat}">${this.formatCategory(cat)}</option>
-                                `).join('')}
-                            </select>
-                            <button class="btn-primary" id="show-add-form">Add Item</button>
-                        </div>
-                    </div>
-                    <div id="inventory-list">
-                        ${this.renderInventoryList()}
-                    </div>
-                </div>
-
-                <!-- Category Summary -->
-                <div class="glass-card" style="padding: 24px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Inventory by Category</h3>
-                    <div id="category-summary">
-                        ${this.renderCategorySummary()}
-                    </div>
+                    
+                    ${filteredItems.length === 0 ? this.renderEmptyState() : this.renderInventoryTable(filteredItems)}
                 </div>
             </div>
-
-            <!-- POPOUT MODALS - Added at the end to overlay content -->
-            <!-- Inventory Report Popout Modal -->
-            <div id="inventory-report-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 800px;">
-                    <div class="popout-modal-header">
-                        <h3 class="popout-modal-title" id="inventory-report-title">Inventory Report</h3>
-                        <button class="popout-modal-close" id="close-inventory-report">&times;</button>
-                    </div>
-                    <div class="popout-modal-body">
-                        <div id="inventory-report-content">
-                            <!-- Report content will be inserted here -->
-                        </div>
-                    </div>
-                    <div class="popout-modal-footer">
-                        <button class="btn-outline" id="print-inventory-report">🖨️ Print</button>
-                        <button class="btn-primary" id="close-inventory-report-btn">Close</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Low Stock Report Popout Modal -->
-            <div id="low-stock-report-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 800px;">
-                    <div class="popout-modal-header">
-                        <h3 class="popout-modal-title" id="low-stock-report-title">Low Stock Report</h3>
-                        <button class="popout-modal-close" id="close-low-stock-report">&times;</button>
-                    </div>
-                    <div class="popout-modal-body">
-                        <div id="low-stock-report-content">
-                            <!-- Report content will be inserted here -->
-                        </div>
-                    </div>
-                    <div class="popout-modal-footer">
-                        <button class="btn-outline" id="print-low-stock-report">🖨️ Print</button>
-                        <button class="btn-primary" id="close-low-stock-report-btn">Close</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Stock Check Popout Modal -->
-            <div id="stock-check-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 800px;">
-                    <div class="popout-modal-header">
-                        <h3 class="popout-modal-title" id="stock-check-title">Stock Check Report</h3>
-                        <button class="popout-modal-close" id="close-stock-check">&times;</button>
-                    </div>
-                    <div class="popout-modal-body">
-                        <div id="stock-check-content">
-                            <!-- Report content will be inserted here -->
-                        </div>
-                    </div>
-                    <div class="popout-modal-footer">
-                        <button class="btn-outline" id="print-stock-check">🖨️ Print</button>
-                        <button class="btn-primary" id="close-stock-check-btn">Close</button>
-                    </div>
-                </div>
-            </div>
-          </div>  
         `;
-
+        
         this.setupEventListeners();
     },
 
-    // KEEP ALL THE EXISTING METHODS EXACTLY AS THEY WERE WORKING
-    calculateStats() {
-        const totalItems = this.inventory.length;
-        const inStock = this.inventory.filter(item => item.currentStock > 0).length;
-        const totalValue = this.inventory.reduce((sum, item) => sum + (item.currentStock * item.cost), 0);
-        const lowStockItems = this.getLowStockItems().length;
-        const outOfStockItems = this.getOutOfStockItems().length;
+    renderEmptyState() {
+        return `
+            <div class="inv-empty-state">
+                <div class="inv-empty-icon">📦</div>
+                <h3 class="inv-empty-title">No items found</h3>
+                <p class="inv-empty-desc">
+                    ${this.searchQuery ? 
+                        'No items match your search. Try a different search term.' : 
+                        'Add your first inventory item to get started.'}
+                </p>
+                ${!this.searchQuery ? `
+                    <button class="btn btn-primary" id="add-first-item-btn">
+                        ➕ Add First Item
+                    </button>
+                ` : ''}
+            </div>
+        `;
+    },
+
+    renderInventoryTable(items) {
+        return `
+            <div style="overflow-x: auto;">
+                <table class="inv-table">
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Category</th>
+                            <th>Quantity</th>
+                            <th>Status</th>
+                            <th>Last Updated</th>
+                            <th>Value</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${items.map(item => `
+                            <tr data-id="${item.id}">
+                                <td>
+                                    <div style="font-weight: 600; color: var(--color-text-primary);">
+                                        ${item.name}
+                                    </div>
+                                    ${item.supplier ? `
+                                        <div style="font-size: 12px; color: var(--color-text-tertiary); margin-top: 2px;">
+                                            ${item.supplier}
+                                        </div>
+                                    ` : ''}
+                                </td>
+                                <td>
+                                    <span style="padding: 4px 8px; background: var(--color-bg-tertiary); 
+                                          border-radius: 6px; font-size: 12px;">
+                                        ${this.formatCategoryName(item.category)}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="inv-quantity ${item.quantity <= item.lowStockThreshold ? 'low' : ''} 
+                                         ${item.quantity === 0 ? 'critical' : ''}">
+                                        ${item.quantity} ${item.unit}
+                                    </div>
+                                    ${item.lowStockThreshold ? `
+                                        <div style="font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px;">
+                                            Low: ${item.lowStockThreshold}
+                                        </div>
+                                    ` : ''}
+                                </td>
+                                <td>
+                                    <span class="inv-status ${item.status}">
+                                        ${this.formatStatus(item.status)}
+                                    </span>
+                                </td>
+                                <td>
+                                    ${this.formatDate(item.lastUpdated)}
+                                </td>
+                                <td>
+                                    ${this.formatCurrency(item.quantity * (item.price || 0))}
+                                </td>
+                                <td>
+                                    <div class="inv-actions">
+                                        <button class="inv-action-btn edit" data-action="edit" data-id="${item.id}">
+                                            Edit
+                                        </button>
+                                        <button class="inv-action-btn delete" data-action="delete" data-id="${item.id}">
+                                            Delete
+                                        </button>
+                                        <button class="inv-action-btn view" data-action="view" data-id="${item.id}">
+                                            View
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    },
+
+    // ==================== MODAL METHODS ====================
+    showAddItemModal() {
+        ModalManager.createQuickForm({
+            id: 'add-item-modal',
+            title: 'Add Inventory Item',
+            subtitle: 'Add a new item to your inventory',
+            size: 'modal-lg',
+            fields: [
+                {
+                    name: 'name',
+                    type: 'text',
+                    label: 'Item Name',
+                    required: true,
+                    placeholder: 'e.g., Chicken Feed, Egg Cartons',
+                    autofocus: true
+                },
+                {
+                    name: 'category',
+                    type: 'category',
+                    label: 'Category',
+                    required: true,
+                    defaultValue: 'feed',
+                    categories: [
+                        { value: 'feed', label: 'Feed' },
+                        { value: 'medication', label: 'Medication' },
+                        { value: 'equipment', label: 'Equipment' },
+                        { value: 'livestock', label: 'Livestock' },
+                        { value: 'crops', label: 'Crops' },
+                        { value: 'packaging', label: 'Packaging' },
+                        { value: 'other', label: 'Other' }
+                    ]
+                },
+                {
+                    name: 'quantity',
+                    type: 'number',
+                    label: 'Current Quantity',
+                    required: true,
+                    min: 0,
+                    step: 1,
+                    placeholder: '0',
+                    note: 'Current stock level'
+                },
+                {
+                    name: 'unit',
+                    type: 'select',
+                    label: 'Unit of Measure',
+                    required: true,
+                    options: [
+                        { value: 'bags', label: 'Bags' },
+                        { value: 'cases', label: 'Cases' },
+                        { value: 'vials', label: 'Vials' },
+                        { value: 'birds', label: 'Birds' },
+                        { value: 'units', label: 'Units' },
+                        { value: 'liters', label: 'Liters' },
+                        { value: 'kg', label: 'Kilograms' },
+                        { value: 'other', label: 'Other' }
+                    ]
+                },
+                {
+                    name: 'lowStockThreshold',
+                    type: 'number',
+                    label: 'Low Stock Threshold',
+                    required: true,
+                    min: 0,
+                    step: 1,
+                    placeholder: '5',
+                    note: 'Alert when stock falls below this number'
+                },
+                {
+                    name: 'price',
+                    type: 'number',
+                    label: 'Unit Price (USD)',
+                    required: false,
+                    min: 0,
+                    step: 0.01,
+                    placeholder: '0.00',
+                    note: 'Price per unit (optional)'
+                },
+                {
+                    name: 'supplier',
+                    type: 'text',
+                    label: 'Supplier (Optional)',
+                    required: false,
+                    placeholder: 'Supplier name'
+                },
+                {
+                    name: 'notes',
+                    type: 'textarea',
+                    label: 'Notes (Optional)',
+                    required: false,
+                    placeholder: 'Additional notes...',
+                    rows: 3
+                }
+            ],
+            onSubmit: (data) => {
+                const newItem = {
+                    id: Date.now(),
+                    name: data.name,
+                    category: data.category,
+                    quantity: parseInt(data.quantity) || 0,
+                    unit: data.unit,
+                    lowStockThreshold: parseInt(data.lowStockThreshold) || 0,
+                    price: parseFloat(data.price) || 0,
+                    supplier: data.supplier || '',
+                    notes: data.notes || '',
+                    lastUpdated: new Date().toISOString().split('T')[0],
+                    status: this.calculateStatus(parseInt(data.quantity) || 0, parseInt(data.lowStockThreshold) || 0)
+                };
+                
+                this.addInventoryItem(newItem);
+            }
+        });
+    },
+
+    showEditItemModal(item) {
+        ModalManager.createQuickForm({
+            id: 'edit-item-modal',
+            title: 'Edit Inventory Item',
+            subtitle: 'Update item details',
+            size: 'modal-lg',
+            fields: [
+                {
+                    name: 'name',
+                    type: 'text',
+                    label: 'Item Name',
+                    required: true,
+                    value: item.name,
+                    autofocus: true
+                },
+                {
+                    name: 'category',
+                    type: 'category',
+                    label: 'Category',
+                    required: true,
+                    defaultValue: item.category,
+                    categories: [
+                        { value: 'feed', label: 'Feed' },
+                        { value: 'medication', label: 'Medication' },
+                        { value: 'equipment', label: 'Equipment' },
+                        { value: 'livestock', label: 'Livestock' },
+                        { value: 'crops', label: 'Crops' },
+                        { value: 'packaging', label: 'Packaging' },
+                        { value: 'other', label: 'Other' }
+                    ]
+                },
+                {
+                    name: 'quantity',
+                    type: 'number',
+                    label: 'Current Quantity',
+                    required: true,
+                    min: 0,
+                    step: 1,
+                    value: item.quantity,
+                    note: 'Current stock level'
+                },
+                {
+                    name: 'unit',
+                    type: 'select',
+                    label: 'Unit of Measure',
+                    required: true,
+                    value: item.unit,
+                    options: [
+                        { value: 'bags', label: 'Bags' },
+                        { value: 'cases', label: 'Cases' },
+                        { value: 'vials', label: 'Vials' },
+                        { value: 'birds', label: 'Birds' },
+                        { value: 'units', label: 'Units' },
+                        { value: 'liters', label: 'Liters' },
+                        { value: 'kg', label: 'Kilograms' },
+                        { value: 'other', label: 'Other' }
+                    ]
+                },
+                {
+                    name: 'lowStockThreshold',
+                    type: 'number',
+                    label: 'Low Stock Threshold',
+                    required: true,
+                    min: 0,
+                    step: 1,
+                    value: item.lowStockThreshold,
+                    note: 'Alert when stock falls below this number'
+                },
+                {
+                    name: 'price',
+                    type: 'number',
+                    label: 'Unit Price (USD)',
+                    required: false,
+                    min: 0,
+                    step: 0.01,
+                    value: item.price || 0,
+                    note: 'Price per unit (optional)'
+                },
+                {
+                    name: 'supplier',
+                    type: 'text',
+                    label: 'Supplier (Optional)',
+                    required: false,
+                    value: item.supplier || ''
+                },
+                {
+                    name: 'notes',
+                    type: 'textarea',
+                    label: 'Notes (Optional)',
+                    required: false,
+                    value: item.notes || '',
+                    rows: 3
+                }
+            ],
+            onSubmit: (data) => {
+                const updatedItem = {
+                    ...item,
+                    name: data.name,
+                    category: data.category,
+                    quantity: parseInt(data.quantity) || 0,
+                    unit: data.unit,
+                    lowStockThreshold: parseInt(data.lowStockThreshold) || 0,
+                    price: parseFloat(data.price) || 0,
+                    supplier: data.supplier || '',
+                    notes: data.notes || '',
+                    lastUpdated: new Date().toISOString().split('T')[0],
+                    status: this.calculateStatus(parseInt(data.quantity) || 0, parseInt(data.lowStockThreshold) || 0)
+                };
+                
+                this.updateInventoryItem(updatedItem);
+            }
+        });
+    },
+
+    showQuickCheckModal() {
+        const lowStockItems = this.inventoryItems.filter(item => 
+            item.status === 'low-stock' || item.status === 'out-of-stock');
         
-        return { totalItems, inStock, totalValue, lowStockItems, outOfStockItems };
-    },
-
-    getLowStockItems() {
-        return this.inventory.filter(item => item.currentStock <= item.minStock && item.currentStock > 0);
-    },
-
-    getOutOfStockItems() {
-        return this.inventory.filter(item => item.currentStock === 0);
-    },
-
-    renderInventoryList() {
-        if (this.inventory.length === 0) {
-            return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No inventory items</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Add your first inventory item to get started</div>
+        let content;
+        
+        if (lowStockItems.length === 0) {
+            content = `
+                <div class="confirmation-content">
+                    <div class="confirmation-icon" style="color: var(--color-success);">✅</div>
+                    <p class="confirmation-message">All items are in stock!</p>
+                    <p class="confirmation-details">No low stock items found.</p>
+                </div>
+            `;
+        } else {
+            const itemsList = lowStockItems.map(item => `
+                <div style="padding: 12px; border-bottom: 1px solid var(--color-border-light);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 600; color: var(--color-text-primary);">
+                                ${item.name}
+                            </div>
+                            <div style="font-size: 13px; color: var(--color-text-tertiary);">
+                                ${item.quantity} ${item.unit} remaining
+                            </div>
+                        </div>
+                        <span class="inv-status ${item.status}">
+                            ${this.formatStatus(item.status)}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+            
+            content = `
+                <div>
+                    <h4 style="margin-bottom: 16px; color: var(--color-text-primary);">
+                        Low Stock Items (${lowStockItems.length})
+                    </h4>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        ${itemsList}
+                    </div>
+                    <div style="margin-top: 16px; padding: 12px; background: var(--color-bg-tertiary); 
+                         border-radius: 8px; font-size: 14px; color: var(--color-text-secondary);">
+                        ⚠️ Consider reordering these items soon.
+                    </div>
                 </div>
             `;
         }
-
-        return `
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${this.inventory.map(item => {
-                    const status = this.getStockStatus(item);
-                    const statusColor = status === 'Adequate' ? '#22c55e' : status === 'Low' ? '#f59e0b' : '#ef4444';
-                    const totalValue = item.currentStock * item.cost;
-                    
-                    return `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <div style="font-size: 20px;">${this.getCategoryIcon(item.category)}</div>
-                                <div>
-                                    <div style="font-weight: 600; color: var(--text-primary);">${item.name}</div>
-                                    <div style="font-size: 14px; color: var(--text-secondary);">
-                                        ${this.formatCategory(item.category)} • ${item.supplier || 'No supplier'}
-                                        ${item.lastRestocked ? ` • Last: ${item.lastRestocked}` : ''}
-                                    </div>
-                                    ${item.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${item.notes}</div>` : ''}
-                                </div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 16px;">
-                                <div style="text-align: right;">
-                                    <div style="font-weight: bold; color: var(--text-primary); font-size: 18px;">
-                                        ${item.currentStock} ${item.unit}
-                                    </div>
-                                    <div style="font-size: 14px; color: var(--text-secondary);">
-                                        Min: ${item.minStock} ${item.unit} • ${this.formatCurrency(totalValue)}
-                                    </div>
-                                </div>
-                                <div style="padding: 4px 12px; border-radius: 12px; background: ${statusColor}20; color: ${statusColor}; font-size: 12px; font-weight: 600;">
-                                    ${status} Stock
-                                </div>
-                                <div style="display: flex; gap: 8px;">
-                                    <button class="btn-icon update-stock" data-id="${item.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Update Stock">
-                                        ✏️
-                                    </button>
-                                    <button class="btn-icon delete-item" data-id="${item.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Delete Item">
-                                        🗑️
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
-    },
-
-    renderCategorySummary() {
-        const categoryData = {};
-        this.categories.forEach(cat => {
-            categoryData[cat] = {
-                count: 0,
-                totalValue: 0,
-                lowStock: 0
-            };
-        });
-
-        this.inventory.forEach(item => {
-            if (categoryData[item.category]) {
-                categoryData[item.category].count++;
-                categoryData[item.category].totalValue += item.currentStock * item.cost;
-                if (item.currentStock <= item.minStock) {
-                    categoryData[item.category].lowStock++;
+        
+        ModalManager.show({
+            id: 'quick-check-modal',
+            title: 'Quick Stock Check',
+            subtitle: 'Low stock items summary',
+            size: 'modal-md',
+            content: content,
+            footer: `
+                <button type="button" class="btn btn-outline" data-action="close">Close</button>
+                ${lowStockItems.length > 0 ? `
+                    <button type="button" class="btn btn-primary" id="reorder-low-stock-btn">
+                        Reorder All
+                    </button>
+                ` : ''}
+            `,
+            onOpen: () => {
+                // Add reorder button handler
+                const reorderBtn = document.getElementById('reorder-low-stock-btn');
+                if (reorderBtn) {
+                    reorderBtn.addEventListener('click', () => {
+                        this.showReorderModal();
+                        ModalManager.closeCurrentModal();
+                    });
+                }
+                
+                // Add close button handler
+                const closeBtn = document.querySelector('[data-action="close"]');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', () => ModalManager.closeCurrentModal());
                 }
             }
         });
+    },
 
-        return `
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                ${this.categories.map(cat => {
-                    const data = categoryData[cat];
-                    return `
-                        <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                                <div style="font-size: 20px;">${this.getCategoryIcon(cat)}</div>
-                                <div style="font-weight: 600; color: var(--text-primary);">${this.formatCategory(cat)}</div>
+    showReorderModal(itemId = null) {
+        let itemsToReorder;
+        
+        if (itemId) {
+            const item = this.inventoryItems.find(i => i.id === itemId);
+            itemsToReorder = item ? [item] : [];
+        } else {
+            itemsToReorder = this.inventoryItems.filter(item => 
+                item.status === 'low-stock' || item.status === 'out-of-stock');
+        }
+        
+        if (itemsToReorder.length === 0) {
+            ModalManager.alert({
+                title: 'No Items to Reorder',
+                message: 'All items are currently in stock.',
+                icon: '✅'
+            });
+            return;
+        }
+        
+        const itemsList = itemsToReorder.map(item => `
+            <div style="padding: 12px; border-bottom: 1px solid var(--color-border-light);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <div style="font-weight: 600; color: var(--color-text-primary);">
+                        ${item.name}
+                    </div>
+                    <span class="inv-status ${item.status}">
+                        ${this.formatStatus(item.status)}
+                    </span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px;">
+                    <div>
+                        <span style="color: var(--color-text-tertiary);">Current:</span>
+                        <span style="margin-left: 8px; font-weight: 600;">
+                            ${item.quantity} ${item.unit}
+                        </span>
+                    </div>
+                    <div>
+                        <span style="color: var(--color-text-tertiary);">Low Stock:</span>
+                        <span style="margin-left: 8px; font-weight: 600;">
+                            ${item.lowStockThreshold}
+                        </span>
+                    </div>
+                </div>
+                <div style="margin-top: 8px;">
+                    <div style="font-size: 13px; color: var(--color-text-tertiary); margin-bottom: 4px;">
+                        Reorder Quantity:
+                    </div>
+                    <input type="number" 
+                           class="quick-form-input" 
+                           style="width: 100px; padding: 8px 12px; font-size: 14px;"
+                           id="reorder-qty-${item.id}"
+                           value="${Math.max(10, item.lowStockThreshold * 2)}"
+                           min="1"
+                           step="1">
+                    <span style="margin-left: 8px; color: var(--color-text-secondary);">
+                        ${item.unit}
+                    </span>
+                </div>
+            </div>
+        `).join('');
+        
+        const totalValue = itemsToReorder.reduce((sum, item) => {
+            const qty = Math.max(10, item.lowStockThreshold * 2);
+            return sum + (qty * (item.price || 0));
+        }, 0);
+        
+        ModalManager.createQuickForm({
+            id: 'reorder-modal',
+            title: 'Place Reorder',
+            subtitle: 'Order low stock items from suppliers',
+            size: 'modal-lg',
+            fields: [
+                {
+                    name: 'supplierName',
+                    type: 'text',
+                    label: 'Supplier Name',
+                    required: true,
+                    placeholder: 'e.g., Farm Supplies Inc',
+                    autofocus: true
+                },
+                {
+                    name: 'orderNotes',
+                    type: 'textarea',
+                    label: 'Order Notes (Optional)',
+                    required: false,
+                    placeholder: 'Special instructions, delivery requirements...',
+                    rows: 3
+                },
+                {
+                    name: 'deliveryDate',
+                    type: 'text',
+                    label: 'Expected Delivery Date',
+                    required: false,
+                    placeholder: 'YYYY-MM-DD or "ASAP"'
+                }
+            ],
+            content: `
+                <div style="margin-bottom: 24px;">
+                    <h4 style="margin-bottom: 12px; color: var(--color-text-primary);">
+                        Items to Reorder (${itemsToReorder.length})
+                    </h4>
+                    <div style="max-height: 300px; overflow-y: auto; border: 1px solid var(--color-border-light); 
+                         border-radius: 8px; margin-bottom: 16px;">
+                        ${itemsList}
+                    </div>
+                    <div style="padding: 12px; background: var(--color-bg-tertiary); border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                            <span style="color: var(--color-text-secondary);">Estimated Total:</span>
+                            <span style="font-weight: 600; color: var(--color-text-primary);">
+                                ${this.formatCurrency(totalValue)}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `,
+            onSubmit: (data) => {
+                // Get reorder quantities
+                const orderItems = itemsToReorder.map(item => {
+                    const qtyInput = document.getElementById(`reorder-qty-${item.id}`);
+                    const quantity = parseInt(qtyInput?.value) || Math.max(10, item.lowStockThreshold * 2);
+                    
+                    return {
+                        id: item.id,
+                        name: item.name,
+                        quantity: quantity,
+                        unit: item.unit,
+                        price: item.price || 0,
+                        total: quantity * (item.price || 0)
+                    };
+                });
+                
+                const totalOrderValue = orderItems.reduce((sum, item) => sum + item.total, 0);
+                
+                // Create order record
+                const order = {
+                    id: Date.now(),
+                    date: new Date().toISOString().split('T')[0],
+                    supplierName: data.supplierName,
+                    orderNotes: data.orderNotes || '',
+                    deliveryDate: data.deliveryDate || '',
+                    items: orderItems,
+                    totalValue: totalOrderValue,
+                    status: 'pending'
+                };
+                
+                this.placeReorder(order);
+            }
+        });
+    },
+
+    showInventoryReportsModal() {
+        const stats = this.calculateStats();
+        const categories = this.getCategoryBreakdown();
+        
+        ModalManager.showReports({
+            id: 'inventory-reports-modal',
+            title: 'Inventory Reports',
+            subtitle: 'Generate inventory analysis reports',
+            reports: [
+                {
+                    id: 'stock-summary',
+                    icon: '📋',
+                    title: 'Stock Summary',
+                    description: 'Current stock levels',
+                    preview: `
+                        <h4 class="font-semibold mb-2">Stock Summary Report</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span>Total Items:</span>
+                                <span class="font-semibold">${stats.totalItems}</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="color: var(--text-secondary);">Items:</span>
-                                <span style="font-weight: 600; color: var(--text-primary);">${data.count}</span>
+                            <div class="flex justify-between">
+                                <span>Total Value:</span>
+                                <span class="font-semibold">${this.formatCurrency(stats.totalValue)}</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="color: var(--text-secondary);">Value:</span>
-                                <span style="font-weight: 600; color: var(--text-primary);">${this.formatCurrency(data.totalValue)}</span>
+                            <div class="flex justify-between">
+                                <span>Low Stock Items:</span>
+                                <span class="font-semibold text-warning">${stats.lowStockItems}</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span style="color: var(--text-secondary);">Low Stock:</span>
-                                <span style="font-weight: 600; color: ${data.lowStock > 0 ? '#f59e0b' : '#22c55e'};">${data.lowStock}</span>
+                            <div class="flex justify-between">
+                                <span>Categories:</span>
+                                <span class="font-semibold">${stats.categories}</span>
                             </div>
                         </div>
-                    `;
-                }).join('')}
+                    `
+                },
+                {
+                    id: 'category-breakdown',
+                    icon: '📊',
+                    title: 'Category Breakdown',
+                    description: 'Stock by category',
+                    preview: `
+                        <h4 class="font-semibold mb-2">Category Breakdown</h4>
+                        <div class="space-y-2" style="max-height: 200px; overflow-y: auto;">
+                            ${categories.map(cat => `
+                                <div class="flex justify-between items-center">
+                                    <span>${cat.name}:</span>
+                                    <span class="font-semibold">${cat.count} items</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `
+                },
+                {
+                    id: 'low-stock-report',
+                    icon: '⚠️',
+                    title: 'Low Stock Report',
+                    description: 'Items needing reorder',
+                    preview: `
+                        <h4 class="font-semibold mb-2">Low Stock Report</h4>
+                        <p class="text-tertiary">Lists all items below their low stock threshold.</p>
+                        <p class="text-tertiary text-sm mt-2">
+                            Low Stock Items: <span class="font-semibold">${stats.lowStockItems}</span>
+                        </p>
+                    `
+                },
+                {
+                    id: 'value-report',
+                    icon: '💰',
+                    title: 'Value Report',
+                    description: 'Inventory valuation',
+                    preview: `
+                        <h4 class="font-semibold mb-2">Inventory Value Report</h4>
+                        <p class="text-tertiary">Detailed valuation of all inventory items.</p>
+                        <p class="text-tertiary text-sm mt-2">
+                            Total Value: <span class="font-semibold">${this.formatCurrency(stats.totalValue)}</span>
+                        </p>
+                    `
+                },
+                {
+                    id: 'export-inventory',
+                    icon: '📤',
+                    title: 'Export Data',
+                    description: 'Export inventory data',
+                    buttonText: 'Export Data',
+                    preview: `
+                        <h4 class="font-semibold mb-2">Export Inventory Data</h4>
+                        <p class="text-tertiary">Export all inventory data as JSON, CSV, or PDF.</p>
+                        <p class="text-tertiary text-sm mt-2">
+                            Total Items: <span class="font-semibold">${stats.totalItems}</span>
+                        </p>
+                    `
+                },
+                {
+                    id: 'print-inventory',
+                    icon: '🖨️',
+                    title: 'Print Report',
+                    description: 'Printable version',
+                    buttonText: 'Print Report',
+                    preview: `
+                        <h4 class="font-semibold mb-2">Print Inventory Report</h4>
+                        <p class="text-tertiary">Generate a printer-friendly version of the selected report.</p>
+                    `
+                }
+            ],
+            onReportSelect: (reportId) => {
+                switch(reportId) {
+                    case 'export-inventory':
+                        this.exportInventoryData();
+                        break;
+                    case 'print-inventory':
+                        window.print();
+                        break;
+                    default:
+                        this.generateInventoryReport(reportId);
+                }
+            }
+        });
+    },
+
+    showViewItemModal(itemId) {
+        const item = this.inventoryItems.find(i => i.id === itemId);
+        if (!item) return;
+        
+        const content = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                <div>
+                    <h4 style="margin-bottom: 12px; color: var(--color-text-primary);">Item Details</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <div style="font-size: 13px; color: var(--color-text-tertiary); margin-bottom: 2px;">Name</div>
+                            <div style="font-weight: 600; color: var(--color-text-primary);">${item.name}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; color: var(--color-text-tertiary); margin-bottom: 2px;">Category</div>
+                            <div>
+                                <span style="padding: 4px 8px; background: var(--color-bg-tertiary); 
+                                      border-radius: 6px; font-size: 12px;">
+                                    ${this.formatCategoryName(item.category)}
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; color: var(--color-text-tertiary); margin-bottom: 2px;">Supplier</div>
+                            <div style="font-weight: 600; color: var(--color-text-primary);">
+                                ${item.supplier || 'Not specified'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 style="margin-bottom: 12px; color: var(--color-text-primary);">Stock Information</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <div style="font-size: 13px; color: var(--color-text-tertiary); margin-bottom: 2px;">Current Stock</div>
+                            <div style="font-weight: 600; color: var(--color-text-primary); font-size: 18px;">
+                                ${item.quantity} ${item.unit}
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; color: var(--color-text-tertiary); margin-bottom: 2px;">Status</div>
+                            <span class="inv-status ${item.status}">
+                                ${this.formatStatus(item.status)}
+                            </span>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; color: var(--color-text-tertiary); margin-bottom: 2px;">Low Stock Threshold</div>
+                            <div style="font-weight: 600; color: var(--color-text-primary);">
+                                ${item.lowStockThreshold} ${item.unit}
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; color: var(--color-text-tertiary); margin-bottom: 2px;">Last Updated</div>
+                            <div style="font-weight: 600; color: var(--color-text-primary);">
+                                ${this.formatDate(item.lastUpdated)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            ${item.notes ? `
+                <div style="margin-top: 24px;">
+                    <h4 style="margin-bottom: 8px; color: var(--color-text-primary);">Notes</h4>
+                    <div style="padding: 12px; background: var(--color-bg-tertiary); border-radius: 8px; font-size: 14px;">
+                        ${item.notes}
+                    </div>
+                </div>
+            ` : ''}
+            
+            <div style="margin-top: 24px; padding: 16px; background: var(--color-bg-tertiary); border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 13px; color: var(--color-text-tertiary);">Current Value</div>
+                        <div style="font-size: 20px; font-weight: 700; color: var(--color-text-primary);">
+                            ${this.formatCurrency(item.quantity * (item.price || 0))}
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; color: var(--color-text-tertiary); text-align: right;">Unit Price</div>
+                        <div style="font-size: 16px; font-weight: 600; color: var(--color-text-primary);">
+                            ${this.formatCurrency(item.price || 0)} per ${item.unit}
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
+        
+        ModalManager.show({
+            id: `view-item-${itemId}`,
+            title: item.name,
+            subtitle: 'Inventory Item Details',
+            size: 'modal-lg',
+            content: content,
+            footer: `
+                <button type="button" class="btn btn-outline" data-action="close">Close</button>
+                <button type="button" class="btn btn-primary" data-action="edit" data-id="${itemId}">
+                    Edit Item
+                </button>
+                <button type="button" class="btn btn-warning" data-action="reorder" data-id="${itemId}">
+                    Reorder
+                </button>
+            `,
+            onOpen: () => {
+                // Add button handlers
+                document.querySelectorAll('[data-action]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const action = btn.dataset.action;
+                        const id = parseInt(btn.dataset.id);
+                        
+                        ModalManager.closeCurrentModal();
+                        
+                        switch(action) {
+                            case 'edit':
+                                this.showEditItemModal(item);
+                                break;
+                            case 'reorder':
+                                this.showReorderModal(id);
+                                break;
+                        }
+                    });
+                });
+            }
+        });
     },
 
-    getStockStatus(item) {
-        if (item.currentStock === 0) return 'Out of Stock';
-        if (item.currentStock <= item.minStock) return 'Low';
-        return 'Adequate';
-    },
-
-    getCategoryIcon(category) {
-        const icons = {
-            'feed': '🌾',
-            'medical': '💊',
-            'packaging': '📦',
-            'equipment': '🔧',
-            'cleaning': '🧼',
-            'other': '📋'
-        };
-        return icons[category] || '📦';
-    },
-
-    formatCategory(category) {
-        const categories = {
-            'feed': 'Feed',
-            'medical': 'Medical',
-            'packaging': 'Packaging',
-            'equipment': 'Equipment',
-            'cleaning': 'Cleaning',
-            'other': 'Other'
-        };
-        return categories[category] || category;
-    },
-
+    // ==================== SETUP EVENT LISTENERS ====================
     setupEventListeners() {
-        // Form buttons
-        document.getElementById('show-add-form')?.addEventListener('click', () => this.showInventoryForm());
-        document.getElementById('add-item-btn')?.addEventListener('click', () => this.showInventoryForm());
-        document.getElementById('stock-check-btn')?.addEventListener('click', () => this.showStockCheck());
-        document.getElementById('low-stock-report-btn')?.addEventListener('click', () => this.generateLowStockReport());
-        document.getElementById('inventory-report-btn')?.addEventListener('click', () => this.generateInventoryReport());
+        // Quick action buttons
+        document.getElementById('add-item-btn')?.addEventListener('click', () => this.showAddItemModal());
+        document.getElementById('quick-check-btn')?.addEventListener('click', () => this.showQuickCheckModal());
+        document.getElementById('reorder-btn')?.addEventListener('click', () => this.showReorderModal());
+        document.getElementById('inventory-report-btn')?.addEventListener('click', () => this.showInventoryReportsModal());
         
-        // Form handlers
-        document.getElementById('inventory-form')?.addEventListener('submit', (e) => this.handleInventorySubmit(e));
-        document.getElementById('stock-update-form')?.addEventListener('submit', (e) => this.handleStockUpdate(e));
-        document.getElementById('cancel-inventory-form')?.addEventListener('click', () => this.hideInventoryForm());
-        document.getElementById('cancel-stock-update')?.addEventListener('click', () => this.hideStockUpdate());
+        // Add first item button
+        document.getElementById('add-first-item-btn')?.addEventListener('click', () => this.showAddItemModal());
         
-        // Popout modal handlers
-        document.getElementById('close-inventory-report')?.addEventListener('click', () => this.hideInventoryReportModal());
-        document.getElementById('close-inventory-report-btn')?.addEventListener('click', () => this.hideInventoryReportModal());
-        document.getElementById('print-inventory-report')?.addEventListener('click', () => this.printInventoryReport());
-        
-        document.getElementById('close-low-stock-report')?.addEventListener('click', () => this.hideLowStockReportModal());
-        document.getElementById('close-low-stock-report-btn')?.addEventListener('click', () => this.hideLowStockReportModal());
-        document.getElementById('print-low-stock-report')?.addEventListener('click', () => this.printLowStockReport());
-        
-        document.getElementById('close-stock-check')?.addEventListener('click', () => this.hideStockCheckModal());
-        document.getElementById('close-stock-check-btn')?.addEventListener('click', () => this.hideStockCheckModal());
-        document.getElementById('print-stock-check')?.addEventListener('click', () => this.printStockCheck());
-        
-        // Category filter
-        document.getElementById('category-filter')?.addEventListener('change', (e) => this.filterByCategory(e.target.value));
-        
-        // Action buttons
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.delete-item')) {
-                const id = parseInt(e.target.closest('.delete-item').dataset.id);
-                this.deleteItem(id);
-            }
-            if (e.target.closest('.update-stock')) {
-                const id = parseInt(e.target.closest('.update-stock').dataset.id);
-                this.showUpdateStockForm(id);
-            }
-            if (e.target.closest('.restock-item')) {
-                const id = parseInt(e.target.closest('.restock-item').dataset.id);
-                this.quickRestock(id);
-            }
-        });
-
-        // Close modals when clicking outside
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('popout-modal')) {
-                this.hideAllModals();
-            }
-        });
-
-        // Hover effects
-        const buttons = document.querySelectorAll('.quick-action-btn');
-        buttons.forEach(button => {
-            button.addEventListener('mouseenter', (e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
+        // Search and filter
+        const searchInput = document.getElementById('inventory-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.searchQuery = e.target.value;
+                this.renderModule();
             });
-            button.addEventListener('mouseleave', (e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-            });
-        });
-    },
-
-    // MODAL CONTROL METHODS
-    showInventoryReportModal() {
-        document.getElementById('inventory-report-modal').classList.remove('hidden');
-    },
-
-    hideInventoryReportModal() {
-        document.getElementById('inventory-report-modal').classList.add('hidden');
-    },
-
-    showLowStockReportModal() {
-        document.getElementById('low-stock-report-modal').classList.remove('hidden');
-    },
-
-    hideLowStockReportModal() {
-        document.getElementById('low-stock-report-modal').classList.add('hidden');
-    },
-
-    showStockCheckModal() {
-        document.getElementById('stock-check-modal').classList.remove('hidden');
-    },
-
-    hideStockCheckModal() {
-        document.getElementById('stock-check-modal').classList.add('hidden');
-    },
-
-    hideAllModals() {
-        this.hideInventoryReportModal();
-        this.hideLowStockReportModal();
-        this.hideStockCheckModal();
-    },
-
-    // KEEP ALL EXISTING FORM METHODS EXACTLY THE SAME
-    showInventoryForm() {
-        document.getElementById('inventory-form-container').classList.remove('hidden');
-        document.getElementById('inventory-form').reset();
-        document.getElementById('inventory-form-container').scrollIntoView({ behavior: 'smooth' });
-    },
-
-    hideInventoryForm() {
-        document.getElementById('inventory-form-container').classList.add('hidden');
-    },
-
-    showUpdateStockForm(id) {
-        const item = this.inventory.find(item => item.id === id);
-        if (!item) return;
-
-        document.getElementById('stock-update-container').classList.remove('hidden');
-        document.getElementById('update-item-id').value = item.id;
-        document.getElementById('update-item-name').textContent = item.name;
-        document.getElementById('update-item-details').textContent = `${this.formatCategory(item.category)} • ${item.supplier || 'No supplier'}`;
-        document.getElementById('current-stock-display').textContent = `${item.currentStock} ${item.unit}`;
-        document.getElementById('new-stock-level').value = item.currentStock;
-        document.getElementById('stock-update-form').reset();
-        
-        document.getElementById('stock-update-container').scrollIntoView({ behavior: 'smooth' });
-    },
-
-    hideStockUpdate() {
-        document.getElementById('stock-update-container').classList.add('hidden');
-    },
-
-    // UPDATE REPORT METHODS TO USE POPOUT MODALS
-    showStockCheck() {
-        const lowStock = this.getLowStockItems();
-        const outOfStock = this.getOutOfStockItems();
-        const stats = this.calculateStats();
-        
-        let report = '<div class="report-content">';
-        report += '<h4 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">📦 Stock Check Report</h4>';
-        
-        if (lowStock.length > 0) {
-            report += `<div style="margin-bottom: 20px;">
-                <h5 style="color: #f59e0b; margin-bottom: 12px;">⚠️ LOW STOCK ITEMS (${lowStock.length}):</h5>
-                <div style="display: flex; flex-direction: column; gap: 8px;">`;
-            lowStock.forEach(item => {
-                report += `<div style="padding: 8px; background: #fef3c7; border-radius: 6px; border-left: 4px solid #f59e0b;">
-                    <strong>${item.name}</strong>: ${item.currentStock} ${item.unit} (min: ${item.minStock} ${item.unit})
-                </div>`;
-            });
-            report += '</div></div>';
-        }
-        
-        if (outOfStock.length > 0) {
-            report += `<div style="margin-bottom: 20px;">
-                <h5 style="color: #ef4444; margin-bottom: 12px;">❌ OUT OF STOCK (${outOfStock.length}):</h5>
-                <div style="display: flex; flex-direction: column; gap: 8px;">`;
-            outOfStock.forEach(item => {
-                report += `<div style="padding: 8px; background: #fee2e2; border-radius: 6px; border-left: 4px solid #ef4444;">
-                    <strong>${item.name}</strong>: 0 ${item.unit}
-                </div>`;
-            });
-            report += '</div></div>';
-        }
-        
-        if (lowStock.length === 0 && outOfStock.length === 0) {
-            report += `<div style="text-align: center; padding: 20px; background: #d1fae5; border-radius: 8px; border-left: 4px solid #22c55e;">
-                <div style="font-size: 24px; margin-bottom: 8px;">✅</div>
-                <strong style="color: #065f46;">All items are adequately stocked!</strong>
-            </div>`;
-        }
-        
-        report += `<div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color);">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <div style="text-align: center;">
-                    <div style="font-size: 12px; color: var(--text-secondary);">Total Items</div>
-                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${stats.totalItems}</div>
-                </div>
-                <div style="text-align: center;">
-                    <div style="font-size: 12px; color: var(--text-secondary);">Total Value</div>
-                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(stats.totalValue)}</div>
-                </div>
-            </div>
-        </div>`;
-        
-        report += '</div>';
-
-        document.getElementById('stock-check-content').innerHTML = report;
-        document.getElementById('stock-check-title').textContent = 'Stock Check Report';
-        this.showStockCheckModal();
-    },
-
-    generateLowStockReport() {
-        const lowStock = this.getLowStockItems();
-        const outOfStock = this.getOutOfStockItems();
-        
-        let report = '<div class="report-content">';
-        report += '<h4 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">📋 LOW STOCK & REORDER REPORT</h4>';
-        
-        if (outOfStock.length === 0 && lowStock.length === 0) {
-            report += `<div style="text-align: center; padding: 40px 20px;">
-                <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
-                <h5 style="color: #065f46; margin-bottom: 8px;">No low stock items!</h5>
-                <p style="color: var(--text-secondary);">All inventory is adequately stocked</p>
-            </div>`;
-        } else {
-            if (outOfStock.length > 0) {
-                report += `<div style="margin-bottom: 24px;">
-                    <h5 style="color: #ef4444; margin-bottom: 16px; padding: 8px 12px; background: #fee2e2; border-radius: 6px;">🚨 URGENT - OUT OF STOCK:</h5>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">`;
-                outOfStock.forEach(item => {
-                    const suggestedOrder = item.minStock * 2;
-                    report += `<div style="padding: 12px; background: #fef2f2; border-radius: 8px; border: 1px solid #fecaca;">
-                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${item.name}</div>
-                        <div style="color: #dc2626; font-size: 14px; margin-bottom: 8px;">
-                            <strong>ORDER ${suggestedOrder} ${item.unit}</strong> (Supplier: ${item.supplier || 'Not specified'})
-                        </div>
-                        <div style="font-size: 12px; color: var(--text-secondary);">Current: 0 ${item.unit} • Min: ${item.minStock} ${item.unit}</div>
-                    </div>`;
-                });
-                report += '</div></div>';
-            }
             
-            if (lowStock.length > 0) {
-                report += `<div style="margin-bottom: 20px;">
-                    <h5 style="color: #f59e0b; margin-bottom: 16px; padding: 8px 12px; background: #fef3c7; border-radius: 6px;">📉 LOW STOCK - REORDER SOON:</h5>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">`;
-                lowStock.forEach(item => {
-                    const suggestedOrder = Math.max(item.minStock * 2 - item.currentStock, 10);
-                    report += `<div style="padding: 12px; background: #fffbeb; border-radius: 8px; border: 1px solid #fcd34d;">
-                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${item.name}</div>
-                        <div style="color: #d97706; font-size: 14px; margin-bottom: 8px;">
-                            <strong>Order ${suggestedOrder} ${item.unit}</strong> - ${item.currentStock} ${item.unit} left
-                        </div>
-                        <div style="font-size: 12px; color: var(--text-secondary);">Min stock: ${item.minStock} ${item.unit} • Supplier: ${item.supplier || 'Not specified'}</div>
-                    </div>`;
-                });
-                report += '</div></div>';
-            }
-        }
-        
-        report += '</div>';
-
-        document.getElementById('low-stock-report-content').innerHTML = report;
-        document.getElementById('low-stock-report-title').textContent = 'Low Stock Report';
-        this.showLowStockReportModal();
-    },
-
-    generateInventoryReport() {
-        const stats = this.calculateStats();
-        const categoryData = {};
-        
-        this.categories.forEach(cat => {
-            const items = this.inventory.filter(item => item.category === cat);
-            categoryData[cat] = {
-                count: items.length,
-                totalValue: items.reduce((sum, item) => sum + (item.currentStock * item.cost), 0),
-                lowStock: items.filter(item => item.currentStock <= item.minStock).length
-            };
-        });
-
-        let report = '<div class="report-content">';
-        report += '<h4 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">📊 COMPLETE INVENTORY REPORT</h4>';
-        
-        // Overview Section
-        report += `<div style="margin-bottom: 24px;">
-            <h5 style="color: var(--text-primary); margin-bottom: 12px;">📈 OVERVIEW:</h5>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px;">
-                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                    <div style="font-size: 12px; color: var(--text-secondary);">Total Items</div>
-                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${stats.totalItems}</div>
-                </div>
-                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                    <div style="font-size: 12px; color: var(--text-secondary);">Items in Stock</div>
-                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${stats.inStock}</div>
-                </div>
-                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                    <div style="font-size: 12px; color: var(--text-secondary);">Total Value</div>
-                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(stats.totalValue)}</div>
-                </div>
-                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                    <div style="font-size: 12px; color: var(--text-secondary);">Low Stock Items</div>
-                    <div style="font-size: 18px; font-weight: bold; color: #f59e0b;">${stats.lowStockItems}</div>
-                </div>
-            </div>
-        </div>`;
-        
-        // Category Breakdown
-        report += `<div style="margin-bottom: 24px;">
-            <h5 style="color: var(--text-primary); margin-bottom: 12px;">🗂️ CATEGORY BREAKDOWN:</h5>
-            <div style="display: flex; flex-direction: column; gap: 8px;">`;
-        this.categories.forEach(cat => {
-            const data = categoryData[cat];
-            if (data.count > 0) {
-                const lowStockColor = data.lowStock > 0 ? '#f59e0b' : '#22c55e';
-                report += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px;">
-                    <div>
-                        <div style="font-weight: 600; color: var(--text-primary);">${this.formatCategory(cat)}</div>
-                        <div style="font-size: 12px; color: var(--text-secondary);">${data.count} items</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 600; color: var(--text-primary);">${this.formatCurrency(data.totalValue)}</div>
-                        <div style="font-size: 12px; color: ${lowStockColor};">${data.lowStock} low stock</div>
-                    </div>
-                </div>`;
-            }
-        });
-        report += '</div></div>';
-        
-        // Low Stock Summary
-        const lowStock = this.getLowStockItems();
-        report += `<div style="margin-bottom: 20px;">
-            <h5 style="color: var(--text-primary); margin-bottom: 12px;">⚠️ LOW STOCK SUMMARY:</h5>`;
-        if (lowStock.length > 0) {
-            report += '<div style="display: flex; flex-direction: column; gap: 8px;">';
-            lowStock.forEach(item => {
-                const statusColor = item.currentStock === 0 ? '#ef4444' : '#f59e0b';
-                report += `<div style="padding: 8px; background: ${statusColor}10; border-radius: 6px; border-left: 4px solid ${statusColor};">
-                    <div style="font-weight: 600; color: var(--text-primary);">${item.name}</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">
-                        ${item.currentStock} ${item.unit} (min: ${item.minStock} ${item.unit}) • ${this.formatCategory(item.category)}
-                    </div>
-                </div>`;
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.renderModule();
+                }
             });
-            report += '</div>';
-        } else {
-            report += `<div style="text-align: center; padding: 20px; background: #d1fae5; border-radius: 8px;">
-                <div style="font-size: 24px; margin-bottom: 8px;">✅</div>
-                <strong style="color: #065f46;">No low stock items</strong>
-            </div>`;
         }
-        report += '</div>';
         
-        report += '</div>';
-
-        document.getElementById('inventory-report-content').innerHTML = report;
-        document.getElementById('inventory-report-title').textContent = 'Complete Inventory Report';
-        this.showInventoryReportModal();
-    },
-
-    // PRINT METHODS
-    printInventoryReport() {
-        this.printReport('inventory-report-content', 'inventory-report-title');
-    },
-
-    printLowStockReport() {
-        this.printReport('low-stock-report-content', 'low-stock-report-title');
-    },
-
-    printStockCheck() {
-        this.printReport('stock-check-content', 'stock-check-title');
-    },
-
-    printReport(contentId, titleId) {
-        const reportContent = document.getElementById(contentId).innerHTML;
-        const reportTitle = document.getElementById(titleId).textContent;
+        document.getElementById('clear-search-btn')?.addEventListener('click', () => {
+            this.searchQuery = '';
+            this.renderModule();
+        });
         
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-            <html>
-                <head>
-                    <title>${reportTitle}</title>
-                    <style>
-                        body { 
-                            font-family: Arial, sans-serif; 
-                            margin: 20px; 
-                            color: #1f2937;
-                            line-height: 1.6;
-                        }
-                        .report-content { 
-                            max-width: 800px; 
-                            margin: 0 auto;
-                        }
-                        h4 { 
-                            color: #1f2937; 
-                            border-bottom: 2px solid #3b82f6; 
-                            padding-bottom: 10px; 
-                            margin-bottom: 20px;
-                        }
-                        h5 { 
-                            color: #374151; 
-                            margin: 20px 0 10px 0;
-                        }
-                        .stats-grid { 
-                            display: grid; 
-                            grid-template-columns: repeat(2, 1fr); 
-                            gap: 15px; 
-                            margin: 15px 0; 
-                        }
-                        .stat-item { 
-                            padding: 10px; 
-                            background: #f8f9fa; 
-                            border-radius: 5px; 
-                            text-align: center; 
-                        }
-                        .alert-item { 
-                            padding: 8px; 
-                            margin: 5px 0; 
-                            border-left: 4px solid; 
-                            border-radius: 4px; 
-                        }
-                        @media print {
-                            body { margin: 0.5in; }
-                            .no-print { display: none; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <h1>${reportTitle}</h1>
-                    <div style="color: #6b7280; margin-bottom: 20px;">Generated on: ${new Date().toLocaleDateString()}</div>
-                    <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
-                    ${reportContent}
-                    <div class="no-print" style="margin-top: 20px; text-align: center; font-size: 12px; color: #666;">
-                        Printed on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
-                    </div>
-                </body>
-            </html>
-        `);
-        printWindow.document.close();
-        printWindow.print();
+        // Category filters
+        document.querySelectorAll('.inv-category-filter').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.currentFilter = e.target.dataset.filter;
+                this.renderModule();
+            });
+        });
+        
+        // Table action buttons
+        document.addEventListener('click', (e) => {
+            const actionBtn = e.target.closest('[data-action]');
+            if (!actionBtn) return;
+            
+            const action = actionBtn.dataset.action;
+            const id = parseInt(actionBtn.dataset.id);
+            
+            if (!id) return;
+            
+            switch(action) {
+                case 'edit':
+                    const itemToEdit = this.inventoryItems.find(item => item.id === id);
+                    if (itemToEdit) {
+                        this.showEditItemModal(itemToEdit);
+                    }
+                    break;
+                    
+                case 'delete':
+                    const itemToDelete = this.inventoryItems.find(item => item.id === id);
+                    if (itemToDelete) {
+                        ModalManager.confirm({
+                            title: 'Delete Inventory Item',
+                            message: `Are you sure you want to delete "${itemToDelete.name}"?`,
+                            details: 'This action cannot be undone.',
+                            icon: '🗑️',
+                            type: 'modal-danger',
+                            danger: true,
+                            confirmText: 'Delete'
+                        }).then((confirmed) => {
+                            if (confirmed) {
+                                this.deleteInventoryItem(id);
+                            }
+                        });
+                    }
+                    break;
+                    
+                case 'view':
+                    this.showViewItemModal(id);
+                    break;
+            }
+        });
     },
 
-    // KEEP ALL EXISTING DATA METHODS EXACTLY THE SAME
-    handleInventorySubmit(e) {
-        e.preventDefault();
-        
-        const formData = {
-            id: Date.now(),
-            name: document.getElementById('item-name').value,
-            category: document.getElementById('item-category').value,
-            currentStock: parseInt(document.getElementById('current-stock').value),
-            unit: document.getElementById('item-unit').value,
-            minStock: parseInt(document.getElementById('min-stock').value),
-            cost: parseFloat(document.getElementById('item-cost').value),
-            supplier: document.getElementById('item-supplier').value || '',
-            lastRestocked: new Date().toISOString().split('T')[0],
-            notes: document.getElementById('item-notes').value || ''
-        };
-
-        this.inventory.unshift(formData);
+    // ==================== INVENTORY METHODS ====================
+    addInventoryItem(item) {
+        this.inventoryItems.unshift(item);
         this.saveData();
         this.renderModule();
         
-        // SYNC WITH PROFILE - Update inventory stats
-        this.syncStatsWithProfile();
+        // Update dashboard stats
+        this.updateDashboardStats();
         
-        if (window.coreModule) {
-            window.coreModule.showNotification('Inventory item added successfully!', 'success');
-        }
-    },
-
-    handleStockUpdate(e) {
-        e.preventDefault();
-        
-        const id = parseInt(document.getElementById('update-item-id').value);
-        const newStock = parseInt(document.getElementById('new-stock-level').value);
-        const reason = document.getElementById('stock-update-reason').value;
-
-        const item = this.inventory.find(item => item.id === id);
-        if (!item) return;
-
-        const oldStock = item.currentStock;
-        item.currentStock = newStock;
-        
-        if (reason === 'restock') {
-            item.lastRestocked = new Date().toISOString().split('T')[0];
-        }
-
-        this.saveData();
-        this.renderModule();
-        
-        // SYNC WITH PROFILE - Update stats after stock change
-        this.syncStatsWithProfile();
-        
-        if (window.coreModule) {
-            const change = newStock - oldStock;
-            const changeText = change > 0 ? `+${change}` : change;
-            window.coreModule.showNotification(`Stock updated: ${changeText} ${item.unit} (${reason})`, 'success');
-        }
-    },
-
-    deleteItem(id) {
-        const item = this.inventory.find(item => item.id === id);
-        if (!item) return;
-
-        if (confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`)) {
-            this.inventory = this.inventory.filter(item => item.id !== id);
-            this.saveData();
-            this.renderModule();
-            
-            // SYNC WITH PROFILE - Update stats after deletion
-            this.syncStatsWithProfile();
-            
-            if (window.coreModule) {
-                window.coreModule.showNotification('Item deleted successfully!', 'success');
-            }
-        }
-    },
-
-    quickRestock(id) {
-        const item = this.inventory.find(item => item.id === id);
-        if (!item) return;
-
-        const suggestedRestock = Math.max(item.minStock * 2, item.currentStock + 10);
-        const restockAmount = prompt(`Restock "${item.name}"\nCurrent: ${item.currentStock} ${item.unit}\nMin: ${item.minStock} ${item.unit}\nEnter amount to add:`, suggestedRestock.toString());
-        
-        if (restockAmount !== null && !isNaN(restockAmount)) {
-            const amount = parseInt(restockAmount);
-            item.currentStock += amount;
-            item.lastRestocked = new Date().toISOString().split('T')[0];
-            
-            this.saveData();
-            this.renderModule();
-            
-            // SYNC WITH PROFILE - Update stats after restock
-            this.syncStatsWithProfile();
-            
-            if (window.coreModule) {
-                window.coreModule.showNotification(`Restocked ${amount} ${item.unit} of ${item.name}`, 'success');
-            }
-        }
-    },
-
-    filterByCategory(category) {
-        const items = document.querySelectorAll('#inventory-list > div > div');
-        items.forEach(item => {
-            const itemCategory = item.querySelector('div > div:nth-child(2) > div:nth-child(2)')?.textContent;
-            if (!category || (itemCategory && itemCategory.includes(this.formatCategory(category)))) {
-                item.style.display = 'flex';
-            } else {
-                item.style.display = 'none';
-            }
+        // Show success notification
+        ModalManager.alert({
+            title: 'Item Added',
+            message: `"${item.name}" has been added to inventory.`,
+            icon: '✅',
+            type: 'modal-success'
         });
     },
 
-    // KEEP THE EXISTING SYNC AND UTILITY METHODS:
-    syncStatsWithProfile() {
+    updateInventoryItem(updatedItem) {
+        const index = this.inventoryItems.findIndex(item => item.id === updatedItem.id);
+        if (index !== -1) {
+            this.inventoryItems[index] = updatedItem;
+            this.saveData();
+            this.renderModule();
+            
+            // Update dashboard stats
+            this.updateDashboardStats();
+            
+            // Show success notification
+            ModalManager.alert({
+                title: 'Item Updated',
+                message: `"${updatedItem.name}" has been updated.`,
+                icon: '✅',
+                type: 'modal-success'
+            });
+        }
+    },
+
+    deleteInventoryItem(id) {
+        const item = this.inventoryItems.find(item => item.id === id);
+        if (!item) return;
+        
+        this.inventoryItems = this.inventoryItems.filter(item => item.id !== id);
+        this.saveData();
+        this.renderModule();
+        
+        // Update dashboard stats
+        this.updateDashboardStats();
+        
+        // Show success notification
+        ModalManager.alert({
+            title: 'Item Deleted',
+            message: `"${item.name}" has been removed from inventory.`,
+            icon: '✅',
+            type: 'modal-success'
+        });
+    },
+
+    placeReorder(order) {
+        // Save order to localStorage
+        const orders = JSON.parse(localStorage.getItem('farm-orders') || '[]');
+        orders.unshift(order);
+        localStorage.setItem('farm-orders', JSON.stringify(orders));
+        
+        // Show success notification
+        ModalManager.alert({
+            title: 'Order Placed',
+            message: `Order #${order.id} has been placed with ${order.supplierName}.`,
+            details: `Total value: ${this.formatCurrency(order.totalValue)}`,
+            icon: '✅',
+            type: 'modal-success'
+        });
+        
+        // Here you would typically send to backend or email supplier
+        console.log('Order placed:', order);
+    },
+
+    calculateStatus(quantity, lowStockThreshold) {
+        if (quantity === 0) return 'out-of-stock';
+        if (quantity <= lowStockThreshold) return 'low-stock';
+        return 'in-stock';
+    },
+
+    getCategoryBreakdown() {
+        const categories = {};
+        
+        this.inventoryItems.forEach(item => {
+            if (!categories[item.category]) {
+                categories[item.category] = {
+                    name: this.formatCategoryName(item.category),
+                    count: 0,
+                    value: 0
+                };
+            }
+            categories[item.category].count++;
+            categories[item.category].value += item.quantity * (item.price || 0);
+        });
+        
+        return Object.values(categories).sort((a, b) => b.count - a.count);
+    },
+
+    generateInventoryReport(reportId) {
+        // Show loading modal
+        const loadingId = ModalManager.showLoading({
+            message: `Generating ${reportId.replace('-', ' ')} report...`
+        });
+        
+        // Simulate report generation
+        setTimeout(() => {
+            ModalManager.hideLoading();
+            
+            // Show success alert
+            ModalManager.alert({
+                title: 'Report Generated',
+                message: `The ${reportId.replace('-', ' ')} report has been generated successfully.`,
+                icon: '✅',
+                type: 'modal-success'
+            });
+            
+            // Here you would implement actual report generation logic
+            console.log(`Generating inventory report: ${reportId}`);
+        }, 1500);
+    },
+
+    exportInventoryData() {
+        const dataStr = JSON.stringify(this.inventoryItems, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `inventory-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        ModalManager.alert({
+            title: 'Data Exported',
+            message: 'Inventory data has been exported successfully.',
+            icon: '✅',
+            type: 'modal-success'
+        });
+    },
+
+    updateDashboardStats() {
         const stats = this.calculateStats();
         
-        if (window.ProfileModule && window.profileInstance) {
-            window.profileInstance.updateStats({
+        if (window.FarmModules && window.FarmModules.appData) {
+            if (!window.FarmModules.appData.profile) {
+                window.FarmModules.appData.profile = {};
+            }
+            if (!window.FarmModules.appData.profile.dashboardStats) {
+                window.FarmModules.appData.profile.dashboardStats = {};
+            }
+            
+            // Update inventory stats in shared data
+            Object.assign(window.FarmModules.appData.profile.dashboardStats, {
                 totalInventoryItems: stats.totalItems,
-                inStockItems: stats.inStock,
-                lowStockItems: stats.lowStockItems,
-                outOfStockItems: stats.outOfStockItems,
                 inventoryValue: stats.totalValue
             });
+            
+            // Dispatch event to update dashboard
+            const statsUpdateEvent = new CustomEvent('inventoryStatsUpdated', {
+                detail: {
+                    totalInventoryItems: stats.totalItems,
+                    inventoryValue: stats.totalValue
+                }
+            });
+            document.dispatchEvent(statsUpdateEvent);
         }
+    },
+
+    saveData() {
+        localStorage.setItem('farm-inventory', JSON.stringify(this.inventoryItems));
+    },
+
+    // ==================== HELPER METHODS ====================
+    formatCategoryName(category) {
+        if (!category) return 'Unknown';
+        return category.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+    },
+
+    formatStatus(status) {
+        const statusMap = {
+            'in-stock': 'In Stock',
+            'low-stock': 'Low Stock',
+            'out-of-stock': 'Out of Stock',
+            'on-order': 'On Order'
+        };
+        return statusMap[status] || status;
+    },
+
+    formatDate(dateString) {
+        if (!dateString) return 'Unknown';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
     },
 
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD'
-        }).format(amount);
-    },
-
-    saveData() {
-        localStorage.setItem('farm-inventory', JSON.stringify(this.inventory));
+        }).format(amount || 0);
     }
 };
 
 if (window.FarmModules) {
-    window.FarmModules.registerModule('inventory-check', InventoryCheckModule);
-    console.log('✅ Inventory Check module registered');
+    window.FarmModules.registerModule('inventory', InventoryModule);
+    console.log('✅ Inventory module registered');
 }
