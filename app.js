@@ -117,7 +117,8 @@ class FarmManagementApp {
         const globalCSS = [
             'css/theme.css',
             'css/layout.css',
-            'css/components.css'
+            'css/components.css',
+            'modals.css'
         ];
         
         globalCSS.forEach(cssFile => {
