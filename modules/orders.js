@@ -1,4 +1,3 @@
-continue from previous chat
 // modules/orders.js - USING MODAL MANAGER
 console.log('Loading orders module with Modal Manager...');
 
