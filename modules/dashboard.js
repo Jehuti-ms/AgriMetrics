@@ -54,6 +54,15 @@ const DashboardModule = {
         this.setupRefreshButton();
     },
 
+    // In dashboard.js, add this event listener
+document.addEventListener('inventoryStatsUpdated', (e) => {
+    const stats = e.detail;
+    this.updateStatCard('inventory-items', stats.totalInventoryItems || 0);
+    
+    // You could also update a value card if you have one
+    // this.updateStatCard('inventory-value', this.formatCurrency(stats.inventoryValue || 0));
+});
+
     renderDashboard() {
         if (!this.element) return;
 
