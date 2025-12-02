@@ -592,8 +592,7 @@ const StyleManager = {
         padding: '0',
         maxWidth: '800px'               // limits total width so cards don’t stretch
       },
-
-    
+   
       '.summary-card': {
         flex: '0 0 auto',
         width: '220px',                 // fixed width per card
@@ -607,6 +606,7 @@ const StyleManager = {
         boxShadow: 'var(--shadow-md)',
         transition: 'all 0.3s ease'
       },
+
 
     
       '.summary-icon': {
