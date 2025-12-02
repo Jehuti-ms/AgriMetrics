@@ -52,16 +52,19 @@ const DashboardModule = {
     setupEventListeners() {
         this.setupQuickActions();
         this.setupRefreshButton();
+        this.setupInventoryStatsListener();
     },
 
-    // In dashboard.js, add this event listener
-document.addEventListener('inventoryStatsUpdated', (e) => {
-    const stats = e.detail;
-    this.updateStatCard('inventory-items', stats.totalInventoryItems || 0);
-    
-    // You could also update a value card if you have one
-    // this.updateStatCard('inventory-value', this.formatCurrency(stats.inventoryValue || 0));
-});
+    setupInventoryStatsListener() {
+        // Listen for inventory stats updates from other modules
+        document.addEventListener('inventoryStatsUpdated', (e) => {
+            const stats = e.detail;
+            this.updateStatCard('inventory-items', stats.totalInventoryItems || 0);
+            
+            // You could also update a value card if you have one
+            // this.updateStatCard('inventory-value', this.formatCurrency(stats.inventoryValue || 0));
+        });
+    },
 
     renderDashboard() {
         if (!this.element) return;
@@ -71,8 +74,8 @@ document.addEventListener('inventoryStatsUpdated', (e) => {
             <div id="dashboard" class="module-container">
                 <!-- Welcome Section -->
                 <div class="dashboard-welcome">
-                    <h1 class="welcome-header text-3xl font-bold">Welcome to Farm Management</h1>
-                    <p class="welcome-subtitle text-lg text-tertiary">Manage your farm operations efficiently</p>
+                    <h1 class="welcome-header">Welcome to Farm Management</h1>
+                    <p class="welcome-subtitle">Manage your farm operations efficiently</p>
                 </div>
 
                 <!-- Quick Actions Grid -->
@@ -193,8 +196,6 @@ document.addEventListener('inventoryStatsUpdated', (e) => {
                 </div>
             </div>
         `;
-
-        // No more applyLayoutStyles() or applyThemeStyles() - CSS handles everything
     },
 
     setupQuickActions() {
@@ -220,7 +221,6 @@ document.addEventListener('inventoryStatsUpdated', (e) => {
         }
     },
 
-    // ... [KEEP ALL YOUR EXISTING FUNCTIONALITY METHODS - NO CHANGES NEEDED] ...
     loadAndDisplayStats() {
         const profileStats = this.getProfileStats();
         this.updateDashboardStats(profileStats);
@@ -332,7 +332,7 @@ document.addEventListener('inventoryStatsUpdated', (e) => {
             if (existingIndicator) existingIndicator.remove();
             
             const monthlyIndicator = document.createElement('div');
-            monthlyIndicator.className = 'monthly-indicator text-xs text-success mt-1';
+            monthlyIndicator.className = 'monthly-indicator';
             monthlyIndicator.textContent = `+${this.formatCurrency(stats.monthlyRevenue)} this month`;
             revenueCard.appendChild(monthlyIndicator);
         }
@@ -419,7 +419,7 @@ document.addEventListener('inventoryStatsUpdated', (e) => {
         }
 
         activityContent.innerHTML = `
-            <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="activity-items-container">
                 ${activities.map(activity => `
                     <div class="dashboard-activity-item">
                         <div class="activity-icon">${activity.icon}</div>
