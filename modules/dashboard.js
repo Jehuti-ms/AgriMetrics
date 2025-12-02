@@ -1,5 +1,5 @@
-// modules/dashboard.js - STYLE MANAGER VERSION (Optimized)
-console.log('Loading dashboard module with Style Manager integration...');
+// modules/dashboard.js - CSS-BASED VERSION (No StyleManager)
+console.log('Loading dashboard module with CSS-based styling...');
 
 const DashboardModule = {
     name: 'dashboard',
@@ -8,16 +8,14 @@ const DashboardModule = {
     element: null,
 
     initialize() {
-        console.log('📊 Initializing Dashboard with StyleManager...');
+        console.log('📊 Initializing Dashboard with CSS...');
         
         // Get the content area element
         this.element = document.getElementById('content-area');
         if (!this.element) return false;
 
-        // Register with StyleManager
-        if (window.StyleManager) {
-            StyleManager.registerModule(this.id, this.element, this);
-        }
+        // Load CSS if not already loaded
+        this.loadCSS();
 
         this.renderDashboard();
         this.setupEventListeners();
@@ -26,87 +24,29 @@ const DashboardModule = {
         // Load and display stats from shared data
         this.loadAndDisplayStats();
         
-        console.log('✅ Dashboard initialized with StyleManager');
+        console.log('✅ Dashboard initialized');
         return true;
     },
 
-    // StyleManager integration methods
-    onThemeChange(theme) {
-        console.log(`Dashboard updating for theme: ${theme}`);
-        this.applyThemeStyles();
-    },
-
-    onStyleUpdate(styles) {
-        console.log('Dashboard styles updated:', styles);
-        this.applyThemeStyles();
-    },
-
-    applyThemeStyles() {
-        if (!this.element || !window.StyleManager) return;
-        
-        const theme = StyleManager.getCurrentTheme();
-        const styles = StyleManager.getModuleStyles(this.id);
-        
-        // Apply background styles
-        this.element.style.backgroundColor = styles?.backgroundColor || 
-            (theme === 'dark' ? '#1a1a1a' : '#f5f5f5');
-        
-        // ✅ Force white header text as requested
-        const welcomeHeader = this.element.querySelector('.welcome-header');
-        if (welcomeHeader) {
-            welcomeHeader.style.color = '#ffffff';
+    loadCSS() {
+        // Check if dashboard CSS is already loaded
+        if (document.querySelector('link[href*="dashboard.css"]')) {
+            return;
         }
         
-        // Apply module-specific styles from StyleManager
-        this.applyModuleStyles(theme, styles);
-    },
-
-    applyModuleStyles(theme, styles) {
-        // Apply styles to all elements using StyleManager's methods
-        // This allows StyleManager to handle both default and custom styles
+        // Create link element for dashboard-specific CSS
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'css/dashboard.css';
+        document.head.appendChild(link);
         
-        // Section titles
-        const sectionTitles = this.element.querySelectorAll('.section-title, .welcome-subtitle');
-        sectionTitles.forEach(el => {
-            const textColor = styles?.textColor || 
-                (theme === 'dark' ? '#ffffff' : '#1a1a1a');
-            el.style.color = textColor;
-        });
-
-        // Stat values
-        const statValues = this.element.querySelectorAll('.stat-value');
-        statValues.forEach(el => {
-            const textColor = styles?.textColor || 
-                (theme === 'dark' ? '#ffffff' : '#1a1a1a');
-            el.style.color = textColor;
-        });
-
-        // Secondary text
-        const secondaryText = this.element.querySelectorAll('.stat-label, .action-subtitle, .action-title, .empty-title, .empty-subtitle');
-        secondaryText.forEach(el => {
-            const secondaryColor = theme === 'dark' ? '#a0a0a0' : '#666666';
-            el.style.color = secondaryColor;
-        });
-
-        // Cards (stat cards, activity list, quick action buttons)
-        const cards = this.element.querySelectorAll('.stat-card, .activity-list, .quick-action-btn');
-        cards.forEach(card => {
-            card.style.backgroundColor = styles?.cardBackground || 
-                (theme === 'dark' ? 'rgba(30, 30, 30, 0.9)' : 'rgba(255, 255, 255, 0.9)');
-            card.style.borderColor = styles?.borderColor || 
-                (theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)');
-        });
-
-        // Buttons
-        const buttons = this.element.querySelectorAll('button');
-        buttons.forEach(button => {
-            button.style.backgroundColor = styles?.buttonBackground || 
-                (theme === 'dark' ? 'rgba(40, 40, 40, 0.9)' : 'rgba(255, 255, 255, 0.9)');
-            button.style.color = styles?.buttonTextColor || 
-                (theme === 'dark' ? '#ffffff' : '#1a1a1a');
-            button.style.borderColor = styles?.buttonBorderColor || 
-                (theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)');
-        });
+        // Make sure theme.css is loaded first
+        if (!document.querySelector('link[href*="theme.css"]')) {
+            const themeLink = document.createElement('link');
+            themeLink.rel = 'stylesheet';
+            themeLink.href = 'css/theme.css';
+            document.head.insertBefore(themeLink, link);
+        }
     },
 
     setupEventListeners() {
@@ -117,50 +57,50 @@ const DashboardModule = {
     renderDashboard() {
         if (!this.element) return;
 
-        // Clean, semantic HTML with only essential layout styles
+        // Clean HTML using only CSS classes - no inline styles
         this.element.innerHTML = `
             <div id="dashboard" class="module-container">
-                <!-- Welcome Section with white header text -->
-                <div class="welcome-section">
-                    <h1 class="welcome-header">Welcome to Farm Management</h1>
-                    <p class="welcome-subtitle">Manage your farm operations efficiently</p>
+                <!-- Welcome Section -->
+                <div class="dashboard-welcome">
+                    <h1 class="welcome-header text-3xl font-bold">Welcome to Farm Management</h1>
+                    <p class="welcome-subtitle text-lg text-tertiary">Manage your farm operations efficiently</p>
                 </div>
 
                 <!-- Quick Actions Grid -->
-                <div class="quick-actions">
-                    <h2 class="section-title">Quick Actions</h2>
-                    <div class="actions-grid">
-                        <button class="quick-action-btn" data-action="add-income">
+                <div class="dashboard-quick-actions">
+                    <h2 class="dashboard-section-title">Quick Actions</h2>
+                    <div class="dashboard-actions-grid">
+                        <button class="dashboard-quick-action-btn" data-action="add-income">
                             <div class="action-icon">💰</div>
                             <span class="action-title">Add Income</span>
                             <span class="action-subtitle">Record new income</span>
                         </button>
 
-                        <button class="quick-action-btn" data-action="add-expense">
+                        <button class="dashboard-quick-action-btn" data-action="add-expense">
                             <div class="action-icon">💸</div>
                             <span class="action-title">Add Expense</span>
                             <span class="action-subtitle">Record new expense</span>
                         </button>
 
-                        <button class="quick-action-btn" data-action="check-inventory">
+                        <button class="dashboard-quick-action-btn" data-action="check-inventory">
                             <div class="action-icon">📦</div>
                             <span class="action-title">Check Inventory</span>
                             <span class="action-subtitle">View stock levels</span>
                         </button>
 
-                        <button class="quick-action-btn" data-action="record-feed">
+                        <button class="dashboard-quick-action-btn" data-action="record-feed">
                             <div class="action-icon">🌾</div>
                             <span class="action-title">Record Feed</span>
                             <span class="action-subtitle">Log feed usage</span>
                         </button>
 
-                        <button class="quick-action-btn" data-action="add-production">
+                        <button class="dashboard-quick-action-btn" data-action="add-production">
                             <div class="action-icon">🚜</div>
                             <span class="action-title">Production</span>
                             <span class="action-subtitle">Record production</span>
                         </button>
 
-                        <button class="quick-action-btn" data-action="view-reports">
+                        <button class="dashboard-quick-action-btn" data-action="view-reports">
                             <div class="action-icon">📈</div>
                             <span class="action-title">View Reports</span>
                             <span class="action-subtitle">Analytics & insights</span>
@@ -169,52 +109,52 @@ const DashboardModule = {
                 </div>
 
                 <!-- Stats Overview -->
-                <div class="stats-overview">
-                    <h2 class="section-title">Overview</h2>
-                    <div class="stats-grid">
-                        <div class="stat-card" id="revenue-card">
+                <div class="dashboard-stats-overview">
+                    <h2 class="dashboard-section-title">Overview</h2>
+                    <div class="dashboard-stats-grid">
+                        <div class="dashboard-stat-card" id="revenue-card">
                             <div class="stat-icon">💰</div>
                             <div class="stat-value" id="total-revenue">$0.00</div>
                             <div class="stat-label">Total Revenue</div>
                         </div>
 
-                        <div class="stat-card" id="expense-card">
+                        <div class="dashboard-stat-card" id="expense-card">
                             <div class="stat-icon">💸</div>
                             <div class="stat-value" id="total-expenses">$0.00</div>
                             <div class="stat-label">Total Expenses</div>
                         </div>
 
-                        <div class="stat-card" id="inventory-card">
+                        <div class="dashboard-stat-card" id="inventory-card">
                             <div class="stat-icon">📦</div>
                             <div class="stat-value" id="inventory-items">0</div>
                             <div class="stat-label">Inventory Items</div>
                         </div>
 
-                        <div class="stat-card" id="birds-card">
+                        <div class="dashboard-stat-card" id="birds-card">
                             <div class="stat-icon">🐔</div>
                             <div class="stat-value" id="active-birds">0</div>
                             <div class="stat-label">Active Birds</div>
                         </div>
 
-                        <div class="stat-card" id="orders-card">
+                        <div class="dashboard-stat-card" id="orders-card">
                             <div class="stat-icon">📋</div>
                             <div class="stat-value" id="total-orders">0</div>
                             <div class="stat-label">Total Orders</div>
                         </div>
 
-                        <div class="stat-card" id="profit-card">
+                        <div class="dashboard-stat-card" id="profit-card">
                             <div class="stat-icon">📊</div>
                             <div class="stat-value" id="net-profit">$0.00</div>
                             <div class="stat-label">Net Profit</div>
                         </div>
 
-                        <div class="stat-card" id="customers-card">
+                        <div class="dashboard-stat-card" id="customers-card">
                             <div class="stat-icon">👥</div>
                             <div class="stat-value" id="total-customers">0</div>
                             <div class="stat-label">Customers</div>
                         </div>
 
-                        <div class="stat-card" id="products-card">
+                        <div class="dashboard-stat-card" id="products-card">
                             <div class="stat-icon">🛒</div>
                             <div class="stat-value" id="total-products">0</div>
                             <div class="stat-label">Products</div>
@@ -224,10 +164,10 @@ const DashboardModule = {
 
                 <!-- Recent Activity -->
                 <div class="recent-activity">
-                    <h2 class="section-title">Recent Activity</h2>
-                    <div class="activity-list">
+                    <h2 class="dashboard-section-title">Recent Activity</h2>
+                    <div class="dashboard-activity-list">
                         <div id="activity-content">
-                            <div class="empty-state">
+                            <div class="dashboard-empty-state">
                                 <div class="empty-icon">📊</div>
                                 <div class="empty-title">No recent activity</div>
                                 <div class="empty-subtitle">Start by adding your first record</div>
@@ -237,229 +177,24 @@ const DashboardModule = {
                 </div>
 
                 <!-- Refresh Button -->
-                <div class="refresh-section">
-                    <button id="refresh-stats-btn" class="btn-outline">
+                <div class="text-center mt-8">
+                    <button id="refresh-stats-btn" class="dashboard-refresh-btn">
                         🔄 Refresh Stats
                     </button>
                 </div>
             </div>
         `;
 
-        // Apply layout styles (these are structural, not theme-related)
-        this.applyLayoutStyles();
-        
-        // Apply theme styles from StyleManager
-        if (window.StyleManager) {
-            this.applyThemeStyles();
-        }
-        
-        // Add event listeners
-        this.setupQuickActions();
-        this.setupRefreshButton();
-    },
-
-    applyLayoutStyles() {
-        // Only layout-related styles that never change
-        const container = this.element.querySelector('#dashboard');
-        if (container) {
-            container.style.padding = '20px';
-            container.style.maxWidth = '1200px';
-            container.style.margin = '0 auto';
-        }
-
-        const welcomeSection = this.element.querySelector('.welcome-section');
-        if (welcomeSection) {
-            welcomeSection.style.marginBottom = '30px';
-        }
-
-        const welcomeHeader = this.element.querySelector('.welcome-header');
-        if (welcomeHeader) {
-            welcomeHeader.style.fontSize = '28px';
-            welcomeHeader.style.marginBottom = '8px';
-            welcomeHeader.style.fontWeight = '600';
-        }
-
-        const welcomeSubtitle = this.element.querySelector('.welcome-subtitle');
-        if (welcomeSubtitle) {
-            welcomeSubtitle.style.fontSize = '16px';
-        }
-
-        // Section titles layout
-        const sectionTitles = this.element.querySelectorAll('.section-title');
-        sectionTitles.forEach(title => {
-            title.style.fontSize = '20px';
-            title.style.marginBottom = '20px';
-            title.style.fontWeight = '600';
-        });
-
-        // Quick actions grid layout
-        const actionsGrid = this.element.querySelector('.actions-grid');
-        if (actionsGrid) {
-            actionsGrid.style.display = 'grid';
-            actionsGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(150px, 1fr))';
-            actionsGrid.style.gap = '16px';
-            actionsGrid.style.marginBottom = '30px';
-        }
-
-        // Quick action buttons - layout only
-        const actionButtons = this.element.querySelectorAll('.quick-action-btn');
-        actionButtons.forEach(btn => {
-            btn.style.borderRadius = '16px';
-            btn.style.padding = '24px 16px';
-            btn.style.cursor = 'pointer';
-            btn.style.transition = 'all 0.3s ease';
-            btn.style.display = 'flex';
-            btn.style.flexDirection = 'column';
-            btn.style.alignItems = 'center';
-            btn.style.gap = '12px';
-            btn.style.minHeight = '120px';
-            btn.style.fontFamily = 'inherit';
-            btn.style.backdropFilter = 'blur(20px)';
-            btn.style.WebkitBackdropFilter = 'blur(20px)';
-        });
-
-        // Action icons layout
-        const actionIcons = this.element.querySelectorAll('.action-icon');
-        actionIcons.forEach(icon => {
-            icon.style.fontSize = '32px';
-            icon.style.lineHeight = '1';
-        });
-
-        // Action titles layout
-        const actionTitles = this.element.querySelectorAll('.action-title');
-        actionTitles.forEach(title => {
-            title.style.fontSize = '14px';
-            title.style.fontWeight = '600';
-            title.style.textAlign = 'center';
-            title.style.lineHeight = '1.2';
-        });
-
-        // Action subtitles layout
-        const actionSubtitles = this.element.querySelectorAll('.action-subtitle');
-        actionSubtitles.forEach(subtitle => {
-            subtitle.style.fontSize = '12px';
-            subtitle.style.textAlign = 'center';
-            subtitle.style.lineHeight = '1.3';
-        });
-
-        // Stats grid layout
-        const statsGrid = this.element.querySelector('.stats-grid');
-        if (statsGrid) {
-            statsGrid.style.display = 'grid';
-            statsGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
-            statsGrid.style.gap = '16px';
-            statsGrid.style.marginBottom = '40px';
-        }
-
-        // Stat cards - layout only
-        const statCards = this.element.querySelectorAll('.stat-card');
-        statCards.forEach(card => {
-            card.style.borderRadius = '16px';
-            card.style.padding = '20px';
-            card.style.textAlign = 'center';
-            card.style.transition = 'transform 0.2s ease';
-            card.style.backdropFilter = 'blur(20px)';
-            card.style.WebkitBackdropFilter = 'blur(20px)';
-        });
-
-        // Stat icons layout
-        const statIcons = this.element.querySelectorAll('.stat-icon');
-        statIcons.forEach(icon => {
-            icon.style.fontSize = '24px';
-            icon.style.marginBottom = '8px';
-            icon.style.lineHeight = '1';
-        });
-
-        // Stat values layout
-        const statValues = this.element.querySelectorAll('.stat-value');
-        statValues.forEach(value => {
-            value.style.fontSize = '24px';
-            value.style.fontWeight = 'bold';
-            value.style.marginBottom = '4px';
-            value.style.lineHeight = '1.2';
-        });
-
-        // Stat labels layout
-        const statLabels = this.element.querySelectorAll('.stat-label');
-        statLabels.forEach(label => {
-            label.style.fontSize = '14px';
-            label.style.lineHeight = '1.3';
-        });
-
-        // Activity list layout
-        const activityList = this.element.querySelector('.activity-list');
-        if (activityList) {
-            activityList.style.borderRadius = '16px';
-            activityList.style.padding = '20px';
-            activityList.style.minHeight = '200px';
-            activityList.style.backdropFilter = 'blur(20px)';
-            activityList.style.WebkitBackdropFilter = 'blur(20px)';
-        }
-
-        // Empty state layout
-        const emptyState = this.element.querySelector('.empty-state');
-        if (emptyState) {
-            emptyState.style.textAlign = 'center';
-            emptyState.style.padding = '40px 20px';
-        }
-
-        const emptyIcon = this.element.querySelector('.empty-icon');
-        if (emptyIcon) {
-            emptyIcon.style.fontSize = '48px';
-            emptyIcon.style.marginBottom = '16px';
-            emptyIcon.style.lineHeight = '1';
-        }
-
-        const emptyTitle = this.element.querySelector('.empty-title');
-        if (emptyTitle) {
-            emptyTitle.style.fontSize = '16px';
-            emptyTitle.style.marginBottom = '8px';
-            emptyTitle.style.fontWeight = '600';
-        }
-
-        const emptySubtitle = this.element.querySelector('.empty-subtitle');
-        if (emptySubtitle) {
-            emptySubtitle.style.fontSize = '14px';
-        }
-
-        // Refresh button layout
-        const refreshBtn = this.element.querySelector('#refresh-stats-btn');
-        if (refreshBtn) {
-            refreshBtn.style.borderRadius = '12px';
-            refreshBtn.style.padding = '12px 24px';
-            refreshBtn.style.cursor = 'pointer';
-            refreshBtn.style.fontSize = '14px';
-            refreshBtn.style.transition = 'all 0.3s ease';
-            refreshBtn.style.fontFamily = 'inherit';
-            refreshBtn.style.backdropFilter = 'blur(20px)';
-            refreshBtn.style.WebkitBackdropFilter = 'blur(20px)';
-        }
-
-        const refreshSection = this.element.querySelector('.refresh-section');
-        if (refreshSection) {
-            refreshSection.style.textAlign = 'center';
-            refreshSection.style.marginTop = '30px';
-        }
+        // No more applyLayoutStyles() or applyThemeStyles() - CSS handles everything
     },
 
     setupQuickActions() {
-        const quickActionButtons = document.querySelectorAll('.quick-action-btn');
+        const quickActionButtons = document.querySelectorAll('.dashboard-quick-action-btn');
         
         quickActionButtons.forEach(button => {
             button.addEventListener('click', (e) => {
                 const action = e.currentTarget.getAttribute('data-action');
                 this.handleQuickAction(action);
-            });
-
-            // Hover effects (behavioral, not theme-based)
-            button.addEventListener('mouseenter', (e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-            });
-
-            button.addEventListener('mouseleave', (e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
             });
         });
     },
@@ -473,21 +208,10 @@ const DashboardModule = {
                     window.coreModule.showNotification('Stats refreshed!', 'success');
                 }
             });
-
-            // Hover effect
-            refreshBtn.addEventListener('mouseenter', (e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-            });
-
-            refreshBtn.addEventListener('mouseleave', (e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-            });
         }
     },
 
-    // ... [rest of your methods remain exactly the same] ...
+    // ... [KEEP ALL YOUR EXISTING FUNCTIONALITY METHODS - NO CHANGES NEEDED] ...
     loadAndDisplayStats() {
         const profileStats = this.getProfileStats();
         this.updateDashboardStats(profileStats);
@@ -578,19 +302,28 @@ const DashboardModule = {
         this.updateStatCard('total-customers', stats.totalCustomers || 0);
         this.updateStatCard('total-products', stats.totalProducts || 0);
 
+        // Update profit card color based on profit/loss
         const profitCard = document.getElementById('profit-card');
         if (profitCard) {
             const netProfit = stats.netProfit || (stats.totalIncome - stats.totalExpenses) || 0;
-            const profitColor = netProfit >= 0 ? '#22c55e' : '#ef4444';
-            profitCard.style.borderLeft = `4px solid ${profitColor}`;
+            if (netProfit >= 0) {
+                profitCard.classList.remove('negative');
+                profitCard.classList.add('positive');
+            } else {
+                profitCard.classList.remove('positive');
+                profitCard.classList.add('negative');
+            }
         }
 
+        // Add monthly revenue indicator if available
         const revenueCard = document.getElementById('revenue-card');
         if (revenueCard && stats.monthlyRevenue > 0) {
+            // Remove existing indicator if present
+            const existingIndicator = revenueCard.querySelector('.monthly-indicator');
+            if (existingIndicator) existingIndicator.remove();
+            
             const monthlyIndicator = document.createElement('div');
-            monthlyIndicator.style.fontSize = '12px';
-            monthlyIndicator.style.color = '#22c55e';
-            monthlyIndicator.style.marginTop = '4px';
+            monthlyIndicator.className = 'monthly-indicator text-xs text-success mt-1';
             monthlyIndicator.textContent = `+${this.formatCurrency(stats.monthlyRevenue)} this month`;
             revenueCard.appendChild(monthlyIndicator);
         }
@@ -599,9 +332,10 @@ const DashboardModule = {
     updateStatCard(elementId, value) {
         const element = document.getElementById(elementId);
         if (element) {
-            element.style.transform = 'scale(1.1)';
+            // Add animation class
+            element.classList.add('stat-updating');
             setTimeout(() => {
-                element.style.transform = 'scale(1)';
+                element.classList.remove('stat-updating');
                 element.textContent = value;
             }, 150);
         }
@@ -666,7 +400,7 @@ const DashboardModule = {
 
         if (activities.length === 0) {
             activityContent.innerHTML = `
-                <div class="empty-state">
+                <div class="dashboard-empty-state">
                     <div class="empty-icon">📊</div>
                     <div class="empty-title">No recent activity</div>
                     <div class="empty-subtitle">Start by adding your first record</div>
@@ -678,11 +412,11 @@ const DashboardModule = {
         activityContent.innerHTML = `
             <div style="display: flex; flex-direction: column; gap: 12px;">
                 ${activities.map(activity => `
-                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px;">
-                        <div style="font-size: 20px;">${activity.icon}</div>
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; font-size: 14px;">${activity.text}</div>
-                            <div style="font-size: 12px; opacity: 0.7;">${activity.time}</div>
+                    <div class="dashboard-activity-item">
+                        <div class="activity-icon">${activity.icon}</div>
+                        <div class="activity-content">
+                            <div class="activity-text">${activity.text}</div>
+                            <div class="activity-time">${activity.time}</div>
                         </div>
                     </div>
                 `).join('')}
@@ -759,7 +493,7 @@ const DashboardModule = {
 // Register the module
 if (window.FarmModules) {
     window.FarmModules.registerModule('dashboard', DashboardModule);
-    console.log('✅ Dashboard module registered with StyleManager integration');
+    console.log('✅ Dashboard module registered');
 }
 
 // Export for global access
