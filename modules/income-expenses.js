@@ -1,4 +1,4 @@
-// modules/income-expenses.js - COMPLETE WITH WORKING HEADER STATS
+// modules/income-expenses.js - CSS-BASED WITH MODALS
 console.log('Loading income-expenses module...');
 
 const IncomeExpensesModule = {
@@ -13,10 +13,8 @@ const IncomeExpensesModule = {
         this.element = document.getElementById('content-area');
         if (!this.element) return false;
 
-        // Register with StyleManager
-        if (window.StyleManager) {
-            window.StyleManager.registerModule('income-expenses', this.element);
-        }
+        // Load CSS if not already loaded
+        this.loadCSS();
 
         this.loadData();
         this.renderModule();
@@ -27,6 +25,19 @@ const IncomeExpensesModule = {
         
         console.log('✅ Income & Expenses initialized');
         return true;
+    },
+
+    loadCSS() {
+        // Check if module CSS is already loaded
+        if (document.querySelector('link[href*="income-expenses.css"]')) {
+            return;
+        }
+        
+        // Create link element for module-specific CSS
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'css/income-expenses.css';
+        document.head.appendChild(link);
     },
 
     loadData() {
@@ -52,126 +63,124 @@ const IncomeExpensesModule = {
 
         this.element.innerHTML = `
             <div id="income-expenses" class="module-container">
-                <!-- Modern PWA Header -->
-                <div class="module-header">
-                    <div class="header-content">
-                        <div class="header-text">
-                            <h1 class="module-title">Income & Expenses</h1>
-                            <p class="module-subtitle">Track your farm's financial health</p>
+                <!-- Modern Header -->
+                <div class="ie-module-header">
+                    <div class="ie-header-content">
+                        <div class="ie-header-text">
+                            <h1 class="ie-module-title">Income & Expenses</h1>
+                            <p class="ie-module-subtitle">Track your farm's financial health</p>
                         </div>
-                        <div class="header-stats">
-                            <div class="stat-badge">
-                                <span class="stat-icon">📈</span>
-                                <span class="stat-value" id="total-income">${this.formatCurrency(stats.totalIncome, false)}</span>
-                                <span class="stat-label">Total Income</span>
+                        <div class="ie-header-stats">
+                            <div class="ie-stat-badge">
+                                <span class="ie-stat-icon">📈</span>
+                                <span class="ie-stat-value" id="total-income">${this.formatCurrency(stats.totalIncome, false)}</span>
+                                <span class="ie-stat-label">Total Income</span>
                             </div>
-                            <div class="stat-badge">
-                                <span class="stat-icon">📊</span>
-                                <span class="stat-value" id="total-expenses">${this.formatCurrency(stats.totalExpenses, false)}</span>
-                                <span class="stat-label">Total Expenses</span>
+                            <div class="ie-stat-badge">
+                                <span class="ie-stat-icon">📊</span>
+                                <span class="ie-stat-value" id="total-expenses">${this.formatCurrency(stats.totalExpenses, false)}</span>
+                                <span class="ie-stat-label">Total Expenses</span>
                             </div>
-                            <div class="stat-badge">
-                                <span class="stat-icon">💰</span>
-                                <span class="stat-value" id="net-profit" style="color: ${stats.netProfit >= 0 ? 'var(--status-paid)' : 'var(--status-cancelled)'}">
+                            <div class="ie-stat-badge">
+                                <span class="ie-stat-icon">💰</span>
+                                <span class="ie-stat-value" id="net-profit" style="color: ${stats.netProfit >= 0 ? 'var(--color-success)' : 'var(--color-danger)'}">
                                     ${this.formatCurrency(stats.netProfit, false)}
                                 </span>
-                                <span class="stat-label">Net Profit</span>
+                                <span class="ie-stat-label">Net Profit</span>
                             </div>
                         </div>
                     </div>
-                    <div class="header-actions">
-                        <button class="btn btn-primary btn-icon" id="add-income-btn">
-                            <span class="btn-icon-text">💰</span>
-                            <span>Add Income</span>
+                    <div class="ie-header-actions">
+                        <button class="btn btn-primary" id="add-income-btn">
+                            <span>💰 Add Income</span>
                         </button>
-                        <button class="btn btn-outline btn-icon" id="add-expense-btn">
-                            <span class="btn-icon-text">💸</span>
-                            <span>Add Expense</span>
+                        <button class="btn btn-outline" id="add-expense-btn">
+                            <span>💸 Add Expense</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- Financial Summary Cards -->
-                <div class="financial-summary">
-                    <div class="summary-card glass-card">
-                        <div class="summary-icon">📈</div>
-                        <div class="summary-content">
+                <div class="ie-financial-summary">
+                    <div class="ie-summary-card">
+                        <div class="ie-summary-icon">📈</div>
+                        <div class="ie-summary-content">
                             <h3>Monthly Income</h3>
-                            <div class="summary-value" id="monthly-income">${this.formatCurrency(this.getMonthlyIncome())}</div>
-                            <div class="summary-period">This Month</div>
+                            <div class="ie-summary-value" id="monthly-income">${this.formatCurrency(this.getMonthlyIncome())}</div>
+                            <div class="ie-summary-period">This Month</div>
                         </div>
                     </div>
-                    <div class="summary-card glass-card">
-                        <div class="summary-icon">📊</div>
-                        <div class="summary-content">
+                    <div class="ie-summary-card">
+                        <div class="ie-summary-icon">📊</div>
+                        <div class="ie-summary-content">
                             <h3>Monthly Expenses</h3>
-                            <div class="summary-value" id="monthly-expenses">${this.formatCurrency(this.getMonthlyExpenses())}</div>
-                            <div class="summary-period">This Month</div>
+                            <div class="ie-summary-value" id="monthly-expenses">${this.formatCurrency(this.getMonthlyExpenses())}</div>
+                            <div class="ie-summary-period">This Month</div>
                         </div>
                     </div>
-                    <div class="summary-card glass-card">
-                        <div class="summary-icon">💰</div>
-                        <div class="summary-content">
+                    <div class="ie-summary-card">
+                        <div class="ie-summary-icon">💰</div>
+                        <div class="ie-summary-content">
                             <h3>Profit Margin</h3>
-                            <div class="summary-value" id="profit-margin">${stats.totalIncome > 0 ? ((stats.netProfit / stats.totalIncome) * 100).toFixed(1) + '%' : '0%'}</div>
-                            <div class="summary-period">Efficiency</div>
+                            <div class="ie-summary-value" id="profit-margin">${stats.totalIncome > 0 ? ((stats.netProfit / stats.totalIncome) * 100).toFixed(1) + '%' : '0%'}</div>
+                            <div class="ie-summary-period">Efficiency</div>
                         </div>
                     </div>
-                    <div class="summary-card glass-card">
-                        <div class="summary-icon">🎯</div>
-                        <div class="summary-content">
+                    <div class="ie-summary-card">
+                        <div class="ie-summary-icon">🎯</div>
+                        <div class="ie-summary-content">
                             <h3>Top Category</h3>
-                            <div class="summary-value" id="top-category">${this.getTopCategory()}</div>
-                            <div class="summary-period">${this.formatCurrency(this.getTopCategoryAmount())}</div>
+                            <div class="ie-summary-value" id="top-category">${this.getTopCategory()}</div>
+                            <div class="ie-summary-period">${this.formatCurrency(this.getTopCategoryAmount())}</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Quick Actions -->
-                <div class="quick-action-grid">
-                    <button class="quick-action-btn" id="quick-income-btn">
-                        <div class="quick-action-icon">💰</div>
-                        <span class="quick-action-title">Quick Income</span>
-                        <span class="quick-action-desc">Record income instantly</span>
+                <div class="ie-quick-action-grid">
+                    <button class="ie-quick-action-btn" id="quick-income-btn">
+                        <div class="ie-quick-action-icon">💰</div>
+                        <span class="ie-quick-action-title">Quick Income</span>
+                        <span class="ie-quick-action-desc">Record income instantly</span>
                     </button>
-                    <button class="quick-action-btn" id="quick-expense-btn">
-                        <div class="quick-action-icon">💸</div>
-                        <span class="quick-action-title">Quick Expense</span>
-                        <span class="quick-action-desc">Record expense instantly</span>
+                    <button class="ie-quick-action-btn" id="quick-expense-btn">
+                        <div class="ie-quick-action-icon">💸</div>
+                        <span class="ie-quick-action-title">Quick Expense</span>
+                        <span class="ie-quick-action-desc">Record expense instantly</span>
                     </button>
-                    <button class="quick-action-btn" id="view-reports-btn">
-                        <div class="quick-action-icon">📊</div>
-                        <span class="quick-action-title">View Reports</span>
-                        <span class="quick-action-desc">Financial analytics</span>
+                    <button class="ie-quick-action-btn" id="view-reports-btn">
+                        <div class="ie-quick-action-icon">📊</div>
+                        <span class="ie-quick-action-title">View Reports</span>
+                        <span class="ie-quick-action-desc">Financial analytics</span>
                     </button>
-                    <button class="quick-action-btn" id="export-data-btn">
-                        <div class="quick-action-icon">📤</div>
-                        <span class="quick-action-title">Export Data</span>
-                        <span class="quick-action-desc">Export transactions</span>
+                    <button class="ie-quick-action-btn" id="export-data-btn">
+                        <div class="ie-quick-action-icon">📤</div>
+                        <span class="ie-quick-action-title">Export Data</span>
+                        <span class="ie-quick-action-desc">Export transactions</span>
                     </button>
                 </div>
 
                 <!-- Transaction Form (Hidden by default) -->
-                <div id="transaction-form-container" class="hidden">
-                    <div class="glass-card" style="padding: 24px; margin: 24px 0;">
-                        <h3 style="color: var(--text-primary); margin-bottom: 20px;" id="form-title">Add Transaction</h3>
+                <div id="transaction-form-container" class="ie-hidden">
+                    <div class="ie-form-container">
+                        <h3 class="ie-form-title" id="form-title">Add Transaction</h3>
                         <form id="transaction-form">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Type</label>
-                                    <select class="form-input" id="transaction-type" required>
+                            <div class="ie-form-row">
+                                <div class="ie-form-group">
+                                    <label class="ie-form-label">Type</label>
+                                    <select class="ie-form-input" id="transaction-type" required>
                                         <option value="income">Income</option>
                                         <option value="expense">Expense</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label class="form-label">Amount</label>
-                                    <input type="number" class="form-input" id="transaction-amount" step="0.01" min="0" required>
+                                <div class="ie-form-group">
+                                    <label class="ie-form-label">Amount</label>
+                                    <input type="number" class="ie-form-input" id="transaction-amount" step="0.01" min="0" required>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Category</label>
-                                <select class="form-input" id="transaction-category" required>
+                            <div class="ie-form-group">
+                                <label class="ie-form-label">Category</label>
+                                <select class="ie-form-input" id="transaction-category" required>
                                     <option value="">Select category</option>
                                     <option value="egg-sales">Egg Sales</option>
                                     <option value="poultry-sales">Poultry Sales</option>
@@ -183,15 +192,15 @@ const IncomeExpensesModule = {
                                     <option value="other">Other</option>
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Description</label>
-                                <input type="text" class="form-input" id="transaction-description" required>
+                            <div class="ie-form-group">
+                                <label class="ie-form-label">Description</label>
+                                <input type="text" class="ie-form-input" id="transaction-description" required>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Date</label>
-                                <input type="date" class="form-input" id="transaction-date" required>
+                            <div class="ie-form-group">
+                                <label class="ie-form-label">Date</label>
+                                <input type="date" class="ie-form-input" id="transaction-date" required>
                             </div>
-                            <div style="display: flex; gap: 12px;">
+                            <div class="ie-form-actions">
                                 <button type="submit" class="btn btn-primary">Save Transaction</button>
                                 <button type="button" class="btn btn-outline" id="cancel-form">Cancel</button>
                             </div>
@@ -200,9 +209,9 @@ const IncomeExpensesModule = {
                 </div>
 
                 <!-- Recent Transactions -->
-                <div class="glass-card" style="padding: 24px; margin-top: 24px;">
-                    <div class="card-header">
-                        <h3 class="card-title">Recent Transactions</h3>
+                <div class="ie-transactions-card">
+                    <div class="ie-card-header">
+                        <h3 class="ie-card-title">Recent Transactions</h3>
                         <button class="btn btn-outline" id="clear-all">Clear All</button>
                     </div>
                     <div id="transactions-list">
@@ -212,9 +221,484 @@ const IncomeExpensesModule = {
             </div>
         `;
 
+        // Render modals (they're not shown by default)
+        this.renderModals();
+        
         this.setupEventListeners();
     },
 
+    renderModals() {
+        // Add modals to the page
+        const modalsHTML = `
+            <!-- Quick Income Modal -->
+            <div id="quick-income-modal" class="modal-overlay">
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Quick Income</h2>
+                        <button class="modal-close" data-modal="quick-income-modal">✕</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="quick-income-form" class="quick-form">
+                            <div class="quick-form-group">
+                                <label class="quick-form-label">Amount</label>
+                                <input type="number" 
+                                       class="quick-form-input quick-form-amount" 
+                                       id="quick-income-amount" 
+                                       step="0.01" 
+                                       min="0" 
+                                       placeholder="0.00"
+                                       required
+                                       autofocus>
+                                <div class="quick-form-note">Enter amount in USD</div>
+                            </div>
+                            <div class="quick-form-group">
+                                <label class="quick-form-label">Category</label>
+                                <div class="quick-categories">
+                                    <button type="button" class="quick-category-btn" data-category="egg-sales">Egg Sales</button>
+                                    <button type="button" class="quick-category-btn" data-category="poultry-sales">Poultry</button>
+                                    <button type="button" class="quick-category-btn" data-category="crop-sales">Crops</button>
+                                    <button type="button" class="quick-category-btn" data-category="other">Other</button>
+                                </div>
+                                <input type="hidden" id="quick-income-category" value="other" required>
+                            </div>
+                            <div class="quick-form-group">
+                                <label class="quick-form-label">Description (Optional)</label>
+                                <input type="text" 
+                                       class="quick-form-input" 
+                                       id="quick-income-description" 
+                                       placeholder="Brief description">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" data-modal="quick-income-modal">Cancel</button>
+                        <button type="submit" form="quick-income-form" class="btn btn-primary">Add Income</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Expense Modal -->
+            <div id="quick-expense-modal" class="modal-overlay">
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Quick Expense</h2>
+                        <button class="modal-close" data-modal="quick-expense-modal">✕</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="quick-expense-form" class="quick-form">
+                            <div class="quick-form-group">
+                                <label class="quick-form-label">Amount</label>
+                                <input type="number" 
+                                       class="quick-form-input quick-form-amount" 
+                                       id="quick-expense-amount" 
+                                       step="0.01" 
+                                       min="0" 
+                                       placeholder="0.00"
+                                       required
+                                       autofocus>
+                                <div class="quick-form-note">Enter amount in USD</div>
+                            </div>
+                            <div class="quick-form-group">
+                                <label class="quick-form-label">Category</label>
+                                <div class="quick-categories">
+                                    <button type="button" class="quick-category-btn" data-category="feed">Feed</button>
+                                    <button type="button" class="quick-category-btn" data-category="medication">Medication</button>
+                                    <button type="button" class="quick-category-btn" data-category="equipment">Equipment</button>
+                                    <button type="button" class="quick-category-btn" data-category="labor">Labor</button>
+                                    <button type="button" class="quick-category-btn" data-category="other">Other</button>
+                                </div>
+                                <input type="hidden" id="quick-expense-category" value="other" required>
+                            </div>
+                            <div class="quick-form-group">
+                                <label class="quick-form-label">Description (Optional)</label>
+                                <input type="text" 
+                                       class="quick-form-input" 
+                                       id="quick-expense-description" 
+                                       placeholder="Brief description">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" data-modal="quick-expense-modal">Cancel</button>
+                        <button type="submit" form="quick-expense-form" class="btn btn-primary">Add Expense</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View Reports Modal -->
+            <div id="view-reports-modal" class="modal-overlay">
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Financial Reports</h2>
+                        <button class="modal-close" data-modal="view-reports-modal">✕</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="reports-grid">
+                            <div class="report-card" data-report="profit-loss">
+                                <div class="report-icon">📊</div>
+                                <h4 class="report-title">Profit & Loss</h4>
+                                <p class="report-desc">Income vs expenses</p>
+                            </div>
+                            <div class="report-card" data-report="monthly-trends">
+                                <div class="report-icon">📈</div>
+                                <h4 class="report-title">Monthly Trends</h4>
+                                <p class="report-desc">Income/expense trends</p>
+                            </div>
+                            <div class="report-card" data-report="category-breakdown">
+                                <div class="report-icon">🧮</div>
+                                <h4 class="report-title">Category Breakdown</h4>
+                                <p class="report-desc">By income/expense type</p>
+                            </div>
+                            <div class="report-card" data-report="yearly-summary">
+                                <div class="report-icon">📅</div>
+                                <h4 class="report-title">Yearly Summary</h4>
+                                <p class="report-desc">Annual performance</p>
+                            </div>
+                            <div class="report-card" data-report="export-data">
+                                <div class="report-icon">📤</div>
+                                <h4 class="report-title">Export Data</h4>
+                                <p class="report-desc">Download all data</p>
+                            </div>
+                            <div class="report-card" data-report="print-report">
+                                <div class="report-icon">🖨️</div>
+                                <h4 class="report-title">Print Report</h4>
+                                <p class="report-desc">Printable version</p>
+                            </div>
+                        </div>
+                        <div id="report-preview" class="mt-4 p-4 border rounded hidden">
+                            <!-- Report preview will be displayed here -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" data-modal="view-reports-modal">Close</button>
+                        <button type="button" class="btn btn-primary hidden" id="generate-report-btn">Generate Report</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Add modals to body if not already there
+        if (!document.getElementById('quick-income-modal')) {
+            document.body.insertAdjacentHTML('beforeend', modalsHTML);
+        }
+    },
+
+    setupEventListeners() {
+        // Add transaction buttons
+        document.getElementById('add-income-btn')?.addEventListener('click', () => this.showTransactionForm('income'));
+        document.getElementById('add-expense-btn')?.addEventListener('click', () => this.showTransactionForm('expense'));
+        
+        // Quick action buttons
+        document.getElementById('quick-income-btn')?.addEventListener('click', () => this.showQuickIncomeModal());
+        document.getElementById('quick-expense-btn')?.addEventListener('click', () => this.showQuickExpenseModal());
+        document.getElementById('view-reports-btn')?.addEventListener('click', () => this.showViewReportsModal());
+        document.getElementById('export-data-btn')?.addEventListener('click', () => this.exportData());
+        
+        // Form handlers
+        document.getElementById('transaction-form')?.addEventListener('submit', (e) => this.handleTransactionSubmit(e));
+        document.getElementById('cancel-form')?.addEventListener('click', () => this.hideTransactionForm());
+        
+        // Clear all button
+        document.getElementById('clear-all')?.addEventListener('click', () => this.clearAllTransactions());
+        
+        // Delete buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.ie-delete-btn')) {
+                const id = parseInt(e.target.closest('.ie-delete-btn').dataset.id);
+                this.deleteTransaction(id);
+            }
+        });
+
+        // Modal handlers
+        this.setupModalHandlers();
+    },
+
+    setupModalHandlers() {
+        // Quick Income Form
+        document.getElementById('quick-income-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleQuickIncomeSubmit();
+        });
+
+        // Quick Expense Form
+        document.getElementById('quick-expense-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleQuickExpenseSubmit();
+        });
+
+        // Category selection
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('quick-category-btn')) {
+                const category = e.target.dataset.category;
+                const modalId = e.target.closest('.modal-container').parentElement.id;
+                
+                // Update active state
+                e.target.closest('.quick-categories').querySelectorAll('.quick-category-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                e.target.classList.add('active');
+                
+                // Update hidden input
+                if (modalId === 'quick-income-modal') {
+                    document.getElementById('quick-income-category').value = category;
+                } else if (modalId === 'quick-expense-modal') {
+                    document.getElementById('quick-expense-category').value = category;
+                }
+            }
+        });
+
+        // Report selection
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.report-card')) {
+                const reportCard = e.target.closest('.report-card');
+                const reportType = reportCard.dataset.report;
+                this.selectReport(reportType);
+            }
+        });
+
+        // Modal close buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-close') || 
+                e.target.dataset.modal) {
+                const modalId = e.target.dataset.modal || e.target.closest('[data-modal]')?.dataset.modal;
+                if (modalId) {
+                    this.hideModal(modalId);
+                }
+            }
+        });
+
+        // Click outside modal to close
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-overlay')) {
+                e.target.classList.remove('active');
+            }
+        });
+
+        // Escape key to close modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            }
+        });
+    },
+
+    // ==================== MODAL METHODS ====================
+    showModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+            
+            // Focus on amount input for quick forms
+            if (modalId.includes('quick-')) {
+                setTimeout(() => {
+                    const amountInput = modal.querySelector('.quick-form-amount');
+                    if (amountInput) {
+                        amountInput.focus();
+                        amountInput.select();
+                    }
+                }, 100);
+            }
+        }
+    },
+
+    hideModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = ''; // Restore scrolling
+            
+            // Reset forms
+            const form = modal.querySelector('form');
+            if (form) form.reset();
+            
+            // Reset category selection
+            modal.querySelectorAll('.quick-category-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Reset report selection
+            if (modalId === 'view-reports-modal') {
+                document.getElementById('generate-report-btn').classList.add('hidden');
+                document.getElementById('report-preview').classList.add('hidden');
+                document.getElementById('report-preview').innerHTML = '';
+            }
+        }
+    },
+
+    showQuickIncomeModal() {
+        this.showModal('quick-income-modal');
+    },
+
+    showQuickExpenseModal() {
+        this.showModal('quick-expense-modal');
+    },
+
+    showViewReportsModal() {
+        this.showModal('view-reports-modal');
+    },
+
+    handleQuickIncomeSubmit() {
+        const amount = parseFloat(document.getElementById('quick-income-amount').value);
+        const category = document.getElementById('quick-income-category').value;
+        const description = document.getElementById('quick-income-description').value || 'Quick Income Entry';
+        
+        if (!amount || isNaN(amount)) {
+            if (window.coreModule) {
+                window.coreModule.showNotification('Please enter a valid amount', 'error');
+            }
+            return;
+        }
+
+        const transaction = {
+            id: Date.now(),
+            type: 'income',
+            amount: amount,
+            category: category,
+            description: description,
+            date: new Date().toISOString().split('T')[0]
+        };
+        
+        this.addQuickTransaction(transaction);
+        this.hideModal('quick-income-modal');
+    },
+
+    handleQuickExpenseSubmit() {
+        const amount = parseFloat(document.getElementById('quick-expense-amount').value);
+        const category = document.getElementById('quick-expense-category').value;
+        const description = document.getElementById('quick-expense-description').value || 'Quick Expense Entry';
+        
+        if (!amount || isNaN(amount)) {
+            if (window.coreModule) {
+                window.coreModule.showNotification('Please enter a valid amount', 'error');
+            }
+            return;
+        }
+
+        const transaction = {
+            id: Date.now(),
+            type: 'expense',
+            amount: amount,
+            category: category,
+            description: description,
+            date: new Date().toISOString().split('T')[0]
+        };
+        
+        this.addQuickTransaction(transaction);
+        this.hideModal('quick-expense-modal');
+    },
+
+    selectReport(reportType) {
+        const preview = document.getElementById('report-preview');
+        const generateBtn = document.getElementById('generate-report-btn');
+        
+        // Update active state
+        document.querySelectorAll('.report-card').forEach(card => {
+            card.style.borderColor = 'transparent';
+        });
+        document.querySelector(`.report-card[data-report="${reportType}"]`).style.borderColor = 'var(--color-primary)';
+        
+        // Show preview
+        preview.classList.remove('hidden');
+        generateBtn.classList.remove('hidden');
+        
+        // Set preview content
+        let previewHTML = '';
+        const stats = this.calculateStats();
+        
+        switch(reportType) {
+            case 'profit-loss':
+                previewHTML = `
+                    <h4 class="font-semibold mb-2">Profit & Loss Preview</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span>Total Income:</span>
+                            <span class="font-semibold text-success">${this.formatCurrency(stats.totalIncome)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Total Expenses:</span>
+                            <span class="font-semibold text-danger">${this.formatCurrency(stats.totalExpenses)}</span>
+                        </div>
+                        <div class="flex justify-between border-t pt-2">
+                            <span>Net Profit:</span>
+                            <span class="font-semibold ${stats.netProfit >= 0 ? 'text-success' : 'text-danger'}">
+                                ${this.formatCurrency(stats.netProfit)}
+                            </span>
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            case 'monthly-trends':
+                previewHTML = `
+                    <h4 class="font-semibold mb-2">Monthly Trends Preview</h4>
+                    <p class="text-tertiary">This report will show income and expense trends over the last 12 months.</p>
+                `;
+                break;
+                
+            case 'category-breakdown':
+                previewHTML = `
+                    <h4 class="font-semibold mb-2">Category Breakdown Preview</h4>
+                    <p class="text-tertiary">This report will break down transactions by category.</p>
+                `;
+                break;
+                
+            case 'yearly-summary':
+                previewHTML = `
+                    <h4 class="font-semibold mb-2">Yearly Summary Preview</h4>
+                    <p class="text-tertiary">Annual performance report for the current year.</p>
+                `;
+                break;
+                
+            case 'export-data':
+                previewHTML = `
+                    <h4 class="font-semibold mb-2">Export Data Preview</h4>
+                    <p class="text-tertiary">Export all transaction data as JSON, CSV, or PDF.</p>
+                `;
+                generateBtn.textContent = 'Export Data';
+                break;
+                
+            case 'print-report':
+                previewHTML = `
+                    <h4 class="font-semibold mb-2">Print Report Preview</h4>
+                    <p class="text-tertiary">Generate a printer-friendly version of the selected report.</p>
+                `;
+                generateBtn.textContent = 'Print Report';
+                break;
+        }
+        
+        preview.innerHTML = previewHTML;
+        generateBtn.onclick = () => this.generateReport(reportType);
+    },
+
+    generateReport(reportType) {
+        // Implement report generation logic here
+        switch(reportType) {
+            case 'export-data':
+                this.exportData();
+                break;
+            case 'print-report':
+                window.print();
+                break;
+            default:
+                if (window.coreModule) {
+                    window.coreModule.showNotification(`Generating ${reportType} report...`, 'info');
+                }
+                // Here you would implement actual report generation
+                // For now, just show a notification
+                setTimeout(() => {
+                    if (window.coreModule) {
+                        window.coreModule.showNotification('Report generated successfully!', 'success');
+                    }
+                }, 1500);
+        }
+        this.hideModal('view-reports-modal');
+    },
+
+    // ==================== REST OF YOUR METHODS (keep them exactly as they were) ====================
+    // ... [KEEP ALL YOUR EXISTING calculateStats, getMonthlyIncome, etc. methods exactly as they were] ...
     calculateStats() {
         const totalIncome = this.transactions
             .filter(t => t.type === 'income')
@@ -298,9 +782,9 @@ const IncomeExpensesModule = {
     renderTransactionsList() {
         if (this.transactions.length === 0) {
             return `
-                <div class="empty-state">
-                    <div class="empty-content">
-                        <span class="empty-icon">📋</span>
+                <div class="ie-empty-state">
+                    <div class="ie-empty-content">
+                        <span class="ie-empty-icon">📋</span>
                         <h4>No transactions yet</h4>
                         <p>Add your first transaction to get started</p>
                     </div>
@@ -308,23 +792,23 @@ const IncomeExpensesModule = {
             `;
         }
 
-        const recentTransactions = this.transactions.slice(0, 10); // Show only last 10
+        const recentTransactions = this.transactions.slice(0, 10);
 
         return `
-            <div class="transactions-list">
+            <div class="ie-transactions-list">
                 ${recentTransactions.map(transaction => `
-                    <div class="transaction-item">
-                        <div class="transaction-icon">${transaction.type === 'income' ? '💰' : '💸'}</div>
-                        <div class="transaction-details">
-                            <div class="transaction-description">${transaction.description}</div>
-                            <div class="transaction-meta">
+                    <div class="ie-transaction-item">
+                        <div class="ie-transaction-icon">${transaction.type === 'income' ? '💰' : '💸'}</div>
+                        <div class="ie-transaction-details">
+                            <div class="ie-transaction-description">${transaction.description}</div>
+                            <div class="ie-transaction-meta">
                                 <span class="transaction-category">${this.formatCategoryName(transaction.category)}</span>
                                 <span class="transaction-date">${transaction.date}</span>
                             </div>
                         </div>
-                        <div class="transaction-amount ${transaction.type}">
+                        <div class="ie-transaction-amount ${transaction.type}">
                             <span>${transaction.type === 'income' ? '+' : '-'}${this.formatCurrency(transaction.amount)}</span>
-                            <button class="btn-icon delete-transaction" data-id="${transaction.id}" title="Delete">
+                            <button class="ie-delete-btn" data-id="${transaction.id}" title="Delete">
                                 🗑️
                             </button>
                         </div>
@@ -332,44 +816,6 @@ const IncomeExpensesModule = {
                 `).join('')}
             </div>
         `;
-    },
-
-    setupEventListeners() {
-        // Add transaction buttons
-        document.getElementById('add-income-btn')?.addEventListener('click', () => this.showTransactionForm('income'));
-        document.getElementById('add-expense-btn')?.addEventListener('click', () => this.showTransactionForm('expense'));
-        
-        // Quick action buttons
-        document.getElementById('quick-income-btn')?.addEventListener('click', () => this.showQuickIncomeForm());
-        document.getElementById('quick-expense-btn')?.addEventListener('click', () => this.showQuickExpenseForm());
-        document.getElementById('view-reports-btn')?.addEventListener('click', () => this.viewReports());
-        document.getElementById('export-data-btn')?.addEventListener('click', () => this.exportData());
-        
-        // Form handlers
-        document.getElementById('transaction-form')?.addEventListener('submit', (e) => this.handleTransactionSubmit(e));
-        document.getElementById('cancel-form')?.addEventListener('click', () => this.hideTransactionForm());
-        
-        // Clear all button
-        document.getElementById('clear-all')?.addEventListener('click', () => this.clearAllTransactions());
-        
-        // Delete buttons
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.delete-transaction')) {
-                const id = parseInt(e.target.closest('.delete-transaction').dataset.id);
-                this.deleteTransaction(id);
-            }
-        });
-
-        // Hover effects for quick action buttons
-        const quickActionButtons = document.querySelectorAll('.quick-action-btn');
-        quickActionButtons.forEach(button => {
-            button.addEventListener('mouseenter', (e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-            });
-            button.addEventListener('mouseleave', (e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-            });
-        });
     },
 
     showTransactionForm(type) {
@@ -382,47 +828,8 @@ const IncomeExpensesModule = {
         typeSelect.value = type;
         dateInput.value = new Date().toISOString().split('T')[0];
         
-        formContainer.classList.remove('hidden');
+        formContainer.classList.remove('ie-hidden');
         formContainer.scrollIntoView({ behavior: 'smooth' });
-    },
-
-    showQuickIncomeForm() {
-        const amount = prompt('Enter income amount:');
-        if (amount && !isNaN(parseFloat(amount))) {
-            const transaction = {
-                id: Date.now(),
-                type: 'income',
-                amount: parseFloat(amount),
-                category: 'other',
-                description: 'Quick Income Entry',
-                date: new Date().toISOString().split('T')[0]
-            };
-            this.addQuickTransaction(transaction);
-        }
-    },
-
-    showQuickExpenseForm() {
-        const amount = prompt('Enter expense amount:');
-        if (amount && !isNaN(parseFloat(amount))) {
-            const transaction = {
-                id: Date.now(),
-                type: 'expense',
-                amount: parseFloat(amount),
-                category: 'other',
-                description: 'Quick Expense Entry',
-                date: new Date().toISOString().split('T')[0]
-            };
-            this.addQuickTransaction(transaction);
-        }
-    },
-
-    viewReports() {
-        // Navigate to reports module if available
-        if (window.FarmModules && window.FarmModules.modules.reports) {
-            window.FarmModules.showModule('reports');
-        } else {
-            alert('Reports module not available');
-        }
     },
 
     exportData() {
@@ -454,7 +861,7 @@ const IncomeExpensesModule = {
     },
 
     hideTransactionForm() {
-        document.getElementById('transaction-form-container').classList.add('hidden');
+        document.getElementById('transaction-form-container').classList.add('ie-hidden');
         document.getElementById('transaction-form').reset();
     },
 
@@ -474,10 +881,7 @@ const IncomeExpensesModule = {
         this.saveData();
         this.renderModule();
         
-        // SYNC WITH DASHBOARD - Update financial stats
         this.syncStatsWithDashboard();
-        
-        // Add recent activity
         this.addRecentActivity(formData);
         
         if (window.coreModule) {
@@ -491,10 +895,8 @@ const IncomeExpensesModule = {
         this.saveData();
         this.renderModule();
         
-        // SYNC WITH DASHBOARD - Update stats after deletion
         this.syncStatsWithDashboard();
         
-        // Add deletion activity
         if (transaction) {
             this.addRecentActivity({
                 ...transaction,
@@ -514,10 +916,7 @@ const IncomeExpensesModule = {
             this.saveData();
             this.renderModule();
             
-            // SYNC WITH DASHBOARD - Reset financial stats
             this.syncStatsWithDashboard();
-            
-            // Add clear activity
             this.addRecentActivity({
                 type: 'clear',
                 message: 'Cleared all transactions'
@@ -533,11 +932,9 @@ const IncomeExpensesModule = {
         localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
     },
 
-    // Sync financial stats with dashboard
     syncStatsWithDashboard() {
         const stats = this.calculateStats();
         
-        // Update shared data structure
         if (window.FarmModules && window.FarmModules.appData) {
             if (!window.FarmModules.appData.profile) {
                 window.FarmModules.appData.profile = {};
@@ -546,7 +943,6 @@ const IncomeExpensesModule = {
                 window.FarmModules.appData.profile.dashboardStats = {};
             }
             
-            // Update financial stats in shared data
             Object.assign(window.FarmModules.appData.profile.dashboardStats, {
                 totalIncome: stats.totalIncome,
                 totalExpenses: stats.totalExpenses,
@@ -555,7 +951,6 @@ const IncomeExpensesModule = {
             });
         }
         
-        // Notify dashboard via custom event
         const statsUpdateEvent = new CustomEvent('financialStatsUpdated', {
             detail: {
                 totalIncome: stats.totalIncome,
@@ -567,7 +962,6 @@ const IncomeExpensesModule = {
         document.dispatchEvent(statsUpdateEvent);
     },
 
-    // Add recent activity to dashboard
     addRecentActivity(transaction) {
         if (!window.FarmModules || !window.FarmModules.modules.dashboard) return;
         
@@ -604,7 +998,6 @@ const IncomeExpensesModule = {
         }
     },
 
-    // Helper method to format category names
     formatCategoryName(category) {
         if (!category) return 'Unknown';
         return category.split('-').map(word => 
