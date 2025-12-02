@@ -1,5 +1,5 @@
-// modules/income-expenses.js - CSS-BASED WITH MODALS
-console.log('Loading income-expenses module...');
+// modules/income-expenses.js - USING MODAL MANAGER
+console.log('Loading income-expenses module with Modal Manager...');
 
 const IncomeExpensesModule = {
     name: 'income-expenses',
@@ -220,169 +220,259 @@ const IncomeExpensesModule = {
                 </div>
             </div>
         `;
-
-        // Render modals (they're not shown by default)
-        this.renderModals();
         
         this.setupEventListeners();
     },
 
-    renderModals() {
-        // Add modals to the page
-        const modalsHTML = `
-            <!-- Quick Income Modal -->
-            <div id="quick-income-modal" class="modal-overlay">
-                <div class="modal-container">
-                    <div class="modal-header">
-                        <h2 class="modal-title">Quick Income</h2>
-                        <button class="modal-close" data-modal="quick-income-modal">✕</button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="quick-income-form" class="quick-form">
-                            <div class="quick-form-group">
-                                <label class="quick-form-label">Amount</label>
-                                <input type="number" 
-                                       class="quick-form-input quick-form-amount" 
-                                       id="quick-income-amount" 
-                                       step="0.01" 
-                                       min="0" 
-                                       placeholder="0.00"
-                                       required
-                                       autofocus>
-                                <div class="quick-form-note">Enter amount in USD</div>
-                            </div>
-                            <div class="quick-form-group">
-                                <label class="quick-form-label">Category</label>
-                                <div class="quick-categories">
-                                    <button type="button" class="quick-category-btn" data-category="egg-sales">Egg Sales</button>
-                                    <button type="button" class="quick-category-btn" data-category="poultry-sales">Poultry</button>
-                                    <button type="button" class="quick-category-btn" data-category="crop-sales">Crops</button>
-                                    <button type="button" class="quick-category-btn" data-category="other">Other</button>
-                                </div>
-                                <input type="hidden" id="quick-income-category" value="other" required>
-                            </div>
-                            <div class="quick-form-group">
-                                <label class="quick-form-label">Description (Optional)</label>
-                                <input type="text" 
-                                       class="quick-form-input" 
-                                       id="quick-income-description" 
-                                       placeholder="Brief description">
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline" data-modal="quick-income-modal">Cancel</button>
-                        <button type="submit" form="quick-income-form" class="btn btn-primary">Add Income</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Expense Modal -->
-            <div id="quick-expense-modal" class="modal-overlay">
-                <div class="modal-container">
-                    <div class="modal-header">
-                        <h2 class="modal-title">Quick Expense</h2>
-                        <button class="modal-close" data-modal="quick-expense-modal">✕</button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="quick-expense-form" class="quick-form">
-                            <div class="quick-form-group">
-                                <label class="quick-form-label">Amount</label>
-                                <input type="number" 
-                                       class="quick-form-input quick-form-amount" 
-                                       id="quick-expense-amount" 
-                                       step="0.01" 
-                                       min="0" 
-                                       placeholder="0.00"
-                                       required
-                                       autofocus>
-                                <div class="quick-form-note">Enter amount in USD</div>
-                            </div>
-                            <div class="quick-form-group">
-                                <label class="quick-form-label">Category</label>
-                                <div class="quick-categories">
-                                    <button type="button" class="quick-category-btn" data-category="feed">Feed</button>
-                                    <button type="button" class="quick-category-btn" data-category="medication">Medication</button>
-                                    <button type="button" class="quick-category-btn" data-category="equipment">Equipment</button>
-                                    <button type="button" class="quick-category-btn" data-category="labor">Labor</button>
-                                    <button type="button" class="quick-category-btn" data-category="other">Other</button>
-                                </div>
-                                <input type="hidden" id="quick-expense-category" value="other" required>
-                            </div>
-                            <div class="quick-form-group">
-                                <label class="quick-form-label">Description (Optional)</label>
-                                <input type="text" 
-                                       class="quick-form-input" 
-                                       id="quick-expense-description" 
-                                       placeholder="Brief description">
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline" data-modal="quick-expense-modal">Cancel</button>
-                        <button type="submit" form="quick-expense-form" class="btn btn-primary">Add Expense</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- View Reports Modal -->
-            <div id="view-reports-modal" class="modal-overlay">
-                <div class="modal-container">
-                    <div class="modal-header">
-                        <h2 class="modal-title">Financial Reports</h2>
-                        <button class="modal-close" data-modal="view-reports-modal">✕</button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="reports-grid">
-                            <div class="report-card" data-report="profit-loss">
-                                <div class="report-icon">📊</div>
-                                <h4 class="report-title">Profit & Loss</h4>
-                                <p class="report-desc">Income vs expenses</p>
-                            </div>
-                            <div class="report-card" data-report="monthly-trends">
-                                <div class="report-icon">📈</div>
-                                <h4 class="report-title">Monthly Trends</h4>
-                                <p class="report-desc">Income/expense trends</p>
-                            </div>
-                            <div class="report-card" data-report="category-breakdown">
-                                <div class="report-icon">🧮</div>
-                                <h4 class="report-title">Category Breakdown</h4>
-                                <p class="report-desc">By income/expense type</p>
-                            </div>
-                            <div class="report-card" data-report="yearly-summary">
-                                <div class="report-icon">📅</div>
-                                <h4 class="report-title">Yearly Summary</h4>
-                                <p class="report-desc">Annual performance</p>
-                            </div>
-                            <div class="report-card" data-report="export-data">
-                                <div class="report-icon">📤</div>
-                                <h4 class="report-title">Export Data</h4>
-                                <p class="report-desc">Download all data</p>
-                            </div>
-                            <div class="report-card" data-report="print-report">
-                                <div class="report-icon">🖨️</div>
-                                <h4 class="report-title">Print Report</h4>
-                                <p class="report-desc">Printable version</p>
-                            </div>
-                        </div>
-                        <div id="report-preview" class="mt-4 p-4 border rounded hidden">
-                            <!-- Report preview will be displayed here -->
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline" data-modal="view-reports-modal">Close</button>
-                        <button type="button" class="btn btn-primary hidden" id="generate-report-btn">Generate Report</button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        // Add modals to body if not already there
-        if (!document.getElementById('quick-income-modal')) {
-            document.body.insertAdjacentHTML('beforeend', modalsHTML);
-        }
+    // ==================== MODAL METHODS ====================
+    showQuickIncomeModal() {
+        ModalManager.createQuickForm({
+            id: 'quick-income-modal',
+            title: 'Quick Income',
+            subtitle: 'Record a new income transaction',
+            fields: [
+                {
+                    name: 'amount',
+                    type: 'number',
+                    label: 'Amount (USD)',
+                    required: true,
+                    large: true,
+                    min: 0,
+                    step: 0.01,
+                    placeholder: '0.00',
+                    autofocus: true,
+                    note: 'Enter the income amount'
+                },
+                {
+                    name: 'category',
+                    type: 'category',
+                    label: 'Category',
+                    required: true,
+                    defaultValue: 'other',
+                    categories: [
+                        { value: 'egg-sales', label: 'Egg Sales' },
+                        { value: 'poultry-sales', label: 'Poultry Sales' },
+                        { value: 'crop-sales', label: 'Crop Sales' },
+                        { value: 'other', label: 'Other' }
+                    ]
+                },
+                {
+                    name: 'description',
+                    type: 'text',
+                    label: 'Description (Optional)',
+                    required: false,
+                    placeholder: 'Brief description'
+                }
+            ],
+            onSubmit: (data) => {
+                const transaction = {
+                    id: Date.now(),
+                    type: 'income',
+                    amount: data.amount,
+                    category: data.category,
+                    description: data.description || 'Quick Income Entry',
+                    date: new Date().toISOString().split('T')[0]
+                };
+                
+                this.addQuickTransaction(transaction);
+            }
+        });
     },
 
+    showQuickExpenseModal() {
+        ModalManager.createQuickForm({
+            id: 'quick-expense-modal',
+            title: 'Quick Expense',
+            subtitle: 'Record a new expense transaction',
+            fields: [
+                {
+                    name: 'amount',
+                    type: 'number',
+                    label: 'Amount (USD)',
+                    required: true,
+                    large: true,
+                    min: 0,
+                    step: 0.01,
+                    placeholder: '0.00',
+                    autofocus: true,
+                    note: 'Enter the expense amount'
+                },
+                {
+                    name: 'category',
+                    type: 'category',
+                    label: 'Category',
+                    required: true,
+                    defaultValue: 'other',
+                    categories: [
+                        { value: 'feed', label: 'Feed' },
+                        { value: 'medication', label: 'Medication' },
+                        { value: 'equipment', label: 'Equipment' },
+                        { value: 'labor', label: 'Labor' },
+                        { value: 'other', label: 'Other' }
+                    ]
+                },
+                {
+                    name: 'description',
+                    type: 'text',
+                    label: 'Description (Optional)',
+                    required: false,
+                    placeholder: 'Brief description'
+                }
+            ],
+            onSubmit: (data) => {
+                const transaction = {
+                    id: Date.now(),
+                    type: 'expense',
+                    amount: data.amount,
+                    category: data.category,
+                    description: data.description || 'Quick Expense Entry',
+                    date: new Date().toISOString().split('T')[0]
+                };
+                
+                this.addQuickTransaction(transaction);
+            }
+        });
+    },
+
+    showViewReportsModal() {
+        const stats = this.calculateStats();
+        const monthlyIncome = this.getMonthlyIncome();
+        const monthlyExpenses = this.getMonthlyExpenses();
+        
+        ModalManager.showReports({
+            title: 'Financial Reports',
+            subtitle: 'Select a report to generate',
+            reports: [
+                {
+                    id: 'profit-loss',
+                    icon: '📊',
+                    title: 'Profit & Loss',
+                    description: 'Income vs expenses report',
+                    preview: `
+                        <h4 class="font-semibold mb-2">Profit & Loss Report</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span>Total Income:</span>
+                                <span class="font-semibold text-success">${this.formatCurrency(stats.totalIncome)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Total Expenses:</span>
+                                <span class="font-semibold text-danger">${this.formatCurrency(stats.totalExpenses)}</span>
+                            </div>
+                            <div class="flex justify-between border-t pt-2">
+                                <span>Net Profit:</span>
+                                <span class="font-semibold ${stats.netProfit >= 0 ? 'text-success' : 'text-danger'}">
+                                    ${this.formatCurrency(stats.netProfit)}
+                                </span>
+                            </div>
+                        </div>
+                    `
+                },
+                {
+                    id: 'monthly-trends',
+                    icon: '📈',
+                    title: 'Monthly Trends',
+                    description: 'Income/expense trends',
+                    preview: `
+                        <h4 class="font-semibold mb-2">Monthly Trends Report</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span>This Month Income:</span>
+                                <span class="font-semibold text-success">${this.formatCurrency(monthlyIncome)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>This Month Expenses:</span>
+                                <span class="font-semibold text-danger">${this.formatCurrency(monthlyExpenses)}</span>
+                            </div>
+                            <p class="text-tertiary text-sm mt-2">Shows trends over the last 12 months</p>
+                        </div>
+                    `
+                },
+                {
+                    id: 'category-breakdown',
+                    icon: '🧮',
+                    title: 'Category Breakdown',
+                    description: 'By income/expense type',
+                    preview: `
+                        <h4 class="font-semibold mb-2">Category Breakdown</h4>
+                        <p class="text-tertiary">Breakdown of transactions by category.</p>
+                        <p class="text-tertiary text-sm mt-2">Top Category: ${this.getTopCategory()}</p>
+                    `
+                },
+                {
+                    id: 'yearly-summary',
+                    icon: '📅',
+                    title: 'Yearly Summary',
+                    description: 'Annual performance',
+                    preview: `
+                        <h4 class="font-semibold mb-2">Yearly Summary Report</h4>
+                        <p class="text-tertiary">Annual performance report for the current year.</p>
+                    `
+                },
+                {
+                    id: 'export-data',
+                    icon: '📤',
+                    title: 'Export Data',
+                    description: 'Download all data',
+                    buttonText: 'Export Data',
+                    preview: `
+                        <h4 class="font-semibold mb-2">Export Data</h4>
+                        <p class="text-tertiary">Export all transaction data as JSON, CSV, or PDF.</p>
+                        <p class="text-tertiary text-sm mt-2">Total Transactions: ${this.transactions.length}</p>
+                    `
+                },
+                {
+                    id: 'print-report',
+                    icon: '🖨️',
+                    title: 'Print Report',
+                    description: 'Printable version',
+                    buttonText: 'Print Report',
+                    preview: `
+                        <h4 class="font-semibold mb-2">Print Report</h4>
+                        <p class="text-tertiary">Generate a printer-friendly version of the selected report.</p>
+                    `
+                }
+            ],
+            onReportSelect: (reportId) => {
+                switch(reportId) {
+                    case 'export-data':
+                        this.exportData();
+                        break;
+                    case 'print-report':
+                        window.print();
+                        break;
+                    default:
+                        this.generateReport(reportId);
+                }
+            }
+        });
+    },
+
+    generateReport(reportType) {
+        // Show loading modal
+        const loadingId = ModalManager.showLoading({
+            message: `Generating ${reportType.replace('-', ' ')} report...`
+        });
+        
+        // Simulate report generation
+        setTimeout(() => {
+            ModalManager.hideLoading();
+            
+            // Show success alert
+            ModalManager.alert({
+                title: 'Report Generated',
+                message: `The ${reportType.replace('-', ' ')} report has been generated successfully.`,
+                icon: '✅',
+                type: 'modal-success'
+            });
+            
+            // Here you would implement actual report generation logic
+            // For example, generate PDF, show in new window, etc.
+            console.log(`Generating report: ${reportType}`);
+        }, 1500);
+    },
+
+    // ==================== SETUP EVENT LISTENERS ====================
     setupEventListeners() {
         // Add transaction buttons
         document.getElementById('add-income-btn')?.addEventListener('click', () => this.showTransactionForm('income'));
@@ -398,307 +488,59 @@ const IncomeExpensesModule = {
         document.getElementById('transaction-form')?.addEventListener('submit', (e) => this.handleTransactionSubmit(e));
         document.getElementById('cancel-form')?.addEventListener('click', () => this.hideTransactionForm());
         
-        // Clear all button
-        document.getElementById('clear-all')?.addEventListener('click', () => this.clearAllTransactions());
+        // Clear all button with confirmation modal
+        document.getElementById('clear-all')?.addEventListener('click', () => {
+            ModalManager.confirm({
+                title: 'Clear All Transactions',
+                message: 'Are you sure you want to clear all transactions?',
+                details: 'This action cannot be undone.',
+                icon: '⚠️',
+                type: 'modal-danger',
+                danger: true,
+                confirmText: 'Clear All'
+            }).then((confirmed) => {
+                if (confirmed) {
+                    this.clearAllTransactions();
+                }
+            });
+        });
         
-        // Delete buttons
+        // Delete buttons with confirmation
         document.addEventListener('click', (e) => {
             if (e.target.closest('.ie-delete-btn')) {
                 const id = parseInt(e.target.closest('.ie-delete-btn').dataset.id);
-                this.deleteTransaction(id);
-            }
-        });
-
-        // Modal handlers
-        this.setupModalHandlers();
-    },
-
-    setupModalHandlers() {
-        // Quick Income Form
-        document.getElementById('quick-income-form')?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleQuickIncomeSubmit();
-        });
-
-        // Quick Expense Form
-        document.getElementById('quick-expense-form')?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleQuickExpenseSubmit();
-        });
-
-        // Category selection
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('quick-category-btn')) {
-                const category = e.target.dataset.category;
-                const modalId = e.target.closest('.modal-container').parentElement.id;
+                const transaction = this.transactions.find(t => t.id === id);
                 
-                // Update active state
-                e.target.closest('.quick-categories').querySelectorAll('.quick-category-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                e.target.classList.add('active');
-                
-                // Update hidden input
-                if (modalId === 'quick-income-modal') {
-                    document.getElementById('quick-income-category').value = category;
-                } else if (modalId === 'quick-expense-modal') {
-                    document.getElementById('quick-expense-category').value = category;
+                if (transaction) {
+                    ModalManager.confirm({
+                        title: 'Delete Transaction',
+                        message: `Are you sure you want to delete this ${transaction.type}?`,
+                        details: `${transaction.description} - ${this.formatCurrency(transaction.amount)}`,
+                        icon: '🗑️',
+                        type: 'modal-warning',
+                        confirmText: 'Delete'
+                    }).then((confirmed) => {
+                        if (confirmed) {
+                            this.deleteTransaction(id);
+                        }
+                    });
                 }
             }
         });
 
-        // Report selection
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.report-card')) {
-                const reportCard = e.target.closest('.report-card');
-                const reportType = reportCard.dataset.report;
-                this.selectReport(reportType);
-            }
-        });
-
-        // Modal close buttons
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal-close') || 
-                e.target.dataset.modal) {
-                const modalId = e.target.dataset.modal || e.target.closest('[data-modal]')?.dataset.modal;
-                if (modalId) {
-                    this.hideModal(modalId);
-                }
-            }
-        });
-
-        // Click outside modal to close
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal-overlay')) {
-                e.target.classList.remove('active');
-            }
-        });
-
-        // Escape key to close modal
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                document.querySelectorAll('.modal-overlay.active').forEach(modal => {
-                    modal.classList.remove('active');
-                });
-            }
-        });
-    },
-
-    // ==================== MODAL METHODS ====================
-    showModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden'; // Prevent scrolling
-            
-            // Focus on amount input for quick forms
-            if (modalId.includes('quick-')) {
-                setTimeout(() => {
-                    const amountInput = modal.querySelector('.quick-form-amount');
-                    if (amountInput) {
-                        amountInput.focus();
-                        amountInput.select();
-                    }
-                }, 100);
-            }
-        }
-    },
-
-    hideModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.remove('active');
-            document.body.style.overflow = ''; // Restore scrolling
-            
-            // Reset forms
-            const form = modal.querySelector('form');
-            if (form) form.reset();
-            
-            // Reset category selection
-            modal.querySelectorAll('.quick-category-btn').forEach(btn => {
-                btn.classList.remove('active');
+        // Hover effects for quick action buttons
+        const quickActionButtons = document.querySelectorAll('.ie-quick-action-btn');
+        quickActionButtons.forEach(button => {
+            button.addEventListener('mouseenter', (e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
             });
-            
-            // Reset report selection
-            if (modalId === 'view-reports-modal') {
-                document.getElementById('generate-report-btn').classList.add('hidden');
-                document.getElementById('report-preview').classList.add('hidden');
-                document.getElementById('report-preview').innerHTML = '';
-            }
-        }
-    },
-
-    showQuickIncomeModal() {
-        this.showModal('quick-income-modal');
-    },
-
-    showQuickExpenseModal() {
-        this.showModal('quick-expense-modal');
-    },
-
-    showViewReportsModal() {
-        this.showModal('view-reports-modal');
-    },
-
-    handleQuickIncomeSubmit() {
-        const amount = parseFloat(document.getElementById('quick-income-amount').value);
-        const category = document.getElementById('quick-income-category').value;
-        const description = document.getElementById('quick-income-description').value || 'Quick Income Entry';
-        
-        if (!amount || isNaN(amount)) {
-            if (window.coreModule) {
-                window.coreModule.showNotification('Please enter a valid amount', 'error');
-            }
-            return;
-        }
-
-        const transaction = {
-            id: Date.now(),
-            type: 'income',
-            amount: amount,
-            category: category,
-            description: description,
-            date: new Date().toISOString().split('T')[0]
-        };
-        
-        this.addQuickTransaction(transaction);
-        this.hideModal('quick-income-modal');
-    },
-
-    handleQuickExpenseSubmit() {
-        const amount = parseFloat(document.getElementById('quick-expense-amount').value);
-        const category = document.getElementById('quick-expense-category').value;
-        const description = document.getElementById('quick-expense-description').value || 'Quick Expense Entry';
-        
-        if (!amount || isNaN(amount)) {
-            if (window.coreModule) {
-                window.coreModule.showNotification('Please enter a valid amount', 'error');
-            }
-            return;
-        }
-
-        const transaction = {
-            id: Date.now(),
-            type: 'expense',
-            amount: amount,
-            category: category,
-            description: description,
-            date: new Date().toISOString().split('T')[0]
-        };
-        
-        this.addQuickTransaction(transaction);
-        this.hideModal('quick-expense-modal');
-    },
-
-    selectReport(reportType) {
-        const preview = document.getElementById('report-preview');
-        const generateBtn = document.getElementById('generate-report-btn');
-        
-        // Update active state
-        document.querySelectorAll('.report-card').forEach(card => {
-            card.style.borderColor = 'transparent';
+            button.addEventListener('mouseleave', (e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+            });
         });
-        document.querySelector(`.report-card[data-report="${reportType}"]`).style.borderColor = 'var(--color-primary)';
-        
-        // Show preview
-        preview.classList.remove('hidden');
-        generateBtn.classList.remove('hidden');
-        
-        // Set preview content
-        let previewHTML = '';
-        const stats = this.calculateStats();
-        
-        switch(reportType) {
-            case 'profit-loss':
-                previewHTML = `
-                    <h4 class="font-semibold mb-2">Profit & Loss Preview</h4>
-                    <div class="space-y-2">
-                        <div class="flex justify-between">
-                            <span>Total Income:</span>
-                            <span class="font-semibold text-success">${this.formatCurrency(stats.totalIncome)}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Total Expenses:</span>
-                            <span class="font-semibold text-danger">${this.formatCurrency(stats.totalExpenses)}</span>
-                        </div>
-                        <div class="flex justify-between border-t pt-2">
-                            <span>Net Profit:</span>
-                            <span class="font-semibold ${stats.netProfit >= 0 ? 'text-success' : 'text-danger'}">
-                                ${this.formatCurrency(stats.netProfit)}
-                            </span>
-                        </div>
-                    </div>
-                `;
-                break;
-                
-            case 'monthly-trends':
-                previewHTML = `
-                    <h4 class="font-semibold mb-2">Monthly Trends Preview</h4>
-                    <p class="text-tertiary">This report will show income and expense trends over the last 12 months.</p>
-                `;
-                break;
-                
-            case 'category-breakdown':
-                previewHTML = `
-                    <h4 class="font-semibold mb-2">Category Breakdown Preview</h4>
-                    <p class="text-tertiary">This report will break down transactions by category.</p>
-                `;
-                break;
-                
-            case 'yearly-summary':
-                previewHTML = `
-                    <h4 class="font-semibold mb-2">Yearly Summary Preview</h4>
-                    <p class="text-tertiary">Annual performance report for the current year.</p>
-                `;
-                break;
-                
-            case 'export-data':
-                previewHTML = `
-                    <h4 class="font-semibold mb-2">Export Data Preview</h4>
-                    <p class="text-tertiary">Export all transaction data as JSON, CSV, or PDF.</p>
-                `;
-                generateBtn.textContent = 'Export Data';
-                break;
-                
-            case 'print-report':
-                previewHTML = `
-                    <h4 class="font-semibold mb-2">Print Report Preview</h4>
-                    <p class="text-tertiary">Generate a printer-friendly version of the selected report.</p>
-                `;
-                generateBtn.textContent = 'Print Report';
-                break;
-        }
-        
-        preview.innerHTML = previewHTML;
-        generateBtn.onclick = () => this.generateReport(reportType);
-    },
-
-    generateReport(reportType) {
-        // Implement report generation logic here
-        switch(reportType) {
-            case 'export-data':
-                this.exportData();
-                break;
-            case 'print-report':
-                window.print();
-                break;
-            default:
-                if (window.coreModule) {
-                    window.coreModule.showNotification(`Generating ${reportType} report...`, 'info');
-                }
-                // Here you would implement actual report generation
-                // For now, just show a notification
-                setTimeout(() => {
-                    if (window.coreModule) {
-                        window.coreModule.showNotification('Report generated successfully!', 'success');
-                    }
-                }, 1500);
-        }
-        this.hideModal('view-reports-modal');
     },
 
     // ==================== REST OF YOUR METHODS (keep them exactly as they were) ====================
-    // ... [KEEP ALL YOUR EXISTING calculateStats, getMonthlyIncome, etc. methods exactly as they were] ...
     calculateStats() {
         const totalIncome = this.transactions
             .filter(t => t.type === 'income')
@@ -911,20 +753,18 @@ const IncomeExpensesModule = {
     },
 
     clearAllTransactions() {
-        if (confirm('Are you sure you want to clear all transactions? This cannot be undone.')) {
-            this.transactions = [];
-            this.saveData();
-            this.renderModule();
-            
-            this.syncStatsWithDashboard();
-            this.addRecentActivity({
-                type: 'clear',
-                message: 'Cleared all transactions'
-            });
-            
-            if (window.coreModule) {
-                window.coreModule.showNotification('All transactions cleared!', 'success');
-            }
+        this.transactions = [];
+        this.saveData();
+        this.renderModule();
+        
+        this.syncStatsWithDashboard();
+        this.addRecentActivity({
+            type: 'clear',
+            message: 'Cleared all transactions'
+        });
+        
+        if (window.coreModule) {
+            window.coreModule.showNotification('All transactions cleared!', 'success');
         }
     },
 
