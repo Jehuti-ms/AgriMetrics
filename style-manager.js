@@ -617,7 +617,7 @@ const StyleManager = {
         borderRadius: '0',
         padding: '0',
         margin: '0'
-      }
+      },
 
       
       '.summary-card:hover': {
