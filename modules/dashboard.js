@@ -120,150 +120,110 @@ const DashboardModule = {
     },
 
     renderDashboard() {
-        if (!this.element) return;
+  if (!this.element) return;
 
-        // Clean, semantic HTML without theme controls
-        this.element.innerHTML = `
-            <div id="dashboard" class="module-container">
-                <!-- Welcome Section with white header text -->
-                <div class="welcome-section">
-                    <h1 class="welcome-header">Welcome to Farm Management</h1>
-                    <p class="welcome-subtitle" style="color: white; margin: 0; padding: 0;">
-                      Manage your farm operations efficiently
-                    </p>
-                </div>
+  this.element.innerHTML = `
+    <div id="dashboard" class="module-container">
+      
+      <!-- Welcome Section -->
+      <div class="welcome-section">
+        <h1 class="welcome-header">Welcome to Farm Management</h1>
+        <p class="welcome-subtitle">Manage your farm operations efficiently</p>
+      </div>
 
-                <!-- Quick Actions Grid -->
-                <div class="quick-actions">
-                    <h2 class="section-title">Quick Actions</h2>
-                    <div class="actions-grid">
-                        <button class="quick-action-btn" data-action="add-income">
-                            <div class="action-icon">💰</div>
-                            <span class="action-title">Add Income</span>
-                            <span class="action-subtitle">Record new income</span>
-                        </button>
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <h2 class="section-title">Quick Actions</h2>
+        <div class="actions-grid">
+          <button class="btn-primary" data-action="add-income">💰 Add Income</button>
+          <button class="btn-primary" data-action="add-expense">💸 Add Expense</button>
+          <button class="btn-primary" data-action="check-inventory">📦 Check Inventory</button>
+          <button class="btn-primary" data-action="record-feed">🌾 Record Feed</button>
+          <button class="btn-primary" data-action="add-production">🚜 Production</button>
+          <button class="btn-primary" data-action="view-reports">📈 View Reports</button>
+        </div>
+      </div>
 
-                        <button class="quick-action-btn" data-action="add-expense">
-                            <div class="action-icon">💸</div>
-                            <span class="action-title">Add Expense</span>
-                            <span class="action-subtitle">Record new expense</span>
-                        </button>
+      <!-- Stats Overview -->
+      <div class="stats-overview">
+        <h2 class="section-title">Overview</h2>
+        <div class="stats-grid">
+          <div class="card" id="revenue-card">
+            <div class="card-icon">💰</div>
+            <div class="card-value" id="total-revenue">$0.00</div>
+            <div class="card-label">Total Revenue</div>
+          </div>
 
-                        <button class="quick-action-btn" data-action="check-inventory">
-                            <div class="action-icon">📦</div>
-                            <span class="action-title">Check Inventory</span>
-                            <span class="action-subtitle">View stock levels</span>
-                        </button>
+          <div class="card" id="expense-card">
+            <div class="card-icon">💸</div>
+            <div class="card-value" id="total-expenses">$0.00</div>
+            <div class="card-label">Total Expenses</div>
+          </div>
 
-                        <button class="quick-action-btn" data-action="record-feed">
-                            <div class="action-icon">🌾</div>
-                            <span class="action-title">Record Feed</span>
-                            <span class="action-subtitle">Log feed usage</span>
-                        </button>
+          <div class="card" id="inventory-card">
+            <div class="card-icon">📦</div>
+            <div class="card-value" id="inventory-items">0</div>
+            <div class="card-label">Inventory Items</div>
+          </div>
 
-                        <button class="quick-action-btn" data-action="add-production">
-                            <div class="action-icon">🚜</div>
-                            <span class="action-title">Production</span>
-                            <span class="action-subtitle">Record production</span>
-                        </button>
+          <div class="card" id="birds-card">
+            <div class="card-icon">🐔</div>
+            <div class="card-value" id="active-birds">0</div>
+            <div class="card-label">Active Birds</div>
+          </div>
 
-                        <button class="quick-action-btn" data-action="view-reports">
-                            <div class="action-icon">📈</div>
-                            <span class="action-title">View Reports</span>
-                            <span class="action-subtitle">Analytics & insights</span>
-                        </button>
-                    </div>
-                </div>
+          <div class="card" id="orders-card">
+            <div class="card-icon">📋</div>
+            <div class="card-value" id="total-orders">0</div>
+            <div class="card-label">Total Orders</div>
+          </div>
 
-                <!-- Stats Overview -->
-                <div class="stats-overview">
-                    <h2 class="section-title">Overview</h2>
-                    <div class="stats-grid">
-                        <div class="stat-card" id="revenue-card">
-                            <div class="stat-icon">💰</div>
-                            <div class="stat-value" id="total-revenue">$0.00</div>
-                            <div class="stat-label">Total Revenue</div>
-                        </div>
+          <div class="card" id="profit-card">
+            <div class="card-icon">📊</div>
+            <div class="card-value" id="net-profit">$0.00</div>
+            <div class="card-label">Net Profit</div>
+          </div>
 
-                        <div class="stat-card" id="expense-card">
-                            <div class="stat-icon">💸</div>
-                            <div class="stat-value" id="total-expenses">$0.00</div>
-                            <div class="stat-label">Total Expenses</div>
-                        </div>
+          <div class="card" id="customers-card">
+            <div class="card-icon">👥</div>
+            <div class="card-value" id="total-customers">0</div>
+            <div class="card-label">Customers</div>
+          </div>
 
-                        <div class="stat-card" id="inventory-card">
-                            <div class="stat-icon">📦</div>
-                            <div class="stat-value" id="inventory-items">0</div>
-                            <div class="stat-label">Inventory Items</div>
-                        </div>
+          <div class="card" id="products-card">
+            <div class="card-icon">🛒</div>
+            <div class="card-value" id="total-products">0</div>
+            <div class="card-label">Products</div>
+          </div>
+        </div>
+      </div>
 
-                        <div class="stat-card" id="birds-card">
-                            <div class="stat-icon">🐔</div>
-                            <div class="stat-value" id="active-birds">0</div>
-                            <div class="stat-label">Active Birds</div>
-                        </div>
-
-                        <div class="stat-card" id="orders-card">
-                            <div class="stat-icon">📋</div>
-                            <div class="stat-value" id="total-orders">0</div>
-                            <div class="stat-label">Total Orders</div>
-                        </div>
-
-                        <div class="stat-card" id="profit-card">
-                            <div class="stat-icon">📊</div>
-                            <div class="stat-value" id="net-profit">$0.00</div>
-                            <div class="stat-label">Net Profit</div>
-                        </div>
-
-                        <div class="stat-card" id="customers-card">
-                            <div class="stat-icon">👥</div>
-                            <div class="stat-value" id="total-customers">0</div>
-                            <div class="stat-label">Customers</div>
-                        </div>
-
-                        <div class="stat-card" id="products-card">
-                            <div class="stat-icon">🛒</div>
-                            <div class="stat-value" id="total-products">0</div>
-                            <div class="stat-label">Products</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Activity -->
-                <div class="recent-activity">
-                    <h2 class="section-title">Recent Activity</h2>
-                    <div class="activity-list">
-                        <div id="activity-content">
-                            <div class="empty-state">
-                                <div class="empty-icon">📊</div>
-                                <div class="empty-title">No recent activity</div>
-                                <div class="empty-subtitle">Start by adding your first record</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Refresh Button -->
-                <div class="refresh-section">
-                    <button id="refresh-stats-btn" class="btn-outline">
-                        🔄 Refresh Stats
-                    </button>
-                </div>
+      <!-- Recent Activity -->
+      <div class="recent-activity">
+        <h2 class="section-title">Recent Activity</h2>
+        <div class="activity-list">
+          <div id="activity-content">
+            <div class="empty-state">
+              <div class="empty-icon">📊</div>
+              <div class="empty-title">No recent activity</div>
+              <div class="empty-subtitle">Start by adding your first record</div>
             </div>
-        `;
+          </div>
+        </div>
+      </div>
 
-        // Apply initial layout styles
-        this.applyInitialStyles();
-        
-        // Add event listeners
-        this.setupQuickActions();
-        this.setupRefreshButton();
-        
-        // Apply theme styles from StyleManager
-        if (window.StyleManager) {
-            this.applyThemeStyles();
-        }
-    },
+      <!-- Refresh Button -->
+      <div class="refresh-section">
+        <button id="refresh-stats-btn" class="btn-primary">🔄 Refresh Stats</button>
+      </div>
+    </div>
+  `;
+
+  // Attach event listeners
+  this.setupQuickActions();
+  this.setupRefreshButton();
+}
+
 
     applyInitialStyles() {
         // Layout-only styles (these won't be overridden by theme)
