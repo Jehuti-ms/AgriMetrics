@@ -582,20 +582,26 @@ const StyleManager = {
       
       // ======== FINANCIAL SUMMARY CARDS ========
       // Horizontal on desktop, stacked on mobile
+      '.financial-summary-wrapper': {
+        display: 'flex',
+        justifyContent: 'center',       // centers the inner row
+        width: '100%',
+        marginTop: '32px'
+      },
+      
       '.financial-summary': {
         display: 'flex',
-        justifyContent: 'center',       // centers the row of cards
-        alignItems: 'flex-start',
         gap: '24px',
         flexWrap: 'wrap',
-        margin: '32px auto 0',
-        padding: '0',
-        maxWidth: '800px'               // limits total width so cards don’t stretch
+        justifyContent: 'center',       // centers the cards inside the row
+        maxWidth: '800px',
+        width: '100%',
+        margin: '0 auto'
       },
-   
+      
       '.summary-card': {
         flex: '0 0 auto',
-        width: '220px',                 // fixed width per card
+        width: '220px',
         padding: '20px',
         background: 'var(--card-bg)',
         border: '1px solid var(--border-color)',
@@ -606,9 +612,7 @@ const StyleManager = {
         boxShadow: 'var(--shadow-md)',
         transition: 'all 0.3s ease'
       },
-
-
-    
+         
       '.summary-icon': {
         fontSize: '32px',
         width: 'auto',
