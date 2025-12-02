@@ -1471,3 +1471,41 @@ input:focus, textarea:focus, select:focus {
   box-shadow: 0 8px 32px rgba(0,0,0,0.15);
   background: white;
 }
+
+/* Global card row layout */
+.financial-summary {
+  display: flex;
+  justify-content: center;   /* centers the row of cards */
+  align-items: flex-start;
+  gap: 32px;                 /* spacing between cards */
+  flex-wrap: nowrap;         /* keep them horizontal on big screens */
+  margin: 40px auto 0;
+  max-width: 1000px;         /* prevents full-page stretching */
+}
+
+/* Global card styling */
+.summary-card {
+  flex: 0 0 auto;
+  width: 220px;              /* fixed width per card */
+  padding: 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
+}
+
+/* Global icon cleanup */
+.summary-icon {
+  font-size: 32px;
+  width: auto;
+  height: auto;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+}
+
