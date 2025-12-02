@@ -1,5 +1,5 @@
-// app.js - FIXED FARM MODULES INITIALIZATION
-console.log('Loading main app...');
+// app.js - CSS-BASED VERSION (No StyleManager)
+console.log('🚀 Loading Farm Management App (CSS-based)...');
 
 class FarmManagementApp {
     constructor() {
@@ -7,11 +7,12 @@ class FarmManagementApp {
         this.currentSection = 'dashboard';
         this.isDemoMode = false;
         this.userPreferences = {};
+        this.modules = {};
         this.init();
     }
 
     async init() {
-        console.log('🚀 Starting Farm Management App...');
+        console.log('🚜 Starting Farm Management App...');
         
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
@@ -23,13 +24,13 @@ class FarmManagementApp {
     }
 
     async initializeApp() {
-        console.log('✅ Initializing app...');
+        console.log('✅ Initializing CSS-based app...');
         
-        // CRITICAL: Initialize StyleManager FIRST before any modules
-        this.initializeStyleManager();
-        
-        // CRITICAL: Initialize FarmModules core system
+        // CRITICAL: Initialize FarmModules core system FIRST
         this.initializeFarmModules();
+        
+        // CRITICAL: Load global CSS
+        this.loadGlobalCSS();
         
         this.isDemoMode = true;
         
@@ -42,23 +43,12 @@ class FarmManagementApp {
         // Setup navigation and events
         this.createTopNavigation();
         
-        // Small delay to ensure DOM is fully rendered
+        // Setup interactions
         setTimeout(() => {
             this.setupHamburgerMenu();
             this.setupSideMenuEvents();
             this.setupEventListeners();
             this.setupDarkMode();
-
-            // Test if hamburger is working
-            const hamburger = document.getElementById('hamburger-menu');
-            const sideMenu = document.getElementById('side-menu');
-            console.log('🔍 Debug - Hamburger exists:', !!hamburger);
-            console.log('🔍 Debug - Side menu exists:', !!sideMenu);
-            
-            if (hamburger) {
-                console.log('🔍 Debug - Hamburger classes:', hamburger.className);
-                console.log('🔍 Debug - Hamburger styles:', window.getComputedStyle(hamburger));
-            }
         }, 100);
         
         // Load initial section
@@ -67,63 +57,91 @@ class FarmManagementApp {
         console.log('✅ App initialized successfully');
     }
 
-    initializeStyleManager() {
-        // Initialize StyleManager IMMEDIATELY when app starts
-        if (window.StyleManager && typeof StyleManager.init === 'function') {
-            StyleManager.init();
-            console.log('🎨 StyleManager initialized');
-        } else {
-            console.warn('⚠️ StyleManager not available - modules may not style properly');
-        }
+    initializeFarmModules() {
+        // Create FarmModules core with module registration system
+        window.FarmModules = {
+            modules: {},
+            appData: {
+                profile: {
+                    farmName: 'My Farm',
+                    dashboardStats: {},
+                    lastUpdated: new Date().toISOString()
+                },
+                settings: {
+                    currency: 'USD',
+                    theme: 'modern-green',
+                    autoSync: true
+                }
+            },
+            
+            // Module registration system
+            registerModule: function(name, module) {
+                console.log(`📦 Module registered: ${name}`);
+                this.modules[name] = module;
+                
+                // Auto-initialize if it's the current section
+                if (window.app && window.app.currentSection === name) {
+                    setTimeout(() => module.initialize(), 50);
+                }
+            },
+            
+            getModule: function(name) {
+                return this.modules[name];
+            },
+            
+            // Load module CSS dynamically
+            loadModuleCSS: function(moduleName) {
+                const cssFile = `css/${moduleName}.css`;
+                const linkId = `module-css-${moduleName}`;
+                
+                // Check if already loaded
+                if (document.getElementById(linkId)) {
+                    return;
+                }
+                
+                const link = document.createElement('link');
+                link.id = linkId;
+                link.rel = 'stylesheet';
+                link.href = cssFile;
+                document.head.appendChild(link);
+                
+                console.log(`🎨 CSS loaded for: ${moduleName}`);
+            }
+        };
+        
+        console.log('🔧 FarmModules core initialized (CSS-based)');
     }
 
-    initializeFarmModules() {
-        // FIXED: Check if FarmModules exists and initialize all modules
-        if (window.FarmModules) {
-            // Check if initializeAll method exists (for newer versions)
-            if (typeof FarmModules.initializeAll === 'function') {
-                FarmModules.initializeAll();
-                console.log('🔧 FarmModules initialized all modules');
-            } 
-            // If no initializeAll method, just log that modules are ready
-            else {
-                console.log('🔧 FarmModules core ready - modules can register');
+    loadGlobalCSS() {
+        // Load essential global CSS files
+        const globalCSS = [
+            'css/theme.css',
+            'css/layout.css',
+            'css/components.css'
+        ];
+        
+        globalCSS.forEach(cssFile => {
+            if (!document.querySelector(`link[href="${cssFile}"]`)) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = cssFile;
+                document.head.appendChild(link);
             }
-        } else {
-            console.warn('⚠️ FarmModules core not available');
-            
-            // Create a basic FarmModules if it doesn't exist
-            window.FarmModules = {
-                modules: {},
-                registerModule: function(name, module) {
-                    console.log(`✅ Registering module: ${name}`);
-                    this.modules[name] = module;
-                },
-                getModule: function(name) {
-                    return this.modules[name];
-                }
-            };
-            console.log('🔧 Created basic FarmModules fallback');
-        }
+        });
+        
+        console.log('🎨 Global CSS loaded');
     }
     
     async loadUserPreferences() {
         try {
-            // Try to use ProfileModule if available
-            if (typeof ProfileModule !== 'undefined' && ProfileModule.loadUserPreferences) {
-                this.userPreferences = ProfileModule.loadUserPreferences();
-                console.log('✅ User preferences loaded via ProfileModule');
-            } else {
-                // Fallback to direct localStorage access
-                const savedPrefs = localStorage.getItem('farm-user-preferences');
-                this.userPreferences = savedPrefs ? JSON.parse(savedPrefs) : this.getDefaultPreferences();
-                console.log('⚠️ ProfileModule not available, using localStorage fallback');
-                
-                // Create a complete ProfileModule fallback for other modules to use
-                this.createProfileModuleFallback();
-            }
+            // Try to load from localStorage
+            const savedPrefs = localStorage.getItem('farm-user-preferences');
+            this.userPreferences = savedPrefs ? JSON.parse(savedPrefs) : this.getDefaultPreferences();
             
-            // Apply theme preference immediately
+            // Create ProfileModule for compatibility
+            this.createProfileModuleFallback();
+            
+            // Apply theme preference
             this.applyUserTheme();
             
         } catch (error) {
@@ -159,7 +177,6 @@ class FarmManagementApp {
     }
 
     createProfileModuleFallback() {
-        // Create a complete ProfileModule with all methods modules expect
         if (typeof ProfileModule === 'undefined') {
             window.ProfileModule = {
                 userPreferences: this.userPreferences,
@@ -173,18 +190,7 @@ class FarmManagementApp {
                     console.log(`⚙️ Preference updated: ${key} = ${value}`);
                 },
                 
-                // Stats methods that modules expect
-                updateBusinessStats: (module, stats) => {
-                    if (!this.userPreferences.dashboardStats) {
-                        this.userPreferences.dashboardStats = {};
-                    }
-                    Object.keys(stats).forEach(key => {
-                        this.userPreferences.dashboardStats[key] = stats[key];
-                    });
-                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-                    console.log('📊 Stats updated for', module + ':', stats);
-                },
-                
+                // Stats methods
                 updateStats: (stats) => {
                     if (!this.userPreferences.dashboardStats) {
                         this.userPreferences.dashboardStats = {};
@@ -193,14 +199,12 @@ class FarmManagementApp {
                         this.userPreferences.dashboardStats[key] = stats[key];
                     });
                     localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-                    console.log('📊 Stats updated:', stats);
                 },
                 
                 getStats: () => {
                     return this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
                 },
                 
-                // Dashboard module expects this method
                 getProfileData: () => {
                     return {
                         farmName: this.userPreferences.businessName || 'My Farm',
@@ -209,33 +213,14 @@ class FarmManagementApp {
                     };
                 },
                 
-                getProfileStats: () => {
-                    return this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
-                },
-                
-                // For compatibility with existing modules
-                getBusinessOverview: () => {
-                    const stats = this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
-                    return {
-                        totalOrders: stats.totalOrders || 0,
-                        totalRevenue: stats.totalRevenue || 0,
-                        pendingOrders: stats.pendingOrders || 0,
-                        totalCustomers: stats.totalCustomers || 0,
-                        totalProducts: stats.totalProducts || 0,
-                        monthlyRevenue: stats.monthlyRevenue || 0,
-                        monthlyOrders: stats.monthlyOrders || 0
-                    };
-                },
-                
-                // Initialize method for compatibility
+                // Compatibility methods
                 initialize: () => {
                     console.log('✅ ProfileModule fallback initialized');
                     return true;
                 }
             };
             
-            window.profileInstance = window.ProfileModule;
-            console.log('✅ Complete ProfileModule fallback created');
+            console.log('✅ ProfileModule created for compatibility');
         }
     }
 
@@ -254,8 +239,6 @@ class FarmManagementApp {
             document.body.classList.toggle('dark-mode', prefersDark);
             this.updateDarkModeIcon(prefersDark);
         }
-        
-        console.log('🎨 Applied user theme:', theme);
     }
 
     setupDarkMode() {
@@ -272,8 +255,8 @@ class FarmManagementApp {
                 this.userPreferences.theme = newTheme;
                 localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
                 
-                // Update ProfileModule if available
-                if (window.ProfileModule && window.ProfileModule.updatePreference) {
+                // Update ProfileModule
+                if (window.ProfileModule) {
                     window.ProfileModule.updatePreference('theme', newTheme);
                 }
                 
@@ -284,7 +267,7 @@ class FarmManagementApp {
             });
         }
         
-        // Listen for system theme changes (only if theme is set to auto)
+        // Listen for system theme changes
         prefersDarkScheme.addEventListener('change', (e) => {
             if (this.userPreferences.theme === 'auto') {
                 document.body.classList.toggle('dark-mode', e.matches);
@@ -320,7 +303,7 @@ class FarmManagementApp {
                 }
             }
             
-            // Handle sidebar menu items (for the existing HTML sidebar)
+            // Handle sidebar menu items
             if (e.target.closest('.side-menu-item')) {
                 const menuItem = e.target.closest('.side-menu-item');
                 const section = menuItem.getAttribute('data-section');
@@ -400,7 +383,7 @@ class FarmManagementApp {
                         <span class="nav-label">Theme</span>
                     </button>
                     
-                    <!-- Hamburger menu as a proper nav-item -->
+                    <!-- Hamburger menu -->
                     <button class="nav-item hamburger-menu" id="hamburger-menu" title="Farm Operations">
                         <span>☰</span>
                         <span class="nav-label">More</span>
@@ -409,9 +392,6 @@ class FarmManagementApp {
             </nav>
         `;
 
-        // Setup hamburger menu functionality
-        this.setupHamburgerMenu();
-        
         // Adjust main content padding
         const main = appContainer.querySelector('main');
         if (main) {
@@ -426,7 +406,7 @@ class FarmManagementApp {
         const sideMenu = document.getElementById('side-menu');
         
         if (hamburger && sideMenu) {
-            // Ensure sidebar is hidden by default and positioned on right
+            // Ensure sidebar is hidden by default
             sideMenu.style.left = 'auto';
             sideMenu.style.right = '0';
             sideMenu.style.transform = 'translateX(100%)';
@@ -439,13 +419,8 @@ class FarmManagementApp {
             newHamburger.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('🍔 Hamburger clicked, toggling sidebar');
                 sideMenu.classList.toggle('active');
             });
-            
-            console.log('✅ Hamburger menu connected to sidebar');
-        } else {
-            console.log('❌ Hamburger or side menu not found:', { hamburger, sideMenu });
         }
         
         // Close sidebar when clicking outside
@@ -455,21 +430,9 @@ class FarmManagementApp {
             
             if (sideMenu && sideMenu.classList.contains('active') && hamburger) {
                 if (!sideMenu.contains(e.target) && !hamburger.contains(e.target)) {
-                    console.log('📱 Click outside, closing sidebar');
                     sideMenu.classList.remove('active');
                 }
             }
-        });
-        
-        // Close sidebar when clicking on sidebar items
-        const sideMenuItems = document.querySelectorAll('.side-menu-item');
-        sideMenuItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const sideMenu = document.getElementById('side-menu');
-                if (sideMenu) {
-                    sideMenu.classList.remove('active');
-                }
-            });
         });
     }
 
@@ -480,7 +443,6 @@ class FarmManagementApp {
                 e.preventDefault();
                 const section = item.getAttribute('data-section');
                 if (section) {
-                    console.log('📱 Side menu item clicked:', section);
                     this.showSection(section);
                     
                     // Close sidebar after selection
@@ -491,14 +453,12 @@ class FarmManagementApp {
                 }
             });
         });
-        
-        console.log('✅ Side menu events setup');
     }
     
     showSection(sectionId) {
         console.log(`🔄 Switching to section: ${sectionId}`);
         
-        // Update active nav state for top navigation
+        // Update active nav state
         document.querySelectorAll('.nav-item').forEach(item => {
             item.classList.remove('active');
         });
@@ -508,7 +468,7 @@ class FarmManagementApp {
             activeNavItem.classList.add('active');
         }
 
-        // Update active state for sidebar items
+        // Update sidebar active state
         document.querySelectorAll('.side-menu-item').forEach(item => {
             item.classList.remove('active');
         });
@@ -520,36 +480,107 @@ class FarmManagementApp {
 
         this.currentSection = sectionId;
         
-        // Load the module content
-        if (window.FarmModules && typeof window.FarmModules.initializeModule === 'function') {
-            window.FarmModules.initializeModule(sectionId);
-        } else {
-            this.loadFallbackContent(sectionId);
+        // Load module CSS dynamically
+        if (window.FarmModules && window.FarmModules.loadModuleCSS) {
+            window.FarmModules.loadModuleCSS(sectionId);
         }
+        
+        // Initialize the module
+        this.initializeModule(sectionId);
     }
 
-    loadFallbackContent(sectionId) {
+    initializeModule(moduleName) {
         const contentArea = document.getElementById('content-area');
         if (!contentArea) return;
+        
+        // Show loading state
+        contentArea.innerHTML = `
+            <div class="module-loading">
+                <div class="loading-spinner">⏳</div>
+                <p>Loading ${this.getSectionName(moduleName)}...</p>
+            </div>
+        `;
+        
+        // Clear content area after a brief moment
+        setTimeout(() => {
+            contentArea.innerHTML = '';
+            
+            // Find and initialize the module
+            const module = window.FarmModules?.modules[moduleName];
+            if (module && typeof module.initialize === 'function') {
+                if (module.initialize()) {
+                    console.log(`✅ Module initialized: ${moduleName}`);
+                    this.currentSection = moduleName;
+                } else {
+                    this.showError(`Failed to load ${this.getSectionName(moduleName)}`);
+                }
+            } else {
+                // Show module not available message
+                this.showModuleNotAvailable(moduleName);
+            }
+        }, 50);
+    }
 
-        const sectionTitles = {
+    getSectionName(section) {
+        const sectionNames = {
             'dashboard': 'Dashboard',
             'income-expenses': 'Income & Expenses',
-            'inventory-check': 'Inventory Check',
-            'feed-record': 'Feed Record',
-            'broiler-mortality': 'Broiler Mortality',
-            'production': 'Production Records',
-            'sales-record': 'Sales Record',
+            'inventory-check': 'Inventory',
             'orders': 'Orders',
+            'sales-record': 'Sales Record',
+            'labs': 'Labs',
+            'feed-record': 'Feed Records',
+            'production': 'Production',
             'reports': 'Reports',
             'profile': 'Profile'
         };
+        return sectionNames[section] || section;
+    }
+
+    showError(message) {
+        console.error('❌', message);
+        const contentArea = document.getElementById('content-area');
+        if (contentArea) {
+            contentArea.innerHTML = `
+                <div class="module-error">
+                    <div class="error-icon">⚠️</div>
+                    <h3>Error Loading Module</h3>
+                    <p>${message}</p>
+                    <button onclick="app.showSection('dashboard')" class="btn-primary">
+                        Return to Dashboard
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    showModuleNotAvailable(moduleName) {
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
 
         contentArea.innerHTML = `
-            <div style="padding: 20px;">
-                <h2 style="color: #1a1a1a;">${sectionTitles[sectionId] || sectionId}</h2>
-                <p style="color: #666;">Content loading...</p>
-                <p style="color: #999; font-size: 14px;">Module system not loaded yet</p>
+            <div class="module-container">
+                <div class="module-header">
+                    <h1 class="module-title">${this.getSectionName(moduleName)}</h1>
+                    <p class="module-subtitle">Module under construction</p>
+                </div>
+                
+                <div class="module-content">
+                    <div class="card">
+                        <h3>📋 Module Information</h3>
+                        <p>The <strong>${this.getSectionName(moduleName)}</strong> module is currently being migrated to the new CSS-based system.</p>
+                        
+                        <div class="alert alert-info mt-4">
+                            <strong>Migration Status:</strong> This module will be available soon.
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button onclick="app.showSection('dashboard')" class="btn-primary">
+                                ← Return to Dashboard
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
     }
