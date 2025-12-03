@@ -174,7 +174,7 @@ const IncomeExpensesModule = {
 
         `;
     },
-S
+
     setupEventListeners() {
         this.setupQuickActions();
         this.setupActionButtons();
