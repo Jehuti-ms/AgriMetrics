@@ -147,38 +147,32 @@ const IncomeExpensesModule = {
         </div>
       </div>
       
-<!-- Recent Transactions -->
-<div class="income-recent">
-  <div class="income-activity-header header-flex">
-    <h2 class="income-section-title">Recent Transactions</h2>
-    <button id="view-all-transactions" class="btn-primary">
-      <span class="btn-icon">📋</span>
-      <span class="btn-text">View All</span>
-    </button>
+<div class="glass-card">
+  <div class="header-flex">
+    <h3>Recent Transactions</h3>
+    <button class="btn-outline" id="clear-all">Clear All</button>
   </div>
-
   <div id="transactions-list">
     <!-- Example transaction row -->
     <div class="transaction-row">
-      <div class="transaction-info">
-        <div class="transaction-title">Egg Sales — $250.00</div>
-        <div class="transaction-subtitle">Income · 2025-12-01</div>
-      </div>
-      <div class="transaction-actions">
-        <button class="btn-outline">Edit</button>
-        <button class="btn-outline">Delete</button>
-      </div>
+      <span class="transaction-date">📅 2025-12-01</span>
+      <span class="transaction-desc">💰 Egg Sales</span>
+      <span class="transaction-category">📂 Income</span>
+      <span class="transaction-amount">💵 $250.00</span>
+      <span class="transaction-actions">
+        <button class="icon-btn">✏️</button>
+        <button class="icon-btn">🗑️</button>
+      </span>
     </div>
 
     <!-- Empty state -->
     <div class="transaction-row income-empty-state">
-      <div class="transaction-info">
-        <div class="transaction-title">No transactions yet</div>
-        <div class="transaction-subtitle">Add your first income or expense record</div>
-      </div>
+      <span class="transaction-desc">📋 No transactions yet</span>
+      <span class="transaction-category">➕ Add your first income or expense record</span>
     </div>
   </div>
 </div>
+
 
 
 <!-- Expense Categories -->
