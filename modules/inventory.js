@@ -1390,7 +1390,21 @@ const InventoryModule = {
     }
 };
 
+// Register the module
 if (window.FarmModules) {
     window.FarmModules.registerModule('inventory', InventoryModule);
-    console.log('✅ Inventory module registered');
+    console.log('✅ Inventory module registered with FarmModules');
+} else {
+    // Fallback: wait for FarmModules
+    const checkFarmModules = setInterval(() => {
+        if (window.FarmModules) {
+            clearInterval(checkFarmModules);
+            window.FarmModules.registerModule('inventory', InventoryModule);
+            console.log('✅ Inventory module registered after wait');
+        }
+    }, 100);
 }
+
+// CRITICAL: Export for global access
+window.InventoryModule = InventoryModule;
+console.log('✅ InventoryModule exported globally');
