@@ -26,11 +26,37 @@
 }
 
 /* ===== Stats Row Under Subtitle ===== */
-.income-stats-row {
+.income-stats-inline {
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 16px;
+  gap: 24px;
+  margin-top: 12px;
+  color: #fff;
+  font-weight: 600;
+}
+
+.income-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+}
+
+/*============Income Tranaction btn ===============*/
+.income-transaction-btn {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 12px 32px; /* same size as refresh */
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.income-transaction-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
 .income-stat-card {
