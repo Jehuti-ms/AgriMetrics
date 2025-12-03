@@ -29,44 +29,40 @@
   gap: 16px;
 }
 
+/* ===== Quick Action Buttons (Green Gradient) ===== */
 .dashboard-quick-action-btn {
-  border-radius: 16px;
-  padding: 24px 16px;
+  background: var(--gradient-primary, linear-gradient(135deg, #16a34a, #22c55e));
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-primary, 0 2px 6px rgba(0, 0, 0, 0.1));
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  min-height: 120px;
-  font-family: inherit;
-  border: 1px solid var(--color-border-light);
-  background: var(--color-bg-card);
-  color: var(--color-text-primary);
   text-align: center;
 }
 
 .dashboard-quick-action-btn:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--color-primary);
+  transform: scale(1.03);
+  background: linear-gradient(135deg, #15803d, #22c55e); /* slightly deeper hover */
 }
 
 .dashboard-quick-action-btn .action-icon {
-  font-size: 32px;
-  line-height: 1;
+  font-size: 28px;
+  margin-bottom: 8px;
 }
 
 .dashboard-quick-action-btn .action-title {
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.2;
+  font-weight: 700;
+  font-size: 16px;
 }
 
 .dashboard-quick-action-btn .action-subtitle {
-  font-size: 12px;
-  line-height: 1.3;
-  color: var(--color-text-tertiary);
+  font-size: 13px;
+  opacity: 0.8;
 }
 
 /* Stats Overview */
