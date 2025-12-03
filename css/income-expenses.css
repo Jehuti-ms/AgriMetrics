@@ -1,4 +1,4 @@
-/* ===== Income Header Layout ===== */
+/* ================= Income Header Layout ================= */
 .income-header {
   display: flex;
   justify-content: space-between;
@@ -20,17 +20,18 @@
 
 .income-header-right {
   display: flex;
-  flex-wrap: wrap;          /* ✅ allows wrapping on small screens */
-  justify-content: flex-end; /* ✅ keeps buttons aligned to the right */
-  gap: 12px;                 /* ✅ spacing between buttons */
+  flex-wrap: wrap;           /* allows wrapping on small screens */
+  justify-content: flex-end; /* keeps buttons aligned to the right */
+  gap: 12px;                 /* spacing between buttons */
 }
 
+/* ================= Primary Action Buttons ================= */
 .income-primary-btn {
   background: linear-gradient(135deg, #16a34a, #22c55e);
   color: #fff;
   border: none;
   border-radius: var(--radius-lg);
-  padding: 12px 32px;        /* ✅ same size as refresh */
+  padding: 12px 32px;        /* same size as refresh */
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -38,7 +39,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  flex: 0 0 auto;            /* ✅ prevents shrinking */
+  flex: 0 0 auto;            /* prevents shrinking */
 }
 
 .income-primary-btn:hover {
@@ -50,7 +51,7 @@
   background: linear-gradient(135deg, #15803d, #22c55e);
 }
 
-/* ===== Stats Row Under Subtitle ===== */
+/* ================= Stats Row Under Subtitle ================= */
 .income-stats-inline {
   display: flex;
   gap: 24px;
@@ -66,24 +67,7 @@
   font-size: 15px;
 }
 
-/*============Income Tranaction btn ===============*/
-.income-transaction-btn {
-  background: linear-gradient(135deg, #16a34a, #22c55e);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-lg);
-  padding: 12px 32px; /* same size as refresh */
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.income-transaction-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-}
-
+/* ================= Stat Cards ================= */
 .income-stat-card {
   background: #fff;
   border-radius: var(--radius-lg);
@@ -105,7 +89,7 @@
   margin-bottom: 8px;
 }
 
-/* ===== Main Grid for Cards & Actions ===== */
+/* ================= Main Grid for Cards & Actions ================= */
 .income-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -113,7 +97,7 @@
   padding: 24px;
 }
 
-/* ===== Footer Layout ===== */
+/* ================= Footer Layout ================= */
 .income-footer {
   display: flex;
   justify-content: space-between;
@@ -124,7 +108,7 @@
   padding: 0 24px;
 }
 
-/* ===== Modal Trigger Buttons ===== */
+/* ================= Modal Trigger Buttons ================= */
 .income-modal-triggers {
   display: flex;
   gap: 12px;
