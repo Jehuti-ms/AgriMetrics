@@ -36,7 +36,32 @@
   margin: 0 10px;
   transition: color 0.3s ease;
 }
-
 .top-nav a:hover {
   color: var(--accent-green, #16a34a); /* use your existing green token */
+}
+
+/* ===== Shared Module Layouts ===== */
+
+/* Header alignment (stats + buttons baseline) */
+.header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end; /* ✅ aligns header buttons with stats */
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+/* Grid for Quick Actions and Stat Cards */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  padding: 24px 0;
+}
+
+/* Inline stats row (Dashboard + Income inline metrics) */
+.stats-inline {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
 }
