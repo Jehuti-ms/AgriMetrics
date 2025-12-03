@@ -8,7 +8,6 @@
   color: var(--text-primary);
 }
 
-/* Profile Card */
 #profile .profile-card {
   background: var(--card-bg);
   border-radius: var(--radius-lg);
@@ -40,7 +39,6 @@
   margin-bottom: 16px;
 }
 
-/* Profile Actions */
 #profile .action-buttons {
   display: flex;
   justify-content: center;
@@ -66,57 +64,4 @@
 
 #profile .btn-primary:hover {
   background: linear-gradient(135deg, #16a34a, #22c55e);
-}
-
-/* Settings Grid */
-#profile .settings-grid {
-  display: flex;
-  justify-content: center;
-  gap: 32px;
-  flex-wrap: wrap;
-}
-
-#profile .settings-card {
-  background: var(--card-bg);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: 20px;
-  width: 220px;
-  text-align: center;
-  transition: transform 0.2s ease;
-}
-
-#profile .settings-card:hover {
-  transform: translateY(-2px);
-}
-
-#profile .settings-icon {
-  font-size: 28px;
-  margin-bottom: 8px;
-}
-
-#profile .settings-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  #profile .action-buttons,
-  #profile .settings-grid {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  #profile .settings-card {
-    width: 100%;
-    max-width: 320px;
-  }
-
-  #profile .btn-primary {
-    width: 100%;
-    max-width: 320px;
-    justify-content: center;
-  }
 }
