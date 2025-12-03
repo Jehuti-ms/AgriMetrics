@@ -147,69 +147,62 @@ const IncomeExpensesModule = {
         </div>
       </div>
       
-<!-- Recent Transactions Section -->
+<!-- Recent Transactions -->
 <div class="income-recent">
-  <div class="glass-card">
-    <div class="header-flex">
-      <h2 class="income-section-title">Recent Transactions</h2>
-      <div class="header-flex">
-        <button class="btn-primary" id="add-transaction-btn">
-          <span class="btn-icon">➕</span>
-          <span class="btn-text">Add Transaction</span>
-        </button>
-        <button class="btn-outline" id="view-all-transactions">
-          <span class="btn-icon">📋</span>
-          <span class="btn-text">View All</span>
-        </button>
+  <div class="income-activity-header header-flex">
+    <h2 class="income-section-title">Recent Transactions</h2>
+    <button id="view-all-transactions" class="btn-primary">
+      <span class="btn-icon">📋</span>
+      <span class="btn-text">View All</span>
+    </button>
+  </div>
+
+  <div id="transactions-list">
+    <!-- Example transaction row -->
+    <div class="transaction-row">
+      <div class="transaction-info">
+        <div class="transaction-title">Egg Sales — $250.00</div>
+        <div class="transaction-subtitle">Income · 2025-12-01</div>
+      </div>
+      <div class="transaction-actions">
+        <button class="btn-outline">Edit</button>
+        <button class="btn-outline">Delete</button>
       </div>
     </div>
 
-    <div class="card-grid" id="transactions-content">
-      <!-- Example transaction card -->
-      <div class="info-card">
-        <div class="info-header">
-          <div class="info-icon">💸</div>
-          <div class="info-title">Feed Purchase — $120.00</div>
-        </div>
-        <div class="info-subtitle">Category: Expense · Date: 2025-12-01</div>
-        <div class="info-notes">Purchased 3 bags of layer mash</div>
-        <div class="info-actions">
-          <button class="btn-outline edit-transaction">Edit</button>
-          <button class="btn-outline delete-transaction">Delete</button>
-        </div>
-      </div>
-
-      <!-- Empty state -->
-      <div class="info-card income-empty-state hidden">
-        <div class="info-icon">📋</div>
-        <div class="info-title">No transactions yet</div>
-        <div class="info-notes">Add your first income or expense record</div>
+    <!-- Empty state -->
+    <div class="transaction-row income-empty-state">
+      <div class="transaction-info">
+        <div class="transaction-title">No transactions yet</div>
+        <div class="transaction-subtitle">Add your first income or expense record</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Expense Categories Section -->
+
+<!-- Expense Categories -->
 <div class="income-categories">
-  <div class="glass-card">
-    <h2 class="income-section-title">Expense Categories</h2>
+  <h2 class="income-section-title">Expense Categories</h2>
 
-    <div class="card-grid" id="categories-content">
-      <!-- Example category card -->
-      <div class="info-card">
-        <div class="info-header">
-          <div class="info-icon">📂</div>
-          <div class="info-title">Feed</div>
-        </div>
-        <div class="info-subtitle">Total: $120.00 · 45% of expenses</div>
-        <div class="info-notes">Includes layer mash, starter crumble</div>
+  <div id="categories-list">
+    <!-- Example category row -->
+    <div class="transaction-row">
+      <div class="transaction-info">
+        <div class="transaction-title">Feed — $120.00</div>
+        <div class="transaction-subtitle">45% of expenses</div>
       </div>
+      <div class="transaction-actions">
+        <button class="btn-outline">Edit</button>
+        <button class="btn-outline">Delete</button>
+      </div>
+    </div>
 
-      <!-- Empty state -->
-      <div class="info-card income-empty-state hidden">
-        <div class="info-icon">📊</div>
-        <div class="info-title">No categories yet</div>
-        <div class="info-notes">Add expenses to see categories</div>
+    <!-- Empty state -->
+    <div class="transaction-row income-empty-state">
+      <div class="transaction-info">
+        <div class="transaction-title">No categories yet</div>
+        <div class="transaction-subtitle">Add expenses to see categories</div>
       </div>
     </div>
   </div>
