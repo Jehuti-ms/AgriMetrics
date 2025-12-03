@@ -1,0 +1,119 @@
+/* ===== Sales Record Module ===== */
+
+#sales-record .section-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-align: center;
+  color: var(--text-primary);
+}
+
+/* Sales Summary Grid */
+#sales-record .sales-grid {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  flex-wrap: wrap;
+  margin-bottom: 40px;
+}
+
+#sales-record .sales-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 20px;
+  width: 240px;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+#sales-record .sales-card:hover {
+  transform: translateY(-2px);
+}
+
+#sales-record .sales-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+#sales-record .sales-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+#sales-record .sales-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Action Buttons */
+#sales-record .action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+#sales-record .btn-primary {
+  background: var(--gradient-primary);
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--radius-lg);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: var(--shadow-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+#sales-record .btn-primary:hover {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+}
+
+/* Empty State */
+#sales-record .empty-state {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+}
+
+#sales-record .empty-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+#sales-record .empty-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+#sales-record .empty-subtitle {
+  font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  #sales-record .sales-grid,
+  #sales-record .action-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #sales-record .sales-card {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  #sales-record .btn-primary {
+    width: 100%;
+    max-width: 320px;
+    justify-content: center;
+  }
+}
