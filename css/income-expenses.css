@@ -1,134 +1,81 @@
-/* ===== Income & Expenses Module Header ===== */
+/* ===== Income Header Layout ===== */
 .income-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 20px 24px;
   background: linear-gradient(to bottom right, #16a34a, #4ade80);
   color: #fff;
-  padding: 20px 24px;
-  margin-top: 0;
   border-bottom-left-radius: 24px;
   border-bottom-right-radius: 24px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-  text-align: left;
-  position: relative;
-  z-index: 1;
 }
 
-.income-header .income-title {
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: #fff;
+.income-header-left {
+  flex: 1 1 300px;
+  min-width: 280px;
 }
 
-.income-header .income-subtitle {
-  font-size: 16px;
-  opacity: 0.9;
-  color: #fff;
-}
-
-/* ===== Income & Expenses Content Card ===== */
-.income-card {
-  background: var(--color-bg-card, #fff);
-  border-radius: 24px;
-  padding: 24px;
-  margin-bottom: 32px;
-  border: 1px solid var(--color-border-light);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-}
-
-/* ===== Quick Action Buttons ===== */
-.income-action-btn {
-  background: transparent;
-  color: var(--color-primary, #16a34a);
-  border: 2px solid var(--color-primary, #16a34a);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  font-weight: 600;
-  transition: all 0.3s ease;
+.income-header-right {
+  flex: 0 0 auto;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  text-align: center;
+  justify-content: flex-end;
 }
 
-.income-action-btn:hover {
-  background: linear-gradient(135deg, #16a34a, #22c55e);
-  color: #fff;
-  border-color: transparent;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  transform: scale(1.03);
+/* ===== Stats Row Under Subtitle ===== */
+.income-stats-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
 }
 
-.income-action-btn:active {
-  background: linear-gradient(135deg, #15803d, #22c55e);
-  color: #fff;
-  border-color: transparent;
-}
-
-/* ===== Stats Cards ===== */
 .income-stat-card {
   background: #fff;
   border-radius: var(--radius-lg);
   padding: 16px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  position: relative;
-  overflow: hidden;
   text-align: center;
+  flex: 1 1 120px;
+  min-width: 120px;
 }
 
 .income-stat-card::before {
   content: '';
-  position: absolute;
-  top: 0; left: 0;
-  height: 6px; width: 100%;
+  display: block;
+  height: 6px;
+  width: 100%;
   background: linear-gradient(90deg, #16a34a, #22c55e);
   border-top-left-radius: var(--radius-lg);
   border-top-right-radius: var(--radius-lg);
+  margin-bottom: 8px;
 }
 
-.income-stat-card .stat-value {
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 4px;
+/* ===== Main Grid for Cards & Actions ===== */
+.income-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  padding: 24px;
 }
 
-.income-stat-card .stat-label {
-  font-size: 14px;
-  color: var(--color-text-secondary, #666);
-}
-
-/* ===== Refresh Button ===== */
-.income-refresh-container {
+/* ===== Footer Layout ===== */
+.income-footer {
   display: flex;
-  justify-content: center;
-  margin: 20px 0;
-}
-
-.income-refresh-btn {
-  border-radius: var(--radius-lg);
-  padding: 12px 24px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  display: inline-flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
-
-  background: transparent;
-  color: var(--color-primary, #16a34a);
-  border: 2px solid var(--color-primary, #16a34a);
-  transition: all 0.3s ease;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 32px 0;
+  padding: 0 24px;
 }
 
-.income-refresh-btn:hover {
-  background: linear-gradient(135deg, #16a34a, #22c55e);
-  color: #fff;
-  border-color: transparent;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  transform: scale(1.03);
-}
-
-.income-refresh-btn:active {
-  background: linear-gradient(135deg, #15803d, #22c55e);
-  color: #fff;
-  border-color: transparent;
+/* ===== Modal Trigger Buttons ===== */
+.income-modal-triggers {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
