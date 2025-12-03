@@ -227,3 +227,44 @@
   padding: 6px 12px;
   font-size: 13px;
 }
+
+.income .transaction-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 120px 120px auto; /* date, desc, category, amount, actions */
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 10px 16px;
+  margin-bottom: 8px;
+}
+
+.income .transaction-date,
+.income .transaction-desc,
+.income .transaction-category,
+.income .transaction-amount {
+  font-size: 14px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px; /* ✅ ensures icon + text spacing */
+}
+
+.income .transaction-amount {
+  font-weight: 600;
+  text-align: right;
+}
+
+.income .transaction-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.income .transaction-actions .icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
