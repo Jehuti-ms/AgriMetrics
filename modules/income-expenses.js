@@ -52,7 +52,7 @@ const IncomeExpensesModule = {
         document.head.appendChild(link);
     },
 
-   renderModule() {
+  renderModule() {
   if (!this.element) return;
 
   this.element.innerHTML = `
@@ -64,7 +64,7 @@ const IncomeExpensesModule = {
           <h1 class="income-title">Income & Expenses</h1>
           <p class="income-subtitle">Track your farm's financial health</p>
           
-          <!-- Stats inline in white with icons -->
+          <!-- Stats inline with icons -->
           <div class="income-stats-inline">
             <span class="income-stat">💰 <span id="inline-total-income">$0.00</span> Total Income</span>
             <span class="income-stat">💸 <span id="inline-total-expenses">$0.00</span> Total Expenses</span>
@@ -147,128 +147,121 @@ const IncomeExpensesModule = {
         </div>
       </div>
       
-<div class="glass-card">
-  <div class="header-flex">
-    <h3>Recent Transactions</h3>
-    <button class="btn-outline" id="clear-all">Clear All</button>
-  </div>
-  <div id="transactions-list">
-    <!-- Example transaction row -->
-    <div class="transaction-row">
-      <span class="transaction-date">📅 2025-12-01</span>
-      <span class="transaction-desc">💰 Egg Sales</span>
-      <span class="transaction-category">📂 Income</span>
-      <span class="transaction-amount">💵 $250.00</span>
-      <span class="transaction-actions">
-        <button class="icon-btn">✏️</button>
-        <button class="icon-btn">🗑️</button>
-      </span>
-    </div>
-
-    <!-- Empty state -->
-    <div class="transaction-row income-empty-state">
-      <span class="transaction-desc">📋 No transactions yet</span>
-      <span class="transaction-category">➕ Add your first income or expense record</span>
-    </div>
-  </div>
-</div>
-
-
-
-<!-- Expense Categories -->
-<div class="income-categories">
-  <h2 class="income-section-title">Expense Categories</h2>
-
-  <div id="categories-list">
-    <!-- Example category row -->
-    <div class="transaction-row">
-      <div class="transaction-info">
-        <div class="transaction-title">Feed — $120.00</div>
-        <div class="transaction-subtitle">45% of expenses</div>
-      </div>
-      <div class="transaction-actions">
-        <button class="btn-outline">Edit</button>
-        <button class="btn-outline">Delete</button>
-      </div>
-    </div>
-
-    <!-- Empty state -->
-    <div class="transaction-row income-empty-state">
-      <div class="transaction-info">
-        <div class="transaction-title">No categories yet</div>
-        <div class="transaction-subtitle">Add expenses to see categories</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Transaction Form (Initially hidden) -->
-<div id="transaction-form-container" class="hidden">
-  <div class="glass-card">
-    <h3 id="form-title">Add Transaction</h3>
-    <form id="transaction-form">
-      <div class="form-grid">
-        <div>
-          <label class="form-label">Type</label>
-          <select class="form-input" id="transaction-type" required>
-            <option value="income">Income</option>
-            <option value="expense" selected>Expense</option>
-          </select>
+      <!-- Recent Transactions -->
+      <div class="glass-card">
+        <div class="header-flex">
+          <h3>Recent Transactions</h3>
+          <button class="btn-outline" id="clear-all">Clear All</button>
         </div>
-        <div>
-          <label class="form-label">Amount</label>
-          <input type="number" class="form-input" id="transaction-amount" step="0.01" min="0" required>
+        <div id="transactions-list">
+          <!-- Example transaction row -->
+          <div class="transaction-row">
+            <span class="transaction-date">📅 2025-12-01</span>
+            <span class="transaction-desc">💰 Egg Sales</span>
+            <span class="transaction-category">📂 Income</span>
+            <span class="transaction-amount">💵 $250.00</span>
+            <span class="transaction-actions">
+              <button class="icon-btn">✏️</button>
+              <button class="icon-btn">🗑️</button>
+            </span>
+          </div>
+
+          <!-- Empty state -->
+          <div class="transaction-row income-empty-state">
+            <span class="transaction-desc">📋 No transactions yet</span>
+            <span class="transaction-category">➕ Add your first income or expense record</span>
+          </div>
         </div>
       </div>
-      <div>
-        <label class="form-label">Category</label>
-        <select class="form-input" id="transaction-category" required>
-          <option value="">Select category</option>
-          <option value="egg-sales">Egg Sales</option>
-          <option value="poultry-sales">Poultry Sales</option>
-          <option value="crop-sales">Crop Sales</option>
-          <option value="feed" selected>Feed</option>
-          <option value="medication">Medication</option>
-          <option value="equipment">Equipment</option>
-          <option value="labor">Labor</option>
-          <option value="other">Other</option>
-        </select>
-      </div>
-      <div>
-        <label class="form-label">Description</label>
-        <input type="text" class="form-input" id="transaction-description" required>
-      </div>
-      <div>
-        <label class="form-label">Date</label>
-        <input type="date" class="form-input" id="transaction-date" required>
-      </div>
-      <div class="form-actions">
-        <button type="submit" class="btn-primary">Save Transaction</button>
-        <button type="button" class="btn-outline" id="cancel-form">Cancel</button>
-      </div>
-    </form>
-  </div>
-</div>
 
-<!-- Footer -->
-<div class="income-footer">
-  <div class="income-refresh-container">
-    <button id="refresh-data-btn" class="btn-primary">
-      <span class="btn-icon">🔄</span>
-      <span class="btn-text">Refresh Data</span>
-    </button>
-  </div>
-  <div class="income-modal-triggers">
-    <button id="export-data-btn" class="card-button" data-action="export-data">
-      <span class="action-icon">📤</span>
-      <span class="action-title">Export Data</span>
-      <span class="action-subtitle">Export to CSV/Excel</span>
-    </button>
-  </div>
-</div>
+      <!-- Expense Categories -->
+      <div class="income-categories">
+        <h2 class="income-section-title">Expense Categories</h2>
+        <div id="categories-list">
+          <!-- Example category row -->
+          <div class="transaction-row">
+            <span class="transaction-desc">📂 Feed</span>
+            <span class="transaction-amount">💵 $120.00</span>
+            <span class="transaction-category">📊 45% of expenses</span>
+            <span class="transaction-actions">
+              <button class="icon-btn">✏️</button>
+              <button class="icon-btn">🗑️</button>
+            </span>
+          </div>
 
-  `;
-},
+          <!-- Empty state -->
+          <div class="transaction-row income-empty-state">
+            <span class="transaction-desc">📋 No categories yet</span>
+            <span class="transaction-category">➕ Add expenses to see categories</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transaction Form (Initially hidden) -->
+      <div id="transaction-form-container" class="hidden">
+        <div class="glass-card">
+          <h3 id="form-title">Add Transaction</h3>
+          <form id="transaction-form">
+            <div class="form-grid">
+              <div>
+                <label class="form-label">Type</label>
+                <select class="form-input" id="transaction-type" required>
+                  <option value="income">Income</option>
+                  <option value="expense" selected>Expense</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Amount</label>
+                <input type="number" class="form-input" id="transaction-amount" step="0.01" min="0" required>
+              </div>
+            </div>
+            <div>
+              <label class="form-label">Category</label>
+              <select class="form-input" id="transaction-category" required>
+                <option value="">Select category</option>
+                <option value="egg-sales">Egg Sales</option>
+                <option value="poultry-sales">Poultry Sales</option>
+                <option value="crop-sales">Crop Sales</option>
+                <option value="feed" selected>Feed</option>
+                <option value="medication">Medication</option>
+                <option value="equipment">Equipment</option>
+                <option value="labor">Labor</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Description</label>
+              <input type="text" class="form-input" id="transaction-description" required>
+            </div>
+            <div>
+              <label class="form-label">Date</label>
+              <input type="date" class="form-input" id="transaction-date" required>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">Save Transaction</button>
+              <button type="button" class="btn-outline" id="cancel-form">Cancel</button>
+            </div>
+          </form>
+
+            <!-- Footer -->
+            <div class="income-footer">
+              <div class="income-refresh-container">
+                <button id="refresh-data-btn" class="btn-primary">
+                  <span class="btn-icon">🔄</span>
+                  <span class="btn-text">Refresh Data</span>
+                </button>
+              </div>
+              <div class="income-modal-triggers">
+                <button id="export-data-btn" class="card-button" data-action="export-data">
+                  <span class="action-icon">📤</span>
+                  <span class="action-title">Export Data</span>
+                  <span class="action-subtitle">Export to CSV/Excel</span>
+                </button>
+              </div>
+            </div>
+            
+              `;
+            },
 
     setupEventListeners() {
         // Quick action buttons
