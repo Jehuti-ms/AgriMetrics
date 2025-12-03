@@ -19,10 +19,35 @@
 }
 
 .income-header-right {
-  flex: 0 0 auto;
   display: flex;
+  flex-wrap: wrap;          /* ✅ allows wrapping on small screens */
+  justify-content: flex-end; /* ✅ keeps buttons aligned to the right */
+  gap: 12px;                 /* ✅ spacing between buttons */
+}
+
+.income-primary-btn {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 12px 32px;        /* ✅ same size as refresh */
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;            /* ✅ prevents shrinking */
+}
+
+.income-primary-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.income-primary-btn:active {
+  background: linear-gradient(135deg, #15803d, #22c55e);
 }
 
 /* ===== Stats Row Under Subtitle ===== */
