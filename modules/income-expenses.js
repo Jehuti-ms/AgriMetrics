@@ -180,6 +180,7 @@ renderModule() {
       </div>
 
       <!-- Expense Categories -->
+      <div id="categories-list" class="categories-list">
       <div class="glass-card">
         <div class="header-flex">
           <h3>Expense Categories</h3>
