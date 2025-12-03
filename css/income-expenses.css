@@ -252,3 +252,55 @@
   gap: 8px;
 }
 
+/* Expense Categories rows */
+.income .categories-list .transaction-row {
+  display: grid;
+  grid-template-columns: 1fr 120px 160px auto; /* name, amount, percentage, actions */
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 10px 16px;
+  margin-bottom: 8px;
+}
+
+.income .categories-list .transaction-desc {
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px; /* icon + text spacing */
+}
+
+.income .categories-list .transaction-amount {
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: right;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.income .categories-list .transaction-category {
+  font-size: 13px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.income .categories-list .transaction-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.income .categories-list .transaction-actions .icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+
