@@ -1,4 +1,4 @@
-// modules/income-expenses.js - CSS-BASED VERSION (Matching Dashboard style)
+// modules/income-expenses.js - CSS-BASED VERSION (Complete with CSS matching)
 console.log('💰 Loading Income & Expenses module...');
 
 const IncomeExpensesModule = {
@@ -52,138 +52,186 @@ const IncomeExpensesModule = {
         document.head.appendChild(link);
     },
 
-   renderModule() {
-  if (!this.element) return;
+    renderModule() {
+        if (!this.element) return;
 
-  this.element.innerHTML = `
-    <div id="income-expenses" class="module-container">
-
-      <!-- Header -->
-      <div class="income-header">
-        <div class="income-header-left">
-          <h1 class="income-title">Income & Expenses</h1>
-          <p class="income-subtitle">Track your farm's financial health</p>
-
-          <!-- Stats inline in white with icons -->
-          <div class="income-stats-inline">
-            <span class="income-stat">💰 $0.00 Total Income</span>
-            <span class="income-stat">💸 $0.00 Total Expenses</span>
-            <span class="income-stat">🪙 $0.00 Net Profit</span>
-          </div>
-        </div>
-
-        <!-- Right side: Add Transaction + Import Receipts -->
-        <div class="income-header-right">
-          <button id="transaction-btn" class="income-primary-btn">➕ Transaction</button>
-          <button id="import-btn" class="income-primary-btn">📥 Import Receipts</button>
-        </div>
-      </div>
-
-      <!-- Quick Actions -->
-      <div class="income-quick-actions">
-        <h2 class="income-section-title">Quick Actions</h2>
-        <div class="income-actions-grid">
-          <button id="quick-income" class="income-action-btn">
-            <div class="action-icon">💰</div>
-            <span class="action-title">Quick Income</span>
-            <span class="action-subtitle">Record income instantly</span>
-          </button>
-
-          <button id="quick-expense" class="income-action-btn">
-            <div class="action-icon">🧾</div>
-            <span class="action-title">Quick Expense</span>
-            <span class="action-subtitle">Record expense instantly</span>
-          </button>
-
-          <button id="view-reports" class="income-action-btn">
-            <div class="action-icon">📊</div>
-            <span class="action-title">View Reports</span>
-            <span class="action-subtitle">Financial analytics</span>
-          </button>
-
-          <button id="manage-categories" class="income-action-btn">
-            <div class="action-icon">📂</div>
-            <span class="action-title">Categories</span>
-            <span class="action-subtitle">Manage categories</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Financial Overview -->
-      <div class="income-overview">
-        <h2 class="income-section-title">Financial Overview</h2>
-        <div class="income-stats-grid">
-          <div class="income-stat-card"><div class="stat-icon">📅</div><div class="stat-value">$0.00</div><div class="stat-label">This Month</div></div>
-          <div class="income-stat-card"><div class="stat-icon">📈</div><div class="stat-value">$0.00</div><div class="stat-label">Avg Monthly</div></div>
-          <div class="income-stat-card"><div class="stat-icon">📋</div><div class="stat-value">0</div><div class="stat-label">Transactions</div></div>
-          <div class="income-stat-card"><div class="stat-icon">📂</div><div class="stat-value">0</div><div class="stat-label">Categories</div></div>
-          <div class="income-stat-card"><div class="stat-icon">🏦</div><div class="stat-value">$0.00</div><div class="stat-label">Current Balance</div></div>
-        </div>
-      </div>
-
-      <!-- Recent Transactions -->
-      <div class="income-recent">
-        <div class="income-activity-header">
-          <h2 class="income-section-title">Recent Transactions</h2>
-          <button class="btn-secondary" id="view-all-transactions">View All</button>
-        </div>
-        <div class="income-activity-list">
-          <div id="transactions-content">
-            <div class="income-empty-state">
-              <div class="empty-icon">📋</div>
-              <div class="empty-title">No transactions yet</div>
-              <div class="empty-subtitle">Add your first income or expense record</div>
+        this.element.innerHTML = `
+            <div id="income-expenses" class="module-container">
+                <!-- Header -->
+                <div class="income-header">
+                    <div class="income-header-left">
+                        <h1 class="income-title">Income & Expenses</h1>
+                        <p class="income-subtitle">Track your farm's financial health</p>
+                        
+                        <!-- Stats inline in white with icons -->
+                        <div class="income-stats-inline">
+                            <span class="income-stat">💰 <span id="inline-total-income">$0.00</span> Total Income</span>
+                            <span class="income-stat">💸 <span id="inline-total-expenses">$0.00</span> Total Expenses</span>
+                            <span class="income-stat">🪙 <span id="inline-net-profit">$0.00</span> Net Profit</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Right side: Add Transaction + Import Receipts -->
+                    <div class="income-header-right">
+                        <button id="add-transaction-btn" class="income-primary-btn">
+                            <span class="btn-icon">➕</span>
+                            <span class="btn-text">Add Transaction</span>
+                        </button>
+                        <button id="import-receipts-btn" class="income-primary-btn">
+                            <span class="btn-icon">📥</span>
+                            <span class="btn-text">Import Receipts</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="income-quick-actions">
+                    <h2 class="income-section-title">Quick Actions</h2>
+                    <div class="income-actions-grid">
+                        <button id="quick-income-btn" class="income-action-btn" data-action="quick-income">
+                            <div class="action-icon">💰</div>
+                            <span class="action-title">Quick Income</span>
+                            <span class="action-subtitle">Record income instantly</span>
+                        </button>
+                        
+                        <button id="quick-expense-btn" class="income-action-btn" data-action="quick-expense">
+                            <div class="action-icon">🧾</div>
+                            <span class="action-title">Quick Expense</span>
+                            <span class="action-subtitle">Record expense instantly</span>
+                        </button>
+                        
+                        <button id="view-reports-btn" class="income-action-btn" data-action="view-reports">
+                            <div class="action-icon">📊</div>
+                            <span class="action-title">View Reports</span>
+                            <span class="action-subtitle">Financial analytics</span>
+                        </button>
+                        
+                        <button id="manage-categories-btn" class="income-action-btn" data-action="manage-categories">
+                            <div class="action-icon">📂</div>
+                            <span class="action-title">Categories</span>
+                            <span class="action-subtitle">Manage categories</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Financial Overview -->
+                <div class="income-overview">
+                    <h2 class="income-section-title">Financial Overview</h2>
+                    <div class="income-stats-grid">
+                        <div class="income-stat-card" id="monthly-income-card">
+                            <div class="stat-icon">📅</div>
+                            <div class="stat-value" id="monthly-income">$0.00</div>
+                            <div class="stat-label">This Month</div>
+                        </div>
+                        <div class="income-stat-card" id="avg-monthly-card">
+                            <div class="stat-icon">📈</div>
+                            <div class="stat-value" id="avg-monthly-income">$0.00</div>
+                            <div class="stat-label">Avg Monthly</div>
+                        </div>
+                        <div class="income-stat-card" id="transactions-card">
+                            <div class="stat-icon">📋</div>
+                            <div class="stat-value" id="total-transactions">0</div>
+                            <div class="stat-label">Transactions</div>
+                        </div>
+                        <div class="income-stat-card" id="categories-card">
+                            <div class="stat-icon">📂</div>
+                            <div class="stat-value" id="total-categories">0</div>
+                            <div class="stat-label">Categories</div>
+                        </div>
+                        <div class="income-stat-card" id="balance-card">
+                            <div class="stat-icon">🏦</div>
+                            <div class="stat-value" id="current-balance">$0.00</div>
+                            <div class="stat-label">Current Balance</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Transactions -->
+                <div class="income-recent">
+                    <div class="income-activity-header">
+                        <h2 class="income-section-title">Recent Transactions</h2>
+                        <button id="view-all-transactions" class="income-primary-btn">
+                            <span class="btn-icon">📋</span>
+                            <span class="btn-text">View All</span>
+                        </button>
+                    </div>
+                    <div class="income-activity-list">
+                        <div id="transactions-content">
+                            <div class="income-empty-state">
+                                <div class="empty-icon">📋</div>
+                                <div class="empty-title">No transactions yet</div>
+                                <div class="empty-subtitle">Add your first income or expense record</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Expense Categories -->
+                <div class="income-categories">
+                    <h2 class="income-section-title">Expense Categories</h2>
+                    <div class="income-activity-list">
+                        <div id="categories-content">
+                            <div class="income-empty-state">
+                                <div class="empty-icon">📊</div>
+                                <div class="empty-title">No categories yet</div>
+                                <div class="empty-subtitle">Add expenses to see categories</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div class="income-footer">
+                    <div class="income-refresh-container">
+                        <button id="refresh-data-btn" class="income-refresh-btn">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-text">Refresh Data</span>
+                        </button>
+                    </div>
+                    <div class="income-modal-triggers">
+                        <button id="export-data-btn" class="income-action-btn" data-action="export-data">
+                            <span class="action-icon">📤</span>
+                            <span class="action-title">Export Data</span>
+                            <span class="action-subtitle">Export to CSV/Excel</span>
+                        </button>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Expense Categories -->
-      <div class="income-categories">
-        <h2 class="income-section-title">Expense Categories</h2>
-        <div class="income-activity-list">
-          <div id="categories-content">
-            <div class="income-empty-state">
-              <div class="empty-icon">📊</div>
-              <div class="empty-title">No categories yet</div>
-              <div class="empty-subtitle">Add expenses to see categories</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer -->
-      <div class="income-footer">
-        <div class="income-refresh-container">
-          <button id="refresh-income-btn" class="income-refresh-btn">🔄 Refresh Data</button>
-        </div>
-        <div class="income-modal-triggers">
-          <button id="export-btn" class="income-action-btn">📤 Export Data</button>
-        </div>
-      </div>
-
-    </div>
-  `;
-},
-
-    setupEventListeners() {
-        this.setupQuickActions();
-        this.setupActionButtons();
+        `;
     },
 
-    setupQuickActions() {
-        const quickActionButtons = document.querySelectorAll('.dashboard-quick-action-btn');
-        
+    setupEventListeners() {
+        // Quick action buttons
+        const quickActionButtons = document.querySelectorAll('.income-action-btn[data-action]');
         quickActionButtons.forEach(button => {
             button.addEventListener('click', (e) => {
                 const action = e.currentTarget.getAttribute('data-action');
                 this.handleQuickAction(action);
             });
         });
-    },
-
-    setupActionButtons() {
-        // Refresh button
+        
+        // Primary buttons
+        const addTransactionBtn = document.getElementById('add-transaction-btn');
+        if (addTransactionBtn) {
+            addTransactionBtn.addEventListener('click', () => {
+                this.openAddTransactionModal();
+            });
+        }
+        
+        const importReceiptsBtn = document.getElementById('import-receipts-btn');
+        if (importReceiptsBtn) {
+            importReceiptsBtn.addEventListener('click', () => {
+                this.importReceipts();
+            });
+        }
+        
+        const viewAllBtn = document.getElementById('view-all-transactions');
+        if (viewAllBtn) {
+            viewAllBtn.addEventListener('click', () => {
+                this.viewAllTransactions();
+            });
+        }
+        
         const refreshBtn = document.getElementById('refresh-data-btn');
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => {
@@ -192,19 +240,10 @@ const IncomeExpensesModule = {
             });
         }
         
-        // Add transaction button
-        const addBtn = document.getElementById('add-transaction-btn');
-        if (addBtn) {
-            addBtn.addEventListener('click', () => {
-                this.showNotification('Add transaction clicked', 'info');
-            });
-        }
-        
-        // View all transactions button
-        const viewAllBtn = document.getElementById('view-all-transactions');
-        if (viewAllBtn) {
-            viewAllBtn.addEventListener('click', () => {
-                this.showNotification('View all transactions clicked', 'info');
+        const exportBtn = document.getElementById('export-data-btn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                this.exportData();
             });
         }
     },
@@ -239,15 +278,14 @@ const IncomeExpensesModule = {
         }
 
         // Fallback to localStorage
-        if (data.totalIncome === 0) {
-            const savedData = localStorage.getItem('farm-income-expenses-data');
-            if (savedData) {
-                data = { ...data, ...JSON.parse(savedData) };
-            }
+        const savedData = localStorage.getItem('farm-income-expenses-data');
+        if (savedData) {
+            const parsedData = JSON.parse(savedData);
+            data = { ...data, ...parsedData };
         }
 
         // Use sample data for demo if empty
-        if (data.totalIncome === 0) {
+        if (data.totalIncome === 0 && data.totalExpenses === 0) {
             data = this.getSampleData();
         }
 
@@ -327,64 +365,62 @@ const IncomeExpensesModule = {
     },
 
     updateDashboardDisplay(data) {
-        this.updateStatCard('total-income', this.formatCurrency(data.totalIncome));
-        this.updateStatCard('total-expenses', this.formatCurrency(data.totalExpenses));
-        this.updateStatCard('net-profit', this.formatCurrency(data.netProfit));
-        this.updateStatCard('monthly-income', this.formatCurrency(data.monthlyIncome));
-        this.updateStatCard('avg-monthly-income', this.formatCurrency(data.avgMonthlyIncome));
-        this.updateStatCard('total-transactions', data.totalTransactions);
-        this.updateStatCard('total-categories', data.totalCategories);
-        this.updateStatCard('current-balance', this.formatCurrency(data.currentBalance));
+        // Update inline stats
+        this.updateInlineStat('inline-total-income', this.formatCurrency(data.totalIncome));
+        this.updateInlineStat('inline-total-expenses', this.formatCurrency(data.totalExpenses));
+        this.updateInlineStat('inline-net-profit', this.formatCurrency(data.netProfit));
+        
+        // Update card stats
+        this.updateCardStat('monthly-income', this.formatCurrency(data.monthlyIncome));
+        this.updateCardStat('avg-monthly-income', this.formatCurrency(data.avgMonthlyIncome));
+        this.updateCardStat('total-transactions', data.totalTransactions);
+        this.updateCardStat('total-categories', data.totalCategories);
+        this.updateCardStat('current-balance', this.formatCurrency(data.currentBalance));
+        
+        // Update card styling based on values
+        this.updateCardStatus('balance-card', data.currentBalance, 'balance');
+        this.updateCardStatus('monthly-income-card', data.monthlyIncome, 'income');
+    },
 
-        // Update profit card styling
-        const profitCard = document.getElementById('net-profit-card');
-        if (profitCard) {
-            if (data.netProfit >= 0) {
-                profitCard.classList.add('profit-positive');
-                profitCard.classList.remove('profit-negative');
-            } else {
-                profitCard.classList.add('profit-negative');
-                profitCard.classList.remove('profit-positive');
-            }
-        }
-
-        // Update balance card styling
-        const balanceCard = document.getElementById('balance-card');
-        if (balanceCard) {
-            if (data.currentBalance >= 0) {
-                balanceCard.classList.add('profit-positive');
-                balanceCard.classList.remove('profit-negative');
-            } else {
-                balanceCard.classList.add('profit-negative');
-                balanceCard.classList.remove('profit-positive');
-            }
-        }
-
-        // Add monthly income indicator
-        const monthlyCard = document.getElementById('monthly-income-card');
-        if (monthlyCard && data.monthlyIncome > 0) {
-            // Remove existing indicator if present
-            const existingIndicator = monthlyCard.querySelector('.monthly-indicator');
-            if (existingIndicator) existingIndicator.remove();
-            
-            const monthlyIndicator = document.createElement('div');
-            monthlyIndicator.className = 'monthly-indicator';
-            monthlyIndicator.textContent = `Current month`;
-            monthlyCard.appendChild(monthlyIndicator);
+    updateInlineStat(elementId, value) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = value;
         }
     },
 
-    updateStatCard(elementId, value) {
+    updateCardStat(elementId, value) {
         const element = document.getElementById(elementId);
         if (element) {
-            // Add animation
-            element.classList.add('stat-updating');
-            
-            // Update value after animation
+            element.classList.add('value-updating');
             setTimeout(() => {
-                element.classList.remove('stat-updating');
+                element.classList.remove('value-updating');
                 element.textContent = value;
             }, 300);
+        }
+    },
+
+    updateCardStatus(cardId, value, type) {
+        const card = document.getElementById(cardId);
+        if (!card) return;
+        
+        // Remove existing status classes
+        card.classList.remove('status-positive', 'status-negative', 'status-neutral');
+        
+        if (type === 'balance') {
+            if (value > 0) {
+                card.classList.add('status-positive');
+            } else if (value < 0) {
+                card.classList.add('status-negative');
+            } else {
+                card.classList.add('status-neutral');
+            }
+        } else if (type === 'income') {
+            if (value > 0) {
+                card.classList.add('status-positive');
+            } else {
+                card.classList.add('status-neutral');
+            }
         }
     },
 
@@ -396,7 +432,7 @@ const IncomeExpensesModule = {
 
         if (transactions.length === 0) {
             transactionsContent.innerHTML = `
-                <div class="dashboard-empty-state">
+                <div class="income-empty-state">
                     <div class="empty-icon">📋</div>
                     <div class="empty-title">No transactions yet</div>
                     <div class="empty-subtitle">Add your first income or expense record</div>
@@ -406,27 +442,61 @@ const IncomeExpensesModule = {
         }
 
         transactionsContent.innerHTML = `
-            <div class="activity-items-container">
+            <div class="transactions-container">
                 ${transactions.map(transaction => `
-                    <div class="dashboard-activity-item transaction-${transaction.type}">
-                        <div class="activity-icon">${transaction.icon || '💰'}</div>
-                        <div class="activity-content">
-                            <div class="activity-text">${transaction.description}</div>
-                            <div class="activity-details">
-                                <span class="activity-category">${transaction.category}</span>
-                                <span class="activity-amount ${transaction.type}">
+                    <div class="transaction-item transaction-${transaction.type}" data-id="${transaction.id}">
+                        <div class="transaction-icon">${transaction.icon || this.getTransactionIcon(transaction.type)}</div>
+                        <div class="transaction-details">
+                            <div class="transaction-main">
+                                <div class="transaction-description">${transaction.description}</div>
+                                <div class="transaction-amount ${transaction.type}">
                                     ${transaction.type === 'income' ? '+' : '-'}${this.formatCurrency(transaction.amount)}
-                                </span>
+                                </div>
                             </div>
-                            <div class="activity-time">${this.formatDate(transaction.date)}</div>
+                            <div class="transaction-meta">
+                                <span class="transaction-category">${transaction.category}</span>
+                                <span class="transaction-date">${this.formatDate(transaction.date)}</span>
+                                <span class="transaction-status status-${transaction.status}">${transaction.status}</span>
+                            </div>
                         </div>
-                        <div class="activity-status status-${transaction.status}">
-                            ${transaction.status}
+                        <div class="transaction-actions">
+                            <button class="transaction-action-btn edit-btn" data-id="${transaction.id}" title="Edit">
+                                ✏️
+                            </button>
+                            <button class="transaction-action-btn delete-btn" data-id="${transaction.id}" title="Delete">
+                                🗑️
+                            </button>
                         </div>
                     </div>
                 `).join('')}
             </div>
         `;
+        
+        // Add event listeners to transaction action buttons
+        this.setupTransactionActionListeners();
+    },
+
+    getTransactionIcon(type) {
+        return type === 'income' ? '💰' : '💸';
+    },
+
+    setupTransactionActionListeners() {
+        const editButtons = document.querySelectorAll('.transaction-action-btn.edit-btn');
+        const deleteButtons = document.querySelectorAll('.transaction-action-btn.delete-btn');
+        
+        editButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const transactionId = e.currentTarget.getAttribute('data-id');
+                this.editTransaction(transactionId);
+            });
+        });
+        
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const transactionId = e.currentTarget.getAttribute('data-id');
+                this.deleteTransaction(transactionId);
+            });
+        });
     },
 
     updateCategoriesList(data) {
@@ -437,7 +507,7 @@ const IncomeExpensesModule = {
 
         if (categories.length === 0) {
             categoriesContent.innerHTML = `
-                <div class="dashboard-empty-state">
+                <div class="income-empty-state">
                     <div class="empty-icon">📊</div>
                     <div class="empty-title">No categories yet</div>
                     <div class="empty-subtitle">Add expenses to see categories</div>
@@ -446,25 +516,30 @@ const IncomeExpensesModule = {
             return;
         }
 
+        // Calculate total expenses for percentage
+        const totalExpenses = categories.reduce((sum, cat) => sum + cat.amount, 0);
+
         categoriesContent.innerHTML = `
-            <div class="activity-items-container">
-                ${categories.map(category => `
-                    <div class="dashboard-activity-item category-item">
-                        <div class="activity-icon">${category.icon || '📂'}</div>
-                        <div class="activity-content">
-                            <div class="activity-text">${category.name}</div>
-                            <div class="activity-details">
-                                <span class="activity-count">${category.count || 0} transactions</span>
-                                <span class="activity-amount expense">
-                                    ${this.formatCurrency(category.amount)}
-                                </span>
+            <div class="categories-container">
+                ${categories.map(category => {
+                    const percentage = totalExpenses > 0 ? ((category.amount / totalExpenses) * 100).toFixed(1) : 0;
+                    return `
+                        <div class="category-item">
+                            <div class="category-header">
+                                <div class="category-icon">${category.icon || '📂'}</div>
+                                <div class="category-info">
+                                    <div class="category-name">${category.name}</div>
+                                    <div class="category-count">${category.count || 0} transactions</div>
+                                </div>
+                                <div class="category-amount">${this.formatCurrency(category.amount)}</div>
                             </div>
-                            <div class="activity-progress">
-                                <div class="progress-bar" style="width: ${Math.min((category.amount / 5000) * 100, 100)}%"></div>
+                            <div class="category-progress">
+                                <div class="progress-bar" style="width: ${percentage}%"></div>
                             </div>
+                            <div class="category-percentage">${percentage}% of expenses</div>
                         </div>
-                    </div>
-                `).join('')}
+                    `;
+                }).join('')}
             </div>
         `;
     },
@@ -472,45 +547,145 @@ const IncomeExpensesModule = {
     handleQuickAction(action) {
         console.log(`Quick action: ${action}`);
         
-        const actionMap = {
-            'add-income': this.addIncome.bind(this),
-            'add-expense': this.addExpense.bind(this),
-            'view-reports': 'reports',
-            'manage-categories': this.manageCategories.bind(this),
-            'import-data': this.importData.bind(this),
-            'export-data': this.exportData.bind(this)
-        };
-
-        if (action === 'view-reports' && window.app && window.app.showSection) {
-            window.app.showSection('reports');
-            this.showNotification('Opening Reports...', 'info');
-        } else if (typeof actionMap[action] === 'function') {
-            actionMap[action]();
-        } else {
-            this.showNotification(`Action "${action}" not implemented yet`, 'info');
+        switch (action) {
+            case 'quick-income':
+                this.openQuickIncomeModal();
+                break;
+            case 'quick-expense':
+                this.openQuickExpenseModal();
+                break;
+            case 'view-reports':
+                if (window.app && window.app.showSection) {
+                    window.app.showSection('reports');
+                    this.showNotification('Opening Reports...', 'info');
+                }
+                break;
+            case 'manage-categories':
+                this.openManageCategoriesModal();
+                break;
+            case 'export-data':
+                this.exportData();
+                break;
+            default:
+                this.showNotification(`Action "${action}" not implemented yet`, 'info');
         }
     },
 
-    addIncome() {
-        this.showNotification('Adding new income record...', 'success');
-        // TODO: Open income modal
+    openAddTransactionModal() {
+        this.showNotification('Opening Add Transaction modal...', 'info');
+        // TODO: Implement modal opening
+        // You can use your existing ModalManager here
+        if (window.ModalManager) {
+            // window.ModalManager.openModal('add-transaction-modal');
+        }
     },
 
-    addExpense() {
-        this.showNotification('Adding new expense record...', 'success');
-        // TODO: Open expense modal
+    openQuickIncomeModal() {
+        this.showNotification('Opening Quick Income form...', 'info');
+        // TODO: Implement quick income modal
     },
 
-    manageCategories() {
-        this.showNotification('Managing categories...', 'info');
+    openQuickExpenseModal() {
+        this.showNotification('Opening Quick Expense form...', 'info');
+        // TODO: Implement quick expense modal
     },
 
-    importData() {
-        this.showNotification('Importing data...', 'info');
+    openManageCategoriesModal() {
+        this.showNotification('Opening Categories Manager...', 'info');
+        // TODO: Implement categories management modal
+    },
+
+    importReceipts() {
+        this.showNotification('Import receipts feature coming soon!', 'info');
+        // TODO: Implement file upload for receipts
+    },
+
+    viewAllTransactions() {
+        this.showNotification('Showing all transactions...', 'info');
+        // TODO: Navigate to detailed transactions view or open modal
     },
 
     exportData() {
-        this.showNotification('Exporting data...', 'info');
+        this.showNotification('Exporting data to CSV...', 'success');
+        
+        // Get current data
+        const data = this.getModuleData();
+        
+        // Create CSV content
+        let csvContent = "Date,Description,Category,Type,Amount,Status\n";
+        
+        data.recentTransactions.forEach(transaction => {
+            csvContent += `"${transaction.date}","${transaction.description}","${transaction.category}",${transaction.type},${transaction.amount},${transaction.status}\n`;
+        });
+        
+        // Create download link
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `farm-transactions-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    },
+
+    editTransaction(transactionId) {
+        this.showNotification(`Editing transaction #${transactionId}...`, 'info');
+        // TODO: Implement transaction editing
+    },
+
+    deleteTransaction(transactionId) {
+        if (confirm('Are you sure you want to delete this transaction?')) {
+            // Get current data
+            let data = this.getModuleData();
+            
+            // Remove transaction
+            data.recentTransactions = data.recentTransactions.filter(t => t.id != transactionId);
+            
+            // Recalculate totals
+            this.recalculateTotals(data);
+            
+            // Save updated data
+            this.saveData(data);
+            
+            // Refresh display
+            this.loadAndDisplayData();
+            
+            this.showNotification('Transaction deleted successfully!', 'success');
+        }
+    },
+
+    recalculateTotals(data) {
+        // Recalculate totals from remaining transactions
+        data.totalIncome = data.recentTransactions
+            .filter(t => t.type === 'income')
+            .reduce((sum, t) => sum + t.amount, 0);
+            
+        data.totalExpenses = data.recentTransactions
+            .filter(t => t.type === 'expense')
+            .reduce((sum, t) => sum + t.amount, 0);
+            
+        data.netProfit = data.totalIncome - data.totalExpenses;
+        data.totalTransactions = data.recentTransactions.length;
+        
+        // Update current balance (simplified)
+        data.currentBalance = data.netProfit;
+    },
+
+    saveData(data) {
+        // Save to FarmModules
+        if (window.FarmModules && window.FarmModules.appData) {
+            if (!window.FarmModules.appData.incomeExpenses) {
+                window.FarmModules.appData.incomeExpenses = {};
+            }
+            window.FarmModules.appData.incomeExpenses = data;
+        }
+        
+        // Save to localStorage
+        localStorage.setItem('farm-income-expenses-data', JSON.stringify(data));
+        
+        console.log('💾 Income & Expenses data saved');
     },
 
     formatCurrency(amount) {
@@ -551,29 +726,77 @@ const IncomeExpensesModule = {
     },
 
     addTransaction(transaction) {
-        if (!window.FarmModules || !window.FarmModules.appData) return;
-
-        if (!window.FarmModules.appData.incomeExpenses) {
-            window.FarmModules.appData.incomeExpenses = {};
-        }
-
-        if (!window.FarmModules.appData.incomeExpenses.recentTransactions) {
-            window.FarmModules.appData.incomeExpenses.recentTransactions = [];
-        }
-
-        window.FarmModules.appData.incomeExpenses.recentTransactions.unshift({
+        let data = this.getModuleData();
+        
+        // Add new transaction
+        const newTransaction = {
             id: Date.now(),
+            date: new Date().toISOString().split('T')[0],
             timestamp: new Date().toISOString(),
             ...transaction
-        });
-
-        // Keep only last 20 transactions
-        if (window.FarmModules.appData.incomeExpenses.recentTransactions.length > 20) {
-            window.FarmModules.appData.incomeExpenses.recentTransactions = 
-                window.FarmModules.appData.incomeExpenses.recentTransactions.slice(0, 20);
+        };
+        
+        data.recentTransactions.unshift(newTransaction);
+        
+        // Update totals
+        if (transaction.type === 'income') {
+            data.totalIncome += transaction.amount;
+        } else {
+            data.totalExpenses += transaction.amount;
         }
-
+        
+        data.netProfit = data.totalIncome - data.totalExpenses;
+        data.totalTransactions = data.recentTransactions.length;
+        data.currentBalance = data.netProfit;
+        
+        // Update categories
+        this.updateCategoriesData(data, transaction);
+        
+        // Save data
+        this.saveData(data);
+        
+        // Refresh display
         this.loadAndDisplayData();
+        
+        this.showNotification('Transaction added successfully!', 'success');
+    },
+
+    updateCategoriesData(data, transaction) {
+        if (transaction.type === 'expense') {
+            // Find or create category
+            let category = data.expenseCategories.find(c => c.name === transaction.category);
+            
+            if (category) {
+                category.amount += transaction.amount;
+                category.count += 1;
+            } else {
+                data.expenseCategories.push({
+                    name: transaction.category,
+                    amount: transaction.amount,
+                    count: 1,
+                    icon: this.getCategoryIcon(transaction.category)
+                });
+            }
+            
+            data.totalCategories = data.expenseCategories.length;
+        }
+    },
+
+    getCategoryIcon(categoryName) {
+        const iconMap = {
+            'Feed & Nutrition': '🌾',
+            'Healthcare': '💊',
+            'Equipment': '🔧',
+            'Labor': '👷',
+            'Utilities': '⚡',
+            'Livestock Sales': '🐔',
+            'Product Sales': '🥚',
+            'Transportation': '🚚',
+            'Maintenance': '🔨',
+            'Other': '📦'
+        };
+        
+        return iconMap[categoryName] || '📂';
     }
 };
 
