@@ -147,7 +147,6 @@ const IncomeExpensesModule = {
         </div>
       </div>
       
-<!-- Recent Transactions -->
 <div class="income-recent">
   <div class="income-activity-header header-flex">
     <h2 class="income-section-title">Recent Transactions</h2>
@@ -157,71 +156,53 @@ const IncomeExpensesModule = {
     </button>
   </div>
 
-  <div class="table-container">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Description</th>
-          <th>Category</th>
-          <th>Amount</th>
-        </tr>
-      </thead>
-      <tbody id="transactions-content">
-        <!-- Example row -->
-        <!-- <tr>
-          <td>2025-12-01</td>
-          <td>Egg Sales</td>
-          <td>Income</td>
-          <td>$250.00</td>
-        </tr> -->
+  <div class="card-grid" id="transactions-content">
+    <!-- Example transaction card -->
+    <div class="info-card">
+      <div class="info-header">
+        <div class="info-icon">💸</div>
+        <div class="info-title">Feed Purchase — $120.00</div>
+      </div>
+      <div class="info-subtitle">Category: Expense · Date: 2025-12-01</div>
+      <div class="info-notes">Purchased 3 bags of layer mash</div>
+      <div class="info-actions">
+        <button class="btn-outline">Edit</button>
+        <button class="btn-outline">Delete</button>
+      </div>
+    </div>
 
-        <!-- Empty state -->
-        <tr class="income-empty-state">
-          <td colspan="4">
-            <div class="empty-icon">📋</div>
-            <div class="empty-title">No transactions yet</div>
-            <div class="empty-subtitle">Add your first income or expense record</div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <!-- Empty state -->
+    <div class="info-card income-empty-state">
+      <div class="info-icon">📋</div>
+      <div class="info-title">No transactions yet</div>
+      <div class="info-notes">Add your first income or expense record</div>
+    </div>
   </div>
 </div>
 
-<!-- Expense Categories -->
 <div class="income-categories">
   <h2 class="income-section-title">Expense Categories</h2>
 
-  <div class="table-container">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Category</th>
-          <th>Total Expenses</th>
-          <th>Percentage</th>
-        </tr>
-      </thead>
-      <tbody id="categories-content">
-        <!-- Example row -->
-        <!-- <tr>
-          <td>Feed</td>
-          <td>$120.00</td>
-          <td>45%</td>
-        </tr> -->
+  <div class="card-grid" id="categories-content">
+    <!-- Example category card -->
+    <div class="info-card">
+      <div class="info-header">
+        <div class="info-icon">📂</div>
+        <div class="info-title">Feed</div>
+      </div>
+      <div class="info-subtitle">Total: $120.00 · 45% of expenses</div>
+      <div class="info-notes">Includes layer mash, starter crumble</div>
+    </div>
 
-        <!-- Empty state -->
-        <tr class="income-empty-state">
-          <td colspan="3">
-            <div class="empty-icon">📊</div>
-            <div class="empty-title">No categories yet</div>
-            <div class="empty-subtitle">Add expenses to see categories</div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <!-- Empty state -->
+    <div class="info-card income-empty-state">
+      <div class="info-icon">📊</div>
+      <div class="info-title">No categories yet</div>
+      <div class="info-notes">Add expenses to see categories</div>
+    </div>
   </div>
 </div>
+
 
 <!-- Footer -->
 <div class="income-footer">
