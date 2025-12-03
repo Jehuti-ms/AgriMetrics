@@ -1,4 +1,4 @@
-// modules/income-expenses.js - CSS-BASED VERSION (Refactored)
+// modules/income-expenses.js - CSS-BASED VERSION (Matching Dashboard style)
 console.log('💰 Loading Income & Expenses module...');
 
 const IncomeExpensesModule = {
@@ -57,163 +57,202 @@ const IncomeExpensesModule = {
 
         this.element.innerHTML = `
             <div id="income-expenses" class="module-container">
-                <!-- Module Header -->
-                <div class="module-header">
-                    <h1 class="module-title">Income & Expenses</h1>
-                    <p class="module-subtitle">Track and manage financial records</p>
+                <!-- Welcome Section -->
+                <div class="dashboard-welcome">
+                    <h1 class="welcome-header">Income & Expenses</h1>
+                    <p class="welcome-subtitle">Track and manage your farm's financial records</p>
                 </div>
 
-                <!-- Quick Actions -->
-                <div class="module-card">
-                    <button class="module-action-btn" data-action="add-income">
-                        <span class="btn-icon">💰</span>
-                        <span class="btn-text">Add Income</span>
-                    </button>
-                    <button class="module-action-btn" data-action="add-expense">
-                        <span class="btn-icon">💸</span>
-                        <span class="btn-text">Add Expense</span>
-                    </button>
+                <!-- Quick Actions Grid -->
+                <div class="dashboard-quick-actions">
+                    <h2 class="dashboard-section-title">Quick Actions</h2>
+                    <div class="dashboard-actions-grid">
+                        <button class="dashboard-quick-action-btn" data-action="add-income">
+                            <div class="action-icon">💰</div>
+                            <span class="action-title">Add Income</span>
+                            <span class="action-subtitle">Record new income</span>
+                        </button>
+
+                        <button class="dashboard-quick-action-btn" data-action="add-expense">
+                            <div class="action-icon">💸</div>
+                            <span class="action-title">Add Expense</span>
+                            <span class="action-subtitle">Record new expense</span>
+                        </button>
+
+                        <button class="dashboard-quick-action-btn" data-action="view-reports">
+                            <div class="action-icon">📈</div>
+                            <span class="action-title">View Reports</span>
+                            <span class="action-subtitle">Financial analytics</span>
+                        </button>
+
+                        <button class="dashboard-quick-action-btn" data-action="manage-categories">
+                            <div class="action-icon">📂</div>
+                            <span class="action-title">Categories</span>
+                            <span class="action-subtitle">Manage categories</span>
+                        </button>
+
+                        <button class="dashboard-quick-action-btn" data-action="import-data">
+                            <div class="action-icon">📥</div>
+                            <span class="action-title">Import Data</span>
+                            <span class="action-subtitle">Import transactions</span>
+                        </button>
+
+                        <button class="dashboard-quick-action-btn" data-action="export-data">
+                            <div class="action-icon">📤</div>
+                            <span class="action-title">Export Data</span>
+                            <span class="action-subtitle">Export records</span>
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Summary Cards -->
-                <div class="module-section">
-                    <h2 class="section-title">Financial Overview</h2>
-                    <div class="cards-grid">
-                        <div class="summary-card income-card">
-                            <div class="card-icon">💰</div>
-                            <div class="card-content">
-                                <div class="card-label">Total Income</div>
-                                <div class="card-value" id="total-income">$0.00</div>
-                                <div class="card-trend positive">+12% this month</div>
-                            </div>
+                <!-- Stats Overview -->
+                <div class="dashboard-stats-overview">
+                    <h2 class="dashboard-section-title">Financial Overview</h2>
+                    <div class="dashboard-stats-grid">
+                        <div class="dashboard-stat-card" id="total-income-card">
+                            <div class="stat-icon">💰</div>
+                            <div class="stat-value" id="total-income">$0.00</div>
+                            <div class="stat-label">Total Income</div>
                         </div>
-                        
-                        <div class="summary-card expense-card">
-                            <div class="card-icon">💸</div>
-                            <div class="card-content">
-                                <div class="card-label">Total Expenses</div>
-                                <div class="card-value" id="total-expenses">$0.00</div>
-                                <div class="card-trend">Monthly average</div>
-                            </div>
+
+                        <div class="dashboard-stat-card" id="total-expenses-card">
+                            <div class="stat-icon">💸</div>
+                            <div class="stat-value" id="total-expenses">$0.00</div>
+                            <div class="stat-label">Total Expenses</div>
                         </div>
-                        
-                        <div class="summary-card profit-card">
-                            <div class="card-icon">📊</div>
-                            <div class="card-content">
-                                <div class="card-label">Net Profit</div>
-                                <div class="card-value" id="net-profit">$0.00</div>
-                                <div class="card-trend positive">Profit margin</div>
-                            </div>
+
+                        <div class="dashboard-stat-card" id="net-profit-card">
+                            <div class="stat-icon">📊</div>
+                            <div class="stat-value" id="net-profit">$0.00</div>
+                            <div class="stat-label">Net Profit</div>
                         </div>
-                        
-                        <div class="summary-card monthly-card">
-                            <div class="card-icon">📅</div>
-                            <div class="card-content">
-                                <div class="card-label">This Month</div>
-                                <div class="card-value" id="monthly-total">$0.00</div>
-                                <div class="card-trend">Current period</div>
-                            </div>
+
+                        <div class="dashboard-stat-card" id="monthly-income-card">
+                            <div class="stat-icon">📅</div>
+                            <div class="stat-value" id="monthly-income">$0.00</div>
+                            <div class="stat-label">This Month</div>
+                        </div>
+
+                        <div class="dashboard-stat-card" id="avg-income-card">
+                            <div class="stat-icon">📈</div>
+                            <div class="stat-value" id="avg-monthly-income">$0.00</div>
+                            <div class="stat-label">Avg Monthly</div>
+                        </div>
+
+                        <div class="dashboard-stat-card" id="transactions-card">
+                            <div class="stat-icon">📋</div>
+                            <div class="stat-value" id="total-transactions">0</div>
+                            <div class="stat-label">Transactions</div>
+                        </div>
+
+                        <div class="dashboard-stat-card" id="categories-card">
+                            <div class="stat-icon">📂</div>
+                            <div class="stat-value" id="total-categories">0</div>
+                            <div class="stat-label">Categories</div>
+                        </div>
+
+                        <div class="dashboard-stat-card" id="balance-card">
+                            <div class="stat-icon">🏦</div>
+                            <div class="stat-value" id="current-balance">$0.00</div>
+                            <div class="stat-label">Current Balance</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Recent Transactions -->
-                <div class="module-section">
-                    <div class="section-header">
-                        <h2 class="section-title">Recent Transactions</h2>
-                        <button class="btn-secondary" id="view-all-btn">
-                            View All →
+                <div class="recent-activity">
+                    <div class="activity-header">
+                        <h2 class="dashboard-section-title">Recent Transactions</h2>
+                        <button class="btn-secondary" id="view-all-transactions">
+                            View All
                         </button>
                     </div>
-                    
-                    <div class="table-container">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Description</th>
-                                    <th>Category</th>
-                                    <th>Type</th>
-                                    <th>Amount</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="transactions-table-body">
-                                <!-- Transactions will be loaded here -->
-                                <tr class="empty-row">
-                                    <td colspan="6">
-                                        <div class="empty-state">
-                                            <div class="empty-icon">📋</div>
-                                            <div class="empty-text">No transactions yet</div>
-                                            <div class="empty-subtext">Add your first income or expense record</div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="dashboard-activity-list">
+                        <div id="transactions-content">
+                            <div class="dashboard-empty-state">
+                                <div class="empty-icon">📋</div>
+                                <div class="empty-title">No transactions yet</div>
+                                <div class="empty-subtitle">Add your first income or expense record</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Expense Categories -->
-                <div class="module-section">
-                    <h2 class="section-title">Expense Categories</h2>
-                    <div class="categories-container" id="categories-container">
-                        <!-- Categories will be loaded here -->
-                        <div class="loading-categories">
-                            <div class="loading-spinner"></div>
-                            <p>Loading categories...</p>
+                <div class="recent-activity">
+                    <h2 class="dashboard-section-title">Expense Categories</h2>
+                    <div class="dashboard-activity-list">
+                        <div id="categories-content">
+                            <div class="dashboard-empty-state">
+                                <div class="empty-icon">📊</div>
+                                <div class="empty-title">No categories yet</div>
+                                <div class="empty-subtitle">Add expenses to see categories</div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Monthly Chart -->
-                <div class="module-section">
-                    <h2 class="section-title">Monthly Trends</h2>
-                    <div class="chart-container">
-                        <div class="chart-placeholder">
-                            <div class="chart-icon">📈</div>
-                            <div class="chart-text">Income vs Expenses Chart</div>
-                            <div class="chart-subtext">Visualize your financial trends</div>
-                            <button class="btn-secondary" id="generate-report-btn">Generate Report</button>
-                        </div>
-                    </div>
+                <!-- Action Buttons -->
+                <div class="dashboard-refresh-container">
+                    <button id="refresh-data-btn" class="dashboard-refresh-btn">
+                        🔄 Refresh Data
+                    </button>
+                    <button id="add-transaction-btn" class="dashboard-refresh-btn primary">
+                        ➕ Add Transaction
+                    </button>
                 </div>
             </div>
         `;
     },
 
     setupEventListeners() {
-        // Action buttons
-        const actionButtons = document.querySelectorAll('.module-action-btn');
-        actionButtons.forEach(button => {
+        this.setupQuickActions();
+        this.setupActionButtons();
+    },
+
+    setupQuickActions() {
+        const quickActionButtons = document.querySelectorAll('.dashboard-quick-action-btn');
+        
+        quickActionButtons.forEach(button => {
             button.addEventListener('click', (e) => {
                 const action = e.currentTarget.getAttribute('data-action');
-                this.handleAction(action);
+                this.handleQuickAction(action);
             });
         });
-        
-        // View all button
-        const viewAllBtn = document.getElementById('view-all-btn');
-        if (viewAllBtn) {
-            viewAllBtn.addEventListener('click', () => {
-                this.showNotification('View all transactions clicked', 'info');
+    },
+
+    setupActionButtons() {
+        // Refresh button
+        const refreshBtn = document.getElementById('refresh-data-btn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.loadAndDisplayData();
+                this.showNotification('Data refreshed!', 'success');
             });
         }
         
-        // Generate report button
-        const reportBtn = document.getElementById('generate-report-btn');
-        if (reportBtn) {
-            reportBtn.addEventListener('click', () => {
-                this.generateReport();
+        // Add transaction button
+        const addBtn = document.getElementById('add-transaction-btn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => {
+                this.showNotification('Add transaction clicked', 'info');
+            });
+        }
+        
+        // View all transactions button
+        const viewAllBtn = document.getElementById('view-all-transactions');
+        if (viewAllBtn) {
+            viewAllBtn.addEventListener('click', () => {
+                this.showNotification('View all transactions clicked', 'info');
             });
         }
     },
 
     loadAndDisplayData() {
         const data = this.getModuleData();
-        this.updateSummaryCards(data);
-        this.updateTransactionsTable(data);
-        this.updateCategories(data);
+        this.updateDashboardDisplay(data);
+        this.updateTransactionsList(data);
+        this.updateCategoriesList(data);
     },
 
     getModuleData() {
@@ -221,10 +260,13 @@ const IncomeExpensesModule = {
             totalIncome: 0,
             totalExpenses: 0,
             netProfit: 0,
-            monthlyTotal: 0,
+            monthlyIncome: 0,
+            avgMonthlyIncome: 0,
+            totalTransactions: 0,
+            totalCategories: 0,
+            currentBalance: 0,
             recentTransactions: [],
-            expenseCategories: {},
-            monthlyTrends: []
+            expenseCategories: []
         };
 
         // Try to get data from FarmModules
@@ -243,11 +285,6 @@ const IncomeExpensesModule = {
             }
         }
 
-        // Calculate net profit if not provided
-        if (data.netProfit === 0) {
-            data.netProfit = data.totalIncome - data.totalExpenses;
-        }
-
         // Use sample data for demo if empty
         if (data.totalIncome === 0) {
             data = this.getSampleData();
@@ -261,34 +298,41 @@ const IncomeExpensesModule = {
             totalIncome: 12500,
             totalExpenses: 8500,
             netProfit: 4000,
-            monthlyTotal: 3200,
+            monthlyIncome: 3200,
+            avgMonthlyIncome: 2800,
+            totalTransactions: 24,
+            totalCategories: 8,
+            currentBalance: 5200,
             recentTransactions: [
                 {
                     id: 1,
                     date: '2024-01-15',
                     description: 'Chicken Sales - Batch #45',
-                    category: 'Livestock',
+                    category: 'Livestock Sales',
                     type: 'income',
                     amount: 2500,
-                    status: 'completed'
+                    status: 'completed',
+                    icon: '💰'
                 },
                 {
                     id: 2,
                     date: '2024-01-14',
                     description: 'Feed Purchase - Premium',
-                    category: 'Feed',
+                    category: 'Feed & Nutrition',
                     type: 'expense',
                     amount: 800,
-                    status: 'completed'
+                    status: 'completed',
+                    icon: '🌾'
                 },
                 {
                     id: 3,
                     date: '2024-01-13',
                     description: 'Egg Sales - Wholesale',
-                    category: 'Products',
+                    category: 'Product Sales',
                     type: 'income',
                     amount: 1200,
-                    status: 'completed'
+                    status: 'completed',
+                    icon: '🥚'
                 },
                 {
                     id: 4,
@@ -297,7 +341,8 @@ const IncomeExpensesModule = {
                     category: 'Healthcare',
                     type: 'expense',
                     amount: 350,
-                    status: 'completed'
+                    status: 'completed',
+                    icon: '💊'
                 },
                 {
                     id: 5,
@@ -306,167 +351,179 @@ const IncomeExpensesModule = {
                     category: 'Equipment',
                     type: 'expense',
                     amount: 450,
-                    status: 'pending'
+                    status: 'pending',
+                    icon: '🔧'
                 }
             ],
-            expenseCategories: {
-                'Feed': 1500,
-                'Healthcare': 450,
-                'Equipment': 1200,
-                'Labor': 2800,
-                'Utilities': 650,
-                'Other': 895
-            },
-            monthlyTrends: [
-                { month: 'Jan', income: 3200, expenses: 2100 },
-                { month: 'Dec', income: 2800, expenses: 1900 },
-                { month: 'Nov', income: 3100, expenses: 2200 }
+            expenseCategories: [
+                { name: 'Feed & Nutrition', amount: 1500, count: 8, icon: '🌾' },
+                { name: 'Healthcare', amount: 450, count: 3, icon: '💊' },
+                { name: 'Equipment', amount: 1200, count: 5, icon: '🔧' },
+                { name: 'Labor', amount: 2800, count: 12, icon: '👷' },
+                { name: 'Utilities', amount: 650, count: 4, icon: '⚡' }
             ]
         };
     },
 
-    updateSummaryCards(data) {
-        this.updateCardValue('total-income', this.formatCurrency(data.totalIncome));
-        this.updateCardValue('total-expenses', this.formatCurrency(data.totalExpenses));
-        this.updateCardValue('net-profit', this.formatCurrency(data.netProfit));
-        this.updateCardValue('monthly-total', this.formatCurrency(data.monthlyTotal));
-        
+    updateDashboardDisplay(data) {
+        this.updateStatCard('total-income', this.formatCurrency(data.totalIncome));
+        this.updateStatCard('total-expenses', this.formatCurrency(data.totalExpenses));
+        this.updateStatCard('net-profit', this.formatCurrency(data.netProfit));
+        this.updateStatCard('monthly-income', this.formatCurrency(data.monthlyIncome));
+        this.updateStatCard('avg-monthly-income', this.formatCurrency(data.avgMonthlyIncome));
+        this.updateStatCard('total-transactions', data.totalTransactions);
+        this.updateStatCard('total-categories', data.totalCategories);
+        this.updateStatCard('current-balance', this.formatCurrency(data.currentBalance));
+
         // Update profit card styling
-        const profitCard = document.querySelector('.profit-card');
+        const profitCard = document.getElementById('net-profit-card');
         if (profitCard) {
             if (data.netProfit >= 0) {
-                profitCard.classList.add('positive');
-                profitCard.classList.remove('negative');
+                profitCard.classList.add('profit-positive');
+                profitCard.classList.remove('profit-negative');
             } else {
-                profitCard.classList.add('negative');
-                profitCard.classList.remove('positive');
+                profitCard.classList.add('profit-negative');
+                profitCard.classList.remove('profit-positive');
             }
+        }
+
+        // Update balance card styling
+        const balanceCard = document.getElementById('balance-card');
+        if (balanceCard) {
+            if (data.currentBalance >= 0) {
+                balanceCard.classList.add('profit-positive');
+                balanceCard.classList.remove('profit-negative');
+            } else {
+                balanceCard.classList.add('profit-negative');
+                balanceCard.classList.remove('profit-positive');
+            }
+        }
+
+        // Add monthly income indicator
+        const monthlyCard = document.getElementById('monthly-income-card');
+        if (monthlyCard && data.monthlyIncome > 0) {
+            // Remove existing indicator if present
+            const existingIndicator = monthlyCard.querySelector('.monthly-indicator');
+            if (existingIndicator) existingIndicator.remove();
+            
+            const monthlyIndicator = document.createElement('div');
+            monthlyIndicator.className = 'monthly-indicator';
+            monthlyIndicator.textContent = `Current month`;
+            monthlyCard.appendChild(monthlyIndicator);
         }
     },
 
-    updateCardValue(elementId, value) {
+    updateStatCard(elementId, value) {
         const element = document.getElementById(elementId);
         if (element) {
-            element.classList.add('value-updating');
+            // Add animation
+            element.classList.add('stat-updating');
+            
+            // Update value after animation
             setTimeout(() => {
-                element.classList.remove('value-updating');
+                element.classList.remove('stat-updating');
                 element.textContent = value;
             }, 300);
         }
     },
 
-    updateTransactionsTable(data) {
-        const tableBody = document.getElementById('transactions-table-body');
-        if (!tableBody) return;
+    updateTransactionsList(data) {
+        const transactionsContent = document.getElementById('transactions-content');
+        if (!transactionsContent) return;
 
         const transactions = data.recentTransactions || [];
 
         if (transactions.length === 0) {
-            tableBody.innerHTML = `
-                <tr class="empty-row">
-                    <td colspan="6">
-                        <div class="empty-state">
-                            <div class="empty-icon">📋</div>
-                            <div class="empty-text">No transactions yet</div>
-                            <div class="empty-subtext">Add your first income or expense record</div>
+            transactionsContent.innerHTML = `
+                <div class="dashboard-empty-state">
+                    <div class="empty-icon">📋</div>
+                    <div class="empty-title">No transactions yet</div>
+                    <div class="empty-subtitle">Add your first income or expense record</div>
+                </div>
+            `;
+            return;
+        }
+
+        transactionsContent.innerHTML = `
+            <div class="activity-items-container">
+                ${transactions.map(transaction => `
+                    <div class="dashboard-activity-item transaction-${transaction.type}">
+                        <div class="activity-icon">${transaction.icon || '💰'}</div>
+                        <div class="activity-content">
+                            <div class="activity-text">${transaction.description}</div>
+                            <div class="activity-details">
+                                <span class="activity-category">${transaction.category}</span>
+                                <span class="activity-amount ${transaction.type}">
+                                    ${transaction.type === 'income' ? '+' : '-'}${this.formatCurrency(transaction.amount)}
+                                </span>
+                            </div>
+                            <div class="activity-time">${this.formatDate(transaction.date)}</div>
                         </div>
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        tableBody.innerHTML = transactions.map(transaction => `
-            <tr class="transaction-row transaction-${transaction.type}">
-                <td>${this.formatDate(transaction.date)}</td>
-                <td>${transaction.description}</td>
-                <td>
-                    <span class="category-badge category-${transaction.category.toLowerCase()}">
-                        ${transaction.category}
-                    </span>
-                </td>
-                <td>
-                    <span class="type-badge type-${transaction.type}">
-                        ${transaction.type === 'income' ? '💰 Income' : '💸 Expense'}
-                    </span>
-                </td>
-                <td class="amount-cell ${transaction.type}">
-                    ${transaction.type === 'income' ? '+' : '-'}${this.formatCurrency(transaction.amount)}
-                </td>
-                <td>
-                    <button class="table-action-btn" data-id="${transaction.id}" title="Edit">
-                        ✏️
-                    </button>
-                    <button class="table-action-btn delete-btn" data-id="${transaction.id}" title="Delete">
-                        🗑️
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-        
-        // Add event listeners to action buttons
-        this.setupTableActionListeners();
+                        <div class="activity-status status-${transaction.status}">
+                            ${transaction.status}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
     },
 
-    setupTableActionListeners() {
-        const actionButtons = document.querySelectorAll('.table-action-btn');
-        actionButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                const transactionId = e.currentTarget.getAttribute('data-id');
-                const isDelete = e.currentTarget.classList.contains('delete-btn');
-                
-                if (isDelete) {
-                    this.deleteTransaction(transactionId);
-                } else {
-                    this.editTransaction(transactionId);
-                }
-            });
-        });
-    },
+    updateCategoriesList(data) {
+        const categoriesContent = document.getElementById('categories-content');
+        if (!categoriesContent) return;
 
-    updateCategories(data) {
-        const container = document.getElementById('categories-container');
-        if (!container) return;
+        const categories = data.expenseCategories || [];
 
-        const categories = data.expenseCategories || {};
-        const totalExpenses = data.totalExpenses || 1; // Avoid division by zero
-
-        if (Object.keys(categories).length === 0) {
-            container.innerHTML = `
-                <div class="empty-categories">
+        if (categories.length === 0) {
+            categoriesContent.innerHTML = `
+                <div class="dashboard-empty-state">
                     <div class="empty-icon">📊</div>
-                    <div class="empty-text">No categories yet</div>
+                    <div class="empty-title">No categories yet</div>
+                    <div class="empty-subtitle">Add expenses to see categories</div>
                 </div>
             `;
             return;
         }
 
-        container.innerHTML = Object.entries(categories).map(([category, amount]) => {
-            const percentage = ((amount / totalExpenses) * 100).toFixed(1);
-            return `
-                <div class="category-item">
-                    <div class="category-header">
-                        <div class="category-name">${category}</div>
-                        <div class="category-amount">${this.formatCurrency(amount)}</div>
+        categoriesContent.innerHTML = `
+            <div class="activity-items-container">
+                ${categories.map(category => `
+                    <div class="dashboard-activity-item category-item">
+                        <div class="activity-icon">${category.icon || '📂'}</div>
+                        <div class="activity-content">
+                            <div class="activity-text">${category.name}</div>
+                            <div class="activity-details">
+                                <span class="activity-count">${category.count || 0} transactions</span>
+                                <span class="activity-amount expense">
+                                    ${this.formatCurrency(category.amount)}
+                                </span>
+                            </div>
+                            <div class="activity-progress">
+                                <div class="progress-bar" style="width: ${Math.min((category.amount / 5000) * 100, 100)}%"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="category-progress">
-                        <div class="progress-bar" style="width: ${Math.min(percentage, 100)}%"></div>
-                    </div>
-                    <div class="category-percentage">${percentage}%</div>
-                </div>
-            `;
-        }).join('');
+                `).join('')}
+            </div>
+        `;
     },
 
-    handleAction(action) {
-        console.log(`Action: ${action}`);
+    handleQuickAction(action) {
+        console.log(`Quick action: ${action}`);
         
         const actionMap = {
             'add-income': this.addIncome.bind(this),
-            'add-expense': this.addExpense.bind(this)
+            'add-expense': this.addExpense.bind(this),
+            'view-reports': 'reports',
+            'manage-categories': this.manageCategories.bind(this),
+            'import-data': this.importData.bind(this),
+            'export-data': this.exportData.bind(this)
         };
 
-        if (actionMap[action]) {
+        if (action === 'view-reports' && window.app && window.app.showSection) {
+            window.app.showSection('reports');
+            this.showNotification('Opening Reports...', 'info');
+        } else if (typeof actionMap[action] === 'function') {
             actionMap[action]();
         } else {
             this.showNotification(`Action "${action}" not implemented yet`, 'info');
@@ -476,30 +533,23 @@ const IncomeExpensesModule = {
     addIncome() {
         this.showNotification('Adding new income record...', 'success');
         // TODO: Open income modal
-        // window.ModalManager?.openModal('add-income-modal');
     },
 
     addExpense() {
         this.showNotification('Adding new expense record...', 'success');
         // TODO: Open expense modal
-        // window.ModalManager?.openModal('add-expense-modal');
     },
 
-    editTransaction(transactionId) {
-        this.showNotification(`Editing transaction #${transactionId}`, 'info');
+    manageCategories() {
+        this.showNotification('Managing categories...', 'info');
     },
 
-    deleteTransaction(transactionId) {
-        if (confirm('Are you sure you want to delete this transaction?')) {
-            this.showNotification(`Deleted transaction #${transactionId}`, 'warning');
-            // TODO: Implement actual deletion
-            this.loadAndDisplayData(); // Refresh data
-        }
+    importData() {
+        this.showNotification('Importing data...', 'info');
     },
 
-    generateReport() {
-        this.showNotification('Generating financial report...', 'info');
-        // TODO: Implement report generation
+    exportData() {
+        this.showNotification('Exporting data...', 'info');
     },
 
     formatCurrency(amount) {
