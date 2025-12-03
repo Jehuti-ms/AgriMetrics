@@ -50,6 +50,10 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
+.income-quick-actions {
+  margin-top: 32px; /* space below header */
+}
+
 /* ===== Quick Action Buttons ===== */
 /* ===== Quick Actions (Dashboard-style) ===== */
 .income-actions-grid {
@@ -120,7 +124,9 @@
   content: '';
   display: block;
   height: 6px;
-  width: 100%;
+  width: calc(100% + 32px); /* full bleed */
+  margin-left: -16px;
+  margin-right: -16px;
   background: linear-gradient(90deg, #16a34a, #22c55e);
   border-top-left-radius: var(--radius-lg);
   border-top-right-radius: var(--radius-lg);
