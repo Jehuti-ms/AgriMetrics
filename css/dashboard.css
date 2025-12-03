@@ -3,13 +3,23 @@
 
 /* Welcome Section */
 /* ===== Dashboard Welcome Header (Green Gradient) ===== */
+/* Dashboard Welcome Header */
 .dashboard-welcome {
-  background: linear-gradient(135deg, #16a34a, #22c55e); /* green gradient */
+  background: linear-gradient(135deg, #16a34a, #22c55e);
   color: #fff;
-  padding: 32px 24px;
-  border-radius: 0 0 var(--radius-xl) var(--radius-xl); /* curved bottom corners */
+  padding: 24px 20px; /* slightly less padding so it sits higher */
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* soft shadow */
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl); /* curved bottom */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-top: 0; /* ensures it hugs the navbar */
+}
+
+/* Add space before Quick Actions */
+.dashboard-quick-actions {
+  margin-top: 32px; /* more breathing room below header */
 }
 
 .dashboard-welcome .welcome-header {
