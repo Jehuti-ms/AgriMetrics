@@ -57,193 +57,219 @@ const IncomeExpensesModule = {
         document.head.appendChild(link);
     },
 
-    renderModule() {
-        if (!this.element) return;
+renderModule() {
+  if (!this.element) return;
 
-        this.element.innerHTML = `
-            <div id="income-expenses" class="module-container income">
-                
-                <!-- Header -->
-                <div class="income-header header-flex">
-                    <div class="income-header-left">
-                        <h1 class="income-title">Income & Expenses</h1>
-                        <p class="income-subtitle">Track your farm's financial health</p>
-                        
-                        <!-- Stats inline with icons -->
-                        <div class="income-stats-inline">
-                            <span class="income-stat">💰 <span id="inline-total-income">$0.00</span> Total Income</span>
-                            <span class="income-stat">💸 <span id="inline-total-expenses">$0.00</span> Total Expenses</span>
-                            <span class="income-stat">🪙 <span id="inline-net-profit">$0.00</span> Net Profit</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Right side: Add Transaction + Import Receipts -->
-                    <div class="income-header-right">
-                        <button id="add-transaction-btn" class="btn-primary">
-                            <span class="btn-icon">➕</span>
-                            <span class="btn-text">Add Transaction</span>
-                        </button>
-                        <button id="import-receipts-btn" class="btn-primary">
-                            <span class="btn-icon">📥</span>
-                            <span class="btn-text">Import Receipts</span>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Quick Actions -->
-                <div class="income-quick-actions">
-                    <h2 class="income-section-title">Quick Actions</h2>
-                    <div class="card-grid">
-                        <button id="quick-income-btn" class="card-button" data-action="quick-income">
-                            <div class="action-icon">💰</div>
-                            <span class="action-title">Quick Income</span>
-                            <span class="action-subtitle">Record income instantly</span>
-                        </button>
-                        
-                        <button id="quick-expense-btn" class="card-button" data-action="quick-expense">
-                            <div class="action-icon">🧾</div>
-                            <span class="action-title">Quick Expense</span>
-                            <span class="action-subtitle">Record expense instantly</span>
-                        </button>
-                        
-                        <button id="view-reports-btn" class="card-button" data-action="view-reports">
-                            <div class="action-icon">📊</div>
-                            <span class="action-title">View Reports</span>
-                            <span class="action-subtitle">Financial analytics</span>
-                        </button>
-                        
-                        <button id="manage-categories-btn" class="card-button" data-action="manage-categories">
-                            <div class="action-icon">📂</div>
-                            <span class="action-title">Categories</span>
-                            <span class="action-subtitle">Manage categories</span>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Financial Overview -->
-                <div class="income-overview">
-                    <h2 class="income-section-title">Financial Overview</h2>
-                    <div class="card-grid">
-                        <div class="stat-card" id="monthly-income-card">
-                            <div class="stat-icon">📅</div>
-                            <div class="stat-value" id="monthly-income">$0.00</div>
-                            <div class="stat-label">This Month</div>
-                        </div>
-                        <div class="stat-card" id="avg-monthly-card">
-                            <div class="stat-icon">📈</div>
-                            <div class="stat-value" id="avg-monthly-income">$0.00</div>
-                            <div class="stat-label">Avg Monthly</div>
-                        </div>
-                        <div class="stat-card" id="transactions-card">
-                            <div class="stat-icon">📋</div>
-                            <div class="stat-value" id="total-transactions">0</div>
-                            <div class="stat-label">Transactions</div>
-                        </div>
-                        <div class="stat-card" id="categories-card">
-                            <div class="stat-icon">📂</div>
-                            <div class="stat-value" id="total-categories">0</div>
-                            <div class="stat-label">Categories</div>
-                        </div>
-                        <div class="stat-card" id="balance-card">
-                            <div class="stat-icon">🏦</div>
-                            <div class="stat-value" id="current-balance">$0.00</div>
-                            <div class="stat-label">Current Balance</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Recent Transactions & Categories Container -->
-                <div class="income-content-columns">
-                    <!-- Recent Transactions Column -->
-                    <div class="income-content-column">
-                        <div class="glass-card">
-                            <div class="header-flex">
-                                <h3>Recent Transactions</h3>
-                                <button class="btn-outline" id="clear-all">Clear All</button>
-                            </div>
-                            <div id="transactions-list">
-                                <!-- Transactions will be populated dynamically -->
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Expense Categories Column -->
-                    <div class="income-content-column">
-                        <div class="glass-card">
-                            <h2 class="income-section-title">Expense Categories</h2>
-                            <div id="categories-list">
-                                <!-- Categories will be populated dynamically -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  this.element.innerHTML = `
+    <div id="income-expenses" class="module-container income">
+      
+      <!-- Header -->
+      <div class="income-header header-flex">
+        <div class="income-header-left">
+          <h1 class="income-title">Income & Expenses</h1>
+          <p class="income-subtitle">Track your farm's financial health</p>
+          
+          <!-- Stats inline with icons -->
+          <div class="income-stats-inline">
+            <span class="income-stat">💰 <span id="inline-total-income">$0.00</span> Total Income</span>
+            <span class="income-stat">💸 <span id="inline-total-expenses">$0.00</span> Total Expenses</span>
+            <span class="income-stat">🪙 <span id="inline-net-profit">$0.00</span> Net Profit</span>
+          </div>
+        </div>
+        
+        <!-- Right side: Add Transaction + Import Receipts -->
+        <div class="income-header-right">
+          <button id="add-transaction-btn" class="btn-primary">
+            <span class="btn-icon">➕</span>
+            <span class="btn-text">Add Transaction</span>
+          </button>
+          <button id="import-receipts-btn" class="btn-primary">
+            <span class="btn-icon">📥</span>
+            <span class="btn-text">Import Receipts</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Quick Actions -->
+      <div class="income-quick-actions">
+        <h2 class="income-section-title">Quick Actions</h2>
+        <div class="card-grid">
+          <button id="quick-income-btn" class="card-button" data-action="quick-income">
+            <div class="action-icon">💰</div>
+            <span class="action-title">Quick Income</span>
+            <span class="action-subtitle">Record income instantly</span>
+          </button>
+          
+          <button id="quick-expense-btn" class="card-button" data-action="quick-expense">
+            <div class="action-icon">🧾</div>
+            <span class="action-title">Quick Expense</span>
+            <span class="action-subtitle">Record expense instantly</span>
+          </button>
+          
+          <button id="view-reports-btn" class="card-button" data-action="view-reports">
+            <div class="action-icon">📊</div>
+            <span class="action-title">View Reports</span>
+            <span class="action-subtitle">Financial analytics</span>
+          </button>
+          
+          <button id="manage-categories-btn" class="card-button" data-action="manage-categories">
+            <div class="action-icon">📂</div>
+            <span class="action-title">Categories</span>
+            <span class="action-subtitle">Manage categories</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Financial Overview -->
+      <div class="income-overview">
+        <h2 class="income-section-title">Financial Overview</h2>
+        <div class="card-grid">
+          <div class="stat-card" id="monthly-income-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-value" id="monthly-income">$0.00</div>
+            <div class="stat-label">This Month</div>
+          </div>
+          <div class="stat-card" id="avg-monthly-card">
+            <div class="stat-icon">📈</div>
+            <div class="stat-value" id="avg-monthly-income">$0.00</div>
+            <div class="stat-label">Avg Monthly</div>
+          </div>
+          <div class="stat-card" id="transactions-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-value" id="total-transactions">0</div>
+            <div class="stat-label">Transactions</div>
+          </div>
+          <div class="stat-card" id="categories-card">
+            <div class="stat-icon">📂</div>
+            <div class="stat-value" id="total-categories">0</div>
+            <div class="stat-label">Categories</div>
+          </div>
+          <div class="stat-card" id="balance-card">
+            <div class="stat-icon">🏦</div>
+            <div class="stat-value" id="current-balance">$0.00</div>
+            <div class="stat-label">Current Balance</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Recent Transactions -->
+      <div class="glass-card">
+        <div class="header-flex">
+          <h3>Recent Transactions</h3>
+          <button class="btn-outline" id="clear-all">Clear All</button>
+        </div>
+        <div id="transactions-list">
+          <!-- Example transaction row -->
+          <div class="transaction-row">
+            <span class="transaction-date">📅 2025-12-01</span>
+            <span class="transaction-desc">💰 Egg Sales</span>
+            <span class="transaction-category">📂 Income</span>
+            <span class="transaction-amount">💵 $250.00</span>
+            <span class="transaction-actions">
+              <button class="icon-btn">✏️</button>
+              <button class="icon-btn">🗑️</button>
+            </span>
+          </div>
 
-                <!-- Transaction Form (Initially hidden) -->
-                <div id="transaction-form-container" class="hidden">
-                    <div class="glass-card">
-                        <h3 id="form-title">Add Transaction</h3>
-                        <form id="transaction-form">
-                            <div class="form-grid">
-                                <div>
-                                    <label class="form-label">Type</label>
-                                    <select class="form-input" id="transaction-type" required>
-                                        <option value="income">Income</option>
-                                        <option value="expense" selected>Expense</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="form-label">Amount</label>
-                                    <input type="number" class="form-input" id="transaction-amount" step="0.01" min="0" required>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="form-label">Category</label>
-                                <select class="form-input" id="transaction-category" required>
-                                    <option value="">Select category</option>
-                                    <option value="egg-sales">Egg Sales</option>
-                                    <option value="poultry-sales">Poultry Sales</option>
-                                    <option value="crop-sales">Crop Sales</option>
-                                    <option value="feed" selected>Feed</option>
-                                    <option value="medication">Medication</option>
-                                    <option value="equipment">Equipment</option>
-                                    <option value="labor">Labor</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="form-label">Description</label>
-                                <input type="text" class="form-input" id="transaction-description" required>
-                            </div>
-                            <div>
-                                <label class="form-label">Date</label>
-                                <input type="date" class="form-input" id="transaction-date" required>
-                            </div>
-                            <div class="form-actions">
-                                <button type="submit" class="btn-primary" id="submit-form">Save Transaction</button>
-                                <button type="button" class="btn-outline" id="cancel-form">Cancel</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+          <!-- Empty state -->
+          <div class="transaction-row income-empty-state">
+            <span class="transaction-desc">📋 No transactions yet</span>
+            <span class="transaction-category">➕ Add your first income or expense record</span>
+          </div>
+        </div>
+      </div>
 
-                <!-- Footer -->
-                <div class="income-footer">
-                    <div class="income-refresh-container">
-                        <button id="refresh-data-btn" class="btn-primary">
-                            <span class="btn-icon">🔄</span>
-                            <span class="btn-text">Refresh Data</span>
-                        </button>
-                    </div>
-                    <div class="income-modal-triggers">
-                        <button id="export-data-btn" class="card-button" data-action="export-data">
-                            <span class="action-icon">📤</span>
-                            <span class="action-title">Export Data</span>
-                            <span class="action-subtitle">Export to CSV/Excel</span>
-                        </button>
-                    </div>
-                </div>
-                
+      <!-- Expense Categories -->
+      <div class="glass-card">
+        <div class="header-flex">
+          <h3>Expense Categories</h3>
+          <button class="btn-outline" id="clear-categories">Clear All</button>
+        </div>
+        <div id="categories-list">
+          <!-- Example category row -->
+          <div class="transaction-row">
+            <span class="transaction-desc">📂 Feed</span>
+            <span class="transaction-amount">💵 $120.00</span>
+            <span class="transaction-category">📊 45% of expenses</span>
+            <span class="transaction-actions">
+              <button class="icon-btn">✏️</button>
+              <button class="icon-btn">🗑️</button>
+            </span>
+          </div>
+
+          <!-- Empty state -->
+          <div class="transaction-row income-empty-state">
+            <span class="transaction-desc">📋 No categories yet</span>
+            <span class="transaction-category">➕ Add expenses to see categories</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transaction Form (Initially hidden) -->
+      <div id="transaction-form-container" class="hidden">
+        <div class="glass-card">
+          <h3 id="form-title">Add Transaction</h3>
+          <form id="transaction-form">
+            <div class="form-grid">
+              <div>
+                <label class="form-label">Type</label>
+                <select class="form-input" id="transaction-type" required>
+                  <option value="income">Income</option>
+                  <option value="expense" selected>Expense</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Amount</label>
+                <input type="number" class="form-input" id="transaction-amount" step="0.01" min="0" required>
+              </div>
             </div>
+            <div>
+              <label class="form-label">Category</label>
+              <select class="form-input" id="transaction-category" required>
+                <option value="">Select category</option>
+                <option value="egg-sales">Egg Sales</option>
+                <option value="poultry-sales">Poultry Sales</option>
+                <option value="crop-sales">Crop Sales</option>
+                <option value="feed" selected>Feed</option>
+                <option value="medication">Medication</option>
+                <option value="equipment">Equipment</option>
+                <option value="labor">Labor</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Description</label>
+              <input type="text" class="form-input" id="transaction-description" required>
+            </div>
+            <div>
+              <label class="form-label">Date</label>
+              <input type="date" class="form-input" id="transaction-date" required>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">Save Transaction</button>
+              <button type="button" class="btn-outline" id="cancel-form">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+     <!-- Footer -->
+<div class="income-footer">
+  <div class="income-refresh-container">
+    <button id="refresh-data-btn" class="btn-primary">
+      <span class="btn-icon">🔄</span>
+      <span class="btn-text">Refresh Data</span>
+    </button>
+  </div>
+  <div class="income-modal-triggers">
+    <button id="export-data-btn" class="card-button" data-action="export-data">
+      <span class="action-icon">📤</span>
+      <span class="action-title">Export Data</span>
+      <span class="action-subtitle">Export to CSV/Excel</span>
+    </button>
+  </div>
+</div>
+
         `;
     },
 
