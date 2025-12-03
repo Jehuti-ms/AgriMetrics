@@ -60,8 +60,9 @@
 }
 
 .income-action-btn {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: #fff;
+  border: none;
   border-radius: var(--radius-lg);
   padding: 20px;
   text-align: center;
@@ -71,20 +72,23 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
 }
 
 .income-action-btn:hover {
-  background: #f0fdf4;
-  border-color: #16a34a;
-  transform: translateY(-2px);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+}
+
+.action-title, .action-subtitle {
+  color: #fff;
 }
 
 .action-icon {
   font-size: 22px;
 }
 
-.action-title {
+/*.action-title {
   font-weight: 600;
   color: #111;
 }
@@ -138,3 +142,5 @@
   font-size: 13px;
   color: #555;
 }
+
+
