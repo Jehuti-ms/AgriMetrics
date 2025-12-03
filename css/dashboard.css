@@ -226,14 +226,7 @@
   margin: 20px 0;          /* optional spacing */
 }
 
-/* Centering container */
-.dashboard-refresh-container {
-  display: flex;
-  justify-content: center; /* ✅ centers horizontally */
-  margin: 20px 0;
-}
-
-/* Rest state: green outline */
+/* Rest state: outlined */
 .dashboard-refresh-btn {
   border-radius: var(--radius-lg);
   padding: 12px 24px;
@@ -247,22 +240,24 @@
   background: transparent;
   color: var(--color-primary, #16a34a);
   border: 2px solid var(--color-primary, #16a34a);
-  transition: transform 0.2s ease, background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
 }
 
-/* Hover: subtle lift, still outlined */
+/* Hover: same as Quick Action buttons */
 .dashboard-refresh-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md, 0 2px 6px rgba(0,0,0,0.1));
-}
-
-/* Active/Clicked: filled like Quick Action buttons */
-.dashboard-refresh-btn:active,
-.dashboard-refresh-btn.is-active {
-  background: linear-gradient(135deg, #16a34a, #22c55e); /* ✅ same gradient as action buttons */
+  background: linear-gradient(135deg, #16a34a, #22c55e); /* ✅ same gradient */
   color: #fff;
   border-color: transparent;
   box-shadow: var(--shadow-primary, 0 2px 6px rgba(0,0,0,0.1));
+  transform: scale(1.03);
+}
+
+/* Active/Clicked: deeper green fill */
+.dashboard-refresh-btn:active {
+  background: linear-gradient(135deg, #15803d, #22c55e);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--shadow-md, 0 2px 6px rgba(0,0,0,0.15));
 }
 
 /* ===== Section Titles ===== */
