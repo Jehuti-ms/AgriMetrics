@@ -7,22 +7,22 @@
   min-height: 100vh;
 }
 
-/* ===== Top Navigation (White Glass) ===== */
+/* ===== Top Navigation (Bright White Glass) ===== */
 .top-nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
 
-  /* Bright white glass effect */
-  background: rgba(255, 255, 255, 0.9);   /* higher opacity = whiter look */
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  /* Stronger white base */
+  background: rgba(255, 255, 255, 0.95);   /* almost solid white */
+  backdrop-filter: blur(8px);              /* lighter blur keeps text crisp */
+  -webkit-backdrop-filter: blur(8px);
 
-  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.6);
   color: var(--text-primary);
 
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* subtle shadow for separation */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* very subtle shadow */
   position: sticky;
   top: 0;
   z-index: 1000;
