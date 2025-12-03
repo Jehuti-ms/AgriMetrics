@@ -1,17 +1,16 @@
 /* ==================== DASHBOARD MODULE SPECIFIC STYLES ==================== */
 /* Only styles unique to dashboard - all generic styles are in theme.css */
 
-/* Welcome Section */
 /* ===== Dashboard Welcome Header (Green Gradient) ===== */
 .dashboard-welcome {
   background: linear-gradient(to bottom right, #16a34a, #4ade80); /* vibrant green gradient */
   color: #fff;
-  padding: 20px 20px; /* tighter padding to pull it up */
-  margin-top: 0;       /* no gap above */
+  padding: 20px 24px;
+  margin-top: 0; /* sits directly under navbar */
   border-bottom-left-radius: 24px;
   border-bottom-right-radius: 24px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-  text-align: center;
+  text-align: left; /* ✅ left-aligned text */
   position: relative;
   z-index: 1;
 }
@@ -19,49 +18,22 @@
 .dashboard-welcome .welcome-header {
   font-size: 24px;
   font-weight: 700;
-  margin-bottom: 6px;
-}
-
-.dashboard-welcome .welcome-subtitle {
-  font-size: 16px;
-  opacity: 0.9;
-}
-
-/* Add spacing before Quick Actions */
-.dashboard-quick-actions {
-  margin-top: 32px;
-}
-
-.dashboard-welcome .welcome-header {
-  font-size: 24px;
-  font-weight: 700;
   margin-bottom: 8px;
+  color: #fff;
 }
 
 .dashboard-welcome .welcome-subtitle {
   font-size: 16px;
   opacity: 0.9;
+  color: #fff;
 }
 
-/* Curved bottom using pseudo-element */
-.dashboard-welcome::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  width: 100%;
-  height: 80px;
-  background: #fff;
-  border-top-left-radius: 100% 40px;
-  border-top-right-radius: 100% 40px;
-  z-index: -1;
+/* Spacing before Quick Actions */
+.dashboard-quick-actions {
+  margin: 32px 0 30px;
 }
 
 /* Quick Actions Grid */
-.dashboard-quick-actions {
-  margin-bottom: 30px;
-}
-
 .dashboard-actions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -104,7 +76,7 @@
   opacity: 0.8;
 }
 
-/* Stats Overview */
+/* ===== Stats Overview ===== */
 .dashboard-stats-overview {
   margin-bottom: 40px;
 }
@@ -172,7 +144,7 @@
   border-left-color: var(--color-danger);
 }
 
-/* Recent Activity */
+/* ===== Recent Activity ===== */
 .dashboard-activity-list {
   border-radius: 16px;
   padding: 20px;
@@ -237,7 +209,7 @@
   color: var(--color-text-tertiary);
 }
 
-/* Refresh Button */
+/* ===== Refresh Button ===== */
 .dashboard-refresh-btn {
   border-radius: 12px;
   padding: 12px 24px;
@@ -261,7 +233,7 @@
   color: white;
 }
 
-/* Section Titles */
+/* ===== Section Titles ===== */
 .dashboard-section-title {
   font-size: 20px;
   margin-bottom: 20px;
