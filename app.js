@@ -400,7 +400,7 @@ class FarmManagementApp {
                         <span class="nav-label">Income</span>
                     </button>
 
-                    <button class="nav-item" data-view="inventory-check" title="Inventory">
+                    <button class="nav-item" data-view="inventory" title="Inventory"> <!-- CHANGED: inventory-check to inventory -->
                         <span>📦</span>
                         <span class="nav-label">Inventory</span>
                     </button>
@@ -585,7 +585,7 @@ class FarmManagementApp {
         const moduleMap = {
             'dashboard': 'DashboardModule',
             'income-expenses': 'IncomeExpensesModule',
-            'inventory-check': 'InventoryModule',
+            'inventory': 'InventoryModule', // CHANGED: inventory-check to inventory
             'orders': 'OrdersModule',
             'sales-record': 'SalesRecordModule',
             'feed-record': 'FeedRecordModule',
@@ -601,7 +601,7 @@ class FarmManagementApp {
         const sectionNames = {
             'dashboard': 'Dashboard',
             'income-expenses': 'Income & Expenses',
-            'inventory-check': 'Inventory',
+            'inventory': 'Inventory', // CHANGED: inventory-check to inventory
             'orders': 'Orders',
             'sales-record': 'Sales Record',
             'feed-record': 'Feed Records',
