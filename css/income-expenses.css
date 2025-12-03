@@ -143,4 +143,43 @@
   color: #555;
 }
 
+/* Wrapper for refresh button */
+.income-refresh-container {
+  display: flex;
+  justify-content: center; /* ✅ centers horizontally */
+  margin: 20px 0;          /* optional spacing */
+}
 
+/* Rest state: outlined */
+.income-refresh-btn {
+  border-radius: var(--radius-lg);
+  padding: 12px 24px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  background: transparent;
+  color: var(--color-primary, #16a34a);
+  border: 2px solid var(--color-primary, #16a34a);
+  transition: all 0.3s ease;
+}
+
+/* Hover: same as Quick Action buttons */
+.income-refresh-btn:hover {
+  background: linear-gradient(135deg, #16a34a, #22c55e); /* ✅ same gradient */
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--shadow-primary, 0 2px 6px rgba(0,0,0,0.1));
+  transform: scale(1.03);
+}
+
+/* Active/Clicked: deeper green fill */
+.income-refresh-btn:active {
+  background: linear-gradient(135deg, #15803d, #22c55e);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--shadow-md, 0 2px 6px rgba(0,0,0,0.15));
+}
