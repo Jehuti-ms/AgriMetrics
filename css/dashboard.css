@@ -4,14 +4,16 @@
 /* Welcome Section */
 /* ===== Dashboard Welcome Header (Green Gradient) ===== */
 .dashboard-welcome {
-  background: linear-gradient(135deg, #16a34a, #22c55e); /* subtle green gradient */
+  background: linear-gradient(to bottom right, #16a34a, #4ade80); /* vibrant green gradient */
   color: #fff;
-  padding: 24px 20px;
-  text-align: center;
+  padding: 20px 20px; /* tighter padding to pull it up */
+  margin-top: 0;       /* no gap above */
   border-bottom-left-radius: 24px;
   border-bottom-right-radius: 24px;
-  margin-top: 0; /* sits directly under navbar */
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06); /* soft lift */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  text-align: center;
+  position: relative;
+  z-index: 1;
 }
 
 .dashboard-welcome .welcome-header {
