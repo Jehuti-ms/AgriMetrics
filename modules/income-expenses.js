@@ -147,62 +147,121 @@ const IncomeExpensesModule = {
         </div>
       </div>
       
+<!-- Recent Transactions Section -->
 <div class="income-recent">
-  <div class="income-activity-header header-flex">
-    <h2 class="income-section-title">Recent Transactions</h2>
-    <button id="view-all-transactions" class="btn-primary">
-      <span class="btn-icon">📋</span>
-      <span class="btn-text">View All</span>
-    </button>
-  </div>
-
-  <div class="card-grid" id="transactions-content">
-    <!-- Example transaction card -->
-    <div class="info-card">
-      <div class="info-header">
-        <div class="info-icon">💸</div>
-        <div class="info-title">Feed Purchase — $120.00</div>
-      </div>
-      <div class="info-subtitle">Category: Expense · Date: 2025-12-01</div>
-      <div class="info-notes">Purchased 3 bags of layer mash</div>
-      <div class="info-actions">
-        <button class="btn-outline">Edit</button>
-        <button class="btn-outline">Delete</button>
+  <div class="glass-card">
+    <div class="header-flex">
+      <h2 class="income-section-title">Recent Transactions</h2>
+      <div class="header-flex">
+        <button class="btn-primary" id="add-transaction-btn">
+          <span class="btn-icon">➕</span>
+          <span class="btn-text">Add Transaction</span>
+        </button>
+        <button class="btn-outline" id="view-all-transactions">
+          <span class="btn-icon">📋</span>
+          <span class="btn-text">View All</span>
+        </button>
       </div>
     </div>
 
-    <!-- Empty state -->
-    <div class="info-card income-empty-state">
-      <div class="info-icon">📋</div>
-      <div class="info-title">No transactions yet</div>
-      <div class="info-notes">Add your first income or expense record</div>
+    <div class="card-grid" id="transactions-content">
+      <!-- Example transaction card -->
+      <div class="info-card">
+        <div class="info-header">
+          <div class="info-icon">💸</div>
+          <div class="info-title">Feed Purchase — $120.00</div>
+        </div>
+        <div class="info-subtitle">Category: Expense · Date: 2025-12-01</div>
+        <div class="info-notes">Purchased 3 bags of layer mash</div>
+        <div class="info-actions">
+          <button class="btn-outline edit-transaction">Edit</button>
+          <button class="btn-outline delete-transaction">Delete</button>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div class="info-card income-empty-state hidden">
+        <div class="info-icon">📋</div>
+        <div class="info-title">No transactions yet</div>
+        <div class="info-notes">Add your first income or expense record</div>
+      </div>
     </div>
   </div>
 </div>
 
+<!-- Expense Categories Section -->
 <div class="income-categories">
-  <h2 class="income-section-title">Expense Categories</h2>
+  <div class="glass-card">
+    <h2 class="income-section-title">Expense Categories</h2>
 
-  <div class="card-grid" id="categories-content">
-    <!-- Example category card -->
-    <div class="info-card">
-      <div class="info-header">
-        <div class="info-icon">📂</div>
-        <div class="info-title">Feed</div>
+    <div class="card-grid" id="categories-content">
+      <!-- Example category card -->
+      <div class="info-card">
+        <div class="info-header">
+          <div class="info-icon">📂</div>
+          <div class="info-title">Feed</div>
+        </div>
+        <div class="info-subtitle">Total: $120.00 · 45% of expenses</div>
+        <div class="info-notes">Includes layer mash, starter crumble</div>
       </div>
-      <div class="info-subtitle">Total: $120.00 · 45% of expenses</div>
-      <div class="info-notes">Includes layer mash, starter crumble</div>
-    </div>
 
-    <!-- Empty state -->
-    <div class="info-card income-empty-state">
-      <div class="info-icon">📊</div>
-      <div class="info-title">No categories yet</div>
-      <div class="info-notes">Add expenses to see categories</div>
+      <!-- Empty state -->
+      <div class="info-card income-empty-state hidden">
+        <div class="info-icon">📊</div>
+        <div class="info-title">No categories yet</div>
+        <div class="info-notes">Add expenses to see categories</div>
+      </div>
     </div>
   </div>
 </div>
 
+<!-- Transaction Form (Initially hidden) -->
+<div id="transaction-form-container" class="hidden">
+  <div class="glass-card">
+    <h3 id="form-title">Add Transaction</h3>
+    <form id="transaction-form">
+      <div class="form-grid">
+        <div>
+          <label class="form-label">Type</label>
+          <select class="form-input" id="transaction-type" required>
+            <option value="income">Income</option>
+            <option value="expense" selected>Expense</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Amount</label>
+          <input type="number" class="form-input" id="transaction-amount" step="0.01" min="0" required>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Category</label>
+        <select class="form-input" id="transaction-category" required>
+          <option value="">Select category</option>
+          <option value="egg-sales">Egg Sales</option>
+          <option value="poultry-sales">Poultry Sales</option>
+          <option value="crop-sales">Crop Sales</option>
+          <option value="feed" selected>Feed</option>
+          <option value="medication">Medication</option>
+          <option value="equipment">Equipment</option>
+          <option value="labor">Labor</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Description</label>
+        <input type="text" class="form-input" id="transaction-description" required>
+      </div>
+      <div>
+        <label class="form-label">Date</label>
+        <input type="date" class="form-input" id="transaction-date" required>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">Save Transaction</button>
+        <button type="button" class="btn-outline" id="cancel-form">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <!-- Footer -->
 <div class="income-footer">
