@@ -62,8 +62,34 @@ const IncomeExpensesModule = {
                     <h1 class="welcome-header">Income & Expenses</h1>
                     <p class="welcome-subtitle">Track and manage your farm's financial records</p>
                 </div>
+                <!-- Header -->
+                    <div class="income-header">
+                      <div class="income-header-left">
+                        <h1 class="income-title">Income & Expenses</h1>
+                        <p class="income-subtitle">Track your farm's financial health</p>
+                    
+                        <div class="income-stats-row">
+                          <div class="income-stat-card">
+                            <div class="stat-value">$0.00</div>
+                            <div class="stat-label">Total Income</div>
+                          </div>
+                          <div class="income-stat-card">
+                            <div class="stat-value">$0.00</div>
+                            <div class="stat-label">Total Expenses</div>
+                          </div>
+                          <div class="income-stat-card">
+                            <div class="stat-value">$0.00</div>
+                            <div class="stat-label">Net Profit</div>
+                          </div>
+                        </div>
+                      </div>
+                    
+                      <div class="income-header-right">
+                        <button class="income-action-btn">➕ Add Transaction</button>
+                      </div>
+                    </div>
 
-                <!-- Quick Actions Grid -->
+                   <!-- Quick Actions Grid -->
                 <div class="dashboard-quick-actions">
                     <h2 class="dashboard-section-title">Quick Actions</h2>
                     <div class="dashboard-actions-grid">
@@ -196,10 +222,6 @@ const IncomeExpensesModule = {
                 <div class="dashboard-refresh-container">
                     <button id="refresh-data-btn" class="dashboard-refresh-btn">
                         🔄 Refresh Data
-                    </button>
-                    <button id="add-transaction-btn" class="dashboard-refresh-btn primary">
-                        ➕ Add Transaction
-                    </button>
                 </div>
             </div>
         `;
