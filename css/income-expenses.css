@@ -1,129 +1,134 @@
-/* ===== Income & Expenses Module ===== */
-
-#income-expenses .section-title {
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 16px;
-  text-align: center;
-  color: var(--text-primary);
-}
-
-#income-expenses .financial-metrics {
-  display: flex;
-  justify-content: center;
-  gap: 32px;
-  flex-wrap: wrap;
-  margin-bottom: 40px;
-}
-
-#income-expenses .metric-card {
-  background: var(--card-bg);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: 20px;
-  width: 220px;
-  text-align: center;
-}
-
-#income-expenses .metric-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-}
-
-#income-expenses .metric-value {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-top: 8px;
-}
-
-#income-expenses .action-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 24px;
-  margin-bottom: 32px;
-}
-
-#income-expenses .btn-primary {
-  background: var(--gradient-primary);
+/* ===== Income & Expenses Module Header ===== */
+.income-header {
+  background: linear-gradient(to bottom right, #16a34a, #4ade80);
   color: #fff;
-  border: none;
-  padding: 12px 24px;
-  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  margin-top: 0;
+  border-bottom-left-radius: 24px;
+  border-bottom-right-radius: 24px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  text-align: left;
+  position: relative;
+  z-index: 1;
+}
+
+.income-header .income-title {
+  font-size: 24px;
   font-weight: 700;
+  margin-bottom: 8px;
+  color: #fff;
+}
+
+.income-header .income-subtitle {
+  font-size: 16px;
+  opacity: 0.9;
+  color: #fff;
+}
+
+/* ===== Income & Expenses Content Card ===== */
+.income-card {
+  background: var(--color-bg-card, #fff);
+  border-radius: 24px;
+  padding: 24px;
+  margin-bottom: 32px;
+  border: 1px solid var(--color-border-light);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+/* ===== Quick Action Buttons ===== */
+.income-action-btn {
+  background: transparent;
+  color: var(--color-primary, #16a34a);
+  border: 2px solid var(--color-primary, #16a34a);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.income-action-btn:hover {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transform: scale(1.03);
+}
+
+.income-action-btn:active {
+  background: linear-gradient(135deg, #15803d, #22c55e);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* ===== Stats Cards ===== */
+.income-stat-card {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+
+.income-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  height: 6px; width: 100%;
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+}
+
+.income-stat-card .stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.income-stat-card .stat-label {
   font-size: 14px;
+  color: var(--color-text-secondary, #666);
+}
+
+/* ===== Refresh Button ===== */
+.income-refresh-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.income-refresh-btn {
+  border-radius: var(--radius-lg);
+  padding: 12px 24px;
   cursor: pointer;
-  box-shadow: var(--shadow-primary);
+  font-size: 14px;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
   gap: 8px;
+
+  background: transparent;
+  color: var(--color-primary, #16a34a);
+  border: 2px solid var(--color-primary, #16a34a);
   transition: all 0.3s ease;
 }
 
-#income-expenses .btn-primary:hover {
+.income-refresh-btn:hover {
   background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transform: scale(1.03);
 }
 
-/* Quick Actions */
-#income-expenses .quick-actions {
-  display: flex;
-  justify-content: center;
-  gap: 24px;
-  flex-wrap: wrap;
-  margin-bottom: 40px;
-}
-
-#income-expenses .quick-action {
-  background: var(--card-bg);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: 16px;
-  width: 200px;
-  text-align: center;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-#income-expenses .quick-action:hover {
-  transform: translateY(-2px);
-}
-
-#income-expenses .quick-icon {
-  font-size: 28px;
-  margin-bottom: 8px;
-}
-
-#income-expenses .quick-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-#income-expenses .quick-subtitle {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  #income-expenses .financial-metrics,
-  #income-expenses .action-buttons,
-  #income-expenses .quick-actions {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  #income-expenses .metric-card,
-  #income-expenses .quick-action {
-    width: 100%;
-    max-width: 320px;
-  }
-
-  #income-expenses .btn-primary {
-    width: 100%;
-    max-width: 320px;
-    justify-content: center;
-  }
+.income-refresh-btn:active {
+  background: linear-gradient(135deg, #15803d, #22c55e);
+  color: #fff;
+  border-color: transparent;
 }
