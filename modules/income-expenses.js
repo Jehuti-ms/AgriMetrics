@@ -57,105 +57,176 @@ const IncomeExpensesModule = {
 
         this.element.innerHTML = `
             <div id="income-expenses" class="module-container">
-            
-              <!-- Header -->
-              <div class="income-header">
-                <div class="income-header-left">
-                  <h1 class="income-title">Income & Expenses</h1>
-                  <p class="income-subtitle">Track your farm's financial health</p>
-            
-                  <!-- Stats under subtitle -->
-                  <div class="income-stats-row">
-                    <div class="income-stat-card">
-                      <div class="stat-value">$0.00</div>
-                      <div class="stat-label">Total Income</div>
+                <!-- Welcome Section -->
+                <div class="dashboard-welcome">
+                    <h1 class="welcome-header">Income & Expenses</h1>
+                    <p class="welcome-subtitle">Track and manage your farm's financial records</p>
+                </div>
+                <!-- Header -->
+                    <div class="income-header">
+                      <div class="income-header-left">
+                        <h1 class="income-title">Income & Expenses</h1>
+                        <p class="income-subtitle">Track your farm's financial health</p>
+                    
+                        <div class="income-stats-row">
+                          <div class="income-stat-card">
+                            <div class="stat-value">$0.00</div>
+                            <div class="stat-label">Total Income</div>
+                          </div>
+                          <div class="income-stat-card">
+                            <div class="stat-value">$0.00</div>
+                            <div class="stat-label">Total Expenses</div>
+                          </div>
+                          <div class="income-stat-card">
+                            <div class="stat-value">$0.00</div>
+                            <div class="stat-label">Net Profit</div>
+                          </div>
+                        </div>
+                      </div>
+                    
+                      <div class="income-header-right">
+                        <button class="income-action-btn">➕ Add Transaction</button>
+                      </div>
                     </div>
-                    <div class="income-stat-card">
-                      <div class="stat-value">$0.00</div>
-                      <div class="stat-label">Total Expenses</div>
+
+                   <!-- Quick Actions Grid -->
+                <div class="dashboard-quick-actions">
+                    <h2 class="dashboard-section-title">Quick Actions</h2>
+                    <div class="dashboard-actions-grid">
+                        <button class="dashboard-quick-action-btn" data-action="add-income">
+                            <div class="action-icon">💰</div>
+                            <span class="action-title">Add Income</span>
+                            <span class="action-subtitle">Record new income</span>
+                        </button>
+
+                        <button class="dashboard-quick-action-btn" data-action="add-expense">
+                            <div class="action-icon">💸</div>
+                            <span class="action-title">Add Expense</span>
+                            <span class="action-subtitle">Record new expense</span>
+                        </button>
+
+                        <button class="dashboard-quick-action-btn" data-action="view-reports">
+                            <div class="action-icon">📈</div>
+                            <span class="action-title">View Reports</span>
+                            <span class="action-subtitle">Financial analytics</span>
+                        </button>
+
+                        <button class="dashboard-quick-action-btn" data-action="manage-categories">
+                            <div class="action-icon">📂</div>
+                            <span class="action-title">Categories</span>
+                            <span class="action-subtitle">Manage categories</span>
+                        </button>
+
+                        <button class="dashboard-quick-action-btn" data-action="import-data">
+                            <div class="action-icon">📥</div>
+                            <span class="action-title">Import Data</span>
+                            <span class="action-subtitle">Import transactions</span>
+                        </button>
+
+                        <button class="dashboard-quick-action-btn" data-action="export-data">
+                            <div class="action-icon">📤</div>
+                            <span class="action-title">Export Data</span>
+                            <span class="action-subtitle">Export records</span>
+                        </button>
                     </div>
-                    <div class="income-stat-card">
-                      <div class="stat-value">$0.00</div>
-                      <div class="stat-label">Net Profit</div>
+                </div>
+
+                <!-- Stats Overview -->
+                <div class="dashboard-stats-overview">
+                    <h2 class="dashboard-section-title">Financial Overview</h2>
+                    <div class="dashboard-stats-grid">
+                        <div class="dashboard-stat-card" id="total-income-card">
+                            <div class="stat-icon">💰</div>
+                            <div class="stat-value" id="total-income">$0.00</div>
+                            <div class="stat-label">Total Income</div>
+                        </div>
+
+                        <div class="dashboard-stat-card" id="total-expenses-card">
+                            <div class="stat-icon">💸</div>
+                            <div class="stat-value" id="total-expenses">$0.00</div>
+                            <div class="stat-label">Total Expenses</div>
+                        </div>
+
+                        <div class="dashboard-stat-card" id="net-profit-card">
+                            <div class="stat-icon">📊</div>
+                            <div class="stat-value" id="net-profit">$0.00</div>
+                            <div class="stat-label">Net Profit</div>
+                        </div>
+
+                        <div class="dashboard-stat-card" id="monthly-income-card">
+                            <div class="stat-icon">📅</div>
+                            <div class="stat-value" id="monthly-income">$0.00</div>
+                            <div class="stat-label">This Month</div>
+                        </div>
+
+                        <div class="dashboard-stat-card" id="avg-income-card">
+                            <div class="stat-icon">📈</div>
+                            <div class="stat-value" id="avg-monthly-income">$0.00</div>
+                            <div class="stat-label">Avg Monthly</div>
+                        </div>
+
+                        <div class="dashboard-stat-card" id="transactions-card">
+                            <div class="stat-icon">📋</div>
+                            <div class="stat-value" id="total-transactions">0</div>
+                            <div class="stat-label">Transactions</div>
+                        </div>
+
+                        <div class="dashboard-stat-card" id="categories-card">
+                            <div class="stat-icon">📂</div>
+                            <div class="stat-value" id="total-categories">0</div>
+                            <div class="stat-label">Categories</div>
+                        </div>
+
+                        <div class="dashboard-stat-card" id="balance-card">
+                            <div class="stat-icon">🏦</div>
+                            <div class="stat-value" id="current-balance">$0.00</div>
+                            <div class="stat-label">Current Balance</div>
+                        </div>
                     </div>
-                  </div>
                 </div>
-            
-                <!-- Add Transaction button -->
-                <div class="income-header-right">
-                  <button class="income-action-btn">➕ Add Transaction</button>
-                </div>
-              </div>
-            
-              <!-- Quick Actions -->
-              <div class="income-card">
-                <h2 class="module-section-title">Quick Actions</h2>
-                <div class="income-grid">
-                  <button class="income-action-btn">💰 Quick Income</button>
-                  <button class="income-action-btn">🧾 Quick Expense</button>
-                  <button class="income-action-btn">📊 View Reports</button>
-                  <button class="income-action-btn">📂 Categories</button>
-                </div>
-              </div>
-            
-              <!-- Financial Overview -->
-              <div class="income-card">
-                <h2 class="module-section-title">Financial Overview</h2>
-                <div class="income-grid">
-                  <div class="income-stat-card"><div class="stat-value">$0.00</div><div class="stat-label">This Month</div></div>
-                  <div class="income-stat-card"><div class="stat-value">$0.00</div><div class="stat-label">Avg Monthly</div></div>
-                  <div class="income-stat-card"><div class="stat-value">0</div><div class="stat-label">Transactions</div></div>
-                  <div class="income-stat-card"><div class="stat-value">0</div><div class="stat-label">Categories</div></div>
-                  <div class="income-stat-card"><div class="stat-value">$0.00</div><div class="stat-label">Current Balance</div></div>
-                </div>
-              </div>
-            
-              <!-- Recent Transactions -->
-              <div class="income-card">
-                <div class="activity-header">
-                  <h2 class="module-section-title">Recent Transactions</h2>
-                  <button class="btn-secondary" id="view-all-transactions">View All</button>
-                </div>
-                <div class="dashboard-activity-list">
-                  <div id="transactions-content">
-                    <div class="dashboard-empty-state">
-                      <div class="empty-icon">📋</div>
-                      <div class="empty-title">No transactions yet</div>
-                      <div class="empty-subtitle">Add your first income or expense record</div>
+
+                <!-- Recent Transactions -->
+                <div class="recent-activity">
+                    <div class="activity-header">
+                        <h2 class="dashboard-section-title">Recent Transactions</h2>
+                        <button class="btn-secondary" id="view-all-transactions">
+                            View All
+                        </button>
                     </div>
-                  </div>
-                </div>
-              </div>
-            
-              <!-- Expense Categories -->
-              <div class="income-card">
-                <h2 class="module-section-title">Expense Categories</h2>
-                <div class="dashboard-activity-list">
-                  <div id="categories-content">
-                    <div class="dashboard-empty-state">
-                      <div class="empty-icon">📊</div>
-                      <div class="empty-title">No categories yet</div>
-                      <div class="empty-subtitle">Add expenses to see categories</div>
+                    <div class="dashboard-activity-list">
+                        <div id="transactions-content">
+                            <div class="dashboard-empty-state">
+                                <div class="empty-icon">📋</div>
+                                <div class="empty-title">No transactions yet</div>
+                                <div class="empty-subtitle">Add your first income or expense record</div>
+                            </div>
+                        </div>
                     </div>
-                  </div>
                 </div>
-              </div>
-            
-              <!-- Footer -->
-              <div class="income-footer">
-                <div class="income-refresh-container">
-                  <button id="refresh-income-btn" class="income-refresh-btn">🔄 Refresh Data</button>
+
+                <!-- Expense Categories -->
+                <div class="recent-activity">
+                    <h2 class="dashboard-section-title">Expense Categories</h2>
+                    <div class="dashboard-activity-list">
+                        <div id="categories-content">
+                            <div class="dashboard-empty-state">
+                                <div class="empty-icon">📊</div>
+                                <div class="empty-title">No categories yet</div>
+                                <div class="empty-subtitle">Add expenses to see categories</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="income-modal-triggers">
-                  <button class="income-action-btn" onclick="openImportModal()">📥 Import Data</button>
-                  <button class="income-action-btn" onclick="openExportModal()">📤 Export Data</button>
+
+                <!-- Action Buttons -->
+                <div class="dashboard-refresh-container">
+                    <button id="refresh-data-btn" class="dashboard-refresh-btn">
+                        🔄 Refresh Data
                 </div>
-              </div>
-            
             </div>
-            `;
-        },
-    
+        `;
+    },
+
     setupEventListeners() {
         this.setupQuickActions();
         this.setupActionButtons();
