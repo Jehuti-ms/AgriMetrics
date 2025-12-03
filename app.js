@@ -1,4 +1,4 @@
-// app.js - CSS-BASED VERSION (Fixed and Enhanced)
+// app.js - CSS-BASED VERSION (Fixed for all modules)
 console.log('🚀 Loading Farm Management App (CSS-based)...');
 
 class FarmManagementApp {
@@ -29,24 +29,21 @@ class FarmManagementApp {
         // 1. Initialize FarmModules core system FIRST
         this.initializeFarmModules();
         
-        // 2. Pre-register critical modules
-        this.preRegisterModules();
-        
-        // 3. Load global CSS
+        // 2. Load global CSS
         this.loadGlobalCSS();
         
         this.isDemoMode = true;
         
-        // 4. Load user preferences
+        // 3. Load user preferences
         await this.loadUserPreferences();
         
-        // 5. Show the app interface
+        // 4. Show the app interface
         this.showApp();
         
-        // 6. Setup navigation and events
+        // 5. Setup navigation and events
         this.createTopNavigation();
         
-        // 7. Setup interactions
+        // 6. Setup interactions
         setTimeout(() => {
             this.setupHamburgerMenu();
             this.setupSideMenuEvents();
@@ -54,7 +51,7 @@ class FarmManagementApp {
             this.setupDarkMode();
         }, 100);
         
-        // 8. Load dashboard as initial section
+        // 7. Load dashboard as initial section
         setTimeout(() => {
             this.showSection('dashboard');
         }, 200);
@@ -93,15 +90,6 @@ class FarmManagementApp {
             registerModule: function(name, module) {
                 console.log(`📦 Module registered: ${name}`);
                 this.modules[name] = module;
-                
-                // Auto-initialize if it's the current section
-                if (window.app && window.app.currentSection === name) {
-                    setTimeout(() => {
-                        if (module.initialize && typeof module.initialize === 'function') {
-                            module.initialize();
-                        }
-                    }, 100);
-                }
             },
             
             getModule: function(name) {
@@ -141,100 +129,6 @@ class FarmManagementApp {
         };
         
         console.log('🔧 FarmModules core initialized (CSS-based)');
-    }
-
-    preRegisterModules() {
-        // Pre-register dashboard module if available
-        if (typeof DashboardModule !== 'undefined') {
-            window.FarmModules.registerModule('dashboard', DashboardModule);
-            console.log('✅ Dashboard pre-registered');
-        }
-        
-        // Create placeholder for other modules
-        const placeholderModule = {
-            name: 'placeholder',
-            initialize: function() {
-                const contentArea = document.getElementById('content-area');
-                if (contentArea) {
-                    contentArea.innerHTML = `
-                        <div class="module-container">
-                            <div class="module-header">
-                                <h1 class="module-title">Module Preview</h1>
-                                <p class="module-subtitle">Coming soon</p>
-                            </div>
-                            <div class="card">
-                                <h3>📋 Module Information</h3>
-                                <p>This module is currently under development.</p>
-                                <div class="mt-4">
-                                    <button onclick="app.showSection('dashboard')" class="btn-primary">
-                                        ← Return to Dashboard
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-                return true;
-            }
-        };
-        
-        // Register placeholders for other sections
-        const placeholderSections = [
-            'income-expenses',
-            'inventory-check', 
-            'orders',
-            'sales-record',
-            'feed-record',
-            'production',
-            'reports',
-            'profile'
-        ];
-        
-        placeholderSections.forEach(section => {
-            window.FarmModules.registerModule(section, {
-                ...placeholderModule,
-                name: section,
-                initialize: function() {
-                    const contentArea = document.getElementById('content-area');
-                    if (contentArea) {
-                        const sectionNames = {
-                            'income-expenses': 'Income & Expenses',
-                            'inventory-check': 'Inventory',
-                            'orders': 'Orders',
-                            'sales-record': 'Sales',
-                            'feed-record': 'Feed Records', 
-                            'production': 'Production',
-                            'reports': 'Reports',
-                            'profile': 'Profile'
-                        };
-                        
-                        contentArea.innerHTML = `
-                            <div class="module-container">
-                                <div class="module-header">
-                                    <h1 class="module-title">${sectionNames[section] || section}</h1>
-                                    <p class="module-subtitle">Module under construction</p>
-                                </div>
-                                <div class="card">
-                                    <h3>📋 Module Information</h3>
-                                    <p>The <strong>${sectionNames[section] || section}</strong> module is currently being migrated to the new CSS-based system.</p>
-                                    <div class="alert alert-info mt-4">
-                                        <strong>Migration Status:</strong> This module will be available soon.
-                                    </div>
-                                    <div class="mt-4">
-                                        <button onclick="app.showSection('dashboard')" class="btn-primary">
-                                            ← Return to Dashboard
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }
-                    return true;
-                }
-            });
-        });
-        
-        console.log('✅ All modules pre-registered');
     }
 
     loadGlobalCSS() {
@@ -629,8 +523,13 @@ class FarmManagementApp {
     }
 
     initializeModule(moduleName) {
+        console.log(`🔧 Initializing module: ${moduleName}`);
+        
         const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
+        if (!contentArea) {
+            console.error('❌ Content area not found');
+            return;
+        }
         
         // Show loading state
         contentArea.innerHTML = `
@@ -644,24 +543,58 @@ class FarmManagementApp {
             </div>
         `;
         
-        // Clear content area after a brief moment
+        // Initialize after a brief moment
         setTimeout(() => {
-            contentArea.innerHTML = '';
+            // Try to find and initialize the module
+            let module = null;
             
-            // Find and initialize the module
-            const module = window.FarmModules?.modules[moduleName];
+            // 1. Try to get from FarmModules
+            if (window.FarmModules && window.FarmModules.modules[moduleName]) {
+                module = window.FarmModules.modules[moduleName];
+                console.log(`📦 Found module in FarmModules: ${moduleName}`);
+            }
+            
+            // 2. Try to get from global window object
+            if (!module) {
+                const globalModuleName = this.getGlobalModuleName(moduleName);
+                if (window[globalModuleName]) {
+                    module = window[globalModuleName];
+                    console.log(`📦 Found global module: ${globalModuleName}`);
+                }
+            }
+            
             if (module && typeof module.initialize === 'function') {
-                if (module.initialize()) {
-                    console.log(`✅ Module initialized: ${moduleName}`);
-                    this.currentSection = moduleName;
+                console.log(`🚀 Calling initialize() for ${moduleName}`);
+                const result = module.initialize();
+                
+                if (result === false) {
+                    console.error(`❌ ${moduleName}.initialize() returned false`);
+                    this.showModuleNotAvailable(moduleName);
                 } else {
-                    this.showError(`Failed to load ${this.getSectionName(moduleName)}`);
+                    console.log(`✅ ${moduleName} initialized successfully`);
+                    this.currentSection = moduleName;
                 }
             } else {
-                // Fallback: Show module not available
+                console.error(`❌ Module ${moduleName} not found or has no initialize method`);
                 this.showModuleNotAvailable(moduleName);
             }
         }, 300);
+    }
+
+    getGlobalModuleName(sectionId) {
+        const moduleMap = {
+            'dashboard': 'DashboardModule',
+            'income-expenses': 'IncomeExpensesModule',
+            'inventory-check': 'InventoryModule',
+            'orders': 'OrdersModule',
+            'sales-record': 'SalesRecordModule',
+            'feed-record': 'FeedRecordModule',
+            'broiler-mortality': 'BroilerMortalityModule',
+            'production': 'ProductionModule',
+            'reports': 'ReportsModule',
+            'profile': 'ProfileModule'
+        };
+        return moduleMap[sectionId] || sectionId.charAt(0).toUpperCase() + sectionId.slice(1) + 'Module';
     }
 
     getSectionName(section) {
@@ -672,6 +605,7 @@ class FarmManagementApp {
             'orders': 'Orders',
             'sales-record': 'Sales Record',
             'feed-record': 'Feed Records',
+            'broiler-mortality': 'Health & Mortality',
             'production': 'Production',
             'reports': 'Reports',
             'profile': 'Profile'
