@@ -1,8 +1,8 @@
-/* ===== Header Layout ===== */
+/* ===== Income Header Layout ===== */
 .income-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: flex-end;   /* ✅ align both sides to the bottom */
   flex-wrap: wrap;
   gap: 24px;
   padding: 20px 24px;
@@ -16,6 +16,9 @@
 .income-header-left {
   flex: 1 1 300px;
   min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* ✅ ensures stats sit at the bottom */
 }
 
 .income-header-right {
@@ -23,6 +26,7 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 12px;
+  align-items: flex-end;   /* ✅ buttons align with stats row */
 }
 
 /* ===== Primary Buttons (Transaction + Import) ===== */
