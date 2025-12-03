@@ -227,7 +227,7 @@
 }
 
 /* Refresh Button */
-.dashboard-refresh-btn {
+/*.dashboard-refresh-btn {
   border-radius: 12px;
   padding: 12px 24px;
   cursor: pointer;
@@ -239,9 +239,39 @@
   transition: all 0.3s ease;
 
   /* Default state: green outline */
-  background: transparent;
+ /* background: transparent;
   color: var(--color-primary, #16a34a);
   border: 2px solid var(--color-primary, #16a34a);
+}*/
+
+/* Refresh Button styled same as Quick Actions */
+.dashboard-refresh-btn {
+  background: linear-gradient(135deg, #16a34a, #22c55e); /* same gradient */
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 12px 24px;
+  box-shadow: var(--shadow-primary, 0 2px 6px rgba(0, 0, 0, 0.1));
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 auto; /* ✅ centers button when parent has text-align: center */
+}
+
+/* Hover: slightly deeper gradient */
+.dashboard-refresh-btn:hover {
+  transform: scale(1.03);
+  background: linear-gradient(135deg, #15803d, #22c55e);
+}
+
+/* Active/Clicked: even deeper green */
+.dashboard-refresh-btn:active {
+  background: linear-gradient(135deg, #14532d, #15803d);
 }
 
 /* Hover: subtle lift */
