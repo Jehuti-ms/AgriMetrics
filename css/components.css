@@ -63,3 +63,49 @@
   border-top-left-radius: var(--radius-lg);
   border-top-right-radius: var(--radius-lg);
 }
+
+.info-card {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.info-card .info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info-card .info-icon {
+  font-size: 20px;
+}
+
+.info-card .info-title {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.info-card .info-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.info-card .info-notes {
+  font-size: 14px;
+  color: var(--text-primary);
+  margin-top: 4px;
+}
+
+.info-card .info-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
