@@ -488,7 +488,7 @@ class FarmManagementApp {
         header.innerHTML = `
             <nav class="top-nav">
                 <div class="nav-brand">
-                    <div class="brand-icon">🌱</div>
+                    <img src="icons/icon-96x96.png" alt="AgriMetrics" class="brand-icon">
                     <div class="brand-texts">
                         <span class="brand-text">AgriMetrics</span>
                         <span class="brand-subtitle">Farm Management System</span>
