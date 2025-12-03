@@ -2,22 +2,6 @@
 /* Only styles unique to dashboard - all generic styles are in theme.css */
 
 /* Welcome Section */
-/*.dashboard-welcome {
-  margin-bottom: 30px;
-}
-
-.dashboard-welcome h1 {
-  font-size: 28px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: var(--color-text-primary);
-}
-
-.dashboard-welcome p {
-  font-size: 16px;
-  color: var(--color-text-secondary);
-}*/
-
 /* ===== Dashboard Welcome Header (Green Gradient) ===== */
 .dashboard-welcome {
   background: linear-gradient(135deg, #16a34a, #22c55e); /* green gradient */
@@ -99,12 +83,26 @@
 }
 
 .dashboard-stat-card {
-  border-radius: 16px;
-  padding: 20px;
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* subtle lift */
+  position: relative;
+  overflow: hidden;
   text-align: center;
-  transition: transform 0.2s ease;
-  border: 1px solid var(--color-border-light);
-  background: var(--color-bg-card);
+}
+
+/* Green stripe accent */
+.dashboard-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 6px;
+  width: 100%;
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
 }
 
 .dashboard-stat-card:hover {
