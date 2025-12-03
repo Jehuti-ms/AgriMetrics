@@ -147,57 +147,99 @@ const IncomeExpensesModule = {
         </div>
       </div>
       
-      <!-- Recent Transactions -->
-      <div class="income-recent">
-        <div class="income-activity-header">
-          <h2 class="income-section-title">Recent Transactions</h2>
-          <button id="view-all-transactions" class="btn-primary">
-            <span class="btn-icon">📋</span>
-            <span class="btn-text">View All</span>
-          </button>
-        </div>
-        <div class="income-activity-list">
-          <div id="transactions-content">
-            <div class="income-empty-state">
-              <div class="empty-icon">📋</div>
-              <div class="empty-title">No transactions yet</div>
-              <div class="empty-subtitle">Add your first income or expense record</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Expense Categories -->
-      <div class="income-categories">
-        <h2 class="income-section-title">Expense Categories</h2>
-        <div class="income-activity-list">
-          <div id="categories-content">
-            <div class="income-empty-state">
-              <div class="empty-icon">📊</div>
-              <div class="empty-title">No categories yet</div>
-              <div class="empty-subtitle">Add expenses to see categories</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Footer -->
-      <div class="income-footer">
-        <div class="income-refresh-container">
-          <button id="refresh-data-btn" class="btn-primary">
-            <span class="btn-icon">🔄</span>
-            <span class="btn-text">Refresh Data</span>
-          </button>
-        </div>
-        <div class="income-modal-triggers">
-          <button id="export-data-btn" class="card-button" data-action="export-data">
-            <span class="action-icon">📤</span>
-            <span class="action-title">Export Data</span>
-            <span class="action-subtitle">Export to CSV/Excel</span>
-          </button>
-        </div>
-      </div>
-    </div>
+<!-- Recent Transactions -->
+<div class="income-recent">
+  <div class="income-activity-header header-flex">
+    <h2 class="income-section-title">Recent Transactions</h2>
+    <button id="view-all-transactions" class="btn-primary">
+      <span class="btn-icon">📋</span>
+      <span class="btn-text">View All</span>
+    </button>
+  </div>
+
+  <div class="table-container">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Category</th>
+          <th>Amount</th>
+        </tr>
+      </thead>
+      <tbody id="transactions-content">
+        <!-- Example row -->
+        <!-- <tr>
+          <td>2025-12-01</td>
+          <td>Egg Sales</td>
+          <td>Income</td>
+          <td>$250.00</td>
+        </tr> -->
+
+        <!-- Empty state -->
+        <tr class="income-empty-state">
+          <td colspan="4">
+            <div class="empty-icon">📋</div>
+            <div class="empty-title">No transactions yet</div>
+            <div class="empty-subtitle">Add your first income or expense record</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Expense Categories -->
+<div class="income-categories">
+  <h2 class="income-section-title">Expense Categories</h2>
+
+  <div class="table-container">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Total Expenses</th>
+          <th>Percentage</th>
+        </tr>
+      </thead>
+      <tbody id="categories-content">
+        <!-- Example row -->
+        <!-- <tr>
+          <td>Feed</td>
+          <td>$120.00</td>
+          <td>45%</td>
+        </tr> -->
+
+        <!-- Empty state -->
+        <tr class="income-empty-state">
+          <td colspan="3">
+            <div class="empty-icon">📊</div>
+            <div class="empty-title">No categories yet</div>
+            <div class="empty-subtitle">Add expenses to see categories</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="income-footer">
+  <div class="income-refresh-container">
+    <button id="refresh-data-btn" class="btn-primary">
+      <span class="btn-icon">🔄</span>
+      <span class="btn-text">Refresh Data</span>
+    </button>
+  </div>
+  <div class="income-modal-triggers">
+    <button id="export-data-btn" class="card-button" data-action="export-data">
+      <span class="action-icon">📤</span>
+      <span class="action-title">Export Data</span>
+      <span class="action-subtitle">Export to CSV/Excel</span>
+    </button>
+  </div>
+</div>
+
   `;
 },
 
