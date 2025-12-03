@@ -7,46 +7,36 @@
   min-height: 100vh;
 }
 
-/* Top navigation */
+/* ===== Top Navigation (Glass) ===== */
 .top-nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
-  background: var(--gradient-primary);
-  color: #fff;
+
+  /* Glass effect */
+  background: rgba(255, 255, 255, 0.7); /* semi-transparent white */
+  backdrop-filter: blur(12px);           /* frosted glass blur */
+  -webkit-backdrop-filter: blur(12px);   /* Safari support */
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--text-primary);
+
   box-shadow: var(--shadow-md);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
-/* Section wrapper */
-.section {
-  padding: 32px;
-  flex: 1;
+/* Nav links */
+.top-nav a {
+  color: var(--text-primary);
+  font-weight: 600;
+  text-decoration: none;
+  margin: 0 12px;
+  transition: color 0.3s ease;
 }
 
-/* Grid helpers */
-.grid {
-  display: grid;
-  gap: 24px;
-}
-
-.grid-2 {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.grid-3 {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-.grid-4 {
-  grid-template-columns: repeat(4, 1fr);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .grid-2,
-  .grid-3,
-  .grid-4 {
-    grid-template-columns: 1fr;
-  }
+.top-nav a:hover {
+  color: #16a34a; /* green accent on hover */
 }
