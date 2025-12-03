@@ -1,5 +1,5 @@
-// modules/dashboard.js - CSS-BASED VERSION (No StyleManager)
-console.log('Loading dashboard module with CSS-based styling...');
+// modules/dashboard.js - CSS-BASED VERSION (Clean)
+console.log('📊 Loading dashboard module...');
 
 const DashboardModule = {
     name: 'dashboard',
@@ -8,68 +8,53 @@ const DashboardModule = {
     element: null,
 
     initialize() {
-        console.log('📊 Initializing Dashboard with CSS...');
+        console.log('📊 Initializing Dashboard...');
         
         // Get the content area element
         this.element = document.getElementById('content-area');
-        if (!this.element) return false;
+        if (!this.element) {
+            console.error('❌ Content area not found');
+            return false;
+        }
 
-        // Load CSS if not already loaded
-        this.loadCSS();
-
-        this.renderDashboard();
-        this.setupEventListeners();
-        this.initialized = true;
+        // Ensure CSS is loaded
+        this.ensureDashboardCSS();
         
-        // Load and display stats from shared data
+        // Render dashboard
+        this.renderDashboard();
+        
+        // Setup event listeners
+        this.setupEventListeners();
+        
+        // Load stats
         this.loadAndDisplayStats();
         
-        console.log('✅ Dashboard initialized');
+        this.initialized = true;
+        
+        console.log('✅ Dashboard initialized successfully');
         return true;
     },
 
-    loadCSS() {
+    ensureDashboardCSS() {
         // Check if dashboard CSS is already loaded
-        if (document.querySelector('link[href*="dashboard.css"]')) {
+        const existingLinks = document.querySelectorAll('link[href*="dashboard.css"]');
+        if (existingLinks.length > 0) {
             return;
         }
         
-        // Create link element for dashboard-specific CSS
+        // Load dashboard CSS
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = 'css/dashboard.css';
+        link.onerror = () => {
+            console.warn('⚠️ dashboard.css not found');
+        };
         document.head.appendChild(link);
-        
-        // Make sure theme.css is loaded first
-        if (!document.querySelector('link[href*="theme.css"]')) {
-            const themeLink = document.createElement('link');
-            themeLink.rel = 'stylesheet';
-            themeLink.href = 'css/theme.css';
-            document.head.insertBefore(themeLink, link);
-        }
-    },
-
-    setupEventListeners() {
-        this.setupQuickActions();
-        this.setupRefreshButton();
-        this.setupInventoryStatsListener();
-    },
-
-    setupInventoryStatsListener() {
-        // Listen for inventory stats updates from other modules
-        document.addEventListener('inventoryStatsUpdated', (e) => {
-            const stats = e.detail;
-            this.updateStatCard('inventory-items', stats.totalInventoryItems || 0);
-            
-            // You could also update a value card if you have one
-            // this.updateStatCard('inventory-value', this.formatCurrency(stats.inventoryValue || 0));
-        });
     },
 
     renderDashboard() {
         if (!this.element) return;
 
-        // Clean HTML using only CSS classes - no inline styles
         this.element.innerHTML = `
             <div id="dashboard" class="module-container">
                 <!-- Welcome Section -->
@@ -189,13 +174,18 @@ const DashboardModule = {
                 </div>
 
                 <!-- Refresh Button -->
-                <div class="text-center mt-8">
+                <div class="dashboard-refresh-container">
                     <button id="refresh-stats-btn" class="dashboard-refresh-btn">
                         🔄 Refresh Stats
                     </button>
                 </div>
             </div>
         `;
+    },
+
+    setupEventListeners() {
+        this.setupQuickActions();
+        this.setupRefreshButton();
     },
 
     setupQuickActions() {
@@ -214,20 +204,18 @@ const DashboardModule = {
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => {
                 this.loadAndDisplayStats();
-                if (window.coreModule && window.coreModule.showNotification) {
-                    window.coreModule.showNotification('Stats refreshed!', 'success');
-                }
+                this.showNotification('Stats refreshed!', 'success');
             });
         }
     },
 
     loadAndDisplayStats() {
-        const profileStats = this.getProfileStats();
-        this.updateDashboardStats(profileStats);
-        this.updateRecentActivity(profileStats);
+        const stats = this.getDashboardStats();
+        this.updateDashboardDisplay(stats);
+        this.updateRecentActivity(stats);
     },
 
-    getProfileStats() {
+    getDashboardStats() {
         let stats = {
             totalIncome: 0,
             totalExpenses: 0,
@@ -242,6 +230,7 @@ const DashboardModule = {
             completedOrders: 0
         };
 
+        // Try to get stats from FarmModules
         if (window.FarmModules && window.FarmModules.appData) {
             const sharedStats = window.FarmModules.appData.profile?.dashboardStats;
             if (sharedStats) {
@@ -249,6 +238,7 @@ const DashboardModule = {
             }
         }
 
+        // Fallback to localStorage
         if (stats.totalIncome === 0) {
             const savedStats = localStorage.getItem('farm-dashboard-stats');
             if (savedStats) {
@@ -256,49 +246,12 @@ const DashboardModule = {
             }
         }
 
+        // Calculate net profit if not provided
+        if (stats.netProfit === 0 && (stats.totalIncome > 0 || stats.totalExpenses > 0)) {
+            stats.netProfit = (stats.totalIncome || stats.totalRevenue || 0) - stats.totalExpenses;
+        }
+
         return stats;
-    },
-
-    updateDashboardStats(newStats) {
-        if (window.FarmModules && window.FarmModules.appData) {
-            if (!window.FarmModules.appData.profile) {
-                window.FarmModules.appData.profile = {};
-            }
-            if (!window.FarmModules.appData.profile.dashboardStats) {
-                window.FarmModules.appData.profile.dashboardStats = {};
-            }
-            
-            Object.assign(window.FarmModules.appData.profile.dashboardStats, newStats);
-        }
-
-        this.updateDashboardDisplay(newStats);
-    },
-
-    addRecentActivity(activity) {
-        if (!window.FarmModules || !window.FarmModules.appData) return;
-
-        if (!window.FarmModules.appData.profile) {
-            window.FarmModules.appData.profile = {};
-        }
-        if (!window.FarmModules.appData.profile.dashboardStats) {
-            window.FarmModules.appData.profile.dashboardStats = {};
-        }
-        if (!window.FarmModules.appData.profile.dashboardStats.recentActivities) {
-            window.FarmModules.appData.profile.dashboardStats.recentActivities = [];
-        }
-
-        window.FarmModules.appData.profile.dashboardStats.recentActivities.unshift({
-            id: Date.now(),
-            timestamp: new Date().toISOString(),
-            ...activity
-        });
-
-        if (window.FarmModules.appData.profile.dashboardStats.recentActivities.length > 10) {
-            window.FarmModules.appData.profile.dashboardStats.recentActivities = 
-                window.FarmModules.appData.profile.dashboardStats.recentActivities.slice(0, 10);
-        }
-
-        this.updateRecentActivity(this.getProfileStats());
     },
 
     updateDashboardDisplay(stats) {
@@ -307,24 +260,24 @@ const DashboardModule = {
         this.updateStatCard('inventory-items', stats.totalInventoryItems || 0);
         this.updateStatCard('active-birds', stats.totalBirds || 0);
         this.updateStatCard('total-orders', stats.totalOrders || 0);
-        this.updateStatCard('net-profit', this.formatCurrency(stats.netProfit || (stats.totalIncome - stats.totalExpenses) || 0));
+        this.updateStatCard('net-profit', this.formatCurrency(stats.netProfit || 0));
         this.updateStatCard('total-customers', stats.totalCustomers || 0);
         this.updateStatCard('total-products', stats.totalProducts || 0);
 
-        // Update profit card color based on profit/loss
+        // Update profit card styling
         const profitCard = document.getElementById('profit-card');
         if (profitCard) {
-            const netProfit = stats.netProfit || (stats.totalIncome - stats.totalExpenses) || 0;
+            const netProfit = stats.netProfit || 0;
             if (netProfit >= 0) {
-                profitCard.classList.remove('negative');
-                profitCard.classList.add('positive');
+                profitCard.classList.add('profit-positive');
+                profitCard.classList.remove('profit-negative');
             } else {
-                profitCard.classList.remove('positive');
-                profitCard.classList.add('negative');
+                profitCard.classList.add('profit-negative');
+                profitCard.classList.remove('profit-positive');
             }
         }
 
-        // Add monthly revenue indicator if available
+        // Update monthly revenue indicator
         const revenueCard = document.getElementById('revenue-card');
         if (revenueCard && stats.monthlyRevenue > 0) {
             // Remove existing indicator if present
@@ -341,12 +294,14 @@ const DashboardModule = {
     updateStatCard(elementId, value) {
         const element = document.getElementById(elementId);
         if (element) {
-            // Add animation class
+            // Add animation
             element.classList.add('stat-updating');
+            
+            // Update value after animation
             setTimeout(() => {
                 element.classList.remove('stat-updating');
                 element.textContent = value;
-            }, 150);
+            }, 300);
         }
     },
 
@@ -355,7 +310,9 @@ const DashboardModule = {
         if (!activityContent) return;
 
         const activities = [];
-        const recentActivities = window.FarmModules?.appData?.profile?.dashboardStats?.recentActivities || [];
+        
+        // Get recent activities from FarmModules
+        const recentActivities = window.FarmModules?.appData?.profile?.recentActivities || [];
 
         if (recentActivities.length > 0) {
             recentActivities.forEach(activity => {
@@ -366,6 +323,7 @@ const DashboardModule = {
                 });
             });
         } else {
+            // Generate default activities from stats
             if (stats.totalOrders > 0) {
                 activities.push({
                     icon: '📋',
@@ -395,14 +353,6 @@ const DashboardModule = {
                     icon: '🐔',
                     text: `${stats.totalBirds} birds in stock`,
                     time: 'Active'
-                });
-            }
-
-            if (stats.totalCustomers > 0) {
-                activities.push({
-                    icon: '👥',
-                    text: `${stats.totalCustomers} customers registered`,
-                    time: 'Total'
                 });
             }
         }
@@ -444,10 +394,6 @@ const DashboardModule = {
         return `${Math.floor(diffInSeconds / 86400)}d ago`;
     },
 
-    refreshStats() {
-        this.loadAndDisplayStats();
-    },
-
     handleQuickAction(action) {
         console.log(`Quick action: ${action}`);
         
@@ -461,21 +407,9 @@ const DashboardModule = {
         };
 
         const targetModule = actionMap[action];
-        if (targetModule) {
-            if (window.FarmManagementApp) {
-                window.FarmManagementApp.showSection(targetModule);
-            } else if (window.app && window.app.showSection) {
-                window.app.showSection(targetModule);
-            } else {
-                const event = new CustomEvent('sectionChange', { 
-                    detail: { section: targetModule } 
-                });
-                document.dispatchEvent(event);
-            }
-            
-            if (window.coreModule && window.coreModule.showNotification) {
-                window.coreModule.showNotification(`Opening ${this.getActionName(action)}...`, 'info');
-            }
+        if (targetModule && window.app && window.app.showSection) {
+            window.app.showSection(targetModule);
+            this.showNotification(`Opening ${this.getActionName(action)}...`, 'info');
         }
     },
 
@@ -494,15 +428,70 @@ const DashboardModule = {
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'USD'
+            currency: 'USD',
+            minimumFractionDigits: 2
         }).format(amount);
+    },
+
+    showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+        
+        // Add to container
+        const container = document.getElementById('notification-container');
+        if (container) {
+            container.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.classList.add('notification-fadeout');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+    },
+
+    addActivity(activity) {
+        if (!window.FarmModules || !window.FarmModules.appData) return;
+
+        if (!window.FarmModules.appData.profile.recentActivities) {
+            window.FarmModules.appData.profile.recentActivities = [];
+        }
+
+        window.FarmModules.appData.profile.recentActivities.unshift({
+            id: Date.now(),
+            timestamp: new Date().toISOString(),
+            ...activity
+        });
+
+        // Keep only last 10 activities
+        if (window.FarmModules.appData.profile.recentActivities.length > 10) {
+            window.FarmModules.appData.profile.recentActivities = 
+                window.FarmModules.appData.profile.recentActivities.slice(0, 10);
+        }
+
+        this.updateRecentActivity(this.getDashboardStats());
     }
 };
 
-// Register the module
+// Register the module when FarmModules is available
 if (window.FarmModules) {
     window.FarmModules.registerModule('dashboard', DashboardModule);
     console.log('✅ Dashboard module registered');
+} else {
+    // Wait for FarmModules to be available
+    const checkFarmModules = setInterval(() => {
+        if (window.FarmModules) {
+            clearInterval(checkFarmModules);
+            window.FarmModules.registerModule('dashboard', DashboardModule);
+            console.log('✅ Dashboard module registered after wait');
+        }
+    }, 100);
 }
 
 // Export for global access
