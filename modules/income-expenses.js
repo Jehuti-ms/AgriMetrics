@@ -1,4 +1,4 @@
-// modules/income-expenses.js - CSS-BASED VERSION (Using Modal Manager)
+// modules/income-expenses.js - Modal Manager Version
 console.log('💰 Loading Income & Expenses module...');
 
 const IncomeExpensesModule = {
@@ -59,21 +59,21 @@ const IncomeExpensesModule = {
             <div id="income-expenses" class="module-container income">
                 
                 <!-- Header -->
-                <div class="income-header header-flex">
-                    <div class="income-header-left">
-                        <h1 class="income-title">Income & Expenses</h1>
-                        <p class="income-subtitle">Track your farm's financial health</p>
+                <div class="module-header header-flex">
+                    <div class="header-left">
+                        <h1>Income & Expenses</h1>
+                        <p class="module-subtitle">Track your farm's financial health</p>
                         
                         <!-- Stats inline with icons -->
-                        <div class="income-stats-inline">
-                            <span class="income-stat">💰 <span id="inline-total-income">$0.00</span> Total Income</span>
-                            <span class="income-stat">💸 <span id="inline-total-expenses">$0.00</span> Total Expenses</span>
-                            <span class="income-stat">🪙 <span id="inline-net-profit">$0.00</span> Net Profit</span>
+                        <div class="stats-inline">
+                            <span class="stat-item">💰 <span id="inline-total-income">$0.00</span> Total Income</span>
+                            <span class="stat-item">💸 <span id="inline-total-expenses">$0.00</span> Total Expenses</span>
+                            <span class="stat-item">🪙 <span id="inline-net-profit">$0.00</span> Net Profit</span>
                         </div>
                     </div>
                     
                     <!-- Right side: Add Transaction + Import Receipts -->
-                    <div class="income-header-right">
+                    <div class="header-right">
                         <button id="add-transaction-btn" class="btn-primary">
                             <span class="btn-icon">➕</span>
                             <span class="btn-text">Add Transaction</span>
@@ -86,35 +86,35 @@ const IncomeExpensesModule = {
                 </div>
                 
                 <!-- Quick Actions -->
-                <div class="income-quick-actions">
-                    <h2 class="income-section-title">Quick Actions</h2>
+                <div class="quick-actions-section">
+                    <h2 class="section-title">Quick Actions</h2>
                     <div class="card-grid">
                         <button id="quick-income-btn" class="card-button" data-action="quick-income">
-                            <div class="action-icon">💰</div>
-                            <span class="action-title">Quick Income</span>
-                            <span class="action-subtitle">Record income instantly</span>
+                            <div class="card-icon">💰</div>
+                            <span class="card-title">Quick Income</span>
+                            <span class="card-subtitle">Record income instantly</span>
                         </button>
                         <button id="quick-expense-btn" class="card-button" data-action="quick-expense">
-                            <div class="action-icon">🧾</div>
-                            <span class="action-title">Quick Expense</span>
-                            <span class="action-subtitle">Record expense instantly</span>
+                            <div class="card-icon">🧾</div>
+                            <span class="card-title">Quick Expense</span>
+                            <span class="card-subtitle">Record expense instantly</span>
                         </button>
                         <button id="view-reports-btn" class="card-button" data-action="view-reports">
-                            <div class="action-icon">📊</div>
-                            <span class="action-title">View Reports</span>
-                            <span class="action-subtitle">Financial analytics</span>
+                            <div class="card-icon">📊</div>
+                            <span class="card-title">View Reports</span>
+                            <span class="card-subtitle">Financial analytics</span>
                         </button>
                         <button id="manage-categories-btn" class="card-button" data-action="manage-categories">
-                            <div class="action-icon">📂</div>
-                            <span class="action-title">Categories</span>
-                            <span class="action-subtitle">Manage categories</span>
+                            <div class="card-icon">📂</div>
+                            <span class="card-title">Categories</span>
+                            <span class="card-subtitle">Manage categories</span>
                         </button>
                     </div>
                 </div>
                 
                 <!-- Financial Overview -->
-                <div class="income-overview">
-                    <h2 class="income-section-title">Financial Overview</h2>
+                <div class="overview-section">
+                    <h2 class="section-title">Financial Overview</h2>
                     <div class="card-grid">
                         <div class="stat-card" id="monthly-income-card">
                             <div class="stat-icon">📅</div>
@@ -145,23 +145,23 @@ const IncomeExpensesModule = {
                 </div>
                 
                 <!-- Recent Transactions & Expense Categories -->
-                <div class="income-content-columns">
+                <div class="content-columns">
                     
                     <!-- Recent Transactions -->
-                    <div class="income-content-column">
+                    <div class="content-column">
                         <div class="glass-card">
-                            <div class="header-flex">
+                            <div class="card-header header-flex">
                                 <h3>Recent Transactions</h3>
                                 <button class="btn-outline" id="clear-all">Clear All</button>
                             </div>
                             <div id="transactions-list">
                                 <!-- Transaction rows populated dynamically -->
                                 <div class="transaction-row">
-                                    <span class="transaction-date">📅 2025-12-01</span>
-                                    <span class="transaction-desc">💰 Egg Sales</span>
-                                    <span class="transaction-category">📂 Income</span>
-                                    <span class="transaction-amount">💵 $250.00</span>
-                                    <span class="transaction-actions">
+                                    <span class="date-col">📅 2025-12-01</span>
+                                    <span class="desc-col">💰 Egg Sales</span>
+                                    <span class="category-col">📂 Income</span>
+                                    <span class="amount-col">💵 $250.00</span>
+                                    <span class="actions-col">
                                         <button class="icon-btn">✏️</button>
                                         <button class="icon-btn">🗑️</button>
                                     </span>
@@ -171,19 +171,19 @@ const IncomeExpensesModule = {
                     </div>
                     
                     <!-- Expense Categories -->
-                    <div class="income-content-column">
+                    <div class="content-column">
                         <div class="glass-card">
-                            <div class="header-flex">
+                            <div class="card-header header-flex">
                                 <h3>Expense Categories</h3>
                                 <button class="btn-outline" id="clear-categories">Clear All</button>
                             </div>
                             <div id="categories-list">
                                 <!-- Category rows populated dynamically -->
-                                <div class="transaction-row">
-                                    <span class="transaction-desc">📂 Feed & Nutrition</span>
-                                    <span class="transaction-amount">💵 $1,500.00</span>
-                                    <span class="transaction-category">📊 22.7%</span>
-                                    <span class="transaction-actions">
+                                <div class="data-row">
+                                    <span class="desc-col">📂 Feed & Nutrition</span>
+                                    <span class="amount-col">💵 $1,500.00</span>
+                                    <span class="percentage-col">📊 22.7%</span>
+                                    <span class="actions-col">
                                         <button class="icon-btn">✏️</button>
                                         <button class="icon-btn">🗑️</button>
                                     </span>
@@ -195,18 +195,18 @@ const IncomeExpensesModule = {
                 </div>
 
                 <!-- Footer -->
-                <div class="income-footer">
-                    <div class="income-refresh-container">
+                <div class="module-footer">
+                    <div class="footer-left">
                         <button id="refresh-data-btn" class="btn-primary">
                             <span class="btn-icon">🔄</span>
                             <span class="btn-text">Refresh Data</span>
                         </button>
                     </div>
-                    <div class="income-modal-triggers">
+                    <div class="footer-right">
                         <button id="export-data-btn" class="card-button" data-action="export-data">
-                            <span class="action-icon">📤</span>
-                            <span class="action-title">Export Data</span>
-                            <span class="action-subtitle">Export to CSV/Excel</span>
+                            <span class="card-icon">📤</span>
+                            <span class="card-title">Export Data</span>
+                            <span class="card-subtitle">Export to CSV/Excel</span>
                         </button>
                     </div>
                 </div>
@@ -420,9 +420,9 @@ const IncomeExpensesModule = {
 
         if (transactions.length === 0) {
             transactionsList.innerHTML = `
-                <div class="transaction-row income-empty-state">
-                    <span class="transaction-desc">📋 No transactions yet</span>
-                    <span class="transaction-category">➕ Add your first income or expense record</span>
+                <div class="transaction-row empty-state">
+                    <span class="desc-col">📋 No transactions yet</span>
+                    <span class="category-col">➕ Add your first income or expense record</span>
                 </div>
             `;
             return;
@@ -433,13 +433,13 @@ const IncomeExpensesModule = {
         
         transactionsList.innerHTML = recentTransactions.map(transaction => `
             <div class="transaction-row transaction-${transaction.type}" data-id="${transaction.id}">
-                <span class="transaction-date">📅 ${this.formatDate(transaction.date)}</span>
-                <span class="transaction-desc">${transaction.icon} ${transaction.description}</span>
-                <span class="transaction-category">📂 ${transaction.category}</span>
-                <span class="transaction-amount ${transaction.type}">
+                <span class="date-col">📅 ${this.formatDate(transaction.date)}</span>
+                <span class="desc-col">${transaction.icon} ${transaction.description}</span>
+                <span class="category-col">📂 ${transaction.category}</span>
+                <span class="amount-col ${transaction.type}">
                     ${transaction.type === 'income' ? '💵 +' : '💸 -'}${this.formatCurrency(transaction.amount)}
                 </span>
-                <span class="transaction-actions">
+                <span class="actions-col">
                     <button class="icon-btn edit-transaction" data-id="${transaction.id}">✏️</button>
                     <button class="icon-btn delete-transaction" data-id="${transaction.id}">🗑️</button>
                 </span>
@@ -476,9 +476,9 @@ const IncomeExpensesModule = {
 
         if (categories.length === 0) {
             categoriesList.innerHTML = `
-                <div class="transaction-row income-empty-state">
-                    <span class="transaction-desc">📋 No categories yet</span>
-                    <span class="transaction-category">➕ Add expenses to see categories</span>
+                <div class="data-row empty-state">
+                    <span class="desc-col">📋 No categories yet</span>
+                    <span class="category-col">➕ Add expenses to see categories</span>
                 </div>
             `;
             return;
@@ -490,11 +490,11 @@ const IncomeExpensesModule = {
         categoriesList.innerHTML = categories.map(category => {
             const percentage = totalExpenses > 0 ? ((category.amount / totalExpenses) * 100).toFixed(1) : 0;
             return `
-                <div class="transaction-row" data-category="${category.name}">
-                    <span class="transaction-desc">${category.icon} ${category.name}</span>
-                    <span class="transaction-amount">💵 ${this.formatCurrency(category.amount)}</span>
-                    <span class="transaction-category">📊 ${percentage}%</span>
-                    <span class="transaction-actions">
+                <div class="data-row" data-category="${category.name}">
+                    <span class="desc-col">${category.icon} ${category.name}</span>
+                    <span class="amount-col">💵 ${this.formatCurrency(category.amount)}</span>
+                    <span class="percentage-col">📊 ${percentage}%</span>
+                    <span class="actions-col">
                         <button class="icon-btn edit-category" data-category="${category.name}">✏️</button>
                         <button class="icon-btn delete-category" data-category="${category.name}">🗑️</button>
                     </span>
