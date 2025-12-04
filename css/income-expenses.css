@@ -356,3 +356,38 @@
   /* same styles as transactions */
 }
 
+/* Shared row styling for transactions and categories */
+#transactions-list .transaction-row,
+#categories-list .transaction-row {
+  display: grid;
+  grid-template-columns: 1fr 160px 160px auto; /* name | amount | percentage | actions */
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 10px 16px;
+  margin-bottom: 8px;
+}
+
+#transactions-list .transaction-row span,
+#categories-list .transaction-row span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#transactions-list .transaction-actions,
+#categories-list .transaction-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+#transactions-list .transaction-actions .icon-btn,
+#categories-list .transaction-actions .icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
