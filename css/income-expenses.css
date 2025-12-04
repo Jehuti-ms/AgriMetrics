@@ -1,3 +1,31 @@
+/* ===== Income Header (layout only, color comes from components.css) ===== */
+.income .income-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+/* ===== Quick Actions (layout only) ===== */
+.income .income-quick-actions { margin-top: 32px; }
+
+.income .income-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  padding: 24px;
+}
+
+/* ===== Stats Overview (layout only) ===== */
+.income .income-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  padding: 24px;
+}
+
+/* ===== Shared Row Styling ===== */
 .income .transaction-row {
   display: grid;
   align-items: center;
@@ -28,12 +56,26 @@
   font-size: 16px;
 }
 
-/* Transactions: Date | Desc | Category | Amount | Actions */
+/* ===== Specific Grid Overrides ===== */
+/* Recent Transactions: Date | Desc | Category | Amount | Actions */
 .income #transactions-list > .transaction-row {
   grid-template-columns: 140px 1fr 120px 120px auto;
 }
 
-/* Categories: Name | Amount | % | Actions */
-.income .categories-list > .transaction-row {
+/* Expense Categories: Name | Amount | % | Actions */
+.income #categories-list > .transaction-row {
   grid-template-columns: 1fr 120px 160px auto;
+}
+
+/* ===== Footer Layout ===== */
+.income .income-refresh-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.income .income-modal-triggers {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
 }
