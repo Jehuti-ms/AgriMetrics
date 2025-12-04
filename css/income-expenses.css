@@ -1,5 +1,5 @@
 /* ===== Income Header Layout ===== */
-.income-header {
+.income .income-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -13,7 +13,7 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 
-.income-header-left {
+.income .income-header-left {
   flex: 1 1 300px;
   min-width: 280px;
   display: flex;
@@ -21,7 +21,7 @@
   justify-content: flex-end;
 }
 
-.income-header-right {
+.income .income-header-right {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -30,7 +30,7 @@
 }
 
 /* ===== Primary Buttons ===== */
-.income-primary-btn {
+.income .income-primary-btn {
   background: linear-gradient(135deg, #16a34a, #22c55e);
   color: #fff;
   border: none;
@@ -44,20 +44,20 @@
   align-items: center;
   gap: 8px;
 }
-.income-primary-btn:hover {
+.income .income-primary-btn:hover {
   transform: scale(1.05);
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
 /* ===== Quick Actions ===== */
-.income-quick-actions { margin-top: 32px; }
-.income-actions-grid {
+.income .income-quick-actions { margin-top: 32px; }
+.income .income-actions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
   padding: 24px;
 }
-.income-action-btn {
+.income .income-action-btn {
   background: linear-gradient(135deg, #16a34a, #22c55e);
   color: #fff;
   border: none;
@@ -72,29 +72,29 @@
   gap: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.08);
 }
-.income-action-btn:hover {
+.income .income-action-btn:hover {
   transform: scale(1.05);
   box-shadow: 0 4px 8px rgba(0,0,0,0.12);
 }
-.action-icon { font-size: 22px; }
-.action-title { font-weight: 600; color: #111; }
-.action-subtitle { font-size: 13px; color: #555; }
+.income .action-icon { font-size: 22px; }
+.income .action-title { font-weight: 600; color: #111; }
+.income .action-subtitle { font-size: 13px; color: #555; }
 
 /* ===== Stats Overview ===== */
-.income-stats-grid {
+.income .income-stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 16px;
   padding: 24px;
 }
-.income-stat-card {
+.income .income-stat-card {
   background: #fff;
   border-radius: var(--radius-lg);
   padding: 16px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   text-align: center;
 }
-.income-stat-card::before {
+.income .income-stat-card::before {
   content: '';
   display: block;
   height: 6px;
@@ -104,17 +104,17 @@
   border-top-left-radius: var(--radius-lg);
   border-top-right-radius: var(--radius-lg);
 }
-.stat-icon { font-size: 20px; margin-bottom: 6px; }
-.stat-value { font-size: 18px; font-weight: 700; color: #111; }
-.stat-label { font-size: 13px; color: #555; }
+.income .stat-icon { font-size: 20px; margin-bottom: 6px; }
+.income .stat-value { font-size: 18px; font-weight: 700; color: #111; }
+.income .stat-label { font-size: 13px; color: #555; }
 
 /* ===== Refresh Button ===== */
-.income-refresh-container {
+.income .income-refresh-container {
   display: flex;
   justify-content: center;
   margin: 20px 0;
 }
-.income-refresh-btn {
+.income .income-refresh-btn {
   border-radius: var(--radius-lg);
   padding: 12px 24px;
   cursor: pointer;
@@ -128,25 +128,23 @@
   border: 2px solid var(--color-primary, #16a34a);
   transition: all 0.3s ease;
 }
-.income-refresh-btn:hover {
+.income .income-refresh-btn:hover {
   background: linear-gradient(135deg, #16a34a, #22c55e);
   color: #fff;
   border-color: transparent;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   transform: scale(1.03);
 }
-.income-refresh-btn:active {
+.income .income-refresh-btn:active {
   background: linear-gradient(135deg, #15803d, #22c55e);
   color: #fff;
   border-color: transparent;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-/* ===== Shared Row Styling (Transactions + Categories) ===== */
-#transactions-list .transaction-row,
-#categories-list .transaction-row {
+/* ===== Shared Row Styling ===== */
+.income .transaction-row {
   display: grid;
-  grid-template-columns: 1fr 160px 160px auto; /* name | amount | percentage | actions */
   align-items: center;
   gap: 12px;
   background: #fff;
@@ -155,22 +153,30 @@
   padding: 10px 16px;
   margin-bottom: 8px;
 }
-#transactions-list .transaction-row span,
-#categories-list .transaction-row span {
+.income .transaction-row span {
   display: flex;
   align-items: center;
   gap: 6px;
 }
-#transactions-list .transaction-actions,
-#categories-list .transaction-actions {
+.income .transaction-actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
 }
-#transactions-list .transaction-actions .icon-btn,
-#categories-list .transaction-actions .icon-btn {
+.income .transaction-actions .icon-btn {
   background: none;
   border: none;
   cursor: pointer;
   font-size: 16px;
+}
+
+/* ===== Specific Grid Overrides ===== */
+/* Transactions: Date | Desc | Category | Amount | Actions */
+.income #transactions-list .transaction-row {
+  grid-template-columns: 140px 1fr 120px 120px auto;
+}
+
+/* Expense Categories: Name | Amount | % | Count | Actions */
+.income #categories-list .transaction-row {
+  grid-template-columns: 1fr 120px 120px 140px auto;
 }
