@@ -1,202 +1,255 @@
-/* === Section Titles & Subtitles === */
-.section-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 12px;
-  color: var(--text-primary);
+/* ==================== DASHBOARD MODULE ==================== */
+/* All dashboard-specific visuals, rewritten to unified naming convention */
+
+/* ===== Welcome Header (Green Gradient) ===== */
+.module-header {
+  background: linear-gradient(to bottom right, #16a34a, #4ade80);
+  color: #fff;
+  padding: 20px 24px;
+  margin-top: 0;
+  border-bottom-left-radius: 24px;
+  border-bottom-right-radius: 24px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  text-align: left;
+  position: relative;
+  z-index: 1;
 }
 
-.section-subtitle {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-top: 4px;
+.module-header .header-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #fff;
 }
 
-/* === Content Column Wrapper === */
+.module-header .header-subtitle {
+  font-size: 16px;
+  opacity: 0.9;
+  color: #fff;
+}
+
+/* ===== Quick Actions ===== */
 .content-column {
-  margin-bottom: 24px;
+  margin: 32px 0 30px;
 }
 
-/* === Quick Actions === */
+.section-title {
+  font-size: 20px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
 .card-button-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
 }
 
 .card-button {
-  flex: 1 1 160px;
+  background: var(--gradient-primary, linear-gradient(135deg, #16a34a, #22c55e));
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-lg);
   padding: 16px;
-  border-radius: var(--radius-md);
-  background: #fff;
-  box-shadow: var(--shadow-sm);
-  text-align: center;
-  font-weight: 500;
+  box-shadow: var(--shadow-primary, 0 2px 6px rgba(0, 0, 0, 0.1));
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: transform 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .card-button:hover {
-  background: var(--hover-bg);
+  transform: scale(1.03);
+  background: linear-gradient(135deg, #15803d, #22c55e);
 }
 
-/* === Stats Overview === */
+.card-button .action-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.card-button .action-title {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.card-button .action-subtitle {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+/* ===== Stats Overview ===== */
 .stats-inline {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
+  margin-bottom: 40px;
 }
 
 .stat-card {
   background: #fff;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-lg);
   padding: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
   text-align: center;
 }
 
-.stat-icon {
-  font-size: 24px;
-  margin-bottom: 8px;
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 6px;
+  width: 100%;
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
 }
 
-.stat-value {
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: var(--text-muted);
-}
-
-/* === Transactions / Recent Activity === */
-.transactions-list {
-  margin-top: 12px;
-}
-
-#transactions-content > .transaction-row {
-  display: grid;
-  grid-template-columns: 140px 1fr 160px 120px auto; /* Date | Desc | Category | Amount | Actions */
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  margin-bottom: 8px;
-  background: #fff;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-}
-
-.transaction-date { font-weight: 500; }
-.transaction-desc { font-weight: 600; }
-.transaction-category { color: var(--text-muted); }
-.transaction-amount { text-align: right; font-weight: 600; }
-.transaction-actions { display: flex; justify-content: flex-end; gap: 8px; }
-
-/* === Empty State === */
-.empty-state {
-  text-align: center;
-  padding: 24px;
-  color: var(--text-muted);
-}
-
-.empty-icon {
-  font-size: 32px;
-  margin-bottom: 8px;
-}
-
-.empty-title {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.empty-subtitle {
-  font-size: 14px;
-}
-
-/* === Refresh Button === */
-.btn-outline {
-  padding: 10px 16px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background: transparent;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.btn-outline:hover {
-  background: var(--hover-bg);
-}
-
-/* === Quick Actions Grid === */
-.card-button-group {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 16px;
-}
-
-.card-button {
-  background: #fff;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  padding: 16px;
-  text-align: center;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.card-button:hover {
+.stat-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
-/* === Stats Grid === */
-.stats-inline {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 16px;
-}
-
-.stat-card {
-  background: #fff;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  padding: 16px;
-  text-align: center;
-}
-
-.stat-icon {
+.stat-card .stat-icon {
   font-size: 24px;
   margin-bottom: 8px;
 }
 
-.stat-value {
-  font-size: 20px;
-  font-weight: 600;
+.stat-card .stat-value {
+  font-size: 24px;
+  font-weight: bold;
   margin-bottom: 4px;
+  color: var(--color-text-primary);
 }
 
-.stat-label {
+.stat-card .stat-label {
   font-size: 14px;
-  color: var(--text-muted);
+  color: var(--color-text-tertiary);
 }
 
-/* === Recent Activity Rows === */
+#profit-card {
+  border-left: 4px solid var(--color-success);
+}
+
+#profit-card.negative {
+  border-left-color: var(--color-danger);
+}
+
+/* ===== Recent Activity ===== */
 .transactions-list {
-  margin-top: 12px;
+  background: var(--color-bg-card, #fff);
+  border-radius: 24px;
+  padding: 24px;
+  min-height: 200px;
+  border: 1px solid var(--color-border-light);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 
-#transactions-content > .transaction-row {
-  display: grid;
-  grid-template-columns: 140px 1fr 160px 120px auto;
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-state .empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.empty-state .empty-title {
+  font-size: 16px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.empty-state .empty-subtitle {
+  font-size: 14px;
+  color: var(--color-text-tertiary);
+}
+
+.transaction-row {
+  display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
-  margin-bottom: 8px;
-  background: #fff;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
+  padding: 12px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
 }
 
+.transaction-row:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.transaction-row .transaction-desc {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.transaction-row .transaction-time {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+/* ===== Refresh Button ===== */
+.content-column .btn-outline {
+  border-radius: var(--radius-lg);
+  padding: 12px 24px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--color-primary, #16a34a);
+  border: 2px solid var(--color-primary, #16a34a);
+  transition: all 0.3s ease;
+}
+
+.content-column .btn-outline:hover {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--shadow-primary, 0 2px 6px rgba(0,0,0,0.1));
+  transform: scale(1.03);
+}
+
+.content-column .btn-outline:active {
+  background: linear-gradient(135deg, #15803d, #22c55e);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--shadow-md, 0 2px 6px rgba(0,0,0,0.15));
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+  .card-button-group {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  .stats-inline {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .card-button {
+    min-height: 100px;
+    padding: 16px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-inline {
+    grid-template-columns: 1fr;
+  }
+
+  .section-title {
+    font-size: 18px;
+  }
+}
