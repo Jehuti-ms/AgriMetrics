@@ -216,7 +216,7 @@ class FarmManagementApp {
                     this.userPreferences[key] = value;
                     localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
                     console.log(`⚙️ Preference updated: ${key} = ${value}`);
-                },
+                    
                     // Also update FarmModules
                     if (window.FarmModules && window.FarmModules.appData) {
                         if (!window.FarmModules.appData.profile) {
@@ -400,7 +400,7 @@ class FarmManagementApp {
                         <span class="nav-label">Income</span>
                     </button>
 
-                    <button class="nav-item" data-view="inventory" title="Inventory"> <!-- CHANGED: inventory-check to inventory -->
+                    <button class="nav-item" data-view="inventory" title="Inventory">
                         <span>📦</span>
                         <span class="nav-label">Inventory</span>
                     </button>
@@ -585,7 +585,7 @@ class FarmManagementApp {
         const moduleMap = {
             'dashboard': 'DashboardModule',
             'income-expenses': 'IncomeExpensesModule',
-            'inventory': 'InventoryModule', // CHANGED: inventory-check to inventory
+            'inventory': 'InventoryModule',
             'orders': 'OrdersModule',
             'sales-record': 'SalesRecordModule',
             'feed-record': 'FeedRecordModule',
@@ -601,7 +601,7 @@ class FarmManagementApp {
         const sectionNames = {
             'dashboard': 'Dashboard',
             'income-expenses': 'Income & Expenses',
-            'inventory': 'Inventory', // CHANGED: inventory-check to inventory
+            'inventory': 'Inventory',
             'orders': 'Orders',
             'sales-record': 'Sales Record',
             'feed-record': 'Feed Records',
