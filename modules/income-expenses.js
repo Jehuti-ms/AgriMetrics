@@ -179,32 +179,32 @@ renderModule() {
         </div>
       </div>
 
-      <!-- Expense Categories -->
-      <div id="categories-list" class="categories-list">
-      <div class="glass-card">
-        <div class="header-flex">
-          <h3>Expense Categories</h3>
-          <button class="btn-outline" id="clear-categories">Clear All</button>
-        </div>
-        <div id="categories-list">
-          <!-- Example category row -->
-          <div class="transaction-row">
-            <span class="transaction-desc">📂 Feed</span>
-            <span class="transaction-amount">💵 $120.00</span>
-            <span class="transaction-category">📊 45% of expenses</span>
-            <span class="transaction-actions">
-              <button class="icon-btn">✏️</button>
-              <button class="icon-btn">🗑️</button>
-            </span>
-          </div>
+    <!-- Expense Categories -->
+<div class="glass-card">
+  <div class="header-flex">
+    <h3>Expense Categories</h3>
+    <button class="btn-outline" id="clear-categories">Clear All</button>
+  </div>
+  <div id="categories-list" class="categories-list">
+    <!-- Example category row -->
+    <div class="transaction-row">
+      <span class="transaction-desc">📂 Feed</span>
+      <span class="transaction-amount">💵 $120.00</span>
+      <span class="transaction-category">📊 45% of expenses</span>
+      <span class="transaction-actions">
+        <button class="icon-btn">✏️</button>
+        <button class="icon-btn">🗑️</button>
+      </span>
+    </div>
 
-          <!-- Empty state -->
-          <div class="transaction-row income-empty-state">
-            <span class="transaction-desc">📋 No categories yet</span>
-            <span class="transaction-category">➕ Add expenses to see categories</span>
-          </div>
-        </div>
-      </div>
+    <!-- Empty state -->
+    <div class="transaction-row income-empty-state">
+      <span class="transaction-desc">📋 No categories yet</span>
+      <span class="transaction-category">➕ Add expenses to see categories</span>
+    </div>
+  </div>
+</div>
+
 
       <!-- Transaction Form (Initially hidden) -->
       <div id="transaction-form-container" class="hidden">
