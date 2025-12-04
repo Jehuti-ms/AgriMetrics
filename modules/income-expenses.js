@@ -170,28 +170,26 @@ const IncomeExpensesModule = {
                         </div>
                     </div>
                     
-                    <!-- Expense Categories -->
+                   <!-- Expense Categories -->
                     <div class="content-column">
-                        <div class="glass-card">
-                        
-                            <h3>Expense Categories</h3>
-                            <button class="btn-outline" id="clear-categories">Clear All</button>
-                          </div>
-                          <div id="categories-list">
-                            <div class="transaction-row">
-                              <span class="transaction-desc">📂 Feed & Nutrition</span>
-                              <span class="transaction-amount">💵 $1,500.00</span>
-                              <span class="transaction-percent">📊 22.7%</span>
-                              <span class="transaction-actions">
-                                <button class="icon-btn">✏️</button>
-                                <button class="icon-btn">🗑️</button>
-                              </span>
-                            </div>
+                      <div class="glass-card">
+                        <div class="header-flex">
+                          <h3>Expense Categories</h3>
+                          <button class="btn-outline" id="clear-categories">Clear All</button>
+                        </div>
+                        <div id="categories-list">
+                          <div class="transaction-row">
+                            <span class="transaction-desc">📂 Feed & Nutrition</span>
+                            <span class="transaction-amount">💵 $1,500.00</span>
+                            <span class="transaction-percent">📊 22.7%</span>
+                            <span class="transaction-actions">
+                              <button class="icon-btn">✏️</button>
+                              <button class="icon-btn">🗑️</button>
+                            </span>
                           </div>
                         </div>
-                    </div>
-                    
-            
+                      </div>
+                    </div>         
 
                 <!-- Footer -->
                 <div class="module-footer">
