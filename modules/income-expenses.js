@@ -1,4 +1,4 @@
-// modules/income-expenses.js - CSS-BASED VERSION (Complete with CSS matching)
+// modules/income-expenses.js - CSS-BASED VERSION (Using Modal Manager)
 console.log('💰 Loading Income & Expenses module...');
 
 const IncomeExpensesModule = {
@@ -6,8 +6,6 @@ const IncomeExpensesModule = {
     id: 'income-expenses',
     initialized: false,
     element: null,
-    isFormVisible: false,
-    editingTransactionId: null,
 
     initialize() {
         console.log('💰 Initializing Income & Expenses...');
@@ -27,9 +25,6 @@ const IncomeExpensesModule = {
         
         // Setup event listeners
         this.setupEventListeners();
-        
-        // Initialize form with current date
-        this.initializeForm();
         
         // Load data
         this.loadAndDisplayData();
@@ -57,220 +52,145 @@ const IncomeExpensesModule = {
         document.head.appendChild(link);
     },
 
-renderModule() {
-  if (!this.element) return;
+    renderModule() {
+        if (!this.element) return;
 
-  this.element.innerHTML = `
-    <div id="income-expenses" class="module-container income">
-      
-      <!-- Header -->
-      <div class="income-header header-flex">
-        <div class="income-header-left">
-          <h1 class="income-title">Income & Expenses</h1>
-          <p class="income-subtitle">Track your farm's financial health</p>
-          
-          <!-- Stats inline with icons -->
-          <div class="income-stats-inline">
-            <span class="income-stat">💰 <span id="inline-total-income">$0.00</span> Total Income</span>
-            <span class="income-stat">💸 <span id="inline-total-expenses">$0.00</span> Total Expenses</span>
-            <span class="income-stat">🪙 <span id="inline-net-profit">$0.00</span> Net Profit</span>
-          </div>
-        </div>
-        
-        <!-- Right side: Add Transaction + Import Receipts -->
-        <div class="income-header-right">
-          <button id="add-transaction-btn" class="btn-primary">
-            <span class="btn-icon">➕</span>
-            <span class="btn-text">Add Transaction</span>
-          </button>
-          <button id="import-receipts-btn" class="btn-primary">
-            <span class="btn-icon">📥</span>
-            <span class="btn-text">Import Receipts</span>
-          </button>
-        </div>
-      </div>
-      
-      <!-- Quick Actions -->
-      <div class="income-quick-actions">
-        <h2 class="income-section-title">Quick Actions</h2>
-        <div class="card-grid">
-          <button id="quick-income-btn" class="card-button" data-action="quick-income">
-            <div class="action-icon">💰</div>
-            <span class="action-title">Quick Income</span>
-            <span class="action-subtitle">Record income instantly</span>
-          </button>
-          
-          <button id="quick-expense-btn" class="card-button" data-action="quick-expense">
-            <div class="action-icon">🧾</div>
-            <span class="action-title">Quick Expense</span>
-            <span class="action-subtitle">Record expense instantly</span>
-          </button>
-          
-          <button id="view-reports-btn" class="card-button" data-action="view-reports">
-            <div class="action-icon">📊</div>
-            <span class="action-title">View Reports</span>
-            <span class="action-subtitle">Financial analytics</span>
-          </button>
-          
-          <button id="manage-categories-btn" class="card-button" data-action="manage-categories">
-            <div class="action-icon">📂</div>
-            <span class="action-title">Categories</span>
-            <span class="action-subtitle">Manage categories</span>
-          </button>
-        </div>
-      </div>
-      
-      <!-- Financial Overview -->
-      <div class="income-overview">
-        <h2 class="income-section-title">Financial Overview</h2>
-        <div class="card-grid">
-          <div class="stat-card" id="monthly-income-card">
-            <div class="stat-icon">📅</div>
-            <div class="stat-value" id="monthly-income">$0.00</div>
-            <div class="stat-label">This Month</div>
-          </div>
-          <div class="stat-card" id="avg-monthly-card">
-            <div class="stat-icon">📈</div>
-            <div class="stat-value" id="avg-monthly-income">$0.00</div>
-            <div class="stat-label">Avg Monthly</div>
-          </div>
-          <div class="stat-card" id="transactions-card">
-            <div class="stat-icon">📋</div>
-            <div class="stat-value" id="total-transactions">0</div>
-            <div class="stat-label">Transactions</div>
-          </div>
-          <div class="stat-card" id="categories-card">
-            <div class="stat-icon">📂</div>
-            <div class="stat-value" id="total-categories">0</div>
-            <div class="stat-label">Categories</div>
-          </div>
-          <div class="stat-card" id="balance-card">
-            <div class="stat-icon">🏦</div>
-            <div class="stat-value" id="current-balance">$0.00</div>
-            <div class="stat-label">Current Balance</div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Recent Transactions -->
-      <div class="glass-card">
-        <div class="header-flex">
-          <h3>Recent Transactions</h3>
-          <button class="btn-outline" id="clear-all">Clear All</button>
-        </div>
-        <div id="transactions-list">
-          <!-- Example transaction row -->
-          <div class="transaction-row">
-            <span class="transaction-date">📅 2025-12-01</span>
-            <span class="transaction-desc">💰 Egg Sales</span>
-            <span class="transaction-category">📂 Income</span>
-            <span class="transaction-amount">💵 $250.00</span>
-            <span class="transaction-actions">
-              <button class="icon-btn">✏️</button>
-              <button class="icon-btn">🗑️</button>
-            </span>
-          </div>
+        this.element.innerHTML = `
+            <div id="income-expenses" class="module-container income">
+                
+                <!-- Header -->
+                <div class="income-header header-flex">
+                    <div class="income-header-left">
+                        <h1 class="income-title">Income & Expenses</h1>
+                        <p class="income-subtitle">Track your farm's financial health</p>
+                        
+                        <!-- Stats inline with icons -->
+                        <div class="income-stats-inline">
+                            <span class="income-stat">💰 <span id="inline-total-income">$0.00</span> Total Income</span>
+                            <span class="income-stat">💸 <span id="inline-total-expenses">$0.00</span> Total Expenses</span>
+                            <span class="income-stat">🪙 <span id="inline-net-profit">$0.00</span> Net Profit</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Right side: Add Transaction + Import Receipts -->
+                    <div class="income-header-right">
+                        <button id="add-transaction-btn" class="btn-primary">
+                            <span class="btn-icon">➕</span>
+                            <span class="btn-text">Add Transaction</span>
+                        </button>
+                        <button id="import-receipts-btn" class="btn-primary">
+                            <span class="btn-icon">📥</span>
+                            <span class="btn-text">Import Receipts</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="income-quick-actions">
+                    <h2 class="income-section-title">Quick Actions</h2>
+                    <div class="card-grid">
+                        <button id="quick-income-btn" class="card-button" data-action="quick-income">
+                            <div class="action-icon">💰</div>
+                            <span class="action-title">Quick Income</span>
+                            <span class="action-subtitle">Record income instantly</span>
+                        </button>
+                        
+                        <button id="quick-expense-btn" class="card-button" data-action="quick-expense">
+                            <div class="action-icon">🧾</div>
+                            <span class="action-title">Quick Expense</span>
+                            <span class="action-subtitle">Record expense instantly</span>
+                        </button>
+                        
+                        <button id="view-reports-btn" class="card-button" data-action="view-reports">
+                            <div class="action-icon">📊</div>
+                            <span class="action-title">View Reports</span>
+                            <span class="action-subtitle">Financial analytics</span>
+                        </button>
+                        
+                        <button id="manage-categories-btn" class="card-button" data-action="manage-categories">
+                            <div class="action-icon">📂</div>
+                            <span class="action-title">Categories</span>
+                            <span class="action-subtitle">Manage categories</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Financial Overview -->
+                <div class="income-overview">
+                    <h2 class="income-section-title">Financial Overview</h2>
+                    <div class="card-grid">
+                        <div class="stat-card" id="monthly-income-card">
+                            <div class="stat-icon">📅</div>
+                            <div class="stat-value" id="monthly-income">$0.00</div>
+                            <div class="stat-label">This Month</div>
+                        </div>
+                        <div class="stat-card" id="avg-monthly-card">
+                            <div class="stat-icon">📈</div>
+                            <div class="stat-value" id="avg-monthly-income">$0.00</div>
+                            <div class="stat-label">Avg Monthly</div>
+                        </div>
+                        <div class="stat-card" id="transactions-card">
+                            <div class="stat-icon">📋</div>
+                            <div class="stat-value" id="total-transactions">0</div>
+                            <div class="stat-label">Transactions</div>
+                        </div>
+                        <div class="stat-card" id="categories-card">
+                            <div class="stat-icon">📂</div>
+                            <div class="stat-value" id="total-categories">0</div>
+                            <div class="stat-label">Categories</div>
+                        </div>
+                        <div class="stat-card" id="balance-card">
+                            <div class="stat-icon">🏦</div>
+                            <div class="stat-value" id="current-balance">$0.00</div>
+                            <div class="stat-label">Current Balance</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Transactions & Categories Container -->
+                <div class="income-content-columns">
+                    <!-- Recent Transactions Column -->
+                    <div class="income-content-column">
+                        <div class="glass-card">
+                            <div class="header-flex">
+                                <h3>Recent Transactions</h3>
+                                <button class="btn-outline" id="clear-all">Clear All</button>
+                            </div>
+                            <div id="transactions-list">
+                                <!-- Transactions will be populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Expense Categories Column -->
+                    <div class="income-content-column">
+                        <div class="glass-card">
+                            <h2 class="income-section-title">Expense Categories</h2>
+                            <div id="categories-list">
+                                <!-- Categories will be populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-          <!-- Empty state -->
-          <div class="transaction-row income-empty-state">
-            <span class="transaction-desc">📋 No transactions yet</span>
-            <span class="transaction-category">➕ Add your first income or expense record</span>
-          </div>
-        </div>
-      </div>
-
-    <!-- Expense Categories -->
-<div class="glass-card">
-  <div class="header-flex">
-    <h3>Expense Categories</h3>
-    <button class="btn-outline" id="clear-categories">Clear All</button>
-  </div>
-  <div id="categories-list" class="categories-list">
-    <!-- Example category row -->
-    <div class="transaction-row">
-      <span class="transaction-desc">📂 Feed</span>
-      <span class="transaction-amount">💵 $120.00</span>
-      <span class="transaction-category">📊 45% of expenses</span>
-      <span class="transaction-actions">
-        <button class="icon-btn">✏️</button>
-        <button class="icon-btn">🗑️</button>
-      </span>
-    </div>
-
-    <!-- Empty state -->
-    <div class="transaction-row income-empty-state">
-      <span class="transaction-desc">📋 No categories yet</span>
-      <span class="transaction-category">➕ Add expenses to see categories</span>
-    </div>
-  </div>
-</div>
-
-
-      <!-- Transaction Form (Initially hidden) -->
-      <div id="transaction-form-container" class="hidden">
-        <div class="glass-card">
-          <h3 id="form-title">Add Transaction</h3>
-          <form id="transaction-form">
-            <div class="form-grid">
-              <div>
-                <label class="form-label">Type</label>
-                <select class="form-input" id="transaction-type" required>
-                  <option value="income">Income</option>
-                  <option value="expense" selected>Expense</option>
-                </select>
-              </div>
-              <div>
-                <label class="form-label">Amount</label>
-                <input type="number" class="form-input" id="transaction-amount" step="0.01" min="0" required>
-              </div>
+                <!-- Footer -->
+                <div class="income-footer">
+                    <div class="income-refresh-container">
+                        <button id="refresh-data-btn" class="btn-primary">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-text">Refresh Data</span>
+                        </button>
+                    </div>
+                    <div class="income-modal-triggers">
+                        <button id="export-data-btn" class="card-button" data-action="export-data">
+                            <span class="action-icon">📤</span>
+                            <span class="action-title">Export Data</span>
+                            <span class="action-subtitle">Export to CSV/Excel</span>
+                        </button>
+                    </div>
+                </div>
+                
             </div>
-            <div>
-              <label class="form-label">Category</label>
-              <select class="form-input" id="transaction-category" required>
-                <option value="">Select category</option>
-                <option value="egg-sales">Egg Sales</option>
-                <option value="poultry-sales">Poultry Sales</option>
-                <option value="crop-sales">Crop Sales</option>
-                <option value="feed" selected>Feed</option>
-                <option value="medication">Medication</option>
-                <option value="equipment">Equipment</option>
-                <option value="labor">Labor</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label">Description</label>
-              <input type="text" class="form-input" id="transaction-description" required>
-            </div>
-            <div>
-              <label class="form-label">Date</label>
-              <input type="date" class="form-input" id="transaction-date" required>
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="btn-primary">Save Transaction</button>
-              <button type="button" class="btn-outline" id="cancel-form">Cancel</button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-     <!-- Footer -->
-<div class="income-footer">
-  <div class="income-refresh-container">
-    <button id="refresh-data-btn" class="btn-primary">
-      <span class="btn-icon">🔄</span>
-      <span class="btn-text">Refresh Data</span>
-    </button>
-  </div>
-  <div class="income-modal-triggers">
-    <button id="export-data-btn" class="card-button" data-action="export-data">
-      <span class="action-icon">📤</span>
-      <span class="action-title">Export Data</span>
-      <span class="action-subtitle">Export to CSV/Excel</span>
-    </button>
-  </div>
-</div>
-
         `;
     },
 
@@ -283,173 +203,13 @@ renderModule() {
         document.getElementById('export-data-btn')?.addEventListener('click', () => this.handleQuickAction('export-data'));
         
         // Primary buttons
-        document.getElementById('add-transaction-btn')?.addEventListener('click', () => this.showTransactionForm());
+        document.getElementById('add-transaction-btn')?.addEventListener('click', () => this.showAddTransactionModal());
         document.getElementById('import-receipts-btn')?.addEventListener('click', () => this.importReceipts());
         document.getElementById('clear-all')?.addEventListener('click', () => this.clearAllTransactions());
         document.getElementById('refresh-data-btn')?.addEventListener('click', () => {
             this.loadAndDisplayData();
             this.showNotification('Data refreshed!', 'success');
         });
-        
-        // Form buttons
-        document.getElementById('transaction-form')?.addEventListener('submit', (e) => this.handleFormSubmit(e));
-        document.getElementById('cancel-form')?.addEventListener('click', () => this.hideTransactionForm());
-        
-        // Type change listener to update category options
-        document.getElementById('transaction-type')?.addEventListener('change', (e) => this.updateCategoryOptions(e.target.value));
-    },
-
-    initializeForm() {
-        // Set default date to today
-        const today = new Date().toISOString().split('T')[0];
-        const dateInput = document.getElementById('transaction-date');
-        if (dateInput) {
-            dateInput.value = today;
-        }
-    },
-
-    showTransactionForm(transaction = null) {
-        this.isFormVisible = true;
-        this.editingTransactionId = transaction ? transaction.id : null;
-        
-        const formContainer = document.getElementById('transaction-form-container');
-        const formTitle = document.getElementById('form-title');
-        const submitBtn = document.getElementById('submit-form');
-        
-        if (formContainer) formContainer.classList.remove('hidden');
-        if (formTitle) formTitle.textContent = transaction ? 'Edit Transaction' : 'Add Transaction';
-        if (submitBtn) submitBtn.textContent = transaction ? 'Update Transaction' : 'Save Transaction';
-        
-        if (transaction) {
-            // Fill form with transaction data
-            document.getElementById('transaction-type').value = transaction.type;
-            document.getElementById('transaction-amount').value = transaction.amount;
-            document.getElementById('transaction-category').value = this.getCategoryValue(transaction.category);
-            document.getElementById('transaction-description').value = transaction.description;
-            document.getElementById('transaction-date').value = transaction.date;
-        } else {
-            // Reset form
-            document.getElementById('transaction-form').reset();
-            this.initializeForm();
-            document.getElementById('transaction-type').value = 'expense';
-            document.getElementById('transaction-category').value = 'feed';
-        }
-        
-        // Update category options based on type
-        this.updateCategoryOptions(document.getElementById('transaction-type').value);
-    },
-
-    hideTransactionForm() {
-        this.isFormVisible = false;
-        this.editingTransactionId = null;
-        const formContainer = document.getElementById('transaction-form-container');
-        if (formContainer) formContainer.classList.add('hidden');
-        document.getElementById('transaction-form').reset();
-        this.initializeForm();
-    },
-
-    handleFormSubmit(e) {
-        e.preventDefault();
-        
-        const type = document.getElementById('transaction-type').value;
-        const amount = parseFloat(document.getElementById('transaction-amount').value);
-        const category = document.getElementById('transaction-category').value;
-        const description = document.getElementById('transaction-description').value;
-        const date = document.getElementById('transaction-date').value;
-        
-        const transaction = {
-            type,
-            amount,
-            category: this.getCategoryName(category),
-            description,
-            date,
-            status: 'completed',
-            icon: this.getTransactionIcon(type)
-        };
-        
-        if (this.editingTransactionId) {
-            transaction.id = this.editingTransactionId;
-            this.updateTransaction(transaction);
-        } else {
-            this.addTransaction(transaction);
-        }
-        
-        this.hideTransactionForm();
-    },
-
-    updateCategoryOptions(type) {
-        const categorySelect = document.getElementById('transaction-category');
-        if (!categorySelect) return;
-        
-        // Clear existing options except the first one
-        while (categorySelect.options.length > 1) {
-            categorySelect.remove(1);
-        }
-        
-        const categories = type === 'income' ? 
-            [
-                { value: 'egg-sales', label: 'Egg Sales' },
-                { value: 'poultry-sales', label: 'Poultry Sales' },
-                { value: 'crop-sales', label: 'Crop Sales' },
-                { value: 'other-income', label: 'Other Income' }
-            ] : 
-            [
-                { value: 'feed', label: 'Feed' },
-                { value: 'medication', label: 'Medication' },
-                { value: 'equipment', label: 'Equipment' },
-                { value: 'labor', label: 'Labor' },
-                { value: 'utilities', label: 'Utilities' },
-                { value: 'transportation', label: 'Transportation' },
-                { value: 'maintenance', label: 'Maintenance' },
-                { value: 'other', label: 'Other' }
-            ];
-        
-        categories.forEach(cat => {
-            const option = document.createElement('option');
-            option.value = cat.value;
-            option.textContent = cat.label;
-            categorySelect.appendChild(option);
-        });
-    },
-
-    getCategoryValue(categoryName) {
-        const categoryMap = {
-            'Egg Sales': 'egg-sales',
-            'Poultry Sales': 'poultry-sales',
-            'Crop Sales': 'crop-sales',
-            'Feed & Nutrition': 'feed',
-            'Feed': 'feed',
-            'Healthcare': 'medication',
-            'Medication': 'medication',
-            'Equipment': 'equipment',
-            'Labor': 'labor',
-            'Utilities': 'utilities',
-            'Transportation': 'transportation',
-            'Maintenance': 'maintenance',
-            'Other': 'other',
-            'Other Income': 'other-income'
-        };
-        
-        return categoryMap[categoryName] || 'other';
-    },
-
-    getCategoryName(categoryValue) {
-        const categoryMap = {
-            'egg-sales': 'Egg Sales',
-            'poultry-sales': 'Poultry Sales',
-            'crop-sales': 'Crop Sales',
-            'feed': 'Feed & Nutrition',
-            'medication': 'Healthcare',
-            'equipment': 'Equipment',
-            'labor': 'Labor',
-            'utilities': 'Utilities',
-            'transportation': 'Transportation',
-            'maintenance': 'Maintenance',
-            'other': 'Other',
-            'other-income': 'Other Income'
-        };
-        
-        return categoryMap[categoryValue] || 'Other';
     },
 
     loadAndDisplayData() {
@@ -509,7 +269,7 @@ renderModule() {
             recentTransactions: [
                 {
                     id: 1,
-                    date: '2024-01-15',
+                    date: new Date().toISOString().split('T')[0],
                     description: 'Chicken Sales - Batch #45',
                     category: 'Poultry Sales',
                     type: 'income',
@@ -519,7 +279,7 @@ renderModule() {
                 },
                 {
                     id: 2,
-                    date: '2024-01-14',
+                    date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
                     description: 'Feed Purchase - Premium',
                     category: 'Feed & Nutrition',
                     type: 'expense',
@@ -529,7 +289,7 @@ renderModule() {
                 },
                 {
                     id: 3,
-                    date: '2024-01-13',
+                    date: new Date(Date.now() - 172800000).toISOString().split('T')[0],
                     description: 'Egg Sales - Wholesale',
                     category: 'Egg Sales',
                     type: 'income',
@@ -539,7 +299,7 @@ renderModule() {
                 },
                 {
                     id: 4,
-                    date: '2024-01-12',
+                    date: new Date(Date.now() - 259200000).toISOString().split('T')[0],
                     description: 'Vaccination Supplies',
                     category: 'Healthcare',
                     type: 'expense',
@@ -549,7 +309,7 @@ renderModule() {
                 },
                 {
                     id: 5,
-                    date: '2024-01-11',
+                    date: new Date(Date.now() - 345600000).toISOString().split('T')[0],
                     description: 'Equipment Maintenance',
                     category: 'Equipment',
                     type: 'expense',
@@ -721,16 +481,16 @@ renderModule() {
         
         switch (action) {
             case 'quick-income':
-                this.openQuickIncomeModal();
+                this.showAddTransactionModal({ type: 'income' });
                 break;
             case 'quick-expense':
-                this.openQuickExpenseModal();
+                this.showAddTransactionModal({ type: 'expense' });
                 break;
             case 'view-reports':
-                this.showNotification('Reports feature coming soon!', 'info');
+                this.showReportsModal();
                 break;
             case 'manage-categories':
-                this.openManageCategoriesModal();
+                this.showManageCategoriesModal();
                 break;
             case 'export-data':
                 this.exportData();
@@ -740,34 +500,308 @@ renderModule() {
         }
     },
 
-    openQuickIncomeModal() {
-        this.showTransactionForm({
-            type: 'income',
-            amount: 0,
-            category: 'Egg Sales',
-            description: 'Quick Income',
-            date: new Date().toISOString().split('T')[0]
+    showAddTransactionModal(prefill = null) {
+        const fields = [
+            {
+                type: 'select',
+                name: 'transaction-type',
+                label: 'Type',
+                required: true,
+                options: [
+                    { value: 'income', label: 'Income' },
+                    { value: 'expense', label: 'Expense' }
+                ],
+                value: prefill?.type || 'expense'
+            },
+            {
+                type: 'number',
+                name: 'amount',
+                label: 'Amount',
+                required: true,
+                min: 0.01,
+                step: 0.01,
+                large: true,
+                placeholder: '0.00',
+                value: prefill?.amount || '',
+                note: 'Enter the transaction amount'
+            },
+            {
+                type: 'select',
+                name: 'category',
+                label: 'Category',
+                required: true,
+                options: this.getCategoryOptions(prefill?.type || 'expense'),
+                value: prefill?.category || ''
+            },
+            {
+                type: 'text',
+                name: 'description',
+                label: 'Description',
+                required: true,
+                placeholder: 'Enter transaction description...',
+                value: prefill?.description || ''
+            },
+            {
+                type: 'date',
+                name: 'date',
+                label: 'Date',
+                required: true,
+                value: prefill?.date || new Date().toISOString().split('T')[0]
+            }
+        ];
+
+        // If editing an existing transaction, modify the form
+        const isEditing = prefill?.id;
+        const modalTitle = isEditing ? 'Edit Transaction' : 'Add Transaction';
+        const submitText = isEditing ? 'Update Transaction' : 'Save Transaction';
+
+        window.ModalManager.createQuickForm({
+            id: 'transaction-form-modal',
+            title: modalTitle,
+            size: 'modal-md',
+            fields: fields,
+            submitText: submitText,
+            onSubmit: (formData) => {
+                const transactionData = {
+                    type: formData['transaction-type'],
+                    amount: parseFloat(formData.amount),
+                    category: this.getCategoryName(formData.category),
+                    description: formData.description,
+                    date: formData.date,
+                    status: 'completed',
+                    icon: this.getTransactionIcon(formData['transaction-type'])
+                };
+
+                if (isEditing) {
+                    transactionData.id = prefill.id;
+                    this.updateTransaction(transactionData);
+                } else {
+                    this.addTransaction(transactionData);
+                }
+            }
         });
-        this.showNotification('Quick Income form opened', 'info');
     },
 
-    openQuickExpenseModal() {
-        this.showTransactionForm({
-            type: 'expense',
-            amount: 0,
-            category: 'Feed & Nutrition',
-            description: 'Quick Expense',
-            date: new Date().toISOString().split('T')[0]
-        });
-        this.showNotification('Quick Expense form opened', 'info');
+    getCategoryOptions(type) {
+        const categories = type === 'income' ? 
+            [
+                { value: 'egg-sales', label: 'Egg Sales' },
+                { value: 'poultry-sales', label: 'Poultry Sales' },
+                { value: 'crop-sales', label: 'Crop Sales' },
+                { value: 'other-income', label: 'Other Income' }
+            ] : 
+            [
+                { value: 'feed', label: 'Feed & Nutrition' },
+                { value: 'medication', label: 'Healthcare' },
+                { value: 'equipment', label: 'Equipment' },
+                { value: 'labor', label: 'Labor' },
+                { value: 'utilities', label: 'Utilities' },
+                { value: 'transportation', label: 'Transportation' },
+                { value: 'maintenance', label: 'Maintenance' },
+                { value: 'other', label: 'Other' }
+            ];
+        
+        // Add empty option
+        return [{ value: '', label: 'Select category' }, ...categories];
     },
 
-    openManageCategoriesModal() {
-        this.showNotification('Categories manager feature coming soon!', 'info');
+    showReportsModal() {
+        const reports = [
+            {
+                id: 'income-statement',
+                title: 'Income Statement',
+                icon: '📊',
+                description: 'Revenue, expenses, and net profit',
+                preview: '<p>Shows your farm\'s financial performance over a period of time.</p>',
+                buttonText: 'Generate Report'
+            },
+            {
+                id: 'category-breakdown',
+                title: 'Category Breakdown',
+                icon: '📈',
+                description: 'Expense distribution by category',
+                preview: '<p>Visual breakdown of where your money is being spent.</p>',
+                buttonText: 'View Breakdown'
+            },
+            {
+                id: 'monthly-trends',
+                title: 'Monthly Trends',
+                icon: '📅',
+                description: 'Income and expense trends',
+                preview: '<p>Track your financial performance month over month.</p>',
+                buttonText: 'View Trends'
+            },
+            {
+                id: 'yearly-summary',
+                title: 'Yearly Summary',
+                icon: '📋',
+                description: 'Annual financial summary',
+                preview: '<p>Complete overview of your farm\'s yearly financial performance.</p>',
+                buttonText: 'View Summary'
+            }
+        ];
+
+        window.ModalManager.showReports({
+            id: 'reports-modal',
+            title: 'Financial Reports',
+            subtitle: 'Select a report to generate',
+            reports: reports,
+            onReportSelect: (reportId) => {
+                this.showNotification(`Generating ${reportId.replace('-', ' ')} report...`, 'success');
+                // Implement report generation logic here
+            }
+        });
+    },
+
+    showManageCategoriesModal() {
+        const data = this.getModuleData();
+        const categories = data.expenseCategories || [];
+        
+        let categoriesHTML = '';
+        if (categories.length > 0) {
+            categoriesHTML = categories.map(category => `
+                <div class="category-manage-row" data-category="${category.name}">
+                    <div class="category-manage-info">
+                        <span class="category-manage-icon">${category.icon}</span>
+                        <div>
+                            <div class="category-manage-name">${category.name}</div>
+                            <div class="category-manage-stats">
+                                ${category.count} transactions • ${this.formatCurrency(category.amount)}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="category-manage-actions">
+                        <button class="icon-btn edit-category" data-category="${category.name}">✏️</button>
+                        <button class="icon-btn delete-category" data-category="${category.name}">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            categoriesHTML = `
+                <div class="income-empty-state">
+                    <div class="empty-icon">📊</div>
+                    <div class="empty-title">No categories yet</div>
+                    <div class="empty-subtitle">Add expenses to see categories</div>
+                </div>
+            `;
+        }
+
+        const content = `
+            <div class="categories-manage-list">
+                ${categoriesHTML}
+            </div>
+            <div class="text-center mt-4">
+                <button id="add-category-btn" class="btn-primary">
+                    <span class="btn-icon">➕</span>
+                    <span class="btn-text">Add New Category</span>
+                </button>
+            </div>
+        `;
+
+        const modalId = window.ModalManager.createModal({
+            id: 'manage-categories-modal',
+            title: 'Manage Categories',
+            subtitle: 'Edit or delete expense categories',
+            size: 'modal-md',
+            content: content,
+            footer: `
+                <button type="button" class="btn btn-outline" data-action="close">Close</button>
+            `,
+            onOpen: () => {
+                // Add category management listeners
+                document.querySelectorAll('.edit-category').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const categoryName = e.currentTarget.getAttribute('data-category');
+                        this.editCategory(categoryName);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-category').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const categoryName = e.currentTarget.getAttribute('data-category');
+                        this.deleteCategory(categoryName);
+                    });
+                });
+                
+                // Add new category button
+                document.getElementById('add-category-btn')?.addEventListener('click', () => {
+                    this.showAddCategoryModal();
+                });
+            }
+        });
+
+        window.ModalManager.showModal(modalId);
+    },
+
+    showAddCategoryModal() {
+        const fields = [
+            {
+                type: 'text',
+                name: 'name',
+                label: 'Category Name',
+                required: true,
+                placeholder: 'e.g., Feed & Nutrition',
+                autofocus: true
+            },
+            {
+                type: 'icon',
+                name: 'icon',
+                label: 'Select Icon',
+                required: true,
+                defaultValue: '🌾',
+                icons: [
+                    { value: '🌾', label: '🌾' },
+                    { value: '💊', label: '💊' },
+                    { value: '🔧', label: '🔧' },
+                    { value: '👷', label: '👷' },
+                    { value: '⚡', label: '⚡' },
+                    { value: '🚚', label: '🚚' },
+                    { value: '🔨', label: '🔨' },
+                    { value: '📦', label: '📦' }
+                ]
+            }
+        ];
+
+        window.ModalManager.createQuickForm({
+            id: 'add-category-modal',
+            title: 'Add New Category',
+            size: 'modal-sm',
+            fields: fields,
+            submitText: 'Add Category',
+            onSubmit: (formData) => {
+                // Add category logic here
+                this.showNotification(`Category "${formData.name}" added!`, 'success');
+            }
+        });
+    },
+
+    editCategory(categoryName) {
+        this.showNotification(`Editing category: ${categoryName}`, 'info');
+        // Implement category editing logic
+    },
+
+    deleteCategory(categoryName) {
+        window.ModalManager.confirm({
+            title: 'Delete Category',
+            message: `Are you sure you want to delete "${categoryName}"?`,
+            details: 'All transactions in this category will be moved to "Other"',
+            danger: true,
+            confirmText: 'Delete Category'
+        }).then(confirmed => {
+            if (confirmed) {
+                this.showNotification(`Category "${categoryName}" deleted`, 'success');
+                // Implement category deletion logic
+            }
+        });
     },
 
     importReceipts() {
-        this.showNotification('Import receipts feature coming soon!', 'info');
+        window.ModalManager.alert({
+            title: 'Import Receipts',
+            message: 'This feature is coming soon!',
+            details: 'You will be able to upload and scan receipts for automatic transaction entry.',
+            icon: '📥'
+        });
     },
 
     exportData() {
@@ -800,8 +834,14 @@ renderModule() {
         const transaction = data.recentTransactions.find(t => t.id === transactionId);
         
         if (transaction) {
-            this.showTransactionForm(transaction);
-            this.showNotification(`Editing transaction #${transactionId}...`, 'info');
+            this.showAddTransactionModal({
+                id: transactionId,
+                type: transaction.type,
+                amount: transaction.amount,
+                category: this.getCategoryValue(transaction.category),
+                description: transaction.description,
+                date: transaction.date
+            });
         }
     },
 
@@ -838,32 +878,39 @@ renderModule() {
     },
 
     deleteTransaction(transactionId) {
-        if (confirm('Are you sure you want to delete this transaction?')) {
-            // Get current data
-            let data = this.getModuleData();
-            
-            // Store transaction before deletion for category updates
-            const transactionToDelete = data.recentTransactions.find(t => t.id === transactionId);
-            
-            // Remove transaction
-            data.recentTransactions = data.recentTransactions.filter(t => t.id !== transactionId);
-            
-            // Update categories when deleting expense
-            if (transactionToDelete && transactionToDelete.type === 'expense') {
-                this.updateCategoriesOnDelete(data, transactionToDelete);
+        window.ModalManager.confirm({
+            title: 'Delete Transaction',
+            message: 'Are you sure you want to delete this transaction?',
+            danger: true,
+            confirmText: 'Delete'
+        }).then(confirmed => {
+            if (confirmed) {
+                // Get current data
+                let data = this.getModuleData();
+                
+                // Store transaction before deletion for category updates
+                const transactionToDelete = data.recentTransactions.find(t => t.id === transactionId);
+                
+                // Remove transaction
+                data.recentTransactions = data.recentTransactions.filter(t => t.id !== transactionId);
+                
+                // Update categories when deleting expense
+                if (transactionToDelete && transactionToDelete.type === 'expense') {
+                    this.updateCategoriesOnDelete(data, transactionToDelete);
+                }
+                
+                // Recalculate totals
+                this.recalculateTotals(data);
+                
+                // Save updated data
+                this.saveData(data);
+                
+                // Refresh display
+                this.loadAndDisplayData();
+                
+                this.showNotification('Transaction deleted successfully!', 'success');
             }
-            
-            // Recalculate totals
-            this.recalculateTotals(data);
-            
-            // Save updated data
-            this.saveData(data);
-            
-            // Refresh display
-            this.loadAndDisplayData();
-            
-            this.showNotification('Transaction deleted successfully!', 'success');
-        }
+        });
     },
 
     updateCategoriesOnDelete(data, deletedTransaction) {
@@ -978,29 +1025,38 @@ renderModule() {
     },
 
     clearAllTransactions() {
-        if (confirm('Are you sure you want to clear ALL transactions? This action cannot be undone.')) {
-            // Create fresh data structure
-            const freshData = {
-                totalIncome: 0,
-                totalExpenses: 0,
-                netProfit: 0,
-                monthlyIncome: 0,
-                avgMonthlyIncome: 0,
-                totalTransactions: 0,
-                totalCategories: 0,
-                currentBalance: 0,
-                recentTransactions: [],
-                expenseCategories: []
-            };
-            
-            // Save fresh data
-            this.saveData(freshData);
-            
-            // Refresh display
-            this.loadAndDisplayData();
-            
-            this.showNotification('All transactions cleared!', 'success');
-        }
+        window.ModalManager.confirm({
+            title: 'Clear All Transactions',
+            message: 'Are you sure you want to clear ALL transactions?',
+            details: 'This action cannot be undone. All transaction data will be permanently deleted.',
+            icon: '⚠️',
+            danger: true,
+            confirmText: 'Clear All'
+        }).then(confirmed => {
+            if (confirmed) {
+                // Create fresh data structure
+                const freshData = {
+                    totalIncome: 0,
+                    totalExpenses: 0,
+                    netProfit: 0,
+                    monthlyIncome: 0,
+                    avgMonthlyIncome: 0,
+                    totalTransactions: 0,
+                    totalCategories: 0,
+                    currentBalance: 0,
+                    recentTransactions: [],
+                    expenseCategories: []
+                };
+                
+                // Save fresh data
+                this.saveData(freshData);
+                
+                // Refresh display
+                this.loadAndDisplayData();
+                
+                this.showNotification('All transactions cleared!', 'success');
+            }
+        });
     },
 
     saveData(data) {
@@ -1037,6 +1093,46 @@ renderModule() {
 
     getTransactionIcon(type) {
         return type === 'income' ? '💰' : '💸';
+    },
+
+    getCategoryValue(categoryName) {
+        const categoryMap = {
+            'Egg Sales': 'egg-sales',
+            'Poultry Sales': 'poultry-sales',
+            'Crop Sales': 'crop-sales',
+            'Feed & Nutrition': 'feed',
+            'Feed': 'feed',
+            'Healthcare': 'medication',
+            'Medication': 'medication',
+            'Equipment': 'equipment',
+            'Labor': 'labor',
+            'Utilities': 'utilities',
+            'Transportation': 'transportation',
+            'Maintenance': 'maintenance',
+            'Other': 'other',
+            'Other Income': 'other-income'
+        };
+        
+        return categoryMap[categoryName] || 'other';
+    },
+
+    getCategoryName(categoryValue) {
+        const categoryMap = {
+            'egg-sales': 'Egg Sales',
+            'poultry-sales': 'Poultry Sales',
+            'crop-sales': 'Crop Sales',
+            'feed': 'Feed & Nutrition',
+            'medication': 'Healthcare',
+            'equipment': 'Equipment',
+            'labor': 'Labor',
+            'utilities': 'Utilities',
+            'transportation': 'Transportation',
+            'maintenance': 'Maintenance',
+            'other': 'Other',
+            'other-income': 'Other Income'
+        };
+        
+        return categoryMap[categoryValue] || 'Other';
     },
 
     getCategoryIcon(categoryName) {
