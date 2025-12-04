@@ -52,147 +52,169 @@ const IncomeExpensesModule = {
         document.head.appendChild(link);
     },
 
-    renderModule() {
-        if (!this.element) return;
-
-        this.element.innerHTML = `
+           renderModule() {
+          if (!this.element) return;
+        
+          this.element.innerHTML = `
             <div id="income-expenses" class="module-container income">
-                
-                <!-- Header -->
-                <div class="income-header header-flex">
-                    <div class="income-header-left">
-                        <h1 class="income-title">Income & Expenses</h1>
-                        <p class="income-subtitle">Track your farm's financial health</p>
-                        
-                        <!-- Stats inline with icons -->
-                        <div class="income-stats-inline">
-                            <span class="income-stat">💰 <span id="inline-total-income">$0.00</span> Total Income</span>
-                            <span class="income-stat">💸 <span id="inline-total-expenses">$0.00</span> Total Expenses</span>
-                            <span class="income-stat">🪙 <span id="inline-net-profit">$0.00</span> Net Profit</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Right side: Add Transaction + Import Receipts -->
-                    <div class="income-header-right">
-                        <button id="add-transaction-btn" class="btn-primary">
-                            <span class="btn-icon">➕</span>
-                            <span class="btn-text">Add Transaction</span>
-                        </button>
-                        <button id="import-receipts-btn" class="btn-primary">
-                            <span class="btn-icon">📥</span>
-                            <span class="btn-text">Import Receipts</span>
-                        </button>
-                    </div>
+              
+              <!-- Header -->
+              <div class="income-header header-flex">
+                <div class="income-header-left">
+                  <h1 class="income-title">Income & Expenses</h1>
+                  <p class="income-subtitle">Track your farm's financial health</p>
+                  
+                  <!-- Stats inline with icons -->
+                  <div class="income-stats-inline">
+                    <span class="income-stat">💰 <span id="inline-total-income">$0.00</span> Total Income</span>
+                    <span class="income-stat">💸 <span id="inline-total-expenses">$0.00</span> Total Expenses</span>
+                    <span class="income-stat">🪙 <span id="inline-net-profit">$0.00</span> Net Profit</span>
+                  </div>
                 </div>
                 
-                <!-- Quick Actions -->
-                <div class="income-quick-actions">
-                    <h2 class="income-section-title">Quick Actions</h2>
-                    <div class="card-grid">
-                        <button id="quick-income-btn" class="card-button" data-action="quick-income">
-                            <div class="action-icon">💰</div>
-                            <span class="action-title">Quick Income</span>
-                            <span class="action-subtitle">Record income instantly</span>
-                        </button>
-                        
-                        <button id="quick-expense-btn" class="card-button" data-action="quick-expense">
-                            <div class="action-icon">🧾</div>
-                            <span class="action-title">Quick Expense</span>
-                            <span class="action-subtitle">Record expense instantly</span>
-                        </button>
-                        
-                        <button id="view-reports-btn" class="card-button" data-action="view-reports">
-                            <div class="action-icon">📊</div>
-                            <span class="action-title">View Reports</span>
-                            <span class="action-subtitle">Financial analytics</span>
-                        </button>
-                        
-                        <button id="manage-categories-btn" class="card-button" data-action="manage-categories">
-                            <div class="action-icon">📂</div>
-                            <span class="action-title">Categories</span>
-                            <span class="action-subtitle">Manage categories</span>
-                        </button>
+                <!-- Right side: Add Transaction + Import Receipts -->
+                <div class="income-header-right">
+                  <button id="add-transaction-btn" class="btn-primary">
+                    <span class="btn-icon">➕</span>
+                    <span class="btn-text">Add Transaction</span>
+                  </button>
+                  <button id="import-receipts-btn" class="btn-primary">
+                    <span class="btn-icon">📥</span>
+                    <span class="btn-text">Import Receipts</span>
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Quick Actions -->
+              <div class="income-quick-actions">
+                <h2 class="income-section-title">Quick Actions</h2>
+                <div class="card-grid">
+                  <button id="quick-income-btn" class="card-button" data-action="quick-income">
+                    <div class="action-icon">💰</div>
+                    <span class="action-title">Quick Income</span>
+                    <span class="action-subtitle">Record income instantly</span>
+                  </button>
+                  <button id="quick-expense-btn" class="card-button" data-action="quick-expense">
+                    <div class="action-icon">🧾</div>
+                    <span class="action-title">Quick Expense</span>
+                    <span class="action-subtitle">Record expense instantly</span>
+                  </button>
+                  <button id="view-reports-btn" class="card-button" data-action="view-reports">
+                    <div class="action-icon">📊</div>
+                    <span class="action-title">View Reports</span>
+                    <span class="action-subtitle">Financial analytics</span>
+                  </button>
+                  <button id="manage-categories-btn" class="card-button" data-action="manage-categories">
+                    <div class="action-icon">📂</div>
+                    <span class="action-title">Categories</span>
+                    <span class="action-subtitle">Manage categories</span>
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Financial Overview -->
+              <div class="income-overview">
+                <h2 class="income-section-title">Financial Overview</h2>
+                <div class="card-grid">
+                  <div class="stat-card" id="monthly-income-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-value" id="monthly-income">$0.00</div>
+                    <div class="stat-label">This Month</div>
+                  </div>
+                  <div class="stat-card" id="avg-monthly-card">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-value" id="avg-monthly-income">$0.00</div>
+                    <div class="stat-label">Avg Monthly</div>
+                  </div>
+                  <div class="stat-card" id="transactions-card">
+                    <div class="stat-icon">📋</div>
+                    <div class="stat-value" id="total-transactions">0</div>
+                    <div class="stat-label">Transactions</div>
+                  </div>
+                  <div class="stat-card" id="categories-card">
+                    <div class="stat-icon">📂</div>
+                    <div class="stat-value" id="total-categories">0</div>
+                    <div class="stat-label">Categories</div>
+                  </div>
+                  <div class="stat-card" id="balance-card">
+                    <div class="stat-icon">🏦</div>
+                    <div class="stat-value" id="current-balance">$0.00</div>
+                    <div class="stat-label">Current Balance</div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Recent Transactions & Expense Categories -->
+              <div class="income-content-columns">
+                
+                <!-- Recent Transactions -->
+                <div class="income-content-column">
+                  <div class="glass-card">
+                    <div class="header-flex">
+                      <h3>Recent Transactions</h3>
+                      <button class="btn-outline" id="clear-all">Clear All</button>
                     </div>
+                    <div id="transactions-list">
+                      <!-- Transaction rows populated dynamically -->
+                      <div class="transaction-row">
+                        <span class="transaction-date">📅 2025-12-01</span>
+                        <span class="transaction-desc">💰 Egg Sales</span>
+                        <span class="transaction-category">📂 Income</span>
+                        <span class="transaction-amount">💵 $250.00</span>
+                        <span class="transaction-actions">
+                          <button class="icon-btn">✏️</button>
+                          <button class="icon-btn">🗑️</button>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 
-                <!-- Financial Overview -->
-                <div class="income-overview">
-                    <h2 class="income-section-title">Financial Overview</h2>
-                    <div class="card-grid">
-                        <div class="stat-card" id="monthly-income-card">
-                            <div class="stat-icon">📅</div>
-                            <div class="stat-value" id="monthly-income">$0.00</div>
-                            <div class="stat-label">This Month</div>
-                        </div>
-                        <div class="stat-card" id="avg-monthly-card">
-                            <div class="stat-icon">📈</div>
-                            <div class="stat-value" id="avg-monthly-income">$0.00</div>
-                            <div class="stat-label">Avg Monthly</div>
-                        </div>
-                        <div class="stat-card" id="transactions-card">
-                            <div class="stat-icon">📋</div>
-                            <div class="stat-value" id="total-transactions">0</div>
-                            <div class="stat-label">Transactions</div>
-                        </div>
-                        <div class="stat-card" id="categories-card">
-                            <div class="stat-icon">📂</div>
-                            <div class="stat-value" id="total-categories">0</div>
-                            <div class="stat-label">Categories</div>
-                        </div>
-                        <div class="stat-card" id="balance-card">
-                            <div class="stat-icon">🏦</div>
-                            <div class="stat-value" id="current-balance">$0.00</div>
-                            <div class="stat-label">Current Balance</div>
-                        </div>
+                <!-- Expense Categories -->
+                <div class="income-content-column">
+                  <div class="glass-card">
+                    <div class="header-flex">
+                      <h3>Expense Categories</h3>
+                      <button class="btn-outline" id="clear-categories">Clear All</button>
                     </div>
+                    <div id="categories-list">
+                      <!-- Category rows populated dynamically -->
+                      <div class="transaction-row">
+                        <span class="transaction-desc">📂 Feed & Nutrition</span>
+                        <span class="transaction-amount">💵 $1,500.00</span>
+                        <span class="transaction-category">📊 22.7%</span>
+                        <span class="transaction-actions">
+                          <button class="icon-btn">✏️</button>
+                          <button class="icon-btn">🗑️</button>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 
-                <!-- Recent Transactions & Categories Container -->
-                <div class="income-content-columns">
-                    <!-- Recent Transactions Column -->
-                    <div class="income-content-column">
-                        <div class="glass-card">
-                            <div class="header-flex">
-                                <h3>Recent Transactions</h3>
-                                <button class="btn-outline" id="clear-all">Clear All</button>
-                            </div>
-                            <div id="transactions-list">
-                                <!-- Transactions will be populated dynamically -->
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Expense Categories Column -->
-                    <div class="income-content-column">
-                        <div class="glass-card">
-                            <h2 class="income-section-title">Expense Categories</h2>
-                            <div id="categories-list">
-                                <!-- Categories will be populated dynamically -->
-                            </div>
-                        </div>
-                    </div>
+              </div>
+        
+              <!-- Footer -->
+              <div class="income-footer">
+                <div class="income-refresh-container">
+                  <button id="refresh-data-btn" class="btn-primary">
+                    <span class="btn-icon">🔄</span>
+                    <span class="btn-text">Refresh Data</span>
+                  </button>
                 </div>
-
-                <!-- Footer -->
-                <div class="income-footer">
-                    <div class="income-refresh-container">
-                        <button id="refresh-data-btn" class="btn-primary">
-                            <span class="btn-icon">🔄</span>
-                            <span class="btn-text">Refresh Data</span>
-                        </button>
-                    </div>
-                    <div class="income-modal-triggers">
-                        <button id="export-data-btn" class="card-button" data-action="export-data">
-                            <span class="action-icon">📤</span>
-                            <span class="action-title">Export Data</span>
-                            <span class="action-subtitle">Export to CSV/Excel</span>
-                        </button>
-                    </div>
+                <div class="income-modal-triggers">
+                  <button id="export-data-btn" class="card-button" data-action="export-data">
+                    <span class="action-icon">📤</span>
+                    <span class="action-title">Export Data</span>
+                    <span class="action-subtitle">Export to CSV/Excel</span>
+                  </button>
                 </div>
-                
+              </div>
+              
             </div>
-        `;
-    },
+          `;
+        }
+
 
     setupEventListeners() {
         // Quick action buttons
