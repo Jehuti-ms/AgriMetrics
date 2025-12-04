@@ -216,7 +216,7 @@ class FarmManagementApp {
                     this.userPreferences[key] = value;
                     localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
                     console.log(`⚙️ Preference updated: ${key} = ${value}`);
-                    
+                },
                     // Also update FarmModules
                     if (window.FarmModules && window.FarmModules.appData) {
                         if (!window.FarmModules.appData.profile) {
