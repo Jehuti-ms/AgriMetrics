@@ -97,3 +97,8 @@
   justify-content: center;
   margin-top: 16px;
 }
+
+.transaction-desc { font-weight: 600; }
+.transaction-amount { text-align: right; }
+.transaction-percent { text-align: right; color: var(--text-muted); }
+.transaction-actions { display: flex; justify-content: flex-end; gap: 8px; }
