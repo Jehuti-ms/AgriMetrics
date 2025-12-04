@@ -173,7 +173,7 @@ const IncomeExpensesModule = {
                     <!-- Expense Categories -->
                     <div class="content-column">
                         <div class="glass-card">
-                          <div class="module-header header-flex">
+                        
                             <h3>Expense Categories</h3>
                             <button class="btn-outline" id="clear-categories">Clear All</button>
                           </div>
@@ -191,7 +191,7 @@ const IncomeExpensesModule = {
                         </div>
                     </div>
                     
-                </div>
+            
 
                 <!-- Footer -->
                 <div class="module-footer">
