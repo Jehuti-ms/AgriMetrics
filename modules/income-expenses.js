@@ -148,28 +148,28 @@ const IncomeExpensesModule = {
                 <div class="content-columns">
                     
                     <!-- Recent Transactions -->
-                    <div class="content-column">
-                        <div class="glass-card">
-                            <div class="card-header header-flex">
-                                <h3>Recent Transactions</h3>
-                                <button class="btn-outline" id="clear-all">Clear All</button>
+                        <div class="content-column">
+                          <div class="glass-card">
+                            <div class="header-flex">
+                              <h3>Recent Transactions</h3>
+                              <button class="btn-outline" id="clear-all">Clear All</button>
                             </div>
                             <div id="transactions-list">
-                                <!-- Transaction rows populated dynamically -->
-                                <div class="transaction-row">
-                                    <span class="date-col">📅 2025-12-01</span>
-                                    <span class="desc-col">💰 Egg Sales</span>
-                                    <span class="category-col">📂 Income</span>
-                                    <span class="amount-col">💵 $250.00</span>
-                                    <span class="actions-col">
-                                        <button class="icon-btn">✏️</button>
-                                        <button class="icon-btn">🗑️</button>
-                                    </span>
-                                </div>
+                              <!-- Transaction rows populated dynamically -->
+                              <div class="transaction-row">
+                                <span class="transaction-date">📅 2025-12-01</span>
+                                <span class="transaction-desc">💰 Egg Sales</span>
+                                <span class="transaction-category">📂 Income</span>
+                                <span class="transaction-amount">💵 $250.00</span>
+                                <span class="transaction-actions">
+                                  <button class="icon-btn">✏️</button>
+                                  <button class="icon-btn">🗑️</button>
+                                </span>
+                              </div>
                             </div>
+                          </div>
                         </div>
-                    </div>
-                    
+
                    <!-- Expense Categories -->
                     <div class="content-column">
                       <div class="glass-card">
