@@ -2,7 +2,7 @@
 .income-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;   /* ✅ align both sides to the bottom */
+  align-items: flex-end;
   flex-wrap: wrap;
   gap: 24px;
   padding: 20px 24px;
@@ -18,7 +18,7 @@
   min-width: 280px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end; /* ✅ ensures stats sit at the bottom */
+  justify-content: flex-end;
 }
 
 .income-header-right {
@@ -26,16 +26,16 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 12px;
-  align-items: flex-end;   /* ✅ buttons align with stats row */
+  align-items: flex-end;
 }
 
-/* ===== Primary Buttons (Transaction + Import) ===== */
+/* ===== Primary Buttons ===== */
 .income-primary-btn {
   background: linear-gradient(135deg, #16a34a, #22c55e);
   color: #fff;
   border: none;
   border-radius: var(--radius-lg);
-  padding: 12px 32px;   /* ✅ same size as refresh */
+  padding: 12px 32px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -44,25 +44,19 @@
   align-items: center;
   gap: 8px;
 }
-
 .income-primary-btn:hover {
   transform: scale(1.05);
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-.income-quick-actions {
-  margin-top: 32px; /* space below header */
-}
-
-/* ===== Quick Action Buttons ===== */
-/* ===== Quick Actions (Dashboard-style) ===== */
+/* ===== Quick Actions ===== */
+.income-quick-actions { margin-top: 32px; }
 .income-actions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* ✅ same as dashboard */
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
   padding: 24px;
 }
-
 .income-action-btn {
   background: linear-gradient(135deg, #16a34a, #22c55e);
   color: #fff;
@@ -78,85 +72,48 @@
   gap: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.08);
 }
-
 .income-action-btn:hover {
   transform: scale(1.05);
   box-shadow: 0 4px 8px rgba(0,0,0,0.12);
 }
+.action-icon { font-size: 22px; }
+.action-title { font-weight: 600; color: #111; }
+.action-subtitle { font-size: 13px; color: #555; }
 
-.action-title, .action-subtitle {
-  color: #fff;
-}
-
-.action-icon {
-  font-size: 22px;
-}
-
-.action-title {
-  font-weight: 600;
-  color: #111;
-}
-
-.action-subtitle {
-  font-size: 13px;
-  color: #555;
-}
-
-/* ===== Stats Overview (Dashboard-style) ===== */
+/* ===== Stats Overview ===== */
 .income-stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* ✅ same rhythm as dashboard */
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 16px;
   padding: 24px;
 }
-
 .income-stat-card {
   background: #fff;
   border-radius: var(--radius-lg);
   padding: 16px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   text-align: center;
-  flex: 1 1 120px;
-  min-width: 120px;
 }
-
 .income-stat-card::before {
   content: '';
   display: block;
   height: 6px;
-  width: calc(100% + 32px); /* full bleed */
-  margin-left: -16px;
-  margin-right: -16px;
+  width: calc(100% + 32px);
+  margin: 0 -16px 8px;
   background: linear-gradient(90deg, #16a34a, #22c55e);
   border-top-left-radius: var(--radius-lg);
   border-top-right-radius: var(--radius-lg);
-  margin-bottom: 8px;
 }
+.stat-icon { font-size: 20px; margin-bottom: 6px; }
+.stat-value { font-size: 18px; font-weight: 700; color: #111; }
+.stat-label { font-size: 13px; color: #555; }
 
-.stat-icon {
-  font-size: 20px;
-  margin-bottom: 6px;
-}
-
-.stat-value {
-  font-size: 18px;
-  font-weight: 700;
-  color: #111;
-}
-
-.stat-label {
-  font-size: 13px;
-  color: #555;
-}
-
-/* Wrapper for refresh button */
+/* ===== Refresh Button ===== */
 .income-refresh-container {
   display: flex;
-  justify-content: center; /* ✅ centers horizontally */
-  margin: 20px 0;          /* optional spacing */
+  justify-content: center;
+  margin: 20px 0;
 }
-
-/* Rest state: outlined */
 .income-refresh-btn {
   border-radius: var(--radius-lg);
   padding: 12px 24px;
@@ -166,197 +123,26 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-
   background: transparent;
   color: var(--color-primary, #16a34a);
   border: 2px solid var(--color-primary, #16a34a);
   transition: all 0.3s ease;
 }
-
-/* Hover: same as Quick Action buttons */
 .income-refresh-btn:hover {
-  background: linear-gradient(135deg, #16a34a, #22c55e); /* ✅ same gradient */
+  background: linear-gradient(135deg, #16a34a, #22c55e);
   color: #fff;
   border-color: transparent;
-  box-shadow: var(--shadow-primary, 0 2px 6px rgba(0,0,0,0.1));
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   transform: scale(1.03);
 }
-
-/* Active/Clicked: deeper green fill */
 .income-refresh-btn:active {
   background: linear-gradient(135deg, #15803d, #22c55e);
   color: #fff;
   border-color: transparent;
-  box-shadow: var(--shadow-md, 0 2px 6px rgba(0,0,0,0.15));
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-.income .transaction-row {
-  background: #fff;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  padding: 12px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.income .transaction-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.income .transaction-title {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.income .transaction-subtitle {
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.income .transaction-actions {
-  display: flex;
-  gap: 8px;
-  margin-left: auto; /* ✅ floats buttons to the right */
-}
-
-.income .transaction-actions .btn-outline {
-  padding: 6px 12px;
-  font-size: 13px;
-}
-
-.income .transaction-row {
-  display: grid;
-  grid-template-columns: 140px 1fr 120px 120px auto;
-  align-items: center;
-  gap: 12px;
-  background: #fff;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  padding: 10px 16px;
-  margin-bottom: 8px;
-}
-
-.income .transaction-row span {
-  display: flex;
-  align-items: center;
-  gap: 6px; /* ✅ spacing between icon and text */
-}
-
-.income .transaction-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-/* Expense Categories rows */
-.income .categories-list .transaction-row {
-  display: grid;
-  grid-template-columns: 1fr 120px 160px auto; /* name, amount, percentage, actions */
-  align-items: center;
-  gap: 12px;
-  background: #fff;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  padding: 10px 16px;
-  margin-bottom: 8px;
-}
-
-.income .categories-list .transaction-desc {
-  font-weight: 600;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 6px; /* icon + text spacing */
-}
-
-.income .categories-list .transaction-amount {
-  font-weight: 600;
-  color: var(--text-primary);
-  text-align: right;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.income .categories-list .transaction-category {
-  font-size: 13px;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.income .categories-list .transaction-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.income .categories-list .transaction-actions .icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.income .categories-list .transaction-row {
-  display: grid;
-  grid-template-columns: 1fr 120px 160px auto; /* name | amount | percentage | actions */
-  align-items: center;
-  gap: 12px;
-  background: #fff;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  padding: 10px 16px;
-  margin-bottom: 8px;
-}
-
-.income .categories-list .transaction-desc,
-.income .categories-list .transaction-amount,
-.income .categories-list .transaction-category {
-  display: flex;
-  align-items: center;
-  gap: 6px; /* spacing between icon and text */
-}
-
-.income .categories-list .transaction-desc {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.income .categories-list .transaction-amount {
-  font-weight: 600;
-  color: var(--text-primary);
-  text-align: right;
-}
-
-.income .categories-list .transaction-category {
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.income .categories-list .transaction-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.income .categories-list .transaction-actions .icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-#categories-list .transaction-row {
-  /* same styles as transactions */
-}
-
-/* Shared row styling for transactions and categories */
+/* ===== Shared Row Styling (Transactions + Categories) ===== */
 #transactions-list .transaction-row,
 #categories-list .transaction-row {
   display: grid;
@@ -369,21 +155,18 @@
   padding: 10px 16px;
   margin-bottom: 8px;
 }
-
 #transactions-list .transaction-row span,
 #categories-list .transaction-row span {
   display: flex;
   align-items: center;
   gap: 6px;
 }
-
 #transactions-list .transaction-actions,
 #categories-list .transaction-actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
 }
-
 #transactions-list .transaction-actions .icon-btn,
 #categories-list .transaction-actions .icon-btn {
   background: none;
