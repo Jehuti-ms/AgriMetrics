@@ -71,9 +71,18 @@
   grid-template-columns: 140px 1fr 120px 120px auto;
 }
 
-/* Expense Categories: Name | Amount | % | Actions */
-.income #categories-list > .transaction-row {
-  grid-template-columns: 1fr 120px 160px auto;
+/* Categories grid: Name | Amount | % | Actions */
+.module-container.income #categories-list > .transaction-row {
+  grid-template-columns: 1fr 120px 100px auto;
+}
+
+.module-container.income #categories-list .transaction-desc {
+  font-weight: 600;
+}
+
+.module-container.income #categories-list .transaction-percent {
+  color: var(--text-muted);
+  font-size: 14px;
 }
 
 /* ===== Footer Layout ===== */
