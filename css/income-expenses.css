@@ -142,7 +142,7 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-/* ===== Shared Row Styling ===== */
+/* ===== Shared Row Styling (Income Module) ===== */
 .income .transaction-row {
   display: grid;
   align-items: center;
@@ -153,16 +153,19 @@
   padding: 10px 16px;
   margin-bottom: 8px;
 }
+
 .income .transaction-row span {
   display: flex;
   align-items: center;
   gap: 6px;
 }
+
 .income .transaction-actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
 }
+
 .income .transaction-actions .icon-btn {
   background: none;
   border: none;
@@ -171,12 +174,12 @@
 }
 
 /* ===== Specific Grid Overrides ===== */
-/* Transactions: Date | Desc | Category | Amount | Actions */
+/* Recent Transactions: Date | Desc | Category | Amount | Actions */
 .income #transactions-list .transaction-row {
   grid-template-columns: 140px 1fr 120px 120px auto;
 }
 
-/* Expense Categories: Name | Amount | % | Count | Actions */
+/* Expense Categories: Name | Amount | % | Actions */
 .income #categories-list .transaction-row {
-  grid-template-columns: 1fr 120px 120px 140px auto;
+  grid-template-columns: 1fr 120px 160px auto;
 }
