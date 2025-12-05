@@ -37,7 +37,7 @@
   gap: 16px;
 }
 
-.card-button {
+/*.card-button {
   background: var(--gradient-primary, linear-gradient(135deg, #16a34a, #22c55e));
   color: #fff;
   border: none;
@@ -50,7 +50,49 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
+}*/
+
+.quick-action-btn {
+  flex: 1 1 140px;                 /* smaller base width so they feel squarer */
+  background: var(--card-bg, rgba(255,255,255,0.95));
+  backdrop-filter: var(--surface-blur);
+  border: 1px solid var(--card-border, rgba(255,255,255,0.8));
+  border-radius: 20px;             /* keep rounded corners */
+  padding: 28px 16px;              /* more vertical padding for icon space */
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;         /* center icon + label */
+  gap: 12px;                       /* more space between icon and text */
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--shadow-md);
+  text-align: center;
+  min-height: 140px;               /* taller, squarer footprint */
 }
+
+.quick-action-btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: var(--shadow-lg);
+  background: var(--card-bg-hover, #fff);
+}
+
+/* Icon inside quick action */
+.quick-action-btn .icon {
+  font-size: 36px;                 /* bigger icons */
+  line-height: 1;
+  color: var(--primary-color);
+}
+
+/* Label text */
+.quick-action-btn span {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 
 .card-button:hover {
   transform: scale(1.03);
