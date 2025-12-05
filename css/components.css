@@ -67,37 +67,40 @@
   background: var(--gradient-primary, linear-gradient(135deg, #16a34a, #22c55e));
   color: #fff;
   border: none;
-  border-radius: 20px;              /* rounder corners */
-  padding: 24px 16px;               /* more vertical padding */
-  box-shadow: var(--shadow-primary, 0 4px 12px rgba(0,0,0,0.15));
+  border-radius: 16px;
+  padding: 18px 12px;               /* tighter padding */
+  box-shadow: var(--shadow-primary, 0 2px 6px rgba(0,0,0,0.1));
   cursor: pointer;
   transition: transform 0.2s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;          /* center icon + text */
+  justify-content: center;
   text-align: center;
-  min-height: 160px;                /* taller footprint → squarer */
+  min-height: 120px;                /* reduced height */
+  max-width: 180px;                 /* optional: keeps them from stretching too wide */
 }
 
 .card-button:hover {
-  transform: translateY(-3px) scale(1.05);
+  transform: scale(1.03);
   background: linear-gradient(135deg, #15803d, #22c55e);
 }
 
-.card-button .action-icon {
-  font-size: 48px;                  /* bigger icons */
-  margin-bottom: 12px;
+.card-button .card-icon {
+  font-size: 40px;                  /* slightly larger than default, but not oversized */
+  margin-bottom: 8px;
+  line-height: 1;
 }
 
-.card-button .action-title {
+.card-button .card-title {
   font-weight: 700;
-  font-size: 18px;                  /* slightly larger */
+  font-size: 15px;
+  margin-bottom: 4px;
 }
 
-.card-button .action-subtitle {
-  font-size: 14px;
-  opacity: 0.85;
+.card-button .card-subtitle {
+  font-size: 12px;
+  opacity: 0.8;
 }
 
 /* ===== Stat Cards ===== */
