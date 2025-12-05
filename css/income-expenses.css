@@ -1,120 +1,28 @@
-/* ===== Income Header (layout only, color comes from components.css) ===== */
-.income .income-header {
-  /* Layout comes from .header-flex in Layout.css */
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  gap: 24px;
+/* ==================== INCOME MODULE SPECIFIC STYLES ==================== */
+/* Only styles unique to Income - all shared visuals live in components.css */
 
-  /* Visual theme unique to Income */
-  padding: 20px 24px;
-  background: linear-gradient(to bottom right, #16a34a, #4ade80);
-  color: #fff;
-  border-bottom-left-radius: 24px;
-  border-bottom-right-radius: 24px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-}
-
-/* ===== Quick Actions (layout only) ===== */
-.income .income-quick-actions { margin-top: 32px; }
-
-.income .income-actions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-  padding: 24px;
-}
-
-/* ===== Stats Overview (layout only) ===== */
-.income .income-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 16px;
-  padding: 24px;
-}
-
-/* ===== Shared Row Styling ===== */
-.income .transaction-row {
-  display: grid;
-  align-items: center;
-  gap: 12px;
-  background: #fff;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  padding: 10px 16px;
-  margin-bottom: 8px;
-}
-
-.income .transaction-row span {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.income .transaction-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.income .transaction-actions .icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-/* ===== Specific Grid Overrides ===== */
-/* Recent Transactions: Date | Desc | Category | Amount | Actions */
-.income #transactions-list > .transaction-row {
-  grid-template-columns: 140px 1fr 120px 120px auto;
-}
-
-/* Categories grid: Name | Amount | % | Actions */
-.module-container.income #categories-list > .transaction-row {
-  grid-template-columns: 1fr 120px 100px auto;
-}
-
-.module-container.income #categories-list .transaction-desc {
-  font-weight: 600;
-}
-
-.module-container.income #categories-list .transaction-percent {
-  color: var(--text-muted);
-  font-size: 14px;
-}
-
-.categories-list {
-  margin-top: 12px;
-}
-
-#categories-content > .transaction-row {
+/* ===== Income Categories ===== */
+.module-container.income #categories-content > .transaction-row {
   display: grid;
   grid-template-columns: 1fr 120px 100px auto; /* Name | Amount | % | Actions */
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
   margin-bottom: 8px;
-  background: #fff;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
 }
 
-/* ===== Footer Layout ===== */
-.income .income-refresh-container {
-  display: flex;
-  justify-content: center;
-  margin: 20px 0;
+/* ===== Recent Transactions ===== */
+.module-container.income #transactions-content > .transaction-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 120px auto; /* Date | Desc | Amount | Actions */
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
 }
 
-.income .income-modal-triggers {
-  display: flex;
-  justify-content: center;
-  margin-top: 16px;
+/* ===== Income-specific accents ===== */
+.module-container.income .transaction-amount {
+  color: var(--color-success); /* Green tint for income amounts */
+  font-weight: 600;
 }
-
-.transaction-desc { font-weight: 600; }
-.transaction-amount { text-align: right; }
-.transaction-percent { text-align: right; color: var(--text-muted); }
-.transaction-actions { display: flex; justify-content: flex-end; gap: 8px; }
