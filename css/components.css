@@ -50,9 +50,9 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-}*/
+} */
 
-.quick-action-btn {
+.card-button {
   flex: 1 1 140px;                 /* smaller base width so they feel squarer */
   background: var(--card-bg, rgba(255,255,255,0.95));
   backdrop-filter: var(--surface-blur);
