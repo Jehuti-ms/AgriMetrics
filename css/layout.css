@@ -43,9 +43,9 @@
 /* ===== Shared Module Layouts ===== */
 
 /* Module container background */
-.module-container {
+/*.module-container {
   background: #fff; /* clean white card background */
-  border-radius: var(--radius-lg);
+ /* border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   margin: 24px;
   padding: 24px;
