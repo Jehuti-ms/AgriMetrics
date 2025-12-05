@@ -111,3 +111,7 @@ body {
   border-top-left-radius: var(--radius-lg);
   border-top-right-radius: var(--radius-lg);
 }
+
+* {
+  outline: 1px solid red; /* temporary debug */
+}
