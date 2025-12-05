@@ -1261,7 +1261,7 @@ label {
   background: var(--module-bg, linear-gradient(135deg, #f8faf9 0%, #f0f7f4 100%));
 }
 
-.module-header {
+/*.module-header {
   background: var(--header-gradient, var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)));
   margin: -20px -20px 20px -20px;
   padding: 24px 20px;
