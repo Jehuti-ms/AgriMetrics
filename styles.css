@@ -75,8 +75,9 @@ main {
    Header & Navigation
    ============================================================ */
 header {
-  background: var(--primary-color);
-  color: #fff;
+  background: var(--surface-color); /* frosted glass */
+  backdrop-filter: var(--surface-blur);
+  color: var(--text-primary);
   position: sticky;
   top: 0;
   z-index: 100;
