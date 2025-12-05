@@ -931,7 +931,7 @@ body .side-menu.active {
 }
 
 /* Module Header with Green Gradient */
-.module-header {
+/*.module-header {
   background: var(--header-gradient, linear-gradient(135deg, #22c55e, #16a34a));
   margin: -20px -20px 20px -20px;
   padding: 25px 20px;
