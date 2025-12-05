@@ -1528,3 +1528,28 @@ input:focus, textarea:focus, select:focus {
   justify-content: center !important;
   gap: 8px !important;
 }
+
+/* Simple fix for header conflict */
+body:has(#dashboard[style*="display: block"]) header:not(.top-nav) {
+  display: none !important;
+}
+
+/* When dashboard is visible, ensure navbar is fixed */
+#dashboard[style*="display: block"] ~ header {
+  display: none !important;
+}
+
+/* Force the top-nav to be on top */
+.top-nav {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 10000 !important;
+  background: #fff !important;
+}
+
+/* Add padding to body when navbar is present */
+body:has(.top-nav) {
+  padding-top: 80px !important;
+}
