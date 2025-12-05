@@ -1,1 +1,60 @@
+/* ============================================================
+   Base Reset & Theme Variables
+   ============================================================ */
+:root {
+  --primary-color: #22c55e;
+  --background-color: #f8faf9;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--background-color);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* ============================================================
+   App Layout Containers
+   ============================================================ */
+#app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+  width: 100%;
+}
+
+/* ============================================================
+   Sign-in Page Overlay
+   ============================================================ */
+.signin-page {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(255,255,255,0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* ============================================================
+   Dashboard Wrapper
+   ============================================================ */
+.dashboard {
+  position: relative;
+  z-index: 1;
+  padding: 20px;
+}
 
