@@ -74,15 +74,18 @@ main {
 /* ============================================================
    Header & Navigation
    ============================================================ */
+/* Global Header */
 header {
-  background: var(--surface-color); /* frosted glass */
-  backdrop-filter: var(--surface-blur);
+  /* Instead of hard-coded green, use a variable */
+  background: var(--header-gradient, var(--surface-color));
   color: var(--text-primary);
   position: sticky;
   top: 0;
   z-index: 100;
   box-shadow: var(--shadow-color);
+  transition: background 0.3s ease, color 0.3s ease;
 }
+
 
 .nav-list {
   display: flex;
