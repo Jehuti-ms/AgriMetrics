@@ -1,5 +1,5 @@
 /* ===== Module Header (Green Gradient Banner) ===== */
-/*.module-header {
+.module-header {
   background: linear-gradient(to bottom right, #16a34a, #4ade80);
   color: #fff;
   padding: 20px 24px;
@@ -7,7 +7,7 @@
   border-bottom-right-radius: 24px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.06);
   text-align: left;
-}*/
+}
 
 .module-header .header-title {
   font-size: 24px;
