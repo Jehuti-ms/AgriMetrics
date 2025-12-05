@@ -87,7 +87,7 @@
 }
 
 .card-button .card-icon {
-  font-size: 40px;                  /* slightly larger than default, but not oversized */
+  font-size: 30px;                  /* slightly larger than default, but not oversized */
   margin-bottom: 8px;
   line-height: 1;
 }
