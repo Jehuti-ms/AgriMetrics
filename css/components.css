@@ -1,111 +1,158 @@
-/* ===== components.css ===== */
+/* ===== Module Header (Green Gradient Banner) ===== */
+.module-header {
+  background: linear-gradient(to bottom right, #16a34a, #4ade80);
+  color: #fff;
+  padding: 20px 24px;
+  border-bottom-left-radius: 24px;
+  border-bottom-right-radius: 24px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  text-align: left;
+}
 
-/* Primary buttons (header, footer actions) */
-.btn-primary {
-  background: linear-gradient(135deg, #16a34a, #22c55e); /* Dashboard green */
+.module-header .header-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #fff;
+}
+
+.module-header .header-subtitle {
+  font-size: 16px;
+  opacity: 0.9;
+  color: #fff;
+}
+
+/* ===== Section Titles ===== */
+.section-title {
+  font-size: 20px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* ===== Quick Actions ===== */
+.card-button-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.card-button {
+  background: var(--gradient-primary, linear-gradient(135deg, #16a34a, #22c55e));
   color: #fff;
   border: none;
-  padding: 12px 32px;
   border-radius: var(--radius-lg);
-  font-weight: 600;
-  font-size: 16px;
+  padding: 16px;
+  box-shadow: var(--shadow-primary, 0 2px 6px rgba(0,0,0,0.1));
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-}
-.btn-primary:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.12);
-}
-
-/* Quick Action cards */
-.card-button {
-  background: linear-gradient(135deg, #16a34a, #22c55e);
-  color: #fff;
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  text-align: center;
 }
-.card-button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.12);
-}
-.card-button .action-icon { font-size: 22px; }
-.card-button .action-title { font-weight: 600; color: #fff; }
-.card-button .action-subtitle { font-size: 13px; color: #e5e5e5; }
 
-/* Stat cards */
+.card-button:hover {
+  transform: scale(1.03);
+  background: linear-gradient(135deg, #15803d, #22c55e);
+}
+
+.card-button .action-icon { font-size: 28px; margin-bottom: 8px; }
+.card-button .action-title { font-weight: 700; font-size: 16px; }
+.card-button .action-subtitle { font-size: 13px; opacity: 0.8; }
+
+/* ===== Stat Cards ===== */
+.stats-inline {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
 .stat-card {
   background: #fff;
   border-radius: var(--radius-lg);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   padding: 16px;
-  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   position: relative;
+  overflow: hidden;
+  text-align: center;
 }
+
 .stat-card::before {
   content: '';
   position: absolute;
   top: 0; left: 0;
-  height: 6px;
-  width: 100%;
+  height: 6px; width: 100%;
   background: linear-gradient(90deg, #16a34a, #22c55e);
   border-top-left-radius: var(--radius-lg);
   border-top-right-radius: var(--radius-lg);
 }
 
-.info-card {
-  background: #fff;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  position: relative;
+.stat-card .stat-icon { font-size: 24px; margin-bottom: 8px; }
+.stat-card .stat-value { font-size: 24px; font-weight: bold; margin-bottom: 4px; color: var(--color-text-primary); }
+.stat-card .stat-label { font-size: 14px; color: var(--color-text-tertiary); }
+
+/* ===== Transactions / Activity List ===== */
+.transactions-list {
+  background: var(--color-bg-card, #fff);
+  border-radius: 24px;
+  padding: 24px;
+  min-height: 200px;
+  border: 1px solid var(--color-border-light);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 
-.info-card .info-header {
+.transaction-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-}
-
-.info-card .info-icon {
-  font-size: 20px;
-}
-
-.info-card .info-title {
-  font-weight: 600;
-  font-size: 15px;
-  color: var(--text-primary);
-}
-
-.info-card .info-subtitle {
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.info-card .info-notes {
-  font-size: 14px;
-  color: var(--text-primary);
-  margin-top: 4px;
-}
-
-.info-card .info-actions {
-  display: flex;
   gap: 12px;
-  justify-content: flex-end;
-  margin-top: 8px;
+  padding: 12px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
 }
 
+.transaction-row:hover { background-color: var(--color-bg-tertiary); }
+
+.transaction-desc { font-weight: 600; font-size: 14px; color: var(--color-text-primary); }
+.transaction-time { font-size: 12px; color: var(--color-text-tertiary); }
+
+/* ===== Empty State ===== */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
+.empty-state .empty-title { font-size: 16px; margin-bottom: 8px; font-weight: 600; color: var(--color-text-primary); }
+.empty-state .empty-subtitle { font-size: 14px; color: var(--color-text-tertiary); }
+
+/* ===== Buttons ===== */
+.btn-outline {
+  border-radius: var(--radius-lg);
+  padding: 12px 24px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--color-primary, #16a34a);
+  border: 2px solid var(--color-primary, #16a34a);
+  transition: all 0.3s ease;
+}
+
+.btn-outline:hover {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--shadow-primary, 0 2px 6px rgba(0,0,0,0.1));
+  transform: scale(1.03);
+}
+
+.btn-outline:active {
+  background: linear-gradient(135deg, #15803d, #22c55e);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--shadow-md, 0 2px 6px rgba(0,0,0,0.15));
+}
