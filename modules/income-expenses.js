@@ -2076,15 +2076,7 @@ setupReceiptActionListeners() {
     });
 },
 
-async processSingleReceipt(receiptId) {
-    const receipt = this.receiptQueue.find(r => r.id === receiptId);
-    if (!receipt) return;
-    
-    this.showNotification(`Processing ${receipt.name}...`, 'info');
-    
-    // Here you could add OCR processing, but for now just create a transaction
-    this.showReceiptReviewModal(receipt);
-},
+processSingleReceipt(receiptId)
 
 async deleteReceiptFromFirebase(receiptId) {
     const confirm = await window.ModalManager.confirm({
