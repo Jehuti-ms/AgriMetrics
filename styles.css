@@ -122,10 +122,12 @@ header {
   cursor: pointer;
   color: #1a1a1a; /* dark text/icons */
   transition: background 0.3s ease, color 0.3s ease;
+  background: transparent;   /* no container fill */
+  border: none;              /* remove border */
 }
 
 .nav-item:hover {
-  background: rgba(0,0,0,0.05);
+  background: rgba(0,0,0,0.05); /* subtle hover only */
 }
 
 .nav-item.active {
