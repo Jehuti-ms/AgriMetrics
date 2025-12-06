@@ -1,5 +1,5 @@
-// app.js - CLEAN WORKING SOLUTION
-console.log('Loading main app...');
+// app.js - MERGED WORKING VERSION
+console.log('🚀 Loading Farm Management App...');
 
 class FarmManagementApp {
     constructor() {
@@ -11,7 +11,7 @@ class FarmManagementApp {
     }
 
     async init() {
-        console.log('🚀 Starting Farm Management App...');
+        console.log('🚜 Starting Farm Management App...');
         
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
@@ -25,11 +25,13 @@ class FarmManagementApp {
     async initializeApp() {
         console.log('✅ Initializing app...');
         
-        // Add simple mobile CSS
-        this.addSimpleMobileCSS();
+        // ADD NAVBAR CSS FIRST - This makes it visible
+        this.addNavbarCSS();
         
-        // Initialize modules
+        // CRITICAL: Initialize StyleManager FIRST before any modules
         this.initializeStyleManager();
+        
+        // CRITICAL: Initialize FarmModules core system
         this.initializeFarmModules();
         
         this.isDemoMode = true;
@@ -40,7 +42,10 @@ class FarmManagementApp {
         // Show the app interface
         this.showApp();
         
-        // Setup everything
+        // Setup navigation and events
+        this.createTopNavigation();
+        
+        // Setup interactions
         this.setupHamburgerMenu();
         this.setupSideMenuEvents();
         this.setupEventListeners();
@@ -52,132 +57,520 @@ class FarmManagementApp {
         console.log('✅ App initialized successfully');
     }
 
-    addSimpleMobileCSS() {
+    addNavbarCSS() {
         const style = document.createElement('style');
         style.textContent = `
-            /* Simple mobile fixes */
-            @media (max-width: 767px) {
-                /* Make hamburger visible and clickable */
-                #hamburger-menu {
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    width: 40px !important;
-                    height: 40px !important;
-                    background: #4CAF50 !important;
-                    color: white !important;
-                    border: none !important;
-                    border-radius: 8px !important;
-                    font-size: 20px !important;
-                    cursor: pointer !important;
-                    margin-left: 10px !important;
+            /* ===== ESSENTIAL NAVBAR STYLES ===== */
+            .top-nav {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 70px;
+                background: white;
+                border-bottom: 1px solid #e0e0e0;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 20px;
+                z-index: 1000;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            }
+            
+            .nav-brand {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .nav-brand img {
+                width: 40px;
+                height: 40px;
+                border-radius: 8px;
+            }
+            
+            .brand-text {
+                font-size: 22px;
+                font-weight: 700;
+                color: #2c3e50;
+            }
+            
+            .brand-subtitle {
+                font-size: 14px;
+                color: #7f8c8d;
+                margin-left: 10px;
+            }
+            
+            .nav-items {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .nav-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                width: 60px;
+                height: 60px;
+                background: #f5f5f5;
+                border: 1px solid #e0e0e0;
+                border-radius: 12px;
+                cursor: pointer;
+                font-size: 20px;
+                color: #34495e;
+                padding: 0;
+                transition: all 0.3s ease;
+            }
+            
+            .nav-item:hover {
+                background: white;
+                transform: translateY(-3px);
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            }
+            
+            .nav-item.active {
+                background: #4CAF50;
+                color: white;
+                box-shadow: 0 5px 20px rgba(76, 175, 80, 0.3);
+                border-color: #4CAF50;
+            }
+            
+            .nav-label {
+                font-size: 11px;
+                font-weight: 600;
+                margin-top: 4px;
+            }
+            
+            /* Hamburger menu - make it visible! */
+            .hamburger-menu {
+                background: #4CAF50 !important;
+                color: white !important;
+                border: none !important;
+            }
+            
+            /* Content area spacing */
+            #content-area {
+                margin-top: 80px;
+                padding: 20px;
+                min-height: calc(100vh - 80px);
+            }
+            
+            /* ===== SIDEBAR STYLES ===== */
+            #side-menu {
+                position: fixed;
+                top: 0;
+                right: -300px;
+                bottom: 0;
+                width: 280px;
+                background: white;
+                border-left: 1px solid #e0e0e0;
+                box-shadow: -5px 0 30px rgba(0, 0, 0, 0.1);
+                z-index: 999;
+                transition: right 0.3s ease;
+                overflow-y: auto;
+                padding: 20px;
+            }
+            
+            #side-menu.active {
+                right: 0;
+            }
+            
+            .side-menu-item {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                padding: 15px;
+                margin: 8px 0;
+                border-radius: 10px;
+                background: #f5f5f5;
+                color: #34495e;
+                text-decoration: none;
+                transition: all 0.3s ease;
+                cursor: pointer;
+            }
+            
+            .side-menu-item:hover {
+                background: #e0e0e0;
+                transform: translateX(5px);
+            }
+            
+            .side-menu-item.active {
+                background: #4CAF50;
+                color: white;
+            }
+            
+            /* ===== MOBILE RESPONSIVE ===== */
+            @media (max-width: 768px) {
+                .top-nav {
+                    height: 60px;
+                    padding: 0 15px;
                 }
                 
-                /* Hide sidebar by default on mobile */
-                #side-menu {
-                    position: fixed !important;
-                    top: 0 !important;
-                    right: -300px !important;
-                    bottom: 0 !important;
-                    width: 280px !important;
-                    background: white !important;
-                    box-shadow: -5px 0 15px rgba(0,0,0,0.1) !important;
-                    z-index: 1000 !important;
-                    transition: right 0.3s ease !important;
-                    overflow-y: auto !important;
-                    padding: 20px !important;
+                .nav-brand img {
+                    width: 32px;
+                    height: 32px;
                 }
                 
-                /* Show sidebar when active */
-                #side-menu.active {
-                    right: 0 !important;
+                .brand-text {
+                    font-size: 18px;
                 }
                 
-                /* Remove any overlay if it exists */
-                .sidebar-overlay {
-                    display: none !important;
+                .brand-subtitle {
+                    display: none;
                 }
                 
-                /* Adjust content area */
+                .nav-item {
+                    width: 50px;
+                    height: 50px;
+                    font-size: 18px;
+                }
+                
+                .nav-label {
+                    font-size: 10px;
+                }
+                
                 #content-area {
-                    padding: 16px !important;
+                    margin-top: 70px;
+                    padding: 15px;
+                }
+                
+                /* Sidebar adjustments for mobile */
+                #side-menu {
+                    width: 250px;
                 }
             }
             
-            /* Desktop - sidebar always visible */
-            @media (min-width: 768px) {
+            /* ===== DESKTOP STYLES ===== */
+            @media (min-width: 769px) {
                 #side-menu {
-                    position: fixed !important;
-                    left: 0 !important;
-                    top: 0 !important;
-                    bottom: 0 !important;
-                    width: 260px !important;
-                    background: white !important;
-                    z-index: 100 !important;
-                    overflow-y: auto !important;
-                    padding: 20px !important;
+                    position: fixed;
+                    left: 0;
+                    right: auto;
+                    top: 0;
+                    width: 260px;
+                    border-right: 1px solid #e0e0e0;
+                    border-left: none;
+                    box-shadow: 5px 0 30px rgba(0, 0, 0, 0.1);
                 }
                 
-                #hamburger-menu {
+                #side-menu.active {
+                    left: 0;
+                    right: auto;
+                }
+                
+                .hamburger-menu {
                     display: none !important;
                 }
                 
                 #content-area {
-                    margin-left: 260px !important;
-                    padding: 24px !important;
+                    margin-left: 260px;
+                    margin-top: 0;
                 }
+            }
+            
+            /* Dark mode */
+            .dark-mode .top-nav {
+                background: #1a1a1a;
+                border-color: #333;
+            }
+            
+            .dark-mode .nav-item {
+                background: #333;
+                border-color: #444;
+                color: #ccc;
+            }
+            
+            .dark-mode .nav-item:hover {
+                background: #444;
+            }
+            
+            .dark-mode .nav-item.active {
+                background: #2E7D32;
+            }
+            
+            .dark-mode #side-menu {
+                background: #1a1a1a;
+                border-color: #333;
+            }
+            
+            .dark-mode .side-menu-item {
+                background: #333;
+                color: #ccc;
+            }
+            
+            .dark-mode .side-menu-item:hover {
+                background: #444;
+            }
+            
+            .dark-mode .side-menu-item.active {
+                background: #2E7D32;
             }
         `;
         document.head.appendChild(style);
-        console.log('✅ Simple mobile CSS added');
+        console.log('✅ Navbar CSS added');
     }
 
     initializeStyleManager() {
+        // Initialize StyleManager IMMEDIATELY when app starts
         if (window.StyleManager && typeof StyleManager.init === 'function') {
             StyleManager.init();
             console.log('🎨 StyleManager initialized');
+        } else {
+            console.warn('⚠️ StyleManager not available - modules may not style properly');
         }
     }
 
     initializeFarmModules() {
+        // FIXED: Check if FarmModules exists and initialize all modules
         if (window.FarmModules) {
-            console.log('🔧 FarmModules ready');
+            // Check if initializeAll method exists (for newer versions)
+            if (typeof FarmModules.initializeAll === 'function') {
+                FarmModules.initializeAll();
+                console.log('🔧 FarmModules initialized all modules');
+            } 
+            // If no initializeAll method, just log that modules are ready
+            else {
+                console.log('🔧 FarmModules core ready - modules can register');
+            }
         } else {
+            console.warn('⚠️ FarmModules core not available');
+            
+            // Create a basic FarmModules if it doesn't exist
             window.FarmModules = {
                 modules: {},
                 registerModule: function(name, module) {
                     console.log(`✅ Registering module: ${name}`);
                     this.modules[name] = module;
+                },
+                getModule: function(name) {
+                    return this.modules[name];
                 }
             };
+            console.log('🔧 Created basic FarmModules fallback');
         }
     }
     
     async loadUserPreferences() {
         try {
-            const savedPrefs = localStorage.getItem('farm-user-preferences');
-            this.userPreferences = savedPrefs ? JSON.parse(savedPrefs) : { theme: 'auto' };
+            // Try to use ProfileModule if available
+            if (typeof ProfileModule !== 'undefined' && ProfileModule.loadUserPreferences) {
+                this.userPreferences = ProfileModule.loadUserPreferences();
+                console.log('✅ User preferences loaded via ProfileModule');
+            } else {
+                // Fallback to direct localStorage access
+                const savedPrefs = localStorage.getItem('farm-user-preferences');
+                this.userPreferences = savedPrefs ? JSON.parse(savedPrefs) : this.getDefaultPreferences();
+                console.log('⚠️ ProfileModule not available, using localStorage fallback');
+                
+                // Create a complete ProfileModule fallback for other modules to use
+                this.createProfileModuleFallback();
+            }
+            
+            // Apply theme preference immediately
+            this.applyUserTheme();
+            
         } catch (error) {
-            this.userPreferences = { theme: 'auto' };
+            console.error('❌ Error loading user preferences:', error);
+            this.userPreferences = this.getDefaultPreferences();
+            this.createProfileModuleFallback();
         }
+    }
+
+    getDefaultPreferences() {
+        return {
+            theme: 'auto',
+            language: 'en',
+            currency: 'USD',
+            notifications: true,
+            businessName: 'My Farm',
+            businessType: 'poultry',
+            lowStockThreshold: 10,
+            autoSync: true,
+            dashboardStats: {
+                totalOrders: 0,
+                totalRevenue: 0,
+                pendingOrders: 0,
+                totalCustomers: 0,
+                totalProducts: 0,
+                monthlyRevenue: 0,
+                monthlyOrders: 0,
+                avgOrderValue: 0,
+                completedOrders: 0,
+                paidOrders: 0
+            }
+        };
+    }
+
+    createProfileModuleFallback() {
+        // Create a complete ProfileModule with all methods modules expect
+        if (typeof ProfileModule === 'undefined') {
+            window.ProfileModule = {
+                userPreferences: this.userPreferences,
+                
+                // Core methods
+                loadUserPreferences: () => this.userPreferences,
+                getUserPreferences: () => this.userPreferences,
+                updatePreference: (key, value) => {
+                    this.userPreferences[key] = value;
+                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
+                    console.log(`⚙️ Preference updated: ${key} = ${value}`);
+                },
+                
+                // Stats methods that modules expect
+                updateBusinessStats: (module, stats) => {
+                    if (!this.userPreferences.dashboardStats) {
+                        this.userPreferences.dashboardStats = {};
+                    }
+                    Object.keys(stats).forEach(key => {
+                        this.userPreferences.dashboardStats[key] = stats[key];
+                    });
+                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
+                    console.log('📊 Stats updated for', module + ':', stats);
+                },
+                
+                updateStats: (stats) => {
+                    if (!this.userPreferences.dashboardStats) {
+                        this.userPreferences.dashboardStats = {};
+                    }
+                    Object.keys(stats).forEach(key => {
+                        this.userPreferences.dashboardStats[key] = stats[key];
+                    });
+                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
+                    console.log('📊 Stats updated:', stats);
+                },
+                
+                getStats: () => {
+                    return this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
+                },
+                
+                // Dashboard module expects this method
+                getProfileData: () => {
+                    return {
+                        farmName: this.userPreferences.businessName || 'My Farm',
+                        farmerName: 'Farm Manager',
+                        stats: this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats
+                    };
+                },
+                
+                getProfileStats: () => {
+                    return this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
+                },
+                
+                // For compatibility with existing modules
+                getBusinessOverview: () => {
+                    const stats = this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
+                    return {
+                        totalOrders: stats.totalOrders || 0,
+                        totalRevenue: stats.totalRevenue || 0,
+                        pendingOrders: stats.pendingOrders || 0,
+                        totalCustomers: stats.totalCustomers || 0,
+                        totalProducts: stats.totalProducts || 0,
+                        monthlyRevenue: stats.monthlyRevenue || 0,
+                        monthlyOrders: stats.monthlyOrders || 0
+                    };
+                },
+                
+                // Initialize method for compatibility
+                initialize: () => {
+                    console.log('✅ ProfileModule fallback initialized');
+                    return true;
+                }
+            };
+            
+            window.profileInstance = window.ProfileModule;
+            console.log('✅ Complete ProfileModule fallback created');
+        }
+    }
+
+    applyUserTheme() {
+        const theme = this.userPreferences.theme || 'auto';
+        
+        if (theme === 'dark') {
+            document.body.classList.add('dark-mode');
+            this.updateDarkModeIcon(true);
+        } else if (theme === 'light') {
+            document.body.classList.remove('dark-mode');
+            this.updateDarkModeIcon(false);
+        } else {
+            // Auto mode - follow system preference
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.body.classList.toggle('dark-mode', prefersDark);
+            this.updateDarkModeIcon(prefersDark);
+        }
+        
+        console.log('🎨 Applied user theme:', theme);
     }
 
     setupDarkMode() {
         const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+        
         if (darkModeToggle) {
             darkModeToggle.addEventListener('click', () => {
                 document.body.classList.toggle('dark-mode');
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                
+                // Save preference
+                const newTheme = isDarkMode ? 'dark' : 'light';
+                this.userPreferences.theme = newTheme;
+                localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
+                
+                // Update ProfileModule if available
+                if (window.ProfileModule && window.ProfileModule.updatePreference) {
+                    window.ProfileModule.updatePreference('theme', newTheme);
+                }
+                
+                // Update icon
+                this.updateDarkModeIcon(isDarkMode);
+                
+                console.log('🎨 Theme changed to:', newTheme);
             });
         }
+        
+        // Listen for system theme changes (only if theme is set to auto)
+        prefersDarkScheme.addEventListener('change', (e) => {
+            if (this.userPreferences.theme === 'auto') {
+                document.body.classList.toggle('dark-mode', e.matches);
+                this.updateDarkModeIcon(e.matches);
+            }
+        });
     }
 
+    updateDarkModeIcon(isDarkMode) {
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        if (darkModeToggle) {
+            const icon = darkModeToggle.querySelector('span:first-child');
+            const label = darkModeToggle.querySelector('.nav-label');
+            
+            if (isDarkMode) {
+                icon.textContent = '☀️';
+                label.textContent = 'Light';
+            } else {
+                icon.textContent = '🌙';
+                label.textContent = 'Dark';
+            }
+        }
+    }
+  
     setupEventListeners() {
         document.addEventListener('click', (e) => {
+            // Handle main nav items
             if (e.target.closest('.nav-item')) {
                 const navItem = e.target.closest('.nav-item');
                 const view = navItem.getAttribute('data-view');
                 if (view) {
                     this.showSection(view);
+                }
+            }
+            
+            // Handle sidebar menu items (for the existing HTML sidebar)
+            if (e.target.closest('.side-menu-item')) {
+                const menuItem = e.target.closest('.side-menu-item');
+                const section = menuItem.getAttribute('data-section');
+                if (section) {
+                    this.showSection(section);
                 }
             }
         });
@@ -189,6 +582,79 @@ class FarmManagementApp {
         
         if (authContainer) authContainer.classList.add('hidden');
         if (appContainer) appContainer.classList.remove('hidden');
+        
+        console.log('🏠 App container shown');
+    }
+
+    createTopNavigation() {
+        const appContainer = document.getElementById('app-container');
+        if (!appContainer) return;
+
+        // Remove existing header if any
+        let header = appContainer.querySelector('header');
+        if (header) {
+            header.remove();
+        }
+        
+        // Create new header
+        header = document.createElement('header');
+        appContainer.insertBefore(header, appContainer.firstChild);
+
+        header.innerHTML = `
+            <nav class="top-nav">
+                <div class="nav-brand">
+                    <img src="icons/icon-96x96.png" alt="AgriMetrics">
+                    <span class="brand-text">AgriMetrics</span>
+                    <span class="brand-subtitle">Farm Management System</span>
+                </div>
+                
+                <div class="nav-items">
+                    <button class="nav-item" data-view="dashboard" title="Dashboard">
+                        <span>📊</span>
+                        <span class="nav-label">Dashboard</span>
+                    </button>
+
+                    <button class="nav-item" data-view="income-expenses" title="Income & Expenses">
+                        <span>💰</span>
+                        <span class="nav-label">Income</span>
+                    </button>
+
+                    <button class="nav-item" data-view="inventory-check" title="Inventory">
+                        <span>📦</span>
+                        <span class="nav-label">Inventory</span>
+                    </button>
+
+                    <button class="nav-item" data-view="orders" title="Orders">
+                        <span>📋</span>
+                        <span class="nav-label">Orders</span>
+                    </button>
+
+                    <button class="nav-item" data-view="sales-record" title="Sales">
+                        <span>🛒</span>
+                        <span class="nav-label">Sales</span>
+                    </button>
+
+                    <button class="nav-item" data-view="profile" title="Profile">
+                        <span>👤</span>
+                        <span class="nav-label">Profile</span>
+                    </button>
+
+                    <!-- Dark Mode Toggle -->
+                    <button class="nav-item dark-mode-toggle" id="dark-mode-toggle" title="Toggle Dark Mode">
+                        <span>🌙</span>
+                        <span class="nav-label">Theme</span>
+                    </button>
+                    
+                    <!-- Hamburger menu -->
+                    <button class="nav-item hamburger-menu" id="hamburger-menu" title="Farm Operations">
+                        <span>☰</span>
+                        <span class="nav-label">More</span>
+                    </button>
+                </div>
+            </nav>
+        `;
+
+        console.log('✅ Top Navigation created');
     }
     
     setupHamburgerMenu() {
@@ -201,7 +667,7 @@ class FarmManagementApp {
             hamburger.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Hamburger clicked');
+                console.log('Hamburger clicked, toggling sidebar');
                 sideMenu.classList.toggle('active');
             });
             
@@ -254,7 +720,7 @@ class FarmManagementApp {
         
         this.currentSection = sectionId;
         
-        // Update active states
+        // Update active nav state
         document.querySelectorAll('.nav-item').forEach(item => {
             item.classList.remove('active');
         });
@@ -264,6 +730,7 @@ class FarmManagementApp {
             activeNavItem.classList.add('active');
         }
 
+        // Update sidebar active state
         document.querySelectorAll('.side-menu-item').forEach(item => {
             item.classList.remove('active');
         });
@@ -273,7 +740,7 @@ class FarmManagementApp {
             activeSideItem.classList.add('active');
         }
 
-        // Load module
+        // Load the module content
         if (window.FarmModules && typeof window.FarmModules.initializeModule === 'function') {
             window.FarmModules.initializeModule(sectionId);
         } else {
@@ -300,8 +767,8 @@ class FarmManagementApp {
 
         contentArea.innerHTML = `
             <div style="padding: 20px;">
-                <h2>${sectionTitles[sectionId] || sectionId}</h2>
-                <p>Content loading...</p>
+                <h2 style="color: #1a1a1a;">${sectionTitles[sectionId] || sectionId}</h2>
+                <p style="color: #666;">Content loading...</p>
             </div>
         `;
     }
