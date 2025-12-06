@@ -1,4 +1,4 @@
-// app.js - FIXED FOR MOBILE VISIBILITY
+// app.js - SIDEBAR SLIDES FROM RIGHT ON HAMBURGER CLICK
 console.log('Loading main app...');
 
 class FarmManagementApp {
@@ -25,13 +25,11 @@ class FarmManagementApp {
     async initializeApp() {
         console.log('✅ Initializing app...');
         
-        // Add mobile responsive CSS FIRST
-        this.addMobileCSS();
+        // Add mobile responsive CSS for sidebar from right
+        this.addRightSidebarCSS();
         
-        // CRITICAL: Initialize StyleManager FIRST before any modules
+        // Initialize modules
         this.initializeStyleManager();
-        
-        // CRITICAL: Initialize FarmModules core system
         this.initializeFarmModules();
         
         this.isDemoMode = true;
@@ -42,27 +40,14 @@ class FarmManagementApp {
         // Show the app interface
         this.showApp();
         
-        // Setup navigation and events
+        // Create top navigation with hamburger
         this.createTopNavigation();
         
-        // Small delay to ensure DOM is fully rendered
-        setTimeout(() => {
-            this.setupHamburgerMenu();
-            this.setupSideMenuEvents();
-            this.setupEventListeners();
-            this.setupDarkMode();
-
-            // Test if hamburger is working
-            const hamburger = document.getElementById('hamburger-menu');
-            const sideMenu = document.getElementById('side-menu');
-            console.log('🔍 Debug - Hamburger exists:', !!hamburger);
-            console.log('🔍 Debug - Side menu exists:', !!sideMenu);
-            
-            if (hamburger) {
-                console.log('🔍 Debug - Hamburger position:', hamburger.getBoundingClientRect());
-                console.log('🔍 Debug - Hamburger computed styles:', window.getComputedStyle(hamburger).display);
-            }
-        }, 100);
+        // Setup hamburger menu to open sidebar from right
+        this.setupHamburgerMenu();
+        this.setupSideMenuEvents();
+        this.setupEventListeners();
+        this.setupDarkMode();
         
         // Load initial section
         this.showSection(this.currentSection);
@@ -70,185 +55,189 @@ class FarmManagementApp {
         console.log('✅ App initialized successfully');
     }
 
-    addMobileCSS() {
-        // Add mobile-specific CSS for better visibility
+    addRightSidebarCSS() {
         const style = document.createElement('style');
         style.textContent = `
-            /* ===== MOBILE RESPONSIVE STYLES ===== */
-            @media (max-width: 768px) {
-                /* Make hamburger menu clearly visible */
-                #hamburger-menu {
-                    background: linear-gradient(135deg, #4CAF50, #2E7D32) !important;
-                    border: 2px solid white !important;
-                    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4) !important;
-                    border-radius: 12px !important;
-                    width: 50px !important;
-                    height: 50px !important;
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
+            /* ===== RIGHT SIDEBAR STYLES ===== */
+            /* Mobile styles */
+            @media (max-width: 767px) {
+                /* Sidebar positioned on right, hidden by default */
+                #side-menu {
                     position: fixed !important;
-                    bottom: 20px !important;
-                    right: 20px !important;
-                    z-index: 9999 !important;
-                    cursor: pointer !important;
+                    top: 0 !important;
+                    right: -300px !important;
+                    bottom: 0 !important;
+                    width: 280px !important;
+                    background: white !important;
+                    box-shadow: -5px 0 30px rgba(0,0,0,0.2) !important;
+                    border-left: 1px solid #e0e0e0 !important;
+                    z-index: 1000 !important;
+                    transition: right 0.3s ease !important;
+                    overflow-y: auto !important;
+                    padding: 20px !important;
+                }
+                
+                /* Sidebar active - slides in from right */
+                #side-menu.active {
+                    right: 0 !important;
+                }
+                
+                /* Overlay when sidebar is open */
+                .sidebar-overlay {
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                    bottom: 0 !important;
+                    background: rgba(0,0,0,0.5) !important;
+                    backdrop-filter: blur(2px) !important;
+                    z-index: 999 !important;
+                    opacity: 0 !important;
+                    visibility: hidden !important;
                     transition: all 0.3s ease !important;
                 }
                 
-                #hamburger-menu:hover {
-                    transform: scale(1.1) !important;
-                    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6) !important;
+                .sidebar-overlay.active {
+                    opacity: 1 !important;
+                    visibility: visible !important;
                 }
                 
-                #hamburger-menu span {
-                    font-size: 24px !important;
-                    color: white !important;
-                    font-weight: bold !important;
-                }
-                
-                #hamburger-menu .nav-label {
-                    display: none !important;
-                }
-                
-                /* Make nav items more visible on mobile */
-                .nav-item {
-                    min-width: 50px !important;
-                    min-height: 50px !important;
-                    margin: 5px !important;
-                    padding: 10px !important;
-                    border-radius: 10px !important;
-                    background: rgba(255, 255, 255, 0.9) !important;
-                    backdrop-filter: blur(10px) !important;
-                    border: 1px solid rgba(0,0,0,0.1) !important;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
-                }
-                
-                .nav-item span:first-child {
+                /* Make hamburger clearly visible */
+                #hamburger-menu {
+                    background: #4CAF50 !important;
+                    border: none !important;
+                    border-radius: 8px !important;
+                    width: 44px !important;
+                    height: 44px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    cursor: pointer !important;
                     font-size: 20px !important;
+                    color: white !important;
+                    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3) !important;
                 }
                 
-                .nav-label {
-                    font-size: 10px !important;
-                    font-weight: 600 !important;
+                #hamburger-menu:hover {
+                    background: #2E7D32 !important;
+                    transform: scale(1.05) !important;
                 }
                 
-                /* Adjust top nav for mobile */
-                .top-nav {
-                    padding: 10px 15px !important;
-                    height: 60px !important;
+                /* Ensure hamburger shows on mobile */
+                .hamburger-menu {
+                    display: flex !important;
                 }
                 
-                .nav-brand {
-                    gap: 8px !important;
+                /* Adjust content area for mobile */
+                #content-area {
+                    padding: 16px !important;
                 }
                 
-                .nav-brand img {
-                    width: 30px !important;
-                    height: 30px !important;
+                /* Prevent body scroll when sidebar is open */
+                body.sidebar-open {
+                    overflow: hidden !important;
+                }
+            }
+            
+            /* Desktop styles - sidebar always visible on left */
+            @media (min-width: 768px) {
+                #side-menu {
+                    position: fixed !important;
+                    left: 0 !important;
+                    top: 0 !important;
+                    bottom: 0 !important;
+                    width: 260px !important;
+                    background: white !important;
+                    border-right: 1px solid #e0e0e0 !important;
+                    z-index: 100 !important;
+                    overflow-y: auto !important;
+                    padding: 20px !important;
                 }
                 
-                .brand-text {
-                    font-size: 18px !important;
-                }
-                
-                .brand-subtitle {
+                /* Hide hamburger on desktop */
+                .hamburger-menu {
                     display: none !important;
                 }
                 
-                /* Adjust side menu for mobile */
-                #side-menu {
-                    width: 280px !important;
-                    background: linear-gradient(135deg, #ffffff, #f5f5f5) !important;
-                    backdrop-filter: blur(20px) !important;
-                    box-shadow: -5px 0 30px rgba(0,0,0,0.2) !important;
-                    border-left: 1px solid rgba(0,0,0,0.1) !important;
-                    z-index: 9998 !important;
+                #content-area {
+                    margin-left: 260px !important;
+                    padding: 24px !important;
                 }
                 
-                #side-menu.active {
-                    transform: translateX(0) !important;
-                }
-                
-                /* Make sidebar overlay more visible */
+                /* Hide overlay on desktop */
                 .sidebar-overlay {
-                    background: rgba(0,0,0,0.5) !important;
-                    backdrop-filter: blur(5px) !important;
+                    display: none !important;
                 }
             }
             
-            /* For very small screens */
-            @media (max-width: 480px) {
-                .nav-items {
-                    gap: 5px !important;
-                }
-                
-                .nav-item {
-                    min-width: 40px !important;
-                    min-height: 40px !important;
-                    padding: 8px !important;
-                }
-                
-                .nav-item span:first-child {
-                    font-size: 18px !important;
-                }
-                
-                #side-menu {
-                    width: 85vw !important;
-                }
+            /* Sidebar menu item styles */
+            .side-menu-item {
+                display: flex !important;
+                align-items: center !important;
+                gap: 12px !important;
+                padding: 12px 16px !important;
+                margin: 4px 0 !important;
+                border-radius: 8px !important;
+                color: #333 !important;
+                text-decoration: none !important;
+                transition: all 0.2s ease !important;
+                cursor: pointer !important;
             }
             
-            /* Sidebar overlay */
-            .sidebar-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0,0,0,0);
-                backdrop-filter: blur(0);
-                z-index: 9997;
-                opacity: 0;
-                visibility: hidden;
-                transition: all 0.3s ease;
+            .side-menu-item:hover {
+                background: #f5f5f5 !important;
             }
             
-            .sidebar-overlay.active {
-                background: rgba(0,0,0,0.5);
-                backdrop-filter: blur(5px);
-                opacity: 1;
-                visibility: visible;
+            .side-menu-item.active {
+                background: #4CAF50 !important;
+                color: white !important;
+            }
+            
+            .side-menu-item .menu-icon {
+                font-size: 18px !important;
+            }
+            
+            /* Dark mode support */
+            .dark-mode #side-menu {
+                background: #1a1a1a !important;
+                border-color: #333 !important;
+            }
+            
+            .dark-mode .side-menu-item {
+                color: #ccc !important;
+            }
+            
+            .dark-mode .side-menu-item:hover {
+                background: #333 !important;
+            }
+            
+            .dark-mode .side-menu-item.active {
+                background: #2E7D32 !important;
             }
         `;
         document.head.appendChild(style);
-        console.log('📱 Mobile CSS added');
+        console.log('✅ Right sidebar CSS added');
     }
 
     initializeStyleManager() {
-        // Initialize StyleManager IMMEDIATELY when app starts
         if (window.StyleManager && typeof StyleManager.init === 'function') {
             StyleManager.init();
             console.log('🎨 StyleManager initialized');
         } else {
-            console.warn('⚠️ StyleManager not available - modules may not style properly');
+            console.warn('⚠️ StyleManager not available');
         }
     }
 
     initializeFarmModules() {
-        // FIXED: Check if FarmModules exists and initialize all modules
         if (window.FarmModules) {
-            // Check if initializeAll method exists (for newer versions)
             if (typeof FarmModules.initializeAll === 'function') {
                 FarmModules.initializeAll();
                 console.log('🔧 FarmModules initialized all modules');
-            } 
-            // If no initializeAll method, just log that modules are ready
-            else {
-                console.log('🔧 FarmModules core ready - modules can register');
+            } else {
+                console.log('🔧 FarmModules core ready');
             }
         } else {
             console.warn('⚠️ FarmModules core not available');
-            
-            // Create a basic FarmModules if it doesn't exist
             window.FarmModules = {
                 modules: {},
                 registerModule: function(name, module) {
@@ -259,27 +248,21 @@ class FarmManagementApp {
                     return this.modules[name];
                 }
             };
-            console.log('🔧 Created basic FarmModules fallback');
         }
     }
     
     async loadUserPreferences() {
         try {
-            // Try to use ProfileModule if available
             if (typeof ProfileModule !== 'undefined' && ProfileModule.loadUserPreferences) {
                 this.userPreferences = ProfileModule.loadUserPreferences();
                 console.log('✅ User preferences loaded via ProfileModule');
             } else {
-                // Fallback to direct localStorage access
                 const savedPrefs = localStorage.getItem('farm-user-preferences');
                 this.userPreferences = savedPrefs ? JSON.parse(savedPrefs) : this.getDefaultPreferences();
                 console.log('⚠️ ProfileModule not available, using localStorage fallback');
-                
-                // Create a complete ProfileModule fallback for other modules to use
                 this.createProfileModuleFallback();
             }
             
-            // Apply theme preference immediately
             this.applyUserTheme();
             
         } catch (error) {
@@ -292,215 +275,54 @@ class FarmManagementApp {
     getDefaultPreferences() {
         return {
             theme: 'auto',
-            language: 'en',
-            currency: 'USD',
-            notifications: true,
-            businessName: 'My Farm',
-            businessType: 'poultry',
-            lowStockThreshold: 10,
-            autoSync: true,
-            dashboardStats: {
-                totalOrders: 0,
-                totalRevenue: 0,
-                pendingOrders: 0,
-                totalCustomers: 0,
-                totalProducts: 0,
-                monthlyRevenue: 0,
-                monthlyOrders: 0,
-                avgOrderValue: 0,
-                completedOrders: 0,
-                paidOrders: 0
-            }
+            businessName: 'My Farm'
         };
     }
 
     createProfileModuleFallback() {
-        // Create a complete ProfileModule with all methods modules expect
         if (typeof ProfileModule === 'undefined') {
             window.ProfileModule = {
                 userPreferences: this.userPreferences,
-                
-                // Core methods
                 loadUserPreferences: () => this.userPreferences,
-                getUserPreferences: () => this.userPreferences,
-                updatePreference: (key, value) => {
-                    this.userPreferences[key] = value;
-                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-                    console.log(`⚙️ Preference updated: ${key} = ${value}`);
-                },
-                
-                // Stats methods that modules expect
-                updateBusinessStats: (module, stats) => {
-                    if (!this.userPreferences.dashboardStats) {
-                        this.userPreferences.dashboardStats = {};
-                    }
-                    Object.keys(stats).forEach(key => {
-                        this.userPreferences.dashboardStats[key] = stats[key];
-                    });
-                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-                    console.log('📊 Stats updated for', module + ':', stats);
-                },
-                
-                updateStats: (stats) => {
-                    if (!this.userPreferences.dashboardStats) {
-                        this.userPreferences.dashboardStats = {};
-                    }
-                    Object.keys(stats).forEach(key => {
-                        this.userPreferences.dashboardStats[key] = stats[key];
-                    });
-                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-                    console.log('📊 Stats updated:', stats);
-                },
-                
-                getStats: () => {
-                    return this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
-                },
-                
-                // Dashboard module expects this method
-                getProfileData: () => {
-                    return {
-                        farmName: this.userPreferences.businessName || 'My Farm',
-                        farmerName: 'Farm Manager',
-                        stats: this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats
-                    };
-                },
-                
-                getProfileStats: () => {
-                    return this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
-                },
-                
-                // For compatibility with existing modules
-                getBusinessOverview: () => {
-                    const stats = this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
-                    return {
-                        totalOrders: stats.totalOrders || 0,
-                        totalRevenue: stats.totalRevenue || 0,
-                        pendingOrders: stats.pendingOrders || 0,
-                        totalCustomers: stats.totalCustomers || 0,
-                        totalProducts: stats.totalProducts || 0,
-                        monthlyRevenue: stats.monthlyRevenue || 0,
-                        monthlyOrders: stats.monthlyOrders || 0
-                    };
-                },
-                
-                // Initialize method for compatibility
-                initialize: () => {
-                    console.log('✅ ProfileModule fallback initialized');
-                    return true;
-                }
+                initialize: () => true
             };
-            
-            window.profileInstance = window.ProfileModule;
-            console.log('✅ Complete ProfileModule fallback created');
+            console.log('✅ ProfileModule fallback created');
         }
     }
 
     applyUserTheme() {
         const theme = this.userPreferences.theme || 'auto';
-        
         if (theme === 'dark') {
             document.body.classList.add('dark-mode');
-            this.updateDarkModeIcon(true);
         } else if (theme === 'light') {
             document.body.classList.remove('dark-mode');
-            this.updateDarkModeIcon(false);
         } else {
-            // Auto mode - follow system preference
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             document.body.classList.toggle('dark-mode', prefersDark);
-            this.updateDarkModeIcon(prefersDark);
         }
-        
-        console.log('🎨 Applied user theme:', theme);
     }
 
     setupDarkMode() {
         const darkModeToggle = document.getElementById('dark-mode-toggle');
-        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-        
         if (darkModeToggle) {
             darkModeToggle.addEventListener('click', () => {
                 document.body.classList.toggle('dark-mode');
                 const isDarkMode = document.body.classList.contains('dark-mode');
-                
-                // Save preference
                 const newTheme = isDarkMode ? 'dark' : 'light';
                 this.userPreferences.theme = newTheme;
                 localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-                
-                // Update ProfileModule if available
-                if (window.ProfileModule && window.ProfileModule.updatePreference) {
-                    window.ProfileModule.updatePreference('theme', newTheme);
-                }
-                
-                // Update icon
-                this.updateDarkModeIcon(isDarkMode);
-                
-                console.log('🎨 Theme changed to:', newTheme);
             });
         }
-        
-        // Listen for system theme changes (only if theme is set to auto)
-        prefersDarkScheme.addEventListener('change', (e) => {
-            if (this.userPreferences.theme === 'auto') {
-                document.body.classList.toggle('dark-mode', e.matches);
-                this.updateDarkModeIcon(e.matches);
-            }
-        });
     }
 
-    updateDarkModeIcon(isDarkMode) {
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
-        if (darkModeToggle) {
-            const icon = darkModeToggle.querySelector('span:first-child');
-            const label = darkModeToggle.querySelector('.nav-label');
-            
-            if (isDarkMode) {
-                icon.textContent = '☀️';
-                label.textContent = 'Light';
-            } else {
-                icon.textContent = '🌙';
-                label.textContent = 'Dark';
-            }
-        }
-    }
-  
     setupEventListeners() {
         document.addEventListener('click', (e) => {
-            // Handle main nav items
             if (e.target.closest('.nav-item')) {
                 const navItem = e.target.closest('.nav-item');
                 const view = navItem.getAttribute('data-view');
                 if (view) {
                     this.showSection(view);
                 }
-            }
-            
-            // Handle sidebar menu items (for the existing HTML sidebar)
-            if (e.target.closest('.side-menu-item')) {
-                const menuItem = e.target.closest('.side-menu-item');
-                const section = menuItem.getAttribute('data-section');
-                if (section) {
-                    this.showSection(section);
-                }
-            }
-            
-            // Close sidebar when clicking on overlay
-            if (e.target.classList.contains('sidebar-overlay')) {
-                const sideMenu = document.getElementById('side-menu');
-                const overlay = document.querySelector('.sidebar-overlay');
-                if (sideMenu) sideMenu.classList.remove('active');
-                if (overlay) overlay.classList.remove('active');
-            }
-        });
-        
-        // Close sidebar with Escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                const sideMenu = document.getElementById('side-menu');
-                const overlay = document.querySelector('.sidebar-overlay');
-                if (sideMenu) sideMenu.classList.remove('active');
-                if (overlay) overlay.classList.remove('active');
             }
         });
     }
@@ -511,8 +333,6 @@ class FarmManagementApp {
         
         if (authContainer) authContainer.classList.add('hidden');
         if (appContainer) appContainer.classList.remove('hidden');
-        
-        console.log('🏠 App container shown');
     }
 
     createTopNavigation() {
@@ -525,7 +345,7 @@ class FarmManagementApp {
             header.remove();
         }
         
-        // Create new header
+        // Create new header with hamburger on right
         header = document.createElement('header');
         appContainer.insertBefore(header, appContainer.firstChild);
 
@@ -574,10 +394,10 @@ class FarmManagementApp {
                         <span class="nav-label">Theme</span>
                     </button>
                     
-                    <!-- Hamburger menu as a proper nav-item -->
-                    <button class="nav-item hamburger-menu" id="hamburger-menu" title="Farm Operations">
+                    <!-- Hamburger menu -->
+                    <button class="nav-item hamburger-menu" id="hamburger-menu" title="More Options">
                         <span>☰</span>
-                        <span class="nav-label">More</span>
+                        <span class="nav-label">Menu</span>
                     </button>
                 </div>
             </nav>
@@ -586,25 +406,23 @@ class FarmManagementApp {
             <div class="sidebar-overlay" id="sidebar-overlay"></div>
         `;
 
-        // Setup hamburger menu functionality
-        this.setupHamburgerMenu();
-        
         // Adjust main content padding
         const main = appContainer.querySelector('main');
         if (main) {
             main.style.paddingTop = '80px';
         }
         
-        console.log('✅ Top Navigation created');
+        console.log('✅ Top Navigation with hamburger created');
     }
     
     setupHamburgerMenu() {
         const hamburger = document.getElementById('hamburger-menu');
         const sideMenu = document.getElementById('side-menu');
         const overlay = document.getElementById('sidebar-overlay');
+        const body = document.body;
         
         if (hamburger && sideMenu) {
-            // Remove any existing event listeners to prevent duplicates
+            // Remove any existing event listeners
             const newHamburger = hamburger.cloneNode(true);
             hamburger.parentNode.replaceChild(newHamburger, hamburger);
             
@@ -614,49 +432,49 @@ class FarmManagementApp {
             currentHamburger.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('🍔 Hamburger clicked, toggling sidebar');
+                console.log('🍔 Hamburger clicked - opening sidebar from right');
+                
+                // Toggle sidebar and overlay
                 sideMenu.classList.toggle('active');
                 if (overlay) overlay.classList.toggle('active');
+                body.classList.toggle('sidebar-open');
             });
             
-            console.log('✅ Hamburger menu connected to sidebar');
+            // Close sidebar when clicking overlay
+            if (overlay) {
+                overlay.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    sideMenu.classList.remove('active');
+                    overlay.classList.remove('active');
+                    body.classList.remove('sidebar-open');
+                });
+            }
             
-            // Ensure sidebar is visible on mobile
-            this.fixSidebarVisibility();
+            // Close sidebar with Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    sideMenu.classList.remove('active');
+                    if (overlay) overlay.classList.remove('active');
+                    body.classList.remove('sidebar-open');
+                }
+            });
+            
+            // Ensure sidebar starts hidden on mobile
+            if (window.innerWidth < 768) {
+                sideMenu.style.right = '-300px';
+            }
+            
+            console.log('✅ Hamburger menu setup complete');
         } else {
-            console.log('❌ Hamburger or side menu not found:', { hamburger, sideMenu });
+            console.log('❌ Hamburger or side menu not found');
         }
-    }
-    
-    fixSidebarVisibility() {
-        const sideMenu = document.getElementById('side-menu');
-        if (!sideMenu) return;
-        
-        // Make sure sidebar has proper styles
-        sideMenu.style.position = 'fixed';
-        sideMenu.style.top = '0';
-        sideMenu.style.bottom = '0';
-        sideMenu.style.right = '0';
-        sideMenu.style.width = '300px';
-        sideMenu.style.background = 'linear-gradient(135deg, #ffffff, #f5f5f5)';
-        sideMenu.style.backdropFilter = 'blur(20px)';
-        sideMenu.style.boxShadow = '-5px 0 30px rgba(0,0,0,0.2)';
-        sideMenu.style.borderLeft = '1px solid rgba(0,0,0,0.1)';
-        sideMenu.style.zIndex = '9998';
-        sideMenu.style.transform = 'translateX(100%)';
-        sideMenu.style.transition = 'transform 0.3s ease';
-        sideMenu.style.overflowY = 'auto';
-        sideMenu.style.paddingTop = '20px';
-        
-        // Make sure it's hidden by default
-        sideMenu.classList.remove('active');
-        
-        console.log('✅ Sidebar visibility fixed');
     }
 
     setupSideMenuEvents() {
         const sideMenuItems = document.querySelectorAll('.side-menu-item');
         const overlay = document.getElementById('sidebar-overlay');
+        const sideMenu = document.getElementById('side-menu');
+        const body = document.body;
         
         sideMenuItems.forEach(item => {
             item.addEventListener('click', (e) => {
@@ -666,25 +484,21 @@ class FarmManagementApp {
                     console.log('📱 Side menu item clicked:', section);
                     this.showSection(section);
                     
-                    // Close sidebar after selection
-                    const sideMenu = document.getElementById('side-menu');
-                    if (sideMenu) {
+                    // Close sidebar after selection on mobile
+                    if (window.innerWidth < 768) {
                         sideMenu.classList.remove('active');
-                    }
-                    if (overlay) {
-                        overlay.classList.remove('active');
+                        if (overlay) overlay.classList.remove('active');
+                        body.classList.remove('sidebar-open');
                     }
                 }
             });
         });
-        
-        console.log('✅ Side menu events setup');
     }
     
     showSection(sectionId) {
         console.log(`🔄 Switching to section: ${sectionId}`);
         
-        // Update active nav state for top navigation
+        // Update active nav state
         document.querySelectorAll('.nav-item').forEach(item => {
             item.classList.remove('active');
         });
