@@ -57,9 +57,9 @@
 .card-button {
   margin: 0;
   box-sizing: border-box;
-  /* background left out so gradient stays */
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--gradient-primary, linear-gradient(135deg, #16a34a, #22c55e)); /* keep green gradient */
+  color: #fff;
+  border: none;
   border-radius: 16px;
   padding: 24px 16px;
   cursor: pointer;
@@ -74,41 +74,27 @@
   text-align: center;
 }
 
-/* Keep your gradient color rules separate */
-.card-button.colored {
-  background: var(--gradient-primary, linear-gradient(135deg, #16a34a, #22c55e));
-  color: #fff;
+.card-button:hover {
+  background: var(--gradient-primary-hover, linear-gradient(135deg, #15803d, #22c55e)); /* darker hover */
+  transform: scale(1.03);
+  box-shadow: var(--shadow-primary, 0 2px 6px rgba(0,0,0,0.1));
 }
 
-.card-button.colored:hover {
-  background: var(--gradient-primary-hover, linear-gradient(135deg, #15803d, #22c55e));
-}
-
-
-/*.card-button:hover {
-  transform: translateY(-2px) scale(1.03);
-  background: var(--gradient-primary-hover, linear-gradient(135deg, #15803d, #22c55e)); /* darker hover gradient */
- /* box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-/* Icon */
 .card-button .card-icon {
-  font-size: 32px;   /* balanced size */
+  font-size: 32px;
   line-height: 1;
 }
 
-/* Title */
 .card-button .card-title {
   font-size: 14px;
   font-weight: 600;
-  color: #fff;       /* keep text white for contrast */
+  color: #fff;
 }
 
-/* Subtitle */
 .card-button .card-subtitle {
   font-size: 12px;
   opacity: 0.9;
-  color: #f0fdf4;    /* lighter greenish-white for readability */
+  color: #f0fdf4; /* light text for readability */
   text-align: center;
 }
 
