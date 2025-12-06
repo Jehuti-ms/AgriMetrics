@@ -146,7 +146,7 @@ const SalesRecordModule = {
 
                 <!-- Quick Sale Form -->
                 <div class="glass-card quick-sale">
-                    <h3>⚡ Quick Sale</h3>
+                    <h3> Quick Sale</h3>
                     <form id="quick-sale-form">
                         <div class="form-row compact">
                             <div class="form-group">
