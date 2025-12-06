@@ -1,4 +1,4 @@
-// app.js - MERGED WORKING VERSION
+// app.js - COMPLETE WORKING VERSION WITH PROFILE
 console.log('🚀 Loading Farm Management App...');
 
 class FarmManagementApp {
@@ -36,7 +36,7 @@ class FarmManagementApp {
         
         this.isDemoMode = true;
         
-        // Load user preferences
+        // Load user preferences - IMPORTANT: This creates ProfileModule
         await this.loadUserPreferences();
         
         // Show the app interface
@@ -231,6 +231,12 @@ class FarmManagementApp {
                     font-size: 10px;
                 }
                 
+                /* Hide some nav items on mobile, keep essential ones + hamburger */
+                .nav-item[data-view="orders"],
+                .nav-item[data-view="profile"] {
+                    display: none;
+                }
+                
                 #content-area {
                     margin-top: 70px;
                     padding: 15px;
@@ -313,42 +319,60 @@ class FarmManagementApp {
     }
 
     initializeStyleManager() {
-        // Initialize StyleManager IMMEDIATELY when app starts
         if (window.StyleManager && typeof StyleManager.init === 'function') {
             StyleManager.init();
             console.log('🎨 StyleManager initialized');
         } else {
-            console.warn('⚠️ StyleManager not available - modules may not style properly');
+            console.warn('⚠️ StyleManager not available');
         }
     }
 
     initializeFarmModules() {
-        // FIXED: Check if FarmModules exists and initialize all modules
         if (window.FarmModules) {
-            // Check if initializeAll method exists (for newer versions)
-            if (typeof FarmModules.initializeAll === 'function') {
-                FarmModules.initializeAll();
-                console.log('🔧 FarmModules initialized all modules');
-            } 
-            // If no initializeAll method, just log that modules are ready
-            else {
-                console.log('🔧 FarmModules core ready - modules can register');
-            }
+            console.log('🔧 FarmModules core ready');
         } else {
-            console.warn('⚠️ FarmModules core not available');
-            
-            // Create a basic FarmModules if it doesn't exist
+            // Create complete FarmModules like in CSS version
             window.FarmModules = {
                 modules: {},
-                registerModule: function(name, module) {
-                    console.log(`✅ Registering module: ${name}`);
-                    this.modules[name] = module;
+                appData: {
+                    profile: {
+                        farmName: 'My Farm',
+                        dashboardStats: {},
+                        lastUpdated: new Date().toISOString()
+                    },
+                    settings: {
+                        currency: 'USD',
+                        theme: 'auto',
+                        autoSync: true
+                    }
                 },
+                
+                // Module registration system - IMPORTANT
+                registerModule: function(name, module) {
+                    console.log(`📦 Module registered: ${name}`);
+                    this.modules[name] = module;
+                    
+                    // Auto-initialize if it's the current section
+                    if (window.app && window.app.currentSection === name) {
+                        setTimeout(() => {
+                            if (module.initialize && typeof module.initialize === 'function') {
+                                module.initialize();
+                            }
+                        }, 50);
+                    }
+                },
+                
                 getModule: function(name) {
                     return this.modules[name];
+                },
+                
+                // For compatibility with CSS version
+                loadModuleCSS: function(moduleName) {
+                    console.log(`🎨 CSS requested for: ${moduleName}`);
+                    // CSS is already loaded via addNavbarCSS
                 }
             };
-            console.log('🔧 Created basic FarmModules fallback');
+            console.log('🔧 FarmModules core created (CSS version style)');
         }
     }
     
@@ -359,12 +383,12 @@ class FarmManagementApp {
                 this.userPreferences = ProfileModule.loadUserPreferences();
                 console.log('✅ User preferences loaded via ProfileModule');
             } else {
-                // Fallback to direct localStorage access
+                // Fallback to direct localStorage access - LIKE IN CSS VERSION
                 const savedPrefs = localStorage.getItem('farm-user-preferences');
                 this.userPreferences = savedPrefs ? JSON.parse(savedPrefs) : this.getDefaultPreferences();
                 console.log('⚠️ ProfileModule not available, using localStorage fallback');
                 
-                // Create a complete ProfileModule fallback for other modules to use
+                // Create a complete ProfileModule fallback - LIKE IN CSS VERSION
                 this.createProfileModuleFallback();
             }
             
@@ -379,6 +403,7 @@ class FarmManagementApp {
     }
 
     getDefaultPreferences() {
+        // SAME AS CSS VERSION
         return {
             theme: 'auto',
             language: 'en',
@@ -404,7 +429,7 @@ class FarmManagementApp {
     }
 
     createProfileModuleFallback() {
-        // Create a complete ProfileModule with all methods modules expect
+        // COMPLETE ProfileModule LIKE IN CSS VERSION
         if (typeof ProfileModule === 'undefined') {
             window.ProfileModule = {
                 userPreferences: this.userPreferences,
@@ -418,18 +443,7 @@ class FarmManagementApp {
                     console.log(`⚙️ Preference updated: ${key} = ${value}`);
                 },
                 
-                // Stats methods that modules expect
-                updateBusinessStats: (module, stats) => {
-                    if (!this.userPreferences.dashboardStats) {
-                        this.userPreferences.dashboardStats = {};
-                    }
-                    Object.keys(stats).forEach(key => {
-                        this.userPreferences.dashboardStats[key] = stats[key];
-                    });
-                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-                    console.log('📊 Stats updated for', module + ':', stats);
-                },
-                
+                // Stats methods
                 updateStats: (stats) => {
                     if (!this.userPreferences.dashboardStats) {
                         this.userPreferences.dashboardStats = {};
@@ -445,7 +459,6 @@ class FarmManagementApp {
                     return this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
                 },
                 
-                // Dashboard module expects this method
                 getProfileData: () => {
                     return {
                         farmName: this.userPreferences.businessName || 'My Farm',
@@ -454,11 +467,11 @@ class FarmManagementApp {
                     };
                 },
                 
+                // FOR DASHBOARD MODULE - IMPORTANT!
                 getProfileStats: () => {
                     return this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
                 },
                 
-                // For compatibility with existing modules
                 getBusinessOverview: () => {
                     const stats = this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
                     return {
@@ -479,8 +492,12 @@ class FarmManagementApp {
                 }
             };
             
-            window.profileInstance = window.ProfileModule;
-            console.log('✅ Complete ProfileModule fallback created');
+            // ALSO add to FarmModules for easy access
+            if (window.FarmModules) {
+                window.FarmModules.registerModule('profile', window.ProfileModule);
+            }
+            
+            console.log('✅ Complete ProfileModule created (CSS version style)');
         }
     }
 
@@ -494,7 +511,6 @@ class FarmManagementApp {
             document.body.classList.remove('dark-mode');
             this.updateDarkModeIcon(false);
         } else {
-            // Auto mode - follow system preference
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             document.body.classList.toggle('dark-mode', prefersDark);
             this.updateDarkModeIcon(prefersDark);
@@ -512,24 +528,19 @@ class FarmManagementApp {
                 document.body.classList.toggle('dark-mode');
                 const isDarkMode = document.body.classList.contains('dark-mode');
                 
-                // Save preference
                 const newTheme = isDarkMode ? 'dark' : 'light';
                 this.userPreferences.theme = newTheme;
                 localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
                 
-                // Update ProfileModule if available
                 if (window.ProfileModule && window.ProfileModule.updatePreference) {
                     window.ProfileModule.updatePreference('theme', newTheme);
                 }
                 
-                // Update icon
                 this.updateDarkModeIcon(isDarkMode);
-                
                 console.log('🎨 Theme changed to:', newTheme);
             });
         }
         
-        // Listen for system theme changes (only if theme is set to auto)
         prefersDarkScheme.addEventListener('change', (e) => {
             if (this.userPreferences.theme === 'auto') {
                 document.body.classList.toggle('dark-mode', e.matches);
@@ -556,7 +567,6 @@ class FarmManagementApp {
   
     setupEventListeners() {
         document.addEventListener('click', (e) => {
-            // Handle main nav items
             if (e.target.closest('.nav-item')) {
                 const navItem = e.target.closest('.nav-item');
                 const view = navItem.getAttribute('data-view');
@@ -565,7 +575,6 @@ class FarmManagementApp {
                 }
             }
             
-            // Handle sidebar menu items (for the existing HTML sidebar)
             if (e.target.closest('.side-menu-item')) {
                 const menuItem = e.target.closest('.side-menu-item');
                 const section = menuItem.getAttribute('data-section');
@@ -596,7 +605,7 @@ class FarmManagementApp {
             header.remove();
         }
         
-        // Create new header
+        // Create new header - WITH PROFILE BUTTON
         header = document.createElement('header');
         appContainer.insertBefore(header, appContainer.firstChild);
 
@@ -634,7 +643,8 @@ class FarmManagementApp {
                         <span class="nav-label">Sales</span>
                     </button>
 
-                    <button class="nav-item" data-view="profile" title="Profile">
+                    <!-- PROFILE BUTTON - WAS MISSING -->
+                    <button class="nav-item" data-view="profile" title="Profile" id="profile-nav-button">
                         <span>👤</span>
                         <span class="nav-label">Profile</span>
                     </button>
@@ -654,7 +664,7 @@ class FarmManagementApp {
             </nav>
         `;
 
-        console.log('✅ Top Navigation created');
+        console.log('✅ Top Navigation with Profile created');
     }
     
     setupHamburgerMenu() {
@@ -741,8 +751,11 @@ class FarmManagementApp {
         }
 
         // Load the module content
-        if (window.FarmModules && typeof window.FarmModules.initializeModule === 'function') {
-            window.FarmModules.initializeModule(sectionId);
+        if (window.FarmModules && window.FarmModules.modules[sectionId]) {
+            const module = window.FarmModules.modules[sectionId];
+            if (module.initialize && typeof module.initialize === 'function') {
+                module.initialize();
+            }
         } else {
             this.loadFallbackContent(sectionId);
         }
@@ -769,6 +782,7 @@ class FarmManagementApp {
             <div style="padding: 20px;">
                 <h2 style="color: #1a1a1a;">${sectionTitles[sectionId] || sectionId}</h2>
                 <p style="color: #666;">Content loading...</p>
+                <p style="color: #999; font-size: 14px;">Module system not loaded yet</p>
             </div>
         `;
     }
