@@ -65,7 +65,7 @@ class FarmManagementApp {
         console.log('✅ App initialized successfully');
     }
 
-  /  addEssentialCSS() {
+    addEssentialCSS() {
         // THIS IS WHAT WAS MISSING - The CSS that makes navbar visible
         const style = document.createElement('style');
         style.textContent = `
