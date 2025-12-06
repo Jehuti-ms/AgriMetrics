@@ -65,12 +65,12 @@ class FarmManagementApp {
         console.log('✅ App initialized successfully');
     }
 
-  /*  addEssentialCSS() {
+  /  addEssentialCSS() {
         // THIS IS WHAT WAS MISSING - The CSS that makes navbar visible
         const style = document.createElement('style');
         style.textContent = `
             /* ===== ESSENTIAL CSS TO MAKE NAVBAR VISIBLE ===== */
-    /*        .top-nav {
+           .top-nav {
                 position: fixed;
                 top: 0;
                 left: 0;
@@ -117,7 +117,7 @@ class FarmManagementApp {
             }
             
             /* MAKE NAV ITEMS VISIBLE - This fixes "faint shapes" */
-       /*     .nav-item {
+            .nav-item {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -154,14 +154,14 @@ class FarmManagementApp {
             }
             
             /* MAKE HAMBURGER VISIBLE */
-      /*      .hamburger-menu {
+             .hamburger-menu {
                 background: #4CAF50 !important;
                 color: white !important;
                 border: none !important;
             }
             
             /* SIDEBAR SLIDES FROM RIGHT */
-      /*      #side-menu {
+             #side-menu {
                 position: fixed;
                 top: 0;
                 right: -300px;
@@ -181,14 +181,14 @@ class FarmManagementApp {
             }
             
             /* CONTENT AREA BELOW NAVBAR */
-       /*     #content-area {
+             #content-area {
                 margin-top: 80px;
                 padding: 20px;
                 min-height: calc(100vh - 80px);
             }
             
             /* MOBILE RESPONSIVE */
-        /*    @media (max-width: 768px) {
+             @media (max-width: 768px) {
                 .top-nav {
                     height: 60px;
                     padding: 0 15px;
@@ -206,8 +206,8 @@ class FarmManagementApp {
                 }
             }
             
-            /* DESKTOP - SIDEBAR ON LEFT */
-        /*    @media (min-width: 769px) {
+               DESKTOP - SIDEBAR ON LEFT */
+              @media (min-width: 769px) {
                 #side-menu {
                     position: fixed;
                     left: 0;
@@ -231,10 +231,10 @@ class FarmManagementApp {
                     margin-left: 260px;
                     margin-top: 0;
                 }
-            } */
+            } 
             
-            /* DARK MODE */
-         /*   .dark-mode .top-nav {
+               DARK MODE */
+              .dark-mode .top-nav {
                 background: #1a1a1a;
                 border-color: #333;
             }
@@ -256,7 +256,7 @@ class FarmManagementApp {
         `;
         document.head.appendChild(style);
         console.log('✅ Essential CSS added - navbar will now be visible');
-    }*/
+    }
 
     initializeStyleManager() {
         // Initialize StyleManager IMMEDIATELY when app starts
