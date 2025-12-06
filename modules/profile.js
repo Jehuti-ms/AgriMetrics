@@ -1,15 +1,4 @@
 // modules/profile.js - COMPLETE WITH ALL IMPLEMENTATIONS
- if (!this.element) return;
-
-    // Debug: Log current inputs before rendering
-    console.log('Before render - checking for placeholders:');
-    const inputsBefore = this.element.querySelectorAll('input, select, textarea');
-    inputsBefore.forEach(el => {
-        if (el.placeholder !== undefined && el.placeholder !== '') {
-            console.log(`Found placeholder on ${el.id}: "${el.placeholder}"`);
-        }
-    });
-
 console.log('Loading profile module...');
 
 const ProfileModule = {
@@ -352,99 +341,7 @@ const ProfileModule = {
         this.setupEventListeners();
         this.updateAllDisplays();
         this.loadBackupList();
-
-         // Then after setting innerHTML, check again
-    setTimeout(() => {
-        console.log('After render - checking for placeholders:');
-        const inputsAfter = this.element.querySelectorAll('input, select, textarea');
-        inputsAfter.forEach(el => {
-            console.log(`${el.id}: placeholder="${el.placeholder}"`);
-        });
-    }, 100);
-}
-Also, check these common culprits:
-A. Your ensureFormStyles() method - is it adding placeholders?
-javascript
-ensureFormStyles() {
-    const formInputs = this.element?.querySelectorAll('input, select, textarea');
-    formInputs?.forEach(input => {
-        if (!input.classList.contains('form-input') && !input.classList.contains('setting-control')) {
-            if (input.type !== 'checkbox' && input.type !== 'radio') {
-                input.classList.add('form-input');
-                // Check if you're adding placeholders here!
-            }
-        }
-    });
-}
-B. StyleManager or other global modules
-Check if window.StyleManager or other modules are modifying inputs.
-
-C. Browser Dev Tools Autofill
-Sometimes browsers add placeholders for autofill. Check if they look like:
-
-placeholder="​" (zero-width space)
-
-placeholder=" " (regular space)
-
-Quick Fix:
-Add this cleanup method to your renderModule() right before or after setupEventListeners():
-
-javascript
-renderModule() {
-    // ... existing code ...
-    
-    this.setupEventListeners();
-    
-    // ADD THIS: Clean up empty placeholders
-    this.cleanupEmptyPlaceholders();
-    
-    this.updateAllDisplays();
-    // ... rest of your code ...
-},
-
-cleanupEmptyPlaceholders() {
-    const inputs = this.element.querySelectorAll('input, textarea');
-    inputs.forEach(input => {
-        // Remove placeholder if it's empty or just whitespace
-        if (input.placeholder && input.placeholder.trim() === '') {
-            input.removeAttribute('placeholder');
-        }
-    });
-},
-Also check for hidden characters:
-Sometimes copy-pasting code can add zero-width spaces or other invisible characters:
-
-javascript
-// Add this debug to check for invisible characters
-cleanupEmptyPlaceholders() {
-    const inputs = this.element.querySelectorAll('input, textarea');
-    inputs.forEach(input => {
-        if (input.placeholder) {
-            console.log(`Placeholder for ${input.id}:`, 
-                       `Length: ${input.placeholder.length}`,
-                       `Char codes: ${Array.from(input.placeholder).map(c => c.charCodeAt(0))}`);
-            
-            // Remove if empty or just whitespace/control characters
-            if (input.placeholder.trim().length === 0) {
-                input.removeAttribute('placeholder');
-                console.log(`Removed placeholder from ${input.id}`);
-            }
-        }
-    });
-},
-Most Likely Source:
-Given your code structure, the most likely culprit is either:
-
-Browser extensions (like form helpers, password managers, etc.)
-
-Global JavaScript in another file that's running after your module loads
-
-Framework/library you might be using that's not shown in this code
-
-Check your browser's developer tools → Elements panel → Right-click on an input with placeholder → "Break on" → "Attribute modifications" to see what's adding them.
-
-
-
+        
         // RESTORE USER INPUT AFTER RENDER
         this.restoreUserInput();
         
@@ -1399,5 +1296,3 @@ if (window.FarmModules) {
 }
 
 console.log('✅ Profile module registered with ALL implementations');
-
-
