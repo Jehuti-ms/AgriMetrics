@@ -1100,6 +1100,181 @@ const ModalManager = {
         });
     },
 
+    // Show reports modal
+    showReports(options) {
+        const modalId = this.createModal({
+            id: options.id || 'reports-modal',
+            title: options.title || 'Reports',
+            subtitle: options.subtitle || 'Select a report to generate',
+            size: options.size || 'modal-lg',
+            content: `
+                <div class="reports-selection">
+                    <div class="reports-grid">
+                        ${(options.reports || []).map(report => `
+                            <div class="report-card" data-report="${report.id}">
+                                <div class="report-icon">${report.icon || '📊'}</div>
+                                <h4 class="report-title">${report.title}</h4>
+                                <p class="report-desc">${report.description}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div id="report-preview" class="report-preview" style="display: none; margin-top: 20px; padding: 20px; background: #f9fafb; border-radius: 8px;">
+                        <!-- Report preview will be displayed here -->
+                    </div>
+                </div>
+            `,
+            footer: `
+                <button type="button" class="btn btn-outline" data-action="close">Close</button>
+                <button type="button" class="btn btn-primary" id="generate-report-btn" style="display: none;">
+                    Generate Report
+                </button>
+            `,
+            onOpen: () => {
+                let selectedReport = null;
+                
+                // Add report selection handlers
+                document.querySelectorAll('.report-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        // Update selection
+                        document.querySelectorAll('.report-card').forEach(c => {
+                            c.classList.remove('selected');
+                        });
+                        card.classList.add('selected');
+                        
+                        selectedReport = card.dataset.report;
+                        
+                        // Show preview
+                        const preview = document.getElementById('report-preview');
+                        const generateBtn = document.getElementById('generate-report-btn');
+                        
+                        const report = (options.reports || []).find(r => r.id === selectedReport);
+                        if (report && report.preview) {
+                            preview.innerHTML = report.preview;
+                            preview.style.display = 'block';
+                            generateBtn.style.display = 'inline-block';
+                            generateBtn.textContent = report.buttonText || 'Generate Report';
+                        }
+                    });
+                });
+                
+                // Add generate button handler
+                const generateBtn = document.getElementById('generate-report-btn');
+                if (generateBtn) {
+                    generateBtn.addEventListener('click', () => {
+                        if (selectedReport && options.onReportSelect) {
+                            options.onReportSelect(selectedReport);
+                            this.closeModal(modalId);
+                        }
+                    });
+                }
+                
+                // Add close button handler
+                const closeBtn = document.querySelector(`[data-modal="${modalId}"] ~ .modal-footer [data-action="close"]`);
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', () => this.closeModal(modalId));
+                }
+            }
+        });
+
+        this.showModal(modalId);
+        return modalId;
+    },
+
+    // Show receipt review modal
+    showReceiptReviewModal(options) {
+        const { receipt, extractedData } = options;
+        
+        const fields = [
+            {
+                type: 'select',
+                name: 'transaction-type',
+                label: 'Transaction Type',
+                value: extractedData?.type || 'expense',
+                options: [
+                    { value: 'income', label: '💰 Income' },
+                    { value: 'expense', label: '💸 Expense' }
+                ]
+            },
+            {
+                type: 'text',
+                name: 'description',
+                label: 'Description',
+                value: `Receipt: ${receipt.name}`,
+                required: true,
+                placeholder: 'Enter transaction description'
+            },
+            {
+                type: 'number',
+                name: 'amount',
+                label: 'Amount ($)',
+                value: extractedData?.amount || '',
+                required: true,
+                min: 0.01,
+                step: 0.01,
+                placeholder: '0.00'
+            },
+            {
+                type: 'select',
+                name: 'category',
+                label: 'Category',
+                value: extractedData?.category || '',
+                options: this.getCategoryOptions(extractedData?.type || 'expense')
+            },
+            {
+                type: 'date',
+                name: 'date',
+                label: 'Date',
+                value: extractedData?.date || new Date().toISOString().split('T')[0]
+            },
+            {
+                type: 'text',
+                name: 'vendor',
+                label: 'Vendor/Supplier',
+                value: extractedData?.vendor || '',
+                placeholder: 'Who issued this receipt?'
+            },
+            {
+                type: 'textarea',
+                name: 'notes',
+                label: 'Notes',
+                value: `Imported from receipt: ${receipt.name}`,
+                rows: 3,
+                placeholder: 'Additional notes...'
+            }
+        ];
+
+        // Use your existing createForm method
+        return this.createForm({
+            id: 'receipt-review-modal',
+            title: '🔍 Review Receipt Data',
+            subtitle: `From: ${receipt.name}`,
+            size: 'modal-lg',
+            fields: fields,
+            submitText: 'Add Transaction',
+            onSubmit: options.onSubmit
+        });
+    },
+
+    // Get category options
+    getCategoryOptions(type) {
+        // This should get categories from the IncomeExpensesModule
+        if (window.IncomeExpensesModule && window.IncomeExpensesModule.getCategoryOptions) {
+            return window.IncomeExpensesModule.getCategoryOptions(type);
+        }
+        
+        // Fallback
+        return [
+            { value: '', label: 'Select a category' },
+            { value: 'feed', label: '🌾 Feed & Nutrition' },
+            { value: 'medication', label: '💊 Healthcare' },
+            { value: 'equipment', label: '🔧 Equipment' },
+            { value: 'labor', label: '👷 Labor' },
+            { value: 'utilities', label: '⚡ Utilities' },
+            { value: 'transportation', label: '🚚 Transportation' },
+            { value: 'other-expense', label: '📦 Other Expense' }
+        ];
+    },
+
     // Clean up all modals
     cleanup() {
         Object.keys(this.modals).forEach(modalId => {
@@ -1109,256 +1284,6 @@ const ModalManager = {
         this.currentModal = null;
     }
 };
-
-// In ModalManager.js - Add this method to your ModalManager object
-showReports(options) {
-    const modalId = this.createModal({
-        id: options.id || 'reports-modal',
-        title: options.title || 'Reports',
-        subtitle: options.subtitle || 'Select a report to generate',
-        size: options.size || 'modal-lg',
-        content: `
-            <div class="reports-selection">
-                <div class="reports-grid">
-                    ${(options.reports || []).map(report => `
-                        <div class="report-card" data-report="${report.id}">
-                            <div class="report-icon">${report.icon || '📊'}</div>
-                            <h4 class="report-title">${report.title}</h4>
-                            <p class="report-desc">${report.description}</p>
-                        </div>
-                    `).join('')}
-                </div>
-                <div id="report-preview" class="report-preview hidden">
-                    <!-- Report preview will be displayed here -->
-                </div>
-            </div>
-        `,
-        footer: `
-            <button type="button" class="btn btn-outline" data-action="close">Close</button>
-            <button type="button" class="btn btn-primary hidden" id="generate-report-btn">
-                Generate Report
-            </button>
-        `,
-        onOpen: () => {
-            let selectedReport = null;
-            
-            // Add report selection handlers
-            document.querySelectorAll('.report-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    // Update selection
-                    document.querySelectorAll('.report-card').forEach(c => {
-                        c.classList.remove('selected');
-                    });
-                    card.classList.add('selected');
-                    
-                    selectedReport = card.dataset.report;
-                    
-                    // Show preview
-                    const preview = document.getElementById('report-preview');
-                    const generateBtn = document.getElementById('generate-report-btn');
-                    
-                    const report = (options.reports || []).find(r => r.id === selectedReport);
-                    if (report && report.preview) {
-                        preview.innerHTML = report.preview;
-                        preview.classList.remove('hidden');
-                        generateBtn.classList.remove('hidden');
-                        generateBtn.textContent = report.buttonText || 'Generate Report';
-                    }
-                });
-            });
-            
-            // Add generate button handler
-            const generateBtn = document.getElementById('generate-report-btn');
-            if (generateBtn) {
-                generateBtn.addEventListener('click', () => {
-                    if (selectedReport && options.onReportSelect) {
-                        options.onReportSelect(selectedReport);
-                        this.closeModal(modalId);
-                    }
-                });
-            }
-            
-            // Add close button handler
-            const closeBtn = document.querySelector(`[data-modal="${modalId}"] ~ .modal-footer [data-action="close"]`);
-            if (closeBtn) {
-                closeBtn.addEventListener('click', () => this.closeModal(modalId));
-            }
-        }
-    });
-
-    this.showModal(modalId);
-    return modalId;
-}
-
-// In ModalManager class or object
-showReceiptReviewModal: function(options) {
-    const { receipt, extractedData } = options;
-    
-    const fields = [
-        {
-            type: 'select',
-            name: 'transaction-type',
-            label: 'Transaction Type',
-            value: extractedData?.type || 'expense',
-            options: [
-                { value: 'income', label: '💰 Income' },
-                { value: 'expense', label: '💸 Expense' }
-            ]
-        },
-        {
-            type: 'text',
-            name: 'description',
-            label: 'Description',
-            value: `Receipt: ${receipt.name}`,
-            required: true,
-            placeholder: 'Enter transaction description'
-        },
-        {
-            type: 'number',
-            name: 'amount',
-            label: 'Amount ($)',
-            value: extractedData?.amount || '',
-            required: true,
-            min: 0.01,
-            step: 0.01,
-            placeholder: '0.00'
-        },
-        {
-            type: 'select',
-            name: 'category',
-            label: 'Category',
-            value: extractedData?.category || '',
-            options: this.getCategoryOptions(extractedData?.type || 'expense')
-        },
-        {
-            type: 'date',
-            name: 'date',
-            label: 'Date',
-            value: extractedData?.date || new Date().toISOString().split('T')[0]
-        },
-        {
-            type: 'text',
-            name: 'vendor',
-            label: 'Vendor/Supplier',
-            value: extractedData?.vendor || '',
-            placeholder: 'Who issued this receipt?'
-        },
-        {
-            type: 'textarea',
-            name: 'notes',
-            label: 'Notes',
-            value: `Imported from receipt: ${receipt.name}`,
-            rows: 3,
-            placeholder: 'Additional notes...'
-        }
-    ];
-
-    // Use your existing createForm method
-    return this.createForm({
-        id: 'receipt-review-modal',
-        title: '🔍 Review Receipt Data',
-        subtitle: `From: ${receipt.name}`,
-        size: 'modal-lg',
-        fields: fields,
-        submitText: 'Add Transaction',
-        onSubmit: options.onSubmit
-    });
-},
-
-getCategoryOptions: function(type) {
-    // This should get categories from the IncomeExpensesModule
-    if (window.IncomeExpensesModule) {
-        return window.IncomeExpensesModule.getCategoryOptions(type);
-    }
-    
-    // Fallback
-    return [
-        { value: '', label: 'Select a category' },
-        { value: 'feed', label: '🌾 Feed & Nutrition' },
-        { value: 'medication', label: '💊 Healthcare' },
-        { value: 'equipment', label: '🔧 Equipment' }
-    ];
-},
-
-showReports: function(options) {
-    const modalId = this.createModal({
-        id: options.id || 'reports-modal',
-        title: options.title || 'Reports',
-        subtitle: options.subtitle || 'Select a report to generate',
-        size: options.size || 'modal-lg',
-        content: `
-            <div class="reports-selection">
-                <div class="reports-grid">
-                    ${(options.reports || []).map(report => `
-                        <div class="report-card" data-report="${report.id}">
-                            <div class="report-icon">${report.icon || '📊'}</div>
-                            <h4 class="report-title">${report.title}</h4>
-                            <p class="report-desc">${report.description}</p>
-                        </div>
-                    `).join('')}
-                </div>
-                <div id="report-preview" class="report-preview hidden">
-                    <!-- Report preview will be displayed here -->
-                </div>
-            </div>
-        `,
-        footer: `
-            <button type="button" class="btn btn-outline" data-action="close">Close</button>
-            <button type="button" class="btn btn-primary hidden" id="generate-report-btn">
-                Generate Report
-            </button>
-        `,
-        onOpen: () => {
-            let selectedReport = null;
-            
-            // Add report selection handlers
-            document.querySelectorAll('.report-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    // Update selection
-                    document.querySelectorAll('.report-card').forEach(c => {
-                        c.classList.remove('selected');
-                    });
-                    card.classList.add('selected');
-                    
-                    selectedReport = card.dataset.report;
-                    
-                    // Show preview
-                    const preview = document.getElementById('report-preview');
-                    const generateBtn = document.getElementById('generate-report-btn');
-                    
-                    const report = (options.reports || []).find(r => r.id === selectedReport);
-                    if (report && report.preview) {
-                        preview.innerHTML = report.preview;
-                        preview.classList.remove('hidden');
-                        generateBtn.classList.remove('hidden');
-                        generateBtn.textContent = report.buttonText || 'Generate Report';
-                    }
-                });
-            });
-            
-            // Add generate button handler
-            const generateBtn = document.getElementById('generate-report-btn');
-            if (generateBtn) {
-                generateBtn.addEventListener('click', () => {
-                    if (selectedReport && options.onReportSelect) {
-                        options.onReportSelect(selectedReport);
-                        this.closeModal(modalId);
-                    }
-                });
-            }
-            
-            // Add close button handler
-            const closeBtn = document.querySelector(`[data-modal="${modalId}"] ~ .modal-footer [data-action="close"]`);
-            if (closeBtn) {
-                closeBtn.addEventListener('click', () => this.closeModal(modalId));
-            }
-        }
-    });
-
-    this.showModal(modalId);
-    return modalId;
-}
-}; // This closes the ModalManager object
 
 // Initialize Modal Manager when DOM is ready
 if (document.readyState === 'loading') {
