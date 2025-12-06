@@ -171,14 +171,14 @@ const DashboardModule = {
                 
                 <!-- Refresh Button -->
                 <div class="module-footer">
-                    <div class="footer-left">
-                        <button id="refresh-stats-btn" class="btn-primary">
-                            <span class="btn-icon">🔄</span>
-                            <span class="btn-text">Refresh Stats</span>
-                        </button>
+                   <div class="refresh-container">
+                      <button id="refresh-stats-btn" class="btn-primary">
+                        <span class="btn-icon">🔄</span>
+                        <span class="btn-text">Refresh Stats</span>
+                      </button>
                     </div>
                 </div>
-                
+             </div>  
             </div>
         `;
     },
