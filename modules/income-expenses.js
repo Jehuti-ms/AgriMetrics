@@ -315,22 +315,38 @@ const IncomeExpensesModule = {
     },
 
       loadAndDisplayData() {
-        console.log('🔄 Loading and displaying data...');
-        const data = this.getModuleData();
-        this.updateDashboardDisplay(data);
-        this.updateTransactionsList(data);
-        this.updateCategoriesList(data);
+    console.log('🔄 Loading and displaying data...');
+    const data = this.getModuleData();
+    this.updateDashboardDisplay(data);
+    this.updateTransactionsList(data);
+    this.updateCategoriesList(data);
+    
+    // Try to load receipts, but handle Firebase errors gracefully
+    this.loadReceiptsFromFirebase().then(() => {
+        this.updatePendingReceiptsUI();
+    }).catch(error => {
+        console.error('Error loading receipts:', error);
         
-        // Load receipts from Firebase
-        this.loadReceiptsFromFirebase().then(() => {
-            this.updatePendingReceiptsUI();
-        }).catch(error => {
-            console.error('Error loading receipts:', error);
-            this.updatePendingReceiptsUI();
-        });
+        // Load from localStorage as fallback
+        try {
+            const savedReceipts = localStorage.getItem('farm-pending-receipts');
+            if (savedReceipts) {
+                this.receiptQueue = JSON.parse(savedReceipts);
+                console.log(`✅ Loaded ${this.receiptQueue.length} receipts from localStorage (fallback)`);
+            } else {
+                this.receiptQueue = [];
+                console.log('ℹ️ No receipts found in localStorage');
+            }
+        } catch (localError) {
+            console.error('Error loading from localStorage:', localError);
+            this.receiptQueue = [];
+        }
         
-        console.log('✅ Data loaded and displayed');
-    },
+        this.updatePendingReceiptsUI();
+    });
+    
+    console.log('✅ Data loaded and displayed');
+},
 
     // ==================== DATA MANAGEMENT METHODS ====================
 
@@ -1957,28 +1973,72 @@ const IncomeExpensesModule = {
     },
 
     async loadReceiptsFromFirebase() {
-        try {
-            const receiptsRef = window.db.collection('receipts');
-            const snapshot = await receiptsRef
-                .where('status', '==', 'pending')
-                .orderBy('uploadedAt', 'desc')
-                .limit(10)
-                .get();
-            
-            this.receiptQueue = [];
-            snapshot.forEach(doc => {
-                this.receiptQueue.push(doc.data());
-            });
-            
-            // Update UI
-            this.updateReceiptQueueUI();
-            this.showNotification('Receipts loaded from Firebase', 'success');
-            
-        } catch (error) {
-            console.error('Error loading receipts:', error);
-            this.showNotification('Failed to load receipts', 'error');
+    try {
+        // Check if Firebase is available
+        if (!window.db || typeof window.db.collection !== 'function') {
+            throw new Error('Firebase Firestore not available');
         }
-    },
+        
+        const receiptsRef = window.db.collection('receipts');
+        const snapshot = await receiptsRef
+            .where('status', '==', 'pending')
+            .orderBy('uploadedAt', 'desc')
+            .limit(10)
+            .get();
+        
+        this.receiptQueue = [];
+        snapshot.forEach(doc => {
+            this.receiptQueue.push(doc.data());
+        });
+        
+        // Also save to localStorage for offline use
+        localStorage.setItem('farm-pending-receipts', JSON.stringify(this.receiptQueue));
+        
+        console.log(`✅ Loaded ${this.receiptQueue.length} receipts from Firebase`);
+        
+    } catch (error) {
+        console.error('Error loading receipts from Firebase:', error);
+        
+        // Fallback to localStorage
+        const savedReceipts = localStorage.getItem('farm-pending-receipts');
+        if (savedReceipts) {
+            this.receiptQueue = JSON.parse(savedReceipts);
+            console.log(`✅ Loaded ${this.receiptQueue.length} receipts from localStorage (fallback)`);
+        } else {
+            this.receiptQueue = [];
+            console.log('ℹ️ No receipts found anywhere');
+        }
+        
+        throw error; // Re-throw for caller to handle
+    }
+},
+
+    // Add this method to save receipts locally (for when Firebase is not available)
+saveReceiptLocally(file) {
+    const receiptId = `local_receipt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const receiptData = {
+        id: receiptId,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        status: 'pending',
+        uploadedAt: new Date().toISOString(),
+        isLocal: true, // Flag to indicate it's stored locally
+        metadata: {
+            contentType: file.type,
+            size: file.size
+        }
+    };
+    
+    // Add to queue
+    this.receiptQueue.push(receiptData);
+    
+    // Save to localStorage
+    localStorage.setItem('farm-pending-receipts', JSON.stringify(this.receiptQueue));
+    
+    console.log('✅ Receipt saved locally:', receiptData.name);
+    return receiptData;
+},
 
     renderRecentReceiptsList() {
         if (this.receiptQueue.length === 0) {
