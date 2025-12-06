@@ -170,61 +170,61 @@ const ProfileModule = {
                         </div>
                     </div>
 
-                    <div class="profile-details glass-card">
-                        <h3>Farm Information</h3>
-                        <form id="profile-form">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="farm-name" class="form-label">Farm Name</label>
-                                    <input type="text" id="farm-name" class="form-input" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="farmer-name" class="form-label">Farmer Name</label>
-                                    <input type="text" id="farmer-name" class="form-input" required>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="farm-type" class="form-label">Farm Type</label>
-                                    <select id="farm-type" class="form-input">
-                                        <option value="">Select farm type</option>
-                                        <option value="crop">Crop Farm</option>
-                                        <option value="livestock">Livestock Farm</option>
-                                        <option value="dairy">Dairy Farm</option>
-                                        <option value="poultry">Poultry Farm</option>
-                                        <option value="mixed">Mixed Farming</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="farm-location" class="form-label">Farm Location</label>
-                                    <input type="text" id="farm-location" class="form-input">
-                                </div>
-                            </div>
-                            
-                            <!-- REMEMBER USER SETTING -->
+                                    <div class="profile-details glass-card">
+                    <h3>Farm Information</h3>
+                    <form id="profile-form">
+                        <div class="form-row">
                             <div class="form-group">
-                                <div class="setting-item">
-                                    <div class="setting-info">
-                                        <h4>Remember Me</h4>
-                                        <p>Keep me logged in on this device</p>
-                                    </div>
-                                    <label class="switch">
-                                        <input type="checkbox" id="remember-user" checked>
-                                        <span class="slider"></span>
-                                    </label>
+                                <label for="farm-name" class="form-label">Farm Name</label>
+                                <input type="text" id="farm-name" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="farmer-name" class="form-label">Farmer Name</label>
+                                <input type="text" id="farmer-name" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="farm-type" class="form-label">Farm Type</label>
+                                <select id="farm-type" class="form-input">
+                                    <option value="">Select farm type</option>
+                                    <option value="crop">Crop Farm</option>
+                                    <option value="livestock">Livestock Farm</option>
+                                    <option value="dairy">Dairy Farm</option>
+                                    <option value="poultry">Poultry Farm</option>
+                                    <option value="mixed">Mixed Farming</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="farm-location" class="form-label">Farm Location</label>
+                                <input type="text" id="farm-location" class="form-input" placeholder="e.g., City, State">
+                            </div>
+                        </div>
+                        
+                        <!-- REMEMBER USER SETTING -->
+                        <div class="form-group">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Remember Me</h4>
+                                    <p>Keep me logged in on this device</p>
                                 </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="remember-user" checked>
+                                    <span class="slider"></span>
+                                </label>
                             </div>
-                            
-                            <div class="form-actions">
-                                <button type="submit" class="btn-primary">💾 Save Profile</button>
-                                <button type="button" class="btn-secondary" id="sync-now-btn">🔄 Sync Now</button>
-                                <button type="button" class="btn-outline" id="reset-profile">Reset to Current</button>
-                            </div>
-                        </form>
-                    </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">💾 Save Profile</button>
+                            <button type="button" class="btn-secondary" id="sync-now-btn">🔄 Sync Now</button>
+                            <button type="button" class="btn-outline" id="reset-profile">Reset to Current</button>
+                        </div>
+                    </form>
+                </div>
 
-                    <div class="settings-section glass-card">
+                   <div class="settings-section glass-card">
                         <h3>Application Settings</h3>
                         <div class="settings-list">
                             <div class="setting-item">
@@ -264,7 +264,7 @@ const ProfileModule = {
                                     <span class="slider"></span>
                                 </label>
                             </div>
-
+                    
                             <!-- DATA PERSISTENCE SETTINGS -->
                             <div class="setting-item">
                                 <div class="setting-info">
@@ -276,7 +276,7 @@ const ProfileModule = {
                                     <span class="slider"></span>
                                 </label>
                             </div>
-
+                    
                             <!-- THEME SETTINGS -->
                             <div class="setting-item">
                                 <div class="setting-info">
@@ -293,7 +293,6 @@ const ProfileModule = {
                             </div>
                         </div>
                     </div>
-
                     <div class="data-management glass-card">
                         <h3>Data Management</h3>
                         <div class="data-stats">
