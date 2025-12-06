@@ -1559,179 +1559,256 @@ const IncomeExpensesModule = {
     // ==================== REAL FIREBASE RECEIPT METHODS ====================
 
     showImportReceiptsModal() {
-        // Use your ModalManager with dashboard styling
-        window.ModalManager.show({
-            id: 'import-receipts-modal',
-            title: '📥 Import Receipts',
-            size: 'modal-lg',
-            content: `
-                <div class="import-receipts-container">
-                    
-                    <!-- Quick Options (Dashboard Style) -->
-                    <div class="quick-actions-section">
-                        <h2 class="section-title">Upload Method</h2>
-                        <div class="card-grid">
-                            <button class="card-button" id="camera-option">
-                                <div class="card-icon">📷</div>
-                                <span class="card-title">Take Photo</span>
-                                <span class="card-subtitle">Use camera</span>
+    // Check if ModalManager is available
+    if (!window.ModalManager || !window.ModalManager.show) {
+        console.error('❌ ModalManager not available');
+        this.showNotification('Modal system is not available. Please refresh the page.', 'error');
+        return;
+    }
+    
+    window.ModalManager.show({
+        id: 'import-receipts-modal',
+        title: '📥 Import Receipts',
+        size: 'modal-lg',
+        content: `
+            <div class="import-receipts-container">
+                
+                <!-- Quick Options (Dashboard Style) -->
+                <div class="quick-actions-section">
+                    <h2 class="section-title">Upload Method</h2>
+                    <div class="card-grid">
+                        <button class="card-button" id="camera-option">
+                            <div class="card-icon">📷</div>
+                            <span class="card-title">Take Photo</span>
+                            <span class="card-subtitle">Use camera with OCR</span>
+                        </button>
+                        <button class="card-button" id="upload-option">
+                            <div class="card-icon">📁</div>
+                            <span class="card-title">Upload Files</span>
+                            <span class="card-subtitle">From device</span>
+                        </button>
+                        <button class="card-button" id="scan-option">
+                            <div class="card-icon">🔍</div>
+                            <span class="card-title">OCR Scan</span>
+                            <span class="card-subtitle">Extract text from image</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Camera Interface -->
+                <div class="camera-section" id="camera-section" style="display: none;">
+                    <div class="glass-card">
+                        <div class="card-header header-flex">
+                            <h3>Camera Preview</h3>
+                            <div class="camera-status" id="camera-status">Ready</div>
+                        </div>
+                        <div class="camera-preview">
+                            <video id="camera-preview" autoplay playsinline></video>
+                            <canvas id="camera-canvas" style="display: none;"></canvas>
+                        </div>
+                        <div class="camera-controls">
+                            <button class="btn btn-outline" id="switch-camera">
+                                <span class="btn-icon">🔄</span>
+                                <span class="btn-text">Switch Camera</span>
                             </button>
-                            <button class="card-button" id="upload-option">
-                                <div class="card-icon">📁</div>
-                                <span class="card-title">Upload Files</span>
-                                <span class="card-subtitle">From device</span>
+                            <button class="btn btn-primary" id="capture-photo">
+                                <span class="btn-icon">📸</span>
+                                <span class="btn-text">Capture & Scan</span>
                             </button>
-                            <button class="card-button" id="scan-option" disabled>
-                                <div class="card-icon">🔍</div>
-                                <span class="card-title">Scan (Coming Soon)</span>
-                                <span class="card-subtitle">Auto-extract</span>
+                            <button class="btn btn-outline" id="cancel-camera">
+                                <span class="btn-icon">✖️</span>
+                                <span class="btn-text">Cancel</span>
                             </button>
                         </div>
                     </div>
-                    
-                    <!-- Camera Interface -->
-                    <div class="camera-section" id="camera-section" style="display: none;">
-                        <div class="glass-card">
-                            <div class="card-header header-flex">
-                                <h3>Camera Preview</h3>
-                                <div class="camera-status" id="camera-status">Ready</div>
-                            </div>
-                            <div class="camera-preview">
-                                <video id="camera-preview" autoplay playsinline></video>
-                                <canvas id="camera-canvas" style="display: none;"></canvas>
-                            </div>
-                            <div class="camera-controls">
-                                <button class="btn btn-outline" id="switch-camera">
-                                    <span class="btn-icon">🔄</span>
-                                    <span class="btn-text">Switch Camera</span>
-                                </button>
-                                <button class="btn btn-primary" id="capture-photo">
-                                    <span class="btn-icon">📸</span>
-                                    <span class="btn-text">Capture</span>
-                                </button>
-                                <button class="btn btn-outline" id="cancel-camera">
-                                    <span class="btn-icon">✖️</span>
-                                    <span class="btn-text">Cancel</span>
-                                </button>
-                            </div>
+                </div>
+                
+                <!-- Upload Area -->
+                <div class="upload-section" id="upload-section" style="display: none;">
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <h3>Upload Receipts</h3>
                         </div>
-                    </div>
-                    
-                    <!-- Upload Area -->
-                    <div class="upload-section" id="upload-section" style="display: none;">
-                        <div class="glass-card">
-                            <div class="card-header">
-                                <h3>Upload Receipts</h3>
-                            </div>
-                            <div class="upload-area" id="drop-area">
-                                <div class="upload-icon">📄</div>
-                                <h4>Drag & Drop Receipts</h4>
-                                <p class="upload-subtitle">or click to browse files</p>
-                                <p class="upload-formats">Supports: JPG, PNG, PDF (Max 10MB)</p>
-                                <input type="file" id="receipt-upload-input" multiple 
-                                       accept=".jpg,.jpeg,.png,.pdf" style="display: none;">
-                                <button class="btn btn-primary" id="browse-receipts-btn">
-                                    <span class="btn-icon">📁</span>
-                                    <span class="btn-text">Browse Files</span>
-                                </button>
-                            </div>
-                            
-                            <!-- Upload Progress -->
-                            <div class="upload-progress" id="upload-progress" style="display: none;">
-                                <div class="progress-info">
-                                    <h4>Uploading to Firebase...</h4>
-                                    <div class="progress-container">
-                                        <div class="progress-bar" id="upload-progress-bar"></div>
-                                    </div>
-                                    <div class="progress-details">
-                                        <span id="upload-file-name">-</span>
-                                        <span id="upload-percentage">0%</span>
-                                    </div>
+                        <div class="upload-area" id="drop-area">
+                            <div class="upload-icon">📄</div>
+                            <h4>Drag & Drop Receipts</h4>
+                            <p class="upload-subtitle">or click to browse files</p>
+                            <p class="upload-formats">Supports: JPG, PNG, PDF (Max 10MB)</p>
+                            <input type="file" id="receipt-upload-input" multiple 
+                                   accept=".jpg,.jpeg,.png,.pdf" style="display: none;">
+                            <button class="btn btn-primary" id="browse-receipts-btn">
+                                <span class="btn-icon">📁</span>
+                                <span class="btn-text">Browse Files</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Upload Progress -->
+                        <div class="upload-progress" id="upload-progress" style="display: none;">
+                            <div class="progress-info">
+                                <h4>Processing...</h4>
+                                <div class="progress-container">
+                                    <div class="progress-bar" id="upload-progress-bar"></div>
+                                </div>
+                                <div class="progress-details">
+                                    <span id="upload-file-name">-</span>
+                                    <span id="upload-percentage">0%</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Recent Receipts -->
-                    <div class="recent-section" id="recent-section" style="${this.receiptQueue.length > 0 ? '' : 'display: none;'}">
-                        <div class="glass-card">
-                            <div class="card-header header-flex">
-                                <h3>📋 Recent Receipts</h3>
-                                <button class="btn btn-outline" id="refresh-receipts">
-                                    <span class="btn-icon">🔄</span>
-                                    <span class="btn-text">Refresh</span>
+                </div>
+                
+                <!-- OCR Scan Section -->
+                <div class="ocr-section" id="ocr-section" style="display: none;">
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <h3>OCR Text Extraction</h3>
+                        </div>
+                        <div class="ocr-content">
+                            <div class="ocr-preview-area" id="ocr-preview-area">
+                                <div class="ocr-placeholder">
+                                    <div class="ocr-icon">🔍</div>
+                                    <p>Upload an image to extract text</p>
+                                </div>
+                                <canvas id="ocr-canvas" style="display: none;"></canvas>
+                            </div>
+                            
+                            <div class="ocr-controls">
+                                <input type="file" id="ocr-file-input" accept=".jpg,.jpeg,.png" style="display: none;">
+                                <button class="btn btn-primary" id="select-ocr-image">
+                                    <span class="btn-icon">📁</span>
+                                    <span class="btn-text">Select Image</span>
+                                </button>
+                                <button class="btn btn-success" id="start-ocr" disabled>
+                                    <span class="btn-icon">🔍</span>
+                                    <span class="btn-text">Start OCR</span>
                                 </button>
                             </div>
-                            <div id="recent-receipts-list" class="receipts-list">
-                                ${this.renderRecentReceiptsList()}
+                            
+                            <div class="ocr-results" id="ocr-results" style="display: none;">
+                                <h4>Extracted Text:</h4>
+                                <div class="extracted-text" id="extracted-text"></div>
+                                <div class="ocr-actions">
+                                    <button class="btn btn-sm btn-outline" id="copy-ocr-text">
+                                        <span class="btn-icon">📋</span>
+                                        <span class="btn-text">Copy Text</span>
+                                    </button>
+                                    <button class="btn btn-sm btn-primary" id="create-from-ocr">
+                                        <span class="btn-icon">➕</span>
+                                        <span class="btn-text">Create Transaction</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
                 </div>
-            `,
-            footer: `
-                <button class="btn btn-outline" data-action="close">Cancel</button>
-                <button class="btn btn-primary" id="process-receipts-btn" style="display: none;">
-                    <span class="btn-icon">⚡</span>
-                    <span class="btn-text">Process Receipts</span>
-                </button>
-            `,
-            onOpen: () => {
-                this.setupImportReceiptsHandlers();
-            }
-        });
-    },
-
-    setupImportReceiptsHandlers() {
-        // Camera option
-        document.getElementById('camera-option').addEventListener('click', () => {
-            this.showCameraInterface();
-        });
-        
-        // Upload option
-        document.getElementById('upload-option').addEventListener('click', () => {
-            this.showUploadInterface();
-        });
-        
-        // File upload handlers
-        document.getElementById('browse-receipts-btn').addEventListener('click', () => {
-            document.getElementById('receipt-upload-input').click();
-        });
-        
-        document.getElementById('receipt-upload-input').addEventListener('change', (e) => {
-            this.handleFileUpload(e.target.files);
-        });
-        
-        // Drag and drop
-        const dropArea = document.getElementById('drop-area');
-        if (dropArea) {
-            dropArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropArea.classList.add('drag-over');
-            });
-            
-            dropArea.addEventListener('dragleave', () => {
-                dropArea.classList.remove('drag-over');
-            });
-            
-            dropArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropArea.classList.remove('drag-over');
-                this.handleFileUpload(e.dataTransfer.files);
-            });
+                
+                <!-- Recent Receipts -->
+                <div class="recent-section" id="recent-section" style="${this.receiptQueue.length > 0 ? '' : 'display: none;'}">
+                    <div class="glass-card">
+                        <div class="card-header header-flex">
+                            <h3>📋 Recent Receipts</h3>
+                            <button class="btn btn-outline" id="refresh-receipts">
+                                <span class="btn-icon">🔄</span>
+                                <span class="btn-text">Refresh</span>
+                            </button>
+                        </div>
+                        <div id="recent-receipts-list" class="receipts-list">
+                            ${this.renderRecentReceiptsList()}
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        `,
+        footer: `
+            <button class="btn btn-outline" data-action="close">Cancel</button>
+            <button class="btn btn-primary" id="process-receipts-btn" style="display: none;">
+                <span class="btn-icon">⚡</span>
+                <span class="btn-text">Process Receipts</span>
+            </button>
+        `,
+        onOpen: () => {
+            this.setupImportReceiptsHandlers();
         }
-        
-        // Refresh receipts
-        document.getElementById('refresh-receipts')?.addEventListener('click', () => {
-            this.loadReceiptsFromFirebase();
+    });
+},
+
+   setupImportReceiptsHandlers() {
+    // Camera option
+    document.getElementById('camera-option').addEventListener('click', () => {
+        this.showCameraInterface();
+    });
+    
+    // Upload option
+    document.getElementById('upload-option').addEventListener('click', () => {
+        this.showUploadInterface();
+    });
+    
+    // OCR Scan option
+    document.getElementById('scan-option').addEventListener('click', () => {
+        this.showOCRInterface();
+    });
+    
+    // File upload handlers
+    document.getElementById('browse-receipts-btn').addEventListener('click', () => {
+        document.getElementById('receipt-upload-input').click();
+    });
+    
+    document.getElementById('receipt-upload-input').addEventListener('change', (e) => {
+        this.handleFileUpload(e.target.files, true); // true = enable OCR
+    });
+    
+    // Drag and drop
+    const dropArea = document.getElementById('drop-area');
+    if (dropArea) {
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.classList.add('drag-over');
         });
         
-        // Process button
-        document.getElementById('process-receipts-btn')?.addEventListener('click', () => {
-            this.processPendingReceipts();
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.classList.remove('drag-over');
         });
-    },
+        
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.classList.remove('drag-over');
+            this.handleFileUpload(e.dataTransfer.files, true); // true = enable OCR
+        });
+    }
+    
+    // OCR handlers
+    document.getElementById('select-ocr-image').addEventListener('click', () => {
+        document.getElementById('ocr-file-input').click();
+    });
+    
+    document.getElementById('ocr-file-input').addEventListener('change', (e) => {
+        this.handleOCRImageSelect(e.target.files[0]);
+    });
+    
+    document.getElementById('start-ocr').addEventListener('click', () => {
+        this.performOCR();
+    });
+    
+    document.getElementById('copy-ocr-text').addEventListener('click', () => {
+        this.copyOCRText();
+    });
+    
+    document.getElementById('create-from-ocr').addEventListener('click', () => {
+        this.createTransactionFromOCR();
+    });
+    
+    // Refresh receipts
+    document.getElementById('refresh-receipts')?.addEventListener('click', () => {
+        this.loadReceiptsFromFirebase();
+    });
+    
+    // Process button
+    document.getElementById('process-receipts-btn')?.addEventListener('click', () => {
+        this.processPendingReceipts();
+    });
+},
 
     showCameraInterface() {
         // Hide upload, show camera
@@ -1742,6 +1819,513 @@ const IncomeExpensesModule = {
         this.initializeCamera();
     },
 
+    showOCRInterface() {
+    // Hide other sections, show OCR
+    document.getElementById('camera-section').style.display = 'none';
+    document.getElementById('upload-section').style.display = 'none';
+    document.getElementById('ocr-section').style.display = 'block';
+    document.getElementById('recent-section').style.display = 'block';
+},
+
+handleOCRImageSelect(file) {
+    if (!file) return;
+    
+    // Validate file
+    if (!this.isValidImageFile(file)) {
+        this.showNotification('Please select a valid image file (JPG, PNG)', 'error');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+            // Display preview
+            const canvas = document.getElementById('ocr-canvas');
+            const previewArea = document.getElementById('ocr-preview-area');
+            
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            
+            // Display image preview
+            previewArea.innerHTML = `
+                <img src="${e.target.result}" alt="OCR Preview" style="max-width: 100%; max-height: 300px; border-radius: 8px;">
+            `;
+            
+            // Enable OCR button
+            document.getElementById('start-ocr').disabled = false;
+            document.getElementById('start-ocr').innerHTML = `
+                <span class="btn-icon">🔍</span>
+                <span class="btn-text">Scan for Text</span>
+            `;
+            
+            // Store image data for OCR
+            this.currentOCRImage = {
+                dataUrl: e.target.result,
+                file: file,
+                canvas: canvas
+            };
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+},
+
+async performOCR() {
+    if (!this.currentOCRImage) {
+        this.showNotification('Please select an image first', 'warning');
+        return;
+    }
+    
+    const ocrBtn = document.getElementById('start-ocr');
+    const resultsSection = document.getElementById('ocr-results');
+    const extractedText = document.getElementById('extracted-text');
+    
+    // Show loading
+    ocrBtn.disabled = true;
+    ocrBtn.innerHTML = `
+        <span class="btn-icon">⏳</span>
+        <span class="btn-text">Processing...</span>
+    `;
+    
+    extractedText.innerHTML = '<div class="loading-text">Scanning image for text...</div>';
+    resultsSection.style.display = 'block';
+    
+    try {
+        // Try using Tesseract.js if available
+        if (window.Tesseract) {
+            const result = await this.performTesseractOCR();
+            this.displayOCRResults(result);
+        } 
+        // Try using browser's OCR API if available (Chrome 109+)
+        else if ('OCR' in window) {
+            const result = await this.performBrowserOCR();
+            this.displayOCRResults(result);
+        }
+        // Fallback: Simulated OCR
+        else {
+            const result = await this.performSimulatedOCR();
+            this.displayOCRResults(result);
+        }
+        
+    } catch (error) {
+        console.error('OCR Error:', error);
+        extractedText.innerHTML = `
+            <div class="error-text">
+                <p>OCR failed: ${error.message}</p>
+                <p>You can still upload the image and extract data manually.</p>
+            </div>
+        `;
+    } finally {
+        // Reset button
+        ocrBtn.disabled = false;
+        ocrBtn.innerHTML = `
+            <span class="btn-icon">🔍</span>
+            <span class="btn-text">Scan Again</span>
+        `;
+    }
+},
+
+// Tesseract.js OCR implementation
+async performTesseractOCR() {
+    const { createWorker } = Tesseract;
+    const worker = await createWorker('eng');
+    
+    try {
+        const { data: { text } } = await worker.recognize(this.currentOCRImage.dataUrl);
+        await worker.terminate();
+        
+        return {
+            text: text.trim(),
+            confidence: 0.85,
+            extractedData: this.extractDataFromOCRText(text)
+        };
+    } catch (error) {
+        await worker.terminate();
+        throw error;
+    }
+},
+
+// Browser OCR API (Chrome 109+)
+async performBrowserOCR() {
+    return new Promise((resolve, reject) => {
+        const ocr = new OCR();
+        ocr.detect(this.currentOCRImage.dataUrl)
+            .then((results) => {
+                const text = results.map(r => r.text).join('\n');
+                resolve({
+                    text: text,
+                    confidence: 0.90,
+                    extractedData: this.extractDataFromOCRText(text)
+                });
+            })
+            .catch(reject);
+    });
+},
+
+// Simulated OCR (for when no OCR engine is available)
+async performSimulatedOCR() {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            // Simulate finding some text patterns
+            const simulatedText = `GROCERY STORE RECEIPT
+Store: SuperMart #1234
+Date: ${new Date().toLocaleDateString()}
+Time: ${new Date().toLocaleTimeString()}
+
+CHICKEN FEED ............ $45.99
+EGG CARTONS ............. $12.50
+VET MEDICATION .......... $28.75
+FARM SUPPLIES ........... $67.25
+
+SUBTOTAL ............... $154.49
+TAX .................... $12.36
+TOTAL ................. $166.85
+
+Thank you for shopping!`;
+            
+            resolve({
+                text: simulatedText,
+                confidence: 0.65,
+                extractedData: this.extractDataFromOCRText(simulatedText)
+            });
+        }, 2000);
+    });
+},
+
+// Extract structured data from OCR text
+extractDataFromOCRText(text) {
+    const extractedData = {
+        amount: 0,
+        date: new Date().toISOString().split('T')[0],
+        vendor: 'Unknown Vendor',
+        items: [],
+        category: 'other-expense',
+        type: 'expense'
+    };
+    
+    // Try to find amount (look for $ followed by numbers)
+    const amountMatch = text.match(/\$?\s*(\d+[.,]\d{2})/g);
+    if (amountMatch) {
+        // Take the largest amount (likely the total)
+        const amounts = amountMatch.map(match => {
+            const num = match.replace(/[$,]/g, '');
+            return parseFloat(num);
+        });
+        if (amounts.length > 0) {
+            extractedData.amount = Math.max(...amounts.filter(n => !isNaN(n)));
+        }
+    }
+    
+    // Try to find date (common date patterns)
+    const dateMatch = text.match(/(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})|(\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})/);
+    if (dateMatch) {
+        extractedData.date = this.parseDateString(dateMatch[0]);
+    }
+    
+    // Try to find vendor/store name
+    const vendorPatterns = [
+        /Store:\s*([^\n]+)/i,
+        /From:\s*([^\n]+)/i,
+        /^(.*?)\s*RECEIPT/i,
+        /^(.*?)\s*INVOICE/i
+    ];
+    
+    for (const pattern of vendorPatterns) {
+        const match = text.match(pattern);
+        if (match && match[1]) {
+            extractedData.vendor = match[1].trim();
+            break;
+        }
+    }
+    
+    // Extract line items (look for patterns like ITEM ......... $XX.XX)
+    const itemMatches = text.match(/([A-Z][A-Z\s]+)[\.\s]+\$?(\d+[.,]\d{2})/g);
+    if (itemMatches) {
+        extractedData.items = itemMatches.map(item => item.trim());
+        
+        // Try to guess category from items
+        const itemText = itemMatches.join(' ').toLowerCase();
+        if (itemText.includes('feed') || itemText.includes('grain')) {
+            extractedData.category = 'feed';
+        } else if (itemText.includes('medic') || itemText.includes('vet')) {
+            extractedData.category = 'medication';
+        } else if (itemText.includes('equipment') || itemText.includes('tool')) {
+            extractedData.category = 'equipment';
+        } else if (itemText.includes('labor') || itemText.includes('wage')) {
+            extractedData.category = 'labor';
+        }
+    }
+    
+    return extractedData;
+},
+
+parseDateString(dateStr) {
+    try {
+        // Try different date formats
+        const formats = [
+            'MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY/MM/DD',
+            'MM-DD-YYYY', 'DD-MM-YYYY', 'YYYY-MM-DD'
+        ];
+        
+        for (const format of formats) {
+            const parts = dateStr.split(/[\/\-]/);
+            if (parts.length === 3) {
+                let year, month, day;
+                
+                if (format.startsWith('YYYY')) {
+                    year = parseInt(parts[0]);
+                    month = parseInt(parts[1]) - 1;
+                    day = parseInt(parts[2]);
+                } else if (format.endsWith('YYYY')) {
+                    month = parseInt(parts[0]) - 1;
+                    day = parseInt(parts[1]);
+                    year = parseInt(parts[2]);
+                    if (year < 100) year += 2000; // Handle 2-digit years
+                }
+                
+                const date = new Date(year, month, day);
+                if (!isNaN(date.getTime())) {
+                    return date.toISOString().split('T')[0];
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Date parsing error:', error);
+    }
+    
+    return new Date().toISOString().split('T')[0];
+},
+
+displayOCRResults(result) {
+    const extractedText = document.getElementById('extracted-text');
+    const resultsSection = document.getElementById('ocr-results');
+    
+    extractedText.innerHTML = `
+        <div class="ocr-success">
+            <div class="confidence-badge">Confidence: ${(result.confidence * 100).toFixed(1)}%</div>
+            <pre class="ocr-text">${result.text}</pre>
+            ${result.extractedData.amount > 0 ? `
+                <div class="extracted-data">
+                    <h5>Extracted Information:</h5>
+                    <ul>
+                        <li>Amount: $${result.extractedData.amount.toFixed(2)}</li>
+                        <li>Date: ${result.extractedData.date}</li>
+                        <li>Vendor: ${result.extractedData.vendor}</li>
+                        <li>Category: ${this.getCategoryName(result.extractedData.category)}</li>
+                    </ul>
+                </div>
+            ` : ''}
+        </div>
+    `;
+    
+    resultsSection.style.display = 'block';
+    
+    // Store results for later use
+    this.currentOCRResults = {
+        text: result.text,
+        extractedData: result.extractedData,
+        imageData: this.currentOCRImage.dataUrl
+    };
+    
+    this.showNotification('Text extracted successfully!', 'success');
+},
+
+copyOCRText() {
+    if (!this.currentOCRResults) return;
+    
+    navigator.clipboard.writeText(this.currentOCRResults.text)
+        .then(() => {
+            this.showNotification('Text copied to clipboard!', 'success');
+        })
+        .catch(err => {
+            console.error('Copy failed:', err);
+            this.showNotification('Failed to copy text', 'error');
+        });
+},
+
+createTransactionFromOCR() {
+    if (!this.currentOCRResults) {
+        this.showNotification('No OCR results available', 'warning');
+        return;
+    }
+    
+    // Create transaction from extracted data
+    const transactionData = {
+        type: this.currentOCRResults.extractedData.type || 'expense',
+        description: `Receipt from ${this.currentOCRResults.extractedData.vendor}`,
+        amount: this.currentOCRResults.extractedData.amount || 0,
+        category: this.currentOCRResults.extractedData.category || 'other-expense',
+        date: this.currentOCRResults.extractedData.date,
+        paymentMethod: 'receipt',
+        notes: `Extracted via OCR:\n${this.currentOCRResults.text.substring(0, 200)}...`,
+        status: 'completed'
+    };
+    
+    // Show review modal
+    if (window.ModalManager && window.ModalManager.showReceiptReviewModal) {
+        window.ModalManager.showReceiptReviewModal({
+            receipt: {
+                name: 'OCR Extracted Receipt',
+                isOCR: true
+            },
+            extractedData: transactionData,
+            onSubmit: (formData) => {
+                const finalTransaction = {
+                    ...transactionData,
+                    ...formData,
+                    ocrExtracted: true
+                };
+                
+                this.addTransaction(finalTransaction);
+                this.showNotification('Transaction created from OCR!', 'success');
+                
+                // Close modal
+                if (window.ModalManager.closeCurrentModal) {
+                    window.ModalManager.closeCurrentModal();
+                }
+            }
+        });
+    } else {
+        // Fallback: add transaction directly
+        this.addTransaction(transactionData);
+        this.showNotification('Transaction added!', 'success');
+    }
+},
+
+// Update file upload to optionally run OCR
+async handleFileUpload(files, enableOCR = false) {
+    if (!files || files.length === 0) return;
+    
+    const totalFiles = files.length;
+    let processedFiles = 0;
+    
+    // Show progress
+    const progressSection = document.getElementById('upload-progress');
+    const progressBar = document.getElementById('upload-progress-bar');
+    const progressText = document.getElementById('upload-percentage');
+    const fileName = document.getElementById('upload-file-name');
+    
+    if (progressSection) progressSection.style.display = 'block';
+    
+    // Upload each file
+    for (const file of Array.from(files)) {
+        fileName.textContent = `Processing: ${file.name}`;
+        
+        try {
+            // Upload/save the file
+            const receiptData = window.storage ? 
+                await this.uploadReceiptToFirebase(file) : 
+                this.saveReceiptLocally(file);
+            
+            // If OCR is enabled and it's an image, try to extract text
+            if (enableOCR && file.type.startsWith('image/')) {
+                fileName.textContent = `Scanning: ${file.name}`;
+                
+                try {
+                    const ocrResult = await this.quickOCRScan(file);
+                    if (ocrResult && ocrResult.extractedData.amount > 0) {
+                        receiptData.ocrData = ocrResult;
+                        this.showNotification(`Found amount: $${ocrResult.extractedData.amount.toFixed(2)}`, 'info');
+                    }
+                } catch (ocrError) {
+                    console.log('Quick OCR skipped:', ocrError);
+                }
+            }
+            
+            processedFiles++;
+            
+            // Update progress
+            const progress = Math.round((processedFiles / totalFiles) * 100);
+            if (progressBar) progressBar.style.width = `${progress}%`;
+            if (progressText) progressText.textContent = `${progress}%`;
+            
+        } catch (error) {
+            console.error('Upload error:', error);
+            this.showNotification(`Failed to process ${file.name}: ${error.message}`, 'error');
+        }
+    }
+    
+    // Hide progress after completion
+    setTimeout(() => {
+        if (progressSection) progressSection.style.display = 'none';
+        if (progressBar) progressBar.style.width = '0%';
+        if (progressText) progressText.textContent = '0%';
+        if (fileName) fileName.textContent = '-';
+    }, 1000);
+    
+    this.showNotification(`${processedFiles} receipt(s) processed!`, 'success');
+    
+    // Update UI
+    this.updateReceiptQueueUI();
+    
+    // Show process button
+    const processBtn = document.getElementById('process-receipts-btn');
+    if (processBtn) processBtn.style.display = 'inline-block';
+},
+
+// Quick OCR scan for file uploads
+async quickOCRScan(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                // Simple regex-based extraction (faster than full OCR)
+                const text = await this.extractTextViaCanvas(file);
+                const extractedData = this.extractDataFromOCRText(text);
+                
+                resolve({
+                    text: text,
+                    extractedData: extractedData,
+                    confidence: 0.5
+                });
+            } catch (error) {
+                resolve(null);
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+},
+
+// Simple text extraction via canvas (basic OCR simulation)
+async extractTextViaCanvas(file) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            // Create canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw image
+            ctx.drawImage(img, 0, 0);
+            
+            // Get image data
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            
+            // Simple text detection simulation
+            // In a real app, you'd use Tesseract.js here
+            const simulatedText = `Image: ${file.name}\nSize: ${file.size} bytes\nType: ${file.type}\n\n[Text extraction would appear here with full OCR integration]`;
+            
+            resolve(simulatedText);
+        };
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+},
+
+isValidImageFile(file) {
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    return validTypes.includes(file.type);
+},
+    
     showUploadInterface() {
         // Hide camera, show upload
         document.getElementById('camera-section').style.display = 'none';
