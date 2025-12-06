@@ -146,9 +146,8 @@ FarmModules.registerModule('sales-record', {
                     </table>
                 </div>
             </div>
-
-           // Replace your sales modal HTML with this:
-`
+        `,
+    
 <!-- Sales Popout Modal - Consistent with Inventory -->
 <div id="sale-modal" class="popout-modal hidden">
     <div class="popout-modal-content" style="max-width: 600px;">
@@ -527,6 +526,7 @@ FarmModules.registerModule('sales-record', {
             console.log('✅ Sales event listeners attached');
         }, 100);
     },
+
 
     loadSalesData: function() {
         if (!FarmModules.appData.sales) {
