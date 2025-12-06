@@ -1,4 +1,16 @@
 // sw.js - ENHANCED PWA SERVICE WORKER
+// In sw.js, add this at the top
+const isDevelopment = location.hostname === 'localhost' || 
+                      location.hostname === '127.0.0.1' ||
+                      location.hostname.includes('192.168');
+
+// Skip caching in development
+if (isDevelopment) {
+    self.addEventListener('install', () => self.skipWaiting());
+    self.addEventListener('activate', () => self.clients.claim());
+    return; // Don't cache anything in development
+}
+
 const CACHE_NAME = 'farm-management-v3';
 const urlsToCache = [
   '/',
@@ -46,6 +58,25 @@ self.addEventListener('activate', (event) => {
       return self.clients.claim();
     })
   );
+});
+
+const CACHE_NAME = 'farm-app-v2.0.1'; // CHANGE THIS VERSION WHEN YOU UPDATE
+
+// Delete old caches
+self.addEventListener('activate', event => {
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cacheName => {
+                    if (cacheName !== CACHE_NAME) {
+                        console.log('Deleting old cache:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        })
+    );
+    self.clients.claim();
 });
 
 // Fetch event - serve from cache, fallback to network
