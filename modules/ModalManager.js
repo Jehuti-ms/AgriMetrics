@@ -1110,6 +1110,86 @@ const ModalManager = {
     }
 };
 
+// In ModalManager.js - Add this method to your ModalManager object
+showReports(options) {
+    const modalId = this.createModal({
+        id: options.id || 'reports-modal',
+        title: options.title || 'Reports',
+        subtitle: options.subtitle || 'Select a report to generate',
+        size: options.size || 'modal-lg',
+        content: `
+            <div class="reports-selection">
+                <div class="reports-grid">
+                    ${(options.reports || []).map(report => `
+                        <div class="report-card" data-report="${report.id}">
+                            <div class="report-icon">${report.icon || '📊'}</div>
+                            <h4 class="report-title">${report.title}</h4>
+                            <p class="report-desc">${report.description}</p>
+                        </div>
+                    `).join('')}
+                </div>
+                <div id="report-preview" class="report-preview hidden">
+                    <!-- Report preview will be displayed here -->
+                </div>
+            </div>
+        `,
+        footer: `
+            <button type="button" class="btn btn-outline" data-action="close">Close</button>
+            <button type="button" class="btn btn-primary hidden" id="generate-report-btn">
+                Generate Report
+            </button>
+        `,
+        onOpen: () => {
+            let selectedReport = null;
+            
+            // Add report selection handlers
+            document.querySelectorAll('.report-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    // Update selection
+                    document.querySelectorAll('.report-card').forEach(c => {
+                        c.classList.remove('selected');
+                    });
+                    card.classList.add('selected');
+                    
+                    selectedReport = card.dataset.report;
+                    
+                    // Show preview
+                    const preview = document.getElementById('report-preview');
+                    const generateBtn = document.getElementById('generate-report-btn');
+                    
+                    const report = (options.reports || []).find(r => r.id === selectedReport);
+                    if (report && report.preview) {
+                        preview.innerHTML = report.preview;
+                        preview.classList.remove('hidden');
+                        generateBtn.classList.remove('hidden');
+                        generateBtn.textContent = report.buttonText || 'Generate Report';
+                    }
+                });
+            });
+            
+            // Add generate button handler
+            const generateBtn = document.getElementById('generate-report-btn');
+            if (generateBtn) {
+                generateBtn.addEventListener('click', () => {
+                    if (selectedReport && options.onReportSelect) {
+                        options.onReportSelect(selectedReport);
+                        this.closeModal(modalId);
+                    }
+                });
+            }
+            
+            // Add close button handler
+            const closeBtn = document.querySelector(`[data-modal="${modalId}"] ~ .modal-footer [data-action="close"]`);
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => this.closeModal(modalId));
+            }
+        }
+    });
+
+    this.showModal(modalId);
+    return modalId;
+}
+
 // Initialize Modal Manager when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => ModalManager.initialize());
