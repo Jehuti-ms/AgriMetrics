@@ -1,3 +1,330 @@
+// app.js - CSS-BASED VERSION (No StyleManager)
+console.log('🚀 Loading Farm Management App (CSS-based)...');
+
+class FarmManagementApp {
+    constructor() {
+        this.currentUser = null;
+        this.currentSection = 'dashboard';
+        this.isDemoMode = false;
+        this.userPreferences = {};
+        this.modules = {};
+        this.init();
+    }
+
+    async init() {
+        console.log('🚜 Starting Farm Management App...');
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.initializeApp();
+            });
+        } else {
+            this.initializeApp();
+        }
+    }
+
+    async initializeApp() {
+        console.log('✅ Initializing CSS-based app...');
+        
+        // CRITICAL: Initialize FarmModules core system FIRST
+        this.initializeFarmModules();
+        
+        // CRITICAL: Load global CSS
+        this.loadGlobalCSS();
+        
+        this.isDemoMode = true;
+        
+        // Load user preferences
+        await this.loadUserPreferences();
+        
+        // Show the app interface
+        this.showApp();
+        
+        // Setup navigation and events
+        this.createTopNavigation();
+        
+        // Setup interactions
+        setTimeout(() => {
+            this.setupHamburgerMenu();
+            this.setupSideMenuEvents();
+            this.setupEventListeners();
+            this.setupDarkMode();
+        }, 100);
+        
+        // Load initial section
+        this.showSection(this.currentSection);
+        
+        console.log('✅ App initialized successfully');
+    }
+
+    initializeFarmModules() {
+        // Create FarmModules core with module registration system
+        window.FarmModules = {
+            modules: {},
+            appData: {
+                profile: {
+                    farmName: 'My Farm',
+                    dashboardStats: {},
+                    lastUpdated: new Date().toISOString()
+                },
+                settings: {
+                    currency: 'USD',
+                    theme: 'modern-green',
+                    autoSync: true
+                }
+            },
+            
+            // Module registration system
+            registerModule: function(name, module) {
+                console.log(`📦 Module registered: ${name}`);
+                this.modules[name] = module;
+                
+                // Auto-initialize if it's the current section
+                if (window.app && window.app.currentSection === name) {
+                    setTimeout(() => module.initialize(), 50);
+                }
+            },
+            
+            getModule: function(name) {
+                return this.modules[name];
+            },
+            
+            // Load module CSS dynamically
+            loadModuleCSS: function(moduleName) {
+                const cssFile = `css/${moduleName}.css`;
+                const linkId = `module-css-${moduleName}`;
+                
+                // Check if already loaded
+                if (document.getElementById(linkId)) {
+                    return;
+                }
+                
+                const link = document.createElement('link');
+                link.id = linkId;
+                link.rel = 'stylesheet';
+                link.href = cssFile;
+                document.head.appendChild(link);
+                
+                console.log(`🎨 CSS loaded for: ${moduleName}`);
+            }
+        };
+        
+        console.log('🔧 FarmModules core initialized (CSS-based)');
+    }
+
+    loadGlobalCSS() {
+        // Load essential global CSS files
+        const globalCSS = [
+            'css/theme.css',
+            'css/layout.css',
+            'css/components.css',
+            'modals.css'
+        ];
+        
+        globalCSS.forEach(cssFile => {
+            if (!document.querySelector(`link[href="${cssFile}"]`)) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = cssFile;
+                document.head.appendChild(link);
+            }
+        });
+        
+        console.log('🎨 Global CSS loaded');
+    }
+    
+    async loadUserPreferences() {
+        try {
+            // Try to load from localStorage
+            const savedPrefs = localStorage.getItem('farm-user-preferences');
+            this.userPreferences = savedPrefs ? JSON.parse(savedPrefs) : this.getDefaultPreferences();
+            
+            // Create ProfileModule for compatibility
+            this.createProfileModuleFallback();
+            
+            // Apply theme preference
+            this.applyUserTheme();
+            
+        } catch (error) {
+            console.error('❌ Error loading user preferences:', error);
+            this.userPreferences = this.getDefaultPreferences();
+            this.createProfileModuleFallback();
+        }
+    }
+
+    getDefaultPreferences() {
+        return {
+            theme: 'auto',
+            language: 'en',
+            currency: 'USD',
+            notifications: true,
+            businessName: 'My Farm',
+            businessType: 'poultry',
+            lowStockThreshold: 10,
+            autoSync: true,
+            dashboardStats: {
+                totalOrders: 0,
+                totalRevenue: 0,
+                pendingOrders: 0,
+                totalCustomers: 0,
+                totalProducts: 0,
+                monthlyRevenue: 0,
+                monthlyOrders: 0,
+                avgOrderValue: 0,
+                completedOrders: 0,
+                paidOrders: 0
+            }
+        };
+    }
+
+    createProfileModuleFallback() {
+        if (typeof ProfileModule === 'undefined') {
+            window.ProfileModule = {
+                userPreferences: this.userPreferences,
+                
+                // Core methods
+                loadUserPreferences: () => this.userPreferences,
+                getUserPreferences: () => this.userPreferences,
+                updatePreference: (key, value) => {
+                    this.userPreferences[key] = value;
+                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
+                    console.log(`⚙️ Preference updated: ${key} = ${value}`);
+                },
+                
+                // Stats methods
+                updateStats: (stats) => {
+                    if (!this.userPreferences.dashboardStats) {
+                        this.userPreferences.dashboardStats = {};
+                    }
+                    Object.keys(stats).forEach(key => {
+                        this.userPreferences.dashboardStats[key] = stats[key];
+                    });
+                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
+                },
+                
+                getStats: () => {
+                    return this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
+                },
+                
+                getProfileData: () => {
+                    return {
+                        farmName: this.userPreferences.businessName || 'My Farm',
+                        farmerName: 'Farm Manager',
+                        stats: this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats
+                    };
+                },
+                
+                // Compatibility methods
+                initialize: () => {
+                    console.log('✅ ProfileModule fallback initialized');
+                    return true;
+                }
+            };
+            
+            console.log('✅ ProfileModule created for compatibility');
+        }
+    }
+
+    applyUserTheme() {
+        const theme = this.userPreferences.theme || 'auto';
+        
+        if (theme === 'dark') {
+            document.body.classList.add('dark-mode');
+            this.updateDarkModeIcon(true);
+        } else if (theme === 'light') {
+            document.body.classList.remove('dark-mode');
+            this.updateDarkModeIcon(false);
+        } else {
+            // Auto mode - follow system preference
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.body.classList.toggle('dark-mode', prefersDark);
+            this.updateDarkModeIcon(prefersDark);
+        }
+    }
+
+    setupDarkMode() {
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+        
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                
+                // Save preference
+                const newTheme = isDarkMode ? 'dark' : 'light';
+                this.userPreferences.theme = newTheme;
+                localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
+                
+                // Update ProfileModule
+                if (window.ProfileModule) {
+                    window.ProfileModule.updatePreference('theme', newTheme);
+                }
+                
+                // Update icon
+                this.updateDarkModeIcon(isDarkMode);
+                
+                console.log('🎨 Theme changed to:', newTheme);
+            });
+        }
+        
+        // Listen for system theme changes
+        prefersDarkScheme.addEventListener('change', (e) => {
+            if (this.userPreferences.theme === 'auto') {
+                document.body.classList.toggle('dark-mode', e.matches);
+                this.updateDarkModeIcon(e.matches);
+            }
+        });
+    }
+
+    updateDarkModeIcon(isDarkMode) {
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        if (darkModeToggle) {
+            const icon = darkModeToggle.querySelector('span:first-child');
+            const label = darkModeToggle.querySelector('.nav-label');
+            
+            if (isDarkMode) {
+                icon.textContent = '☀️';
+                label.textContent = 'Light';
+            } else {
+                icon.textContent = '🌙';
+                label.textContent = 'Dark';
+            }
+        }
+    }
+  
+    setupEventListeners() {
+        document.addEventListener('click', (e) => {
+            // Handle main nav items
+            if (e.target.closest('.nav-item')) {
+                const navItem = e.target.closest('.nav-item');
+                const view = navItem.getAttribute('data-view');
+                if (view) {
+                    this.showSection(view);
+                }
+            }
+            
+            // Handle sidebar menu items
+            if (e.target.closest('.side-menu-item')) {
+                const menuItem = e.target.closest('.side-menu-item');
+                const section = menuItem.getAttribute('data-section');
+                if (section) {
+                    this.showSection(section);
+                }
+            }
+        });
+    }
+
+    showApp() {
+        const authContainer = document.getElementById('auth-container');
+        const appContainer = document.getElementById('app-container');
+        
+        if (authContainer) authContainer.classList.add('hidden');
+        if (appContainer) appContainer.classList.remove('hidden');
+        
+        console.log('🏠 App container shown');
+    }
+
     createTopNavigation() {
         const appContainer = document.getElementById('app-container');
         if (!appContainer) return;
@@ -128,3 +455,143 @@
             });
         });
     }
+    
+    showSection(sectionId) {
+        console.log(`🔄 Switching to section: ${sectionId}`);
+        
+        // Update active nav state
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        const activeNavItem = document.querySelector(`.nav-item[data-view="${sectionId}"]`);
+        if (activeNavItem) {
+            activeNavItem.classList.add('active');
+        }
+
+        // Update sidebar active state
+        document.querySelectorAll('.side-menu-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        const activeSideItem = document.querySelector(`.side-menu-item[data-section="${sectionId}"]`);
+        if (activeSideItem) {
+            activeSideItem.classList.add('active');
+        }
+
+        this.currentSection = sectionId;
+        
+        // Load module CSS dynamically
+        if (window.FarmModules && window.FarmModules.loadModuleCSS) {
+            window.FarmModules.loadModuleCSS(sectionId);
+        }
+        
+        // Initialize the module
+        this.initializeModule(sectionId);
+    }
+
+    initializeModule(moduleName) {
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
+        
+        // Show loading state
+        contentArea.innerHTML = `
+            <div class="module-loading">
+                <div class="loading-spinner">⏳</div>
+                <p>Loading ${this.getSectionName(moduleName)}...</p>
+            </div>
+        `;
+        
+        // Clear content area after a brief moment
+        setTimeout(() => {
+            contentArea.innerHTML = '';
+            
+            // Find and initialize the module
+            const module = window.FarmModules?.modules[moduleName];
+            if (module && typeof module.initialize === 'function') {
+                if (module.initialize()) {
+                    console.log(`✅ Module initialized: ${moduleName}`);
+                    this.currentSection = moduleName;
+                } else {
+                    this.showError(`Failed to load ${this.getSectionName(moduleName)}`);
+                }
+            } else {
+                // Show module not available message
+                this.showModuleNotAvailable(moduleName);
+            }
+        }, 50);
+    }
+
+    getSectionName(section) {
+        const sectionNames = {
+            'dashboard': 'Dashboard',
+            'income-expenses': 'Income & Expenses',
+            'inventory-check': 'Inventory',
+            'orders': 'Orders',
+            'sales-record': 'Sales Record',
+            'labs': 'Labs',
+            'feed-record': 'Feed Records',
+            'production': 'Production',
+            'reports': 'Reports',
+            'profile': 'Profile'
+        };
+        return sectionNames[section] || section;
+    }
+
+    showError(message) {
+        console.error('❌', message);
+        const contentArea = document.getElementById('content-area');
+        if (contentArea) {
+            contentArea.innerHTML = `
+                <div class="module-error">
+                    <div class="error-icon">⚠️</div>
+                    <h3>Error Loading Module</h3>
+                    <p>${message}</p>
+                    <button onclick="app.showSection('dashboard')" class="btn-primary">
+                        Return to Dashboard
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    showModuleNotAvailable(moduleName) {
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
+
+        contentArea.innerHTML = `
+            <div class="module-container">
+                <div class="module-header">
+                    <h1 class="module-title">${this.getSectionName(moduleName)}</h1>
+                    <p class="module-subtitle">Module under construction</p>
+                </div>
+                
+                <div class="module-content">
+                    <div class="card">
+                        <h3>📋 Module Information</h3>
+                        <p>The <strong>${this.getSectionName(moduleName)}</strong> module is currently being migrated to the new CSS-based system.</p>
+                        
+                        <div class="alert alert-info mt-4">
+                            <strong>Migration Status:</strong> This module will be available soon.
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button onclick="app.showSection('dashboard')" class="btn-primary">
+                                ← Return to Dashboard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Initialize the app
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.app = new FarmManagementApp();
+    });
+} else {
+    window.app = new FarmManagementApp();
+}
