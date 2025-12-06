@@ -1,4 +1,4 @@
-// app.js - FIXED FARM MODULES INITIALIZATION
+// app.js - FIXED FOR MOBILE VISIBILITY
 console.log('Loading main app...');
 
 class FarmManagementApp {
@@ -24,6 +24,9 @@ class FarmManagementApp {
 
     async initializeApp() {
         console.log('✅ Initializing app...');
+        
+        // Add mobile responsive CSS FIRST
+        this.addMobileCSS();
         
         // CRITICAL: Initialize StyleManager FIRST before any modules
         this.initializeStyleManager();
@@ -56,8 +59,8 @@ class FarmManagementApp {
             console.log('🔍 Debug - Side menu exists:', !!sideMenu);
             
             if (hamburger) {
-                console.log('🔍 Debug - Hamburger classes:', hamburger.className);
-                console.log('🔍 Debug - Hamburger styles:', window.getComputedStyle(hamburger));
+                console.log('🔍 Debug - Hamburger position:', hamburger.getBoundingClientRect());
+                console.log('🔍 Debug - Hamburger computed styles:', window.getComputedStyle(hamburger).display);
             }
         }, 100);
         
@@ -65,6 +68,159 @@ class FarmManagementApp {
         this.showSection(this.currentSection);
         
         console.log('✅ App initialized successfully');
+    }
+
+    addMobileCSS() {
+        // Add mobile-specific CSS for better visibility
+        const style = document.createElement('style');
+        style.textContent = `
+            /* ===== MOBILE RESPONSIVE STYLES ===== */
+            @media (max-width: 768px) {
+                /* Make hamburger menu clearly visible */
+                #hamburger-menu {
+                    background: linear-gradient(135deg, #4CAF50, #2E7D32) !important;
+                    border: 2px solid white !important;
+                    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4) !important;
+                    border-radius: 12px !important;
+                    width: 50px !important;
+                    height: 50px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    position: fixed !important;
+                    bottom: 20px !important;
+                    right: 20px !important;
+                    z-index: 9999 !important;
+                    cursor: pointer !important;
+                    transition: all 0.3s ease !important;
+                }
+                
+                #hamburger-menu:hover {
+                    transform: scale(1.1) !important;
+                    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6) !important;
+                }
+                
+                #hamburger-menu span {
+                    font-size: 24px !important;
+                    color: white !important;
+                    font-weight: bold !important;
+                }
+                
+                #hamburger-menu .nav-label {
+                    display: none !important;
+                }
+                
+                /* Make nav items more visible on mobile */
+                .nav-item {
+                    min-width: 50px !important;
+                    min-height: 50px !important;
+                    margin: 5px !important;
+                    padding: 10px !important;
+                    border-radius: 10px !important;
+                    background: rgba(255, 255, 255, 0.9) !important;
+                    backdrop-filter: blur(10px) !important;
+                    border: 1px solid rgba(0,0,0,0.1) !important;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+                }
+                
+                .nav-item span:first-child {
+                    font-size: 20px !important;
+                }
+                
+                .nav-label {
+                    font-size: 10px !important;
+                    font-weight: 600 !important;
+                }
+                
+                /* Adjust top nav for mobile */
+                .top-nav {
+                    padding: 10px 15px !important;
+                    height: 60px !important;
+                }
+                
+                .nav-brand {
+                    gap: 8px !important;
+                }
+                
+                .nav-brand img {
+                    width: 30px !important;
+                    height: 30px !important;
+                }
+                
+                .brand-text {
+                    font-size: 18px !important;
+                }
+                
+                .brand-subtitle {
+                    display: none !important;
+                }
+                
+                /* Adjust side menu for mobile */
+                #side-menu {
+                    width: 280px !important;
+                    background: linear-gradient(135deg, #ffffff, #f5f5f5) !important;
+                    backdrop-filter: blur(20px) !important;
+                    box-shadow: -5px 0 30px rgba(0,0,0,0.2) !important;
+                    border-left: 1px solid rgba(0,0,0,0.1) !important;
+                    z-index: 9998 !important;
+                }
+                
+                #side-menu.active {
+                    transform: translateX(0) !important;
+                }
+                
+                /* Make sidebar overlay more visible */
+                .sidebar-overlay {
+                    background: rgba(0,0,0,0.5) !important;
+                    backdrop-filter: blur(5px) !important;
+                }
+            }
+            
+            /* For very small screens */
+            @media (max-width: 480px) {
+                .nav-items {
+                    gap: 5px !important;
+                }
+                
+                .nav-item {
+                    min-width: 40px !important;
+                    min-height: 40px !important;
+                    padding: 8px !important;
+                }
+                
+                .nav-item span:first-child {
+                    font-size: 18px !important;
+                }
+                
+                #side-menu {
+                    width: 85vw !important;
+                }
+            }
+            
+            /* Sidebar overlay */
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0);
+                backdrop-filter: blur(0);
+                z-index: 9997;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+            }
+            
+            .sidebar-overlay.active {
+                background: rgba(0,0,0,0.5);
+                backdrop-filter: blur(5px);
+                opacity: 1;
+                visibility: visible;
+            }
+        `;
+        document.head.appendChild(style);
+        console.log('📱 Mobile CSS added');
     }
 
     initializeStyleManager() {
@@ -328,6 +484,24 @@ class FarmManagementApp {
                     this.showSection(section);
                 }
             }
+            
+            // Close sidebar when clicking on overlay
+            if (e.target.classList.contains('sidebar-overlay')) {
+                const sideMenu = document.getElementById('side-menu');
+                const overlay = document.querySelector('.sidebar-overlay');
+                if (sideMenu) sideMenu.classList.remove('active');
+                if (overlay) overlay.classList.remove('active');
+            }
+        });
+        
+        // Close sidebar with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const sideMenu = document.getElementById('side-menu');
+                const overlay = document.querySelector('.sidebar-overlay');
+                if (sideMenu) sideMenu.classList.remove('active');
+                if (overlay) overlay.classList.remove('active');
+            }
         });
     }
 
@@ -407,6 +581,9 @@ class FarmManagementApp {
                     </button>
                 </div>
             </nav>
+            
+            <!-- Create sidebar overlay -->
+            <div class="sidebar-overlay" id="sidebar-overlay"></div>
         `;
 
         // Setup hamburger menu functionality
@@ -424,57 +601,63 @@ class FarmManagementApp {
     setupHamburgerMenu() {
         const hamburger = document.getElementById('hamburger-menu');
         const sideMenu = document.getElementById('side-menu');
+        const overlay = document.getElementById('sidebar-overlay');
         
         if (hamburger && sideMenu) {
-            // Ensure sidebar is hidden by default and positioned on right
-            sideMenu.style.left = 'auto';
-            sideMenu.style.right = '0';
-            sideMenu.style.transform = 'translateX(100%)';
-            sideMenu.classList.remove('active');
-            
             // Remove any existing event listeners to prevent duplicates
-            hamburger.replaceWith(hamburger.cloneNode(true));
-            const newHamburger = document.getElementById('hamburger-menu');
+            const newHamburger = hamburger.cloneNode(true);
+            hamburger.parentNode.replaceChild(newHamburger, hamburger);
             
-            newHamburger.addEventListener('click', (e) => {
+            // Get the new hamburger reference
+            const currentHamburger = document.getElementById('hamburger-menu');
+            
+            currentHamburger.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log('🍔 Hamburger clicked, toggling sidebar');
                 sideMenu.classList.toggle('active');
+                if (overlay) overlay.classList.toggle('active');
             });
             
             console.log('✅ Hamburger menu connected to sidebar');
+            
+            // Ensure sidebar is visible on mobile
+            this.fixSidebarVisibility();
         } else {
             console.log('❌ Hamburger or side menu not found:', { hamburger, sideMenu });
         }
+    }
+    
+    fixSidebarVisibility() {
+        const sideMenu = document.getElementById('side-menu');
+        if (!sideMenu) return;
         
-        // Close sidebar when clicking outside
-        document.addEventListener('click', (e) => {
-            const sideMenu = document.getElementById('side-menu');
-            const hamburger = document.getElementById('hamburger-menu');
-            
-            if (sideMenu && sideMenu.classList.contains('active') && hamburger) {
-                if (!sideMenu.contains(e.target) && !hamburger.contains(e.target)) {
-                    console.log('📱 Click outside, closing sidebar');
-                    sideMenu.classList.remove('active');
-                }
-            }
-        });
+        // Make sure sidebar has proper styles
+        sideMenu.style.position = 'fixed';
+        sideMenu.style.top = '0';
+        sideMenu.style.bottom = '0';
+        sideMenu.style.right = '0';
+        sideMenu.style.width = '300px';
+        sideMenu.style.background = 'linear-gradient(135deg, #ffffff, #f5f5f5)';
+        sideMenu.style.backdropFilter = 'blur(20px)';
+        sideMenu.style.boxShadow = '-5px 0 30px rgba(0,0,0,0.2)';
+        sideMenu.style.borderLeft = '1px solid rgba(0,0,0,0.1)';
+        sideMenu.style.zIndex = '9998';
+        sideMenu.style.transform = 'translateX(100%)';
+        sideMenu.style.transition = 'transform 0.3s ease';
+        sideMenu.style.overflowY = 'auto';
+        sideMenu.style.paddingTop = '20px';
         
-        // Close sidebar when clicking on sidebar items
-        const sideMenuItems = document.querySelectorAll('.side-menu-item');
-        sideMenuItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const sideMenu = document.getElementById('side-menu');
-                if (sideMenu) {
-                    sideMenu.classList.remove('active');
-                }
-            });
-        });
+        // Make sure it's hidden by default
+        sideMenu.classList.remove('active');
+        
+        console.log('✅ Sidebar visibility fixed');
     }
 
     setupSideMenuEvents() {
         const sideMenuItems = document.querySelectorAll('.side-menu-item');
+        const overlay = document.getElementById('sidebar-overlay');
+        
         sideMenuItems.forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -487,6 +670,9 @@ class FarmManagementApp {
                     const sideMenu = document.getElementById('side-menu');
                     if (sideMenu) {
                         sideMenu.classList.remove('active');
+                    }
+                    if (overlay) {
+                        overlay.classList.remove('active');
                     }
                 }
             });
