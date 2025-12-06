@@ -1,4 +1,4 @@
-// modules/production.js - FIXED MODAL STYLING
+// modules/production.js - PROPER MODAL LAYOUT
 console.log('Loading production module...');
 
 const ProductionModule = {
@@ -180,84 +180,122 @@ const ProductionModule = {
                 <!-- Production Record Modal -->
                 <div id="production-modal" class="modal hidden">
                     <div class="modal-backdrop"></div>
-                    <div class="modal-dialog medium-modal">
-                        <div class="modal-header">
-                            <h3 id="production-modal-title">New Production Record</h3>
-                            <button class="btn-icon modal-close" aria-label="Close">
-                                <span class="icon">×</span>
-                            </button>
-                        </div>
-                        <div class="modal-content">
-                            <form id="production-modal-form">
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="modal-product-type" class="form-label">Product Type *</label>
-                                        <select id="modal-product-type" class="form-select" required>
-                                            <option value="">Select Product</option>
-                                            <option value="eggs">Eggs</option>
-                                            <option value="broilers">Broilers</option>
-                                            <option value="layers">Layers</option>
-                                            <option value="pork">Pork</option>
-                                            <option value="beef">Beef</option>
-                                            <option value="milk">Milk</option>
-                                            <option value="other">Other</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="modal-production-date" class="form-label">Date *</label>
-                                        <input type="date" id="modal-production-date" class="form-input" required>
-                                    </div>
+                    <div class="modal-container">
+                        <div class="modal-window">
+                            <div class="modal-header">
+                                <div class="modal-title-wrapper">
+                                    <h3 id="production-modal-title" class="modal-title">New Production Record</h3>
+                                    <p class="modal-subtitle">Add details about your farm production</p>
                                 </div>
+                                <button class="modal-close-btn" aria-label="Close modal">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M18 6L6 18M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <div class="modal-body">
+                                <form id="production-modal-form" class="modal-form">
+                                    <div class="form-grid">
+                                        <div class="form-group">
+                                            <label for="modal-product-type" class="form-label">
+                                                <span class="label-text">Product Type</span>
+                                                <span class="required">*</span>
+                                            </label>
+                                            <select id="modal-product-type" class="form-select" required>
+                                                <option value="">Select Product</option>
+                                                <option value="eggs">🥚 Eggs</option>
+                                                <option value="broilers">🐔 Broilers</option>
+                                                <option value="layers">🐓 Layers</option>
+                                                <option value="pork">🐖 Pork</option>
+                                                <option value="beef">🐄 Beef</option>
+                                                <option value="milk">🥛 Milk</option>
+                                                <option value="other">📦 Other</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="modal-production-date" class="form-label">
+                                                <span class="label-text">Date</span>
+                                                <span class="required">*</span>
+                                            </label>
+                                            <input type="date" id="modal-production-date" class="form-input" required>
+                                        </div>
+                                    </div>
 
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="modal-production-quantity" class="form-label">Quantity *</label>
-                                        <input type="number" id="modal-production-quantity" class="form-input" min="1" required placeholder="0">
+                                    <div class="form-grid">
+                                        <div class="form-group">
+                                            <label for="modal-production-quantity" class="form-label">
+                                                <span class="label-text">Quantity</span>
+                                                <span class="required">*</span>
+                                            </label>
+                                            <div class="input-with-unit">
+                                                <input type="number" id="modal-production-quantity" class="form-input" min="1" required placeholder="0">
+                                                <span class="input-unit" id="quantity-unit">pieces</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="modal-production-unit" class="form-label">
+                                                <span class="label-text">Unit</span>
+                                                <span class="required">*</span>
+                                            </label>
+                                            <select id="modal-production-unit" class="form-select" required>
+                                                <option value="pieces">Pieces</option>
+                                                <option value="birds">Birds</option>
+                                                <option value="kg">Kilograms (kg)</option>
+                                                <option value="lbs">Pounds (lbs)</option>
+                                                <option value="liters">Liters (L)</option>
+                                                <option value="crates">Crates</option>
+                                                <option value="cartons">Cartons</option>
+                                                <option value="dozen">Dozen</option>
+                                            </select>
+                                        </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="modal-production-unit" class="form-label">Unit *</label>
-                                        <select id="modal-production-unit" class="form-select" required>
-                                            <option value="pieces">Pieces</option>
-                                            <option value="birds">Birds</option>
-                                            <option value="kg">Kilograms</option>
-                                            <option value="lbs">Pounds</option>
-                                            <option value="liters">Liters</option>
-                                            <option value="crates">Crates</option>
-                                            <option value="cartons">Cartons</option>
-                                            <option value="dozen">Dozen</option>
-                                        </select>
-                                    </div>
-                                </div>
 
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="modal-production-quality" class="form-label">Quality *</label>
-                                        <select id="modal-production-quality" class="form-select" required>
-                                            <option value="excellent">Excellent</option>
-                                            <option value="grade-a">Grade A</option>
-                                            <option value="grade-b">Grade B</option>
-                                            <option value="standard">Standard</option>
-                                            <option value="rejects">Rejects</option>
-                                        </select>
+                                    <div class="form-grid">
+                                        <div class="form-group">
+                                            <label for="modal-production-quality" class="form-label">
+                                                <span class="label-text">Quality</span>
+                                                <span class="required">*</span>
+                                            </label>
+                                            <select id="modal-production-quality" class="form-select quality-select" required>
+                                                <option value="excellent">⭐ Excellent</option>
+                                                <option value="grade-a">🟢 Grade A</option>
+                                                <option value="grade-b">🟡 Grade B</option>
+                                                <option value="standard">🔵 Standard</option>
+                                                <option value="rejects">🔴 Rejects</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="modal-production-batch" class="form-label">
+                                                <span class="label-text">Batch ID</span>
+                                                <span class="optional">(optional)</span>
+                                            </label>
+                                            <input type="text" id="modal-production-batch" class="form-input" placeholder="BATCH-001">
+                                        </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="modal-production-batch" class="form-label">Batch ID</label>
-                                        <input type="text" id="modal-production-batch" class="form-input" placeholder="Optional batch number">
-                                    </div>
-                                </div>
 
-                                <div class="form-group">
-                                    <label for="modal-production-notes" class="form-label">Notes</label>
-                                    <textarea id="modal-production-notes" class="form-textarea" rows="3" placeholder="Production details, observations, special conditions..."></textarea>
+                                    <div class="form-group full-width">
+                                        <label for="modal-production-notes" class="form-label">
+                                            <span class="label-text">Notes</span>
+                                            <span class="optional">(optional)</span>
+                                        </label>
+                                        <textarea id="modal-production-notes" class="form-textarea" rows="4" placeholder="Add production details, observations, special conditions, or any other relevant information..."></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <div class="modal-footer">
+                                <div class="footer-actions">
+                                    <button type="button" class="btn btn-text modal-close">Cancel</button>
+                                    <button type="submit" form="production-modal-form" class="btn btn-primary">
+                                        <span class="btn-icon">💾</span>
+                                        Save Record
+                                    </button>
                                 </div>
-                            </form>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-text modal-close">Cancel</button>
-                            <button class="btn btn-primary" id="save-production-btn">
-                                <span class="btn-icon">💾</span>
-                                Save Record
-                            </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -265,21 +303,35 @@ const ProductionModule = {
                 <!-- Production Report Modal -->
                 <div id="production-report-modal" class="modal hidden">
                     <div class="modal-backdrop"></div>
-                    <div class="modal-dialog large-modal">
-                        <div class="modal-header">
-                            <h3 id="production-report-title">Production Report</h3>
-                            <button class="btn-icon modal-close" aria-label="Close">
-                                <span class="icon">×</span>
-                            </button>
-                        </div>
-                        <div class="modal-content">
-                            <div id="production-report-content" class="modal-report-content">
-                                <!-- Report content will be inserted here -->
+                    <div class="modal-container">
+                        <div class="modal-window large-modal">
+                            <div class="modal-header">
+                                <div class="modal-title-wrapper">
+                                    <h3 id="production-report-title" class="modal-title">Production Report</h3>
+                                    <p class="modal-subtitle">Generated on ${new Date().toLocaleDateString()}</p>
+                                </div>
+                                <button class="modal-close-btn" aria-label="Close modal">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M18 6L6 18M6 6l12 12" />
+                                    </svg>
+                                </button>
                             </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-text" id="print-production-report">🖨️ Print</button>
-                            <button class="btn btn-primary modal-close">Close</button>
+                            
+                            <div class="modal-body">
+                                <div id="production-report-content" class="report-content">
+                                    <!-- Report content will be inserted here -->
+                                </div>
+                            </div>
+                            
+                            <div class="modal-footer">
+                                <div class="footer-actions">
+                                    <button class="btn btn-text" id="print-production-report">
+                                        <span class="btn-icon">🖨️</span>
+                                        Print Report
+                                    </button>
+                                    <button class="btn btn-primary modal-close">Close</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -287,26 +339,39 @@ const ProductionModule = {
                 <!-- Delete Confirmation Modal -->
                 <div id="production-delete-modal" class="modal hidden">
                     <div class="modal-backdrop"></div>
-                    <div class="modal-dialog small-modal">
-                        <div class="modal-header">
-                            <h3>Delete Production Record</h3>
-                            <button class="btn-icon modal-close" aria-label="Close">
-                                <span class="icon">×</span>
-                            </button>
-                        </div>
-                        <div class="modal-content">
-                            <div class="delete-confirmation">
-                                <div class="delete-icon">🗑️</div>
-                                <p>Are you sure you want to delete this production record?</p>
-                                <p class="text-muted">This action cannot be undone.</p>
+                    <div class="modal-container">
+                        <div class="modal-window small-modal">
+                            <div class="modal-header">
+                                <div class="modal-title-wrapper">
+                                    <h3 class="modal-title">Delete Record</h3>
+                                    <p class="modal-subtitle">This action cannot be undone</p>
+                                </div>
+                                <button class="modal-close-btn" aria-label="Close modal">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M18 6L6 18M6 6l12 12" />
+                                    </svg>
+                                </button>
                             </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-text modal-close">Cancel</button>
-                            <button class="btn btn-danger" id="confirm-delete-production">
-                                <span class="btn-icon">🗑️</span>
-                                Delete Record
-                            </button>
+                            
+                            <div class="modal-body">
+                                <div class="delete-confirmation">
+                                    <div class="delete-icon">🗑️</div>
+                                    <div class="delete-content">
+                                        <h4>Are you sure?</h4>
+                                        <p>You are about to delete this production record. This will permanently remove it from your records.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="modal-footer">
+                                <div class="footer-actions">
+                                    <button class="btn btn-text modal-close">Cancel</button>
+                                    <button class="btn btn-danger" id="confirm-delete-production">
+                                        <span class="btn-icon">🗑️</span>
+                                        Delete Record
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -366,10 +431,10 @@ const ProductionModule = {
                 <tr>
                     <td colspan="7" class="empty-state">
                         <div class="empty-content">
-                            <span class="empty-icon">🚜</span>
-                            <h4>No production records</h4>
-                            <p>${filter === 'all' ? 'Start recording your production' : `No ${filter} production records`}</p>
-                            <button class="btn btn-text" id="add-first-record">
+                            <div class="empty-icon">🚜</div>
+                            <h4>No production records found</h4>
+                            <p>${filter === 'all' ? 'Get started by adding your first production record' : `No ${filter} production records found`}</p>
+                            <button class="btn btn-primary" id="add-first-record">
                                 <span class="btn-icon">➕</span>
                                 Add First Record
                             </button>
@@ -392,24 +457,40 @@ const ProductionModule = {
             
             return `
                 <tr>
-                    <td>${this.formatDate(record.date)}</td>
+                    <td>
+                        <div class="date-cell">
+                            <span class="date-day">${this.formatDate(record.date)}</span>
+                        </div>
+                    </td>
                     <td>
                         <div class="product-cell">
                             <span class="product-icon">${this.getProductIcon(record.product)}</span>
                             <span class="product-name">${this.formatProductName(record.product)}</span>
                         </div>
                     </td>
-                    <td><strong>${record.quantity.toLocaleString()}</strong> ${record.unit}</td>
+                    <td>
+                        <div class="quantity-cell">
+                            <span class="quantity-value">${record.quantity.toLocaleString()}</span>
+                            <span class="quantity-unit">${record.unit}</span>
+                        </div>
+                    </td>
                     <td><span class="${qualityClass}">${this.formatQuality(record.quality)}</span></td>
-                    <td>${record.batch || '-'}</td>
+                    <td>${record.batch ? `<span class="batch-badge">${record.batch}</span>` : '-'}</td>
                     <td class="notes-cell">${record.notes || '-'}</td>
                     <td class="actions-cell">
-                        <button class="btn-icon edit-production" data-id="${record.id}" title="Edit">
-                            <span class="icon">✏️</span>
-                        </button>
-                        <button class="btn-icon delete-production" data-id="${record.id}" title="Delete">
-                            <span class="icon">🗑️</span>
-                        </button>
+                        <div class="action-buttons">
+                            <button class="btn-icon btn-edit edit-production" data-id="${record.id}" title="Edit">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                            </button>
+                            <button class="btn-icon btn-delete delete-production" data-id="${record.id}" title="Delete">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -422,10 +503,20 @@ const ProductionModule = {
             this.openProductionModal();
         });
 
-        // Save production button
-        document.getElementById('save-production-btn')?.addEventListener('click', () => {
-            this.handleProductionSave();
-        });
+        // Unit selection updates quantity unit display
+        const unitSelect = document.getElementById('modal-production-unit');
+        const quantityUnit = document.getElementById('quantity-unit');
+        if (unitSelect && quantityUnit) {
+            unitSelect.addEventListener('change', (e) => {
+                quantityUnit.textContent = e.target.value;
+            });
+        }
+
+        // Set default date in modal when opened
+        const dateInput = document.getElementById('modal-production-date');
+        if (dateInput) {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
 
         // Production form submission
         const productionForm = document.getElementById('production-modal-form');
@@ -466,7 +557,7 @@ const ProductionModule = {
         // Modal close handlers
         document.addEventListener('click', (e) => {
             // Close modal when clicking close button
-            if (e.target.closest('.modal-close')) {
+            if (e.target.closest('.modal-close-btn') || e.target.closest('.modal-close')) {
                 this.closeAllModals();
             }
             
@@ -474,13 +565,13 @@ const ProductionModule = {
             if (e.target.classList.contains('modal-backdrop')) {
                 this.closeAllModals();
             }
-            
-            // Close modal with Escape key
-            document.addEventListener('keydown', (event) => {
-                if (event.key === 'Escape') {
-                    this.closeAllModals();
-                }
-            });
+        });
+
+        // Escape key to close modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !document.querySelector('.modal.hidden')) {
+                this.closeAllModals();
+            }
         });
 
         // Delete confirmation
@@ -492,19 +583,13 @@ const ProductionModule = {
         document.getElementById('print-production-report')?.addEventListener('click', () => {
             this.printProductionReport();
         });
-
-        // Set default date in modal when opened
-        const dateInput = document.getElementById('modal-production-date');
-        if (dateInput) {
-            dateInput.value = new Date().toISOString().split('T')[0];
-        }
     },
 
     openProductionModal(recordId = null) {
         this.currentRecordId = recordId;
         const modal = document.getElementById('production-modal');
-        const form = document.getElementById('production-modal-form');
         const title = document.getElementById('production-modal-title');
+        const form = document.getElementById('production-modal-form');
 
         if (recordId) {
             // Edit mode
@@ -518,16 +603,32 @@ const ProductionModule = {
                 document.getElementById('modal-production-quality').value = record.quality;
                 document.getElementById('modal-production-batch').value = record.batch || '';
                 document.getElementById('modal-production-notes').value = record.notes || '';
+                
+                // Update quantity unit display
+                const quantityUnit = document.getElementById('quantity-unit');
+                if (quantityUnit) {
+                    quantityUnit.textContent = record.unit;
+                }
             }
         } else {
             // Add mode
             title.textContent = 'New Production Record';
             if (form) form.reset();
             document.getElementById('modal-production-date').value = new Date().toISOString().split('T')[0];
+            
+            // Reset quantity unit display
+            const quantityUnit = document.getElementById('quantity-unit');
+            if (quantityUnit) {
+                quantityUnit.textContent = 'pieces';
+            }
         }
 
         modal.classList.remove('hidden');
-        document.getElementById('modal-product-type')?.focus();
+        
+        // Focus first input
+        setTimeout(() => {
+            document.getElementById('modal-product-type')?.focus();
+        }, 100);
     },
 
     handleProductionSave() {
@@ -538,8 +639,8 @@ const ProductionModule = {
             quantity: parseInt(document.getElementById('modal-production-quantity').value),
             unit: document.getElementById('modal-production-unit').value,
             quality: document.getElementById('modal-production-quality').value,
-            batch: document.getElementById('modal-production-batch').value || '',
-            notes: document.getElementById('modal-production-notes').value || ''
+            batch: document.getElementById('modal-production-batch').value.trim() || '',
+            notes: document.getElementById('modal-production-notes').value.trim() || ''
         };
 
         // Validation
@@ -611,35 +712,57 @@ const ProductionModule = {
                 reportContent = this.generateOverviewReport(stats);
         }
 
-        this.openReportModal(reportTitle, reportContent);
+        // Update the report modal title
+        document.getElementById('production-report-title').textContent = reportTitle;
+        document.querySelector('#production-report-modal .modal-subtitle').textContent = `Generated on ${new Date().toLocaleDateString()}`;
+        
+        // Insert report content
+        document.getElementById('production-report-content').innerHTML = reportContent;
+        
+        // Open the modal
+        this.openReportModal();
     },
 
     generateOverviewReport(stats) {
         return `
-            <div class="report-section">
-                <h4>📊 Production Overview</h4>
-                <div class="stats-grid compact">
-                    <div class="stat-item">
-                        <div class="stat-label">Total Records</div>
-                        <div class="stat-number">${stats.totalRecords}</div>
+            <div class="report-overview">
+                <div class="report-header">
+                    <h4>📊 Production Overview</h4>
+                </div>
+                <div class="report-stats">
+                    <div class="stat-card-report">
+                        <div class="stat-icon-report">📝</div>
+                        <div class="stat-content-report">
+                            <div class="stat-value-report">${stats.totalRecords}</div>
+                            <div class="stat-label-report">Total Records</div>
+                        </div>
                     </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Today's Eggs</div>
-                        <div class="stat-number">${stats.todayEggs}</div>
+                    <div class="stat-card-report">
+                        <div class="stat-icon-report">🥚</div>
+                        <div class="stat-content-report">
+                            <div class="stat-value-report">${stats.todayEggs}</div>
+                            <div class="stat-label-report">Today's Eggs</div>
+                        </div>
                     </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Weekly Birds</div>
-                        <div class="stat-number">${stats.weekBirds}</div>
+                    <div class="stat-card-report">
+                        <div class="stat-icon-report">🐔</div>
+                        <div class="stat-content-report">
+                            <div class="stat-value-report">${stats.weekBirds}</div>
+                            <div class="stat-label-report">Weekly Birds</div>
+                        </div>
                     </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Avg Quality</div>
-                        <div class="stat-number">${stats.avgQuality}/5.0</div>
+                    <div class="stat-card-report">
+                        <div class="stat-icon-report">⭐</div>
+                        <div class="stat-content-report">
+                            <div class="stat-value-report">${stats.avgQuality}/5.0</div>
+                            <div class="stat-label-report">Avg Quality</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="report-section">
-                <h4>📈 Product Distribution</h4>
+                <h5>📈 Product Distribution</h5>
                 <div class="distribution-list">
                     ${Object.entries(stats.productDistribution).map(([product, quantity]) => `
                         <div class="distribution-item">
@@ -660,13 +783,23 @@ const ProductionModule = {
         
         return `
             <div class="report-section">
-                <h4>📈 Weekly Production Trends</h4>
+                <h5>📈 Weekly Production Trends</h5>
                 <div class="trends-grid">
                     ${weeklyTrends.map(week => `
-                        <div class="trend-item">
-                            <div class="trend-week">${week.week}</div>
-                            <div class="trend-eggs">🥚 ${week.eggs}</div>
-                            <div class="trend-birds">🐔 ${week.birds}</div>
+                        <div class="trend-card">
+                            <div class="trend-header">${week.week}</div>
+                            <div class="trend-body">
+                                <div class="trend-item">
+                                    <span class="trend-icon">🥚</span>
+                                    <span class="trend-value">${week.eggs}</span>
+                                    <span class="trend-label">Eggs</span>
+                                </div>
+                                <div class="trend-item">
+                                    <span class="trend-icon">🐔</span>
+                                    <span class="trend-value">${week.birds}</span>
+                                    <span class="trend-label">Birds</span>
+                                </div>
+                            </div>
                         </div>
                     `).join('')}
                 </div>
@@ -677,12 +810,15 @@ const ProductionModule = {
     generateQualityReport(stats) {
         return `
             <div class="report-section">
-                <h4>⭐ Quality Distribution</h4>
-                <div class="distribution-list">
+                <h5>⭐ Quality Distribution</h5>
+                <div class="quality-grid">
                     ${Object.entries(stats.qualityDistribution).map(([quality, count]) => `
-                        <div class="distribution-item">
-                            <span class="quality-name">${this.formatQuality(quality)}</span>
-                            <span class="quality-count">${count} records</span>
+                        <div class="quality-card quality-${quality}">
+                            <div class="quality-icon">${this.getQualityIcon(quality)}</div>
+                            <div class="quality-content">
+                                <div class="quality-name">${this.formatQuality(quality)}</div>
+                                <div class="quality-count">${count} records</div>
+                            </div>
                         </div>
                     `).join('')}
                 </div>
@@ -741,7 +877,7 @@ const ProductionModule = {
             const endDate = new Date(startDate);
             endDate.setDate(endDate.getDate() + 6);
             
-            const weekStr = `Week ${4-i}`;
+            const weekStr = this.getWeekLabel(startDate);
             const weekProduction = this.productionData.filter(record => {
                 const recordDate = new Date(record.date);
                 return recordDate >= startDate && recordDate <= endDate;
@@ -760,9 +896,14 @@ const ProductionModule = {
         return weeks;
     },
 
-    openReportModal(title, content) {
-        document.getElementById('production-report-title').textContent = title;
-        document.getElementById('production-report-content').innerHTML = content;
+    getWeekLabel(date) {
+        const start = new Date(date);
+        const end = new Date(date);
+        end.setDate(end.getDate() + 6);
+        return `${start.getDate()} ${start.toLocaleString('default', { month: 'short' })} - ${end.getDate()} ${end.toLocaleString('default', { month: 'short' })}`;
+    },
+
+    openReportModal() {
         document.getElementById('production-report-modal').classList.remove('hidden');
     },
 
@@ -777,6 +918,7 @@ const ProductionModule = {
     printProductionReport() {
         const reportContent = document.getElementById('production-report-content').innerHTML;
         const reportTitle = document.getElementById('production-report-title').textContent;
+        const reportSubtitle = document.querySelector('#production-report-modal .modal-subtitle').textContent;
         
         const printWindow = window.open('', '_blank');
         printWindow.document.write(`
@@ -784,22 +926,49 @@ const ProductionModule = {
                 <head>
                     <title>${reportTitle}</title>
                     <style>
-                        body { font-family: Arial, sans-serif; margin: 20px; }
-                        .report-section { margin-bottom: 20px; }
-                        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-                        .stat-item { border: 1px solid #ddd; padding: 10px; border-radius: 5px; text-align: center; }
+                        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 40px; color: #333; }
+                        .print-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #4CAF50; padding-bottom: 20px; }
+                        .print-title { color: #2c3e50; margin-bottom: 5px; }
+                        .print-subtitle { color: #7f8c8d; margin-bottom: 20px; }
+                        .print-date { color: #95a5a6; font-size: 14px; }
+                        .report-section { margin: 30px 0; break-inside: avoid; }
+                        h5 { color: #34495e; border-bottom: 1px solid #ecf0f1; padding-bottom: 8px; margin-bottom: 15px; }
+                        .report-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+                        .stat-card-report { border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; text-align: center; }
+                        .stat-value-report { font-size: 24px; font-weight: bold; color: #2c3e50; }
+                        .stat-label-report { color: #7f8c8d; font-size: 14px; margin-top: 5px; }
+                        .distribution-list { border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
+                        .distribution-item { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #f5f5f5; }
+                        .distribution-item:last-child { border-bottom: none; }
+                        .product-info { display: flex; align-items: center; gap: 10px; }
+                        .product-quantity { font-weight: bold; color: #2c3e50; }
+                        .trends-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+                        .trend-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; }
+                        .trend-header { font-weight: bold; color: #34495e; margin-bottom: 10px; }
+                        .trend-item { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+                        @media print {
+                            body { margin: 20px; }
+                            .print-header { margin-bottom: 20px; }
+                            .report-stats { grid-template-columns: repeat(2, 1fr); }
+                            .trends-grid { grid-template-columns: repeat(1, 1fr); }
+                        }
                     </style>
                 </head>
                 <body>
-                    <h2>${reportTitle}</h2>
-                    <div>Generated on: ${new Date().toLocaleDateString()}</div>
-                    <hr>
+                    <div class="print-header">
+                        <h1 class="print-title">${reportTitle}</h1>
+                        <div class="print-subtitle">Farm Production Report</div>
+                        <div class="print-date">${reportSubtitle}</div>
+                    </div>
                     ${reportContent}
+                    <div style="margin-top: 40px; text-align: center; color: #95a5a6; font-size: 12px;">
+                        Report generated by Farm Management System
+                    </div>
                 </body>
             </html>
         `);
         printWindow.document.close();
-        printWindow.print();
+        setTimeout(() => printWindow.print(), 500);
     },
 
     exportProduction() {
@@ -838,6 +1007,17 @@ const ProductionModule = {
         return icons[product] || '📦';
     },
 
+    getQualityIcon(quality) {
+        const icons = {
+            'excellent': '⭐',
+            'grade-a': '🟢',
+            'grade-b': '🟡',
+            'standard': '🔵',
+            'rejects': '🔴'
+        };
+        return icons[quality] || '⚪';
+    },
+
     formatProductName(product) {
         const names = {
             'eggs': 'Eggs', 'broilers': 'Broilers', 'layers': 'Layers',
@@ -856,7 +1036,12 @@ const ProductionModule = {
 
     formatDate(dateString) {
         try {
-            return new Date(dateString).toLocaleDateString();
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                year: 'numeric'
+            });
         } catch (e) {
             return 'Invalid date';
         }
