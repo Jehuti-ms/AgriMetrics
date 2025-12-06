@@ -1527,824 +1527,824 @@ const IncomeExpensesModule = {
 
     // ==================== REAL FIREBASE RECEIPT METHODS ====================
 
-showImportReceiptsModal() {
-    // Use your ModalManager with dashboard styling
-    window.ModalManager.show({
-        id: 'import-receipts-modal',
-        title: '📥 Import Receipts',
-        size: 'modal-lg',
-        content: `
-            <div class="import-receipts-container">
-                
-                <!-- Quick Options (Dashboard Style) -->
-                <div class="quick-actions-section">
-                    <h2 class="section-title">Upload Method</h2>
-                    <div class="card-grid">
-                        <button class="card-button" id="camera-option">
-                            <div class="card-icon">📷</div>
-                            <span class="card-title">Take Photo</span>
-                            <span class="card-subtitle">Use camera</span>
-                        </button>
-                        <button class="card-button" id="upload-option">
-                            <div class="card-icon">📁</div>
-                            <span class="card-title">Upload Files</span>
-                            <span class="card-subtitle">From device</span>
-                        </button>
-                        <button class="card-button" id="scan-option" disabled>
-                            <div class="card-icon">🔍</div>
-                            <span class="card-title">Scan (Coming Soon)</span>
-                            <span class="card-subtitle">Auto-extract</span>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Camera Interface -->
-                <div class="camera-section" id="camera-section" style="display: none;">
-                    <div class="glass-card">
-                        <div class="card-header header-flex">
-                            <h3>Camera Preview</h3>
-                            <div class="camera-status" id="camera-status">Ready</div>
-                        </div>
-                        <div class="camera-preview">
-                            <video id="camera-preview" autoplay playsinline></video>
-                            <canvas id="camera-canvas" style="display: none;"></canvas>
-                        </div>
-                        <div class="camera-controls">
-                            <button class="btn btn-outline" id="switch-camera">
-                                <span class="btn-icon">🔄</span>
-                                <span class="btn-text">Switch Camera</span>
+    showImportReceiptsModal() {
+        // Use your ModalManager with dashboard styling
+        window.ModalManager.show({
+            id: 'import-receipts-modal',
+            title: '📥 Import Receipts',
+            size: 'modal-lg',
+            content: `
+                <div class="import-receipts-container">
+                    
+                    <!-- Quick Options (Dashboard Style) -->
+                    <div class="quick-actions-section">
+                        <h2 class="section-title">Upload Method</h2>
+                        <div class="card-grid">
+                            <button class="card-button" id="camera-option">
+                                <div class="card-icon">📷</div>
+                                <span class="card-title">Take Photo</span>
+                                <span class="card-subtitle">Use camera</span>
                             </button>
-                            <button class="btn btn-primary" id="capture-photo">
-                                <span class="btn-icon">📸</span>
-                                <span class="btn-text">Capture</span>
+                            <button class="card-button" id="upload-option">
+                                <div class="card-icon">📁</div>
+                                <span class="card-title">Upload Files</span>
+                                <span class="card-subtitle">From device</span>
                             </button>
-                            <button class="btn btn-outline" id="cancel-camera">
-                                <span class="btn-icon">✖️</span>
-                                <span class="btn-text">Cancel</span>
+                            <button class="card-button" id="scan-option" disabled>
+                                <div class="card-icon">🔍</div>
+                                <span class="card-title">Scan (Coming Soon)</span>
+                                <span class="card-subtitle">Auto-extract</span>
                             </button>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Upload Area -->
-                <div class="upload-section" id="upload-section" style="display: none;">
-                    <div class="glass-card">
-                        <div class="card-header">
-                            <h3>Upload Receipts</h3>
+                    
+                    <!-- Camera Interface -->
+                    <div class="camera-section" id="camera-section" style="display: none;">
+                        <div class="glass-card">
+                            <div class="card-header header-flex">
+                                <h3>Camera Preview</h3>
+                                <div class="camera-status" id="camera-status">Ready</div>
+                            </div>
+                            <div class="camera-preview">
+                                <video id="camera-preview" autoplay playsinline></video>
+                                <canvas id="camera-canvas" style="display: none;"></canvas>
+                            </div>
+                            <div class="camera-controls">
+                                <button class="btn btn-outline" id="switch-camera">
+                                    <span class="btn-icon">🔄</span>
+                                    <span class="btn-text">Switch Camera</span>
+                                </button>
+                                <button class="btn btn-primary" id="capture-photo">
+                                    <span class="btn-icon">📸</span>
+                                    <span class="btn-text">Capture</span>
+                                </button>
+                                <button class="btn btn-outline" id="cancel-camera">
+                                    <span class="btn-icon">✖️</span>
+                                    <span class="btn-text">Cancel</span>
+                                </button>
+                            </div>
                         </div>
-                        <div class="upload-area" id="drop-area">
-                            <div class="upload-icon">📄</div>
-                            <h4>Drag & Drop Receipts</h4>
-                            <p class="upload-subtitle">or click to browse files</p>
-                            <p class="upload-formats">Supports: JPG, PNG, PDF (Max 10MB)</p>
-                            <input type="file" id="receipt-upload-input" multiple 
-                                   accept=".jpg,.jpeg,.png,.pdf" style="display: none;">
-                            <button class="btn btn-primary" id="browse-receipts-btn">
-                                <span class="btn-icon">📁</span>
-                                <span class="btn-text">Browse Files</span>
-                            </button>
-                        </div>
-                        
-                        <!-- Upload Progress -->
-                        <div class="upload-progress" id="upload-progress" style="display: none;">
-                            <div class="progress-info">
-                                <h4>Uploading to Firebase...</h4>
-                                <div class="progress-container">
-                                    <div class="progress-bar" id="upload-progress-bar"></div>
-                                </div>
-                                <div class="progress-details">
-                                    <span id="upload-file-name">-</span>
-                                    <span id="upload-percentage">0%</span>
+                    </div>
+                    
+                    <!-- Upload Area -->
+                    <div class="upload-section" id="upload-section" style="display: none;">
+                        <div class="glass-card">
+                            <div class="card-header">
+                                <h3>Upload Receipts</h3>
+                            </div>
+                            <div class="upload-area" id="drop-area">
+                                <div class="upload-icon">📄</div>
+                                <h4>Drag & Drop Receipts</h4>
+                                <p class="upload-subtitle">or click to browse files</p>
+                                <p class="upload-formats">Supports: JPG, PNG, PDF (Max 10MB)</p>
+                                <input type="file" id="receipt-upload-input" multiple 
+                                       accept=".jpg,.jpeg,.png,.pdf" style="display: none;">
+                                <button class="btn btn-primary" id="browse-receipts-btn">
+                                    <span class="btn-icon">📁</span>
+                                    <span class="btn-text">Browse Files</span>
+                                </button>
+                            </div>
+                            
+                            <!-- Upload Progress -->
+                            <div class="upload-progress" id="upload-progress" style="display: none;">
+                                <div class="progress-info">
+                                    <h4>Uploading to Firebase...</h4>
+                                    <div class="progress-container">
+                                        <div class="progress-bar" id="upload-progress-bar"></div>
+                                    </div>
+                                    <div class="progress-details">
+                                        <span id="upload-file-name">-</span>
+                                        <span id="upload-percentage">0%</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Recent Receipts -->
-                <div class="recent-section" id="recent-section" style="${this.receiptQueue.length > 0 ? '' : 'display: none;'}">
-                    <div class="glass-card">
-                        <div class="card-header header-flex">
-                            <h3>📋 Recent Receipts</h3>
-                            <button class="btn btn-outline" id="refresh-receipts">
-                                <span class="btn-icon">🔄</span>
-                                <span class="btn-text">Refresh</span>
-                            </button>
-                        </div>
-                        <div id="recent-receipts-list" class="receipts-list">
-                            ${this.renderRecentReceiptsList()}
+                    
+                    <!-- Recent Receipts -->
+                    <div class="recent-section" id="recent-section" style="${this.receiptQueue.length > 0 ? '' : 'display: none;'}">
+                        <div class="glass-card">
+                            <div class="card-header header-flex">
+                                <h3>📋 Recent Receipts</h3>
+                                <button class="btn btn-outline" id="refresh-receipts">
+                                    <span class="btn-icon">🔄</span>
+                                    <span class="btn-text">Refresh</span>
+                                </button>
+                            </div>
+                            <div id="recent-receipts-list" class="receipts-list">
+                                ${this.renderRecentReceiptsList()}
+                            </div>
                         </div>
                     </div>
+                    
                 </div>
-                
-            </div>
-        `,
-        footer: `
-            <button class="btn btn-outline" data-action="close">Cancel</button>
-            <button class="btn btn-primary" id="process-receipts-btn" style="display: none;">
-                <span class="btn-icon">⚡</span>
-                <span class="btn-text">Process Receipts</span>
-            </button>
-        `,
-        onOpen: () => {
-            this.setupImportReceiptsHandlers();
-        }
-    });
-},
+            `,
+            footer: `
+                <button class="btn btn-outline" data-action="close">Cancel</button>
+                <button class="btn btn-primary" id="process-receipts-btn" style="display: none;">
+                    <span class="btn-icon">⚡</span>
+                    <span class="btn-text">Process Receipts</span>
+                </button>
+            `,
+            onOpen: () => {
+                this.setupImportReceiptsHandlers();
+            }
+        });
+    },
 
-setupImportReceiptsHandlers() {
-    // Camera option
-    document.getElementById('camera-option').addEventListener('click', () => {
-        this.showCameraInterface();
-    });
-    
-    // Upload option
-    document.getElementById('upload-option').addEventListener('click', () => {
-        this.showUploadInterface();
-    });
-    
-    // File upload handlers
-    document.getElementById('browse-receipts-btn').addEventListener('click', () => {
-        document.getElementById('receipt-upload-input').click();
-    });
-    
-    document.getElementById('receipt-upload-input').addEventListener('change', (e) => {
-        this.handleFileUpload(e.target.files);
-    });
-    
-    // Drag and drop
-    const dropArea = document.getElementById('drop-area');
-    if (dropArea) {
-        dropArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropArea.classList.add('drag-over');
+    setupImportReceiptsHandlers() {
+        // Camera option
+        document.getElementById('camera-option').addEventListener('click', () => {
+            this.showCameraInterface();
         });
         
-        dropArea.addEventListener('dragleave', () => {
-            dropArea.classList.remove('drag-over');
-        });
-        
-        dropArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropArea.classList.remove('drag-over');
-            this.handleFileUpload(e.dataTransfer.files);
-        });
-    }
-    
-    // Refresh receipts
-    document.getElementById('refresh-receipts')?.addEventListener('click', () => {
-        this.loadReceiptsFromFirebase();
-    });
-    
-    // Process button
-    document.getElementById('process-receipts-btn')?.addEventListener('click', () => {
-        this.processPendingReceipts();
-    });
-},
-
-showCameraInterface() {
-    // Hide upload, show camera
-    document.getElementById('upload-section').style.display = 'none';
-    document.getElementById('camera-section').style.display = 'block';
-    document.getElementById('recent-section').style.display = 'none';
-    
-    this.initializeCamera();
-},
-
-showUploadInterface() {
-    // Hide camera, show upload
-    document.getElementById('camera-section').style.display = 'none';
-    document.getElementById('upload-section').style.display = 'block';
-    document.getElementById('recent-section').style.display = 'block';
-},
-
-async initializeCamera() {
-    try {
-        const video = document.getElementById('camera-preview');
-        const status = document.getElementById('camera-status');
-        
-        // Get camera access
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment' },
-            audio: false
-        });
-        
-        video.srcObject = stream;
-        this.cameraStream = stream;
-        status.textContent = 'Camera Ready';
-        
-        // Setup capture button
-        document.getElementById('capture-photo').onclick = () => this.capturePhoto();
-        
-        // Setup switch camera
-        document.getElementById('switch-camera').onclick = () => this.switchCamera();
-        
-        // Setup cancel
-        document.getElementById('cancel-camera').onclick = () => {
-            this.stopCamera();
+        // Upload option
+        document.getElementById('upload-option').addEventListener('click', () => {
             this.showUploadInterface();
-        };
-        
-    } catch (error) {
-        console.error('Camera error:', error);
-        this.showNotification('Camera access denied. Please upload files instead.', 'error');
-        this.showUploadInterface();
-    }
-},
-
-async switchCamera() {
-    if (!this.cameraStream) return;
-    
-    const video = document.getElementById('camera-preview');
-    const tracks = this.cameraStream.getTracks();
-    
-    // Stop current tracks
-    tracks.forEach(track => track.stop());
-    
-    try {
-        // Get current facing mode
-        const currentTrack = tracks.find(track => track.kind === 'video');
-        const currentFacingMode = currentTrack.getSettings().facingMode;
-        
-        // Switch facing mode
-        const newFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-        
-        // Get new stream
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: newFacingMode },
-            audio: false
         });
         
-        video.srcObject = stream;
-        this.cameraStream = stream;
+        // File upload handlers
+        document.getElementById('browse-receipts-btn').addEventListener('click', () => {
+            document.getElementById('receipt-upload-input').click();
+        });
         
-        this.showNotification(`Switched to ${newFacingMode === 'user' ? 'front' : 'rear'} camera`, 'success');
+        document.getElementById('receipt-upload-input').addEventListener('change', (e) => {
+            this.handleFileUpload(e.target.files);
+        });
         
-    } catch (error) {
-        console.error('Switch camera error:', error);
-        this.showNotification('Failed to switch camera', 'error');
-    }
-},
-
-capturePhoto() {
-    const video = document.getElementById('camera-preview');
-    const canvas = document.getElementById('camera-canvas');
-    const status = document.getElementById('camera-status');
-    
-    // Set canvas dimensions to match video
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    
-    // Draw video frame to canvas
-    const context = canvas.getContext('2d');
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-    // Convert to blob
-    canvas.toBlob(async (blob) => {
-        if (blob) {
-            status.textContent = 'Processing photo...';
-            
-            // Create file object
-            const file = new File([blob], `receipt_${Date.now()}.jpg`, {
-                type: 'image/jpeg',
-                lastModified: Date.now()
+        // Drag and drop
+        const dropArea = document.getElementById('drop-area');
+        if (dropArea) {
+            dropArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropArea.classList.add('drag-over');
             });
             
-            // Upload to Firebase
-            await this.uploadReceiptToFirebase(file);
+            dropArea.addEventListener('dragleave', () => {
+                dropArea.classList.remove('drag-over');
+            });
             
-            status.textContent = 'Photo captured!';
-            this.showNotification('Receipt photo captured!', 'success');
+            dropArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropArea.classList.remove('drag-over');
+                this.handleFileUpload(e.dataTransfer.files);
+            });
+        }
+        
+        // Refresh receipts
+        document.getElementById('refresh-receipts')?.addEventListener('click', () => {
+            this.loadReceiptsFromFirebase();
+        });
+        
+        // Process button
+        document.getElementById('process-receipts-btn')?.addEventListener('click', () => {
+            this.processPendingReceipts();
+        });
+    },
+
+    showCameraInterface() {
+        // Hide upload, show camera
+        document.getElementById('upload-section').style.display = 'none';
+        document.getElementById('camera-section').style.display = 'block';
+        document.getElementById('recent-section').style.display = 'none';
+        
+        this.initializeCamera();
+    },
+
+    showUploadInterface() {
+        // Hide camera, show upload
+        document.getElementById('camera-section').style.display = 'none';
+        document.getElementById('upload-section').style.display = 'block';
+        document.getElementById('recent-section').style.display = 'block';
+    },
+
+    async initializeCamera() {
+        try {
+            const video = document.getElementById('camera-preview');
+            const status = document.getElementById('camera-status');
             
-            // Switch back to upload interface
-            setTimeout(() => {
+            // Get camera access
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' },
+                audio: false
+            });
+            
+            video.srcObject = stream;
+            this.cameraStream = stream;
+            status.textContent = 'Camera Ready';
+            
+            // Setup capture button
+            document.getElementById('capture-photo').onclick = () => this.capturePhoto();
+            
+            // Setup switch camera
+            document.getElementById('switch-camera').onclick = () => this.switchCamera();
+            
+            // Setup cancel
+            document.getElementById('cancel-camera').onclick = () => {
                 this.stopCamera();
                 this.showUploadInterface();
-            }, 1000);
-        }
-    }, 'image/jpeg', 0.9);
-},
-
-stopCamera() {
-    if (this.cameraStream) {
-        this.cameraStream.getTracks().forEach(track => track.stop());
-        this.cameraStream = null;
-    }
-    const video = document.getElementById('camera-preview');
-    if (video) video.srcObject = null;
-},
-
-async handleFileUpload(files) {
-    if (!files || files.length === 0) return;
-    
-    const totalFiles = files.length;
-    let processedFiles = 0;
-    
-    // Show progress
-    const progressSection = document.getElementById('upload-progress');
-    const progressBar = document.getElementById('upload-progress-bar');
-    const progressText = document.getElementById('upload-percentage');
-    const fileName = document.getElementById('upload-file-name');
-    
-    if (progressSection) progressSection.style.display = 'block';
-    
-    // Upload each file to Firebase
-    for (const file of Array.from(files)) {
-        fileName.textContent = `Uploading: ${file.name}`;
-        
-        try {
-            await this.uploadReceiptToFirebase(file);
-            processedFiles++;
-            
-            // Update progress
-            const progress = Math.round((processedFiles / totalFiles) * 100);
-            if (progressBar) progressBar.style.width = `${progress}%`;
-            if (progressText) progressText.textContent = `${progress}%`;
+            };
             
         } catch (error) {
-            console.error('Upload error:', error);
-            this.showNotification(`Failed to upload ${file.name}: ${error.message}`, 'error');
+            console.error('Camera error:', error);
+            this.showNotification('Camera access denied. Please upload files instead.', 'error');
+            this.showUploadInterface();
         }
-    }
-    
-    // Hide progress after completion
-    setTimeout(() => {
-        if (progressSection) progressSection.style.display = 'none';
-        if (progressBar) progressBar.style.width = '0%';
-        if (progressText) progressText.textContent = '0%';
-        if (fileName) fileName.textContent = '-';
-    }, 1000);
-    
-    this.showNotification(`${processedFiles} receipt(s) uploaded to Firebase!`, 'success');
-    
-    // Update UI
-    this.updateReceiptQueueUI();
-    
-    // Show process button
-    const processBtn = document.getElementById('process-receipts-btn');
-    if (processBtn) processBtn.style.display = 'inline-block';
-},
+    },
 
-async uploadReceiptToFirebase(file) {
-    if (!file || !window.storage) {
-        throw new Error('Firebase storage not available');
-    }
-    
-    // Validate file
-    if (!this.isValidReceiptFile(file)) {
-        throw new Error('Invalid file type or size');
-    }
-    
-    // Generate unique filename
-    const timestamp = Date.now();
-    const fileExt = file.name.split('.').pop();
-    const fileName = `receipts/${timestamp}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-    
-    // Create storage reference
-    const storageRef = window.storage.ref();
-    const fileRef = storageRef.child(fileName);
-    
-    // Upload file to Firebase Storage
-    const uploadTask = fileRef.put(file);
-    
-    // Wait for upload to complete
-    const snapshot = await uploadTask;
-    
-    // Get download URL
-    const downloadURL = await snapshot.ref.getDownloadURL();
-    
-    // Create receipt record in Firestore
-    const receiptId = `receipt_${timestamp}`;
-    const receiptData = {
-        id: receiptId,
-        name: file.name,
-        originalName: file.name,
-        fileName: fileName,
-        downloadURL: downloadURL,
-        size: file.size,
-        type: file.type,
-        status: 'pending',
-        uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        uploadedBy: this.getCurrentUser() || 'unknown',
-        metadata: {
-            contentType: file.type,
-            size: file.size
-        }
-    };
-    
-    // Save to Firestore
-    await window.db.collection('receipts').doc(receiptId).set(receiptData);
-    
-    // Add to local queue
-    this.receiptQueue.push(receiptData);
-    
-    return receiptData;
-},
-
-async loadReceiptsFromFirebase() {
-    try {
-        const receiptsRef = window.db.collection('receipts');
-        const snapshot = await receiptsRef
-            .where('status', '==', 'pending')
-            .orderBy('uploadedAt', 'desc')
-            .limit(10)
-            .get();
+    async switchCamera() {
+        if (!this.cameraStream) return;
         
-        this.receiptQueue = [];
-        snapshot.forEach(doc => {
-            this.receiptQueue.push(doc.data());
-        });
+        const video = document.getElementById('camera-preview');
+        const tracks = this.cameraStream.getTracks();
+        
+        // Stop current tracks
+        tracks.forEach(track => track.stop());
+        
+        try {
+            // Get current facing mode
+            const currentTrack = tracks.find(track => track.kind === 'video');
+            const currentFacingMode = currentTrack.getSettings().facingMode;
+            
+            // Switch facing mode
+            const newFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            
+            // Get new stream
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: newFacingMode },
+                audio: false
+            });
+            
+            video.srcObject = stream;
+            this.cameraStream = stream;
+            
+            this.showNotification(`Switched to ${newFacingMode === 'user' ? 'front' : 'rear'} camera`, 'success');
+            
+        } catch (error) {
+            console.error('Switch camera error:', error);
+            this.showNotification('Failed to switch camera', 'error');
+        }
+    },
+
+    capturePhoto() {
+        const video = document.getElementById('camera-preview');
+        const canvas = document.getElementById('camera-canvas');
+        const status = document.getElementById('camera-status');
+        
+        // Set canvas dimensions to match video
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        // Draw video frame to canvas
+        const context = canvas.getContext('2d');
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Convert to blob
+        canvas.toBlob(async (blob) => {
+            if (blob) {
+                status.textContent = 'Processing photo...';
+                
+                // Create file object
+                const file = new File([blob], `receipt_${Date.now()}.jpg`, {
+                    type: 'image/jpeg',
+                    lastModified: Date.now()
+                });
+                
+                // Upload to Firebase
+                await this.uploadReceiptToFirebase(file);
+                
+                status.textContent = 'Photo captured!';
+                this.showNotification('Receipt photo captured!', 'success');
+                
+                // Switch back to upload interface
+                setTimeout(() => {
+                    this.stopCamera();
+                    this.showUploadInterface();
+                }, 1000);
+            }
+        }, 'image/jpeg', 0.9);
+    },
+
+    stopCamera() {
+        if (this.cameraStream) {
+            this.cameraStream.getTracks().forEach(track => track.stop());
+            this.cameraStream = null;
+        }
+        const video = document.getElementById('camera-preview');
+        if (video) video.srcObject = null;
+    },
+
+    async handleFileUpload(files) {
+        if (!files || files.length === 0) return;
+        
+        const totalFiles = files.length;
+        let processedFiles = 0;
+        
+        // Show progress
+        const progressSection = document.getElementById('upload-progress');
+        const progressBar = document.getElementById('upload-progress-bar');
+        const progressText = document.getElementById('upload-percentage');
+        const fileName = document.getElementById('upload-file-name');
+        
+        if (progressSection) progressSection.style.display = 'block';
+        
+        // Upload each file to Firebase
+        for (const file of Array.from(files)) {
+            fileName.textContent = `Uploading: ${file.name}`;
+            
+            try {
+                await this.uploadReceiptToFirebase(file);
+                processedFiles++;
+                
+                // Update progress
+                const progress = Math.round((processedFiles / totalFiles) * 100);
+                if (progressBar) progressBar.style.width = `${progress}%`;
+                if (progressText) progressText.textContent = `${progress}%`;
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                this.showNotification(`Failed to upload ${file.name}: ${error.message}`, 'error');
+            }
+        }
+        
+        // Hide progress after completion
+        setTimeout(() => {
+            if (progressSection) progressSection.style.display = 'none';
+            if (progressBar) progressBar.style.width = '0%';
+            if (progressText) progressText.textContent = '0%';
+            if (fileName) fileName.textContent = '-';
+        }, 1000);
+        
+        this.showNotification(`${processedFiles} receipt(s) uploaded to Firebase!`, 'success');
         
         // Update UI
         this.updateReceiptQueueUI();
-        this.showNotification('Receipts loaded from Firebase', 'success');
         
-    } catch (error) {
-        console.error('Error loading receipts:', error);
-        this.showNotification('Failed to load receipts', 'error');
-    }
-},
+        // Show process button
+        const processBtn = document.getElementById('process-receipts-btn');
+        if (processBtn) processBtn.style.display = 'inline-block';
+    },
 
-renderRecentReceiptsList() {
-    if (this.receiptQueue.length === 0) {
-        return `
-            <div class="empty-state">
-                <div class="empty-icon">📄</div>
-                <h4>No pending receipts</h4>
-                <p>Upload some receipts to get started</p>
-            </div>
-        `;
-    }
-    
-    return `
-        <div class="receipts-grid">
-            ${this.receiptQueue.slice(0, 5).map(receipt => `
-                <div class="receipt-card" data-id="${receipt.id}">
-                    <div class="receipt-preview">
-                        ${receipt.type.startsWith('image/') ? 
-                            `<img src="${receipt.downloadURL}" alt="${receipt.name}" loading="lazy">` : 
-                            `<div class="file-icon">📄</div>`
-                        }
-                    </div>
-                    <div class="receipt-info">
-                        <div class="receipt-name">${receipt.name}</div>
-                        <div class="receipt-meta">
-                            <span class="receipt-size">${this.formatFileSize(receipt.size)}</span>
-                            <span class="receipt-status status-${receipt.status}">${receipt.status}</span>
-                        </div>
-                    </div>
-                    <button class="btn btn-sm btn-outline process-btn" data-id="${receipt.id}">
-                        <span class="btn-icon">🔍</span>
-                    </button>
-                </div>
-            `).join('')}
-        </div>
-    `;
-},
+    async uploadReceiptToFirebase(file) {
+        if (!file || !window.storage) {
+            throw new Error('Firebase storage not available');
+        }
+        
+        // Validate file
+        if (!this.isValidReceiptFile(file)) {
+            throw new Error('Invalid file type or size');
+        }
+        
+        // Generate unique filename
+        const timestamp = Date.now();
+        const fileExt = file.name.split('.').pop();
+        const fileName = `receipts/${timestamp}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+        
+        // Create storage reference
+        const storageRef = window.storage.ref();
+        const fileRef = storageRef.child(fileName);
+        
+        // Upload file to Firebase Storage
+        const uploadTask = fileRef.put(file);
+        
+        // Wait for upload to complete
+        const snapshot = await uploadTask;
+        
+        // Get download URL
+        const downloadURL = await snapshot.ref.getDownloadURL();
+        
+        // Create receipt record in Firestore
+        const receiptId = `receipt_${timestamp}`;
+        const receiptData = {
+            id: receiptId,
+            name: file.name,
+            originalName: file.name,
+            fileName: fileName,
+            downloadURL: downloadURL,
+            size: file.size,
+            type: file.type,
+            status: 'pending',
+            uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            uploadedBy: this.getCurrentUser() || 'unknown',
+            metadata: {
+                contentType: file.type,
+                size: file.size
+            }
+        };
+        
+        // Save to Firestore
+        await window.db.collection('receipts').doc(receiptId).set(receiptData);
+        
+        // Add to local queue
+        this.receiptQueue.push(receiptData);
+        
+        return receiptData;
+    },
 
-updateReceiptQueueUI() {
-    // Update main page UI
-    const pendingSection = document.getElementById('pending-receipts-section');
-    const pendingList = document.getElementById('pending-receipts-list');
-    const badge = document.getElementById('receipt-count-badge');
-    
-    const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
-    
-    if (badge) {
-        badge.textContent = pendingReceipts.length;
-        badge.style.display = pendingReceipts.length > 0 ? 'inline-block' : 'none';
-    }
-    
-    if (pendingSection && pendingList) {
-        if (pendingReceipts.length > 0) {
-            pendingSection.style.display = 'block';
+    async loadReceiptsFromFirebase() {
+        try {
+            const receiptsRef = window.db.collection('receipts');
+            const snapshot = await receiptsRef
+                .where('status', '==', 'pending')
+                .orderBy('uploadedAt', 'desc')
+                .limit(10)
+                .get();
             
-            pendingList.innerHTML = pendingReceipts.map(receipt => `
-                <div class="pending-receipt-item" data-id="${receipt.id}">
-                    <div class="receipt-info">
-                        <span class="receipt-icon">${receipt.type.startsWith('image/') ? '🖼️' : '📄'}</span>
-                        <div class="receipt-details">
+            this.receiptQueue = [];
+            snapshot.forEach(doc => {
+                this.receiptQueue.push(doc.data());
+            });
+            
+            // Update UI
+            this.updateReceiptQueueUI();
+            this.showNotification('Receipts loaded from Firebase', 'success');
+            
+        } catch (error) {
+            console.error('Error loading receipts:', error);
+            this.showNotification('Failed to load receipts', 'error');
+        }
+    },
+
+    renderRecentReceiptsList() {
+        if (this.receiptQueue.length === 0) {
+            return `
+                <div class="empty-state">
+                    <div class="empty-icon">📄</div>
+                    <h4>No pending receipts</h4>
+                    <p>Upload some receipts to get started</p>
+                </div>
+            `;
+        }
+        
+        return `
+            <div class="receipts-grid">
+                ${this.receiptQueue.slice(0, 5).map(receipt => `
+                    <div class="receipt-card" data-id="${receipt.id}">
+                        <div class="receipt-preview">
+                            ${receipt.type.startsWith('image/') ? 
+                                `<img src="${receipt.downloadURL}" alt="${receipt.name}" loading="lazy">` : 
+                                `<div class="file-icon">📄</div>`
+                            }
+                        </div>
+                        <div class="receipt-info">
                             <div class="receipt-name">${receipt.name}</div>
                             <div class="receipt-meta">
-                                <span>${this.formatFileSize(receipt.size)}</span>
-                                <span>•</span>
-                                <span class="receipt-status status-pending">Pending</span>
-                                <span>•</span>
-                                <span>${this.formatFirebaseTimestamp(receipt.uploadedAt)}</span>
+                                <span class="receipt-size">${this.formatFileSize(receipt.size)}</span>
+                                <span class="receipt-status status-${receipt.status}">${receipt.status}</span>
                             </div>
                         </div>
-                    </div>
-                    <div class="receipt-actions">
-                        <a href="${receipt.downloadURL}" target="_blank" class="btn btn-sm btn-outline" title="View">
-                            <span class="btn-icon">👁️</span>
-                        </a>
-                        <button class="btn btn-sm btn-primary process-receipt-btn" data-id="${receipt.id}">
+                        <button class="btn btn-sm btn-outline process-btn" data-id="${receipt.id}">
                             <span class="btn-icon">🔍</span>
-                            <span class="btn-text">Process</span>
-                        </button>
-                        <button class="btn btn-sm btn-outline remove-receipt-btn" data-id="${receipt.id}">
-                            <span class="btn-icon">🗑️</span>
                         </button>
                     </div>
-                </div>
-            `).join('');
-            
-            // Add event listeners
-            this.setupReceiptActionListeners();
-            
-        } else {
-            pendingSection.style.display = 'none';
+                `).join('')}
+            </div>
+        `;
+    },
+
+    updateReceiptQueueUI() {
+        // Update main page UI
+        const pendingSection = document.getElementById('pending-receipts-section');
+        const pendingList = document.getElementById('pending-receipts-list');
+        const badge = document.getElementById('receipt-count-badge');
+        
+        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+        
+        if (badge) {
+            badge.textContent = pendingReceipts.length;
+            badge.style.display = pendingReceipts.length > 0 ? 'inline-block' : 'none';
         }
-    }
-},
-
-setupReceiptActionListeners() {
-    // Process buttons
-    document.querySelectorAll('.process-receipt-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const receiptId = e.currentTarget.dataset.id;
-            this.processSingleReceipt(receiptId);
-        });
-    });
-    
-    // Remove buttons
-    document.querySelectorAll('.remove-receipt-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const receiptId = e.currentTarget.dataset.id;
-            this.deleteReceiptFromFirebase(receiptId);
-        });
-    });
-},
-
-processSingleReceipt(receiptId) {
-    const receipt = this.receiptQueue.find(r => r.id === receiptId);
-    if (!receipt) return;
-    
-    // For now, simulate some extracted data (in real app, use OCR)
-    const extractedData = {
-        amount: 0.00,
-        vendor: 'Unknown Vendor',
-        date: new Date().toISOString().split('T')[0],
-        type: 'expense',
-        category: 'other-expense'
-    };
-    
-    // Show review modal
-    this.showReceiptReviewModal(receipt, extractedData);
-},
-
-    showReceiptReviewModal(receipt, extractedData) {
-    // Determine if this looks like income or expense based on data
-    const isLikelyIncome = extractedData.category && 
-                          (extractedData.category.includes('sales') || 
-                           extractedData.category.includes('income'));
-    
-    const defaultType = isLikelyIncome ? 'income' : 'expense';
-    
-    // Create form fields based on extracted data
-    const fields = [
-        {
-            type: 'select',
-            name: 'transaction-type',
-            label: 'Transaction Type',
-            value: defaultType,
-            options: [
-                { value: 'income', label: '💰 Income' },
-                { value: 'expense', label: '💸 Expense' }
-            ]
-        },
-        {
-            type: 'text',
-            name: 'description',
-            label: 'Description',
-            value: `Receipt: ${receipt.name}`,
-            required: true
-        },
-        {
-            type: 'number',
-            name: 'amount',
-            label: 'Amount',
-            value: extractedData.amount || 0,
-            required: true,
-            min: 0.01
-        },
-        {
-            type: 'select',
-            name: 'category',
-            label: 'Category',
-            value: extractedData.category || 'other-expense',
-            options: this.getCategoryOptions(defaultType, extractedData.category)
-        },
-        {
-            type: 'text',
-            name: 'vendor',
-            label: 'Vendor/Supplier',
-            value: extractedData.vendor || ''
-        },
-        {
-            type: 'date',
-            name: 'date',
-            label: 'Date',
-            value: extractedData.date || new Date().toISOString().split('T')[0]
-        },
-        {
-            type: 'textarea',
-            name: 'notes',
-            label: 'Notes',
-            value: `Extracted from receipt: ${receipt.name}\nItems: ${extractedData.items?.join(', ') || 'Various items'}`,
-            rows: 3
+        
+        if (pendingSection && pendingList) {
+            if (pendingReceipts.length > 0) {
+                pendingSection.style.display = 'block';
+                
+                pendingList.innerHTML = pendingReceipts.map(receipt => `
+                    <div class="pending-receipt-item" data-id="${receipt.id}">
+                        <div class="receipt-info">
+                            <span class="receipt-icon">${receipt.type.startsWith('image/') ? '🖼️' : '📄'}</span>
+                            <div class="receipt-details">
+                                <div class="receipt-name">${receipt.name}</div>
+                                <div class="receipt-meta">
+                                    <span>${this.formatFileSize(receipt.size)}</span>
+                                    <span>•</span>
+                                    <span class="receipt-status status-pending">Pending</span>
+                                    <span>•</span>
+                                    <span>${this.formatFirebaseTimestamp(receipt.uploadedAt)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="receipt-actions">
+                            <a href="${receipt.downloadURL}" target="_blank" class="btn btn-sm btn-outline" title="View">
+                                <span class="btn-icon">👁️</span>
+                            </a>
+                            <button class="btn btn-sm btn-primary process-receipt-btn" data-id="${receipt.id}">
+                                <span class="btn-icon">🔍</span>
+                                <span class="btn-text">Process</span>
+                            </button>
+                            <button class="btn btn-sm btn-outline remove-receipt-btn" data-id="${receipt.id}">
+                                <span class="btn-icon">🗑️</span>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                
+                // Add event listeners
+                this.setupReceiptActionListeners();
+                
+            } else {
+                pendingSection.style.display = 'none';
+            }
         }
-    ];
-    
-    window.ModalManager.createForm({
-        id: 'receipt-review-modal',
-        title: '🔍 Review Extracted Data',
-        subtitle: `From: ${receipt.name}`,
-        size: 'modal-lg',
-        fields: fields,
-        submitText: 'Add Transaction',
-        onSubmit: (formData) => {
-            // Create transaction from form data
-            const transactionData = {
-                type: formData['transaction-type'],
-                description: formData.description,
-                amount: parseFloat(formData.amount),
-                category: this.getCategoryName(formData.category),
-                date: formData.date,
-                paymentMethod: 'receipt',
-                notes: formData.notes,
-                vendor: formData.vendor,
-                receiptId: receipt.id,
-                receiptName: receipt.name,
-                receiptURL: receipt.downloadURL,
-                status: 'completed'
-            };
+    },
+
+    setupReceiptActionListeners() {
+        // Process buttons
+        document.querySelectorAll('.process-receipt-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const receiptId = e.currentTarget.dataset.id;
+                this.processSingleReceipt(receiptId);
+            });
+        });
+        
+        // Remove buttons
+        document.querySelectorAll('.remove-receipt-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const receiptId = e.currentTarget.dataset.id;
+                this.deleteReceiptFromFirebase(receiptId);
+            });
+        });
+    },
+
+    processSingleReceipt(receiptId) {
+        const receipt = this.receiptQueue.find(r => r.id === receiptId);
+        if (!receipt) return;
+        
+        // For now, simulate some extracted data (in real app, use OCR)
+        const extractedData = {
+            amount: 0.00,
+            vendor: 'Unknown Vendor',
+            date: new Date().toISOString().split('T')[0],
+            type: 'expense',
+            category: 'other-expense'
+        };
+        
+        // Show review modal
+        this.showReceiptReviewModal(receipt, extractedData);
+    },
+
+    async deleteReceiptFromFirebase(receiptId) {
+        const confirm = await window.ModalManager.confirm({
+            title: 'Delete Receipt',
+            message: 'Are you sure you want to delete this receipt?',
+            details: 'This will remove it from Firebase Storage and Firestore.',
+            icon: '⚠️',
+            danger: true,
+            confirmText: 'Delete'
+        });
+        
+        if (!confirm) return;
+        
+        try {
+            const receipt = this.receiptQueue.find(r => r.id === receiptId);
             
-            // Add to transactions
-            this.addTransaction(transactionData);
+            // Delete from Storage
+            if (receipt?.fileName) {
+                const storageRef = window.storage.ref();
+                await storageRef.child(receipt.fileName).delete();
+            }
             
-            // Update receipt status in Firebase
-            this.updateReceiptStatus(receipt.id, 'processed');
+            // Delete from Firestore
+            await window.db.collection('receipts').doc(receiptId).delete();
             
             // Remove from local queue
-            this.receiptQueue = this.receiptQueue.filter(r => r.id !== receipt.id);
+            this.receiptQueue = this.receiptQueue.filter(r => r.id !== receiptId);
             
             // Update UI
             this.updateReceiptQueueUI();
             
-            this.showNotification('Transaction added from receipt!', 'success');
+            this.showNotification('Receipt deleted successfully', 'success');
+            
+        } catch (error) {
+            console.error('Delete error:', error);
+            this.showNotification('Failed to delete receipt', 'error');
         }
-    });
-},
-
-async updateReceiptStatus(receiptId, status) {
-    try {
-        await window.db.collection('receipts').doc(receiptId).update({
-            status: status,
-            processedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-    } catch (error) {
-        console.error('Error updating receipt status:', error);
-    }
-},
+    },
 
     processPendingReceipts() {
-    const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
-    
-    if (pendingReceipts.length === 0) {
-        this.showNotification('No pending receipts to process!', 'warning');
-        return;
-    }
-    
-    // Process each receipt
-    pendingReceipts.forEach((receipt, index) => {
-        setTimeout(() => {
-            this.processSingleReceipt(receipt.id);
-        }, index * 1000); // Stagger processing
-    });
-},
-
-// Add this method to handle processing all receipts
-processAllReceipts() {
-    this.processPendingReceipts();
-},
-
-// Add this method for clearing pending receipts
-clearAllPendingReceipts() {
-    if (this.receiptQueue.length === 0) {
-        this.showNotification('No pending receipts to clear!', 'info');
-        return;
-    }
-    
-    window.ModalManager.confirm({
-        title: 'Clear All Pending Receipts',
-        message: 'Are you sure you want to clear ALL pending receipts?',
-        details: 'This will remove all uploaded receipts from the queue. Extracted data will be lost.',
-        icon: '⚠️',
-        danger: true,
-        confirmText: 'Clear All'
-    }).then(confirmed => {
-        if (confirmed) {
-            this.receiptQueue = [];
-            this.updateReceiptQueueUI();
-            this.showNotification('All pending receipts cleared!', 'success');
-        }
-    });
-},
-
-async deleteReceiptFromFirebase(receiptId) {
-    const confirm = await window.ModalManager.confirm({
-        title: 'Delete Receipt',
-        message: 'Are you sure you want to delete this receipt?',
-        details: 'This will remove it from Firebase Storage and Firestore.',
-        icon: '⚠️',
-        danger: true,
-        confirmText: 'Delete'
-    });
-    
-    if (!confirm) return;
-    
-    try {
-        const receipt = this.receiptQueue.find(r => r.id === receiptId);
+        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
         
-        // Delete from Storage
-        if (receipt?.fileName) {
-            const storageRef = window.storage.ref();
-            await storageRef.child(receipt.fileName).delete();
+        if (pendingReceipts.length === 0) {
+            this.showNotification('No pending receipts to process!', 'warning');
+            return;
         }
         
-        // Delete from Firestore
-        await window.db.collection('receipts').doc(receiptId).delete();
+        // Process each receipt
+        pendingReceipts.forEach((receipt, index) => {
+            setTimeout(() => {
+                this.processSingleReceipt(receipt.id);
+            }, index * 1000); // Stagger processing
+        });
+    },
+
+    processAllReceipts() {
+        this.processPendingReceipts();
+    },
+
+    clearAllPendingReceipts() {
+        if (this.receiptQueue.length === 0) {
+            this.showNotification('No pending receipts to clear!', 'info');
+            return;
+        }
         
-        // Remove from local queue
-        this.receiptQueue = this.receiptQueue.filter(r => r.id !== receiptId);
+        window.ModalManager.confirm({
+            title: 'Clear All Pending Receipts',
+            message: 'Are you sure you want to clear ALL pending receipts?',
+            details: 'This will remove all uploaded receipts from the queue. Extracted data will be lost.',
+            icon: '⚠️',
+            danger: true,
+            confirmText: 'Clear All'
+        }).then(confirmed => {
+            if (confirmed) {
+                this.receiptQueue = [];
+                this.updateReceiptQueueUI();
+                this.showNotification('All pending receipts cleared!', 'success');
+            }
+        });
+    },
+
+    // Utility methods
+    isValidReceiptFile(file) {
+        const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+        const maxSize = 10 * 1024 * 1024; // 10MB
         
-        // Update UI
-        this.updateReceiptQueueUI();
+        return validTypes.includes(file.type) && file.size <= maxSize;
+    },
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    },
+
+    formatFirebaseTimestamp(timestamp) {
+        if (!timestamp) return 'Recently';
         
-        this.showNotification('Receipt deleted successfully', 'success');
+        let date;
+        if (timestamp.toDate) {
+            date = timestamp.toDate(); // Firestore Timestamp
+        } else if (timestamp.seconds) {
+            date = new Date(timestamp.seconds * 1000);
+        } else {
+            date = new Date(timestamp);
+        }
         
-    } catch (error) {
-        console.error('Delete error:', error);
-        this.showNotification('Failed to delete receipt', 'error');
+        return this.formatTimeAgo(date);
+    },
+
+    formatTimeAgo(date) {
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+        
+        if (diffInSeconds < 60) return 'Just now';
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+        return `${Math.floor(diffInSeconds / 2592000)}mo ago`;
+    },
+
+    getCurrentUser() {
+        // Get current user from Firebase Auth or your app state
+        if (firebase.auth().currentUser) {
+            return firebase.auth().currentUser.uid;
+        }
+        
+        // Fallback to localStorage or app data
+        if (window.FarmModules?.appData?.profile?.userId) {
+            return window.FarmModules.appData.profile.userId;
+        }
+        
+        return 'anonymous';
+    },
+
+    showReceiptReviewModal(receipt, extractedData) {
+        // Determine if this looks like income or expense based on data
+        const isLikelyIncome = extractedData.category && 
+                              (extractedData.category.includes('sales') || 
+                               extractedData.category.includes('income'));
+        
+        const defaultType = isLikelyIncome ? 'income' : 'expense';
+        
+        // Create form fields based on extracted data
+        const fields = [
+            {
+                type: 'select',
+                name: 'transaction-type',
+                label: 'Transaction Type',
+                value: defaultType,
+                options: [
+                    { value: 'income', label: '💰 Income' },
+                    { value: 'expense', label: '💸 Expense' }
+                ]
+            },
+            {
+                type: 'text',
+                name: 'description',
+                label: 'Description',
+                value: `Receipt: ${receipt.name}`,
+                required: true
+            },
+            {
+                type: 'number',
+                name: 'amount',
+                label: 'Amount',
+                value: extractedData.amount || 0,
+                required: true,
+                min: 0.01
+            },
+            {
+                type: 'select',
+                name: 'category',
+                label: 'Category',
+                value: extractedData.category || 'other-expense',
+                options: this.getCategoryOptions(defaultType, extractedData.category)
+            },
+            {
+                type: 'text',
+                name: 'vendor',
+                label: 'Vendor/Supplier',
+                value: extractedData.vendor || ''
+            },
+            {
+                type: 'date',
+                name: 'date',
+                label: 'Date',
+                value: extractedData.date || new Date().toISOString().split('T')[0]
+            },
+            {
+                type: 'textarea',
+                name: 'notes',
+                label: 'Notes',
+                value: `Extracted from receipt: ${receipt.name}\nItems: ${extractedData.items?.join(', ') || 'Various items'}`,
+                rows: 3
+            }
+        ];
+        
+        window.ModalManager.createForm({
+            id: 'receipt-review-modal',
+            title: '🔍 Review Extracted Data',
+            subtitle: `From: ${receipt.name}`,
+            size: 'modal-lg',
+            fields: fields,
+            submitText: 'Add Transaction',
+            onSubmit: (formData) => {
+                // Create transaction from form data
+                const transactionData = {
+                    type: formData['transaction-type'],
+                    description: formData.description,
+                    amount: parseFloat(formData.amount),
+                    category: this.getCategoryName(formData.category),
+                    date: formData.date,
+                    paymentMethod: 'receipt',
+                    notes: formData.notes,
+                    vendor: formData.vendor,
+                    receiptId: receipt.id,
+                    receiptName: receipt.name,
+                    receiptURL: receipt.downloadURL,
+                    status: 'completed'
+                };
+                
+                // Add to transactions
+                this.addTransaction(transactionData);
+                
+                // Update receipt status in Firebase
+                this.updateReceiptStatus(receipt.id, 'processed');
+                
+                // Remove from local queue
+                this.receiptQueue = this.receiptQueue.filter(r => r.id !== receipt.id);
+                
+                // Update UI
+                this.updateReceiptQueueUI();
+                
+                this.showNotification('Transaction added from receipt!', 'success');
+            }
+        });
+    },
+
+    async updateReceiptStatus(receiptId, status) {
+        try {
+            await window.db.collection('receipts').doc(receiptId).update({
+                status: status,
+                processedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } catch (error) {
+            console.error('Error updating receipt status:', error);
+        }
     }
-},
 
-// Utility methods
-isValidReceiptFile(file) {
-    const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    
-    return validTypes.includes(file.type) && file.size <= maxSize;
-},
-
-formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-},
-
-formatFirebaseTimestamp(timestamp) {
-    if (!timestamp) return 'Recently';
-    
-    let date;
-    if (timestamp.toDate) {
-        date = timestamp.toDate(); // Firestore Timestamp
-    } else if (timestamp.seconds) {
-        date = new Date(timestamp.seconds * 1000);
-    } else {
-        date = new Date(timestamp);
-    }
-    
-    return this.formatTimeAgo(date);
-},
-
-formatTimeAgo(date) {
-    const now = new Date();
-    const diffInSeconds = Math.floor((now - date) / 1000);
-    
-    if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-    return `${Math.floor(diffInSeconds / 2592000)}mo ago`;
-},
-
-getCurrentUser() {
-    // Get current user from Firebase Auth or your app state
-    if (firebase.auth().currentUser) {
-        return firebase.auth().currentUser.uid;
-    }
-    
-    // Fallback to localStorage or app data
-    if (window.FarmModules?.appData?.profile?.userId) {
-        return window.FarmModules.appData.profile.userId;
-    }
-    
-    return 'anonymous';
-};
+}; // This closes the IncomeExpensesModule object
 
 // Register the module when FarmModules is available
 if (window.FarmModules) {
