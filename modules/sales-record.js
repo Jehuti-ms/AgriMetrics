@@ -147,133 +147,94 @@ FarmModules.registerModule('sales-record', {
                 </div>
             </div>
 
-            <!-- Sales Modal -->
-            <div id="sale-modal" class="modal hidden">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 id="sale-modal-title">Record Sale</h3>
-                        <button class="modal-close">&times;</button>
+           // Replace your sales modal HTML with this:
+`
+<!-- Sales Popout Modal - Consistent with Inventory -->
+<div id="sale-modal" class="popout-modal hidden">
+    <div class="popout-modal-content" style="max-width: 600px;">
+        <div class="popout-modal-header">
+            <h3 class="popout-modal-title" id="sale-modal-title">Record Sale</h3>
+            <button class="popout-modal-close" id="close-sale-modal">&times;</button>
+        </div>
+        <div class="popout-modal-body">
+            <form id="sale-form">
+                <input type="hidden" id="sale-id" value="">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="sale-date">Sale Date *</label>
+                        <input type="date" id="sale-date" required>
                     </div>
-                    <div class="modal-body">
-                        <form id="sale-form">
-                            <input type="hidden" id="sale-id">
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="sale-date">Sale Date *</label>
-                                    <input type="date" id="sale-date" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="sale-customer">Customer Name</label>
-                                    <input type="text" id="sale-customer" placeholder="Customer name (optional)">
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="sale-product">Product *</label>
-                                    <select id="sale-product" required>
-                                        <option value="">Select Product</option>
-                                        <optgroup label="Livestock">
-                                            <option value="broilers-live">Broilers (Live)</option>
-                                            <option value="broilers-dressed">Broilers (Dressed)</option>
-                                            <option value="eggs">Eggs</option>
-                                            <option value="pork">Pork</option>
-                                            <option value="beef">Beef</option>
-                                            <option value="chicken-parts">Chicken Parts</option>
-                                        </optgroup>
-                                        <optgroup label="Produce">
-                                            <option value="tomatoes">Tomatoes</option>
-                                            <option value="peppers">Peppers</option>
-                                            <option value="cucumbers">Cucumbers</option>
-                                            <option value="lettuce">Lettuce</option>
-                                            <option value="carrots">Carrots</option>
-                                            <option value="potatoes">Potatoes</option>
-                                            <option value="onions">Onions</option>
-                                            <option value="cabbage">Cabbage</option>
-                                        </optgroup>
-                                        <optgroup label="Dairy">
-                                            <option value="milk">Milk</option>
-                                            <option value="cheese">Cheese</option>
-                                            <option value="yogurt">Yogurt</option>
-                                            <option value="butter">Butter</option>
-                                        </optgroup>
-                                        <optgroup label="Other">
-                                            <option value="honey">Honey</option>
-                                            <option value="jam">Jam/Preserves</option>
-                                            <option value="bread">Bread</option>
-                                            <option value="other">Other</option>
-                                        </optgroup>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="sale-unit">Unit *</label>
-                                    <select id="sale-unit" required>
-                                        <option value="kg">Kilograms (kg)</option>
-                                        <option value="lbs">Pounds (lbs)</option>
-                                        <option value="units">Units</option>
-                                        <option value="dozen">Dozen</option>
-                                        <option value="case">Case</option>
-                                        <option value="crate">Crate</option>
-                                        <option value="bag">Bag</option>
-                                        <option value="bottle">Bottle</option>
-                                        <option value="jar">Jar</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="sale-quantity">Quantity *</label>
-                                    <input type="number" id="sale-quantity" min="0.01" step="0.01" required placeholder="0.00">
-                                </div>
-                                <div class="form-group">
-                                    <label for="sale-price">Unit Price ($) *</label>
-                                    <input type="number" id="sale-price" step="0.01" min="0" required placeholder="0.00">
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="sale-payment">Payment Method *</label>
-                                    <select id="sale-payment" required>
-                                        <option value="cash">Cash</option>
-                                        <option value="card">Credit/Debit Card</option>
-                                        <option value="transfer">Bank Transfer</option>
-                                        <option value="check">Check</option>
-                                        <option value="mobile">Mobile Payment</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="sale-status">Payment Status</label>
-                                    <select id="sale-status">
-                                        <option value="paid">Paid</option>
-                                        <option value="pending">Pending</option>
-                                        <option value="partial">Partial Payment</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="sale-notes">Notes (Optional)</label>
-                                <textarea id="sale-notes" placeholder="Sale notes, customer details, etc." rows="3"></textarea>
-                            </div>
-
-                            <div class="sale-total">
-                                <h4>Sale Total: <span id="sale-total-amount">$0.00</span></h4>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-text modal-close">Cancel</button>
-                        <button type="button" class="btn btn-danger" id="delete-sale" style="display: none;">Delete</button>
-                        <button type="button" class="btn btn-primary" id="save-sale">Save Sale</button>
+                    <div class="form-group">
+                        <label for="sale-customer">Customer Name</label>
+                        <input type="text" id="sale-customer" placeholder="Customer name (optional)">
                     </div>
                 </div>
-            </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="sale-product">Product *</label>
+                        <select id="sale-product" required>
+                            <option value="">Select Product</option>
+                            <!-- ... product options ... -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sale-unit">Unit *</label>
+                        <select id="sale-unit" required>
+                            <option value="kg">Kilograms (kg)</option>
+                            <!-- ... unit options ... -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="sale-quantity">Quantity *</label>
+                        <input type="number" id="sale-quantity" min="0.01" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="sale-price">Unit Price ($) *</label>
+                        <input type="number" id="sale-price" step="0.01" min="0" required placeholder="0.00">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="sale-payment">Payment Method *</label>
+                        <select id="sale-payment" required>
+                            <option value="cash">Cash</option>
+                            <!-- ... payment options ... -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sale-status">Payment Status</label>
+                        <select id="sale-status">
+                            <option value="paid">Paid</option>
+                            <option value="pending">Pending</option>
+                            <option value="partial">Partial Payment</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="sale-notes">Notes (Optional)</label>
+                    <textarea id="sale-notes" placeholder="Sale notes, customer details, etc." rows="3"></textarea>
+                </div>
+
+                <div class="sale-total">
+                    <h4>Sale Total: <span id="sale-total-amount">$0.00</span></h4>
+                </div>
+            </form>
         </div>
-    `,
+        <div class="popout-modal-footer">
+            <button type="button" class="btn btn-text" id="cancel-sale">Cancel</button>
+            <button type="button" class="btn btn-danger" id="delete-sale" style="display: none;">Delete</button>
+            <button type="button" class="btn btn-primary" id="save-sale">Save Sale</button>
+        </div>
+    </div>
+</div>
+`,
 
     styles: `
         .sales-summary {
@@ -761,7 +722,43 @@ FarmModules.registerModule('sales-record', {
             });
             console.log('✅ Period filter listener attached');
         }
+// Update show/hide methods to match inventory pattern
+showSaleModal() {
+    const modal = document.getElementById('sale-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        // Also set inline styles for consistency
+        modal.style.display = 'flex';
+    }
+},
 
+hideSaleModal() {
+    const modal = document.getElementById('sale-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+},
+
+// Update close button handler
+setupEventListeners() {
+    // Close button
+    document.getElementById('close-sale-modal')?.addEventListener('click', () => {
+        this.hideSaleModal();
+    });
+    
+    // Cancel button
+    document.getElementById('cancel-sale')?.addEventListener('click', () => {
+        this.hideSaleModal();
+    });
+    
+    // Close when clicking outside
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('popout-modal')) {
+            this.hideSaleModal();
+        }
+    });
+},
         // Export
         const exportBtn = document.getElementById('export-sales');
         if (exportBtn) {
