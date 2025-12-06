@@ -1,4 +1,4 @@
-// modules/production.js - UPDATED WITH CORRECT MODAL STRUCTURE
+// modules/production.js - FIXED MODAL STYLING
 console.log('Loading production module...');
 
 const ProductionModule = {
@@ -6,7 +6,8 @@ const ProductionModule = {
     initialized: false,
     element: null,
     productionData: [],
-    currentRecordId: null, // Track record being edited
+    currentRecordId: null,
+    recordToDelete: null,
 
     initialize() {
         console.log('🚜 Initializing Production Records...');
@@ -17,7 +18,6 @@ const ProductionModule = {
             return false;
         }
 
-        // ✅ PROPER StyleManager registration
         if (window.StyleManager) {
             StyleManager.registerModule(this.name, this.element, this);
             console.log('🎨 Production module registered with StyleManager');
@@ -179,12 +179,15 @@ const ProductionModule = {
 
                 <!-- Production Record Modal -->
                 <div id="production-modal" class="modal hidden">
-                    <div class="modal-content medium-modal">
+                    <div class="modal-backdrop"></div>
+                    <div class="modal-dialog medium-modal">
                         <div class="modal-header">
                             <h3 id="production-modal-title">New Production Record</h3>
-                            <button class="modal-close">&times;</button>
+                            <button class="btn-icon modal-close" aria-label="Close">
+                                <span class="icon">×</span>
+                            </button>
                         </div>
-                        <div class="modal-body">
+                        <div class="modal-content">
                             <form id="production-modal-form">
                                 <div class="form-row">
                                     <div class="form-group">
@@ -261,12 +264,15 @@ const ProductionModule = {
 
                 <!-- Production Report Modal -->
                 <div id="production-report-modal" class="modal hidden">
-                    <div class="modal-content large-modal">
+                    <div class="modal-backdrop"></div>
+                    <div class="modal-dialog large-modal">
                         <div class="modal-header">
                             <h3 id="production-report-title">Production Report</h3>
-                            <button class="modal-close">&times;</button>
+                            <button class="btn-icon modal-close" aria-label="Close">
+                                <span class="icon">×</span>
+                            </button>
                         </div>
-                        <div class="modal-body">
+                        <div class="modal-content">
                             <div id="production-report-content" class="modal-report-content">
                                 <!-- Report content will be inserted here -->
                             </div>
@@ -280,14 +286,20 @@ const ProductionModule = {
 
                 <!-- Delete Confirmation Modal -->
                 <div id="production-delete-modal" class="modal hidden">
-                    <div class="modal-content small-modal">
+                    <div class="modal-backdrop"></div>
+                    <div class="modal-dialog small-modal">
                         <div class="modal-header">
                             <h3>Delete Production Record</h3>
-                            <button class="modal-close">&times;</button>
+                            <button class="btn-icon modal-close" aria-label="Close">
+                                <span class="icon">×</span>
+                            </button>
                         </div>
-                        <div class="modal-body">
-                            <p>Are you sure you want to delete this production record?</p>
-                            <p class="text-muted">This action cannot be undone.</p>
+                        <div class="modal-content">
+                            <div class="delete-confirmation">
+                                <div class="delete-icon">🗑️</div>
+                                <p>Are you sure you want to delete this production record?</p>
+                                <p class="text-muted">This action cannot be undone.</p>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button class="btn btn-text modal-close">Cancel</button>
@@ -366,7 +378,6 @@ const ProductionModule = {
                 </tr>
             `;
             
-            // Add event listener for the add first record button
             document.getElementById('add-first-record')?.addEventListener('click', () => {
                 this.openProductionModal();
             });
@@ -452,14 +463,24 @@ const ProductionModule = {
             }
         });
 
-        // Modal close handlers (using the same pattern as sales modal)
+        // Modal close handlers
         document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal-close') || e.target.closest('.modal-close')) {
+            // Close modal when clicking close button
+            if (e.target.closest('.modal-close')) {
                 this.closeAllModals();
             }
-            if (e.target.classList.contains('modal')) {
+            
+            // Close modal when clicking backdrop
+            if (e.target.classList.contains('modal-backdrop')) {
                 this.closeAllModals();
             }
+            
+            // Close modal with Escape key
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    this.closeAllModals();
+                }
+            });
         });
 
         // Delete confirmation
@@ -501,12 +522,12 @@ const ProductionModule = {
         } else {
             // Add mode
             title.textContent = 'New Production Record';
-            form.reset();
+            if (form) form.reset();
             document.getElementById('modal-production-date').value = new Date().toISOString().split('T')[0];
         }
 
         modal.classList.remove('hidden');
-        document.getElementById('modal-product-type').focus();
+        document.getElementById('modal-product-type')?.focus();
     },
 
     handleProductionSave() {
@@ -556,17 +577,18 @@ const ProductionModule = {
     },
 
     openDeleteModal(recordId) {
-        this.currentRecordId = recordId;
+        this.recordToDelete = recordId;
         document.getElementById('production-delete-modal').classList.remove('hidden');
     },
 
     confirmDeleteProduction() {
-        if (this.currentRecordId) {
-            this.productionData = this.productionData.filter(r => r.id != this.currentRecordId);
+        if (this.recordToDelete) {
+            this.productionData = this.productionData.filter(r => r.id != this.recordToDelete);
             this.saveData();
             this.updateStats();
             this.renderProductionTable();
             this.showNotification('Production record deleted successfully', 'success');
+            this.recordToDelete = null;
             this.closeAllModals();
         }
     },
@@ -749,6 +771,7 @@ const ProductionModule = {
             modal.classList.add('hidden');
         });
         this.currentRecordId = null;
+        this.recordToDelete = null;
     },
 
     printProductionReport() {
