@@ -1,734 +1,153 @@
-// app.js - FINAL WORKING VERSION (Keeping your exact code)
-console.log('🚀 Loading Farm Management App...');
-
-class FarmManagementApp {
-    constructor() {
-        this.currentUser = null;
-        this.currentSection = 'dashboard';
-        this.isDemoMode = false;
-        this.userPreferences = {};
-        this.init();
-    }
-
-    async init() {
-        console.log('🚜 Starting Farm Management App...');
-        
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                this.initializeApp();
-            });
-        } else {
-            this.initializeApp();
-        }
-    }
-
-    async initializeApp() {
-        console.log('✅ Initializing app...');
-        
-        // CRITICAL: Add the CSS that makes navbar visible
-        this.addEssentialCSS();
-        
-        // CRITICAL: Initialize StyleManager FIRST before any modules
-        this.initializeStyleManager();
-        
-        // CRITICAL: Initialize FarmModules core system
-        this.initializeFarmModules();
-        
-        this.isDemoMode = true;
-        
-        // Load user preferences
-        await this.loadUserPreferences();
-        
-        // Show the app interface
-        this.showApp();
-        
-        // Setup navigation and events - USING YOUR EXACT CODE
-        this.createTopNavigation();
-        
-        // Small delay to ensure DOM is fully rendered
-        setTimeout(() => {
-            this.setupHamburgerMenu();
-            this.setupSideMenuEvents();
-            this.setupEventListeners();
-            this.setupDarkMode();
-
-            // Test if hamburger is working
-            const hamburger = document.getElementById('hamburger-menu');
-            const sideMenu = document.getElementById('side-menu');
-            console.log('🔍 Debug - Hamburger exists:', !!hamburger);
-            console.log('🔍 Debug - Side menu exists:', !!sideMenu);
-        }, 100);
-        
-        // Load initial section
-        this.showSection(this.currentSection);
-        
-        console.log('✅ App initialized successfully');
-    }
-
-    addEssentialCSS() {
-        // THIS IS WHAT WAS MISSING - The CSS that makes navbar visible
-        const style = document.createElement('style');
-        style.textContent = `
-            /* ===== ESSENTIAL CSS TO MAKE NAVBAR VISIBLE ===== */
-           .top-nav {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 70px;
-                background: white;
-                border-bottom: 1px solid #e0e0e0;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 0 20px;
-                z-index: 1000;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            }
-            
-            .nav-brand {
-                display: flex;
-                align-items: center;
-                gap: 15px;
-            }
-            
-            .nav-brand img {
-                width: 40px;
-                height: 40px;
-                border-radius: 8px;
-            }
-            
-            .brand-text {
-                font-size: 22px;
-                font-weight: 700;
-                color: #2c3e50;
-            }
-            
-            .brand-subtitle {
-                font-size: 14px;
-                color: #7f8c8d;
-                margin-left: 10px;
-            }
-            
-            .nav-items {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-            
-            /* MAKE NAV ITEMS VISIBLE - This fixes "faint shapes" */
-            .nav-item {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                width: 60px;
-                height: 60px;
-                background: #f5f5f5;
-                border: 1px solid #e0e0e0;
-                border-radius: 12px;
-                cursor: pointer;
-                font-size: 20px;
-                color: #34495e;
-                padding: 0;
-                transition: all 0.3s ease;
-            }
-            
-            .nav-item:hover {
-                background: white;
-                transform: translateY(-3px);
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            }
-            
-            .nav-item.active {
-                background: #4CAF50;
-                color: white;
-                box-shadow: 0 5px 20px rgba(76, 175, 80, 0.3);
-                border-color: #4CAF50;
-            }
-            
-            .nav-label {
-                font-size: 11px;
-                font-weight: 600;
-                margin-top: 4px;
-            }
-            
-            /* MAKE HAMBURGER VISIBLE */
-             .hamburger-menu {
-                background: #4CAF50 !important;
-                color: white !important;
-                border: none !important;
-            }
-            
-            /* SIDEBAR SLIDES FROM RIGHT */
-             #side-menu {
-                position: fixed;
-                top: 0;
-                right: -300px;
-                bottom: 0;
-                width: 280px;
-                background: white;
-                border-left: 1px solid #e0e0e0;
-                box-shadow: -5px 0 30px rgba(0, 0, 0, 0.1);
-                z-index: 999;
-                transition: right 0.3s ease;
-                overflow-y: auto;
-                padding: 20px;
-            }
-            
-            #side-menu.active {
-                right: 0;
-            }
-            
-            /* CONTENT AREA BELOW NAVBAR */
-             #content-area {
-                margin-top: 80px;
-                padding: 20px;
-                min-height: calc(100vh - 80px);
-            }
-            
-            /* MOBILE RESPONSIVE */
-             @media (max-width: 768px) {
-                .top-nav {
-                    height: 60px;
-                    padding: 0 15px;
-                }
-                
-                .nav-item {
-                    width: 50px;
-                    height: 50px;
-                    font-size: 18px;
-                }
-                
-                #content-area {
-                    margin-top: 70px;
-                    padding: 15px;
-                }
-            }
-            
-               DESKTOP - SIDEBAR ON LEFT */
-              @media (min-width: 769px) {
-                #side-menu {
-                    position: fixed;
-                    left: 0;
-                    right: auto;
-                    top: 0;
-                    width: 260px;
-                    border-right: 1px solid #e0e0e0;
-                    border-left: none;
-                }
-                
-                #side-menu.active {
-                    left: 0;
-                    right: auto;
-                }
-                
-                .hamburger-menu {
-                    display: none !important;
-                }
-                
-                #content-area {
-                    margin-left: 260px;
-                    margin-top: 0;
-                }
-            } 
-            
-               DARK MODE */
-              .dark-mode .top-nav {
-                background: #1a1a1a;
-                border-color: #333;
-            }
-            
-            .dark-mode .nav-item {
-                background: #333;
-                border-color: #444;
-                color: #ccc;
-            }
-            
-            .dark-mode .nav-item.active {
-                background: #2E7D32;
-            }
-            
-            .dark-mode #side-menu {
-                background: #1a1a1a;
-                border-color: #333;
-            }
-        `;
-        document.head.appendChild(style);
-        console.log('✅ Essential CSS added - navbar will now be visible');
-    }
-
-    initializeStyleManager() {
-        // Initialize StyleManager IMMEDIATELY when app starts
-        if (window.StyleManager && typeof StyleManager.init === 'function') {
-            StyleManager.init();
-            console.log('🎨 StyleManager initialized');
-        } else {
-            console.warn('⚠️ StyleManager not available - modules may not style properly');
-        }
-    }
-
-    initializeFarmModules() {
-        // FIXED: Check if FarmModules exists and initialize all modules
-        if (window.FarmModules) {
-            // Check if initializeAll method exists (for newer versions)
-            if (typeof FarmModules.initializeAll === 'function') {
-                FarmModules.initializeAll();
-                console.log('🔧 FarmModules initialized all modules');
-            } 
-            // If no initializeAll method, just log that modules are ready
-            else {
-                console.log('🔧 FarmModules core ready - modules can register');
-            }
-        } else {
-            console.warn('⚠️ FarmModules core not available');
-            
-            // Create a basic FarmModules if it doesn't exist
-            window.FarmModules = {
-                modules: {},
-                registerModule: function(name, module) {
-                    console.log(`✅ Registering module: ${name}`);
-                    this.modules[name] = module;
-                },
-                getModule: function(name) {
-                    return this.modules[name];
-                }
-            };
-            console.log('🔧 Created basic FarmModules fallback');
-        }
-    }
-    
-    async loadUserPreferences() {
-        try {
-            // Try to use ProfileModule if available
-            if (typeof ProfileModule !== 'undefined' && ProfileModule.loadUserPreferences) {
-                this.userPreferences = ProfileModule.loadUserPreferences();
-                console.log('✅ User preferences loaded via ProfileModule');
-            } else {
-                // Fallback to direct localStorage access
-                const savedPrefs = localStorage.getItem('farm-user-preferences');
-                this.userPreferences = savedPrefs ? JSON.parse(savedPrefs) : this.getDefaultPreferences();
-                console.log('⚠️ ProfileModule not available, using localStorage fallback');
-                
-                // Create a complete ProfileModule fallback for other modules to use
-                this.createProfileModuleFallback();
-            }
-            
-            // Apply theme preference immediately
-            this.applyUserTheme();
-            
-        } catch (error) {
-            console.error('❌ Error loading user preferences:', error);
-            this.userPreferences = this.getDefaultPreferences();
-            this.createProfileModuleFallback();
-        }
-    }
-
-    getDefaultPreferences() {
-        return {
-            theme: 'auto',
-            language: 'en',
-            currency: 'USD',
-            notifications: true,
-            businessName: 'My Farm',
-            businessType: 'poultry',
-            lowStockThreshold: 10,
-            autoSync: true,
-            dashboardStats: {
-                totalOrders: 0,
-                totalRevenue: 0,
-                pendingOrders: 0,
-                totalCustomers: 0,
-                totalProducts: 0,
-                monthlyRevenue: 0,
-                monthlyOrders: 0,
-                avgOrderValue: 0,
-                completedOrders: 0,
-                paidOrders: 0
-            }
-        };
-    }
-
-    createProfileModuleFallback() {
-        // Create a complete ProfileModule with all methods modules expect
-        if (typeof ProfileModule === 'undefined') {
-            window.ProfileModule = {
-                userPreferences: this.userPreferences,
-                
-                // Core methods
-                loadUserPreferences: () => this.userPreferences,
-                getUserPreferences: () => this.userPreferences,
-                updatePreference: (key, value) => {
-                    this.userPreferences[key] = value;
-                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-                    console.log(`⚙️ Preference updated: ${key} = ${value}`);
-                },
-                
-                // Stats methods that modules expect
-                updateBusinessStats: (module, stats) => {
-                    if (!this.userPreferences.dashboardStats) {
-                        this.userPreferences.dashboardStats = {};
-                    }
-                    Object.keys(stats).forEach(key => {
-                        this.userPreferences.dashboardStats[key] = stats[key];
-                    });
-                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-                    console.log('📊 Stats updated for', module + ':', stats);
-                },
-                
-                updateStats: (stats) => {
-                    if (!this.userPreferences.dashboardStats) {
-                        this.userPreferences.dashboardStats = {};
-                    }
-                    Object.keys(stats).forEach(key => {
-                        this.userPreferences.dashboardStats[key] = stats[key];
-                    });
-                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-                    console.log('📊 Stats updated:', stats);
-                },
-                
-                getStats: () => {
-                    return this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
-                },
-                
-                // Dashboard module expects this method
-                getProfileData: () => {
-                    return {
-                        farmName: this.userPreferences.businessName || 'My Farm',
-                        farmerName: 'Farm Manager',
-                        stats: this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats
-                    };
-                },
-                
-                getProfileStats: () => {
-                    return this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
-                },
-                
-                // For compatibility with existing modules
-                getBusinessOverview: () => {
-                    const stats = this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
-                    return {
-                        totalOrders: stats.totalOrders || 0,
-                        totalRevenue: stats.totalRevenue || 0,
-                        pendingOrders: stats.pendingOrders || 0,
-                        totalCustomers: stats.totalCustomers || 0,
-                        totalProducts: stats.totalProducts || 0,
-                        monthlyRevenue: stats.monthlyRevenue || 0,
-                        monthlyOrders: stats.monthlyOrders || 0
-                    };
-                },
-                
-                // Initialize method for compatibility
-                initialize: () => {
-                    console.log('✅ ProfileModule fallback initialized');
-                    return true;
-                }
-            };
-            
-            window.profileInstance = window.ProfileModule;
-            console.log('✅ Complete ProfileModule fallback created');
-        }
-    }
-
-    applyUserTheme() {
-        const theme = this.userPreferences.theme || 'auto';
-        
-        if (theme === 'dark') {
-            document.body.classList.add('dark-mode');
-            this.updateDarkModeIcon(true);
-        } else if (theme === 'light') {
-            document.body.classList.remove('dark-mode');
-            this.updateDarkModeIcon(false);
-        } else {
-            // Auto mode - follow system preference
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            document.body.classList.toggle('dark-mode', prefersDark);
-            this.updateDarkModeIcon(prefersDark);
-        }
-        
-        console.log('🎨 Applied user theme:', theme);
-    }
-
-    setupDarkMode() {
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
-        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-        
-        if (darkModeToggle) {
-            darkModeToggle.addEventListener('click', () => {
-                document.body.classList.toggle('dark-mode');
-                const isDarkMode = document.body.classList.contains('dark-mode');
-                
-                // Save preference
-                const newTheme = isDarkMode ? 'dark' : 'light';
-                this.userPreferences.theme = newTheme;
-                localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-                
-                // Update ProfileModule if available
-                if (window.ProfileModule && window.ProfileModule.updatePreference) {
-                    window.ProfileModule.updatePreference('theme', newTheme);
-                }
-                
-                // Update icon
-                this.updateDarkModeIcon(isDarkMode);
-                
-                console.log('🎨 Theme changed to:', newTheme);
-            });
-        }
-        
-        // Listen for system theme changes (only if theme is set to auto)
-        prefersDarkScheme.addEventListener('change', (e) => {
-            if (this.userPreferences.theme === 'auto') {
-                document.body.classList.toggle('dark-mode', e.matches);
-                this.updateDarkModeIcon(e.matches);
-            }
-        });
-    }
-
-    updateDarkModeIcon(isDarkMode) {
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
-        if (darkModeToggle) {
-            const icon = darkModeToggle.querySelector('span:first-child');
-            const label = darkModeToggle.querySelector('.nav-label');
-            
-            if (isDarkMode) {
-                icon.textContent = '☀️';
-                label.textContent = 'Light';
-            } else {
-                icon.textContent = '🌙';
-                label.textContent = 'Dark';
-            }
-        }
-    }
-  
-    setupEventListeners() {
-        document.addEventListener('click', (e) => {
-            // Handle main nav items
-            if (e.target.closest('.nav-item')) {
-                const navItem = e.target.closest('.nav-item');
-                const view = navItem.getAttribute('data-view');
-                if (view) {
-                    this.showSection(view);
-                }
-            }
-            
-            // Handle sidebar menu items (for the existing HTML sidebar)
-            if (e.target.closest('.side-menu-item')) {
-                const menuItem = e.target.closest('.side-menu-item');
-                const section = menuItem.getAttribute('data-section');
-                if (section) {
-                    this.showSection(section);
-                }
-            }
-        });
-    }
-
-    showApp() {
-        const authContainer = document.getElementById('auth-container');
-        const appContainer = document.getElementById('app-container');
-        
-        if (authContainer) authContainer.classList.add('hidden');
-        if (appContainer) appContainer.classList.remove('hidden');
-        
-        console.log('🏠 App container shown');
-    }
-
-    // KEEP YOUR EXACT CODE HERE - I'LL JUST ADD THE CSS
-    createTopNavigation() {
-        const appContainer = document.getElementById('app-container');
-        if (!appContainer) return;
-
-        // Remove existing header if any
-        let header = appContainer.querySelector('header');
-        if (header) {
-            header.remove();
-        }
-        
-        // Create new header
-        header = document.createElement('header');
-        appContainer.insertBefore(header, appContainer.firstChild);
-
-        header.innerHTML = `
-            <nav class="top-nav">
-                <div class="nav-brand">
-                    <img src="icons/icon-96x96.png" alt="AgriMetrics">
-                    <span class="brand-text">AgriMetrics</span>
-                    <span class="brand-subtitle">Farm Management System</span>
-                </div>
-                
-                <div class="nav-items">
-                    <button class="nav-item" data-view="dashboard" title="Dashboard">
-                        <span>📊</span>
-                        <span class="nav-label">Dashboard</span>
-                    </button>
-
-                    <button class="nav-item" data-view="income-expenses" title="Income & Expenses">
-                        <span>💰</span>
-                        <span class="nav-label">Income</span>
-                    </button>
-
-                    <button class="nav-item" data-view="inventory-check" title="Inventory">
-                        <span>📦</span>
-                        <span class="nav-label">Inventory</span>
-                    </button>
-
-                    <button class="nav-item" data-view="orders" title="Orders">
-                        <span>📋</span>
-                        <span class="nav-label">Orders</span>
-                    </button>
-
-                    <button class="nav-item" data-view="sales-record" title="Sales">
-                        <span>🛒</span>
-                        <span class="nav-label">Sales</span>
-                    </button>
-
-                    <button class="nav-item" data-view="profile" title="Profile">
-                        <span>👤</span>
-                        <span class="nav-label">Profile</span>
-                    </button>
-
-                    <!-- Dark Mode Toggle -->
-                    <button class="nav-item dark-mode-toggle" id="dark-mode-toggle" title="Toggle Dark Mode">
-                        <span>🌙</span>
-                        <span class="nav-label">Theme</span>
-                    </button>
-                    
-                    <!-- Hamburger menu -->
-                    <button class="nav-item hamburger-menu" id="hamburger-menu" title="Farm Operations">
-                        <span>☰</span>
-                        <span class="nav-label">More</span>
-                    </button>
-                </div>
-            </nav>
-        `;
-
-        // Adjust main content padding
-        const main = appContainer.querySelector('main');
-        if (main) {
-            main.style.paddingTop = '80px';
-        }
-        
-        console.log('✅ Top Navigation created');
-    }
-    
-    setupHamburgerMenu() {
-        const hamburger = document.getElementById('hamburger-menu');
-        const sideMenu = document.getElementById('side-menu');
-        
-        if (hamburger && sideMenu) {
-            // Ensure sidebar is hidden by default
-            sideMenu.style.left = 'auto';
-            sideMenu.style.right = '0';
-            sideMenu.style.transform = 'translateX(100%)';
-            sideMenu.classList.remove('active');
-            
-            // Remove any existing event listeners to prevent duplicates
-            hamburger.replaceWith(hamburger.cloneNode(true));
-            const newHamburger = document.getElementById('hamburger-menu');
-            
-            newHamburger.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                sideMenu.classList.toggle('active');
-            });
-        }
-        
-        // Close sidebar when clicking outside
-        document.addEventListener('click', (e) => {
-            const sideMenu = document.getElementById('side-menu');
-            const hamburger = document.getElementById('hamburger-menu');
-            
-            if (sideMenu && sideMenu.classList.contains('active') && hamburger) {
-                if (!sideMenu.contains(e.target) && !hamburger.contains(e.target)) {
-                    sideMenu.classList.remove('active');
-                }
-            }
-        });
-    }
-
-    setupSideMenuEvents() {
-        const sideMenuItems = document.querySelectorAll('.side-menu-item');
-        sideMenuItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                const section = item.getAttribute('data-section');
-                if (section) {
-                    this.showSection(section);
-                    
-                    // Close sidebar after selection
-                    const sideMenu = document.getElementById('side-menu');
-                    if (sideMenu) {
-                        sideMenu.classList.remove('active');
-                    }
-                }
-            });
-        });
-    }
-    
-    showSection(sectionId) {
-        console.log(`🔄 Switching to section: ${sectionId}`);
-        
-        // Update active nav state for top navigation
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        
-        const activeNavItem = document.querySelector(`.nav-item[data-view="${sectionId}"]`);
-        if (activeNavItem) {
-            activeNavItem.classList.add('active');
-        }
-
-        // Update active state for sidebar items
-        document.querySelectorAll('.side-menu-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        
-        const activeSideItem = document.querySelector(`.side-menu-item[data-section="${sectionId}"]`);
-        if (activeSideItem) {
-            activeSideItem.classList.add('active');
-        }
-
-        this.currentSection = sectionId;
-        
-        // Load the module content
-        if (window.FarmModules && typeof window.FarmModules.initializeModule === 'function') {
-            window.FarmModules.initializeModule(sectionId);
-        } else {
-            this.loadFallbackContent(sectionId);
-        }
-    }
-
-    loadFallbackContent(sectionId) {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
-
-        const sectionTitles = {
-            'dashboard': 'Dashboard',
-            'income-expenses': 'Income & Expenses',
-            'inventory-check': 'Inventory Check',
-            'feed-record': 'Feed Record',
-            'broiler-mortality': 'Broiler Mortality',
-            'production': 'Production Records',
-            'sales-record': 'Sales Record',
-            'orders': 'Orders',
-            'reports': 'Reports',
-            'profile': 'Profile'
-        };
-
-        contentArea.innerHTML = `
-            <div style="padding: 20px;">
-                <h2 style="color: #1a1a1a;">${sectionTitles[sectionId] || sectionId}</h2>
-                <p style="color: #666;">Content loading...</p>
-                <p style="color: #999; font-size: 14px;">Module system not loaded yet</p>
-            </div>
-        `;
-    }
+/* NAVBAR STYLES - MINIMAL & WORKING */
+.top-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: white;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 1000;
 }
 
-// Initialize the app
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.app = new FarmManagementApp();
-    });
-} else {
-    window.app = new FarmManagementApp();
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.nav-brand-logo {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #4CAF50, #2E7D32);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.brand-text {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+}
+
+.brand-subtitle {
+    font-size: 12px;
+    color: #666;
+}
+
+.nav-items {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.2s;
+}
+
+.nav-item:hover {
+    background: #e0e0e0;
+}
+
+.nav-item.active {
+    background: #4CAF50;
+    border-color: #4CAF50;
+    color: white;
+}
+
+.nav-icon {
+    font-size: 20px;
+    margin-bottom: 4px;
+}
+
+.nav-label {
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.hamburger-menu {
+    background: #4CAF50;
+    color: white;
+    border: none;
+}
+
+#side-menu {
+    position: fixed;
+    top: 0;
+    right: -280px;
+    bottom: 0;
+    width: 280px;
+    background: white;
+    border-left: 1px solid #ddd;
+    z-index: 999;
+    transition: right 0.3s;
+    padding: 20px;
+}
+
+#side-menu.active {
+    right: 0;
+}
+
+.side-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    margin: 6px 0;
+    border-radius: 8px;
+    background: #f5f5f5;
+    cursor: pointer;
+}
+
+.side-menu-item.active {
+    background: #4CAF50;
+    color: white;
+}
+
+#content-area {
+    margin-top: 80px;
+    padding: 20px;
+}
+
+@media (min-width: 769px) {
+    #side-menu {
+        right: auto;
+        left: 0;
+        width: 260px;
+        border-right: 1px solid #ddd;
+        border-left: none;
+    }
+    
+    #side-menu.active {
+        left: 0;
+    }
+    
+    .hamburger-menu {
+        display: none;
+    }
+    
+    #content-area {
+        margin-left: 260px;
+        margin-top: 0;
+    }
 }
