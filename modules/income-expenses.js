@@ -6,6 +6,35 @@ const IncomeExpensesModule = {
     id: 'income-expenses',
     initialized: false,
     element: null,
+    categories: {
+        income: [
+            { value: 'egg-sales', label: 'Egg Sales', icon: '🥚' },
+            { value: 'poultry-sales', label: 'Poultry Sales', icon: '🐔' },
+            { value: 'crop-sales', label: 'Crop Sales', icon: '🌽' },
+            { value: 'dairy-sales', label: 'Dairy Sales', icon: '🥛' },
+            { value: 'meat-sales', label: 'Meat Sales', icon: '🥩' },
+            { value: 'farm-tourism', label: 'Farm Tourism', icon: '🏞️' },
+            { value: 'consulting', label: 'Consulting Services', icon: '💼' },
+            { value: 'grants', label: 'Grants & Subsidies', icon: '💰' },
+            { value: 'other-income', label: 'Other Income', icon: '📦' }
+        ],
+        expense: [
+            { value: 'feed', label: 'Feed & Nutrition', icon: '🌾' },
+            { value: 'medication', label: 'Healthcare', icon: '💊' },
+            { value: 'equipment', label: 'Equipment', icon: '🔧' },
+            { value: 'labor', label: 'Labor', icon: '👷' },
+            { value: 'utilities', label: 'Utilities', icon: '⚡' },
+            { value: 'transportation', label: 'Transportation', icon: '🚚' },
+            { value: 'maintenance', label: 'Maintenance', icon: '🔨' },
+            { value: 'seeds-plants', label: 'Seeds & Plants', icon: '🌱' },
+            { value: 'fertilizer', label: 'Fertilizer', icon: '🧪' },
+            { value: 'insurance', label: 'Insurance', icon: '🛡️' },
+            { value: 'rent', label: 'Rent & Leases', icon: '🏠' },
+            { value: 'marketing', label: 'Marketing', icon: '📢' },
+            { value: 'taxes', label: 'Taxes', icon: '🧾' },
+            { value: 'other-expense', label: 'Other Expense', icon: '📦' }
+        ]
+    },
 
     initialize() {
         console.log('💰 Initializing Income & Expenses...');
@@ -20,13 +49,16 @@ const IncomeExpensesModule = {
         // Ensure CSS is loaded
         this.ensureModuleCSS();
         
+        // Load existing data first
+        this.loadData();
+        
         // Render module
         this.renderModule();
         
         // Setup event listeners
         this.setupEventListeners();
         
-        // Load data
+        // Load and display data
         this.loadAndDisplayData();
         
         this.initialized = true;
@@ -74,11 +106,11 @@ const IncomeExpensesModule = {
                     
                     <!-- Right side: Add Transaction + Import Receipts -->
                     <div class="header-right">
-                        <button id="add-transaction-btn" class="btn-primary">
+                        <button id="add-transaction-btn" class="btn btn-primary">
                             <span class="btn-icon">➕</span>
                             <span class="btn-text">Add Transaction</span>
                         </button>
-                        <button id="import-receipts-btn" class="btn-primary">
+                        <button id="import-receipts-btn" class="btn btn-secondary">
                             <span class="btn-icon">📥</span>
                             <span class="btn-text">Import Receipts</span>
                         </button>
@@ -148,60 +180,44 @@ const IncomeExpensesModule = {
                 <div class="content-columns">
                     
                     <!-- Recent Transactions -->
-                        <div class="content-column">
-                          <div class="glass-card">
+                    <div class="content-column">
+                        <div class="glass-card">
                             <div class="header-flex">
-                              <h3>Recent Transactions</h3>
-                              <button class="btn-outline" id="clear-all">Clear All</button>
+                                <h3>Recent Transactions</h3>
+                                <button class="btn btn-outline" id="clear-all-transactions">Clear All</button>
                             </div>
-                            <div id="transactions-list">
-                              <!-- Transaction rows populated dynamically -->
-                              <div class="transaction-row">
-                                <span class="transaction-date">📅 2025-12-01</span>
-                                <span class="transaction-desc">💰 Egg Sales</span>
-                                <span class="transaction-category">📂 Income</span>
-                                <span class="transaction-amount">💵 $250.00</span>
-                                <span class="transaction-actions">
-                                  <button class="icon-btn">✏️</button>
-                                  <button class="icon-btn">🗑️</button>
-                                </span>
-                              </div>
+                            <div id="transactions-list" class="transactions-list">
+                                <!-- Transaction rows will be populated dynamically -->
                             </div>
-                          </div>
                         </div>
+                    </div>
 
-                        <!-- Expense Categories -->
-                        <div class="content-column">
-                          <h2 class="section-title">Expense Categories</h2>
-                          <div class="categories-list">
-                            <div id="categories-content">
-                              <div class="transaction-row">
-                                <span class="transaction-desc">📂 Feed & Nutrition</span>
-                                <span class="transaction-amount">💵 $1,500.00</span>
-                                <span class="transaction-percent">📊 22.1%</span>
-                                <span class="transaction-actions">
-                                  <button class="icon-btn">✏️</button>
-                                  <button class="icon-btn">🗑️</button>
-                                </span>
-                              </div>
-                              <!-- More rows -->
+                    <!-- Expense Categories -->
+                    <div class="content-column">
+                        <div class="glass-card">
+                            <div class="header-flex">
+                                <h3>Expense Categories</h3>
+                                <button class="btn btn-outline" id="manage-categories-btn-2">Manage</button>
                             </div>
-                          </div>
+                            <div id="categories-list" class="categories-list">
+                                <!-- Categories will be populated dynamically -->
+                            </div>
                         </div>
+                    </div>
+                </div>
 
                 <!-- Footer -->
                 <div class="module-footer">
                     <div class="footer-left">
-                        <button id="refresh-data-btn" class="btn-primary">
+                        <button id="refresh-data-btn" class="btn btn-primary">
                             <span class="btn-icon">🔄</span>
                             <span class="btn-text">Refresh Data</span>
                         </button>
                     </div>
                     <div class="footer-right">
-                        <button id="export-data-btn" class="card-button" data-action="export-data">
-                            <span class="card-icon">📤</span>
-                            <span class="card-title">Export Data</span>
-                            <span class="card-subtitle">Export to CSV/Excel</span>
+                        <button id="export-data-btn" class="btn btn-secondary" data-action="export-data">
+                            <span class="btn-icon">📤</span>
+                            <span class="btn-text">Export Data</span>
                         </button>
                     </div>
                 </div>
@@ -212,30 +228,45 @@ const IncomeExpensesModule = {
 
     setupEventListeners() {
         // Quick action buttons
-        document.getElementById('quick-income-btn')?.addEventListener('click', () => this.handleQuickAction('quick-income'));
-        document.getElementById('quick-expense-btn')?.addEventListener('click', () => this.handleQuickAction('quick-expense'));
-        document.getElementById('view-reports-btn')?.addEventListener('click', () => this.handleQuickAction('view-reports'));
-        document.getElementById('manage-categories-btn')?.addEventListener('click', () => this.handleQuickAction('manage-categories'));
-        document.getElementById('export-data-btn')?.addEventListener('click', () => this.handleQuickAction('export-data'));
+        document.getElementById('quick-income-btn')?.addEventListener('click', () => this.showAddTransactionModal({ type: 'income' }));
+        document.getElementById('quick-expense-btn')?.addEventListener('click', () => this.showAddTransactionModal({ type: 'expense' }));
+        document.getElementById('view-reports-btn')?.addEventListener('click', () => this.showReportsModal());
+        document.getElementById('manage-categories-btn')?.addEventListener('click', () => this.showManageCategoriesModal());
+        document.getElementById('manage-categories-btn-2')?.addEventListener('click', () => this.showManageCategoriesModal());
+        document.getElementById('export-data-btn')?.addEventListener('click', () => this.exportData());
         
         // Primary buttons
         document.getElementById('add-transaction-btn')?.addEventListener('click', () => this.showAddTransactionModal());
         document.getElementById('import-receipts-btn')?.addEventListener('click', () => this.importReceipts());
-        document.getElementById('clear-all')?.addEventListener('click', () => this.clearAllTransactions());
+        document.getElementById('clear-all-transactions')?.addEventListener('click', () => this.clearAllTransactions());
         document.getElementById('refresh-data-btn')?.addEventListener('click', () => {
             this.loadAndDisplayData();
             this.showNotification('Data refreshed!', 'success');
         });
-        
-        // Clear categories button
-        document.getElementById('clear-categories')?.addEventListener('click', () => this.clearAllCategories());
     },
 
-    loadAndDisplayData() {
-        const data = this.getModuleData();
-        this.updateDashboardDisplay(data);
-        this.updateTransactionsList(data);
-        this.updateCategoriesList(data);
+    loadData() {
+        // Try to load from localStorage
+        const savedData = localStorage.getItem('farm-income-expenses-data');
+        if (savedData) {
+            try {
+                const parsedData = JSON.parse(savedData);
+                if (parsedData.categories) {
+                    this.categories = parsedData.categories;
+                }
+            } catch (e) {
+                console.error('Error loading data:', e);
+            }
+        }
+    },
+
+    saveData() {
+        // Save categories to localStorage
+        const dataToSave = {
+            categories: this.categories,
+            lastUpdated: new Date().toISOString()
+        };
+        localStorage.setItem('farm-income-expenses-data', JSON.stringify(dataToSave));
     },
 
     getModuleData() {
@@ -252,23 +283,70 @@ const IncomeExpensesModule = {
             expenseCategories: []
         };
 
-        // Try to get data from FarmModules
-        if (window.FarmModules && window.FarmModules.appData) {
-            const sharedData = window.FarmModules.appData.incomeExpenses;
-            if (sharedData) {
-                data = { ...data, ...sharedData };
+        // Try to get data from localStorage
+        const savedData = localStorage.getItem('farm-transactions');
+        if (savedData) {
+            try {
+                const parsedData = JSON.parse(savedData);
+                if (parsedData.transactions) {
+                    data.recentTransactions = parsedData.transactions;
+                    
+                    // Calculate totals
+                    data.totalIncome = data.recentTransactions
+                        .filter(t => t.type === 'income')
+                        .reduce((sum, t) => sum + t.amount, 0);
+                        
+                    data.totalExpenses = data.recentTransactions
+                        .filter(t => t.type === 'expense')
+                        .reduce((sum, t) => sum + t.amount, 0);
+                        
+                    data.netProfit = data.totalIncome - data.totalExpenses;
+                    data.totalTransactions = data.recentTransactions.length;
+                    data.currentBalance = data.netProfit;
+                    
+                    // Calculate expense categories
+                    const categoryMap = {};
+                    data.recentTransactions
+                        .filter(t => t.type === 'expense')
+                        .forEach(t => {
+                            if (!categoryMap[t.category]) {
+                                categoryMap[t.category] = { amount: 0, count: 0 };
+                            }
+                            categoryMap[t.category].amount += t.amount;
+                            categoryMap[t.category].count += 1;
+                        });
+                    
+                    data.expenseCategories = Object.entries(categoryMap).map(([name, stats]) => ({
+                        name,
+                        amount: stats.amount,
+                        count: stats.count,
+                        icon: this.getCategoryIcon(name)
+                    }));
+                    
+                    data.totalCategories = data.expenseCategories.length;
+                    
+                    // Calculate monthly data
+                    const currentMonth = new Date().getMonth();
+                    const currentYear = new Date().getFullYear();
+                    const currentMonthIncome = data.recentTransactions
+                        .filter(t => {
+                            const date = new Date(t.date);
+                            return t.type === 'income' && 
+                                   date.getMonth() === currentMonth && 
+                                   date.getFullYear() === currentYear;
+                        })
+                        .reduce((sum, t) => sum + t.amount, 0);
+                    
+                    data.monthlyIncome = currentMonthIncome;
+                    data.avgMonthlyIncome = data.totalIncome / Math.max(1, (new Date().getMonth() + 1));
+                }
+            } catch (e) {
+                console.error('Error loading transaction data:', e);
             }
         }
 
-        // Fallback to localStorage
-        const savedData = localStorage.getItem('farm-income-expenses-data');
-        if (savedData) {
-            const parsedData = JSON.parse(savedData);
-            data = { ...data, ...parsedData };
-        }
-
         // Use sample data for demo if empty
-        if (data.totalIncome === 0 && data.totalExpenses === 0) {
+        if (data.totalTransactions === 0) {
             data = this.getSampleData();
         }
 
@@ -276,74 +354,100 @@ const IncomeExpensesModule = {
     },
 
     getSampleData() {
+        const sampleTransactions = [
+            {
+                id: 1,
+                date: new Date().toISOString().split('T')[0],
+                description: 'Egg Sales - Weekly Batch',
+                category: 'Egg Sales',
+                type: 'income',
+                amount: 1200,
+                status: 'completed',
+                icon: '🥚'
+            },
+            {
+                id: 2,
+                date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+                description: 'Organic Chicken Feed',
+                category: 'Feed & Nutrition',
+                type: 'expense',
+                amount: 450,
+                status: 'completed',
+                icon: '🌾'
+            },
+            {
+                id: 3,
+                date: new Date(Date.now() - 172800000).toISOString().split('T')[0],
+                description: 'Chicken Sales - Batch #42',
+                category: 'Poultry Sales',
+                type: 'income',
+                amount: 2800,
+                status: 'completed',
+                icon: '🐔'
+            },
+            {
+                id: 4,
+                date: new Date(Date.now() - 259200000).toISOString().split('T')[0],
+                description: 'Veterinary Services',
+                category: 'Healthcare',
+                type: 'expense',
+                amount: 320,
+                status: 'completed',
+                icon: '💊'
+            },
+            {
+                id: 5,
+                date: new Date(Date.now() - 345600000).toISOString().split('T')[0],
+                description: 'Farm Equipment Repair',
+                category: 'Maintenance',
+                type: 'expense',
+                amount: 180,
+                status: 'completed',
+                icon: '🔧'
+            }
+        ];
+        
+        // Calculate totals from sample transactions
+        const totalIncome = sampleTransactions
+            .filter(t => t.type === 'income')
+            .reduce((sum, t) => sum + t.amount, 0);
+            
+        const totalExpenses = sampleTransactions
+            .filter(t => t.type === 'expense')
+            .reduce((sum, t) => sum + t.amount, 0);
+            
+        const netProfit = totalIncome - totalExpenses;
+        
+        // Calculate expense categories
+        const categoryMap = {};
+        sampleTransactions
+            .filter(t => t.type === 'expense')
+            .forEach(t => {
+                if (!categoryMap[t.category]) {
+                    categoryMap[t.category] = { amount: 0, count: 0 };
+                }
+                categoryMap[t.category].amount += t.amount;
+                categoryMap[t.category].count += 1;
+            });
+        
+        const expenseCategories = Object.entries(categoryMap).map(([name, stats]) => ({
+            name,
+            amount: stats.amount,
+            count: stats.count,
+            icon: this.getCategoryIcon(name)
+        }));
+        
         return {
-            totalIncome: 12500,
-            totalExpenses: 8500,
-            netProfit: 4000,
+            totalIncome,
+            totalExpenses,
+            netProfit,
             monthlyIncome: 3200,
             avgMonthlyIncome: 2800,
-            totalTransactions: 24,
-            totalCategories: 8,
-            currentBalance: 5200,
-            recentTransactions: [
-                {
-                    id: 1,
-                    date: new Date().toISOString().split('T')[0],
-                    description: 'Chicken Sales - Batch #45',
-                    category: 'Poultry Sales',
-                    type: 'income',
-                    amount: 2500,
-                    status: 'completed',
-                    icon: '💰'
-                },
-                {
-                    id: 2,
-                    date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
-                    description: 'Feed Purchase - Premium',
-                    category: 'Feed & Nutrition',
-                    type: 'expense',
-                    amount: 800,
-                    status: 'completed',
-                    icon: '💸'
-                },
-                {
-                    id: 3,
-                    date: new Date(Date.now() - 172800000).toISOString().split('T')[0],
-                    description: 'Egg Sales - Wholesale',
-                    category: 'Egg Sales',
-                    type: 'income',
-                    amount: 1200,
-                    status: 'completed',
-                    icon: '💰'
-                },
-                {
-                    id: 4,
-                    date: new Date(Date.now() - 259200000).toISOString().split('T')[0],
-                    description: 'Vaccination Supplies',
-                    category: 'Healthcare',
-                    type: 'expense',
-                    amount: 350,
-                    status: 'completed',
-                    icon: '💸'
-                },
-                {
-                    id: 5,
-                    date: new Date(Date.now() - 345600000).toISOString().split('T')[0],
-                    description: 'Equipment Maintenance',
-                    category: 'Equipment',
-                    type: 'expense',
-                    amount: 450,
-                    status: 'pending',
-                    icon: '💸'
-                }
-            ],
-            expenseCategories: [
-                { name: 'Feed & Nutrition', amount: 1500, count: 8, icon: '🌾' },
-                { name: 'Healthcare', amount: 450, count: 3, icon: '💊' },
-                { name: 'Equipment', amount: 1200, count: 5, icon: '🔧' },
-                { name: 'Labor', amount: 2800, count: 12, icon: '👷' },
-                { name: 'Utilities', amount: 650, count: 4, icon: '⚡' }
-            ]
+            totalTransactions: sampleTransactions.length,
+            totalCategories: expenseCategories.length,
+            currentBalance: netProfit,
+            recentTransactions: sampleTransactions,
+            expenseCategories
         };
     },
 
@@ -415,11 +519,18 @@ const IncomeExpensesModule = {
 
         if (transactions.length === 0) {
             transactionsList.innerHTML = `
-                <div class="transaction-row empty-state">
-                    <span class="desc-col">📋 No transactions yet</span>
-                    <span class="category-col">➕ Add your first income or expense record</span>
+                <div class="empty-state">
+                    <div class="empty-icon">📋</div>
+                    <h4>No transactions yet</h4>
+                    <p>Add your first income or expense record</p>
+                    <button class="btn btn-primary" id="add-first-transaction">Add Transaction</button>
                 </div>
             `;
+            
+            document.getElementById('add-first-transaction')?.addEventListener('click', () => {
+                this.showAddTransactionModal();
+            });
+            
             return;
         }
 
@@ -428,16 +539,34 @@ const IncomeExpensesModule = {
         
         transactionsList.innerHTML = recentTransactions.map(transaction => `
             <div class="transaction-row transaction-${transaction.type}" data-id="${transaction.id}">
-                <span class="date-col">📅 ${this.formatDate(transaction.date)}</span>
-                <span class="desc-col">${transaction.icon} ${transaction.description}</span>
-                <span class="category-col">📂 ${transaction.category}</span>
-                <span class="amount-col ${transaction.type}">
-                    ${transaction.type === 'income' ? '💵 +' : '💸 -'}${this.formatCurrency(transaction.amount)}
-                </span>
-                <span class="actions-col">
-                    <button class="icon-btn edit-transaction" data-id="${transaction.id}">✏️</button>
-                    <button class="icon-btn delete-transaction" data-id="${transaction.id}">🗑️</button>
-                </span>
+                <div class="transaction-main">
+                    <div class="transaction-icon">${transaction.icon || this.getTransactionIcon(transaction.type)}</div>
+                    <div class="transaction-details">
+                        <div class="transaction-description">${transaction.description}</div>
+                        <div class="transaction-meta">
+                            <span class="transaction-date">📅 ${this.formatDate(transaction.date)}</span>
+                            <span class="transaction-category">📂 ${transaction.category}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="transaction-amount ${transaction.type}">
+                    ${transaction.type === 'income' ? '+' : '-'}${this.formatCurrency(transaction.amount)}
+                </div>
+                <div class="transaction-actions">
+                    <button class="icon-btn edit-transaction" data-id="${transaction.id}" title="Edit">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                    </button>
+                    <button class="icon-btn delete-transaction" data-id="${transaction.id}" title="Delete">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 6h18"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
         `).join('');
 
@@ -471,9 +600,10 @@ const IncomeExpensesModule = {
 
         if (categories.length === 0) {
             categoriesList.innerHTML = `
-                <div class="data-row empty-state">
-                    <span class="desc-col">📋 No categories yet</span>
-                    <span class="category-col">➕ Add expenses to see categories</span>
+                <div class="empty-state">
+                    <div class="empty-icon">📂</div>
+                    <h4>No expense categories</h4>
+                    <p>Add expenses to see categories</p>
                 </div>
             `;
             return;
@@ -485,104 +615,80 @@ const IncomeExpensesModule = {
         categoriesList.innerHTML = categories.map(category => {
             const percentage = totalExpenses > 0 ? ((category.amount / totalExpenses) * 100).toFixed(1) : 0;
             return `
-                <div class="data-row" data-category="${category.name}">
-                    <span class="desc-col">${category.icon} ${category.name}</span>
-                    <span class="amount-col">💵 ${this.formatCurrency(category.amount)}</span>
-                    <span class="percentage-col">📊 ${percentage}%</span>
-                    <span class="actions-col">
-                        <button class="icon-btn edit-category" data-category="${category.name}">✏️</button>
-                        <button class="icon-btn delete-category" data-category="${category.name}">🗑️</button>
-                    </span>
+                <div class="category-row" data-category="${category.name}">
+                    <div class="category-main">
+                        <div class="category-icon">${category.icon}</div>
+                        <div class="category-details">
+                            <div class="category-name">${category.name}</div>
+                            <div class="category-meta">${category.count} transactions</div>
+                        </div>
+                    </div>
+                    <div class="category-amount">
+                        ${this.formatCurrency(category.amount)}
+                        <div class="category-percentage">${percentage}%</div>
+                    </div>
+                    <div class="category-progress">
+                        <div class="progress-bar" style="width: ${percentage}%"></div>
+                    </div>
                 </div>
             `;
         }).join('');
-
-        // Add event listeners to category action buttons
-        this.setupCategoryActionListeners();
     },
 
-    setupCategoryActionListeners() {
-        // Edit category buttons
-        document.querySelectorAll('.edit-category').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const categoryName = e.currentTarget.getAttribute('data-category');
-                this.editCategory(categoryName);
-            });
-        });
-        
-        // Delete category buttons
-        document.querySelectorAll('.delete-category').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const categoryName = e.currentTarget.getAttribute('data-category');
-                this.deleteCategory(categoryName);
-            });
-        });
+    loadAndDisplayData() {
+        const data = this.getModuleData();
+        this.updateDashboardDisplay(data);
+        this.updateTransactionsList(data);
+        this.updateCategoriesList(data);
     },
 
-    handleQuickAction(action) {
-        console.log(`Quick action: ${action}`);
-        
-        switch (action) {
-            case 'quick-income':
-                this.showAddTransactionModal({ type: 'income' });
-                break;
-            case 'quick-expense':
-                this.showAddTransactionModal({ type: 'expense' });
-                break;
-            case 'view-reports':
-                this.showReportsModal();
-                break;
-            case 'manage-categories':
-                this.showManageCategoriesModal();
-                break;
-            case 'export-data':
-                this.exportData();
-                break;
-            default:
-                this.showNotification(`Action "${action}" not implemented yet`, 'info');
-        }
-    },
+    // ==================== MODAL FUNCTIONS ====================
 
     showAddTransactionModal(prefill = null) {
+        const isEditing = prefill?.id;
+        const modalTitle = isEditing ? 'Edit Transaction' : 'Add Transaction';
+        
+        // Get current transaction type for category filtering
+        const currentType = prefill?.type || 'expense';
+        
         const fields = [
             {
                 type: 'select',
                 name: 'transaction-type',
-                label: 'Type',
+                label: 'Transaction Type',
                 required: true,
                 options: [
-                    { value: 'income', label: 'Income' },
-                    { value: 'expense', label: 'Expense' }
+                    { value: 'income', label: '💰 Income' },
+                    { value: 'expense', label: '💸 Expense' }
                 ],
-                value: prefill?.type || 'expense'
-            },
-            {
-                type: 'number',
-                name: 'amount',
-                label: 'Amount',
-                required: true,
-                min: 0.01,
-                step: 0.01,
-                large: true,
-                placeholder: '0.00',
-                value: prefill?.amount || '',
-                note: 'Enter the transaction amount'
-            },
-            {
-                type: 'select',
-                name: 'category',
-                label: 'Category',
-                required: true,
-                options: this.getCategoryOptions(prefill?.type || 'expense'),
-                value: prefill?.category || ''
+                value: currentType
             },
             {
                 type: 'text',
                 name: 'description',
                 label: 'Description',
                 required: true,
-                placeholder: 'Enter transaction description...',
+                placeholder: 'e.g., Egg sales, Feed purchase, Equipment repair...',
                 value: prefill?.description || ''
+            },
+            {
+                type: 'number',
+                name: 'amount',
+                label: 'Amount ($)',
+                required: true,
+                min: 0.01,
+                step: 0.01,
+                placeholder: '0.00',
+                value: prefill?.amount || '',
+                note: 'Enter the transaction amount in dollars'
+            },
+            {
+                type: 'select',
+                name: 'category',
+                label: 'Category',
+                required: true,
+                options: this.getCategoryOptions(currentType, prefill?.category),
+                value: prefill?.category || ''
             },
             {
                 type: 'date',
@@ -590,29 +696,47 @@ const IncomeExpensesModule = {
                 label: 'Date',
                 required: true,
                 value: prefill?.date || new Date().toISOString().split('T')[0]
+            },
+            {
+                type: 'select',
+                name: 'payment-method',
+                label: 'Payment Method',
+                options: [
+                    { value: 'cash', label: '💵 Cash' },
+                    { value: 'bank-transfer', label: '🏦 Bank Transfer' },
+                    { value: 'credit-card', label: '💳 Credit Card' },
+                    { value: 'check', label: '📝 Check' },
+                    { value: 'mobile-payment', label: '📱 Mobile Payment' },
+                    { value: 'other', label: '📦 Other' }
+                ],
+                value: prefill?.paymentMethod || 'cash'
+            },
+            {
+                type: 'textarea',
+                name: 'notes',
+                label: 'Notes (Optional)',
+                placeholder: 'Add any additional notes about this transaction...',
+                rows: 3,
+                value: prefill?.notes || ''
             }
         ];
 
-        // If editing an existing transaction, modify the form
-        const isEditing = prefill?.id;
-        const modalTitle = isEditing ? 'Edit Transaction' : 'Add Transaction';
-        const submitText = isEditing ? 'Update Transaction' : 'Save Transaction';
-
-        window.ModalManager.createQuickForm({
+        window.ModalManager.createForm({
             id: 'transaction-form-modal',
             title: modalTitle,
-            size: 'modal-md',
+            size: 'modal-lg',
             fields: fields,
-            submitText: submitText,
+            submitText: isEditing ? 'Update Transaction' : 'Save Transaction',
             onSubmit: (formData) => {
                 const transactionData = {
                     type: formData['transaction-type'],
+                    description: formData.description,
                     amount: parseFloat(formData.amount),
                     category: this.getCategoryName(formData.category),
-                    description: formData.description,
                     date: formData.date,
-                    status: 'completed',
-                    icon: this.getTransactionIcon(formData['transaction-type'])
+                    paymentMethod: formData['payment-method'],
+                    notes: formData.notes,
+                    status: 'completed'
                 };
 
                 if (isEditing) {
@@ -623,29 +747,238 @@ const IncomeExpensesModule = {
                 }
             }
         });
+
+        // Add dynamic category updating when transaction type changes
+        const modal = document.getElementById('transaction-form-modal');
+        if (modal) {
+            const typeSelect = modal.querySelector('[name="transaction-type"]');
+            const categorySelect = modal.querySelector('[name="category"]');
+            
+            if (typeSelect && categorySelect) {
+                typeSelect.addEventListener('change', (e) => {
+                    const newType = e.target.value;
+                    const categoryOptions = this.getCategoryOptions(newType);
+                    
+                    // Update category select options
+                    categorySelect.innerHTML = categoryOptions.map(opt => 
+                        `<option value="${opt.value}" ${opt.selected ? 'selected' : ''}>${opt.label}</option>`
+                    ).join('');
+                });
+            }
+        }
     },
 
-    getCategoryOptions(type) {
-        const categories = type === 'income' ? 
-            [
-                { value: 'egg-sales', label: 'Egg Sales' },
-                { value: 'poultry-sales', label: 'Poultry Sales' },
-                { value: 'crop-sales', label: 'Crop Sales' },
-                { value: 'other-income', label: 'Other Income' }
-            ] : 
-            [
-                { value: 'feed', label: 'Feed & Nutrition' },
-                { value: 'medication', label: 'Healthcare' },
-                { value: 'equipment', label: 'Equipment' },
-                { value: 'labor', label: 'Labor' },
-                { value: 'utilities', label: 'Utilities' },
-                { value: 'transportation', label: 'Transportation' },
-                { value: 'maintenance', label: 'Maintenance' },
-                { value: 'other', label: 'Other' }
-            ];
+    getCategoryOptions(type, currentCategory = '') {
+        const categories = type === 'income' ? this.categories.income : this.categories.expense;
         
-        // Add empty option
-        return [{ value: '', label: 'Select category' }, ...categories];
+        const options = categories.map(cat => ({
+            value: cat.value,
+            label: `${cat.icon} ${cat.label}`,
+            selected: currentCategory === cat.value
+        }));
+        
+        // Add empty option at the beginning
+        return [{ value: '', label: 'Select a category', selected: !currentCategory }, ...options];
+    },
+
+    getCategoryName(categoryValue) {
+        // Find in income categories
+        const incomeCat = this.categories.income.find(cat => cat.value === categoryValue);
+        if (incomeCat) return incomeCat.label;
+        
+        // Find in expense categories
+        const expenseCat = this.categories.expense.find(cat => cat.value === categoryValue);
+        if (expenseCat) return expenseCat.label;
+        
+        return 'Other';
+    },
+
+    getCategoryIcon(categoryName) {
+        // Find in income categories
+        const incomeCat = this.categories.income.find(cat => cat.label === categoryName);
+        if (incomeCat) return incomeCat.icon;
+        
+        // Find in expense categories
+        const expenseCat = this.categories.expense.find(cat => cat.label === categoryName);
+        if (expenseCat) return expenseCat.icon;
+        
+        return '📦';
+    },
+
+    getTransactionIcon(type) {
+        return type === 'income' ? '💰' : '💸';
+    },
+
+    addTransaction(transactionData) {
+        // Get existing transactions
+        const existingData = localStorage.getItem('farm-transactions');
+        let transactions = [];
+        
+        if (existingData) {
+            try {
+                const parsed = JSON.parse(existingData);
+                transactions = parsed.transactions || [];
+            } catch (e) {
+                console.error('Error loading existing transactions:', e);
+            }
+        }
+        
+        // Add new transaction
+        const newTransaction = {
+            id: Date.now(),
+            ...transactionData,
+            icon: this.getCategoryIcon(transactionData.category),
+            createdAt: new Date().toISOString()
+        };
+        
+        transactions.unshift(newTransaction);
+        
+        // Save to localStorage
+        localStorage.setItem('farm-transactions', JSON.stringify({ 
+            transactions,
+            lastUpdated: new Date().toISOString() 
+        }));
+        
+        // Refresh display
+        this.loadAndDisplayData();
+        
+        // Show success notification
+        this.showNotification(
+            `${transactionData.type === 'income' ? 'Income' : 'Expense'} recorded successfully!`,
+            'success'
+        );
+    },
+
+    editTransaction(transactionId) {
+        // Get existing transactions
+        const existingData = localStorage.getItem('farm-transactions');
+        if (!existingData) return;
+        
+        try {
+            const parsed = JSON.parse(existingData);
+            const transaction = parsed.transactions?.find(t => t.id === transactionId);
+            
+            if (transaction) {
+                this.showAddTransactionModal({
+                    id: transaction.id,
+                    type: transaction.type,
+                    description: transaction.description,
+                    amount: transaction.amount,
+                    category: this.getCategoryValue(transaction.category),
+                    date: transaction.date,
+                    paymentMethod: transaction.paymentMethod || 'cash',
+                    notes: transaction.notes || ''
+                });
+            }
+        } catch (e) {
+            console.error('Error editing transaction:', e);
+        }
+    },
+
+    getCategoryValue(categoryName) {
+        // Find in income categories
+        const incomeCat = this.categories.income.find(cat => cat.label === categoryName);
+        if (incomeCat) return incomeCat.value;
+        
+        // Find in expense categories
+        const expenseCat = this.categories.expense.find(cat => cat.label === categoryName);
+        if (expenseCat) return expenseCat.value;
+        
+        return 'other';
+    },
+
+    updateTransaction(updatedTransaction) {
+        // Get existing transactions
+        const existingData = localStorage.getItem('farm-transactions');
+        if (!existingData) return;
+        
+        try {
+            const parsed = JSON.parse(existingData);
+            const transactions = parsed.transactions || [];
+            
+            // Find and update transaction
+            const index = transactions.findIndex(t => t.id === updatedTransaction.id);
+            if (index !== -1) {
+                transactions[index] = {
+                    ...transactions[index],
+                    ...updatedTransaction,
+                    icon: this.getCategoryIcon(updatedTransaction.category),
+                    updatedAt: new Date().toISOString()
+                };
+                
+                // Save updated transactions
+                localStorage.setItem('farm-transactions', JSON.stringify({ 
+                    transactions,
+                    lastUpdated: new Date().toISOString() 
+                }));
+                
+                // Refresh display
+                this.loadAndDisplayData();
+                
+                // Show success notification
+                this.showNotification('Transaction updated successfully!', 'success');
+            }
+        } catch (e) {
+            console.error('Error updating transaction:', e);
+            this.showNotification('Error updating transaction', 'error');
+        }
+    },
+
+    deleteTransaction(transactionId) {
+        window.ModalManager.confirm({
+            title: 'Delete Transaction',
+            message: 'Are you sure you want to delete this transaction?',
+            details: 'This action cannot be undone.',
+            icon: '⚠️',
+            danger: true,
+            confirmText: 'Delete'
+        }).then(confirmed => {
+            if (confirmed) {
+                // Get existing transactions
+                const existingData = localStorage.getItem('farm-transactions');
+                if (!existingData) return;
+                
+                try {
+                    const parsed = JSON.parse(existingData);
+                    const transactions = parsed.transactions || [];
+                    
+                    // Filter out the transaction to delete
+                    const updatedTransactions = transactions.filter(t => t.id !== transactionId);
+                    
+                    // Save updated transactions
+                    localStorage.setItem('farm-transactions', JSON.stringify({ 
+                        transactions: updatedTransactions,
+                        lastUpdated: new Date().toISOString() 
+                    }));
+                    
+                    // Refresh display
+                    this.loadAndDisplayData();
+                    
+                    // Show success notification
+                    this.showNotification('Transaction deleted successfully!', 'success');
+                } catch (e) {
+                    console.error('Error deleting transaction:', e);
+                    this.showNotification('Error deleting transaction', 'error');
+                }
+            }
+        });
+    },
+
+    clearAllTransactions() {
+        window.ModalManager.confirm({
+            title: 'Clear All Transactions',
+            message: 'Are you sure you want to clear ALL transactions?',
+            details: 'This will permanently delete all transaction records. This action cannot be undone.',
+            icon: '⚠️',
+            danger: true,
+            confirmText: 'Clear All'
+        }).then(confirmed => {
+            if (confirmed) {
+                localStorage.removeItem('farm-transactions');
+                this.loadAndDisplayData();
+                this.showNotification('All transactions cleared!', 'success');
+            }
+        });
     },
 
     showReportsModal() {
@@ -655,7 +988,26 @@ const IncomeExpensesModule = {
                 title: 'Income Statement',
                 icon: '📊',
                 description: 'Revenue, expenses, and net profit',
-                preview: '<p>Shows your farm\'s financial performance over a period of time.</p>',
+                preview: `
+                    <div class="report-preview">
+                        <h4>Income Statement Preview</h4>
+                        <p>Shows your farm's financial performance over a selected period.</p>
+                        <div class="preview-stats">
+                            <div class="preview-stat">
+                                <span class="label">Total Income:</span>
+                                <span class="value positive">$12,500.00</span>
+                            </div>
+                            <div class="preview-stat">
+                                <span class="label">Total Expenses:</span>
+                                <span class="value negative">$8,500.00</span>
+                            </div>
+                            <div class="preview-stat">
+                                <span class="label">Net Profit:</span>
+                                <span class="value positive">$4,000.00</span>
+                            </div>
+                        </div>
+                    </div>
+                `,
                 buttonText: 'Generate Report'
             },
             {
@@ -663,7 +1015,19 @@ const IncomeExpensesModule = {
                 title: 'Category Breakdown',
                 icon: '📈',
                 description: 'Expense distribution by category',
-                preview: '<p>Visual breakdown of where your money is being spent.</p>',
+                preview: `
+                    <div class="report-preview">
+                        <h4>Category Breakdown Preview</h4>
+                        <p>Visual breakdown of where your money is being spent.</p>
+                        <div class="preview-chart">
+                            <div class="chart-bar" style="width: 40%">Feed & Nutrition</div>
+                            <div class="chart-bar" style="width: 25%">Labor</div>
+                            <div class="chart-bar" style="width: 15%">Equipment</div>
+                            <div class="chart-bar" style="width: 10%">Healthcare</div>
+                            <div class="chart-bar" style="width: 10%">Other</div>
+                        </div>
+                    </div>
+                `,
                 buttonText: 'View Breakdown'
             },
             {
@@ -671,7 +1035,26 @@ const IncomeExpensesModule = {
                 title: 'Monthly Trends',
                 icon: '📅',
                 description: 'Income and expense trends',
-                preview: '<p>Track your financial performance month over month.</p>',
+                preview: `
+                    <div class="report-preview">
+                        <h4>Monthly Trends Preview</h4>
+                        <p>Track your financial performance month over month.</p>
+                        <div class="trend-preview">
+                            <div class="trend-month">
+                                <span>Jan: <span class="positive">+$2,800</span></span>
+                            </div>
+                            <div class="trend-month">
+                                <span>Feb: <span class="positive">+$3,200</span></span>
+                            </div>
+                            <div class="trend-month">
+                                <span>Mar: <span class="positive">+$2,900</span></span>
+                            </div>
+                            <div class="trend-month">
+                                <span>Apr: <span class="positive">+$3,600</span></span>
+                            </div>
+                        </div>
+                    </div>
+                `,
                 buttonText: 'View Trends'
             },
             {
@@ -679,7 +1062,26 @@ const IncomeExpensesModule = {
                 title: 'Yearly Summary',
                 icon: '📋',
                 description: 'Annual financial summary',
-                preview: '<p>Complete overview of your farm\'s yearly financial performance.</p>',
+                preview: `
+                    <div class="report-preview">
+                        <h4>Yearly Summary Preview</h4>
+                        <p>Complete overview of your farm's yearly financial performance.</p>
+                        <div class="yearly-stats">
+                            <div class="yearly-stat">
+                                <span class="label">Total Income:</span>
+                                <span class="value">$38,400.00</span>
+                            </div>
+                            <div class="yearly-stat">
+                                <span class="label">Total Expenses:</span>
+                                <span class="value">$25,600.00</span>
+                            </div>
+                            <div class="yearly-stat">
+                                <span class="label">Yearly Profit:</span>
+                                <span class="value positive">$12,800.00</span>
+                            </div>
+                        </div>
+                    </div>
+                `,
                 buttonText: 'View Summary'
             }
         ];
@@ -691,354 +1093,360 @@ const IncomeExpensesModule = {
             reports: reports,
             onReportSelect: (reportId) => {
                 this.showNotification(`Generating ${reportId.replace('-', ' ')} report...`, 'success');
-                // Implement report generation logic here
+                // In a real app, you would generate and show the actual report here
+                setTimeout(() => {
+                    this.showNotification(`Report generated successfully!`, 'success');
+                }, 1500);
             }
         });
     },
 
     showManageCategoriesModal() {
-        this.showNotification('Categories management coming soon!', 'info');
+        window.ModalManager.show({
+            id: 'manage-categories-modal',
+            title: 'Manage Categories',
+            size: 'modal-lg',
+            content: `
+                <div class="categories-management">
+                    <div class="tabs">
+                        <button class="tab active" data-tab="income">💰 Income Categories</button>
+                        <button class="tab" data-tab="expense">💸 Expense Categories</button>
+                    </div>
+                    
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="income-categories">
+                            <div class="categories-list" id="income-categories-list">
+                                ${this.renderCategoryList('income')}
+                            </div>
+                            <button class="btn btn-primary add-category-btn" data-type="income">
+                                <span class="btn-icon">➕</span>
+                                <span class="btn-text">Add Income Category</span>
+                            </button>
+                        </div>
+                        
+                        <div class="tab-pane" id="expense-categories">
+                            <div class="categories-list" id="expense-categories-list">
+                                ${this.renderCategoryList('expense')}
+                            </div>
+                            <button class="btn btn-primary add-category-btn" data-type="expense">
+                                <span class="btn-icon">➕</span>
+                                <span class="btn-text">Add Expense Category</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `,
+            footer: `
+                <button class="btn btn-outline" data-action="close">Close</button>
+                <button class="btn btn-primary" data-action="save-categories">Save Changes</button>
+            `,
+            onOpen: () => {
+                // Tab switching
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        const tabType = e.target.dataset.tab;
+                        
+                        // Update active tab
+                        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                        e.target.classList.add('active');
+                        
+                        // Show corresponding content
+                        document.querySelectorAll('.tab-pane').forEach(pane => {
+                            pane.classList.remove('active');
+                        });
+                        document.getElementById(`${tabType}-categories`).classList.add('active');
+                    });
+                });
+                
+                // Add category buttons
+                document.querySelectorAll('.add-category-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const type = btn.dataset.type;
+                        this.showAddCategoryModal(type);
+                    });
+                });
+                
+                // Edit category buttons
+                document.querySelectorAll('.edit-category-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const categoryValue = e.target.closest('.category-item').dataset.value;
+                        const type = e.target.closest('.category-item').dataset.type;
+                        this.showEditCategoryModal(type, categoryValue);
+                    });
+                });
+                
+                // Delete category buttons
+                document.querySelectorAll('.delete-category-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const categoryValue = e.target.closest('.category-item').dataset.value;
+                        const type = e.target.closest('.category-item').dataset.type;
+                        this.showDeleteCategoryModal(type, categoryValue);
+                    });
+                });
+                
+                // Save button
+                document.querySelector('[data-action="save-categories"]').addEventListener('click', () => {
+                    this.saveData();
+                    this.showNotification('Categories saved successfully!', 'success');
+                    window.ModalManager.closeCurrentModal();
+                });
+                
+                // Close button
+                document.querySelector('[data-action="close"]').addEventListener('click', () => {
+                    window.ModalManager.closeCurrentModal();
+                });
+            }
+        });
+    },
+
+    renderCategoryList(type) {
+        const categories = this.categories[type];
+        
+        if (categories.length === 0) {
+            return `<div class="empty-categories">No ${type} categories yet. Add your first one!</div>`;
+        }
+        
+        return categories.map(category => `
+            <div class="category-item" data-type="${type}" data-value="${category.value}">
+                <div class="category-info">
+                    <span class="category-icon">${category.icon}</span>
+                    <div class="category-details">
+                        <div class="category-name">${category.label}</div>
+                        <div class="category-value">${category.value}</div>
+                    </div>
+                </div>
+                <div class="category-actions">
+                    <button class="icon-btn edit-category-btn" title="Edit">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                    </button>
+                    <button class="icon-btn delete-category-btn" title="Delete">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 6h18"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    },
+
+    showAddCategoryModal(type) {
+        const typeLabel = type === 'income' ? 'Income' : 'Expense';
+        
+        window.ModalManager.createForm({
+            id: 'add-category-modal',
+            title: `Add ${typeLabel} Category`,
+            size: 'modal-sm',
+            fields: [
+                {
+                    type: 'text',
+                    name: 'name',
+                    label: 'Category Name',
+                    required: true,
+                    placeholder: 'e.g., Feed & Nutrition, Egg Sales...'
+                },
+                {
+                    type: 'text',
+                    name: 'value',
+                    label: 'Category Value',
+                    required: true,
+                    placeholder: 'e.g., feed, egg-sales...',
+                    note: 'Used internally (no spaces, lowercase)'
+                },
+                {
+                    type: 'select',
+                    name: 'icon',
+                    label: 'Icon',
+                    options: [
+                        { value: '🥚', label: '🥚 Egg' },
+                        { value: '🐔', label: '🐔 Chicken' },
+                        { value: '🌾', label: '🌾 Grain' },
+                        { value: '💊', label: '💊 Medicine' },
+                        { value: '🔧', label: '🔧 Tools' },
+                        { value: '👷', label: '👷 Labor' },
+                        { value: '⚡', label: '⚡ Utilities' },
+                        { value: '🚚', label: '🚚 Transport' },
+                        { value: '💰', label: '💰 Money' },
+                        { value: '📦', label: '📦 Other' }
+                    ],
+                    value: '📦'
+                }
+            ],
+            submitText: 'Add Category',
+            onSubmit: (formData) => {
+                const newCategory = {
+                    label: formData.name,
+                    value: formData.value,
+                    icon: formData.icon
+                };
+                
+                this.categories[type].push(newCategory);
+                this.saveData();
+                this.showNotification(`${typeLabel} category added!`, 'success');
+                
+                // Refresh the categories modal if it's open
+                const manageModal = document.getElementById('manage-categories-modal');
+                if (manageModal) {
+                    window.ModalManager.closeCurrentModal();
+                    setTimeout(() => {
+                        this.showManageCategoriesModal();
+                    }, 300);
+                }
+            }
+        });
+    },
+
+    showEditCategoryModal(type, categoryValue) {
+        const categories = this.categories[type];
+        const category = categories.find(cat => cat.value === categoryValue);
+        const typeLabel = type === 'income' ? 'Income' : 'Expense';
+        
+        if (!category) return;
+        
+        window.ModalManager.createForm({
+            id: 'edit-category-modal',
+            title: `Edit ${typeLabel} Category`,
+            size: 'modal-sm',
+            fields: [
+                {
+                    type: 'text',
+                    name: 'name',
+                    label: 'Category Name',
+                    required: true,
+                    value: category.label
+                },
+                {
+                    type: 'text',
+                    name: 'value',
+                    label: 'Category Value',
+                    required: true,
+                    value: category.value,
+                    note: 'Used internally (no spaces, lowercase)'
+                },
+                {
+                    type: 'select',
+                    name: 'icon',
+                    label: 'Icon',
+                    options: [
+                        { value: '🥚', label: '🥚 Egg' },
+                        { value: '🐔', label: '🐔 Chicken' },
+                        { value: '🌾', label: '🌾 Grain' },
+                        { value: '💊', label: '💊 Medicine' },
+                        { value: '🔧', label: '🔧 Tools' },
+                        { value: '👷', label: '👷 Labor' },
+                        { value: '⚡', label: '⚡ Utilities' },
+                        { value: '🚚', label: '🚚 Transport' },
+                        { value: '💰', label: '💰 Money' },
+                        { value: '📦', label: '📦 Other' }
+                    ],
+                    value: category.icon
+                }
+            ],
+            submitText: 'Update Category',
+            onSubmit: (formData) => {
+                const updatedCategory = {
+                    label: formData.name,
+                    value: formData.value,
+                    icon: formData.icon
+                };
+                
+                // Update the category
+                const index = categories.findIndex(cat => cat.value === categoryValue);
+                if (index !== -1) {
+                    this.categories[type][index] = updatedCategory;
+                    this.saveData();
+                    this.showNotification(`${typeLabel} category updated!`, 'success');
+                    
+                    // Refresh the categories modal if it's open
+                    const manageModal = document.getElementById('manage-categories-modal');
+                    if (manageModal) {
+                        window.ModalManager.closeCurrentModal();
+                        setTimeout(() => {
+                            this.showManageCategoriesModal();
+                        }, 300);
+                    }
+                }
+            }
+        });
+    },
+
+    showDeleteCategoryModal(type, categoryValue) {
+        const categories = this.categories[type];
+        const category = categories.find(cat => cat.value === categoryValue);
+        const typeLabel = type === 'income' ? 'Income' : 'Expense';
+        
+        if (!category) return;
+        
+        window.ModalManager.confirm({
+            title: `Delete ${typeLabel} Category`,
+            message: `Are you sure you want to delete "${category.label}"?`,
+            details: 'This action cannot be undone. Existing transactions using this category will need to be reassigned.',
+            icon: '⚠️',
+            danger: true,
+            confirmText: 'Delete Category'
+        }).then(confirmed => {
+            if (confirmed) {
+                // Remove the category
+                this.categories[type] = categories.filter(cat => cat.value !== categoryValue);
+                this.saveData();
+                this.showNotification(`${typeLabel} category deleted!`, 'success');
+                
+                // Refresh the categories modal if it's open
+                const manageModal = document.getElementById('manage-categories-modal');
+                if (manageModal) {
+                    window.ModalManager.closeCurrentModal();
+                    setTimeout(() => {
+                        this.showManageCategoriesModal();
+                    }, 300);
+                }
+            }
+        });
     },
 
     importReceipts() {
-        window.ModalManager.alert({
+        window.ModalManager.info({
             title: 'Import Receipts',
-            message: 'This feature is coming soon!',
-            details: 'You will be able to upload and scan receipts for automatic transaction entry.',
+            message: 'Receipt import feature is coming soon!',
+            details: 'You will be able to upload and scan receipts for automatic transaction entry. This feature will include OCR technology to extract transaction details from your receipts.',
             icon: '📥'
         });
     },
 
     exportData() {
-        this.showNotification('Exporting data to CSV...', 'success');
-        
         // Get current data
         const data = this.getModuleData();
         
         // Create CSV content
-        let csvContent = "Date,Description,Category,Type,Amount,Status\n";
+        let csvContent = "Date,Type,Description,Category,Amount,Payment Method,Status\n";
         
         data.recentTransactions.forEach(transaction => {
-            csvContent += `"${transaction.date}","${transaction.description}","${transaction.category}",${transaction.type},${transaction.amount},${transaction.status}\n`;
+            csvContent += `"${transaction.date}","${transaction.type}","${transaction.description}","${transaction.category}",${transaction.amount},"${transaction.paymentMethod || 'cash'}",${transaction.status}\n`;
         });
         
         // Create download link
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `farm-transactions-${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-    },
-
-    editTransaction(transactionId) {
-        const data = this.getModuleData();
-        const transaction = data.recentTransactions.find(t => t.id === transactionId);
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `farm-transactions-${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
         
-        if (transaction) {
-            this.showAddTransactionModal({
-                id: transactionId,
-                type: transaction.type,
-                amount: transaction.amount,
-                category: this.getCategoryValue(transaction.category),
-                description: transaction.description,
-                date: transaction.date
-            });
-        }
-    },
-
-    updateTransaction(updatedTransaction) {
-        let data = this.getModuleData();
-        
-        // Find and update the transaction
-        const index = data.recentTransactions.findIndex(t => t.id === updatedTransaction.id);
-        if (index !== -1) {
-            // Store old transaction for recalculation
-            const oldTransaction = data.recentTransactions[index];
-            
-            // Update the transaction
-            data.recentTransactions[index] = {
-                ...oldTransaction,
-                ...updatedTransaction,
-                icon: this.getTransactionIcon(updatedTransaction.type)
-            };
-            
-            // Recalculate totals
-            this.recalculateTotals(data);
-            
-            // Update categories
-            this.updateCategoriesData(data, updatedTransaction, oldTransaction);
-            
-            // Save updated data
-            this.saveData(data);
-            
-            // Refresh display
-            this.loadAndDisplayData();
-            
-            this.showNotification('Transaction updated successfully!', 'success');
-        }
-    },
-
-    deleteTransaction(transactionId) {
-        window.ModalManager.confirm({
-            title: 'Delete Transaction',
-            message: 'Are you sure you want to delete this transaction?',
-            danger: true,
-            confirmText: 'Delete'
-        }).then(confirmed => {
-            if (confirmed) {
-                // Get current data
-                let data = this.getModuleData();
-                
-                // Store transaction before deletion for category updates
-                const transactionToDelete = data.recentTransactions.find(t => t.id === transactionId);
-                
-                // Remove transaction
-                data.recentTransactions = data.recentTransactions.filter(t => t.id !== transactionId);
-                
-                // Update categories when deleting expense
-                if (transactionToDelete && transactionToDelete.type === 'expense') {
-                    this.updateCategoriesOnDelete(data, transactionToDelete);
-                }
-                
-                // Recalculate totals
-                this.recalculateTotals(data);
-                
-                // Save updated data
-                this.saveData(data);
-                
-                // Refresh display
-                this.loadAndDisplayData();
-                
-                this.showNotification('Transaction deleted successfully!', 'success');
-            }
-        });
-    },
-
-    updateCategoriesOnDelete(data, deletedTransaction) {
-        const category = data.expenseCategories.find(c => c.name === deletedTransaction.category);
-        if (category) {
-            category.amount -= deletedTransaction.amount;
-            category.count -= 1;
-            
-            // Remove category if no transactions left
-            if (category.count <= 0) {
-                data.expenseCategories = data.expenseCategories.filter(c => c.name !== deletedTransaction.category);
-            }
-        }
-        
-        data.totalCategories = data.expenseCategories.length;
-    },
-
-    addTransaction(transaction) {
-        let data = this.getModuleData();
-        
-        // Add new transaction
-        const newTransaction = {
-            id: Date.now(),
-            date: new Date().toISOString().split('T')[0],
-            timestamp: new Date().toISOString(),
-            ...transaction
-        };
-        
-        data.recentTransactions.unshift(newTransaction);
-        
-        // Update totals
-        if (transaction.type === 'income') {
-            data.totalIncome += transaction.amount;
-        } else {
-            data.totalExpenses += transaction.amount;
-        }
-        
-        data.netProfit = data.totalIncome - data.totalExpenses;
-        data.totalTransactions = data.recentTransactions.length;
-        data.currentBalance = data.netProfit;
-        
-        // Update categories for expenses
-        if (transaction.type === 'expense') {
-            this.updateCategoriesData(data, transaction);
-        }
-        
-        // Update monthly averages (simplified)
-        data.monthlyIncome = data.totalIncome / 4; // Assuming 4 months
-        data.avgMonthlyIncome = data.monthlyIncome;
-        
-        // Save data
-        this.saveData(data);
-        
-        // Refresh display
-        this.loadAndDisplayData();
-        
-        this.showNotification('Transaction added successfully!', 'success');
-    },
-
-    updateCategoriesData(data, newTransaction, oldTransaction = null) {
-        if (newTransaction.type === 'expense') {
-            // If editing, remove old category amounts first
-            if (oldTransaction && oldTransaction.category !== newTransaction.category) {
-                const oldCategory = data.expenseCategories.find(c => c.name === oldTransaction.category);
-                if (oldCategory) {
-                    oldCategory.amount -= oldTransaction.amount;
-                    oldCategory.count -= 1;
-                    
-                    // Remove old category if no transactions left
-                    if (oldCategory.count <= 0) {
-                        data.expenseCategories = data.expenseCategories.filter(c => c.name !== oldTransaction.category);
-                    }
-                }
-            }
-            
-            // Find or create category for new transaction
-            let category = data.expenseCategories.find(c => c.name === newTransaction.category);
-            
-            if (category) {
-                category.amount += newTransaction.amount;
-                category.count += 1;
-            } else {
-                data.expenseCategories.push({
-                    name: newTransaction.category,
-                    amount: newTransaction.amount,
-                    count: 1,
-                    icon: this.getCategoryIcon(newTransaction.category)
-                });
-            }
-            
-            data.totalCategories = data.expenseCategories.length;
-        }
-    },
-
-    recalculateTotals(data) {
-        // Recalculate totals from all transactions
-        data.totalIncome = data.recentTransactions
-            .filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + t.amount, 0);
-            
-        data.totalExpenses = data.recentTransactions
-            .filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + t.amount, 0);
-            
-        data.netProfit = data.totalIncome - data.totalExpenses;
-        data.totalTransactions = data.recentTransactions.length;
-        data.currentBalance = data.netProfit;
-        
-        // Update monthly averages (simplified)
-        data.monthlyIncome = data.totalIncome / 4; // Assuming 4 months
-        data.avgMonthlyIncome = data.monthlyIncome;
-    },
-
-    clearAllTransactions() {
-        window.ModalManager.confirm({
-            title: 'Clear All Transactions',
-            message: 'Are you sure you want to clear ALL transactions?',
-            details: 'This action cannot be undone. All transaction data will be permanently deleted.',
-            icon: '⚠️',
-            danger: true,
-            confirmText: 'Clear All'
-        }).then(confirmed => {
-            if (confirmed) {
-                // Create fresh data structure
-                const freshData = {
-                    totalIncome: 0,
-                    totalExpenses: 0,
-                    netProfit: 0,
-                    monthlyIncome: 0,
-                    avgMonthlyIncome: 0,
-                    totalTransactions: 0,
-                    totalCategories: 0,
-                    currentBalance: 0,
-                    recentTransactions: [],
-                    expenseCategories: []
-                };
-                
-                // Save fresh data
-                this.saveData(freshData);
-                
-                // Refresh display
-                this.loadAndDisplayData();
-                
-                this.showNotification('All transactions cleared!', 'success');
-            }
-        });
-    },
-
-    clearAllCategories() {
-        window.ModalManager.confirm({
-            title: 'Clear All Categories',
-            message: 'Are you sure you want to clear ALL expense categories?',
-            details: 'Category data will be reset. Existing transactions will remain but categories will be recalculated.',
-            icon: '⚠️',
-            danger: true,
-            confirmText: 'Clear Categories'
-        }).then(confirmed => {
-            if (confirmed) {
-                let data = this.getModuleData();
-                data.expenseCategories = [];
-                data.totalCategories = 0;
-                
-                // Save updated data
-                this.saveData(data);
-                
-                // Refresh display
-                this.loadAndDisplayData();
-                
-                this.showNotification('All categories cleared!', 'success');
-            }
-        });
-    },
-
-    editCategory(categoryName) {
-        this.showNotification(`Editing category: ${categoryName}`, 'info');
-    },
-
-    deleteCategory(categoryName) {
-        window.ModalManager.confirm({
-            title: 'Delete Category',
-            message: `Are you sure you want to delete "${categoryName}"?`,
-            details: 'All transactions in this category will be moved to "Other"',
-            danger: true,
-            confirmText: 'Delete Category'
-        }).then(confirmed => {
-            if (confirmed) {
-                let data = this.getModuleData();
-                
-                // Remove the category
-                data.expenseCategories = data.expenseCategories.filter(c => c.name !== categoryName);
-                data.totalCategories = data.expenseCategories.length;
-                
-                // Save updated data
-                this.saveData(data);
-                
-                // Refresh display
-                this.loadAndDisplayData();
-                
-                this.showNotification(`Category "${categoryName}" deleted`, 'success');
-            }
-        });
-    },
-
-    saveData(data) {
-        // Save to FarmModules
-        if (window.FarmModules && window.FarmModules.appData) {
-            if (!window.FarmModules.appData.incomeExpenses) {
-                window.FarmModules.appData.incomeExpenses = {};
-            }
-            window.FarmModules.appData.incomeExpenses = data;
-        }
-        
-        // Save to localStorage
-        localStorage.setItem('farm-income-expenses-data', JSON.stringify(data));
-        
-        console.log('💾 Income & Expenses data saved');
+        this.showNotification('Data exported successfully!', 'success');
     },
 
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD',
-            minimumFractionDigits: 2
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
         }).format(amount);
     },
 
@@ -1051,138 +1459,15 @@ const IncomeExpensesModule = {
         });
     },
 
-    getTransactionIcon(type) {
-        return type === 'income' ? '💰' : '💸';
-    },
-
-    getCategoryValue(categoryName) {
-        const categoryMap = {
-            'Egg Sales': 'egg-sales',
-            'Poultry Sales': 'poultry-sales',
-            'Crop Sales': 'crop-sales',
-            'Feed & Nutrition': 'feed',
-            'Feed': 'feed',
-            'Healthcare': 'medication',
-            'Medication': 'medication',
-            'Equipment': 'equipment',
-            'Labor': 'labor',
-            'Utilities': 'utilities',
-            'Transportation': 'transportation',
-            'Maintenance': 'maintenance',
-            'Other': 'other',
-            'Other Income': 'other-income'
-        };
-        
-        return categoryMap[categoryName] || 'other';
-    },
-
-    getCategoryName(categoryValue) {
-        const categoryMap = {
-            'egg-sales': 'Egg Sales',
-            'poultry-sales': 'Poultry Sales',
-            'crop-sales': 'Crop Sales',
-            'feed': 'Feed & Nutrition',
-            'medication': 'Healthcare',
-            'equipment': 'Equipment',
-            'labor': 'Labor',
-            'utilities': 'Utilities',
-            'transportation': 'Transportation',
-            'maintenance': 'Maintenance',
-            'other': 'Other',
-            'other-income': 'Other Income'
-        };
-        
-        return categoryMap[categoryValue] || 'Other';
-    },
-
-    getCategoryIcon(categoryName) {
-        const iconMap = {
-            'Feed & Nutrition': '🌾',
-            'Healthcare': '💊',
-            'Medication': '💊',
-            'Equipment': '🔧',
-            'Labor': '👷',
-            'Utilities': '⚡',
-            'Transportation': '🚚',
-            'Maintenance': '🔨',
-            'Egg Sales': '🥚',
-            'Poultry Sales': '🐔',
-            'Crop Sales': '🌽',
-            'Other': '📦',
-            'Other Income': '💰'
-        };
-        
-        return iconMap[categoryName] || '📂';
-    },
-
     showNotification(message, type = 'info') {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.textContent = message;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 24px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 500;
-            z-index: 10000;
-            animation: slideIn 0.3s ease-out;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        `;
-        
-        // Set background color based on type
-        const bgColor = {
-            success: '#10b981',
-            error: '#ef4444',
-            warning: '#f59e0b',
-            info: '#3b82f6'
-        }[type] || '#3b82f6';
-        
-        notification.style.backgroundColor = bgColor;
-        
-        // Add to document
-        document.body.appendChild(notification);
-        
-        // Remove after 3 seconds
-        setTimeout(() => {
-            notification.style.animation = 'slideOut 0.3s ease-out';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
-        }, 3000);
-        
-        // Add CSS for animations if not already present
-        if (!document.getElementById('notification-animations')) {
-            const style = document.createElement('style');
-            style.id = 'notification-animations';
-            style.textContent = `
-                @keyframes slideIn {
-                    from {
-                        transform: translateX(100%);
-                        opacity: 0;
-                    }
-                    to {
-                        transform: translateX(0);
-                        opacity: 1;
-                    }
-                }
-                @keyframes slideOut {
-                    from {
-                        transform: translateX(0);
-                        opacity: 1;
-                    }
-                    to {
-                        transform: translateX(100%);
-                        opacity: 0;
-                    }
-                }
-            `;
-            document.head.appendChild(style);
+        if (window.ModalManager && window.ModalManager[type]) {
+            window.ModalManager[type]({
+                title: type.charAt(0).toUpperCase() + type.slice(1),
+                message: message
+            });
+        } else {
+            // Fallback to simple alert
+            alert(message);
         }
     }
 };
