@@ -1069,125 +1069,958 @@ const IncomeExpensesModule = {
 
     // ==================== REPORTS MODAL METHOD ====================
 
-    showReportsModal() {
-        const reports = [
-            {
-                id: 'income-statement',
-                title: 'Income Statement',
-                icon: '📊',
-                description: 'Revenue, expenses, and net profit',
-                preview: `
-                    <div class="report-preview">
-                        <h4>Income Statement Preview</h4>
-                        <p>Shows your farm's financial performance over a selected period.</p>
-                        <div class="preview-stats">
-                            <div class="preview-stat">
-                                <span class="label">Total Income:</span>
-                                <span class="value positive">$12,500.00</span>
-                            </div>
-                            <div class="preview-stat">
-                                <span class="label">Total Expenses:</span>
-                                <span class="value negative">$8,500.00</span>
-                            </div>
-                            <div class="preview-stat">
-                                <span class="label">Net Profit:</span>
-                                <span class="value positive">$4,000.00</span>
-                            </div>
+showReportsModal() {
+    const reports = [
+        {
+            id: 'income-statement',
+            title: 'Income Statement',
+            icon: '📊',
+            description: 'Revenue, expenses, and net profit',
+            preview: `
+                <div class="report-preview">
+                    <h4>Income Statement Preview</h4>
+                    <p>Shows your farm's financial performance over a selected period.</p>
+                    <div class="preview-stats">
+                        <div class="preview-stat">
+                            <span class="label">Total Income:</span>
+                            <span class="value positive">$12,500.00</span>
+                        </div>
+                        <div class="preview-stat">
+                            <span class="label">Total Expenses:</span>
+                            <span class="value negative">$8,500.00</span>
+                        </div>
+                        <div class="preview-stat">
+                            <span class="label">Net Profit:</span>
+                            <span class="value positive">$4,000.00</span>
                         </div>
                     </div>
-                `,
-                buttonText: 'Generate Report'
-            },
-            {
-                id: 'category-breakdown',
-                title: 'Category Breakdown',
-                icon: '📈',
-                description: 'Expense distribution by category',
-                preview: `
-                    <div class="report-preview">
-                        <h4>Category Breakdown Preview</h4>
-                        <p>Visual breakdown of where your money is being spent.</p>
-                        <div class="preview-chart">
-                            <div class="chart-bar" style="width: 40%">Feed & Nutrition</div>
-                            <div class="chart-bar" style="width: 25%">Labor</div>
-                            <div class="chart-bar" style="width: 15%">Equipment</div>
-                            <div class="chart-bar" style="width: 10%">Healthcare</div>
-                            <div class="chart-bar" style="width: 10%">Other</div>
+                </div>
+            `,
+            buttonText: 'Generate Report'
+        },
+        {
+            id: 'category-breakdown',
+            title: 'Category Breakdown',
+            icon: '📈',
+            description: 'Expense distribution by category',
+            preview: `
+                <div class="report-preview">
+                    <h4>Category Breakdown Preview</h4>
+                    <p>Visual breakdown of where your money is being spent.</p>
+                    <div class="preview-chart">
+                        <div class="chart-bar" style="width: 40%">Feed & Nutrition</div>
+                        <div class="chart-bar" style="width: 25%">Labor</div>
+                        <div class="chart-bar" style="width: 15%">Equipment</div>
+                        <div class="chart-bar" style="width: 10%">Healthcare</div>
+                        <div class="chart-bar" style="width: 10%">Other</div>
+                    </div>
+                </div>
+            `,
+            buttonText: 'View Breakdown'
+        },
+        {
+            id: 'monthly-trends',
+            title: 'Monthly Trends',
+            icon: '📅',
+            description: 'Income and expense trends',
+            preview: `
+                <div class="report-preview">
+                    <h4>Monthly Trends Preview</h4>
+                    <p>Track your financial performance month over month.</p>
+                    <div class="trend-preview">
+                        <div class="trend-month">
+                            <span>Jan: <span class="positive">+$2,800</span></span>
+                        </div>
+                        <div class="trend-month">
+                            <span>Feb: <span class="positive">+$3,200</span></span>
+                        </div>
+                        <div class="trend-month">
+                            <span>Mar: <span class="positive">+$2,900</span></span>
+                        </div>
+                        <div class="trend-month">
+                            <span>Apr: <span class="positive">+$3,600</span></span>
                         </div>
                     </div>
-                `,
-                buttonText: 'View Breakdown'
-            },
-            {
-                id: 'monthly-trends',
-                title: 'Monthly Trends',
-                icon: '📅',
-                description: 'Income and expense trends',
-                preview: `
-                    <div class="report-preview">
-                        <h4>Monthly Trends Preview</h4>
-                        <p>Track your financial performance month over month.</p>
-                        <div class="trend-preview">
-                            <div class="trend-month">
-                                <span>Jan: <span class="positive">+$2,800</span></span>
-                            </div>
-                            <div class="trend-month">
-                                <span>Feb: <span class="positive">+$3,200</span></span>
-                            </div>
-                            <div class="trend-month">
-                                <span>Mar: <span class="positive">+$2,900</span></span>
-                            </div>
-                            <div class="trend-month">
-                                <span>Apr: <span class="positive">+$3,600</span></span>
-                            </div>
+                </div>
+            `,
+            buttonText: 'View Trends'
+        },
+        {
+            id: 'yearly-summary',
+            title: 'Yearly Summary',
+            icon: '📋',
+            description: 'Annual financial summary',
+            preview: `
+                <div class="report-preview">
+                    <h4>Yearly Summary Preview</h4>
+                    <p>Complete overview of your farm's yearly financial performance.</p>
+                    <div class="yearly-stats">
+                        <div class="yearly-stat">
+                            <span class="label">Total Income:</span>
+                            <span class="value">$38,400.00</span>
+                        </div>
+                        <div class="yearly-stat">
+                            <span class="label">Total Expenses:</span>
+                            <span class="value">$25,600.00</span>
+                        </div>
+                        <div class="yearly-stat">
+                            <span class="label">Yearly Profit:</span>
+                            <span class="value positive">$12,800.00</span>
                         </div>
                     </div>
-                `,
-                buttonText: 'View Trends'
-            },
-            {
-                id: 'yearly-summary',
-                title: 'Yearly Summary',
-                icon: '📋',
-                description: 'Annual financial summary',
-                preview: `
-                    <div class="report-preview">
-                        <h4>Yearly Summary Preview</h4>
-                        <p>Complete overview of your farm's yearly financial performance.</p>
-                        <div class="yearly-stats">
-                            <div class="yearly-stat">
-                                <span class="label">Total Income:</span>
-                                <span class="value">$38,400.00</span>
-                            </div>
-                            <div class="yearly-stat">
-                                <span class="label">Total Expenses:</span>
-                                <span class="value">$25,600.00</span>
-                            </div>
-                            <div class="yearly-stat">
-                                <span class="label">Yearly Profit:</span>
-                                <span class="value positive">$12,800.00</span>
-                            </div>
-                        </div>
-                    </div>
-                `,
-                buttonText: 'View Summary'
-            }
-        ];
+                </div>
+            `,
+            buttonText: 'View Summary'
+        }
+    ];
 
-        window.ModalManager.showReports({
-            id: 'reports-modal',
-            title: 'Financial Reports',
-            subtitle: 'Select a report to generate',
-            reports: reports,
-            onReportSelect: (reportId) => {
-                this.showNotification(`Generating ${reportId.replace('-', ' ')} report...`, 'success');
-                // In a real app, you would generate and show the actual report here
-                setTimeout(() => {
-                    this.showNotification(`Report generated successfully!`, 'success');
-                }, 1500);
+    // First, let's make sure ModalManager exists and has the right method
+    if (!window.ModalManager) {
+        console.error('ModalManager not found!');
+        return;
+    }
+
+    // Create the modal HTML directly
+    const modalHTML = `
+        <div class="modal-overlay active" id="reports-modal">
+            <div class="modal-container">
+                <button class="modal-close-x" onclick="closeModal('reports-modal')">×</button>
+                
+                <div class="modal-header">
+                    <h2 class="modal-title">Financial Reports</h2>
+                    <p class="modal-subtitle">Select a report to generate</p>
+                </div>
+                
+                <div class="modal-content">
+                    <div class="reports-grid">
+                        ${reports.map(report => `
+                            <div class="report-card">
+                                <div class="report-icon">${report.icon}</div>
+                                <h3 class="report-title">${report.title}</h3>
+                                <p class="report-description">${report.description}</p>
+                                ${report.preview ? `<div class="report-preview">${report.preview}</div>` : ''}
+                                <button class="btn btn-primary generate-report-btn" 
+                                        data-report-id="${report.id}"
+                                        onclick="handleReportGenerate('${report.id}')">
+                                    ${report.buttonText}
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal('reports-modal')">Cancel</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add to page
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    // Add CSS for modal if not already present
+    if (!document.querySelector('#modal-styles')) {
+        const style = document.createElement('style');
+        style.id = 'modal-styles';
+        style.textContent = `
+            .modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                display: none;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
             }
+            
+            .modal-overlay.active {
+                display: flex;
+            }
+            
+            .modal-container {
+                background-color: white;
+                border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+                width: 90%;
+                max-width: 600px;
+                max-height: 90vh;
+                overflow-y: auto;
+                position: relative;
+                animation: modalSlideIn 0.3s ease;
+            }
+            
+            .modal-close-x {
+                position: absolute;
+                top: 15px;
+                right: 20px;
+                background: none;
+                border: none;
+                font-size: 28px;
+                color: #666;
+                cursor: pointer;
+                line-height: 1;
+                padding: 5px 10px;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                transition: all 0.2s;
+                z-index: 10;
+            }
+            
+            .modal-close-x:hover {
+                background-color: #f5f5f5;
+                color: #333;
+                transform: scale(1.1);
+            }
+            
+            .modal-header {
+                padding: 25px 30px 15px;
+                border-bottom: 1px solid #eee;
+            }
+            
+            .modal-title {
+                margin: 0;
+                font-size: 1.5rem;
+                color: #333;
+            }
+            
+            .modal-subtitle {
+                margin: 5px 0 0;
+                color: #666;
+                font-size: 0.95rem;
+            }
+            
+            .modal-content {
+                padding: 20px 30px;
+                max-height: 60vh;
+                overflow-y: auto;
+            }
+            
+            .modal-footer {
+                padding: 20px 30px;
+                border-top: 1px solid #eee;
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+            }
+            
+            @keyframes modalSlideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            .reports-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 20px;
+                margin-top: 20px;
+            }
+            
+            .report-card {
+                background: #f9f9f9;
+                border-radius: 10px;
+                padding: 20px;
+                border: 1px solid #eee;
+                transition: transform 0.2s;
+            }
+            
+            .report-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            }
+            
+            .report-icon {
+                font-size: 2.5rem;
+                margin-bottom: 10px;
+            }
+            
+            .report-title {
+                margin: 0 0 10px 0;
+                font-size: 1.2rem;
+                color: #333;
+            }
+            
+            .report-description {
+                color: #666;
+                font-size: 0.9rem;
+                margin-bottom: 15px;
+            }
+            
+            .report-preview {
+                background: white;
+                padding: 15px;
+                border-radius: 8px;
+                margin: 15px 0;
+                border: 1px solid #e0e0e0;
+            }
+            
+            .report-preview h4 {
+                margin-top: 0;
+                color: #555;
+                font-size: 1rem;
+            }
+            
+            .btn {
+                padding: 10px 20px;
+                border-radius: 6px;
+                border: none;
+                cursor: pointer;
+                font-size: 1rem;
+                transition: all 0.2s;
+            }
+            
+            .btn-primary {
+                background-color: #4CAF50;
+                color: white;
+                width: 100%;
+            }
+            
+            .btn-primary:hover {
+                background-color: #45a049;
+            }
+            
+            .btn-outline {
+                background-color: transparent;
+                color: #666;
+                border: 1px solid #ddd;
+            }
+            
+            .btn-outline:hover {
+                background-color: #f5f5f5;
+            }
+            
+            @media (max-width: 768px) {
+                .modal-container {
+                    width: 95%;
+                    margin: 10px;
+                }
+                
+                .modal-close-x {
+                    top: 10px;
+                    right: 15px;
+                    font-size: 24px;
+                    width: 35px;
+                    height: 35px;
+                }
+                
+                .reports-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // Add global close function
+    window.closeModal = function(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('active');
+            setTimeout(() => {
+                if (modal.parentNode) {
+                    modal.parentNode.removeChild(modal);
+                }
+            }, 300);
+        }
+    };
+
+    // Add report generate handler
+    window.handleReportGenerate = function(reportId) {
+        this.showNotification(`Generating ${reportId.replace('-', ' ')} report...`, 'success');
+        setTimeout(() => {
+            this.showNotification(`Report generated successfully!`, 'success');
+            window.closeModal('reports-modal');
+        }, 1500);
+    }.bind(this);
+},
+
+// ==================== CATEGORIES MODAL METHODS ====================
+
+showManageCategoriesModal() {
+    // Create modal HTML
+    const modalHTML = `
+        <div class="modal-overlay active" id="manage-categories-modal">
+            <div class="modal-container modal-lg">
+                <button class="modal-close-x" onclick="closeModal('manage-categories-modal')">×</button>
+                
+                <div class="modal-header">
+                    <h2 class="modal-title">Manage Categories</h2>
+                </div>
+                
+                <div class="modal-content">
+                    <div class="categories-management">
+                        <div class="tabs">
+                            <button class="tab active" onclick="switchCategoryTab('income')">💰 Income Categories</button>
+                            <button class="tab" onclick="switchCategoryTab('expense')">💸 Expense Categories</button>
+                        </div>
+                        
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="income-categories-pane">
+                                <div class="categories-list" id="income-categories-list">
+                                    ${this.renderCategoryList('income')}
+                                </div>
+                                <button class="btn btn-primary add-category-btn" onclick="FarmFinanceTracker.showAddCategoryModal('income')">
+                                    <span class="btn-icon">➕</span>
+                                    <span class="btn-text">Add Income Category</span>
+                                </button>
+                            </div>
+                            
+                            <div class="tab-pane" id="expense-categories-pane">
+                                <div class="categories-list" id="expense-categories-list">
+                                    ${this.renderCategoryList('expense')}
+                                </div>
+                                <button class="btn btn-primary add-category-btn" onclick="FarmFinanceTracker.showAddCategoryModal('expense')">
+                                    <span class="btn-icon">➕</span>
+                                    <span class="btn-text">Add Expense Category</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal('manage-categories-modal')">Close</button>
+                    <button class="btn btn-primary" onclick="saveCategories()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add to page
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    // Add category management styles
+    if (!document.querySelector('#category-styles')) {
+        const style = document.createElement('style');
+        style.id = 'category-styles';
+        style.textContent = `
+            .tabs {
+                display: flex;
+                border-bottom: 2px solid #eee;
+                margin-bottom: 20px;
+            }
+            
+            .tab {
+                padding: 12px 20px;
+                background: none;
+                border: none;
+                cursor: pointer;
+                font-size: 1rem;
+                color: #666;
+                border-bottom: 2px solid transparent;
+                transition: all 0.2s;
+                margin-bottom: -2px;
+            }
+            
+            .tab.active {
+                color: #4CAF50;
+                border-bottom-color: #4CAF50;
+                font-weight: 600;
+            }
+            
+            .tab:hover:not(.active) {
+                color: #333;
+                background-color: #f5f5f5;
+            }
+            
+            .tab-pane {
+                display: none;
+            }
+            
+            .tab-pane.active {
+                display: block;
+            }
+            
+            .categories-list {
+                margin-bottom: 20px;
+                max-height: 300px;
+                overflow-y: auto;
+                padding-right: 10px;
+            }
+            
+            .category-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 15px;
+                background: #f9f9f9;
+                border-radius: 8px;
+                margin-bottom: 10px;
+                border: 1px solid #eee;
+            }
+            
+            .category-info {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            
+            .category-icon {
+                font-size: 1.5rem;
+            }
+            
+            .category-details {
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .category-name {
+                font-weight: 600;
+                color: #333;
+            }
+            
+            .category-value {
+                font-size: 0.85rem;
+                color: #666;
+                font-family: monospace;
+                margin-top: 2px;
+            }
+            
+            .category-actions {
+                display: flex;
+                gap: 8px;
+            }
+            
+            .icon-btn {
+                background: none;
+                border: none;
+                cursor: pointer;
+                padding: 6px;
+                border-radius: 4px;
+                color: #666;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .icon-btn:hover {
+                background-color: #f0f0f0;
+                color: #333;
+            }
+            
+            .empty-categories {
+                text-align: center;
+                padding: 40px 20px;
+                color: #999;
+                font-style: italic;
+                background: #f9f9f9;
+                border-radius: 8px;
+                border: 2px dashed #ddd;
+            }
+            
+            .add-category-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                width: 100%;
+                padding: 12px;
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 1rem;
+                transition: background-color 0.2s;
+            }
+            
+            .add-category-btn:hover {
+                background-color: #45a049;
+            }
+            
+            .btn-icon {
+                font-size: 1.2rem;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // Add tab switching function
+    window.switchCategoryTab = function(tabType) {
+        // Update active tab
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.classList.remove('active');
         });
-    },
+        document.querySelector(`[onclick="switchCategoryTab('${tabType}')"]`).classList.add('active');
+        
+        // Show corresponding content
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.remove('active');
+        });
+        document.getElementById(`${tabType}-categories-pane`).classList.add('active');
+    };
+
+    // Add save function
+    window.saveCategories = function() {
+        this.saveData();
+        this.showNotification('Categories saved successfully!', 'success');
+        window.closeModal('manage-categories-modal');
+    }.bind(this);
+},
+
+renderCategoryList(type) {
+    const categories = this.categories[type];
+    
+    if (categories.length === 0) {
+        return `<div class="empty-categories">No ${type} categories yet. Add your first one!</div>`;
+    }
+    
+    return categories.map(category => `
+        <div class="category-item">
+            <div class="category-info">
+                <span class="category-icon">${category.icon}</span>
+                <div class="category-details">
+                    <div class="category-name">${category.label}</div>
+                    <div class="category-value">${category.value}</div>
+                </div>
+            </div>
+            <div class="category-actions">
+                <button class="icon-btn edit-category-btn" 
+                        onclick="FarmFinanceTracker.showEditCategoryModal('${type}', '${category.value}')"
+                        title="Edit">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                </button>
+                <button class="icon-btn delete-category-btn" 
+                        onclick="FarmFinanceTracker.showDeleteCategoryModal('${type}', '${category.value}')"
+                        title="Delete">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 6h18"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    `).join('');
+},
+
+showAddCategoryModal(type) {
+    const typeLabel = type === 'income' ? 'Income' : 'Expense';
+    
+    const modalHTML = `
+        <div class="modal-overlay active" id="add-category-modal">
+            <div class="modal-container modal-sm">
+                <button class="modal-close-x" onclick="closeModal('add-category-modal')">×</button>
+                
+                <div class="modal-header">
+                    <h2 class="modal-title">Add ${typeLabel} Category</h2>
+                </div>
+                
+                <div class="modal-content">
+                    <form id="addCategoryForm">
+                        <div class="form-group">
+                            <label for="category-name">Category Name *</label>
+                            <input type="text" id="category-name" required 
+                                   placeholder="e.g., Feed & Nutrition, Egg Sales...">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="category-value">Category Value *</label>
+                            <input type="text" id="category-value" required 
+                                   placeholder="e.g., feed, egg-sales...">
+                            <small class="form-note">Used internally (no spaces, lowercase)</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="category-icon">Icon</label>
+                            <select id="category-icon" class="icon-select">
+                                <option value="🥚">🥚 Egg</option>
+                                <option value="🐔">🐔 Chicken</option>
+                                <option value="🌾">🌾 Grain</option>
+                                <option value="💊">💊 Medicine</option>
+                                <option value="🔧">🔧 Tools</option>
+                                <option value="👷">👷 Labor</option>
+                                <option value="⚡">⚡ Utilities</option>
+                                <option value="🚚">🚚 Transport</option>
+                                <option value="💰">💰 Money</option>
+                                <option value="📦" selected>📦 Other</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal('add-category-modal')">Cancel</button>
+                    <button class="btn btn-primary" onclick="submitAddCategory('${type}')">Add Category</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Add form styles
+    if (!document.querySelector('#form-styles')) {
+        const style = document.createElement('style');
+        style.id = 'form-styles';
+        style.textContent = `
+            .form-group {
+                margin-bottom: 20px;
+            }
+            
+            .form-group label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 600;
+                color: #333;
+            }
+            
+            .form-group input,
+            .form-group select {
+                width: 100%;
+                padding: 10px 12px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                font-size: 1rem;
+                box-sizing: border-box;
+            }
+            
+            .form-group input:focus,
+            .form-group select:focus {
+                outline: none;
+                border-color: #4CAF50;
+                box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+            }
+            
+            .form-note {
+                display: block;
+                margin-top: 5px;
+                color: #666;
+                font-size: 0.85rem;
+            }
+            
+            .icon-select {
+                font-size: 1.2rem;
+                padding: 8px;
+            }
+            
+            .modal-sm .modal-container {
+                max-width: 500px;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Add submit function
+    window.submitAddCategory = function(categoryType) {
+        const name = document.getElementById('category-name').value.trim();
+        const value = document.getElementById('category-value').value.trim();
+        const icon = document.getElementById('category-icon').value;
+        
+        if (!name || !value) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        const newCategory = {
+            label: name,
+            value: value.toLowerCase().replace(/\s+/g, '-'),
+            icon: icon
+        };
+        
+        this.categories[categoryType].push(newCategory);
+        this.saveData();
+        this.showNotification(`${categoryType === 'income' ? 'Income' : 'Expense'} category added!`, 'success');
+        
+        // Close both modals
+        window.closeModal('add-category-modal');
+        window.closeModal('manage-categories-modal');
+        
+        // Reopen categories modal
+        setTimeout(() => {
+            this.showManageCategoriesModal();
+        }, 300);
+    }.bind(this);
+},
+
+showEditCategoryModal(type, categoryValue) {
+    const categories = this.categories[type];
+    const category = categories.find(cat => cat.value === categoryValue);
+    const typeLabel = type === 'income' ? 'Income' : 'Expense';
+    
+    if (!category) return;
+    
+    const modalHTML = `
+        <div class="modal-overlay active" id="edit-category-modal">
+            <div class="modal-container modal-sm">
+                <button class="modal-close-x" onclick="closeModal('edit-category-modal')">×</button>
+                
+                <div class="modal-header">
+                    <h2 class="modal-title">Edit ${typeLabel} Category</h2>
+                </div>
+                
+                <div class="modal-content">
+                    <form id="editCategoryForm">
+                        <div class="form-group">
+                            <label for="edit-category-name">Category Name *</label>
+                            <input type="text" id="edit-category-name" required 
+                                   value="${category.label}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-category-value">Category Value *</label>
+                            <input type="text" id="edit-category-value" required 
+                                   value="${category.value}">
+                            <small class="form-note">Used internally (no spaces, lowercase)</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-category-icon">Icon</label>
+                            <select id="edit-category-icon" class="icon-select">
+                                <option value="🥚" ${category.icon === '🥚' ? 'selected' : ''}>🥚 Egg</option>
+                                <option value="🐔" ${category.icon === '🐔' ? 'selected' : ''}>🐔 Chicken</option>
+                                <option value="🌾" ${category.icon === '🌾' ? 'selected' : ''}>🌾 Grain</option>
+                                <option value="💊" ${category.icon === '💊' ? 'selected' : ''}>💊 Medicine</option>
+                                <option value="🔧" ${category.icon === '🔧' ? 'selected' : ''}>🔧 Tools</option>
+                                <option value="👷" ${category.icon === '👷' ? 'selected' : ''}>👷 Labor</option>
+                                <option value="⚡" ${category.icon === '⚡' ? 'selected' : ''}>⚡ Utilities</option>
+                                <option value="🚚" ${category.icon === '🚚' ? 'selected' : ''}>🚚 Transport</option>
+                                <option value="💰" ${category.icon === '💰' ? 'selected' : ''}>💰 Money</option>
+                                <option value="📦" ${category.icon === '📦' ? 'selected' : ''}>📦 Other</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal('edit-category-modal')">Cancel</button>
+                    <button class="btn btn-primary" onclick="submitEditCategory('${type}', '${categoryValue}')">Update Category</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Add submit function
+    window.submitEditCategory = function(categoryType, oldValue) {
+        const name = document.getElementById('edit-category-name').value.trim();
+        const value = document.getElementById('edit-category-value').value.trim();
+        const icon = document.getElementById('edit-category-icon').value;
+        
+        if (!name || !value) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        const updatedCategory = {
+            label: name,
+            value: value.toLowerCase().replace(/\s+/g, '-'),
+            icon: icon
+        };
+        
+        // Update the category
+        const index = this.categories[categoryType].findIndex(cat => cat.value === oldValue);
+        if (index !== -1) {
+            this.categories[categoryType][index] = updatedCategory;
+            this.saveData();
+            this.showNotification(`${categoryType === 'income' ? 'Income' : 'Expense'} category updated!`, 'success');
+            
+            // Close both modals
+            window.closeModal('edit-category-modal');
+            window.closeModal('manage-categories-modal');
+            
+            // Reopen categories modal
+            setTimeout(() => {
+                this.showManageCategoriesModal();
+            }, 300);
+        }
+    }.bind(this);
+},
+
+showDeleteCategoryModal(type, categoryValue) {
+    const categories = this.categories[type];
+    const category = categories.find(cat => cat.value === categoryValue);
+    const typeLabel = type === 'income' ? 'Income' : 'Expense';
+    
+    if (!category) return;
+    
+    const modalHTML = `
+        <div class="modal-overlay active" id="delete-category-modal">
+            <div class="modal-container modal-sm">
+                <button class="modal-close-x" onclick="closeModal('delete-category-modal')">×</button>
+                
+                <div class="modal-header">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span style="font-size: 2rem;">⚠️</span>
+                        <div>
+                            <h2 class="modal-title" style="color: #d32f2f; margin: 0;">Delete ${typeLabel} Category</h2>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-content">
+                    <div style="padding: 20px; background: #ffebee; border-radius: 8px; margin-bottom: 20px;">
+                        <p style="margin: 0 0 10px 0; font-weight: 600; color: #c62828;">
+                            Are you sure you want to delete "${category.label}"?
+                        </p>
+                        <p style="margin: 0; color: #666; font-size: 0.95rem;">
+                            This action cannot be undone. Existing transactions using this category will need to be reassigned.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal('delete-category-modal')">Cancel</button>
+                    <button class="btn btn-danger" onclick="confirmDeleteCategory('${type}', '${categoryValue}')">Delete Category</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Add danger button style
+    if (!document.querySelector('#danger-styles')) {
+        const style = document.createElement('style');
+        style.id = 'danger-styles';
+        style.textContent = `
+            .btn-danger {
+                background-color: #d32f2f;
+                color: white;
+            }
+            
+            .btn-danger:hover {
+                background-color: #c62828;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Add delete function
+    window.confirmDeleteCategory = function(categoryType, categoryValue) {
+        // Remove the category
+        this.categories[categoryType] = this.categories[categoryType].filter(cat => cat.value !== categoryValue);
+        this.saveData();
+        this.showNotification(`${categoryType === 'income' ? 'Income' : 'Expense'} category deleted!`, 'success');
+        
+        // Close both modals
+        window.closeModal('delete-category-modal');
+        window.closeModal('manage-categories-modal');
+        
+        // Reopen categories modal
+        setTimeout(() => {
+            this.showManageCategoriesModal();
+        }, 300);
+    }.bind(this);
+}
 
     // ==================== CATEGORIES MODAL METHODS ====================
 
