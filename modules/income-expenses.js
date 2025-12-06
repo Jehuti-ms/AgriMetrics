@@ -2076,7 +2076,181 @@ setupReceiptActionListeners() {
     });
 },
 
-processSingleReceipt(receiptId)
+processSingleReceipt(receiptId) {
+    const receipt = this.receiptQueue.find(r => r.id === receiptId);
+    if (!receipt) return;
+    
+    // For now, simulate some extracted data (in real app, use OCR)
+    const extractedData = {
+        amount: 0.00,
+        vendor: 'Unknown Vendor',
+        date: new Date().toISOString().split('T')[0],
+        type: 'expense',
+        category: 'other-expense'
+    };
+    
+    // Show review modal
+    this.showReceiptReviewModal(receipt, extractedData);
+},
+
+    showReceiptReviewModal(receipt, extractedData) {
+    // Determine if this looks like income or expense based on data
+    const isLikelyIncome = extractedData.category && 
+                          (extractedData.category.includes('sales') || 
+                           extractedData.category.includes('income'));
+    
+    const defaultType = isLikelyIncome ? 'income' : 'expense';
+    
+    // Create form fields based on extracted data
+    const fields = [
+        {
+            type: 'select',
+            name: 'transaction-type',
+            label: 'Transaction Type',
+            value: defaultType,
+            options: [
+                { value: 'income', label: '💰 Income' },
+                { value: 'expense', label: '💸 Expense' }
+            ]
+        },
+        {
+            type: 'text',
+            name: 'description',
+            label: 'Description',
+            value: `Receipt: ${receipt.name}`,
+            required: true
+        },
+        {
+            type: 'number',
+            name: 'amount',
+            label: 'Amount',
+            value: extractedData.amount || 0,
+            required: true,
+            min: 0.01
+        },
+        {
+            type: 'select',
+            name: 'category',
+            label: 'Category',
+            value: extractedData.category || 'other-expense',
+            options: this.getCategoryOptions(defaultType, extractedData.category)
+        },
+        {
+            type: 'text',
+            name: 'vendor',
+            label: 'Vendor/Supplier',
+            value: extractedData.vendor || ''
+        },
+        {
+            type: 'date',
+            name: 'date',
+            label: 'Date',
+            value: extractedData.date || new Date().toISOString().split('T')[0]
+        },
+        {
+            type: 'textarea',
+            name: 'notes',
+            label: 'Notes',
+            value: `Extracted from receipt: ${receipt.name}\nItems: ${extractedData.items?.join(', ') || 'Various items'}`,
+            rows: 3
+        }
+    ];
+    
+    window.ModalManager.createForm({
+        id: 'receipt-review-modal',
+        title: '🔍 Review Extracted Data',
+        subtitle: `From: ${receipt.name}`,
+        size: 'modal-lg',
+        fields: fields,
+        submitText: 'Add Transaction',
+        onSubmit: (formData) => {
+            // Create transaction from form data
+            const transactionData = {
+                type: formData['transaction-type'],
+                description: formData.description,
+                amount: parseFloat(formData.amount),
+                category: this.getCategoryName(formData.category),
+                date: formData.date,
+                paymentMethod: 'receipt',
+                notes: formData.notes,
+                vendor: formData.vendor,
+                receiptId: receipt.id,
+                receiptName: receipt.name,
+                receiptURL: receipt.downloadURL,
+                status: 'completed'
+            };
+            
+            // Add to transactions
+            this.addTransaction(transactionData);
+            
+            // Update receipt status in Firebase
+            this.updateReceiptStatus(receipt.id, 'processed');
+            
+            // Remove from local queue
+            this.receiptQueue = this.receiptQueue.filter(r => r.id !== receipt.id);
+            
+            // Update UI
+            this.updateReceiptQueueUI();
+            
+            this.showNotification('Transaction added from receipt!', 'success');
+        }
+    });
+},
+
+async updateReceiptStatus(receiptId, status) {
+    try {
+        await window.db.collection('receipts').doc(receiptId).update({
+            status: status,
+            processedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch (error) {
+        console.error('Error updating receipt status:', error);
+    }
+},
+
+    processPendingReceipts() {
+    const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+    
+    if (pendingReceipts.length === 0) {
+        this.showNotification('No pending receipts to process!', 'warning');
+        return;
+    }
+    
+    // Process each receipt
+    pendingReceipts.forEach((receipt, index) => {
+        setTimeout(() => {
+            this.processSingleReceipt(receipt.id);
+        }, index * 1000); // Stagger processing
+    });
+},
+
+// Add this method to handle processing all receipts
+processAllReceipts() {
+    this.processPendingReceipts();
+},
+
+// Add this method for clearing pending receipts
+clearAllPendingReceipts() {
+    if (this.receiptQueue.length === 0) {
+        this.showNotification('No pending receipts to clear!', 'info');
+        return;
+    }
+    
+    window.ModalManager.confirm({
+        title: 'Clear All Pending Receipts',
+        message: 'Are you sure you want to clear ALL pending receipts?',
+        details: 'This will remove all uploaded receipts from the queue. Extracted data will be lost.',
+        icon: '⚠️',
+        danger: true,
+        confirmText: 'Clear All'
+    }).then(confirmed => {
+        if (confirmed) {
+            this.receiptQueue = [];
+            this.updateReceiptQueueUI();
+            this.showNotification('All pending receipts cleared!', 'success');
+        }
+    });
+},
 
 async deleteReceiptFromFirebase(receiptId) {
     const confirm = await window.ModalManager.confirm({
@@ -2170,7 +2344,7 @@ getCurrentUser() {
     }
     
     return 'anonymous';
-}
+};
 
 // Register the module when FarmModules is available
 if (window.FarmModules) {
