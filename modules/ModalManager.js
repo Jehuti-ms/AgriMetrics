@@ -1190,6 +1190,96 @@ showReports(options) {
     return modalId;
 }
 
+// In ModalManager class or object
+showReceiptReviewModal: function(options) {
+    const { receipt, extractedData } = options;
+    
+    const fields = [
+        {
+            type: 'select',
+            name: 'transaction-type',
+            label: 'Transaction Type',
+            value: extractedData?.type || 'expense',
+            options: [
+                { value: 'income', label: '💰 Income' },
+                { value: 'expense', label: '💸 Expense' }
+            ]
+        },
+        {
+            type: 'text',
+            name: 'description',
+            label: 'Description',
+            value: `Receipt: ${receipt.name}`,
+            required: true,
+            placeholder: 'Enter transaction description'
+        },
+        {
+            type: 'number',
+            name: 'amount',
+            label: 'Amount ($)',
+            value: extractedData?.amount || '',
+            required: true,
+            min: 0.01,
+            step: 0.01,
+            placeholder: '0.00'
+        },
+        {
+            type: 'select',
+            name: 'category',
+            label: 'Category',
+            value: extractedData?.category || '',
+            options: this.getCategoryOptions(extractedData?.type || 'expense')
+        },
+        {
+            type: 'date',
+            name: 'date',
+            label: 'Date',
+            value: extractedData?.date || new Date().toISOString().split('T')[0]
+        },
+        {
+            type: 'text',
+            name: 'vendor',
+            label: 'Vendor/Supplier',
+            value: extractedData?.vendor || '',
+            placeholder: 'Who issued this receipt?'
+        },
+        {
+            type: 'textarea',
+            name: 'notes',
+            label: 'Notes',
+            value: `Imported from receipt: ${receipt.name}`,
+            rows: 3,
+            placeholder: 'Additional notes...'
+        }
+    ];
+
+    // Use your existing createForm method
+    return this.createForm({
+        id: 'receipt-review-modal',
+        title: '🔍 Review Receipt Data',
+        subtitle: `From: ${receipt.name}`,
+        size: 'modal-lg',
+        fields: fields,
+        submitText: 'Add Transaction',
+        onSubmit: options.onSubmit
+    });
+},
+
+getCategoryOptions: function(type) {
+    // This should get categories from the IncomeExpensesModule
+    if (window.IncomeExpensesModule) {
+        return window.IncomeExpensesModule.getCategoryOptions(type);
+    }
+    
+    // Fallback
+    return [
+        { value: '', label: 'Select a category' },
+        { value: 'feed', label: '🌾 Feed & Nutrition' },
+        { value: 'medication', label: '💊 Healthcare' },
+        { value: 'equipment', label: '🔧 Equipment' }
+    ];
+}
+
 // Initialize Modal Manager when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => ModalManager.initialize());
