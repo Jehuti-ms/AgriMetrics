@@ -314,13 +314,21 @@ const IncomeExpensesModule = {
         console.log('✅ Event listeners set up');
     },
 
-    loadAndDisplayData() {
+      loadAndDisplayData() {
         console.log('🔄 Loading and displaying data...');
         const data = this.getModuleData();
         this.updateDashboardDisplay(data);
         this.updateTransactionsList(data);
         this.updateCategoriesList(data);
-        this.updatePendingReceiptsUI();
+        
+        // Load receipts from Firebase
+        this.loadReceiptsFromFirebase().then(() => {
+            this.updatePendingReceiptsUI();
+        }).catch(error => {
+            console.error('Error loading receipts:', error);
+            this.updatePendingReceiptsUI();
+        });
+        
         console.log('✅ Data loaded and displayed');
     },
 
@@ -699,10 +707,17 @@ const IncomeExpensesModule = {
 
     // ==================== TRANSACTION MODAL METHODS ====================
 
-    showAddTransactionModal(prefill = null) {
+       showAddTransactionModal(prefill = null) {
+        // Check if ModalManager is available
+        if (!window.ModalManager || !window.ModalManager.createForm) {
+            console.error('❌ ModalManager not available');
+            this.showNotification('Modal system is not available. Please refresh the page.', 'error');
+            return;
+        }
+        
         const isEditing = prefill?.id;
         const modalTitle = isEditing ? 'Edit Transaction' : 'Add Transaction';
-        
+               
         // Get current transaction type for category filtering
         const currentType = prefill?.type || 'expense';
         
@@ -2171,6 +2186,69 @@ const IncomeExpensesModule = {
                 this.showNotification('All pending receipts cleared!', 'success');
             }
         });
+    },
+
+        updatePendingReceiptsUI() {
+        // This method should update the pending receipts UI
+        console.log('🔄 Updating pending receipts UI...');
+        
+        const pendingSection = document.getElementById('pending-receipts-section');
+        const pendingList = document.getElementById('pending-receipts-list');
+        const badge = document.getElementById('receipt-count-badge');
+        
+        if (!pendingSection || !pendingList || !badge) return;
+        
+        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+        
+        if (pendingReceipts.length > 0) {
+            // Show the section
+            pendingSection.style.display = 'block';
+            
+            // Update badge
+            badge.textContent = pendingReceipts.length;
+            badge.style.display = 'inline-block';
+            
+            // Update list
+            pendingList.innerHTML = pendingReceipts.map(receipt => `
+                <div class="pending-receipt-item" data-id="${receipt.id}">
+                    <div class="receipt-info">
+                        <span class="receipt-icon">${receipt.type.startsWith('image/') ? '🖼️' : '📄'}</span>
+                        <div class="receipt-details">
+                            <div class="receipt-name">${receipt.name}</div>
+                            <div class="receipt-meta">
+                                <span>${this.formatFileSize(receipt.size)}</span>
+                                <span>•</span>
+                                <span class="receipt-status status-pending">Pending</span>
+                                <span>•</span>
+                                <span>${this.formatFirebaseTimestamp(receipt.uploadedAt)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="receipt-actions">
+                        <a href="${receipt.downloadURL}" target="_blank" class="btn btn-sm btn-outline" title="View">
+                            <span class="btn-icon">👁️</span>
+                        </a>
+                        <button class="btn btn-sm btn-primary process-receipt-btn" data-id="${receipt.id}">
+                            <span class="btn-icon">🔍</span>
+                            <span class="btn-text">Process</span>
+                        </button>
+                        <button class="btn btn-sm btn-outline remove-receipt-btn" data-id="${receipt.id}">
+                            <span class="btn-icon">🗑️</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Add event listeners to new buttons
+            this.setupReceiptActionListeners();
+            
+        } else {
+            // Hide the section
+            pendingSection.style.display = 'none';
+            badge.style.display = 'none';
+        }
+        
+        console.log('✅ Pending receipts UI updated');
     },
 
     // Utility methods
