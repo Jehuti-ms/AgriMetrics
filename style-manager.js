@@ -266,21 +266,15 @@ const StyleManager = {
 
             .nav-brand {
               display: flex;
-              align-items: center;     /* vertical centering */
-              gap: 12px;               /* space between logo and text */
-            }
-            
-            .nav-brand img {
-              height: 48px;
-              width: auto;
+              align-items: flex-end;   /* align text at the bottom */
+              gap: 8px;                /* space between the two spans */
             }
             
             .brand-text,
             .brand-subtitle {
               display: inline-block;
-              font-size: 1rem;
-              line-height: 1.2;
-              white-space: nowrap;     /* prevent wrapping */
+              line-height: 1;          /* keeps bottoms aligned */
+              vertical-align: bottom;  /* ensures flush alignment */
             }
 
            /* MODERN PWA BUTTONS - GREEN GRADIENT FOR ALL MODULES */
