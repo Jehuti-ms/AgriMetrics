@@ -953,8 +953,8 @@ const ReportsModule = {
     }
 };
 
-// Register the module correctly
+// FIXED: Register the module correctly
 window.FarmModules = window.FarmModules || {};
 window.FarmModules.reports = ReportsModule;
 
-console.log('📊 Reports module registered successfully!');
+console.log('✅ Reports module registered successfully!');
