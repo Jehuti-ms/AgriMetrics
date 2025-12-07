@@ -669,7 +669,7 @@ const IncomeExpensesModule = {
         `;
     },
 
-    // ==================== MODAL CONTROL METHODS ====================
+   // ==================== MODAL CONTROL METHODS ====================
     showImportReceiptsModal() {
         console.log('Showing import receipts modal');
         this.hideAllModals();
