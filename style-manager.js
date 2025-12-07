@@ -268,6 +268,7 @@ const StyleManager = {
               display: flex;
               align-items: flex-end; /* aligns all children at their bottom edge */
               gap: 8px;
+              padding-bottom: 6px; /* nudges entire brand block upward */
             }
             
             .brand-text,
