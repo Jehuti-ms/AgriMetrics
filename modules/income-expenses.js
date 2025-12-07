@@ -1,5 +1,5 @@
-// modules/income-expenses.js - UPGRADED WITH FIREBASE RECEIPTS
-console.log('💰 Loading Income & Expenses module (Upgraded)...');
+// modules/income-expenses.js - COMPLETE REWRITTEN VERSION
+console.log('💰 Loading Income & Expenses module (Complete)...');
 
 const IncomeExpensesModule = {
     name: 'income-expenses',
@@ -8,7 +8,7 @@ const IncomeExpensesModule = {
     transactions: [],
     categories: ['feed', 'medical', 'equipment', 'labor', 'utilities', 'sales', 'other'],
     currentEditingId: null,
-    receiptQueue: [], // Firebase pending receipts
+    receiptQueue: [],
     cameraStream: null,
     scannerStream: null,
     receiptPreview: null,
@@ -16,7 +16,7 @@ const IncomeExpensesModule = {
 
     // ==================== INITIALIZATION ====================
     initialize() {
-        console.log('💰 Initializing Income & Expenses with Firebase Receipts...');
+        console.log('💰 Initializing Income & Expenses...');
         
         this.element = document.getElementById('content-area');
         if (!this.element) {
@@ -33,11 +33,11 @@ const IncomeExpensesModule = {
         }
 
         this.loadData();
-        this.loadReceiptsFromFirebase(); // Load receipts on startup
+        this.loadReceiptsFromFirebase();
         this.renderModule();
         this.initialized = true;
         
-        console.log('✅ Income & Expenses initialized with Firebase Receipts');
+        console.log('✅ Income & Expenses initialized');
         return true;
     },
 
@@ -157,6 +157,10 @@ const IncomeExpensesModule = {
                 /* Spinner Animation */
                 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
                 .spinner { width: 40px; height: 40px; border: 4px solid var(--glass-border); border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; }
+                
+                /* Make button children not interfere with clicks */
+                #upload-receipt-btn * { pointer-events: none; }
+                .firebase-badge, .receipt-queue-badge { pointer-events: none; }
             </style>
 
             <div class="module-container">
@@ -168,13 +172,11 @@ const IncomeExpensesModule = {
                         <button class="btn btn-primary" id="add-transaction">
                             ➕ Add Transaction
                         </button>
-                       <div style="display: flex; align-items: center; gap: 8px;">
-                            <button class="btn btn-outline" id="upload-receipt-btn">
-                                📄 Import Receipts
-                            </button>
+                        <button class="btn btn-outline" id="upload-receipt-btn" style="display: flex; align-items: center; gap: 8px;">
+                            📄 Import Receipts
                             ${this.isFirebaseAvailable ? '<span class="firebase-badge">Firebase</span>' : ''}
                             ${pendingReceipts.length > 0 ? `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingReceipts.length}</span>` : ''}
-                        </div>
+                        </button>
                     </div>
                 </div>
 
@@ -284,7 +286,7 @@ const IncomeExpensesModule = {
                     </div>
                     <div class="popout-modal-body">
                         <div id="import-receipts-content">
-                            ${this.renderImportReceiptsModal()}
+                            <!-- Content loaded dynamically -->
                         </div>
                     </div>
                     <div class="popout-modal-footer">
@@ -434,51 +436,138 @@ const IncomeExpensesModule = {
                     </div>
                 </div>
             </div>
-
-            <!-- Receipt Scanner Modal -->
-            <div id="receipt-scanner-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 100%; height: 100%; background: #000;">
-                    <div class="popout-modal-header" style="background: rgba(0,0,0,0.7);">
-                        <h3 class="popout-modal-title" style="color: white;">Receipt Scanner</h3>
-                        <button class="popout-modal-close" id="close-scanner-modal" style="color: white;">&times;</button>
-                    </div>
-                    <div class="popout-modal-body" style="padding: 0; height: calc(100% - 60px);">
-                        <div style="position: relative; height: 100%;">
-                            <video id="scanner-preview" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
-                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; height: 200px; border: 3px solid #22c55e; border-radius: 12px; pointer-events: none;"></div>
-                            <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; color: white; background: rgba(0,0,0,0.5); padding: 16px;">
-                                <div style="margin-bottom: 8px;">Hold steady and align receipt within the frame</div>
-                                <button type="button" id="scan-capture-btn" class="btn-primary" style="font-size: 18px; padding: 12px 32px;">
-                                    📷 Capture Receipt
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Financial Report Modal -->
-            <div id="financial-report-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 800px;">
-                    <div class="popout-modal-header">
-                        <h3 class="popout-modal-title">Financial Report</h3>
-                        <button class="popout-modal-close" id="close-financial-report">&times;</button>
-                    </div>
-                    <div class="popout-modal-body">
-                        <div id="financial-report-content"></div>
-                    </div>
-                    <div class="popout-modal-footer">
-                        <button class="btn-outline" id="print-financial-report">🖨️ Print</button>
-                        <button class="btn-primary" id="close-financial-report-btn">Close</button>
-                    </div>
-                </div>
-            </div>
         `;
 
         this.setupEventListeners();
     },
 
+    // ==================== EVENT LISTENERS ====================
+    setupEventListeners() {
+        console.log('Setting up event listeners...');
+        
+        // Main buttons - SIMPLE DIRECT EVENT LISTENERS
+        document.getElementById('add-transaction')?.addEventListener('click', () => {
+            console.log('Add Transaction clicked');
+            this.showTransactionModal();
+        });
+
+        // FIXED: Import Receipts button with proper event handling
+        const uploadReceiptBtn = document.getElementById('upload-receipt-btn');
+        if (uploadReceiptBtn) {
+            console.log('Found upload-receipt-btn, adding listener');
+            // Remove any existing listeners
+            const newBtn = uploadReceiptBtn.cloneNode(true);
+            uploadReceiptBtn.parentNode.replaceChild(newBtn, uploadReceiptBtn);
+            
+            // Add fresh listener
+            newBtn.addEventListener('click', (e) => {
+                console.log('UPLOAD RECEIPT BUTTON CLICKED!');
+                e.preventDefault();
+                e.stopPropagation();
+                this.showImportReceiptsModal();
+            });
+            
+            // Also add onclick as backup
+            newBtn.onclick = (e) => {
+                console.log('onclick backup fired');
+                e.preventDefault();
+                this.showImportReceiptsModal();
+            };
+        } else {
+            console.error('upload-receipt-btn not found!');
+        }
+        
+        // Quick actions
+        this.setupButton('add-income-btn', () => this.showAddIncome());
+        this.setupButton('add-expense-btn', () => this.showAddExpense());
+        this.setupButton('financial-report-btn', () => this.generateFinancialReport());
+        this.setupButton('category-analysis-btn', () => this.generateCategoryAnalysis());
+        
+        // Transaction modal
+        this.setupButton('save-transaction', () => this.saveTransaction());
+        this.setupButton('delete-transaction', () => this.deleteTransaction());
+        this.setupButton('cancel-transaction', () => this.hideTransactionModal());
+        this.setupButton('close-transaction-modal', () => this.hideTransactionModal());
+        
+        // Import receipts modal
+        this.setupButton('close-import-receipts', () => this.hideImportReceiptsModal());
+        this.setupButton('cancel-import-receipts', () => this.hideImportReceiptsModal());
+        
+        // Refresh receipts
+        this.setupButton('refresh-receipts-btn', () => this.loadReceiptsFromFirebase());
+        this.setupButton('process-all-receipts', () => this.processPendingReceipts());
+        
+        // Other buttons
+        this.setupButton('export-transactions', () => this.exportTransactions());
+        
+        // Filter
+        const transactionFilter = document.getElementById('transaction-filter');
+        if (transactionFilter) {
+            transactionFilter.addEventListener('change', (e) => {
+                this.filterTransactions(e.target.value);
+            });
+        }
+        
+        // Edit/delete transaction buttons (delegated)
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.edit-transaction')) {
+                const id = e.target.closest('.edit-transaction').dataset.id;
+                this.editTransaction(id);
+            }
+            if (e.target.closest('.delete-transaction')) {
+                const id = e.target.closest('.delete-transaction').dataset.id;
+                this.deleteTransactionRecord(id);
+            }
+            if (e.target.closest('.view-receipt')) {
+                const id = e.target.closest('.view-receipt').dataset.id;
+                this.viewReceipt(id);
+            }
+        });
+        
+        // Close modals when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('popout-modal')) {
+                this.hideAllModals();
+            }
+        });
+    },
+
+    setupButton(id, handler) {
+        const button = document.getElementById(id);
+        if (button) {
+            button.addEventListener('click', handler);
+        }
+    },
+
     // ==================== FIREBASE RECEIPT METHODS ====================
+    showImportReceiptsModal() {
+        console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
+        
+        // Hide all other modals
+        this.hideAllModals();
+        
+        // Get or create modal
+        let modal = document.getElementById('import-receipts-modal');
+        if (!modal) {
+            console.error('Modal not found in DOM!');
+            return;
+        }
+        
+        // Show modal
+        modal.classList.remove('hidden');
+        
+        // Update content
+        const content = document.getElementById('import-receipts-content');
+        if (content) {
+            content.innerHTML = this.renderImportReceiptsModal();
+        }
+        
+        // Setup handlers
+        this.setupImportReceiptsHandlers();
+        
+        console.log('Modal should now be visible');
+    },
+
     renderImportReceiptsModal() {
         return `
             <div class="import-receipts-container">
@@ -588,6 +677,122 @@ const IncomeExpensesModule = {
         `;
     },
 
+    setupImportReceiptsHandlers() {
+        console.log('Setting up import receipt handlers');
+        
+        // Camera option
+        this.setupButton('camera-option', () => {
+            document.getElementById('upload-section').style.display = 'none';
+            document.getElementById('camera-section').style.display = 'block';
+            document.getElementById('recent-section').style.display = 'none';
+            this.initializeCamera();
+        });
+        
+        // Upload option
+        this.setupButton('upload-option', () => {
+            document.getElementById('camera-section').style.display = 'none';
+            document.getElementById('upload-section').style.display = 'block';
+            document.getElementById('recent-section').style.display = 'block';
+        });
+        
+        // Firebase option
+        this.setupButton('firebase-option', () => {
+            this.loadReceiptsFromFirebase();
+            this.showNotification('Loaded receipts from Firebase', 'success');
+        });
+        
+        // File upload handlers
+        this.setupButton('browse-receipts-btn', () => {
+            document.getElementById('receipt-upload-input').click();
+        });
+        
+        const fileInput = document.getElementById('receipt-upload-input');
+        if (fileInput) {
+            fileInput.onchange = (e) => {
+                this.handleFileUpload(e.target.files);
+            };
+        }
+        
+        // Drag and drop
+        const dropArea = document.getElementById('drop-area');
+        if (dropArea) {
+            dropArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropArea.classList.add('drag-over');
+            });
+            
+            dropArea.addEventListener('dragleave', () => {
+                dropArea.classList.remove('drag-over');
+            });
+            
+            dropArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropArea.classList.remove('drag-over');
+                this.handleFileUpload(e.dataTransfer.files);
+            });
+        }
+        
+        // Camera controls
+        this.setupButton('capture-photo', () => this.capturePhoto());
+        this.setupButton('switch-camera', () => this.switchCamera());
+        this.setupButton('cancel-camera', () => {
+            this.stopCamera();
+            document.getElementById('camera-section').style.display = 'none';
+            document.getElementById('upload-section').style.display = 'block';
+            document.getElementById('recent-section').style.display = 'block';
+        });
+        
+        // Refresh receipts
+        this.setupButton('refresh-receipts', () => {
+            this.loadReceiptsFromFirebase();
+            const recentList = document.getElementById('recent-receipts-list');
+            if (recentList) {
+                recentList.innerHTML = this.renderRecentReceiptsList();
+            }
+        });
+        
+        // Process button
+        this.setupButton('process-receipts-btn', () => this.processPendingReceipts());
+    },
+
+    // ==================== RECEIPT PROCESSING ====================
+    renderRecentReceiptsList() {
+        if (this.receiptQueue.length === 0) {
+            return `
+                <div class="empty-state">
+                    <div class="empty-icon">📄</div>
+                    <h4>No receipts found</h4>
+                    <p>Upload receipts to get started</p>
+                </div>
+            `;
+        }
+        
+        return `
+            <div class="receipts-grid">
+                ${this.receiptQueue.slice(0, 5).map(receipt => `
+                    <div class="receipt-card" data-id="${receipt.id}">
+                        <div class="receipt-preview">
+                            ${receipt.type?.startsWith('image/') ? 
+                                `<img src="${receipt.downloadURL}" alt="${receipt.name}" loading="lazy" style="max-width: 60px; max-height: 60px; border-radius: 4px;">` : 
+                                `<div class="file-icon" style="font-size: 24px;">📄</div>`
+                            }
+                        </div>
+                        <div class="receipt-info">
+                            <div class="receipt-name">${receipt.name}</div>
+                            <div class="receipt-meta">
+                                <span class="receipt-size">${this.formatFileSize(receipt.size || 0)}</span>
+                                <span class="receipt-status status-${receipt.status || 'pending'}">${receipt.status || 'pending'}</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline process-btn" data-id="${receipt.id}">
+                            <span class="btn-icon">🔍</span>
+                        </button>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    },
+
     renderPendingReceiptsList(receipts) {
         if (receipts.length === 0) {
             return `
@@ -634,135 +839,219 @@ const IncomeExpensesModule = {
         `;
     },
 
-    renderRecentReceiptsList() {
-        if (this.receiptQueue.length === 0) {
-            return `
-                <div class="empty-state">
-                    <div class="empty-icon">📄</div>
-                    <h4>No receipts found</h4>
-                    <p>Upload receipts to get started</p>
+    async processSingleReceipt(receiptId) {
+        const receipt = this.receiptQueue.find(r => r.id === receiptId);
+        if (!receipt) {
+            this.showNotification('Receipt not found', 'error');
+            return;
+        }
+        
+        this.showNotification(`Processing ${receipt.name}...`, 'info');
+        
+        // Close import modal if open
+        this.hideImportReceiptsModal();
+        
+        // Create transaction from receipt
+        this.showTransactionModal();
+        
+        // Pre-fill form with receipt data
+        setTimeout(() => {
+            this.prefillFromReceipt(receipt);
+        }, 100);
+    },
+
+    prefillFromReceipt(receipt) {
+        const form = document.getElementById('transaction-form');
+        if (!form) return;
+        
+        // Set receipt data
+        this.receiptPreview = receipt;
+        
+        // Show receipt preview
+        const previewContainer = document.getElementById('receipt-preview-container');
+        const imagePreview = document.getElementById('receipt-image-preview');
+        const filename = document.getElementById('receipt-filename');
+        const filesize = document.getElementById('receipt-size');
+        
+        if (previewContainer) {
+            previewContainer.classList.remove('hidden');
+            
+            if (filename) filename.textContent = receipt.name;
+            if (filesize) filesize.textContent = this.formatFileSize(receipt.size || 0);
+            
+            if (imagePreview && receipt.type?.startsWith('image/')) {
+                imagePreview.src = receipt.downloadURL;
+                imagePreview.style.display = 'block';
+            }
+        }
+        
+        // Auto-fill description
+        const descriptionInput = document.getElementById('transaction-description');
+        if (descriptionInput) {
+            descriptionInput.value = `Receipt: ${receipt.name}`;
+        }
+        
+        // Set today's date
+        const dateInput = document.getElementById('transaction-date');
+        if (dateInput) {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
+        
+        // Suggest category
+        const categoryInput = document.getElementById('transaction-category');
+        if (categoryInput) {
+            // Try to guess category from receipt name
+            const name = receipt.name.toLowerCase();
+            if (name.includes('feed')) categoryInput.value = 'feed';
+            else if (name.includes('medical') || name.includes('vet')) categoryInput.value = 'medical';
+            else if (name.includes('equipment')) categoryInput.value = 'equipment';
+            else if (name.includes('utility') || name.includes('electric') || name.includes('water')) categoryInput.value = 'utilities';
+            else if (name.includes('labor') || name.includes('salary') || name.includes('wage')) categoryInput.value = 'labor';
+        }
+        
+        // Show OCR suggestion
+        this.showOCRSuggestion(receipt);
+    },
+
+    showOCRSuggestion(receipt) {
+        const ocrResults = document.getElementById('ocr-results');
+        const ocrDetails = document.getElementById('ocr-details');
+        
+        if (ocrResults && ocrDetails) {
+            ocrResults.classList.remove('hidden');
+            ocrDetails.innerHTML = `
+                <div style="margin-bottom: 8px;">
+                    <span style="font-weight: 600;">Source:</span>
+                    <span style="margin-left: 8px; color: #1e40af;">${receipt.name}</span>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <span style="font-weight: 600;">Uploaded:</span>
+                    <span style="margin-left: 8px; color: #1e40af;">${this.formatFirebaseTimestamp(receipt.uploadedAt)}</span>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <span style="font-weight: 600;">Status:</span>
+                    <span style="margin-left: 8px; color: #f59e0b;">Pending processing</span>
+                </div>
+                <div style="font-size: 12px; color: #6b7280; margin-top: 8px;">
+                    <em>Fill in the transaction details and save to mark as processed</em>
                 </div>
             `;
-        }
-        
-        return `
-            <div class="receipts-grid">
-                ${this.receiptQueue.slice(0, 5).map(receipt => `
-                    <div class="receipt-card" data-id="${receipt.id}">
-                        <div class="receipt-preview">
-                            ${receipt.type?.startsWith('image/') ? 
-                                `<img src="${receipt.downloadURL}" alt="${receipt.name}" loading="lazy" style="max-width: 60px; max-height: 60px; border-radius: 4px;">` : 
-                                `<div class="file-icon" style="font-size: 24px;">📄</div>`
-                            }
-                        </div>
-                        <div class="receipt-info">
-                            <div class="receipt-name">${receipt.name}</div>
-                            <div class="receipt-meta">
-                                <span class="receipt-size">${this.formatFileSize(receipt.size || 0)}</span>
-                                <span class="receipt-status status-${receipt.status || 'pending'}">${receipt.status || 'pending'}</span>
-                            </div>
-                        </div>
-                        <button class="btn btn-sm btn-outline process-btn" data-id="${receipt.id}">
-                            <span class="btn-icon">🔍</span>
-                        </button>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-    },
-
-   // ==================== MODAL CONTROL METHODS ====================
-   // showImportReceiptsModal() {
-  /*      console.log('Showing import receipts modal');
-        this.hideAllModals();
-        const modal = document.getElementById('import-receipts-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-            // Update modal content
-            const content = document.getElementById('import-receipts-content');
-            if (content) {
-                content.innerHTML = this.renderImportReceiptsModal();
+            
+            // Setup apply button
+            const useOCRBtn = document.getElementById('use-ocr-data');
+            if (useOCRBtn) {
+                useOCRBtn.onclick = () => {
+                    this.showNotification('Auto-extract coming soon. Please fill in the details manually.', 'info');
+                };
             }
-            this.setupImportReceiptsHandlers();
         }
-    }, */
-    
-    showImportReceiptsModal() {
-    console.log('=== DEBUG START: Import Receipts ===');
-    console.log('1. Method called');
-    
-    // Check if hideAllModals exists
-    if (typeof this.hideAllModals !== 'function') {
-        console.error('ERROR: hideAllModals is not a function');
-        return;
-    }
-    
-    console.log('2. Calling hideAllModals...');
-    this.hideAllModals();
-    
-    console.log('3. Looking for modal...');
-    const modal = document.getElementById('import-receipts-modal');
-    console.log('Modal found:', !!modal);
-    
-    if (!modal) {
-        console.error('ERROR: Modal not found in DOM!');
-        console.log('All elements with id containing "modal":');
-        document.querySelectorAll('[id*="modal"]').forEach(el => {
-            console.log(`  - ${el.id}`);
-        });
-        console.log('All popout-modal elements:');
-        document.querySelectorAll('.popout-modal').forEach(el => {
-            console.log(`  - ${el.id || 'no id'}`);
-        });
-        return;
-    }
-    
-    console.log('4. Removing hidden class...');
-    modal.classList.remove('hidden');
-    
-    console.log('5. Updating content...');
-    const content = document.getElementById('import-receipts-content');
-    if (content) {
-        content.innerHTML = this.renderImportReceiptsModal();
-    } else {
-        console.error('ERROR: import-receipts-content not found');
-    }
-    
-    console.log('6. Setting up handlers...');
-    this.setupImportReceiptsHandlers();
-    
-    console.log('7. Checking modal visibility...');
-    console.log('Modal class list:', modal.className);
-    console.log('Modal display style:', window.getComputedStyle(modal).display);
-    console.log('=== DEBUG END ===');
-},
-
-    hideImportReceiptsModal() {
-        const modal = document.getElementById('import-receipts-modal');
-        if (modal) modal.classList.add('hidden');
-        this.stopCamera();
     },
 
-    showCameraInterface() {
-        const uploadSection = document.getElementById('upload-section');
-        const cameraSection = document.getElementById('camera-section');
-        const recentSection = document.getElementById('recent-section');
+    async processPendingReceipts() {
+        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
         
-        if (uploadSection) uploadSection.style.display = 'none';
-        if (cameraSection) cameraSection.style.display = 'block';
-        if (recentSection) recentSection.style.display = 'none';
+        if (pendingReceipts.length === 0) {
+            this.showNotification('No pending receipts to process', 'info');
+            return;
+        }
         
-        this.initializeCamera();
+        if (pendingReceipts.length === 1) {
+            await this.processSingleReceipt(pendingReceipts[0].id);
+        } else {
+            this.showNotification(`Open the Import Receipts modal to process ${pendingReceipts.length} receipts`, 'info');
+            this.showImportReceiptsModal();
+        }
     },
 
-    showUploadInterface() {
-        const uploadSection = document.getElementById('upload-section');
-        const cameraSection = document.getElementById('camera-section');
-        const recentSection = document.getElementById('recent-section');
+    async deleteReceipt(receiptId) {
+        if (!confirm('Are you sure you want to delete this receipt?')) return;
         
-        if (cameraSection) cameraSection.style.display = 'none';
-        if (uploadSection) uploadSection.style.display = 'block';
-        if (recentSection) recentSection.style.display = 'block';
+        try {
+            const receipt = this.receiptQueue.find(r => r.id === receiptId);
+            
+            if (this.isFirebaseAvailable && receipt?.fileName && window.storage) {
+                // Delete from Firebase Storage
+                const storageRef = window.storage.ref();
+                await storageRef.child(receipt.fileName).delete();
+                
+                // Delete from Firestore
+                if (window.db) {
+                    await window.db.collection('receipts').doc(receiptId).delete();
+                }
+            } else {
+                // Delete from localStorage
+                const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+                const updatedReceipts = localReceipts.filter(r => r.id !== receiptId);
+                localStorage.setItem('local-receipts', JSON.stringify(updatedReceipts));
+            }
+            
+            // Remove from local queue
+            this.receiptQueue = this.receiptQueue.filter(r => r.id !== receiptId);
+            
+            // Update UI
+            this.updateReceiptQueueUI();
+            
+            this.showNotification('Receipt deleted successfully', 'success');
+            
+        } catch (error) {
+            console.error('Delete error:', error);
+            this.showNotification('Failed to delete receipt', 'error');
+        }
+    },
+
+    updateReceiptQueueUI() {
+        // Update badge
+        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+        const badge = document.getElementById('receipt-count-badge');
+        
+        if (pendingReceipts.length > 0) {
+            if (!badge) {
+                const uploadBtn = document.getElementById('upload-receipt-btn');
+                if (uploadBtn) {
+                    uploadBtn.innerHTML += `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingReceipts.length}</span>`;
+                }
+            } else {
+                badge.textContent = pendingReceipts.length;
+            }
+            
+            // Update pending section
+            const pendingList = document.getElementById('pending-receipts-list');
+            if (pendingList) {
+                pendingList.innerHTML = this.renderPendingReceiptsList(pendingReceipts);
+                this.setupReceiptActionListeners();
+            }
+        } else {
+            if (badge) badge.remove();
+            
+            const pendingSection = document.getElementById('pending-receipts-section');
+            if (pendingSection) {
+                pendingSection.innerHTML = `
+                    <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
+                        <div style="font-size: 16px; margin-bottom: 8px;">No pending receipts</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Upload receipts to get started</div>
+                    </div>
+                `;
+            }
+        }
+    },
+
+    setupReceiptActionListeners() {
+        // Process buttons
+        document.querySelectorAll('.process-receipt-btn, .process-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const receiptId = e.currentTarget.dataset.id;
+                this.processSingleReceipt(receiptId);
+            });
+        });
+        
+        // Remove buttons
+        document.querySelectorAll('.remove-receipt-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const receiptId = e.currentTarget.dataset.id;
+                this.deleteReceipt(receiptId);
+            });
+        });
     },
 
     // ==================== CAMERA METHODS ====================
@@ -861,7 +1150,9 @@ const IncomeExpensesModule = {
                 // Switch back to upload interface
                 setTimeout(() => {
                     this.stopCamera();
-                    this.showUploadInterface();
+                    document.getElementById('camera-section').style.display = 'none';
+                    document.getElementById('upload-section').style.display = 'block';
+                    document.getElementById('recent-section').style.display = 'block';
                 }, 1000);
             }
         }, 'image/jpeg', 0.9);
@@ -1061,242 +1352,160 @@ const IncomeExpensesModule = {
         }
     },
 
-    updateReceiptQueueUI() {
-        // Update badge
-        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
-        const badge = document.getElementById('receipt-count-badge');
+    // ==================== MODAL CONTROL METHODS ====================
+    hideImportReceiptsModal() {
+        const modal = document.getElementById('import-receipts-modal');
+        if (modal) modal.classList.add('hidden');
+        this.stopCamera();
+    },
+
+    showTransactionModal(transactionId = null) {
+        this.hideAllModals();
+        const modal = document.getElementById('transaction-modal');
+        if (modal) modal.classList.remove('hidden');
+        this.currentEditingId = transactionId;
         
-        if (pendingReceipts.length > 0) {
-            if (!badge) {
-                const uploadBtn = document.getElementById('upload-receipt-btn');
-                if (uploadBtn) {
-                    uploadBtn.innerHTML += `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingReceipts.length}</span>`;
-                }
-            } else {
-                badge.textContent = pendingReceipts.length;
-            }
+        const form = document.getElementById('transaction-form');
+        if (form) {
+            form.reset();
+            const dateInput = document.getElementById('transaction-date');
+            if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+            const deleteBtn = document.getElementById('delete-transaction');
+            if (deleteBtn) deleteBtn.style.display = 'none';
+            const title = document.getElementById('transaction-modal-title');
+            if (title) title.textContent = 'Add Transaction';
+            this.clearReceiptPreview();
+            const ocrResults = document.getElementById('ocr-results');
+            if (ocrResults) ocrResults.classList.add('hidden');
             
-            // Update pending section
-            const pendingList = document.getElementById('pending-receipts-list');
-            if (pendingList) {
-                pendingList.innerHTML = this.renderPendingReceiptsList(pendingReceipts);
-                this.setupReceiptActionListeners();
-            }
-        } else {
-            if (badge) badge.remove();
-            
-            const pendingSection = document.getElementById('pending-receipts-section');
-            if (pendingSection) {
-                pendingSection.innerHTML = `
-                    <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                        <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
-                        <div style="font-size: 16px; margin-bottom: 8px;">No pending receipts</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Upload receipts to get started</div>
-                    </div>
-                `;
-            }
+            if (transactionId) this.editTransaction(transactionId);
         }
     },
 
-    // ==================== EVENT LISTENERS ====================
-       setupEventListeners() {
-    console.log('=== Setting up event listeners ===');
-    
-    // Main buttons
-    const addTransactionBtn = document.getElementById('add-transaction');
-    console.log('Add Transaction button:', !!addTransactionBtn);
-    if (addTransactionBtn) {
-        addTransactionBtn.addEventListener('click', () => {
-            console.log('Add Transaction button clicked');
-            this.showTransactionModal();
-        });
-    }
-
-    const uploadReceiptBtn = document.getElementById('upload-receipt-btn');
-    console.log('Upload Receipt button:', !!uploadReceiptBtn);
-    if (uploadReceiptBtn) {
-        uploadReceiptBtn.addEventListener('click', (e) => {
-            console.log('=== UPLOAD RECEIPT BUTTON CLICKED ===');
-            console.log('Event:', e);
-            console.log('Button text:', uploadReceiptBtn.textContent);
-            console.log('Button HTML:', uploadReceiptBtn.innerHTML);
-            this.showImportReceiptsModal();
-        });
-        
-        // Also add a test click
-        uploadReceiptBtn.addEventListener('click', () => {
-            console.log('TEST: Direct click handler fired');
-        }, { once: true });
-    } else {
-        console.error('ERROR: upload-receipt-btn not found!');
-        console.log('Available buttons:');
-        document.querySelectorAll('button').forEach((btn, i) => {
-            if (btn.id) console.log(`  ${i}: #${btn.id} - "${btn.textContent}"`);
-        });
-    }
-    
-    /*setupEventListeners() {
-        console.log('Setting up event listeners...');
-        
-      /*  // Main buttons
-        this.setupButton('add-transaction', () => this.showTransactionModal());
-        this.setupButton('upload-receipt-btn', () => this.showImportReceiptsModal());
-        */
-        // Quick actions
-        this.setupButton('add-income-btn', () => this.showAddIncome());
-        this.setupButton('add-expense-btn', () => this.showAddExpense());
-        this.setupButton('financial-report-btn', () => this.generateFinancialReport());
-        this.setupButton('category-analysis-btn', () => this.generateCategoryAnalysis());
-        
-        // Transaction modal
-        this.setupButton('save-transaction', () => this.saveTransaction());
-        this.setupButton('delete-transaction', () => this.deleteTransaction());
-        this.setupButton('cancel-transaction', () => this.hideTransactionModal());
-        this.setupButton('close-transaction-modal', () => this.hideTransactionModal());
-        
-        // Import receipts modal
-        this.setupButton('close-import-receipts', () => this.hideImportReceiptsModal());
-        this.setupButton('cancel-import-receipts', () => this.hideImportReceiptsModal());
-        
-        // Refresh receipts
-        this.setupButton('refresh-receipts-btn', () => this.loadReceiptsFromFirebase());
-        this.setupButton('process-all-receipts', () => this.processPendingReceipts());
-        
-        // Other buttons
-        this.setupButton('export-transactions', () => this.exportTransactions());
-        
-        // Filter
-        const transactionFilter = document.getElementById('transaction-filter');
-        if (transactionFilter) {
-            transactionFilter.addEventListener('change', (e) => {
-                this.filterTransactions(e.target.value);
-            });
-        }
-        
-        // Edit/delete transaction buttons (delegated)
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.edit-transaction')) {
-                const id = e.target.closest('.edit-transaction').dataset.id;
-                this.editTransaction(id);
-            }
-            if (e.target.closest('.delete-transaction')) {
-                const id = e.target.closest('.delete-transaction').dataset.id;
-                this.deleteTransactionRecord(id);
-            }
-            if (e.target.closest('.view-receipt')) {
-                const id = e.target.closest('.view-receipt').dataset.id;
-                this.viewReceipt(id);
-            }
-        });
-        
-        // Close modals when clicking outside
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('popout-modal')) {
-                this.hideAllModals();
-            }
-        });
-        
-        // Initialize receipt action listeners
-        setTimeout(() => {
-            this.setupReceiptActionListeners();
-        }, 100);
-    }, 
-
-
-
-
-    setupImportReceiptsHandlers() {
-        // Camera option
-        this.setupButton('camera-option', () => this.showCameraInterface());
-        
-        // Upload option
-        this.setupButton('upload-option', () => this.showUploadInterface());
-        
-        // Firebase option
-        this.setupButton('firebase-option', () => {
-            this.loadReceiptsFromFirebase();
-            this.showUploadInterface();
-        });
-        
-        // File upload handlers
-        this.setupButton('browse-receipts-btn', () => {
-            document.getElementById('receipt-upload-input').click();
-        });
-        
-        const fileInput = document.getElementById('receipt-upload-input');
-        if (fileInput) {
-            fileInput.onchange = (e) => {
-                this.handleFileUpload(e.target.files);
-            };
-        }
-        
-        // Drag and drop
-        const dropArea = document.getElementById('drop-area');
-        if (dropArea) {
-            dropArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropArea.classList.add('drag-over');
-            });
-            
-            dropArea.addEventListener('dragleave', () => {
-                dropArea.classList.remove('drag-over');
-            });
-            
-            dropArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropArea.classList.remove('drag-over');
-                this.handleFileUpload(e.dataTransfer.files);
-            });
-        }
-        
-        // Camera controls
-        this.setupButton('capture-photo', () => this.capturePhoto());
-        this.setupButton('switch-camera', () => this.switchCamera());
-        this.setupButton('cancel-camera', () => {
-            this.stopCamera();
-            this.showUploadInterface();
-        });
-        
-        // Refresh receipts
-        this.setupButton('refresh-receipts', () => {
-            this.loadReceiptsFromFirebase();
-            const recentList = document.getElementById('recent-receipts-list');
-            if (recentList) {
-                recentList.innerHTML = this.renderRecentReceiptsList();
-            }
-        });
-        
-        // Process button
-        this.setupButton('process-receipts-btn', () => this.processPendingReceipts());
+    hideTransactionModal() {
+        const modal = document.getElementById('transaction-modal');
+        if (modal) modal.classList.add('hidden');
+        this.receiptPreview = null;
     },
 
-    setupReceiptActionListeners() {
-        // Process buttons
-        document.querySelectorAll('.process-receipt-btn, .process-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const receiptId = e.currentTarget.dataset.id;
-                this.processSingleReceipt(receiptId);
-            });
-        });
+    clearReceiptPreview() {
+        const previewContainer = document.getElementById('receipt-preview-container');
+        if (previewContainer) previewContainer.classList.add('hidden');
+        const imagePreview = document.getElementById('image-preview');
+        if (imagePreview) imagePreview.classList.add('hidden');
+    },
+
+    hideAllModals() {
+        this.hideTransactionModal();
+        this.hideImportReceiptsModal();
+        const scannerModal = document.getElementById('receipt-scanner-modal');
+        if (scannerModal) scannerModal.classList.add('hidden');
+        const reportModal = document.getElementById('financial-report-modal');
+        if (reportModal) reportModal.classList.add('hidden');
+    },
+
+    // ==================== TRANSACTION METHODS ====================
+    showAddIncome() {
+        this.showTransactionModal();
+        const typeSelect = document.getElementById('transaction-type');
+        if (typeSelect) typeSelect.value = 'income';
+        const categorySelect = document.getElementById('transaction-category');
+        if (categorySelect) categorySelect.value = 'sales';
+        const title = document.getElementById('transaction-modal-title');
+        if (title) title.textContent = 'Add Income';
+    },
+
+    showAddExpense() {
+        this.showTransactionModal();
+        const typeSelect = document.getElementById('transaction-type');
+        if (typeSelect) typeSelect.value = 'expense';
+        const categorySelect = document.getElementById('transaction-category');
+        if (categorySelect) categorySelect.value = 'feed';
+        const title = document.getElementById('transaction-modal-title');
+        if (title) title.textContent = 'Add Expense';
+    },
+
+    calculateStats() {
+        const income = this.transactions.filter(t => t.type === 'income')
+            .reduce((sum, t) => sum + t.amount, 0);
+        const expenses = this.transactions.filter(t => t.type === 'expense')
+            .reduce((sum, t) => sum + t.amount, 0);
+        const net = income - expenses;
         
-        // Remove buttons
-        document.querySelectorAll('.remove-receipt-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const receiptId = e.currentTarget.dataset.id;
-                this.deleteReceipt(receiptId);
-            });
-        });
+        return {
+            totalIncome: income,
+            totalExpenses: expenses,
+            netIncome: net,
+            transactionCount: this.transactions.length
+        };
     },
 
-    setupButton(id, handler) {
-        const button = document.getElementById(id);
-        if (button) {
-            button.addEventListener('click', handler);
+    getRecentTransactions(limit = 10) {
+        return this.transactions.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, limit);
+    },
+
+    renderTransactionsList(transactions) {
+        if (transactions.length === 0) {
+            return `
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">💰</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No transactions yet</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Record your first income or expense</div>
+                </div>
+            `;
         }
+
+        return `
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                ${transactions.map(transaction => {
+                    const isIncome = transaction.type === 'income';
+                    const amountColor = isIncome ? '#22c55e' : '#ef4444';
+                    const icon = isIncome ? '💰' : '💸';
+                    const categoryIcon = this.getCategoryIcon(transaction.category);
+                    
+                    return `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="font-size: 20px;">${icon}</div>
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">${transaction.description}</div>
+                                    <div style="font-size: 14px; color: var(--text-secondary);">
+                                        ${this.formatDate(transaction.date)} • 
+                                        ${categoryIcon} ${this.formatCategory(transaction.category)}
+                                        ${transaction.reference ? ` • Ref: ${transaction.reference}` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div style="text-align: right;">
+                                    <div style="font-weight: bold; color: ${amountColor}; font-size: 18px;">
+                                        ${isIncome ? '+' : '-'}${this.formatCurrency(transaction.amount)}
+                                    </div>
+                                    <div style="font-size: 14px; color: var(--text-secondary);">
+                                        ${transaction.paymentMethod || 'No payment method'}
+                                    </div>
+                                </div>
+                                ${transaction.receipt ? `
+                                    <button class="btn-icon view-receipt" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="View Receipt">
+                                        📄
+                                    </button>
+                                ` : ''}
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn-icon edit-transaction" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Edit">
+                                        ✏️
+                                    </button>
+                                    <button class="btn-icon delete-transaction" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Delete">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
     },
 
-    // ==================== ADD MISSING METHODS HERE ====================
-    
     renderCategoryBreakdown() {
         const categoryData = {};
         
@@ -1371,178 +1580,50 @@ const IncomeExpensesModule = {
         const reportContent = document.getElementById('financial-report-content');
         if (reportContent) {
             const stats = this.calculateStats();
-            const byMonth = this.getTransactionsByMonth();
             
             reportContent.innerHTML = `
-                <div style="padding: 20px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 24px; text-align: center;">Financial Report</h3>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 24px;">
-                        <div style="background: #f0f9ff; padding: 16px; border-radius: 8px;">
-                            <div style="font-size: 14px; color: #0284c7; margin-bottom: 4px;">Total Income</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #0369a1;">${this.formatCurrency(stats.totalIncome)}</div>
-                        </div>
-                        <div style="background: #fef2f2; padding: 16px; border-radius: 8px;">
-                            <div style="font-size: 14px; color: #dc2626; margin-bottom: 4px;">Total Expenses</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #b91c1c;">${this.formatCurrency(stats.totalExpenses)}</div>
-                        </div>
-                        <div style="background: #f0fdf4; padding: 16px; border-radius: 8px;">
-                            <div style="font-size: 14px; color: #16a34a; margin-bottom: 4px;">Net Income</div>
-                            <div style="font-size: 24px; font-weight: bold; color: ${stats.netIncome >= 0 ? '#15803d' : '#dc2626'};">${this.formatCurrency(stats.netIncome)}</div>
-                        </div>
-                        <div style="background: #f8fafc; padding: 16px; border-radius: 8px;">
-                            <div style="font-size: 14px; color: #64748b; margin-bottom: 4px;">Total Transactions</div>
-                            <div style="font-size: 24px; font-weight: bold; color: #334155;">${stats.transactionCount}</div>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 24px;">
-                        <h4 style="color: var(--text-primary); margin-bottom: 16px;">Monthly Overview</h4>
-                        <div style="background: var(--glass-bg); border-radius: 8px; padding: 16px;">
-                            ${byMonth.length > 0 ? `
-                                <div style="display: flex; flex-direction: column; gap: 12px;">
-                                    ${byMonth.slice(0, 6).map(month => `
-                                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--glass-border);">
-                                            <div>
-                                                <div style="font-weight: 600; color: var(--text-primary);">${month.month}</div>
-                                                <div style="font-size: 12px; color: var(--text-secondary);">${month.transactions} transactions</div>
-                                            </div>
-                                            <div style="text-align: right;">
-                                                <div style="color: #22c55e; font-weight: 600;">${this.formatCurrency(month.income)}</div>
-                                                <div style="color: #ef4444; font-size: 12px;">${this.formatCurrency(month.expenses)}</div>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            ` : `
-                                <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
-                                    No monthly data available
-                                </div>
-                            `}
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 24px;">
-                        <h4 style="color: var(--text-primary); margin-bottom: 16px;">Top Categories</h4>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
-                            ${this.getTopCategories(5).map(category => `
-                                <div style="background: var(--glass-bg); padding: 12px; border-radius: 8px; border: 1px solid var(--glass-border);">
-                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                        <span style="font-size: 20px;">${this.getCategoryIcon(category.name)}</span>
-                                        <span style="font-weight: 600; color: var(--text-primary);">${this.formatCategory(category.name)}</span>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between;">
-                                        <span style="color: var(--text-secondary); font-size: 14px;">Total:</span>
-                                        <span style="font-weight: 600; color: ${category.type === 'income' ? '#22c55e' : '#ef4444'};">${this.formatCurrency(category.amount)}</span>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                    
-                    <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <div style="font-weight: 600; color: #334155;">Report Generated</div>
-                            <div style="color: #64748b; font-size: 14px;">${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</div>
-                        </div>
-                        <div style="color: #64748b; font-size: 14px; text-align: center;">
-                            Farm Financial Report • Powered by Farm Management System
-                        </div>
+                <div style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 64px; margin-bottom: 16px;">📊</div>
+                    <h4 style="color: var(--text-primary); margin-bottom: 8px;">Financial Report</h4>
+                    <p style="color: var(--text-secondary);">Detailed financial report coming soon...</p>
+                    <div style="margin-top: 24px; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+                        <p style="color: var(--text-secondary);">This feature will include:</p>
+                        <ul style="text-align: left; color: var(--text-secondary); margin-top: 8px;">
+                            <li>Income vs Expenses charts</li>
+                            <li>Category breakdown analysis</li>
+                            <li>Monthly trends and forecasts</li>
+                            <li>Profitability analysis</li>
+                        </ul>
                     </div>
                 </div>
             `;
         }
-        this.showModal('financial-report-modal');
+        const modal = document.getElementById('financial-report-modal');
+        if (modal) modal.classList.remove('hidden');
     },
 
     generateCategoryAnalysis() {
         console.log('Generating category analysis...');
         const analysisContent = document.getElementById('category-analysis-content');
         if (analysisContent) {
-            const categoryData = this.getCategoryAnalysisData();
-            
             analysisContent.innerHTML = `
-                <div style="padding: 20px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 24px; text-align: center;">Category Analysis</h3>
-                    
-                    <div style="margin-bottom: 24px;">
-                        <h4 style="color: var(--text-primary); margin-bottom: 16px;">Income Categories</h4>
-                        <div style="background: var(--glass-bg); border-radius: 8px; padding: 16px;">
-                            ${categoryData.income.length > 0 ? `
-                                <div style="display: flex; flex-direction: column; gap: 12px;">
-                                    ${categoryData.income.map(cat => `
-                                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f0f9ff; border-radius: 6px;">
-                                            <div style="display: flex; align-items: center; gap: 12px;">
-                                                <span style="font-size: 20px;">${this.getCategoryIcon(cat.name)}</span>
-                                                <div>
-                                                    <div style="font-weight: 600; color: var(--text-primary);">${this.formatCategory(cat.name)}</div>
-                                                    <div style="font-size: 12px; color: var(--text-secondary);">${cat.count} transactions</div>
-                                                </div>
-                                            </div>
-                                            <div style="text-align: right;">
-                                                <div style="font-weight: bold; color: #22c55e; font-size: 18px;">${this.formatCurrency(cat.amount)}</div>
-                                                <div style="color: #0284c7; font-size: 12px;">${cat.percentage}% of income</div>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            ` : `
-                                <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
-                                    No income data available
-                                </div>
-                            `}
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 24px;">
-                        <h4 style="color: var(--text-primary); margin-bottom: 16px;">Expense Categories</h4>
-                        <div style="background: var(--glass-bg); border-radius: 8px; padding: 16px;">
-                            ${categoryData.expense.length > 0 ? `
-                                <div style="display: flex; flex-direction: column; gap: 12px;">
-                                    ${categoryData.expense.map(cat => `
-                                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #fef2f2; border-radius: 6px;">
-                                            <div style="display: flex; align-items: center; gap: 12px;">
-                                                <span style="font-size: 20px;">${this.getCategoryIcon(cat.name)}</span>
-                                                <div>
-                                                    <div style="font-weight: 600; color: var(--text-primary);">${this.formatCategory(cat.name)}</div>
-                                                    <div style="font-size: 12px; color: var(--text-secondary);">${cat.count} transactions</div>
-                                                </div>
-                                            </div>
-                                            <div style="text-align: right;">
-                                                <div style="font-weight: bold; color: #ef4444; font-size: 18px;">${this.formatCurrency(cat.amount)}</div>
-                                                <div style="color: #dc2626; font-size: 12px;">${cat.percentage}% of expenses</div>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            ` : `
-                                <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
-                                    No expense data available
-                                </div>
-                            `}
-                        </div>
-                    </div>
-                    
-                    <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                            <div style="font-size: 20px;">💡</div>
-                            <div>
-                                <div style="font-weight: 600; color: #334155;">Analysis Insights</div>
-                                <div style="color: #64748b; font-size: 14px;">
-                                    ${this.getCategoryInsights(categoryData)}
-                                </div>
-                            </div>
-                        </div>
+                <div style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 64px; margin-bottom: 16px;">📋</div>
+                    <h4 style="color: var(--text-primary); margin-bottom: 8px;">Category Analysis</h4>
+                    <p style="color: var(--text-secondary);">Detailed category analysis coming soon...</p>
+                    <div style="margin-top: 24px; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+                        <p style="color: var(--text-secondary);">This feature will include:</p>
+                        <ul style="text-align: left; color: var(--text-secondary); margin-top: 8px;">
+                            <li>Category spending trends</li>
+                            <li>Income sources analysis</li>
+                            <li>Expense optimization suggestions</li>
+                            <li>Budget vs actual comparisons</li>
+                        </ul>
                     </div>
                 </div>
             `;
         }
-        this.showModal('category-analysis-modal');
-    },
-
-    showModal(modalId) {
-        this.hideAllModals();
-        const modal = document.getElementById(modalId);
+        const modal = document.getElementById('category-analysis-modal');
         if (modal) modal.classList.remove('hidden');
     },
 
@@ -1790,297 +1871,6 @@ const IncomeExpensesModule = {
         window.print();
     },
 
-    // ==================== HELPER METHODS ====================
-    getTransactionsByMonth() {
-        const months = {};
-        
-        this.transactions.forEach(transaction => {
-            const date = new Date(transaction.date);
-            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-            const monthName = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-            
-            if (!months[monthKey]) {
-                months[monthKey] = {
-                    month: monthName,
-                    income: 0,
-                    expenses: 0,
-                    transactions: 0
-                };
-            }
-            
-            if (transaction.type === 'income') {
-                months[monthKey].income += transaction.amount;
-            } else {
-                months[monthKey].expenses += transaction.amount;
-            }
-            
-            months[monthKey].transactions++;
-        });
-        
-        return Object.values(months).sort((a, b) => {
-            const [aYear, aMonth] = a.month.split(' ');
-            const [bYear, bMonth] = b.month.split(' ');
-            return new Date(bYear, new Date(`${bMonth} 1, ${bYear}`).getMonth()) - 
-                   new Date(aYear, new Date(`${aMonth} 1, ${aYear}`).getMonth());
-        });
-    },
-
-    getTopCategories(limit = 5) {
-        const categoryTotals = {};
-        
-        this.transactions.forEach(transaction => {
-            if (!categoryTotals[transaction.category]) {
-                categoryTotals[transaction.category] = {
-                    name: transaction.category,
-                    amount: 0,
-                    type: transaction.type,
-                    count: 0
-                };
-            }
-            
-            categoryTotals[transaction.category].amount += transaction.amount;
-            categoryTotals[transaction.category].count++;
-        });
-        
-        return Object.values(categoryTotals)
-            .sort((a, b) => b.amount - a.amount)
-            .slice(0, limit);
-    },
-
-    getCategoryAnalysisData() {
-        const incomeCategories = {};
-        const expenseCategories = {};
-        
-        let totalIncome = 0;
-        let totalExpenses = 0;
-        
-        // Calculate totals
-        this.transactions.forEach(transaction => {
-            if (transaction.type === 'income') {
-                totalIncome += transaction.amount;
-                if (!incomeCategories[transaction.category]) {
-                    incomeCategories[transaction.category] = {
-                        name: transaction.category,
-                        amount: 0,
-                        count: 0
-                    };
-                }
-                incomeCategories[transaction.category].amount += transaction.amount;
-                incomeCategories[transaction.category].count++;
-            } else {
-                totalExpenses += transaction.amount;
-                if (!expenseCategories[transaction.category]) {
-                    expenseCategories[transaction.category] = {
-                        name: transaction.category,
-                        amount: 0,
-                        count: 0
-                    };
-                }
-                expenseCategories[transaction.category].amount += transaction.amount;
-                expenseCategories[transaction.category].count++;
-            }
-        });
-        
-        // Calculate percentages
-        Object.values(incomeCategories).forEach(cat => {
-            cat.percentage = totalIncome > 0 ? Math.round((cat.amount / totalIncome) * 100) : 0;
-        });
-        
-        Object.values(expenseCategories).forEach(cat => {
-            cat.percentage = totalExpenses > 0 ? Math.round((cat.amount / totalExpenses) * 100) : 0;
-        });
-        
-        return {
-            income: Object.values(incomeCategories).sort((a, b) => b.amount - a.amount),
-            expense: Object.values(expenseCategories).sort((a, b) => b.amount - a.amount),
-            totalIncome,
-            totalExpenses
-        };
-    },
-
-    getCategoryInsights(categoryData) {
-        const insights = [];
-        
-        if (categoryData.income.length > 0) {
-            const topIncome = categoryData.income[0];
-            insights.push(`Top income source: ${this.formatCategory(topIncome.name)} (${topIncome.percentage}% of total income)`);
-        }
-        
-        if (categoryData.expense.length > 0) {
-            const topExpense = categoryData.expense[0];
-            insights.push(`Largest expense: ${this.formatCategory(topExpense.name)} (${topExpense.percentage}% of total expenses)`);
-        }
-        
-        if (categoryData.totalIncome > 0 && categoryData.totalExpenses > 0) {
-            const profitMargin = ((categoryData.totalIncome - categoryData.totalExpenses) / categoryData.totalIncome * 100).toFixed(1);
-            insights.push(`Profit margin: ${profitMargin}%`);
-        }
-        
-        return insights.length > 0 ? insights.join(' • ') : 'Add more transactions to see insights';
-    },
-       
-    // ==================== RECEIPT PROCESSING ====================
-    async processSingleReceipt(receiptId) {
-        const receipt = this.receiptQueue.find(r => r.id === receiptId);
-        if (!receipt) {
-            this.showNotification('Receipt not found', 'error');
-            return;
-        }
-        
-        this.showNotification(`Processing ${receipt.name}...`, 'info');
-        
-        // Close import modal if open
-        this.hideImportReceiptsModal();
-        
-        // Create transaction from receipt
-        this.showTransactionModal();
-        
-        // Pre-fill form with receipt data
-        setTimeout(() => {
-            this.prefillFromReceipt(receipt);
-        }, 100);
-    },
-
-    prefillFromReceipt(receipt) {
-        const form = document.getElementById('transaction-form');
-        if (!form) return;
-        
-        // Set receipt data
-        this.receiptPreview = receipt;
-        
-        // Show receipt preview
-        const previewContainer = document.getElementById('receipt-preview-container');
-        const imagePreview = document.getElementById('receipt-image-preview');
-        const filename = document.getElementById('receipt-filename');
-        const filesize = document.getElementById('receipt-size');
-        
-        if (previewContainer) {
-            previewContainer.classList.remove('hidden');
-            
-            if (filename) filename.textContent = receipt.name;
-            if (filesize) filesize.textContent = this.formatFileSize(receipt.size || 0);
-            
-            if (imagePreview && receipt.type?.startsWith('image/')) {
-                imagePreview.src = receipt.downloadURL;
-                imagePreview.style.display = 'block';
-            }
-        }
-        
-        // Auto-fill description
-        const descriptionInput = document.getElementById('transaction-description');
-        if (descriptionInput) {
-            descriptionInput.value = `Receipt: ${receipt.name}`;
-        }
-        
-        // Set today's date
-        const dateInput = document.getElementById('transaction-date');
-        if (dateInput) {
-            dateInput.value = new Date().toISOString().split('T')[0];
-        }
-        
-        // Suggest category
-        const categoryInput = document.getElementById('transaction-category');
-        if (categoryInput) {
-            // Try to guess category from receipt name
-            const name = receipt.name.toLowerCase();
-            if (name.includes('feed')) categoryInput.value = 'feed';
-            else if (name.includes('medical') || name.includes('vet')) categoryInput.value = 'medical';
-            else if (name.includes('equipment')) categoryInput.value = 'equipment';
-            else if (name.includes('utility') || name.includes('electric') || name.includes('water')) categoryInput.value = 'utilities';
-            else if (name.includes('labor') || name.includes('salary') || name.includes('wage')) categoryInput.value = 'labor';
-        }
-        
-        // Show OCR suggestion
-        this.showOCRSuggestion(receipt);
-    },
-
-    showOCRSuggestion(receipt) {
-        const ocrResults = document.getElementById('ocr-results');
-        const ocrDetails = document.getElementById('ocr-details');
-        
-        if (ocrResults && ocrDetails) {
-            ocrResults.classList.remove('hidden');
-            ocrDetails.innerHTML = `
-                <div style="margin-bottom: 8px;">
-                    <span style="font-weight: 600;">Source:</span>
-                    <span style="margin-left: 8px; color: #1e40af;">${receipt.name}</span>
-                </div>
-                <div style="margin-bottom: 8px;">
-                    <span style="font-weight: 600;">Uploaded:</span>
-                    <span style="margin-left: 8px; color: #1e40af;">${this.formatFirebaseTimestamp(receipt.uploadedAt)}</span>
-                </div>
-                <div style="margin-bottom: 8px;">
-                    <span style="font-weight: 600;">Status:</span>
-                    <span style="margin-left: 8px; color: #f59e0b;">Pending processing</span>
-                </div>
-                <div style="font-size: 12px; color: #6b7280; margin-top: 8px;">
-                    <em>Fill in the transaction details and save to mark as processed</em>
-                </div>
-            `;
-            
-            // Setup apply button
-            const useOCRBtn = document.getElementById('use-ocr-data');
-            if (useOCRBtn) {
-                useOCRBtn.onclick = () => {
-                    // For now, just show a message
-                    this.showNotification('Auto-extract coming soon. Please fill in the details manually.', 'info');
-                };
-            }
-        }
-    },
-
-    async processPendingReceipts() {
-        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
-        
-        if (pendingReceipts.length === 0) {
-            this.showNotification('No pending receipts to process', 'info');
-            return;
-        }
-        
-        if (pendingReceipts.length === 1) {
-            await this.processSingleReceipt(pendingReceipts[0].id);
-        } else {
-            this.showNotification(`Open the Import Receipts modal to process ${pendingReceipts.length} receipts`, 'info');
-            this.showImportReceiptsModal();
-        }
-    },
-
-    async deleteReceipt(receiptId) {
-        if (!confirm('Are you sure you want to delete this receipt?')) return;
-        
-        try {
-            const receipt = this.receiptQueue.find(r => r.id === receiptId);
-            
-            if (this.isFirebaseAvailable && receipt?.fileName && window.storage) {
-                // Delete from Firebase Storage
-                const storageRef = window.storage.ref();
-                await storageRef.child(receipt.fileName).delete();
-                
-                // Delete from Firestore
-                if (window.db) {
-                    await window.db.collection('receipts').doc(receiptId).delete();
-                }
-            } else {
-                // Delete from localStorage
-                const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
-                const updatedReceipts = localReceipts.filter(r => r.id !== receiptId);
-                localStorage.setItem('local-receipts', JSON.stringify(updatedReceipts));
-            }
-            
-            // Remove from local queue
-            this.receiptQueue = this.receiptQueue.filter(r => r.id !== receiptId);
-            
-            // Update UI
-            this.updateReceiptQueueUI();
-            
-            this.showNotification('Receipt deleted successfully', 'success');
-            
-        } catch (error) {
-            console.error('Delete error:', error);
-            this.showNotification('Failed to delete receipt', 'error');
-        }
-    },
-
     // ==================== UTILITY METHODS ====================
     isValidReceiptFile(file) {
         const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
@@ -2139,158 +1929,6 @@ const IncomeExpensesModule = {
         return 'anonymous';
     },
 
-    // ==================== EXISTING TRANSACTION METHODS (minimal changes) ====================
-    showAddIncome() {
-        this.showTransactionModal();
-        const typeSelect = document.getElementById('transaction-type');
-        if (typeSelect) typeSelect.value = 'income';
-        const categorySelect = document.getElementById('transaction-category');
-        if (categorySelect) categorySelect.value = 'sales';
-        const title = document.getElementById('transaction-modal-title');
-        if (title) title.textContent = 'Add Income';
-    },
-
-    showAddExpense() {
-        this.showTransactionModal();
-        const typeSelect = document.getElementById('transaction-type');
-        if (typeSelect) typeSelect.value = 'expense';
-        const categorySelect = document.getElementById('transaction-category');
-        if (categorySelect) categorySelect.value = 'feed';
-        const title = document.getElementById('transaction-modal-title');
-        if (title) title.textContent = 'Add Expense';
-    },
-
-    calculateStats() {
-        const income = this.transactions.filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + t.amount, 0);
-        const expenses = this.transactions.filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + t.amount, 0);
-        const net = income - expenses;
-        
-        return {
-            totalIncome: income,
-            totalExpenses: expenses,
-            netIncome: net,
-            transactionCount: this.transactions.length
-        };
-    },
-
-    getRecentTransactions(limit = 10) {
-        return this.transactions.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, limit);
-    },
-
-    renderTransactionsList(transactions) {
-        if (transactions.length === 0) {
-            return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">💰</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No transactions yet</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Record your first income or expense</div>
-                </div>
-            `;
-        }
-
-        return `
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${transactions.map(transaction => {
-                    const isIncome = transaction.type === 'income';
-                    const amountColor = isIncome ? '#22c55e' : '#ef4444';
-                    const icon = isIncome ? '💰' : '💸';
-                    const categoryIcon = this.getCategoryIcon(transaction.category);
-                    
-                    return `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <div style="font-size: 20px;">${icon}</div>
-                                <div>
-                                    <div style="font-weight: 600; color: var(--text-primary);">${transaction.description}</div>
-                                    <div style="font-size: 14px; color: var(--text-secondary);">
-                                        ${this.formatDate(transaction.date)} • 
-                                        ${categoryIcon} ${this.formatCategory(transaction.category)}
-                                        ${transaction.reference ? ` • Ref: ${transaction.reference}` : ''}
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 16px;">
-                                <div style="text-align: right;">
-                                    <div style="font-weight: bold; color: ${amountColor}; font-size: 18px;">
-                                        ${isIncome ? '+' : '-'}${this.formatCurrency(transaction.amount)}
-                                    </div>
-                                    <div style="font-size: 14px; color: var(--text-secondary);">
-                                        ${transaction.paymentMethod || 'No payment method'}
-                                    </div>
-                                </div>
-                                ${transaction.receipt ? `
-                                    <button class="btn-icon view-receipt" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="View Receipt">
-                                        📄
-                                    </button>
-                                ` : ''}
-                                <div style="display: flex; gap: 8px;">
-                                    <button class="btn-icon edit-transaction" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Edit">
-                                        ✏️
-                                    </button>
-                                    <button class="btn-icon delete-transaction" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Delete">
-                                        🗑️
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
-    },
-
-    // ... (keep all your existing transaction CRUD methods, stats, etc.)
-    // They should work as-is with the new Firebase integration
-
-    // Add these missing modal methods:
-    showTransactionModal(transactionId = null) {
-        this.hideAllModals();
-        const modal = document.getElementById('transaction-modal');
-        if (modal) modal.classList.remove('hidden');
-        this.currentEditingId = transactionId;
-        
-        const form = document.getElementById('transaction-form');
-        if (form) {
-            form.reset();
-            const dateInput = document.getElementById('transaction-date');
-            if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
-            const deleteBtn = document.getElementById('delete-transaction');
-            if (deleteBtn) deleteBtn.style.display = 'none';
-            const title = document.getElementById('transaction-modal-title');
-            if (title) title.textContent = 'Add Transaction';
-            this.clearReceiptPreview();
-            const ocrResults = document.getElementById('ocr-results');
-            if (ocrResults) ocrResults.classList.add('hidden');
-            
-            if (transactionId) this.editTransaction(transactionId);
-        }
-    },
-
-    hideTransactionModal() {
-        const modal = document.getElementById('transaction-modal');
-        if (modal) modal.classList.add('hidden');
-        this.receiptPreview = null;
-    },
-
-    clearReceiptPreview() {
-        const previewContainer = document.getElementById('receipt-preview-container');
-        if (previewContainer) previewContainer.classList.add('hidden');
-        const imagePreview = document.getElementById('image-preview');
-        if (imagePreview) imagePreview.classList.add('hidden');
-    },
-
-    hideAllModals() {
-        this.hideTransactionModal();
-        this.hideImportReceiptsModal();
-        const scannerModal = document.getElementById('receipt-scanner-modal');
-        if (scannerModal) scannerModal.classList.add('hidden');
-        const reportModal = document.getElementById('financial-report-modal');
-        if (reportModal) reportModal.classList.add('hidden');
-    },
-
-    // Add these format methods:
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -2332,8 +1970,7 @@ const IncomeExpensesModule = {
         } else {
             console.log(`${type.toUpperCase()}: ${message}`);
             // Simple alert fallback
-            const colors = { success: '#10b981', error: '#ef4444', info: '#3b82f6', warning: '#f59e0b' };
-            console.log(`%c${type.toUpperCase()}: ${message}`, `color: ${colors[type] || '#000'}; font-weight: bold;`);
+            alert(`${type.toUpperCase()}: ${message}`);
         }
     }
 };
