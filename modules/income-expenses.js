@@ -452,20 +452,13 @@ const IncomeExpensesModule = {
         });
 
         // FIXED: Import Receipts button with proper event handling
-        const uploadReceiptBtn = document.getElementById('upload-receipt-btn');
-        if (uploadReceiptBtn) {
-            console.log('Found upload-receipt-btn, adding listener');
-            // Remove any existing listeners
-            const newBtn = uploadReceiptBtn.cloneNode(true);
-            uploadReceiptBtn.parentNode.replaceChild(newBtn, uploadReceiptBtn);
-            
-            // Add fresh listener
-            newBtn.addEventListener('click', (e) => {
-                console.log('UPLOAD RECEIPT BUTTON CLICKED!');
-                e.preventDefault();
-                e.stopPropagation();
-                this.showImportReceiptsModal();
-            });
+        // Change this in setupEventListeners():
+document.getElementById('upload-receipt-btn')?.addEventListener('click', (e) => {
+    console.log('Import Receipts button clicked');
+    e.preventDefault();
+    e.stopPropagation();
+    this.showImportReceiptsModal();
+});
             
             // Also add onclick as backup
             newBtn.onclick = (e) => {
