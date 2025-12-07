@@ -191,12 +191,29 @@ const StyleManager = {
         style.textContent = `
             /* Modern PWA Base Styles */
            /* Ensure emoji icons render correctly */
-.nav-item span:first-child {
-  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif !important;
-  font-size: 18px;
-  margin-right: 6px;
-  line-height: 1;
-}
+            /* === NAVBAR EMOJI PRESERVE === */
+        .nav-item span:first-child {
+            font-family: "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji","Twemoji Mozilla", sans-serif !important;
+            font-size: 20px;
+            margin-right: 6px;
+            line-height: 1;
+            display: inline-block;
+        }
+
+        /* Modern PWA Base Styles */
+        .module-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 16px;
+            margin-bottom: 16px;
+        }
 
            
             .module-container {
