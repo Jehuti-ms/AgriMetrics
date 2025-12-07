@@ -169,15 +169,12 @@ const IncomeExpensesModule = {
                     <h1 class="module-title">Income & Expenses</h1>
                     <p class="module-subtitle">Track farm finances and cash flow</p>
                     <div class="header-actions">
-                    <button class="btn btn-outline" id="upload-receipt-btn" style="display: flex; align-items: center; gap: 8px;">
-                            📄 Import Receipts
-                            ${this.isFirebaseAvailable ? '<span class="firebase-badge">Firebase</span>' : ''}
-                            ${pendingReceipts.length > 0 ? `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingReceipts.length}</span>` : ''}
-                        </button>
-                        <button class="btn btn-primary" id="add-transaction">
+                       <button class="btn btn-primary" id="add-transaction">
                             ➕ Add Transaction
                         </button>
-                        
+                        <button class="btn btn-outline" id="upload-receipt-btn" style="display: flex; align-items: center; gap: 8px;">
+                            📄 Import Receipts
+                        </button>
                     </div>
                 </div>
 
