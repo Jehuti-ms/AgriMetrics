@@ -358,7 +358,7 @@ class FarmManagementApp {
         header.innerHTML = `
             <nav class="top-nav">
                 <div class="nav-brand">
-                    <img src="icons/icon-96x96_a.png" alt="AgriMetrics">
+                    <img src="icons/icon-96x96.png" alt="AgriMetrics">
                     <span class="brand-text">AgriMetrics</span>
                     <span class="brand-subtitle">Farm Management System</span>
                 </div>
@@ -400,7 +400,7 @@ class FarmManagementApp {
                         <span class="nav-label">Theme</span>
                     </button>
                     
-                    <!-- Hamburger menu as a proper nav-item -->
+                    <!-- Hamburger menu -->
                     <button class="nav-item hamburger-menu" id="hamburger-menu" title="Farm Operations">
                         <span>☰</span>
                         <span class="nav-label">More</span>
@@ -409,9 +409,6 @@ class FarmManagementApp {
             </nav>
         `;
 
-        // Setup hamburger menu functionality
-        this.setupHamburgerMenu();
-        
         // Adjust main content padding
         const main = appContainer.querySelector('main');
         if (main) {
@@ -426,7 +423,7 @@ class FarmManagementApp {
         const sideMenu = document.getElementById('side-menu');
         
         if (hamburger && sideMenu) {
-            // Ensure sidebar is hidden by default and positioned on right
+            // Ensure sidebar is hidden by default
             sideMenu.style.left = 'auto';
             sideMenu.style.right = '0';
             sideMenu.style.transform = 'translateX(100%)';
@@ -439,13 +436,8 @@ class FarmManagementApp {
             newHamburger.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('🍔 Hamburger clicked, toggling sidebar');
                 sideMenu.classList.toggle('active');
             });
-            
-            console.log('✅ Hamburger menu connected to sidebar');
-        } else {
-            console.log('❌ Hamburger or side menu not found:', { hamburger, sideMenu });
         }
         
         // Close sidebar when clicking outside
@@ -455,24 +447,12 @@ class FarmManagementApp {
             
             if (sideMenu && sideMenu.classList.contains('active') && hamburger) {
                 if (!sideMenu.contains(e.target) && !hamburger.contains(e.target)) {
-                    console.log('📱 Click outside, closing sidebar');
                     sideMenu.classList.remove('active');
                 }
             }
         });
-        
-        // Close sidebar when clicking on sidebar items
-        const sideMenuItems = document.querySelectorAll('.side-menu-item');
-        sideMenuItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const sideMenu = document.getElementById('side-menu');
-                if (sideMenu) {
-                    sideMenu.classList.remove('active');
-                }
-            });
-        });
     }
-
+        
     setupSideMenuEvents() {
         const sideMenuItems = document.querySelectorAll('.side-menu-item');
         sideMenuItems.forEach(item => {
