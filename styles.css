@@ -7834,10 +7834,10 @@ header, .top-nav {
 }
 
 /* ================ Navbar Fix ===================*/
-/* Base navbar */
+/* Navbar container */
 .top-nav {
   height: 60px;
-  background: #ffffff; /* flat white bar */
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -7854,16 +7854,18 @@ header, .top-nav {
 .nav-items {
   display: flex;
   gap: 8px;
-  overflow-x: auto;   /* allow scroll on small screens */
+  overflow-x: auto;        /* allow horizontal scroll */
+  flex: 1 1 auto;
+  justify-content: flex-start;
   scrollbar-width: none;
 }
-
 .nav-items::-webkit-scrollbar {
   display: none;
 }
 
 /* Individual nav links */
 .nav-item {
+  flex: 0 0 auto;           /* prevent shrinking */
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -7874,14 +7876,18 @@ header, .top-nav {
   cursor: pointer;
   transition: background 0.3s ease, color 0.3s ease;
 }
-
 .nav-item:hover {
   background: rgba(0,0,0,0.05);
 }
-
 .nav-item.active {
   color: var(--primary-color);
   background: rgba(34,197,94,0.1);
+}
+
+/* Label under icon */
+.nav-label {
+  font-size: 11px;
+  margin-top: 2px;
 }
 
 /* Mobile adjustments */
@@ -7891,14 +7897,7 @@ header, .top-nav {
     padding: 0 12px;
   }
 
-  .nav-items {
-    flex: 1 1 auto;
-    overflow-x: scroll; /* force horizontal scroll */
-    justify-content: flex-start;
-  }
-
   .nav-item {
-    flex: 0 0 auto; /* prevent shrinking */
     font-size: 14px;
     padding: 4px 8px;
   }
