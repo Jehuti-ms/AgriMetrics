@@ -264,19 +264,16 @@ const StyleManager = {
                 z-index: 1;
             }
 
-          .nav-brand {
-              display: flex;
-              align-items: flex-end;   /* aligns text at the bottom */
-              gap: 8px;
+          .brand-text {
+              font-weight: 600;
+              font-size: 1.1rem;
             }
             
-            .brand-text,
             .brand-subtitle {
-              display: inline-block;
-              line-height: 1;
-              vertical-align: bottom;
-              white-space: nowrap;
+              font-size: 1rem;
+              color: var(--text-secondary);
             }
+
 
            /* MODERN PWA BUTTONS - GREEN GRADIENT FOR ALL MODULES */
             .btn-primary, 
