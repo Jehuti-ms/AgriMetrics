@@ -443,33 +443,54 @@ const IncomeExpensesModule = {
 
     // ==================== EVENT LISTENERS ====================
     setupEventListeners() {
-        console.log('Setting up event listeners...');
-        
-        // Main buttons - SIMPLE DIRECT EVENT LISTENERS
-        document.getElementById('add-transaction')?.addEventListener('click', () => {
+    console.log('Setting up event listeners...');
+    
+    // Main buttons - SIMPLE DIRECT EVENT LISTENERS
+    const addTransactionBtn = document.getElementById('add-transaction');
+    console.log('Add Transaction button found:', !!addTransactionBtn);
+    if (addTransactionBtn) {
+        addTransactionBtn.addEventListener('click', () => {
             console.log('Add Transaction clicked');
             this.showTransactionModal();
         });
+    }
 
-        // FIXED: Import Receipts button with proper event handling
-        // Change this in setupEventListeners():
-document.getElementById('upload-receipt-btn')?.addEventListener('click', (e) => {
-    console.log('Import Receipts button clicked');
-    e.preventDefault();
-    e.stopPropagation();
-    this.showImportReceiptsModal();
-});
-            
-            // Also add onclick as backup
-            newBtn.onclick = (e) => {
-                console.log('onclick backup fired');
-                e.preventDefault();
-                this.showImportReceiptsModal();
-            };
-        } else {
-            console.error('upload-receipt-btn not found!');
-        }
+    // SIMPLE FIX: Import Receipts button
+    const uploadReceiptBtn = document.getElementById('upload-receipt-btn');
+    console.log('Upload Receipt button found:', !!uploadReceiptBtn);
+    
+    if (uploadReceiptBtn) {
+        console.log('Adding click listener to upload-receipt-btn');
         
+        // Simple event listener - NO CLONING
+        uploadReceiptBtn.addEventListener('click', (e) => {
+            console.log('UPLOAD RECEIPT BUTTON CLICKED!');
+            e.preventDefault();
+            e.stopPropagation();
+            this.showImportReceiptsModal();
+            return false;
+        });
+        
+        // Also test with direct onclick
+        uploadReceiptBtn.onclick = (e) => {
+            console.log('Direct onclick fired as backup');
+            e.preventDefault();
+            this.showImportReceiptsModal();
+            return false;
+        };
+        
+    } else {
+        console.error('ERROR: upload-receipt-btn not found!');
+        // Debug what buttons ARE available
+        const allButtons = document.querySelectorAll('button');
+        console.log('Available buttons:');
+        allButtons.forEach((btn, i) => {
+            if (btn.id) {
+                console.log(`  ${i}: #${btn.id} - "${btn.textContent?.trim()}"`);
+            }
+        });
+    }
+            
         // Quick actions
         this.setupButton('add-income-btn', () => this.showAddIncome());
         this.setupButton('add-expense-btn', () => this.showAddExpense());
