@@ -1,4 +1,3 @@
-continue
 // modules/reports.js - COMPLETE REWRITTEN VERSION
 console.log('📊 Loading Reports module...');
 
