@@ -264,21 +264,19 @@ const StyleManager = {
                 z-index: 1;
             }
 
-           .nav-brand {
+            .nav-brand {
               display: flex;
-              align-items: flex-end; /* aligns all children at their bottom edge */
+              align-items: flex-end;
               gap: 8px;
-              padding-bottom: 10px; /* nudges entire brand block upward */
+              padding-bottom: 6px; /* nudges entire brand block upward */
             }
             
             .brand-text,
             .brand-subtitle {
               display: inline-block;
-              font-size: 1rem;
               line-height: 1;
               vertical-align: bottom;
               white-space: nowrap;
-              padding-bottom: 2px; /* optional tweak to visually balance */
             }
 
 
