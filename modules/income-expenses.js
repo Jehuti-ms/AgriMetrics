@@ -2338,8 +2338,35 @@ const IncomeExpensesModule = {
     }
 };
 
-// Add the missing methods (renderCategoryBreakdown, editTransaction, saveTransaction, etc.)
-// ... (copy all your existing transaction methods here)
+// Add this temporary test function to your module
+testButtonClick() {
+    console.log('=== TEST: Manually testing button ===');
+    
+    // Try to find the button
+    const button = document.getElementById('upload-receipt-btn');
+    console.log('Button found:', !!button);
+    
+    if (button) {
+        console.log('Button HTML:', button.outerHTML);
+        console.log('Button parent:', button.parentElement);
+        console.log('Button position:', button.getBoundingClientRect());
+        
+        // Try to trigger click programmatically
+        console.log('Programmatically clicking button...');
+        button.click();
+        
+        // Add a direct onclick handler as test
+        button.onclick = function(e) {
+            console.log('Direct onclick fired!', e);
+            e.stopPropagation();
+            e.preventDefault();
+        };
+        
+        // Also check if button is disabled
+        console.log('Button disabled?', button.disabled);
+        console.log('Button style:', button.style.cssText);
+    }
+},
 
 // Register with FarmModules framework
 if (window.FarmModules) {
