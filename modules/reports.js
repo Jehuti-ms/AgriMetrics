@@ -932,7 +932,7 @@ const ReportsModule = {
         this.showReport('Inventory Analysis Report', reportContent);
     },
 
-       generateSalesReport() {
+    generateSalesReport() {
         const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
         const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
         
