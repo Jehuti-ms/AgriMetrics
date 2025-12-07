@@ -1,13 +1,42 @@
 // modules/reports.js - UPDATED FOR StyleManager SYSTEM
-console.log('📊 Loading reports module...');
+// ============================================
+// REGISTRATION - SIMPLIFIED VERSION
+// ============================================
+console.log('📊 Reports module script loaded');
 
-class ReportsModule {
-    constructor() {
-        this.name = 'reports';
-        this.initialized = false;
-        this.element = null;
+// Create instance
+const reportsInstance = new ReportsModule();
+
+// CRITICAL: Register with FarmModules FIRST (this is what framework.js checks)
+window.FarmModules = window.FarmModules || {};
+console.log('📊 Before registration - FarmModules keys:', Object.keys(window.FarmModules));
+
+// Register directly - this is what framework.js line 17 checks
+window.FarmModules.reports = reportsInstance;
+console.log('✅ Registered reports module to window.FarmModules.reports');
+
+// Also register with StyleManager if available
+if (window.StyleManager) {
+    console.log('📊 Also registering with StyleManager...');
+    try {
+        window.StyleManager.registerModule('reports', reportsInstance);
+        console.log('✅ Also registered with StyleManager');
+    } catch (error) {
+        console.error('❌ Error registering with StyleManager:', error);
     }
+}
 
+// Debug verification
+console.log('📊 After registration - FarmModules.reports exists?', !!window.FarmModules.reports);
+console.log('📊 After registration - FarmModules keys:', Object.keys(window.FarmModules));
+console.log('✅ Reports module registration complete!');
+
+// Quick self-test
+if (window.FarmModules.reports && window.FarmModules.reports.initialize) {
+    console.log('✅ Reports module is properly configured with initialize() method');
+} else {
+    console.error('❌ Reports module configuration failed!');
+}
     initialize() {
         console.log('📈 Initializing reports module...');
         
