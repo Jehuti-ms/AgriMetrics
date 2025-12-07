@@ -1,38 +1,33 @@
-// modules/reports.js - UPDATED TO FOLLOW StyleManager PATTERN
-console.log('Loading reports module...');
+// modules/reports.js - UPDATED FOR StyleManager SYSTEM
+console.log('📊 Loading reports module...');
 
-const ReportsModule = {
-    name: 'reports',
-    initialized: false,
-    element: null,
+class ReportsModule {
+    constructor() {
+        this.name = 'reports';
+        this.initialized = false;
+        this.element = null;
+    }
 
     initialize() {
-        console.log('📈 Initializing reports...');
+        console.log('📈 Initializing reports module...');
         
-        // Get content area element
         this.element = document.getElementById('content-area');
         if (!this.element) {
             console.error('Content area element not found');
             return false;
         }
         
-        // Register with StyleManager for theme support
-        if (window.StyleManager) {
-            window.StyleManager.registerComponent(this.name);
-        }
-        
         this.renderModule();
         this.initialized = true;
         return true;
-    },
+    }
 
     onThemeChange(theme) {
         console.log(`Reports module: Theme changed to ${theme}`);
-        // Re-render or update styles when theme changes
         if (this.initialized) {
             this.renderModule();
         }
-    },
+    }
 
     renderModule() {
         if (!this.element) return;
@@ -173,7 +168,7 @@ const ReportsModule = {
         `;
 
         this.setupEventListeners();
-    },
+    }
 
     setupEventListeners() {
         // Report generation buttons
@@ -189,7 +184,7 @@ const ReportsModule = {
         document.getElementById('print-report')?.addEventListener('click', () => this.printReport());
         document.getElementById('export-report')?.addEventListener('click', () => this.exportReport());
         document.getElementById('close-report')?.addEventListener('click', () => this.closeReport());
-    },
+    }
 
     renderQuickStats() {
         const stats = this.getFarmStats();
@@ -220,7 +215,7 @@ const ReportsModule = {
                 <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${stats.totalFeedUsed} kg</div>
             </div>
         `;
-    },
+    }
 
     getFarmStats() {
         if (window.FarmModules && window.FarmModules.appData && window.FarmModules.appData.profile && window.FarmModules.appData.profile.dashboardStats) {
@@ -262,7 +257,7 @@ const ReportsModule = {
             lowStockItems,
             totalFeedUsed
         };
-    },
+    }
 
     renderRecentActivity() {
         const activities = this.getRecentActivities();
@@ -297,7 +292,7 @@ const ReportsModule = {
                 `).join('')}
             </div>
         `;
-    },
+    }
 
     getRecentActivities() {
         const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]').slice(0, 3);
@@ -360,7 +355,7 @@ const ReportsModule = {
 
         activities.sort((a, b) => new Date(b.date) - new Date(a.date));
         return activities.slice(0, 5);
-    },
+    }
 
     generateFinancialReport() {
         const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
@@ -436,7 +431,7 @@ const ReportsModule = {
         `;
 
         this.showReport('Financial Performance Report', reportContent);
-    },
+    }
 
     generateProductionReport() {
         const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
@@ -510,7 +505,7 @@ const ReportsModule = {
         `;
 
         this.showReport('Production Analysis Report', reportContent);
-    },
+    }
 
     generateInventoryReport() {
         const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
@@ -558,7 +553,7 @@ const ReportsModule = {
         `;
 
         this.showReport('Inventory Analysis Report', reportContent);
-    },
+    }
 
     generateSalesReport() {
         const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
@@ -606,7 +601,7 @@ const ReportsModule = {
         `;
 
         this.showReport('Sales Performance Report', reportContent);
-    },
+    }
 
     generateHealthReport() {
         const mortalityRecords = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
@@ -658,7 +653,7 @@ const ReportsModule = {
         `;
 
         this.showReport('Flock Health Report', reportContent);
-    },
+    }
 
     generateFeedReport() {
         const feedRecords = JSON.parse(localStorage.getItem('farm-feed-records') || '[]');
@@ -713,7 +708,7 @@ const ReportsModule = {
         `;
 
         this.showReport('Feed Consumption Report', reportContent);
-    },
+    }
 
     generateComprehensiveReport() {
         const stats = this.getFarmStats();
@@ -784,26 +779,39 @@ const ReportsModule = {
         `;
 
         this.showReport('Comprehensive Farm Report', reportContent);
-    },
+    }
 
     showReport(title, content) {
-        document.getElementById('report-title').textContent = title;
-        document.getElementById('report-content').innerHTML = content;
-        document.getElementById('report-output').classList.remove('hidden');
-        document.getElementById('report-output').scrollIntoView({ behavior: 'smooth' });
-    },
+        const reportTitle = document.getElementById('report-title');
+        const reportContent = document.getElementById('report-content');
+        const reportOutput = document.getElementById('report-output');
+        
+        if (reportTitle) reportTitle.textContent = title;
+        if (reportContent) reportContent.innerHTML = content;
+        if (reportOutput) {
+            reportOutput.classList.remove('hidden');
+            reportOutput.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
 
     closeReport() {
-        document.getElementById('report-output').classList.add('hidden');
-    },
+        const reportOutput = document.getElementById('report-output');
+        if (reportOutput) {
+            reportOutput.classList.add('hidden');
+        }
+    }
 
     printReport() {
-        const reportContent = document.getElementById('report-content').innerHTML;
+        const reportContent = document.getElementById('report-content')?.innerHTML;
+        const reportTitle = document.getElementById('report-title')?.textContent;
+        
+        if (!reportContent || !reportTitle) return;
+        
         const printWindow = window.open('', '_blank');
         printWindow.document.write(`
             <html>
                 <head>
-                    <title>Farm Report</title>
+                    <title>${reportTitle}</title>
                     <style>
                         body { font-family: Arial, sans-serif; margin: 20px; }
                         .report-section { margin-bottom: 30px; }
@@ -817,7 +825,7 @@ const ReportsModule = {
                     </style>
                 </head>
                 <body>
-                    <h1>${document.getElementById('report-title').textContent}</h1>
+                    <h1>${reportTitle}</h1>
                     <div>Generated on: ${new Date().toLocaleDateString()}</div>
                     <hr>
                     ${reportContent}
@@ -826,11 +834,13 @@ const ReportsModule = {
         `);
         printWindow.document.close();
         printWindow.print();
-    },
+    }
 
     exportReport() {
-        const reportTitle = document.getElementById('report-title').textContent;
-        const reportContent = document.getElementById('report-content').textContent;
+        const reportTitle = document.getElementById('report-title')?.textContent;
+        const reportContent = document.getElementById('report-content')?.textContent;
+        
+        if (!reportTitle || !reportContent) return;
         
         const blob = new Blob([`${reportTitle}\n\nGenerated on: ${new Date().toLocaleDateString()}\n\n${reportContent}`], {
             type: 'text/plain'
@@ -844,18 +854,14 @@ const ReportsModule = {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        
-        if (window.coreModule) {
-            window.coreModule.showNotification('Report exported successfully!', 'success');
-        }
-    },
+    }
 
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD'
         }).format(amount);
-    },
+    }
 
     formatCategory(category) {
         const categories = {
@@ -869,7 +875,7 @@ const ReportsModule = {
             'other': 'Other'
         };
         return categories[category] || category;
-    },
+    }
 
     formatProductName(product) {
         const products = {
@@ -882,7 +888,7 @@ const ReportsModule = {
             'other': 'Other'
         };
         return products[product] || product;
-    },
+    }
 
     formatQuality(quality) {
         const qualities = {
@@ -893,7 +899,7 @@ const ReportsModule = {
             'rejects': 'Rejects'
         };
         return qualities[quality] || quality;
-    },
+    }
 
     formatCause(cause) {
         const causes = {
@@ -905,7 +911,7 @@ const ReportsModule = {
             'other': 'Other'
         };
         return causes[cause] || cause;
-    },
+    }
 
     formatFeedType(feedType) {
         const types = {
@@ -915,7 +921,7 @@ const ReportsModule = {
             'layer': 'Layer'
         };
         return types[feedType] || feedType;
-    },
+    }
 
     getFinancialInsights(income, expenses, netProfit, profitMargin) {
         if (netProfit < 0) {
@@ -927,34 +933,55 @@ const ReportsModule = {
         } else {
             return "✅ Healthy financial performance. Maintain current operations and monitor trends.";
         }
-    },
+    }
 
     getProductionInsights(totalProduction, mortalityRate, qualityDistribution) {
         if (totalProduction === 0) return "No production data recorded. Start tracking your farm's output.";
         if (mortalityRate > 10) return "⚠️ High mortality rate affecting production. Review flock management practices.";
-        if (qualityDistribution['excellent'] > qualityDistribution['grade-b']) {
+        if (qualityDistribution && qualityDistribution['excellent'] > (qualityDistribution['grade-b'] || 0)) {
             return "✅ Excellent quality production! Maintain current standards and practices.";
         }
         return "Good production levels. Focus on quality improvement and mortality reduction.";
-    },
+    }
 
     getSalesInsights(salesCount, totalSales) {
         if (salesCount === 0) return "No sales recorded yet. Focus on marketing and customer acquisition.";
         if (totalSales < 1000) return "Sales are starting. Consider expanding product offerings and marketing efforts.";
         if (totalSales > 5000) return "Strong sales performance! Consider scaling operations and exploring new markets.";
         return "Steady sales performance. Continue current strategies and monitor customer feedback.";
-    },
+    }
 
     getHealthRecommendations(mortalityRate, causeBreakdown) {
         if (mortalityRate > 10) return "⚠️ High mortality rate detected! Immediate veterinary consultation recommended.";
         if (mortalityRate > 5) return "Monitor flock health closely. Review feeding, housing, and environmental conditions.";
-        if (causeBreakdown.disease > 0) return "Disease cases detected. Implement biosecurity measures and consider vaccination.";
+        if (causeBreakdown && causeBreakdown.disease > 0) return "Disease cases detected. Implement biosecurity measures and consider vaccination.";
         return "✅ Good flock health. Maintain current management practices and regular monitoring.";
     }
-};
+}
 
-// FIXED: Register the module correctly
+// ============================================
+// IMPORTANT: Register with StyleManager
+// ============================================
+console.log('📊 Reports module script loaded');
+
+// Check if StyleManager exists and register the module
+if (window.StyleManager) {
+    console.log('✅ StyleManager found, registering reports module...');
+    
+    // Create instance
+    const reportsInstance = new ReportsModule();
+    
+    // Register with StyleManager
+    window.StyleManager.registerModule('reports', reportsInstance);
+    
+    console.log('✅ Reports module registered with StyleManager');
+} else {
+    console.error('❌ StyleManager not found!');
+    console.log('StyleManager is required for module registration');
+    console.log('Make sure style-manager.js is loaded before reports.js');
+}
+
+// Also register with FarmModules for backward compatibility
 window.FarmModules = window.FarmModules || {};
-window.FarmModules.reports = ReportsModule;
-
-console.log('✅ Reports module registered successfully!');
+window.FarmModules.reports = new ReportsModule();
+console.log('✅ Reports module also registered with FarmModules for backward compatibility');
