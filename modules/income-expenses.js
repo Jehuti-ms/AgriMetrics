@@ -670,8 +670,8 @@ const IncomeExpensesModule = {
     },
 
    // ==================== MODAL CONTROL METHODS ====================
-    showImportReceiptsModal() {
-        console.log('Showing import receipts modal');
+   // showImportReceiptsModal() {
+  /*      console.log('Showing import receipts modal');
         this.hideAllModals();
         const modal = document.getElementById('import-receipts-modal');
         if (modal) {
@@ -683,7 +683,57 @@ const IncomeExpensesModule = {
             }
             this.setupImportReceiptsHandlers();
         }
-    },
+    }, */
+    
+    showImportReceiptsModal() {
+    console.log('=== DEBUG START: Import Receipts ===');
+    console.log('1. Method called');
+    
+    // Check if hideAllModals exists
+    if (typeof this.hideAllModals !== 'function') {
+        console.error('ERROR: hideAllModals is not a function');
+        return;
+    }
+    
+    console.log('2. Calling hideAllModals...');
+    this.hideAllModals();
+    
+    console.log('3. Looking for modal...');
+    const modal = document.getElementById('import-receipts-modal');
+    console.log('Modal found:', !!modal);
+    
+    if (!modal) {
+        console.error('ERROR: Modal not found in DOM!');
+        console.log('All elements with id containing "modal":');
+        document.querySelectorAll('[id*="modal"]').forEach(el => {
+            console.log(`  - ${el.id}`);
+        });
+        console.log('All popout-modal elements:');
+        document.querySelectorAll('.popout-modal').forEach(el => {
+            console.log(`  - ${el.id || 'no id'}`);
+        });
+        return;
+    }
+    
+    console.log('4. Removing hidden class...');
+    modal.classList.remove('hidden');
+    
+    console.log('5. Updating content...');
+    const content = document.getElementById('import-receipts-content');
+    if (content) {
+        content.innerHTML = this.renderImportReceiptsModal();
+    } else {
+        console.error('ERROR: import-receipts-content not found');
+    }
+    
+    console.log('6. Setting up handlers...');
+    this.setupImportReceiptsHandlers();
+    
+    console.log('7. Checking modal visibility...');
+    console.log('Modal class list:', modal.className);
+    console.log('Modal display style:', window.getComputedStyle(modal).display);
+    console.log('=== DEBUG END ===');
+},
 
     hideImportReceiptsModal() {
         const modal = document.getElementById('import-receipts-modal');
@@ -1047,7 +1097,43 @@ const IncomeExpensesModule = {
     },
 
     // ==================== EVENT LISTENERS ====================
-    setupEventListeners() {
+       setupEventListeners() {
+    console.log('=== Setting up event listeners ===');
+    
+    // Main buttons
+    const addTransactionBtn = document.getElementById('add-transaction');
+    console.log('Add Transaction button:', !!addTransactionBtn);
+    if (addTransactionBtn) {
+        addTransactionBtn.addEventListener('click', () => {
+            console.log('Add Transaction button clicked');
+            this.showTransactionModal();
+        });
+    }
+
+    const uploadReceiptBtn = document.getElementById('upload-receipt-btn');
+    console.log('Upload Receipt button:', !!uploadReceiptBtn);
+    if (uploadReceiptBtn) {
+        uploadReceiptBtn.addEventListener('click', (e) => {
+            console.log('=== UPLOAD RECEIPT BUTTON CLICKED ===');
+            console.log('Event:', e);
+            console.log('Button text:', uploadReceiptBtn.textContent);
+            console.log('Button HTML:', uploadReceiptBtn.innerHTML);
+            this.showImportReceiptsModal();
+        });
+        
+        // Also add a test click
+        uploadReceiptBtn.addEventListener('click', () => {
+            console.log('TEST: Direct click handler fired');
+        }, { once: true });
+    } else {
+        console.error('ERROR: upload-receipt-btn not found!');
+        console.log('Available buttons:');
+        document.querySelectorAll('button').forEach((btn, i) => {
+            if (btn.id) console.log(`  ${i}: #${btn.id} - "${btn.textContent}"`);
+        });
+    }
+    
+    /*setupEventListeners() {
         console.log('Setting up event listeners...');
         
         // Main buttons
@@ -1112,7 +1198,10 @@ const IncomeExpensesModule = {
         setTimeout(() => {
             this.setupReceiptActionListeners();
         }, 100);
-    },
+    }, */
+
+
+
 
     setupImportReceiptsHandlers() {
         // Camera option
