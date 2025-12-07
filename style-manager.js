@@ -264,30 +264,6 @@ const StyleManager = {
                 z-index: 1;
             }
 
-           .top-nav {
-  display: flex;
-  align-items: center;   /* centers children vertically within navbar */
-  height: 64px;          /* match your navbar height */
-  padding: 0 16px;
-}
-
-.nav-brand {
-  display: flex;
-  align-items: flex-end; /* aligns text at the bottom of its own box */
-  gap: 8px;
-  height: 100%;          /* keeps brand inside navbar height */
-  padding-bottom: 4px;   /* nudges text upward */
-}
-
-.brand-text,
-.brand-subtitle {
-  line-height: 1;
-  vertical-align: bottom;
-  white-space: nowrap;
-}
-
-
-
         /* MODERN PWA BUTTONS - GREEN GRADIENT FOR ALL MODULES */
             .btn-primary, 
             .btn.btn-primary, 
