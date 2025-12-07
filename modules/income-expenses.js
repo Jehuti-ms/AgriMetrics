@@ -1204,6 +1204,630 @@ const IncomeExpensesModule = {
         }
     },
 
+    // ==================== ADD THESE METHODS TO IncomeExpensesModule ====================
+
+    renderCategoryBreakdown() {
+        const categoryData = {};
+        
+        // Initialize all categories
+        this.categories.forEach(cat => {
+            categoryData[cat] = { income: 0, expense: 0 };
+        });
+        
+        // Add additional categories
+        ['sales', 'services', 'grants', 'other-income', 'maintenance', 'transport', 'marketing', 'other-expense'].forEach(category => {
+            if (!categoryData[category]) {
+                categoryData[category] = { income: 0, expense: 0 };
+            }
+        });
+        
+        // Calculate totals
+        this.transactions.forEach(transaction => {
+            if (categoryData[transaction.category]) {
+                if (transaction.type === 'income') {
+                    categoryData[transaction.category].income += transaction.amount;
+                } else {
+                    categoryData[transaction.category].expense += transaction.amount;
+                }
+            }
+        });
+
+        const categoriesWithData = Object.entries(categoryData).filter(([_, data]) => data.income > 0 || data.expense > 0);
+        
+        if (categoriesWithData.length === 0) {
+            return `
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No category data</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Add transactions to see category breakdown</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+                ${categoriesWithData.map(([category, data]) => {
+                    const icon = this.getCategoryIcon(category);
+                    const total = data.income - data.expense;
+                    
+                    return `
+                        <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                <div style="font-size: 20px;">${icon}</div>
+                                <div style="font-weight: 600; color: var(--text-primary);">${this.formatCategory(category)}</div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span style="color: var(--text-secondary);">Income:</span>
+                                <span style="font-weight: 600; color: #22c55e;">${this.formatCurrency(data.income)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span style="color: var(--text-secondary);">Expenses:</span>
+                                <span style="font-weight: 600; color: #ef4444;">${this.formatCurrency(data.expense)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--glass-border);">
+                                <span style="color: var(--text-primary); font-weight: 600;">Net:</span>
+                                <span style="font-weight: bold; color: ${total >= 0 ? '#22c55e' : '#ef4444'};">${this.formatCurrency(total)}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    },
+
+    generateFinancialReport() {
+        console.log('Generating financial report...');
+        const reportContent = document.getElementById('financial-report-content');
+        if (reportContent) {
+            const stats = this.calculateStats();
+            const byMonth = this.getTransactionsByMonth();
+            
+            reportContent.innerHTML = `
+                <div style="padding: 20px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 24px; text-align: center;">Financial Report</h3>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 24px;">
+                        <div style="background: #f0f9ff; padding: 16px; border-radius: 8px;">
+                            <div style="font-size: 14px; color: #0284c7; margin-bottom: 4px;">Total Income</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #0369a1;">${this.formatCurrency(stats.totalIncome)}</div>
+                        </div>
+                        <div style="background: #fef2f2; padding: 16px; border-radius: 8px;">
+                            <div style="font-size: 14px; color: #dc2626; margin-bottom: 4px;">Total Expenses</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #b91c1c;">${this.formatCurrency(stats.totalExpenses)}</div>
+                        </div>
+                        <div style="background: #f0fdf4; padding: 16px; border-radius: 8px;">
+                            <div style="font-size: 14px; color: #16a34a; margin-bottom: 4px;">Net Income</div>
+                            <div style="font-size: 24px; font-weight: bold; color: ${stats.netIncome >= 0 ? '#15803d' : '#dc2626'};">${this.formatCurrency(stats.netIncome)}</div>
+                        </div>
+                        <div style="background: #f8fafc; padding: 16px; border-radius: 8px;">
+                            <div style="font-size: 14px; color: #64748b; margin-bottom: 4px;">Total Transactions</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #334155;">${stats.transactionCount}</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 24px;">
+                        <h4 style="color: var(--text-primary); margin-bottom: 16px;">Monthly Overview</h4>
+                        <div style="background: var(--glass-bg); border-radius: 8px; padding: 16px;">
+                            ${byMonth.length > 0 ? `
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    ${byMonth.slice(0, 6).map(month => `
+                                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--glass-border);">
+                                            <div>
+                                                <div style="font-weight: 600; color: var(--text-primary);">${month.month}</div>
+                                                <div style="font-size: 12px; color: var(--text-secondary);">${month.transactions} transactions</div>
+                                            </div>
+                                            <div style="text-align: right;">
+                                                <div style="color: #22c55e; font-weight: 600;">${this.formatCurrency(month.income)}</div>
+                                                <div style="color: #ef4444; font-size: 12px;">${this.formatCurrency(month.expenses)}</div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : `
+                                <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                                    No monthly data available
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 24px;">
+                        <h4 style="color: var(--text-primary); margin-bottom: 16px;">Top Categories</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                            ${this.getTopCategories(5).map(category => `
+                                <div style="background: var(--glass-bg); padding: 12px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                        <span style="font-size: 20px;">${this.getCategoryIcon(category.name)}</span>
+                                        <span style="font-weight: 600; color: var(--text-primary);">${this.formatCategory(category.name)}</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <span style="color: var(--text-secondary); font-size: 14px;">Total:</span>
+                                        <span style="font-weight: 600; color: ${category.type === 'income' ? '#22c55e' : '#ef4444'};">${this.formatCurrency(category.amount)}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <div style="font-weight: 600; color: #334155;">Report Generated</div>
+                            <div style="color: #64748b; font-size: 14px;">${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</div>
+                        </div>
+                        <div style="color: #64748b; font-size: 14px; text-align: center;">
+                            Farm Financial Report • Powered by Farm Management System
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        this.showModal('financial-report-modal');
+    },
+
+    generateCategoryAnalysis() {
+        console.log('Generating category analysis...');
+        const analysisContent = document.getElementById('category-analysis-content');
+        if (analysisContent) {
+            const categoryData = this.getCategoryAnalysisData();
+            
+            analysisContent.innerHTML = `
+                <div style="padding: 20px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 24px; text-align: center;">Category Analysis</h3>
+                    
+                    <div style="margin-bottom: 24px;">
+                        <h4 style="color: var(--text-primary); margin-bottom: 16px;">Income Categories</h4>
+                        <div style="background: var(--glass-bg); border-radius: 8px; padding: 16px;">
+                            ${categoryData.income.length > 0 ? `
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    ${categoryData.income.map(cat => `
+                                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f0f9ff; border-radius: 6px;">
+                                            <div style="display: flex; align-items: center; gap: 12px;">
+                                                <span style="font-size: 20px;">${this.getCategoryIcon(cat.name)}</span>
+                                                <div>
+                                                    <div style="font-weight: 600; color: var(--text-primary);">${this.formatCategory(cat.name)}</div>
+                                                    <div style="font-size: 12px; color: var(--text-secondary);">${cat.count} transactions</div>
+                                                </div>
+                                            </div>
+                                            <div style="text-align: right;">
+                                                <div style="font-weight: bold; color: #22c55e; font-size: 18px;">${this.formatCurrency(cat.amount)}</div>
+                                                <div style="color: #0284c7; font-size: 12px;">${cat.percentage}% of income</div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : `
+                                <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                                    No income data available
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 24px;">
+                        <h4 style="color: var(--text-primary); margin-bottom: 16px;">Expense Categories</h4>
+                        <div style="background: var(--glass-bg); border-radius: 8px; padding: 16px;">
+                            ${categoryData.expense.length > 0 ? `
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    ${categoryData.expense.map(cat => `
+                                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #fef2f2; border-radius: 6px;">
+                                            <div style="display: flex; align-items: center; gap: 12px;">
+                                                <span style="font-size: 20px;">${this.getCategoryIcon(cat.name)}</span>
+                                                <div>
+                                                    <div style="font-weight: 600; color: var(--text-primary);">${this.formatCategory(cat.name)}</div>
+                                                    <div style="font-size: 12px; color: var(--text-secondary);">${cat.count} transactions</div>
+                                                </div>
+                                            </div>
+                                            <div style="text-align: right;">
+                                                <div style="font-weight: bold; color: #ef4444; font-size: 18px;">${this.formatCurrency(cat.amount)}</div>
+                                                <div style="color: #dc2626; font-size: 12px;">${cat.percentage}% of expenses</div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : `
+                                <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                                    No expense data available
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                            <div style="font-size: 20px;">💡</div>
+                            <div>
+                                <div style="font-weight: 600; color: #334155;">Analysis Insights</div>
+                                <div style="color: #64748b; font-size: 14px;">
+                                    ${this.getCategoryInsights(categoryData)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        this.showModal('category-analysis-modal');
+    },
+
+    showModal(modalId) {
+        this.hideAllModals();
+        const modal = document.getElementById(modalId);
+        if (modal) modal.classList.remove('hidden');
+    },
+
+    editTransaction(transactionId) {
+        console.log('Editing transaction:', transactionId);
+        const transaction = this.transactions.find(t => t.id == transactionId);
+        if (!transaction) {
+            this.showNotification('Transaction not found', 'error');
+            return;
+        }
+        
+        // Populate form
+        const idInput = document.getElementById('transaction-id');
+        if (idInput) idInput.value = transaction.id;
+        
+        const dateInput = document.getElementById('transaction-date');
+        if (dateInput) dateInput.value = transaction.date;
+        
+        const typeSelect = document.getElementById('transaction-type');
+        if (typeSelect) typeSelect.value = transaction.type;
+        
+        const categorySelect = document.getElementById('transaction-category');
+        if (categorySelect) categorySelect.value = transaction.category;
+        
+        const amountInput = document.getElementById('transaction-amount');
+        if (amountInput) amountInput.value = transaction.amount;
+        
+        const descriptionInput = document.getElementById('transaction-description');
+        if (descriptionInput) descriptionInput.value = transaction.description;
+        
+        const paymentSelect = document.getElementById('transaction-payment');
+        if (paymentSelect) paymentSelect.value = transaction.paymentMethod || 'cash';
+        
+        const referenceInput = document.getElementById('transaction-reference');
+        if (referenceInput) referenceInput.value = transaction.reference || '';
+        
+        const notesInput = document.getElementById('transaction-notes');
+        if (notesInput) notesInput.value = transaction.notes || '';
+        
+        const deleteBtn = document.getElementById('delete-transaction');
+        if (deleteBtn) deleteBtn.style.display = 'block';
+        
+        const title = document.getElementById('transaction-modal-title');
+        if (title) title.textContent = 'Edit Transaction';
+        
+        // Handle receipt if exists
+        if (transaction.receipt) {
+            this.receiptPreview = transaction.receipt;
+            this.showReceiptPreviewInTransactionModal(transaction.receipt);
+        }
+    },
+
+    saveTransaction() {
+        console.log('Saving transaction...');
+        
+        // Get form values
+        const id = document.getElementById('transaction-id')?.value || Date.now();
+        const date = document.getElementById('transaction-date')?.value;
+        const type = document.getElementById('transaction-type')?.value;
+        const category = document.getElementById('transaction-category')?.value;
+        const amount = parseFloat(document.getElementById('transaction-amount')?.value || 0);
+        const description = document.getElementById('transaction-description')?.value || '';
+        const paymentMethod = document.getElementById('transaction-payment')?.value || 'cash';
+        const reference = document.getElementById('transaction-reference')?.value || '';
+        const notes = document.getElementById('transaction-notes')?.value || '';
+        
+        // Validate
+        if (!date || !type || !category || !amount || !description) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        if (amount <= 0) {
+            this.showNotification('Amount must be greater than 0', 'error');
+            return;
+        }
+        
+        const transactionData = {
+            id: parseInt(id),
+            date,
+            type,
+            category,
+            amount,
+            description,
+            paymentMethod,
+            reference,
+            notes,
+            receipt: this.receiptPreview || null
+        };
+        
+        // Check if editing existing transaction
+        const existingIndex = this.transactions.findIndex(t => t.id == id);
+        if (existingIndex > -1) {
+            // Update existing
+            this.transactions[existingIndex] = transactionData;
+            this.showNotification('Transaction updated successfully!', 'success');
+            
+            // If this was from a pending receipt, mark it as processed
+            if (this.receiptPreview?.id) {
+                this.markReceiptAsProcessed(this.receiptPreview.id);
+            }
+        } else {
+            // Add new
+            transactionData.id = transactionData.id || Date.now();
+            this.transactions.unshift(transactionData);
+            this.showNotification('Transaction saved successfully!', 'success');
+            
+            // If this was from a pending receipt, mark it as processed
+            if (this.receiptPreview?.id) {
+                this.markReceiptAsProcessed(this.receiptPreview.id);
+            }
+        }
+        
+        // Save to localStorage
+        this.saveData();
+        
+        // Update UI
+        this.updateStats();
+        this.updateTransactionsList();
+        this.updateCategoryBreakdown();
+        
+        // Close modal
+        this.hideTransactionModal();
+    },
+
+    markReceiptAsProcessed(receiptId) {
+        const receiptIndex = this.receiptQueue.findIndex(r => r.id === receiptId);
+        if (receiptIndex > -1) {
+            // Update status locally
+            this.receiptQueue[receiptIndex].status = 'processed';
+            
+            // Update in Firebase if available
+            if (this.isFirebaseAvailable && window.db) {
+                window.db.collection('receipts').doc(receiptId).update({
+                    status: 'processed',
+                    processedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+            
+            // Update UI
+            this.updateReceiptQueueUI();
+            
+            this.showNotification('Receipt marked as processed', 'success');
+        }
+    },
+
+    deleteTransaction() {
+        const transactionId = document.getElementById('transaction-id')?.value;
+        if (!transactionId) return;
+        
+        if (confirm('Are you sure you want to delete this transaction?')) {
+            this.deleteTransactionRecord(transactionId);
+            this.hideTransactionModal();
+        }
+    },
+
+    deleteTransactionRecord(transactionId) {
+        this.transactions = this.transactions.filter(t => t.id != transactionId);
+        this.saveData();
+        this.updateStats();
+        this.updateTransactionsList();
+        this.updateCategoryBreakdown();
+        this.showNotification('Transaction deleted successfully', 'success');
+    },
+
+    filterTransactions(filter) {
+        let filtered = this.transactions;
+        
+        if (filter === 'income') {
+            filtered = this.transactions.filter(t => t.type === 'income');
+        } else if (filter === 'expense') {
+            filtered = this.transactions.filter(t => t.type === 'expense');
+        }
+        
+        const recent = filtered.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
+        const transactionsList = document.getElementById('transactions-list');
+        if (transactionsList) {
+            transactionsList.innerHTML = this.renderTransactionsList(recent);
+        }
+    },
+
+    exportTransactions() {
+        console.log('Exporting transactions...');
+        const dataStr = JSON.stringify(this.transactions, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        
+        const exportFileDefaultName = `transactions-${new Date().toISOString().split('T')[0]}.json`;
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+        
+        this.showNotification('Transactions exported successfully!', 'success');
+    },
+
+    updateStats() {
+        const stats = this.calculateStats();
+        this.updateElement('total-income', this.formatCurrency(stats.totalIncome));
+        this.updateElement('total-expenses', this.formatCurrency(stats.totalExpenses));
+        this.updateElement('net-income', this.formatCurrency(stats.netIncome));
+    },
+
+    updateTransactionsList() {
+        const recent = this.getRecentTransactions(10);
+        const transactionsList = document.getElementById('transactions-list');
+        if (transactionsList) {
+            transactionsList.innerHTML = this.renderTransactionsList(recent);
+        }
+    },
+
+    updateCategoryBreakdown() {
+        const categoryBreakdown = document.getElementById('category-breakdown');
+        if (categoryBreakdown) {
+            categoryBreakdown.innerHTML = this.renderCategoryBreakdown();
+        }
+    },
+
+    updateElement(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+        }
+    },
+
+    viewReceipt(transactionId) {
+        console.log('Viewing receipt for transaction:', transactionId);
+        const transaction = this.transactions.find(t => t.id == transactionId);
+        if (!transaction || !transaction.receipt) {
+            this.showNotification('No receipt available for this transaction', 'info');
+            return;
+        }
+        
+        // Open receipt in new window
+        window.open(transaction.receipt.downloadURL, '_blank');
+    },
+
+    printFinancialReport() {
+        console.log('Printing financial report...');
+        window.print();
+    },
+
+    printCategoryAnalysis() {
+        console.log('Printing category analysis...');
+        window.print();
+    },
+
+    // ==================== HELPER METHODS ====================
+    getTransactionsByMonth() {
+        const months = {};
+        
+        this.transactions.forEach(transaction => {
+            const date = new Date(transaction.date);
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            const monthName = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            if (!months[monthKey]) {
+                months[monthKey] = {
+                    month: monthName,
+                    income: 0,
+                    expenses: 0,
+                    transactions: 0
+                };
+            }
+            
+            if (transaction.type === 'income') {
+                months[monthKey].income += transaction.amount;
+            } else {
+                months[monthKey].expenses += transaction.amount;
+            }
+            
+            months[monthKey].transactions++;
+        });
+        
+        return Object.values(months).sort((a, b) => {
+            const [aYear, aMonth] = a.month.split(' ');
+            const [bYear, bMonth] = b.month.split(' ');
+            return new Date(bYear, new Date(`${bMonth} 1, ${bYear}`).getMonth()) - 
+                   new Date(aYear, new Date(`${aMonth} 1, ${aYear}`).getMonth());
+        });
+    },
+
+    getTopCategories(limit = 5) {
+        const categoryTotals = {};
+        
+        this.transactions.forEach(transaction => {
+            if (!categoryTotals[transaction.category]) {
+                categoryTotals[transaction.category] = {
+                    name: transaction.category,
+                    amount: 0,
+                    type: transaction.type,
+                    count: 0
+                };
+            }
+            
+            categoryTotals[transaction.category].amount += transaction.amount;
+            categoryTotals[transaction.category].count++;
+        });
+        
+        return Object.values(categoryTotals)
+            .sort((a, b) => b.amount - a.amount)
+            .slice(0, limit);
+    },
+
+    getCategoryAnalysisData() {
+        const incomeCategories = {};
+        const expenseCategories = {};
+        
+        let totalIncome = 0;
+        let totalExpenses = 0;
+        
+        // Calculate totals
+        this.transactions.forEach(transaction => {
+            if (transaction.type === 'income') {
+                totalIncome += transaction.amount;
+                if (!incomeCategories[transaction.category]) {
+                    incomeCategories[transaction.category] = {
+                        name: transaction.category,
+                        amount: 0,
+                        count: 0
+                    };
+                }
+                incomeCategories[transaction.category].amount += transaction.amount;
+                incomeCategories[transaction.category].count++;
+            } else {
+                totalExpenses += transaction.amount;
+                if (!expenseCategories[transaction.category]) {
+                    expenseCategories[transaction.category] = {
+                        name: transaction.category,
+                        amount: 0,
+                        count: 0
+                    };
+                }
+                expenseCategories[transaction.category].amount += transaction.amount;
+                expenseCategories[transaction.category].count++;
+            }
+        });
+        
+        // Calculate percentages
+        Object.values(incomeCategories).forEach(cat => {
+            cat.percentage = totalIncome > 0 ? Math.round((cat.amount / totalIncome) * 100) : 0;
+        });
+        
+        Object.values(expenseCategories).forEach(cat => {
+            cat.percentage = totalExpenses > 0 ? Math.round((cat.amount / totalExpenses) * 100) : 0;
+        });
+        
+        return {
+            income: Object.values(incomeCategories).sort((a, b) => b.amount - a.amount),
+            expense: Object.values(expenseCategories).sort((a, b) => b.amount - a.amount),
+            totalIncome,
+            totalExpenses
+        };
+    },
+
+    getCategoryInsights(categoryData) {
+        const insights = [];
+        
+        if (categoryData.income.length > 0) {
+            const topIncome = categoryData.income[0];
+            insights.push(`Top income source: ${this.formatCategory(topIncome.name)} (${topIncome.percentage}% of total income)`);
+        }
+        
+        if (categoryData.expense.length > 0) {
+            const topExpense = categoryData.expense[0];
+            insights.push(`Largest expense: ${this.formatCategory(topExpense.name)} (${topExpense.percentage}% of total expenses)`);
+        }
+        
+        if (categoryData.totalIncome > 0 && categoryData.totalExpenses > 0) {
+            const profitMargin = ((categoryData.totalIncome - categoryData.totalExpenses) / categoryData.totalIncome * 100).toFixed(1);
+            insights.push(`Profit margin: ${profitMargin}%`);
+        }
+        
+        return insights.length > 0 ? insights.join(' • ') : 'Add more transactions to see insights';
+    }
+    
     // ==================== RECEIPT PROCESSING ====================
     async processSingleReceipt(receiptId) {
         const receipt = this.receiptQueue.find(r => r.id === receiptId);
