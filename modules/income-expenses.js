@@ -34,6 +34,8 @@ const IncomeExpensesModule = {
         }
 
         this.loadData();
+         // Clean up broken receipts before loading
+        this.cleanupBrokenReceipts();
         this.loadReceiptsFromFirebase();
         this.renderModule();
         this.initialized = true;
@@ -2279,7 +2281,25 @@ storeReceiptLocally(file) {
         }
     },
     // Add these methods RIGHT BEFORE the closing } of IncomeExpensesModule:
-
+    cleanupBrokenReceipts() {
+    // Clean local receipts
+    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+    const validReceipts = localReceipts.filter(r => this.isValidReceiptURL(r.downloadURL));
+    
+    if (validReceipts.length !== localReceipts.length) {
+        localStorage.setItem('local-receipts', JSON.stringify(validReceipts));
+        console.log(`Cleaned up ${localReceipts.length - validReceipts.length} broken receipts`);
+    }
+    
+    // Clean local queue
+    this.receiptQueue = this.receiptQueue.filter(r => this.isValidReceiptURL(r.downloadURL));
+    
+    // Update UI
+    this.updateReceiptQueueUI();
+    
+    this.showNotification('Cleaned up broken receipts', 'info');
+},
+    
     // ==================== BATCH OPERATIONS ====================
     
     addBatchDeleteUI() {
