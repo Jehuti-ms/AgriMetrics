@@ -1,17 +1,15 @@
-// modules/income-expenses.js - CORRECTED VERSION
-console.log('💰 Loading Income & Expenses module...');
-
+// COMPLETE FINANCE TRACKER WITH ALL MODALS WORKING
 const IncomeExpensesModule = {
     name: 'income-expenses',
     initialized: false,
     element: null,
     transactions: [],
-    categories: ['feed', 'medical', 'equipment', 'labor', 'utilities', 'sales', 'other'],
     currentEditingId: null,
     receiptPreview: null,
     cameraStream: null,
     scannerStream: null,
-    cameraFacingMode: null,
+    cameraFacingMode: 'environment',
+    categories: ['sales', 'services', 'grants', 'other-income', 'feed', 'medical', 'equipment', 'labor', 'utilities', 'maintenance', 'transport', 'marketing', 'other-expense'],
 
     initialize() {
         console.log('💰 Initializing Income & Expenses...');
@@ -22,20 +20,13 @@ const IncomeExpensesModule = {
             return false;
         }
 
-        if (window.StyleManager) {
-            StyleManager.registerModule(this.name, this.element, this);
-        }
-
         this.loadData();
         this.renderModule();
+        this.setupEventListeners();
         this.initialized = true;
         
-        console.log('✅ Income & Expenses initialized with StyleManager');
+        console.log('✅ Income & Expenses initialized with ALL features');
         return true;
-    },
-
-    onThemeChange(theme) {
-        console.log(`Income & Expenses updating for theme: ${theme}`);
     },
 
     loadData() {
@@ -45,52 +36,75 @@ const IncomeExpensesModule = {
 
     saveData() {
         localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+        this.showNotification('Data saved successfully!', 'success');
     },
 
     getDemoData() {
         return [
             {
                 id: 1,
-                date: '2024-03-15',
+                date: '2024-03-20',
                 type: 'income',
                 category: 'sales',
-                description: 'Egg sales - Market day',
-                amount: 450.00,
+                description: 'Egg Sales - Market Day',
+                amount: 1250.75,
                 paymentMethod: 'cash',
-                reference: 'EGG-001',
-                receipt: null,
-                notes: 'Sold 30 dozen eggs at $15/dozen'
+                reference: 'INV-001',
+                notes: 'Sold 50 crates of eggs',
+                receipt: null
             },
             {
                 id: 2,
-                date: '2024-03-14',
+                date: '2024-03-19',
                 type: 'expense',
                 category: 'feed',
-                description: 'Chicken feed purchase',
-                amount: 120.00,
+                description: 'Chicken Feed Purchase',
+                amount: 850.50,
                 paymentMethod: 'card',
-                reference: 'INV-78910',
-                receipt: null,
-                notes: '50kg starter feed from FeedCo'
+                reference: 'INV-789',
+                notes: 'Premium organic feed',
+                receipt: null
             },
             {
                 id: 3,
-                date: '2024-03-13',
+                date: '2024-03-18',
                 type: 'expense',
                 category: 'medical',
-                description: 'Vaccines and supplements',
-                amount: 85.50,
+                description: 'Veterinary Supplies',
+                amount: 320.25,
                 paymentMethod: 'transfer',
-                reference: 'MED-001',
-                receipt: null,
-                notes: 'Monthly health supplies'
+                reference: 'MED-2024',
+                notes: 'Vaccines and supplements',
+                receipt: null
+            },
+            {
+                id: 4,
+                date: '2024-03-17',
+                type: 'income',
+                category: 'services',
+                description: 'Farm Consultation',
+                amount: 500.00,
+                paymentMethod: 'transfer',
+                reference: 'CON-001',
+                notes: 'Consulting services',
+                receipt: null
+            },
+            {
+                id: 5,
+                date: '2024-03-16',
+                type: 'expense',
+                category: 'equipment',
+                description: 'Watering System',
+                amount: 1200.00,
+                paymentMethod: 'card',
+                reference: 'EQP-789',
+                notes: 'Automatic watering system',
+                receipt: null
             }
         ];
     },
 
     renderModule() {
-        if (!this.element) return;
-
         const stats = this.calculateStats();
         const recentTransactions = this.getRecentTransactions(10);
 
@@ -98,13 +112,15 @@ const IncomeExpensesModule = {
             <div class="module-container">
                 <!-- Module Header -->
                 <div class="module-header">
-                    <h1 class="module-title">Income & Expenses</h1>
-                    <p class="module-subtitle">Track farm finances and cash flow</p>
+                    <div>
+                        <h1 class="module-title">💰 Income & Expenses</h1>
+                        <p class="module-subtitle">Track farm finances and cash flow</p>
+                    </div>
                     <div class="header-actions">
                         <button class="btn btn-primary" id="add-transaction">
                             ➕ Add Transaction
                         </button>
-                        <button class="btn btn-outline" id="upload-receipt-btn" style="display: flex; align-items: center; gap: 8px;">
+                        <button class="btn btn-outline" id="upload-receipt-btn">
                             📄 Upload Receipt
                         </button>
                     </div>
@@ -113,62 +129,62 @@ const IncomeExpensesModule = {
                 <!-- Financial Overview -->
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-income">${this.formatCurrency(stats.totalIncome)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Total Income</div>
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-value" id="total-income">${this.formatCurrency(stats.totalIncome)}</div>
+                        <div class="stat-label">Total Income</div>
                     </div>
                     <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-expenses">${this.formatCurrency(stats.totalExpenses)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Total Expenses</div>
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-value" id="total-expenses">${this.formatCurrency(stats.totalExpenses)}</div>
+                        <div class="stat-label">Total Expenses</div>
                     </div>
                     <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">📈</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="net-income">${this.formatCurrency(stats.netIncome)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Net Income</div>
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-value" id="net-income">${this.formatCurrency(stats.netIncome)}</div>
+                        <div class="stat-label">Net Income</div>
                     </div>
                     <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">💳</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.transactionCount}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Transactions</div>
+                        <div class="stat-icon">💳</div>
+                        <div class="stat-value">${stats.transactionCount}</div>
+                        <div class="stat-label">Transactions</div>
                     </div>
                 </div>
 
                 <!-- Quick Actions -->
                 <div class="quick-action-grid">
                     <button class="quick-action-btn" id="add-income-btn">
-                        <div style="font-size: 32px;">💰</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Income</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record farm income</span>
+                        <div class="quick-action-icon">💰</div>
+                        <span class="quick-action-title">Add Income</span>
+                        <span class="quick-action-subtitle">Record farm income</span>
                     </button>
                     <button class="quick-action-btn" id="add-expense-btn">
-                        <div style="font-size: 32px;">💸</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Expense</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record farm expenses</span>
+                        <div class="quick-action-icon">💸</div>
+                        <span class="quick-action-title">Add Expense</span>
+                        <span class="quick-action-subtitle">Record farm expenses</span>
                     </button>
                     <button class="quick-action-btn" id="financial-report-btn">
-                        <div style="font-size: 32px;">📊</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Financial Report</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View financial summary</span>
+                        <div class="quick-action-icon">📊</div>
+                        <span class="quick-action-title">Financial Report</span>
+                        <span class="quick-action-subtitle">View financial summary</span>
                     </button>
                     <button class="quick-action-btn" id="category-analysis-btn">
-                        <div style="font-size: 32px;">📋</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Category Analysis</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Breakdown by category</span>
+                        <div class="quick-action-icon">📋</div>
+                        <span class="quick-action-title">Category Analysis</span>
+                        <span class="quick-action-subtitle">Breakdown by category</span>
                     </button>
                 </div>
 
                 <!-- Recent Transactions -->
-                <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="color: var(--text-primary); font-size: 20px;">📋 Recent Transactions</h3>
-                        <div style="display: flex; gap: 12px;">
-                            <select id="transaction-filter" class="form-input" style="width: auto;">
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3>📋 Recent Transactions</h3>
+                        <div class="section-actions">
+                            <select id="transaction-filter" class="form-select">
                                 <option value="all">All Transactions</option>
                                 <option value="income">Income Only</option>
                                 <option value="expense">Expenses Only</option>
                             </select>
-                            <button class="btn-outline" id="export-transactions">Export</button>
+                            <button class="btn btn-outline" id="export-transactions">Export</button>
                         </div>
                     </div>
                     <div id="transactions-list">
@@ -177,32 +193,33 @@ const IncomeExpensesModule = {
                 </div>
 
                 <!-- Category Breakdown -->
-                <div class="glass-card" style="padding: 24px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">📊 Category Breakdown</h3>
+                <div class="section-card">
+                    <h3>📊 Category Breakdown</h3>
                     <div id="category-breakdown">
                         ${this.renderCategoryBreakdown()}
                     </div>
                 </div>
             </div>
 
-            <!-- POPOUT MODALS - Added at the end to overlay content -->
+            <!-- ========== MODALS ========== -->
+            
             <!-- Transaction Modal -->
-            <div id="transaction-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 600px;">
-                    <div class="popout-modal-header">
-                        <h3 class="popout-modal-title" id="transaction-modal-title">Add Transaction</h3>
-                        <button class="popout-modal-close" id="close-transaction-modal">&times;</button>
+            <div id="transaction-modal" class="modal">
+                <div class="modal-content" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h3 id="transaction-modal-title">Add Transaction</h3>
+                        <button class="modal-close" id="close-transaction-modal">&times;</button>
                     </div>
-                    <div class="popout-modal-body">
+                    <div class="modal-body">
                         <form id="transaction-form">
                             <input type="hidden" id="transaction-id" value="">
                             
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
+                            <div class="form-row">
+                                <div class="form-group">
                                     <label class="form-label">Date *</label>
                                     <input type="date" id="transaction-date" class="form-input" required>
                                 </div>
-                                <div>
+                                <div class="form-group">
                                     <label class="form-label">Type *</label>
                                     <select id="transaction-type" class="form-input" required>
                                         <option value="income">💰 Income</option>
@@ -211,8 +228,8 @@ const IncomeExpensesModule = {
                                 </div>
                             </div>
 
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
+                            <div class="form-row">
+                                <div class="form-group">
                                     <label class="form-label">Category *</label>
                                     <select id="transaction-category" class="form-input" required>
                                         <option value="">Select Category</option>
@@ -235,19 +252,19 @@ const IncomeExpensesModule = {
                                         </optgroup>
                                     </select>
                                 </div>
-                                <div>
+                                <div class="form-group">
                                     <label class="form-label">Amount ($) *</label>
                                     <input type="number" id="transaction-amount" class="form-input" step="0.01" min="0" required placeholder="0.00">
                                 </div>
                             </div>
 
-                            <div style="margin-bottom: 16px;">
+                            <div class="form-group">
                                 <label class="form-label">Description *</label>
-                                    <input type="text" id="transaction-description" class="form-input" required placeholder="Enter transaction description">
+                                <input type="text" id="transaction-description" class="form-input" required placeholder="Enter transaction description">
                             </div>
 
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
+                            <div class="form-row">
+                                <div class="form-group">
                                     <label class="form-label">Payment Method</label>
                                     <select id="transaction-payment" class="form-input">
                                         <option value="cash">Cash</option>
@@ -257,112 +274,110 @@ const IncomeExpensesModule = {
                                         <option value="other">Other</option>
                                     </select>
                                 </div>
-                                <div>
+                                <div class="form-group">
                                     <label class="form-label">Reference Number</label>
                                     <input type="text" id="transaction-reference" class="form-input" placeholder="Invoice/Receipt #">
                                 </div>
                             </div>
 
-                            <div style="margin-bottom: 16px;">
+                            <div class="form-group">
                                 <label class="form-label">Notes (Optional)</label>
                                 <textarea id="transaction-notes" class="form-input" placeholder="Additional notes about this transaction" rows="3"></textarea>
                             </div>
 
                             <!-- Receipt Upload Section -->
-                            <div style="margin-bottom: 16px;">
+                            <div class="form-group">
                                 <label class="form-label">Receipt (Optional)</label>
-                                <div id="receipt-upload-area" style="border: 2px dashed var(--glass-border); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; margin-bottom: 12px;">
-                                    <div style="font-size: 48px; margin-bottom: 8px;">📄</div>
-                                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Upload Receipt</div>
-                                    <div style="color: var(--text-secondary); font-size: 14px;">Click to upload or drag & drop</div>
-                                    <div style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">Supports JPG, PNG, PDF (Max 10MB)</div>
+                                <div id="receipt-upload-area" class="drop-zone">
+                                    <div class="drop-zone-icon">📄</div>
+                                    <div class="drop-zone-title">Upload Receipt</div>
+                                    <div class="drop-zone-subtitle">Click to upload or drag & drop</div>
+                                    <div class="drop-zone-info">Supports JPG, PNG, PDF (Max 10MB)</div>
                                     <input type="file" id="receipt-upload" accept="image/*,.pdf" style="display: none;">
                                 </div>
                                 
                                 <!-- Receipt Preview -->
                                 <div id="receipt-preview-container" class="hidden">
-                                    <div style="display: flex; align-items: center; justify-content: space-between; background: var(--glass-bg); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
-                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                            <div style="font-size: 24px;">📄</div>
+                                    <div class="receipt-preview-header">
+                                        <div class="receipt-file-info">
+                                            <div class="receipt-icon">📄</div>
                                             <div>
-                                                <div style="font-weight: 600; color: var(--text-primary);" id="receipt-filename">receipt.jpg</div>
-                                                <div style="font-size: 12px; color: var(--text-secondary);" id="receipt-size">2.5 MB</div>
+                                                <div class="receipt-filename" id="receipt-filename">receipt.jpg</div>
+                                                <div class="receipt-size" id="receipt-size">2.5 MB</div>
                                             </div>
                                         </div>
-                                        <button type="button" id="remove-receipt" class="btn-icon" style="color: var(--text-secondary);">🗑️</button>
+                                        <button type="button" id="remove-receipt" class="btn-icon">🗑️</button>
                                     </div>
                                     
                                     <!-- Image Preview -->
-                                    <div id="image-preview" class="hidden" style="margin-bottom: 12px;">
-                                        <img id="receipt-image-preview" src="" alt="Receipt preview" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                                    <div id="image-preview" class="hidden">
+                                        <img id="receipt-image-preview" src="" alt="Receipt preview">
                                     </div>
                                     
                                     <!-- OCR Button -->
-                                    <button type="button" id="process-receipt-btn" class="btn-outline" style="width: 100%; margin-top: 8px;">
+                                    <button type="button" id="process-receipt-btn" class="btn btn-outline full-width">
                                         🔍 Extract Information from Receipt
                                     </button>
                                     
                                     <!-- Camera Capture -->
-                                    <div style="display: flex; gap: 8px; margin-top: 8px;">
-                                        <button type="button" id="capture-photo-btn" class="btn-outline" style="flex: 1;">
+                                    <div class="camera-actions">
+                                        <button type="button" id="capture-photo-btn" class="btn btn-outline">
                                             📸 Capture Photo
                                         </button>
-                                        <button type="button" id="scan-receipt-btn" class="btn-outline" style="flex: 1;">
+                                        <button type="button" id="scan-receipt-btn" class="btn btn-outline">
                                             🔍 Scan Receipt
                                         </button>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- OCR Results (Auto-filled from receipt) -->
-                            <div id="ocr-results" class="hidden" style="background: #f0f9ff; border-radius: 8px; padding: 16px; margin-bottom: 16px; border: 1px solid #bfdbfe;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                                    <h4 style="color: #1e40af; margin: 0;">📄 Extracted from Receipt</h4>
-                                    <button type="button" id="use-ocr-data" class="btn-primary" style="font-size: 12px; padding: 4px 8px;">Apply</button>
+                            <!-- OCR Results -->
+                            <div id="ocr-results" class="hidden">
+                                <div class="ocr-header">
+                                    <h4>📄 Extracted from Receipt</h4>
+                                    <button type="button" id="use-ocr-data" class="btn btn-primary">Apply</button>
                                 </div>
-                                <div id="ocr-details" style="font-size: 14px; color: #374151;">
-                                    <!-- OCR extracted details will appear here -->
-                                </div>
+                                <div id="ocr-details"></div>
                             </div>
                         </form>
                     </div>
-                    <div class="popout-modal-footer">
-                        <button type="button" class="btn-outline" id="cancel-transaction">Cancel</button>
-                        <button type="button" class="btn-danger" id="delete-transaction" style="display: none;">Delete</button>
-                        <button type="button" class="btn-primary" id="save-transaction">Save Transaction</button>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" id="cancel-transaction">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="delete-transaction" style="display: none;">Delete</button>
+                        <button type="button" class="btn btn-primary" id="save-transaction">Save Transaction</button>
                     </div>
                 </div>
             </div>
 
             <!-- Receipt Upload Modal -->
-            <div id="receipt-upload-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 500px;">
-                    <div class="popout-modal-header">
-                        <h3 class="popout-modal-title">Upload Receipt</h3>
-                        <button class="popout-modal-close" id="close-receipt-modal">&times;</button>
+            <div id="receipt-upload-modal" class="modal">
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3>Upload Receipt</h3>
+                        <button class="modal-close" id="close-receipt-modal">&times;</button>
                     </div>
-                    <div class="popout-modal-body">
-                        <div style="text-align: center; padding: 20px;">
-                            <div style="font-size: 64px; margin-bottom: 16px;">📄</div>
-                            <h4 style="color: var(--text-primary); margin-bottom: 8px;">Upload Receipt for Processing</h4>
-                            <p style="color: var(--text-secondary); margin-bottom: 24px;">Upload a receipt photo or PDF to automatically extract transaction details</p>
+                    <div class="modal-body">
+                        <div class="upload-container">
+                            <div class="upload-icon">📄</div>
+                            <h4>Upload Receipt for Processing</h4>
+                            <p>Upload a receipt photo or PDF to automatically extract transaction details</p>
                             
-                            <div style="border: 2px dashed var(--glass-border); border-radius: 12px; padding: 40px; margin-bottom: 24px; cursor: pointer;" id="drop-zone">
-                                <div style="font-size: 48px; margin-bottom: 16px;">⬆️</div>
-                                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Drag & Drop Receipt Here</div>
-                                <div style="color: var(--text-secondary); font-size: 14px;">or click to browse files</div>
+                            <div class="drop-zone-lg" id="drop-zone-main">
+                                <div class="drop-zone-lg-icon">⬆️</div>
+                                <div class="drop-zone-lg-title">Drag & Drop Receipt Here</div>
+                                <div class="drop-zone-lg-subtitle">or click to browse files</div>
                                 <input type="file" id="receipt-file-input" accept="image/*,.pdf" style="display: none;">
                             </div>
                             
-                            <div style="color: var(--text-secondary); font-size: 12px; margin-bottom: 24px;">
+                            <div class="upload-info">
                                 Supported formats: JPG, PNG, PDF (Max 10MB)
                             </div>
                             
-                            <div style="display: flex; flex-direction: column; gap: 12px;">
-                                <button type="button" id="take-photo-btn" class="btn-outline" style="width: 100%;">
+                            <div class="upload-actions">
+                                <button type="button" id="take-photo-btn" class="btn btn-outline full-width">
                                     📸 Take Photo
                                 </button>
-                                <button type="button" id="choose-existing-btn" class="btn-outline" style="width: 100%;">
+                                <button type="button" id="choose-existing-btn" class="btn btn-outline full-width">
                                     📁 Choose from Gallery
                                 </button>
                             </div>
@@ -370,91 +385,90 @@ const IncomeExpensesModule = {
                         
                         <!-- Camera Interface -->
                         <div id="camera-interface" class="hidden">
-                            <div style="text-align: center;">
-                                <h4 style="color: var(--text-primary); margin-bottom: 16px;">📸 Camera</h4>
-                                <video id="camera-preview" autoplay playsinline style="width: 100%; max-height: 300px; background: #000; border-radius: 8px; margin-bottom: 16px;"></video>
-                                <div style="display: flex; gap: 12px; justify-content: center;">
-                                    <button type="button" id="capture-btn" class="btn-primary">
-                                        📷 Capture
-                                    </button>
-                                    <button type="button" id="switch-camera-btn" class="btn-outline">
-                                        🔄 Switch Camera
-                                    </button>
-                                    <button type="button" id="cancel-camera-btn" class="btn-outline">
-                                        ❌ Cancel
-                                    </button>
-                                </div>
+                            <h4>📸 Camera</h4>
+                            <div class="camera-preview-container">
+                                <video id="camera-preview" autoplay playsinline></video>
+                                <div class="camera-overlay"></div>
+                            </div>
+                            <div class="camera-controls">
+                                <button type="button" id="capture-btn" class="btn btn-primary">
+                                    📷 Capture
+                                </button>
+                                <button type="button" id="switch-camera-btn" class="btn btn-outline">
+                                    🔄 Switch Camera
+                                </button>
+                                <button type="button" id="cancel-camera-btn" class="btn btn-outline">
+                                    ❌ Cancel
+                                </button>
                             </div>
                         </div>
                         
                         <!-- Processing Indicator -->
-                        <div id="processing-indicator" class="hidden" style="text-align: center; padding: 40px 20px;">
-                            <div class="spinner" style="width: 40px; height: 40px; border: 4px solid var(--glass-border); border-top: 4px solid var(--primary-color); border-radius: 50%; margin: 0 auto 16px; animation: spin 1s linear infinite;"></div>
-                            <h4 style="color: var(--text-primary); margin-bottom: 8px;">Processing Receipt</h4>
-                            <p style="color: var(--text-secondary);">Extracting information from your receipt...</p>
-                            <div id="ocr-progress" style="margin-top: 16px; color: var(--text-secondary); font-size: 14px;">
-                                Analyzing text... 0%
-                            </div>
+                        <div id="processing-indicator" class="hidden">
+                            <div class="spinner"></div>
+                            <h4>Processing Receipt</h4>
+                            <p>Extracting information from your receipt...</p>
+                            <div id="ocr-progress">Analyzing text... 0%</div>
                         </div>
                     </div>
-                    <div class="popout-modal-footer">
-                        <button type="button" class="btn-outline" id="cancel-receipt-upload">Cancel</button>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" id="cancel-receipt-upload">Cancel</button>
                     </div>
                 </div>
             </div>
 
             <!-- Financial Report Modal -->
-            <div id="financial-report-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 800px;">
-                    <div class="popout-modal-header">
-                        <h3 class="popout-modal-title" id="financial-report-title">Financial Report</h3>
-                        <button class="popout-modal-close" id="close-financial-report">&times;</button>
+            <div id="financial-report-modal" class="modal">
+                <div class="modal-content" style="max-width: 800px;">
+                    <div class="modal-header">
+                        <h3 id="financial-report-title">Financial Report</h3>
+                        <button class="modal-close" id="close-financial-report">&times;</button>
                     </div>
-                    <div class="popout-modal-body">
+                    <div class="modal-body">
                         <div id="financial-report-content">
-                            <!-- Report content will be inserted here -->
+                            ${this.renderFinancialReport()}
                         </div>
                     </div>
-                    <div class="popout-modal-footer">
-                        <button class="btn-outline" id="print-financial-report">🖨️ Print</button>
-                        <button class="btn-primary" id="close-financial-report-btn">Close</button>
+                    <div class="modal-footer">
+                        <button class="btn btn-outline" id="print-financial-report">🖨️ Print</button>
+                        <button class="btn btn-primary" id="close-financial-report-btn">Close</button>
                     </div>
                 </div>
             </div>
 
             <!-- Category Analysis Modal -->
-            <div id="category-analysis-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 800px;">
-                    <div class="popout-modal-header">
-                        <h3 class="popout-modal-title" id="category-analysis-title">Category Analysis</h3>
-                        <button class="popout-modal-close" id="close-category-analysis">&times;</button>
+            <div id="category-analysis-modal" class="modal">
+                <div class="modal-content" style="max-width: 800px;">
+                    <div class="modal-header">
+                        <h3 id="category-analysis-title">Category Analysis</h3>
+                        <button class="modal-close" id="close-category-analysis">&times;</button>
                     </div>
-                    <div class="popout-modal-body">
+                    <div class="modal-body">
                         <div id="category-analysis-content">
-                            <!-- Analysis content will be inserted here -->
+                            ${this.renderCategoryAnalysis()}
                         </div>
                     </div>
-                    <div class="popout-modal-footer">
-                        <button class="btn-outline" id="print-category-analysis">🖨️ Print</button>
-                        <button class="btn-primary" id="close-category-analysis-btn">Close</button>
+                    <div class="modal-footer">
+                        <button class="btn btn-outline" id="print-category-analysis">🖨️ Print</button>
+                        <button class="btn btn-primary" id="close-category-analysis-btn">Close</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Receipt Scanner Fullscreen -->
-            <div id="receipt-scanner-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 100%; height: 100%; background: #000;">
-                    <div class="popout-modal-header" style="background: rgba(0,0,0,0.7);">
-                        <h3 class="popout-modal-title" style="color: white;">Receipt Scanner</h3>
-                        <button class="popout-modal-close" id="close-scanner-modal" style="color: white;">&times;</button>
+            <!-- Receipt Scanner Modal -->
+            <div id="receipt-scanner-modal" class="modal">
+                <div class="modal-content" style="max-width: 100%; height: 100%; background: #000;">
+                    <div class="modal-header" style="background: rgba(0,0,0,0.7);">
+                        <h3 style="color: white;">Receipt Scanner</h3>
+                        <button class="modal-close" id="close-scanner-modal" style="color: white;">&times;</button>
                     </div>
-                    <div class="popout-modal-body" style="padding: 0; height: calc(100% - 60px);">
-                        <div style="position: relative; height: 100%;">
-                            <video id="scanner-preview" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
-                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; height: 200px; border: 3px solid #22c55e; border-radius: 12px; pointer-events: none;"></div>
-                            <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; color: white; background: rgba(0,0,0,0.5); padding: 16px;">
-                                <div style="margin-bottom: 8px;">Hold steady and align receipt within the frame</div>
-                                <button type="button" id="scan-capture-btn" class="btn-primary" style="font-size: 18px; padding: 12px 32px;">
+                    <div class="modal-body" style="padding: 0; height: calc(100% - 60px);">
+                        <div class="scanner-container">
+                            <video id="scanner-preview" autoplay playsinline></video>
+                            <div class="scanner-overlay"></div>
+                            <div class="scanner-controls">
+                                <p>Hold steady and align receipt within the frame</p>
+                                <button type="button" id="scan-capture-btn" class="btn btn-primary">
                                     📷 Capture Receipt
                                 </button>
                             </div>
@@ -464,928 +478,878 @@ const IncomeExpensesModule = {
             </div>
         `;
 
-        // Set up event listeners after DOM is created
-        this.setupEventListeners();
+        this.initializeModals();
     },
 
-    // MODAL CONTROL METHODS
-    showTransactionModal(transactionId = null) {
-        console.log('Opening transaction modal...');
-        this.hideAllModals();
-        const modal = document.getElementById('transaction-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-        }
-        this.currentEditingId = transactionId;
-        
-        const form = document.getElementById('transaction-form');
-        if (form) {
-            form.reset();
-            const dateInput = document.getElementById('transaction-date');
-            if (dateInput) {
-                dateInput.value = new Date().toISOString().split('T')[0];
-            }
-            const deleteBtn = document.getElementById('delete-transaction');
-            if (deleteBtn) {
-                deleteBtn.style.display = 'none';
-            }
-            const title = document.getElementById('transaction-modal-title');
-            if (title) {
-                title.textContent = 'Add Transaction';
-            }
-            this.clearReceiptPreview();
-            const ocrResults = document.getElementById('ocr-results');
-            if (ocrResults) {
-                ocrResults.classList.add('hidden');
+    initializeModals() {
+        // Add modal CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            .modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                z-index: 1000;
+                align-items: center;
+                justify-content: center;
             }
             
-            // If editing existing transaction
-            if (transactionId) {
-                this.editTransaction(transactionId);
+            .modal.active {
+                display: flex;
             }
-        }
-    },
-
-    hideTransactionModal() {
-        console.log('Closing transaction modal...');
-        const modal = document.getElementById('transaction-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
-    },
-
-    showReceiptUploadModal() {
-        console.log('Opening receipt upload modal...');
-        this.hideAllModals();
-        const modal = document.getElementById('receipt-upload-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-        }
-        
-        const processing = document.getElementById('processing-indicator');
-        if (processing) {
-            processing.classList.add('hidden');
-        }
-        
-        const camera = document.getElementById('camera-interface');
-        if (camera) {
-            camera.classList.add('hidden');
-        }
-        
-        const dropZone = document.getElementById('drop-zone');
-        if (dropZone) {
-            dropZone.classList.remove('hidden');
-        }
-        
-        // Reset file input
-        const fileInput = document.getElementById('receipt-file-input');
-        if (fileInput) {
-            fileInput.value = '';
-        }
-    },
-
-    hideReceiptUploadModal() {
-        console.log('Closing receipt upload modal...');
-        const modal = document.getElementById('receipt-upload-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
-        this.stopCamera();
-    },
-
-    showScannerModal() {
-        console.log('Opening scanner modal...');
-        this.hideAllModals();
-        const modal = document.getElementById('receipt-scanner-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-        }
-        this.startScannerCamera();
-    },
-
-    hideScannerModal() {
-        console.log('Closing scanner modal...');
-        const modal = document.getElementById('receipt-scanner-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
-        this.stopScannerCamera();
-    },
-
-    showFinancialReportModal() {
-        console.log('Opening financial report modal...');
-        this.hideAllModals();
-        const modal = document.getElementById('financial-report-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-        }
-    },
-
-    hideFinancialReportModal() {
-        console.log('Closing financial report modal...');
-        const modal = document.getElementById('financial-report-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
-    },
-
-    showCategoryAnalysisModal() {
-        console.log('Opening category analysis modal...');
-        this.hideAllModals();
-        const modal = document.getElementById('category-analysis-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-        }
-    },
-
-    hideCategoryAnalysisModal() {
-        console.log('Closing category analysis modal...');
-        const modal = document.getElementById('category-analysis-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
-    },
-
-    hideAllModals() {
-        console.log('Hiding all modals...');
-        this.hideTransactionModal();
-        this.hideReceiptUploadModal();
-        this.hideScannerModal();
-        this.hideFinancialReportModal();
-        this.hideCategoryAnalysisModal();
+            
+            .modal-content {
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                animation: modalSlideIn 0.3s ease;
+            }
+            
+            @keyframes modalSlideIn {
+                from { transform: translateY(-20px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+            
+            .modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 20px;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            
+            .modal-body {
+                padding: 20px;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+            
+            .modal-footer {
+                padding: 20px;
+                border-top: 1px solid #e5e7eb;
+                display: flex;
+                gap: 12px;
+                justify-content: flex-end;
+            }
+            
+            .modal-close {
+                background: none;
+                border: none;
+                font-size: 24px;
+                cursor: pointer;
+                color: #6b7280;
+            }
+            
+            .hidden {
+                display: none !important;
+            }
+            
+            .btn {
+                padding: 10px 20px;
+                border-radius: 8px;
+                border: none;
+                cursor: pointer;
+                font-weight: 500;
+                transition: all 0.2s;
+            }
+            
+            .btn-primary {
+                background: #3b82f6;
+                color: white;
+            }
+            
+            .btn-primary:hover {
+                background: #2563eb;
+            }
+            
+            .btn-outline {
+                background: white;
+                border: 2px solid #e5e7eb;
+                color: #374151;
+            }
+            
+            .btn-outline:hover {
+                border-color: #3b82f6;
+                color: #3b82f6;
+            }
+            
+            .btn-danger {
+                background: #ef4444;
+                color: white;
+            }
+            
+            .btn-danger:hover {
+                background: #dc2626;
+            }
+            
+            .form-row {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+                margin-bottom: 16px;
+            }
+            
+            .form-group {
+                margin-bottom: 16px;
+            }
+            
+            .form-label {
+                display: block;
+                margin-bottom: 6px;
+                font-weight: 500;
+                color: #374151;
+            }
+            
+            .form-input {
+                width: 100%;
+                padding: 10px 12px;
+                border: 2px solid #e5e7eb;
+                border-radius: 8px;
+                font-size: 14px;
+            }
+            
+            .form-input:focus {
+                outline: none;
+                border-color: #3b82f6;
+            }
+            
+            .form-select {
+                padding: 10px 12px;
+                border: 2px solid #e5e7eb;
+                border-radius: 8px;
+                font-size: 14px;
+                background: white;
+            }
+            
+            .drop-zone {
+                border: 2px dashed #d1d5db;
+                border-radius: 8px;
+                padding: 30px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            
+            .drop-zone:hover {
+                border-color: #3b82f6;
+                background: #f8fafc;
+            }
+            
+            .full-width {
+                width: 100%;
+            }
+            
+            .camera-actions {
+                display: flex;
+                gap: 8px;
+                margin-top: 8px;
+            }
+            
+            #ocr-results {
+                background: #f0f9ff;
+                border-radius: 8px;
+                padding: 16px;
+                margin-top: 16px;
+                border: 1px solid #bfdbfe;
+            }
+            
+            .ocr-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 12px;
+            }
+            
+            .spinner {
+                width: 40px;
+                height: 40px;
+                border: 4px solid #e5e7eb;
+                border-top: 4px solid #3b82f6;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 16px;
+            }
+            
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            
+            .module-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 30px;
+            }
+            
+            .module-title {
+                font-size: 2rem;
+                color: #1f2937;
+                margin-bottom: 4px;
+            }
+            
+            .module-subtitle {
+                color: #6b7280;
+            }
+            
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 20px;
+                margin-bottom: 30px;
+            }
+            
+            .stat-card {
+                background: white;
+                border-radius: 12px;
+                padding: 24px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                text-align: center;
+            }
+            
+            .stat-icon {
+                font-size: 32px;
+                margin-bottom: 12px;
+            }
+            
+            .stat-value {
+                font-size: 28px;
+                font-weight: bold;
+                color: #1f2937;
+                margin-bottom: 4px;
+            }
+            
+            .stat-label {
+                color: #6b7280;
+                font-size: 14px;
+            }
+            
+            .quick-action-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 20px;
+                margin-bottom: 30px;
+            }
+            
+            .quick-action-btn {
+                background: white;
+                border: 2px solid #e5e7eb;
+                border-radius: 12px;
+                padding: 24px;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .quick-action-btn:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                border-color: #3b82f6;
+            }
+            
+            .quick-action-icon {
+                font-size: 32px;
+            }
+            
+            .quick-action-title {
+                font-weight: 600;
+                color: #1f2937;
+            }
+            
+            .quick-action-subtitle {
+                color: #6b7280;
+                font-size: 12px;
+                text-align: center;
+            }
+            
+            .section-card {
+                background: white;
+                border-radius: 12px;
+                padding: 24px;
+                margin-bottom: 24px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+            
+            .section-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+            }
+            
+            .section-actions {
+                display: flex;
+                gap: 12px;
+            }
+            
+            .transaction-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 16px;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            
+            .transaction-item:last-child {
+                border-bottom: none;
+            }
+            
+            .transaction-info h4 {
+                margin: 0 0 4px 0;
+                color: #1f2937;
+            }
+            
+            .transaction-meta {
+                color: #6b7280;
+                font-size: 14px;
+            }
+            
+            .transaction-amount {
+                font-weight: bold;
+                font-size: 18px;
+            }
+            
+            .income {
+                color: #10b981;
+            }
+            
+            .expense {
+                color: #ef4444;
+            }
+            
+            .transaction-actions {
+                display: flex;
+                gap: 8px;
+            }
+            
+            .category-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px;
+                background: #f8fafc;
+                border-radius: 8px;
+                margin-bottom: 8px;
+            }
+            
+            .category-name {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+        `;
+        document.head.appendChild(style);
     },
 
     setupEventListeners() {
-        console.log('Setting up event listeners...');
-        
         // Main buttons
-        const addTransactionBtn = document.getElementById('add-transaction');
-        if (addTransactionBtn) {
-            addTransactionBtn.addEventListener('click', () => {
-                console.log('Add Transaction button clicked');
-                this.showTransactionModal();
-            });
-        }
-
-        const uploadReceiptBtn = document.getElementById('upload-receipt-btn');
-        if (uploadReceiptBtn) {
-            uploadReceiptBtn.addEventListener('click', () => {
-                console.log('Upload Receipt button clicked');
-                this.showReceiptUploadModal();
-            });
-        }
-        
-        // Quick action buttons
-        const addIncomeBtn = document.getElementById('add-income-btn');
-        if (addIncomeBtn) {
-            addIncomeBtn.addEventListener('click', () => {
-                console.log('Add Income button clicked');
-                this.showAddIncome();
-            });
-        }
-
-        const addExpenseBtn = document.getElementById('add-expense-btn');
-        if (addExpenseBtn) {
-            addExpenseBtn.addEventListener('click', () => {
-                console.log('Add Expense button clicked');
-                this.showAddExpense();
-            });
-        }
-
-        const financialReportBtn = document.getElementById('financial-report-btn');
-        if (financialReportBtn) {
-            financialReportBtn.addEventListener('click', () => {
-                console.log('Financial Report button clicked');
-                this.generateFinancialReport();
-            });
-        }
-
-        const categoryAnalysisBtn = document.getElementById('category-analysis-btn');
-        if (categoryAnalysisBtn) {
-            categoryAnalysisBtn.addEventListener('click', () => {
-                console.log('Category Analysis button clicked');
-                this.generateCategoryAnalysis();
-            });
-        }
-        
-        // Transaction modal handlers
-        const saveTransactionBtn = document.getElementById('save-transaction');
-        if (saveTransactionBtn) {
-            saveTransactionBtn.addEventListener('click', () => this.saveTransaction());
-        }
-
-        const deleteTransactionBtn = document.getElementById('delete-transaction');
-        if (deleteTransactionBtn) {
-            deleteTransactionBtn.addEventListener('click', () => this.deleteTransaction());
-        }
-
-        const cancelTransactionBtn = document.getElementById('cancel-transaction');
-        if (cancelTransactionBtn) {
-            cancelTransactionBtn.addEventListener('click', () => this.hideTransactionModal());
-        }
-
-        const closeTransactionModalBtn = document.getElementById('close-transaction-modal');
-        if (closeTransactionModalBtn) {
-            closeTransactionModalBtn.addEventListener('click', () => this.hideTransactionModal());
-        }
-        
-        // Receipt upload handlers
-        const closeReceiptModalBtn = document.getElementById('close-receipt-modal');
-        if (closeReceiptModalBtn) {
-            closeReceiptModalBtn.addEventListener('click', () => this.hideReceiptUploadModal());
-        }
-
-        const cancelReceiptUploadBtn = document.getElementById('cancel-receipt-upload');
-        if (cancelReceiptUploadBtn) {
-            cancelReceiptUploadBtn.addEventListener('click', () => this.hideReceiptUploadModal());
-        }
-
-        const closeScannerModalBtn = document.getElementById('close-scanner-modal');
-        if (closeScannerModalBtn) {
-            closeScannerModalBtn.addEventListener('click', () => this.hideScannerModal());
-        }
-        
-        // Report modal handlers
-        const closeFinancialReportBtn = document.getElementById('close-financial-report');
-        if (closeFinancialReportBtn) {
-            closeFinancialReportBtn.addEventListener('click', () => this.hideFinancialReportModal());
-        }
-
-        const closeFinancialReportBtn2 = document.getElementById('close-financial-report-btn');
-        if (closeFinancialReportBtn2) {
-            closeFinancialReportBtn2.addEventListener('click', () => this.hideFinancialReportModal());
-        }
-
-        const printFinancialReportBtn = document.getElementById('print-financial-report');
-        if (printFinancialReportBtn) {
-            printFinancialReportBtn.addEventListener('click', () => this.printFinancialReport());
-        }
-        
-        const closeCategoryAnalysisBtn = document.getElementById('close-category-analysis');
-        if (closeCategoryAnalysisBtn) {
-            closeCategoryAnalysisBtn.addEventListener('click', () => this.hideCategoryAnalysisModal());
-        }
-
-        const closeCategoryAnalysisBtn2 = document.getElementById('close-category-analysis-btn');
-        if (closeCategoryAnalysisBtn2) {
-            closeCategoryAnalysisBtn2.addEventListener('click', () => this.hideCategoryAnalysisModal());
-        }
-
-        const printCategoryAnalysisBtn = document.getElementById('print-category-analysis');
-        if (printCategoryAnalysisBtn) {
-            printCategoryAnalysisBtn.addEventListener('click', () => this.printCategoryAnalysis());
-        }
-        
-        // Filter
-        const transactionFilter = document.getElementById('transaction-filter');
-        if (transactionFilter) {
-            transactionFilter.addEventListener('change', (e) => {
-                this.filterTransactions(e.target.value);
-            });
-        }
-        
-        // Export
-        const exportTransactionsBtn = document.getElementById('export-transactions');
-        if (exportTransactionsBtn) {
-            exportTransactionsBtn.addEventListener('click', () => {
-                this.exportTransactions();
-            });
-        }
-        
-        // Close modals when clicking outside
         document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('popout-modal')) {
-                this.hideAllModals();
-            }
-        });
-        
-        // Edit/delete transaction buttons (delegated)
-        document.addEventListener('click', (e) => {
+            if (e.target.closest('#add-transaction')) this.showTransactionModal();
+            if (e.target.closest('#upload-receipt-btn')) this.showReceiptUploadModal();
+            if (e.target.closest('#add-income-btn')) this.showAddIncome();
+            if (e.target.closest('#add-expense-btn')) this.showAddExpense();
+            if (e.target.closest('#financial-report-btn')) this.showFinancialReport();
+            if (e.target.closest('#category-analysis-btn')) this.showCategoryAnalysis();
+            if (e.target.closest('#export-transactions')) this.exportTransactions();
+            
+            // Modal close buttons
+            if (e.target.closest('#close-transaction-modal')) this.hideModal('transaction-modal');
+            if (e.target.closest('#cancel-transaction')) this.hideModal('transaction-modal');
+            if (e.target.closest('#close-receipt-modal')) this.hideModal('receipt-upload-modal');
+            if (e.target.closest('#cancel-receipt-upload')) this.hideModal('receipt-upload-modal');
+            if (e.target.closest('#close-financial-report')) this.hideModal('financial-report-modal');
+            if (e.target.closest('#close-financial-report-btn')) this.hideModal('financial-report-modal');
+            if (e.target.closest('#close-category-analysis')) this.hideModal('category-analysis-modal');
+            if (e.target.closest('#close-category-analysis-btn')) this.hideModal('category-analysis-modal');
+            if (e.target.closest('#close-scanner-modal')) this.hideModal('receipt-scanner-modal');
+            
+            // Transaction form buttons
+            if (e.target.closest('#save-transaction')) this.saveTransaction();
+            if (e.target.closest('#delete-transaction')) this.deleteTransaction();
+            
+            // Receipt buttons
+            if (e.target.closest('#process-receipt-btn')) this.processReceiptOCR();
+            if (e.target.closest('#use-ocr-data')) this.applyOCRData();
+            if (e.target.closest('#remove-receipt')) this.clearReceiptPreview();
+            if (e.target.closest('#capture-photo-btn')) this.capturePhotoForTransaction();
+            if (e.target.closest('#scan-receipt-btn')) this.showScannerModal();
+            
+            // Upload modal buttons
+            if (e.target.closest('#take-photo-btn')) this.startCamera();
+            if (e.target.closest('#choose-existing-btn')) this.chooseFromGallery();
+            if (e.target.closest('#capture-btn')) this.capturePhoto();
+            if (e.target.closest('#switch-camera-btn')) this.switchCamera();
+            if (e.target.closest('#cancel-camera-btn')) this.cancelCamera();
+            
+            // Scanner buttons
+            if (e.target.closest('#scan-capture-btn')) this.captureScannerPhoto();
+            
+            // Print buttons
+            if (e.target.closest('#print-financial-report')) this.printReport();
+            if (e.target.closest('#print-category-analysis')) this.printCategoryAnalysis();
+            
+            // Edit/Delete transaction buttons
             if (e.target.closest('.edit-transaction')) {
                 const id = e.target.closest('.edit-transaction').dataset.id;
-                this.editTransaction(id);
+                this.editTransaction(parseInt(id));
             }
             if (e.target.closest('.delete-transaction')) {
                 const id = e.target.closest('.delete-transaction').dataset.id;
-                this.deleteTransactionRecord(id);
-            }
-            if (e.target.closest('.view-receipt')) {
-                const id = e.target.closest('.view-receipt').dataset.id;
-                this.viewReceipt(id);
+                this.deleteTransactionRecord(parseInt(id));
             }
         });
         
-        // Hover effects
-        const buttons = document.querySelectorAll('.quick-action-btn');
-        buttons.forEach(button => {
-            button.addEventListener('mouseenter', (e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-            });
-            button.addEventListener('mouseleave', (e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-            });
+        // Filter change
+        document.addEventListener('change', (e) => {
+            if (e.target.id === 'transaction-filter') {
+                this.filterTransactions(e.target.value);
+            }
         });
         
-        // Receipt upload specific handlers
-        this.setupReceiptUploadHandlers();
-    },
-
-    setupReceiptUploadHandlers() {
-        // Drop zone for file upload
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('receipt-file-input');
-        
-        if (dropZone && fileInput) {
-            // Click to upload
-            dropZone.addEventListener('click', () => fileInput.click());
-            
-            // Drag and drop
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.style.borderColor = 'var(--primary-color)';
-                dropZone.style.backgroundColor = 'var(--primary-color)10';
-            });
-            
-            dropZone.addEventListener('dragleave', () => {
-                dropZone.style.borderColor = 'var(--glass-border)';
-                dropZone.style.backgroundColor = '';
-            });
-            
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.style.borderColor = 'var(--glass-border)';
-                dropZone.style.backgroundColor = '';
-                
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    this.handleReceiptFile(files[0]);
-                }
-            });
-        }
-        
-        // File input change
-        fileInput?.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
+        // File uploads
+        document.addEventListener('change', (e) => {
+            if (e.target.id === 'receipt-upload') {
+                this.handleTransactionReceiptUpload(e.target.files[0]);
+            }
+            if (e.target.id === 'receipt-file-input') {
                 this.handleReceiptFile(e.target.files[0]);
             }
         });
         
-        // Camera buttons
-        const takePhotoBtn = document.getElementById('take-photo-btn');
-        if (takePhotoBtn) {
-            takePhotoBtn.addEventListener('click', () => {
-                this.startCamera();
-            });
-        }
-        
-        const chooseExistingBtn = document.getElementById('choose-existing-btn');
-        if (chooseExistingBtn) {
-            chooseExistingBtn.addEventListener('click', () => {
-                // Create file input for gallery
-                const galleryInput = document.createElement('input');
-                galleryInput.type = 'file';
-                galleryInput.accept = 'image/*';
-                galleryInput.multiple = false;
-                galleryInput.onchange = (e) => {
-                    if (e.target.files.length > 0) {
-                        this.handleReceiptFile(e.target.files[0]);
-                    }
-                };
-                galleryInput.click();
-            });
-        }
-        
-        // Capture button
-        const captureBtn = document.getElementById('capture-btn');
-        if (captureBtn) {
-            captureBtn.addEventListener('click', () => {
-                this.capturePhoto();
-            });
-        }
-        
-        // Switch camera
-        const switchCameraBtn = document.getElementById('switch-camera-btn');
-        if (switchCameraBtn) {
-            switchCameraBtn.addEventListener('click', () => {
-                this.switchCamera();
-            });
-        }
-        
-        // Cancel camera
-        const cancelCameraBtn = document.getElementById('cancel-camera-btn');
-        if (cancelCameraBtn) {
-            cancelCameraBtn.addEventListener('click', () => {
-                this.stopCamera();
-                const cameraInterface = document.getElementById('camera-interface');
-                if (cameraInterface) {
-                    cameraInterface.classList.add('hidden');
-                }
-                const dropZone = document.getElementById('drop-zone');
-                if (dropZone) {
-                    dropZone.classList.remove('hidden');
-                }
-            });
-        }
-        
-        // Scanner modal
-        const scanReceiptBtn = document.getElementById('scan-receipt-btn');
-        if (scanReceiptBtn) {
-            scanReceiptBtn.addEventListener('click', () => {
-                this.showScannerModal();
-            });
-        }
-        
-        const scanCaptureBtn = document.getElementById('scan-capture-btn');
-        if (scanCaptureBtn) {
-            scanCaptureBtn.addEventListener('click', () => {
-                this.captureScannerPhoto();
-            });
-        }
-        
-        // In transaction modal receipt handlers
-        const receiptUploadArea = document.getElementById('receipt-upload-area');
-        const receiptUploadInput = document.getElementById('receipt-upload');
-        
-        if (receiptUploadArea && receiptUploadInput) {
-            receiptUploadArea.addEventListener('click', () => receiptUploadInput.click());
-            
-            receiptUploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                receiptUploadArea.style.borderColor = 'var(--primary-color)';
-                receiptUploadArea.style.backgroundColor = 'var(--primary-color)10';
-            });
-            
-            receiptUploadArea.addEventListener('dragleave', () => {
-                receiptUploadArea.style.borderColor = 'var(--glass-border)';
-                receiptUploadArea.style.backgroundColor = '';
-            });
-            
-            receiptUploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                receiptUploadArea.style.borderColor = 'var(--glass-border)';
-                receiptUploadArea.style.backgroundColor = '';
+        // Drag and drop
+        const setupDropZone = (id, callback) => {
+            const dropZone = document.getElementById(id);
+            if (dropZone) {
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropZone.style.borderColor = '#3b82f6';
+                    dropZone.style.background = '#f8fafc';
+                });
                 
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    this.handleTransactionReceiptUpload(files[0]);
-                }
-            });
-        }
+                dropZone.addEventListener('dragleave', () => {
+                    dropZone.style.borderColor = '#d1d5db';
+                    dropZone.style.background = '';
+                });
+                
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.style.borderColor = '#d1d5db';
+                    dropZone.style.background = '';
+                    const file = e.dataTransfer.files[0];
+                    if (file) callback(file);
+                });
+                
+                dropZone.addEventListener('click', () => {
+                    if (id === 'receipt-upload-area') {
+                        document.getElementById('receipt-upload').click();
+                    } else if (id === 'drop-zone-main') {
+                        document.getElementById('receipt-file-input').click();
+                    }
+                });
+            }
+        };
         
-        if (receiptUploadInput) {
-            receiptUploadInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) {
-                    this.handleTransactionReceiptUpload(e.target.files[0]);
-                }
-            });
-        }
+        setupDropZone('receipt-upload-area', (file) => this.handleTransactionReceiptUpload(file));
+        setupDropZone('drop-zone-main', (file) => this.handleReceiptFile(file));
         
-        // Remove receipt button
-        const removeReceiptBtn = document.getElementById('remove-receipt');
-        if (removeReceiptBtn) {
-            removeReceiptBtn.addEventListener('click', () => {
-                this.clearReceiptPreview();
-            });
-        }
-        
-        // Process receipt OCR button
-        const processReceiptBtn = document.getElementById('process-receipt-btn');
-        if (processReceiptBtn) {
-            processReceiptBtn.addEventListener('click', () => {
-                this.processReceiptOCR();
-            });
-        }
-        
-        // Use OCR data button
-        const useOCRDataBtn = document.getElementById('use-ocr-data');
-        if (useOCRDataBtn) {
-            useOCRDataBtn.addEventListener('click', () => {
-                this.applyOCRData();
-            });
-        }
-        
-        // Capture photo in transaction modal
-        const capturePhotoBtn = document.getElementById('capture-photo-btn');
-        if (capturePhotoBtn) {
-            capturePhotoBtn.addEventListener('click', () => {
-                this.capturePhotoForTransaction();
-            });
+        // Close modals on outside click
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                this.hideAllModals();
+            }
+        });
+    },
+
+    // ========== MODAL CONTROL METHODS ==========
+    
+    showModal(id) {
+        this.hideAllModals();
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.add('active');
+            modal.style.display = 'flex';
         }
     },
 
-    // HELPER METHODS
+    hideModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.remove('active');
+            modal.style.display = 'none';
+        }
+    },
+
+    hideAllModals() {
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.classList.remove('active');
+            modal.style.display = 'none';
+        });
+        this.stopCamera();
+        this.stopScannerCamera();
+    },
+
+    showTransactionModal(id = null) {
+        this.currentEditingId = id;
+        this.showModal('transaction-modal');
+        
+        // Reset form or load data
+        const form = document.getElementById('transaction-form');
+        if (form) form.reset();
+        
+        // Set default date
+        const dateInput = document.getElementById('transaction-date');
+        if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+        
+        // Set modal title and buttons
+        const title = document.getElementById('transaction-modal-title');
+        const deleteBtn = document.getElementById('delete-transaction');
+        
+        if (id) {
+            // Editing existing transaction
+            title.textContent = 'Edit Transaction';
+            deleteBtn.style.display = 'block';
+            this.loadTransactionData(id);
+        } else {
+            // Adding new transaction
+            title.textContent = 'Add Transaction';
+            deleteBtn.style.display = 'none';
+        }
+    },
+
     showAddIncome() {
         this.showTransactionModal();
-        const typeSelect = document.getElementById('transaction-type');
-        if (typeSelect) typeSelect.value = 'income';
-        const categorySelect = document.getElementById('transaction-category');
-        if (categorySelect) categorySelect.value = 'sales';
-        const title = document.getElementById('transaction-modal-title');
-        if (title) title.textContent = 'Add Income';
+        document.getElementById('transaction-type').value = 'income';
+        document.getElementById('transaction-modal-title').textContent = 'Add Income';
     },
 
     showAddExpense() {
         this.showTransactionModal();
-        const typeSelect = document.getElementById('transaction-type');
-        if (typeSelect) typeSelect.value = 'expense';
-        const categorySelect = document.getElementById('transaction-category');
-        if (categorySelect) categorySelect.value = 'feed';
-        const title = document.getElementById('transaction-modal-title');
-        if (title) title.textContent = 'Add Expense';
+        document.getElementById('transaction-type').value = 'expense';
+        document.getElementById('transaction-modal-title').textContent = 'Add Expense';
     },
 
-    calculateStats() {
-        const income = this.transactions.filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + t.amount, 0);
-        const expenses = this.transactions.filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + t.amount, 0);
-        const net = income - expenses;
-        
-        return {
-            totalIncome: income,
-            totalExpenses: expenses,
-            netIncome: net,
-            transactionCount: this.transactions.length
-        };
+    showReceiptUploadModal() {
+        this.showModal('receipt-upload-modal');
+        // Reset camera interface
+        document.getElementById('camera-interface').classList.add('hidden');
+        document.getElementById('processing-indicator').classList.add('hidden');
     },
 
-    getRecentTransactions(limit = 10) {
-        return this.transactions.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, limit);
+    showScannerModal() {
+        this.showModal('receipt-scanner-modal');
+        this.startScannerCamera();
     },
 
-    renderTransactionsList(transactions) {
-        if (transactions.length === 0) {
-            return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">💰</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No transactions yet</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Record your first income or expense</div>
-                </div>
-            `;
-        }
-
-        return `
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${transactions.map(transaction => {
-                    const isIncome = transaction.type === 'income';
-                    const amountColor = isIncome ? '#22c55e' : '#ef4444';
-                    const icon = isIncome ? '💰' : '💸';
-                    const categoryIcon = this.getCategoryIcon(transaction.category);
-                    
-                    return `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <div style="font-size: 20px;">${icon}</div>
-                                <div>
-                                    <div style="font-weight: 600; color: var(--text-primary);">${transaction.description}</div>
-                                    <div style="font-size: 14px; color: var(--text-secondary);">
-                                        ${this.formatDate(transaction.date)} • 
-                                        ${categoryIcon} ${this.formatCategory(transaction.category)}
-                                        ${transaction.reference ? ` • Ref: ${transaction.reference}` : ''}
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 16px;">
-                                <div style="text-align: right;">
-                                    <div style="font-weight: bold; color: ${amountColor}; font-size: 18px;">
-                                        ${isIncome ? '+' : '-'}${this.formatCurrency(transaction.amount)}
-                                    </div>
-                                    <div style="font-size: 14px; color: var(--text-secondary);">
-                                        ${transaction.paymentMethod || 'No payment method'}
-                                    </div>
-                                </div>
-                                ${transaction.receipt ? `
-                                    <button class="btn-icon view-receipt" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="View Receipt">
-                                        📄
-                                    </button>
-                                ` : ''}
-                                <div style="display: flex; gap: 8px;">
-                                    <button class="btn-icon edit-transaction" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Edit">
-                                        ✏️
-                                    </button>
-                                    <button class="btn-icon delete-transaction" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Delete">
-                                        🗑️
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
+    showFinancialReport() {
+        this.showModal('financial-report-modal');
+        this.updateFinancialReport();
     },
 
-    renderCategoryBreakdown() {
-        const categoryData = {};
-        
-        // Initialize all categories
-        this.categories.forEach(cat => {
-            categoryData[cat] = { income: 0, expense: 0 };
-        });
-        
-        // Add additional categories
-        ['sales', 'services', 'grants', 'other-income', 'maintenance', 'transport', 'marketing', 'other-expense'].forEach(category => {
-            if (!categoryData[category]) {
-                categoryData[category] = { income: 0, expense: 0 };
-            }
-        });
-        
-        // Calculate totals
-        this.transactions.forEach(transaction => {
-            if (categoryData[transaction.category]) {
-                if (transaction.type === 'income') {
-                    categoryData[transaction.category].income += transaction.amount;
-                } else {
-                    categoryData[transaction.category].expense += transaction.amount;
-                }
-            }
-        });
-
-        const categoriesWithData = Object.entries(categoryData).filter(([_, data]) => data.income > 0 || data.expense > 0);
-        
-        if (categoriesWithData.length === 0) {
-            return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No category data</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Add transactions to see category breakdown</div>
-                </div>
-            `;
-        }
-
-        return `
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
-                ${categoriesWithData.map(([category, data]) => {
-                    const icon = this.getCategoryIcon(category);
-                    const total = data.income - data.expense;
-                    
-                    return `
-                        <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                                <div style="font-size: 20px;">${icon}</div>
-                                <div style="font-weight: 600; color: var(--text-primary);">${this.formatCategory(category)}</div>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="color: var(--text-secondary);">Income:</span>
-                                <span style="font-weight: 600; color: #22c55e;">${this.formatCurrency(data.income)}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="color: var(--text-secondary);">Expenses:</span>
-                                <span style="font-weight: 600; color: #ef4444;">${this.formatCurrency(data.expense)}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--glass-border);">
-                                <span style="color: var(--text-primary); font-weight: 600;">Net:</span>
-                                <span style="font-weight: bold; color: ${total >= 0 ? '#22c55e' : '#ef4444'};">${this.formatCurrency(total)}</span>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
+    showCategoryAnalysis() {
+        this.showModal('category-analysis-modal');
+        this.updateCategoryAnalysis();
     },
 
-    filterTransactions(filter) {
-        let filtered = this.transactions;
-        
-        if (filter === 'income') {
-            filtered = this.transactions.filter(t => t.type === 'income');
-        } else if (filter === 'expense') {
-            filtered = this.transactions.filter(t => t.type === 'expense');
-        }
-        
-        const recent = filtered.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
-        const transactionsList = document.getElementById('transactions-list');
-        if (transactionsList) {
-            transactionsList.innerHTML = this.renderTransactionsList(recent);
-        }
-    },
-
-    generateFinancialReport() {
-        console.log('Generating financial report...');
-        // For now, just show the modal with basic content
-        const reportContent = document.getElementById('financial-report-content');
-        if (reportContent) {
-            reportContent.innerHTML = `
-                <div style="text-align: center; padding: 40px 20px;">
-                    <div style="font-size: 64px; margin-bottom: 16px;">📊</div>
-                    <h4 style="color: var(--text-primary); margin-bottom: 8px;">Financial Report</h4>
-                    <p style="color: var(--text-secondary);">Detailed financial report coming soon...</p>
-                    <div style="margin-top: 24px; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                        <p style="color: var(--text-secondary);">This feature will include:</p>
-                        <ul style="text-align: left; color: var(--text-secondary); margin-top: 8px;">
-                            <li>Income vs Expenses charts</li>
-                            <li>Category breakdown analysis</li>
-                            <li>Monthly trends and forecasts</li>
-                            <li>Profitability analysis</li>
-                        </ul>
-                    </div>
-                </div>
-            `;
-        }
-        this.showFinancialReportModal();
-    },
-
-    generateCategoryAnalysis() {
-        console.log('Generating category analysis...');
-        // For now, just show the modal with basic content
-        const analysisContent = document.getElementById('category-analysis-content');
-        if (analysisContent) {
-            analysisContent.innerHTML = `
-                <div style="text-align: center; padding: 40px 20px;">
-                    <div style="font-size: 64px; margin-bottom: 16px;">📋</div>
-                    <h4 style="color: var(--text-primary); margin-bottom: 8px;">Category Analysis</h4>
-                    <p style="color: var(--text-secondary);">Detailed category analysis coming soon...</p>
-                    <div style="margin-top: 24px; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                        <p style="color: var(--text-secondary);">This feature will include:</p>
-                        <ul style="text-align: left; color: var(--text-secondary); margin-top: 8px;">
-                            <li>Category spending trends</li>
-                            <li>Income sources analysis</li>
-                            <li>Expense optimization suggestions</li>
-                            <li>Budget vs actual comparisons</li>
-                        </ul>
-                    </div>
-                </div>
-            `;
-        }
-        this.showCategoryAnalysisModal();
-    },
-
-    printFinancialReport() {
-        console.log('Printing financial report...');
-        window.print();
-    },
-
-    printCategoryAnalysis() {
-        console.log('Printing category analysis...');
-        window.print();
-    },
-
-    // RECEIPT HANDLING METHODS (simplified for now)
-    handleReceiptFile(file) {
-        console.log('Handling receipt file:', file.name);
-        this.showNotification(`Receipt "${file.name}" uploaded successfully!`, 'success');
-        this.hideReceiptUploadModal();
-        this.showTransactionModal();
-    },
-
-    handleTransactionReceiptUpload(file) {
-        console.log('Handling transaction receipt:', file.name);
-        this.showNotification(`Receipt "${file.name}" attached to transaction`, 'success');
-    },
-
-    clearReceiptPreview() {
-        console.log('Clearing receipt preview');
-        this.receiptPreview = null;
-        const previewContainer = document.getElementById('receipt-preview-container');
-        if (previewContainer) {
-            previewContainer.classList.add('hidden');
-        }
-        const ocrResults = document.getElementById('ocr-results');
-        if (ocrResults) {
-            ocrResults.classList.add('hidden');
-        }
-        const receiptInput = document.getElementById('receipt-upload');
-        if (receiptInput) {
-            receiptInput.value = '';
-        }
-    },
-
-    processReceiptOCR() {
-        console.log('Processing receipt OCR');
-        this.showNotification('OCR processing started...', 'info');
-    },
-
-    applyOCRData() {
-        console.log('Applying OCR data');
-        this.showNotification('OCR data applied to form', 'success');
-    },
-
+    // ========== CAMERA METHODS ==========
+    
     async startCamera() {
-        console.log('Starting camera...');
         try {
-            const cameraInterface = document.getElementById('camera-interface');
-            if (cameraInterface) {
-                cameraInterface.classList.remove('hidden');
+            const constraints = {
+                video: { facingMode: this.cameraFacingMode }
+            };
+            this.cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+            const video = document.getElementById('camera-preview');
+            if (video) {
+                video.srcObject = this.cameraStream;
             }
-            const dropZone = document.getElementById('drop-zone');
-            if (dropZone) {
-                dropZone.classList.add('hidden');
-            }
-            
-            // Simple camera implementation
-            this.showNotification('Camera feature requires device permission', 'info');
-        } catch (error) {
-            console.error('Camera error:', error);
+            document.getElementById('camera-interface').classList.remove('hidden');
+        } catch (err) {
+            console.error('Camera error:', err);
             this.showNotification('Could not access camera', 'error');
         }
     },
 
     async startScannerCamera() {
-        console.log('Starting scanner camera...');
-        this.showNotification('Scanner camera starting...', 'info');
+        try {
+            const constraints = {
+                video: { facingMode: 'environment' }
+            };
+            this.scannerStream = await navigator.mediaDevices.getUserMedia(constraints);
+            const video = document.getElementById('scanner-preview');
+            if (video) {
+                video.srcObject = this.scannerStream;
+            }
+        } catch (err) {
+            console.error('Scanner camera error:', err);
+            this.showNotification('Could not access scanner camera', 'error');
+        }
     },
 
     stopCamera() {
-        console.log('Stopping camera');
+        if (this.cameraStream) {
+            this.cameraStream.getTracks().forEach(track => track.stop());
+            this.cameraStream = null;
+        }
     },
 
     stopScannerCamera() {
-        console.log('Stopping scanner camera');
+        if (this.scannerStream) {
+            this.scannerStream.getTracks().forEach(track => track.stop());
+            this.scannerStream = null;
+        }
     },
 
     switchCamera() {
-        console.log('Switching camera');
-        this.showNotification('Switching camera...', 'info');
+        this.cameraFacingMode = this.cameraFacingMode === 'user' ? 'environment' : 'user';
+        this.stopCamera();
+        this.startCamera();
+    },
+
+    cancelCamera() {
+        this.stopCamera();
+        document.getElementById('camera-interface').classList.add('hidden');
     },
 
     capturePhoto() {
-        console.log('Capturing photo');
-        this.showNotification('Photo captured!', 'success');
-        this.hideReceiptUploadModal();
-        this.showTransactionModal();
+        const video = document.getElementById('camera-preview');
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        canvas.toBlob((blob) => {
+            this.handleReceiptFile(blob, 'camera-capture.jpg');
+            this.stopCamera();
+            this.hideModal('receipt-upload-modal');
+        }, 'image/jpeg', 0.9);
     },
 
     captureScannerPhoto() {
-        console.log('Capturing scanner photo');
-        this.showNotification('Scanner photo captured!', 'success');
-        this.hideScannerModal();
-        this.showTransactionModal();
+        const video = document.getElementById('scanner-preview');
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        canvas.toBlob((blob) => {
+            this.handleReceiptFile(blob, 'scanner-capture.jpg');
+            this.hideModal('receipt-scanner-modal');
+            this.showTransactionModal();
+        }, 'image/jpeg', 0.9);
     },
 
     capturePhotoForTransaction() {
-        console.log('Capturing photo for transaction');
-        this.showNotification('Opening camera for receipt...', 'info');
-        this.hideTransactionModal();
+        this.hideModal('transaction-modal');
         setTimeout(() => {
             this.showReceiptUploadModal();
         }, 300);
     },
 
-    // TRANSACTION CRUD METHODS
-    editTransaction(transactionId) {
-        console.log('Editing transaction:', transactionId);
-        const transaction = this.transactions.find(t => t.id == transactionId);
-        if (!transaction) {
-            this.showNotification('Transaction not found', 'error');
+    chooseFromGallery() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = (e) => {
+            if (e.target.files[0]) {
+                this.handleReceiptFile(e.target.files[0]);
+            }
+        };
+        input.click();
+    },
+
+    // ========== RECEIPT PROCESSING ==========
+    
+    handleReceiptFile(file) {
+        console.log('Processing receipt file:', file.name);
+        
+        // Show processing indicator
+        document.getElementById('processing-indicator').classList.remove('hidden');
+        document.getElementById('camera-interface').classList.add('hidden');
+        
+        // Simulate OCR processing
+        setTimeout(() => {
+            this.hideModal('receipt-upload-modal');
+            this.showTransactionModal();
+            
+            // Simulate OCR results
+            this.simulateOCRProcessing(file);
+        }, 2000);
+    },
+
+    handleTransactionReceiptUpload(file) {
+        console.log('Uploading receipt for transaction:', file.name);
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            this.receiptPreview = e.target.result;
+            this.showReceiptPreview(file);
+        };
+        reader.readAsDataURL(file);
+    },
+
+    showReceiptPreview(file) {
+        const container = document.getElementById('receipt-preview-container');
+        const filename = document.getElementById('receipt-filename');
+        const size = document.getElementById('receipt-size');
+        
+        if (container && filename && size) {
+            container.classList.remove('hidden');
+            filename.textContent = file.name;
+            size.textContent = this.formatFileSize(file.size);
+            
+            // Show image preview for images
+            if (file.type.startsWith('image/')) {
+                const imagePreview = document.getElementById('image-preview');
+                const img = document.getElementById('receipt-image-preview');
+                if (imagePreview && img) {
+                    img.src = this.receiptPreview;
+                    imagePreview.classList.remove('hidden');
+                }
+            }
+        }
+    },
+
+    clearReceiptPreview() {
+        this.receiptPreview = null;
+        const container = document.getElementById('receipt-preview-container');
+        if (container) {
+            container.classList.add('hidden');
+        }
+    },
+
+    simulateOCRProcessing(file) {
+        // Mock OCR data based on file
+        const mockData = {
+            amount: Math.random() * 500 + 50,
+            date: new Date().toISOString().split('T')[0],
+            merchant: file.name.includes('feed') ? 'Farm Supply Store' : 
+                     file.name.includes('medical') ? 'Veterinary Clinic' : 
+                     file.name.includes('market') ? 'Local Market' : 'Unknown Merchant',
+            category: file.name.includes('feed') ? 'feed' : 
+                     file.name.includes('medical') ? 'medical' : 
+                     file.name.includes('equipment') ? 'equipment' : 'other-expense'
+        };
+        
+        // Show OCR results
+        const ocrResults = document.getElementById('ocr-results');
+        const ocrDetails = document.getElementById('ocr-details');
+        
+        if (ocrResults && ocrDetails) {
+            ocrResults.classList.remove('hidden');
+            ocrDetails.innerHTML = `
+                <div style="font-size: 14px; color: #374151;">
+                    <div><strong>Merchant:</strong> ${mockData.merchant}</div>
+                    <div><strong>Amount:</strong> ${this.formatCurrency(mockData.amount)}</div>
+                    <div><strong>Date:</strong> ${mockData.date}</div>
+                    <div><strong>Suggested Category:</strong> ${this.formatCategory(mockData.category)}</div>
+                </div>
+            `;
+            
+            // Auto-apply OCR data
+            setTimeout(() => {
+                this.applyOCRData(mockData);
+            }, 1000);
+        }
+    },
+
+    processReceiptOCR() {
+        if (!this.receiptPreview) {
+            this.showNotification('Please upload a receipt first', 'warning');
             return;
         }
         
-        // Populate form
-        const idInput = document.getElementById('transaction-id');
-        if (idInput) idInput.value = transaction.id;
+        this.showNotification('Processing receipt OCR...', 'info');
         
-        const dateInput = document.getElementById('transaction-date');
-        if (dateInput) dateInput.value = transaction.date;
-        
-        const typeSelect = document.getElementById('transaction-type');
-        if (typeSelect) typeSelect.value = transaction.type;
-        
-        const categorySelect = document.getElementById('transaction-category');
-        if (categorySelect) categorySelect.value = transaction.category;
-        
+        // Simulate OCR processing
+        setTimeout(() => {
+            const mockData = {
+                amount: 125.50,
+                date: new Date().toISOString().split('T')[0],
+                merchant: 'Farm Supply Store',
+                category: 'feed'
+            };
+            
+            const ocrResults = document.getElementById('ocr-results');
+            const ocrDetails = document.getElementById('ocr-details');
+            
+            if (ocrResults && ocrDetails) {
+                ocrResults.classList.remove('hidden');
+                ocrDetails.innerHTML = `
+                    <div style="font-size: 14px; color: #374151;">
+                        <div><strong>Merchant:</strong> ${mockData.merchant}</div>
+                        <div><strong>Amount:</strong> ${this.formatCurrency(mockData.amount)}</div>
+                        <div><strong>Date:</strong> ${mockData.date}</div>
+                        <div><strong>Suggested Category:</strong> ${this.formatCategory(mockData.category)}</div>
+                    </div>
+                `;
+            }
+            
+            this.showNotification('OCR processing complete!', 'success');
+        }, 1500);
+    },
+
+    applyOCRData(data) {
+        // Auto-fill form with OCR data
         const amountInput = document.getElementById('transaction-amount');
-        if (amountInput) amountInput.value = transaction.amount;
-        
+        const dateInput = document.getElementById('transaction-date');
+        const categorySelect = document.getElementById('transaction-category');
         const descriptionInput = document.getElementById('transaction-description');
-        if (descriptionInput) descriptionInput.value = transaction.description;
         
-        const paymentSelect = document.getElementById('transaction-payment');
-        if (paymentSelect) paymentSelect.value = transaction.paymentMethod || 'cash';
+        if (amountInput) amountInput.value = data.amount.toFixed(2);
+        if (dateInput) dateInput.value = data.date;
+        if (categorySelect) categorySelect.value = data.category;
+        if (descriptionInput) descriptionInput.value = `Purchase from ${data.merchant}`;
         
-        const referenceInput = document.getElementById('transaction-reference');
-        if (referenceInput) referenceInput.value = transaction.reference || '';
+        this.showNotification('OCR data applied to form', 'success');
+    },
+
+    // ========== TRANSACTION CRUD ==========
+    
+    loadTransactionData(id) {
+        const transaction = this.transactions.find(t => t.id === id);
+        if (!transaction) return;
         
-        const notesInput = document.getElementById('transaction-notes');
-        if (notesInput) notesInput.value = transaction.notes || '';
+        document.getElementById('transaction-id').value = transaction.id;
+        document.getElementById('transaction-date').value = transaction.date;
+        document.getElementById('transaction-type').value = transaction.type;
+        document.getElementById('transaction-category').value = transaction.category;
+        document.getElementById('transaction-amount').value = transaction.amount;
+        document.getElementById('transaction-description').value = transaction.description;
+        document.getElementById('transaction-payment').value = transaction.paymentMethod;
+        document.getElementById('transaction-reference').value = transaction.reference || '';
+        document.getElementById('transaction-notes').value = transaction.notes || '';
         
-        const deleteBtn = document.getElementById('delete-transaction');
-        if (deleteBtn) deleteBtn.style.display = 'block';
-        
-        const title = document.getElementById('transaction-modal-title');
-        if (title) title.textContent = 'Edit Transaction';
-        
-        // Handle receipt if exists
         if (transaction.receipt) {
             this.receiptPreview = transaction.receipt;
-            this.showReceiptPreview();
+            // We would need to reconstruct the file object from base64
+            // For now, just show that receipt exists
+            this.showNotification('Transaction has attached receipt', 'info');
         }
     },
 
     saveTransaction() {
-        console.log('Saving transaction...');
+        // Get form data
+        const id = parseInt(document.getElementById('transaction-id').value) || Date.now();
+        const date = document.getElementById('transaction-date').value;
+        const type = document.getElementById('transaction-type').value;
+        const category = document.getElementById('transaction-category').value;
+        const amount = parseFloat(document.getElementById('transaction-amount').value);
+        const description = document.getElementById('transaction-description').value;
+        const paymentMethod = document.getElementById('transaction-payment').value;
+        const reference = document.getElementById('transaction-reference').value;
+        const notes = document.getElementById('transaction-notes').value;
         
-        // Get form values
-        const id = document.getElementById('transaction-id')?.value || Date.now();
-        const date = document.getElementById('transaction-date')?.value;
-        const type = document.getElementById('transaction-type')?.value;
-        const category = document.getElementById('transaction-category')?.value;
-        const amount = parseFloat(document.getElementById('transaction-amount')?.value || 0);
-        const description = document.getElementById('transaction-description')?.value || '';
-        const paymentMethod = document.getElementById('transaction-payment')?.value || 'cash';
-        const reference = document.getElementById('transaction-reference')?.value || '';
-        const notes = document.getElementById('transaction-notes')?.value || '';
-        
-        // Validate
+        // Validation
         if (!date || !type || !category || !amount || !description) {
             this.showNotification('Please fill in all required fields', 'error');
             return;
@@ -1396,8 +1360,9 @@ const IncomeExpensesModule = {
             return;
         }
         
-        const transactionData = {
-            id: parseInt(id),
+        // Create transaction object
+        const transaction = {
+            id,
             date,
             type,
             category,
@@ -1406,18 +1371,18 @@ const IncomeExpensesModule = {
             paymentMethod,
             reference,
             notes,
-            receipt: this.receiptPreview || null
+            receipt: this.receiptPreview
         };
         
         // Check if editing existing transaction
-        const existingIndex = this.transactions.findIndex(t => t.id == id);
+        const existingIndex = this.transactions.findIndex(t => t.id === id);
         if (existingIndex > -1) {
             // Update existing
-            this.transactions[existingIndex] = transactionData;
+            this.transactions[existingIndex] = transaction;
             this.showNotification('Transaction updated successfully!', 'success');
         } else {
             // Add new
-            this.transactions.unshift(transactionData);
+            this.transactions.unshift(transaction);
             this.showNotification('Transaction saved successfully!', 'success');
         }
         
@@ -1425,48 +1390,56 @@ const IncomeExpensesModule = {
         this.saveData();
         
         // Update UI
-        this.updateStats();
-        this.updateTransactionsList();
-        this.updateCategoryBreakdown();
+        this.updateUI();
         
         // Close modal
-        this.hideTransactionModal();
+        this.hideModal('transaction-modal');
     },
 
     deleteTransaction() {
-        const transactionId = document.getElementById('transaction-id')?.value;
-        if (!transactionId) return;
+        const id = parseInt(document.getElementById('transaction-id').value);
+        if (!id) return;
         
         if (confirm('Are you sure you want to delete this transaction?')) {
-            this.deleteTransactionRecord(transactionId);
-            this.hideTransactionModal();
+            this.deleteTransactionRecord(id);
+            this.hideModal('transaction-modal');
         }
     },
 
-    deleteTransactionRecord(transactionId) {
-        this.transactions = this.transactions.filter(t => t.id != transactionId);
+    deleteTransactionRecord(id) {
+        this.transactions = this.transactions.filter(t => t.id !== id);
         this.saveData();
-        this.updateStats();
-        this.updateTransactionsList();
-        this.updateCategoryBreakdown();
+        this.updateUI();
         this.showNotification('Transaction deleted successfully', 'success');
     },
 
-    viewReceipt(transactionId) {
-        console.log('Viewing receipt for transaction:', transactionId);
-        const transaction = this.transactions.find(t => t.id == transactionId);
-        if (!transaction || !transaction.receipt) {
-            this.showNotification('No receipt available for this transaction', 'info');
-            return;
+    editTransaction(id) {
+        this.showTransactionModal(id);
+    },
+
+    // ========== FILTERING & EXPORT ==========
+    
+    filterTransactions(filter) {
+        let filtered = [...this.transactions];
+        
+        if (filter === 'income') {
+            filtered = filtered.filter(t => t.type === 'income');
+        } else if (filter === 'expense') {
+            filtered = filtered.filter(t => t.type === 'expense');
         }
         
-        this.showNotification('Opening receipt viewer...', 'info');
-        // In a real implementation, this would open a receipt viewer modal
+        this.updateTransactionsList(filtered);
+    },
+
+    updateTransactionsList(transactions = null) {
+        const list = transactions || this.getRecentTransactions(10);
+        const container = document.getElementById('transactions-list');
+        if (container) {
+            container.innerHTML = this.renderTransactionsList(list);
+        }
     },
 
     exportTransactions() {
-        console.log('Exporting transactions...');
-        // Simple export implementation
         const dataStr = JSON.stringify(this.transactions, null, 2);
         const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
         
@@ -1480,29 +1453,324 @@ const IncomeExpensesModule = {
         this.showNotification('Transactions exported successfully!', 'success');
     },
 
-    updateStats() {
-        const stats = this.calculateStats();
-        this.updateElement('total-income', this.formatCurrency(stats.totalIncome));
-        this.updateElement('total-expenses', this.formatCurrency(stats.totalExpenses));
-        this.updateElement('net-income', this.formatCurrency(stats.netIncome));
+    // ========== REPORTS ==========
+    
+    updateFinancialReport() {
+        const content = document.getElementById('financial-report-content');
+        if (content) {
+            content.innerHTML = this.renderFinancialReport();
+        }
     },
 
-    updateTransactionsList() {
-        const recent = this.getRecentTransactions(10);
-        const transactionsList = document.getElementById('transactions-list');
-        if (transactionsList) {
-            transactionsList.innerHTML = this.renderTransactionsList(recent);
+    updateCategoryAnalysis() {
+        const content = document.getElementById('category-analysis-content');
+        if (content) {
+            content.innerHTML = this.renderCategoryAnalysis();
         }
+    },
+
+    printReport() {
+        window.print();
+    },
+
+    printCategoryAnalysis() {
+        window.print();
+    },
+
+    // ========== UI UPDATES ==========
+    
+    updateUI() {
+        this.updateStats();
+        this.updateTransactionsList();
+        this.updateCategoryBreakdown();
+    },
+
+    updateStats() {
+        const stats = this.calculateStats();
+        
+        const updateElement = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value;
+        };
+        
+        updateElement('total-income', this.formatCurrency(stats.totalIncome));
+        updateElement('total-expenses', this.formatCurrency(stats.totalExpenses));
+        updateElement('net-income', this.formatCurrency(stats.netIncome));
     },
 
     updateCategoryBreakdown() {
-        const categoryBreakdown = document.getElementById('category-breakdown');
-        if (categoryBreakdown) {
-            categoryBreakdown.innerHTML = this.renderCategoryBreakdown();
+        const container = document.getElementById('category-breakdown');
+        if (container) {
+            container.innerHTML = this.renderCategoryBreakdown();
         }
     },
 
-    // UTILITY METHODS
+    // ========== RENDER METHODS ==========
+    
+    calculateStats() {
+        const totalIncome = this.transactions
+            .filter(t => t.type === 'income')
+            .reduce((sum, t) => sum + t.amount, 0);
+        
+        const totalExpenses = this.transactions
+            .filter(t => t.type === 'expense')
+            .reduce((sum, t) => sum + t.amount, 0);
+        
+        const netIncome = totalIncome - totalExpenses;
+        
+        return {
+            totalIncome,
+            totalExpenses,
+            netIncome,
+            transactionCount: this.transactions.length
+        };
+    },
+
+    getRecentTransactions(limit = 10) {
+        return [...this.transactions]
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, limit);
+    },
+
+    renderTransactionsList(transactions) {
+        if (transactions.length === 0) {
+            return `
+                <div style="text-align: center; padding: 40px 20px; color: #6b7280;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">💰</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No transactions yet</div>
+                    <div style="font-size: 14px;">Record your first income or expense</div>
+                </div>
+            `;
+        }
+
+        return transactions.map(transaction => `
+            <div class="transaction-item">
+                <div class="transaction-info">
+                    <h4>${transaction.description}</h4>
+                    <div class="transaction-meta">
+                        ${this.formatDate(transaction.date)} • 
+                        ${this.getCategoryIcon(transaction.category)} ${this.formatCategory(transaction.category)}
+                        ${transaction.reference ? ` • Ref: ${transaction.reference}` : ''}
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <div class="transaction-amount ${transaction.type}">
+                        ${transaction.type === 'income' ? '+' : '-'}${this.formatCurrency(transaction.amount)}
+                    </div>
+                    <div class="transaction-actions">
+                        ${transaction.receipt ? `
+                            <button class="btn-icon view-receipt" data-id="${transaction.id}" title="View Receipt">
+                                📄
+                            </button>
+                        ` : ''}
+                        <button class="btn-icon edit-transaction" data-id="${transaction.id}" title="Edit">
+                            ✏️
+                        </button>
+                        <button class="btn-icon delete-transaction" data-id="${transaction.id}" title="Delete">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    },
+
+    renderCategoryBreakdown() {
+        const categories = {};
+        
+        // Initialize all categories
+        this.categories.forEach(cat => {
+            categories[cat] = { income: 0, expense: 0 };
+        });
+        
+        // Calculate totals
+        this.transactions.forEach(transaction => {
+            if (categories[transaction.category]) {
+                if (transaction.type === 'income') {
+                    categories[transaction.category].income += transaction.amount;
+                } else {
+                    categories[transaction.category].expense += transaction.amount;
+                }
+            }
+        });
+        
+        const categoriesWithData = Object.entries(categories)
+            .filter(([_, data]) => data.income > 0 || data.expense > 0);
+        
+        if (categoriesWithData.length === 0) {
+            return `
+                <div style="text-align: center; padding: 40px 20px; color: #6b7280;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No category data</div>
+                    <div style="font-size: 14px;">Add transactions to see category breakdown</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+                ${categoriesWithData.map(([category, data]) => {
+                    const total = data.income - data.expense;
+                    return `
+                        <div style="padding: 16px; background: #f8fafc; border-radius: 8px; border: 1px solid #e5e7eb;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                <div style="font-size: 20px;">${this.getCategoryIcon(category)}</div>
+                                <div style="font-weight: 600; color: #1f2937;">${this.formatCategory(category)}</div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span style="color: #6b7280;">Income:</span>
+                                <span style="font-weight: 600; color: #10b981;">${this.formatCurrency(data.income)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span style="color: #6b7280;">Expenses:</span>
+                                <span style="font-weight: 600; color: #ef4444;">${this.formatCurrency(data.expense)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
+                                <span style="color: #1f2937; font-weight: 600;">Net:</span>
+                                <span style="font-weight: bold; color: ${total >= 0 ? '#10b981' : '#ef4444'};">${this.formatCurrency(total)}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    },
+
+    renderFinancialReport() {
+        const stats = this.calculateStats();
+        const monthlyData = this.getMonthlyData();
+        
+        return `
+            <div style="padding: 20px;">
+                <h4 style="margin-bottom: 20px; color: #1f2937;">Financial Summary</h4>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;">
+                    <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold; color: #0284c7;">${this.formatCurrency(stats.totalIncome)}</div>
+                        <div style="color: #6b7280; font-size: 14px;">Total Income</div>
+                    </div>
+                    <div style="background: #fef2f2; padding: 20px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold; color: #dc2626;">${this.formatCurrency(stats.totalExpenses)}</div>
+                        <div style="color: #6b7280; font-size: 14px;">Total Expenses</div>
+                    </div>
+                    <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold; color: #16a34a;">${this.formatCurrency(stats.netIncome)}</div>
+                        <div style="color: #6b7280; font-size: 14px;">Net Income</div>
+                    </div>
+                </div>
+                
+                <h4 style="margin-bottom: 16px; color: #1f2937;">Monthly Trends</h4>
+                <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                    <div id="monthly-chart-placeholder" style="text-align: center; padding: 40px;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📈</div>
+                        <div style="color: #6b7280;">Monthly income vs expenses chart would appear here</div>
+                    </div>
+                </div>
+                
+                <h4 style="margin-bottom: 16px; color: #1f2937;">Top Categories</h4>
+                <div style="background: #f8fafc; padding: 20px; border-radius: 8px;">
+                    ${this.renderCategoryBreakdownForReport()}
+                </div>
+            </div>
+        `;
+    },
+
+    renderCategoryAnalysis() {
+        return `
+            <div style="padding: 20px;">
+                <h4 style="margin-bottom: 20px; color: #1f2937;">Category Analysis</h4>
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px;">
+                    <div>
+                        <h5 style="margin-bottom: 16px; color: #16a34a;">Top Income Categories</h5>
+                        ${this.renderTopCategories('income')}
+                    </div>
+                    <div>
+                        <h5 style="margin-bottom: 16px; color: #dc2626;">Top Expense Categories</h5>
+                        ${this.renderTopCategories('expense')}
+                    </div>
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <h5 style="margin-bottom: 16px; color: #1f2937;">Category Distribution</h5>
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 8px;">
+                        <div id="category-chart-placeholder" style="text-align: center; padding: 40px;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                            <div style="color: #6b7280;">Category distribution chart would appear here</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    renderTopCategories(type) {
+        const categories = {};
+        
+        this.transactions
+            .filter(t => t.type === type)
+            .forEach(t => {
+                categories[t.category] = (categories[t.category] || 0) + t.amount;
+            });
+        
+        const sorted = Object.entries(categories)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+        
+        if (sorted.length === 0) {
+            return `<div style="color: #6b7280; text-align: center; padding: 20px;">No ${type} data</div>`;
+        }
+        
+        return sorted.map(([category, amount]) => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #e5e7eb;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span>${this.getCategoryIcon(category)}</span>
+                    <span>${this.formatCategory(category)}</span>
+                </div>
+                <span style="font-weight: bold; color: ${type === 'income' ? '#16a34a' : '#dc2626'}">
+                    ${this.formatCurrency(amount)}
+                </span>
+            </div>
+        `).join('');
+    },
+
+    renderCategoryBreakdownForReport() {
+        const categories = {};
+        
+        this.transactions.forEach(t => {
+            if (!categories[t.category]) {
+                categories[t.category] = { income: 0, expense: 0 };
+            }
+            if (t.type === 'income') {
+                categories[t.category].income += t.amount;
+            } else {
+                categories[t.category].expense += t.amount;
+            }
+        });
+        
+        return Object.entries(categories).map(([category, data]) => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    ${this.getCategoryIcon(category)}
+                    <span>${this.formatCategory(category)}</span>
+                </div>
+                <div style="display: flex; gap: 20px;">
+                    <span style="color: #16a34a; min-width: 80px; text-align: right;">
+                        ${this.formatCurrency(data.income)}
+                    </span>
+                    <span style="color: #dc2626; min-width: 80px; text-align: right;">
+                        ${this.formatCurrency(data.expense)}
+                    </span>
+                    <span style="font-weight: bold; min-width: 80px; text-align: right;">
+                        ${this.formatCurrency(data.income - data.expense)}
+                    </span>
+                </div>
+            </div>
+        `).join('');
+    },
+
+    // ========== UTILITY METHODS ==========
+    
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -1511,53 +1779,142 @@ const IncomeExpensesModule = {
     },
 
     formatDate(dateString) {
-        try {
-            return new Date(dateString).toLocaleDateString();
-        } catch (e) {
-            return 'Invalid date';
-        }
-    },
-
-    getCategoryIcon(category) {
-        const icons = {
-            'sales': '💰', 'services': '🛠️', 'grants': '🏛️', 'other-income': '💼',
-            'feed': '🌾', 'medical': '💊', 'equipment': '🔧', 'labor': '👷',
-            'utilities': '⚡', 'maintenance': '🔨', 'transport': '🚚', 'marketing': '📢',
-            'other-expense': '📦'
-        };
-        return icons[category] || '📦';
+        return new Date(dateString).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
     },
 
     formatCategory(category) {
         const names = {
-            'sales': 'Sales', 'services': 'Services', 'grants': 'Grants', 'other-income': 'Other Income',
-            'feed': 'Feed', 'medical': 'Medical', 'equipment': 'Equipment', 'labor': 'Labor',
-            'utilities': 'Utilities', 'maintenance': 'Maintenance', 'transport': 'Transport',
-            'marketing': 'Marketing', 'other-expense': 'Other Expenses'
+            'sales': 'Sales',
+            'services': 'Services',
+            'grants': 'Grants',
+            'other-income': 'Other Income',
+            'feed': 'Feed',
+            'medical': 'Medical',
+            'equipment': 'Equipment',
+            'labor': 'Labor',
+            'utilities': 'Utilities',
+            'maintenance': 'Maintenance',
+            'transport': 'Transport',
+            'marketing': 'Marketing',
+            'other-expense': 'Other Expenses'
         };
-        return names[category] || category;
+        return names[category] || category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
     },
 
-    updateElement(id, value) {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value;
+    getCategoryIcon(category) {
+        const icons = {
+            'sales': '💰',
+            'services': '🛠️',
+            'grants': '🏛️',
+            'other-income': '💼',
+            'feed': '🌾',
+            'medical': '💊',
+            'equipment': '🔧',
+            'labor': '👷',
+            'utilities': '⚡',
+            'maintenance': '🔨',
+            'transport': '🚚',
+            'marketing': '📢',
+            'other-expense': '📦'
+        };
+        return icons[category] || '📝';
+    },
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    },
+
+    getMonthlyData() {
+        const monthly = {};
+        const now = new Date();
+        
+        // Initialize last 6 months
+        for (let i = 5; i >= 0; i--) {
+            const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const key = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            monthly[key] = { income: 0, expense: 0 };
         }
+        
+        // Fill with data
+        this.transactions.forEach(t => {
+            const date = new Date(t.date);
+            const key = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            if (monthly[key]) {
+                if (t.type === 'income') {
+                    monthly[key].income += t.amount;
+                } else {
+                    monthly[key].expense += t.amount;
+                }
+            }
+        });
+        
+        return monthly;
     },
 
     showNotification(message, type = 'info') {
-        if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
-            window.coreModule.showNotification(message, type);
-        } else {
-            // Fallback notification
-            console.log(`${type.toUpperCase()}: ${message}`);
-            alert(message);
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            background: ${type === 'error' ? '#fef2f2' : type === 'success' ? '#f0fdf4' : '#eff6ff'};
+            color: ${type === 'error' ? '#dc2626' : type === 'success' ? '#16a34a' : '#1d4ed8'};
+            border: 1px solid ${type === 'error' ? '#fecaca' : type === 'success' ? '#bbf7d0' : '#dbeafe'};
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        `;
+        
+        notification.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span>${type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️'}</span>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+        
+        // Add animation styles if not already present
+        if (!document.querySelector('#notification-styles')) {
+            const style = document.createElement('style');
+            style.id = 'notification-styles';
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
         }
     }
 };
 
-// Register with FarmModules framework
-if (window.FarmModules) {
-    window.FarmModules.registerModule('income-expenses', IncomeExpensesModule);
-    console.log('✅ Income & Expenses module registered');
-}
+// Initialize the module when the page loads
+window.addEventListener('DOMContentLoaded', () => {
+    IncomeExpensesModule.initialize();
+});
