@@ -1206,6 +1206,8 @@ const IncomeExpensesModule = {
 
     // ==================== ADD THESE METHODS TO IncomeExpensesModule ====================
 
+        // ==================== ADD MISSING METHODS HERE ====================
+    
     renderCategoryBreakdown() {
         const categoryData = {};
         
@@ -1827,6 +1829,7 @@ const IncomeExpensesModule = {
         
         return insights.length > 0 ? insights.join(' • ') : 'Add more transactions to see insights';
     }
+    // ==================== END OF MISSING METHODS ====================
     
     // ==================== RECEIPT PROCESSING ====================
     async processSingleReceipt(receiptId) {
