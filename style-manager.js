@@ -190,6 +190,14 @@ const StyleManager = {
         style.id = 'style-manager-base';
         style.textContent = `
             /* Modern PWA Base Styles */
+           /* Ensure emoji icons render correctly */
+.nav-item span:first-child {
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif !important;
+  font-size: 18px;
+  margin-right: 6px;
+  line-height: 1;
+}
+
             /* === NAVBAR FIX === */
 .top-nav {
     height: 60px;
