@@ -269,7 +269,7 @@ const StyleManager = {
               align-items: flex-end;
               gap: 8px;
               margin-top: auto;
-              margin-bottom:12px;
+              margin-bottom: auto;
             }
 
 
