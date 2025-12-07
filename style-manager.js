@@ -199,7 +199,13 @@ const StyleManager = {
             line-height: 1;
             display: inline-block;
         }
-
+             .brand-text,
+            .brand-subtitle {
+              display: inline-block;
+              line-height: 1;
+              vertical-align: bottom;   /* forces both to align at their bottom edge */
+            }
+            
         /* Modern PWA Base Styles */
         .module-container {
             max-width: 1200px;
@@ -264,12 +270,7 @@ const StyleManager = {
                 z-index: 1;
             }
 
-            .brand-text,
-            .brand-subtitle {
-              display: inline-block;
-              line-height: 1;
-              vertical-align: bottom;   /* forces both to align at their bottom edge */
-            }
+           
 
         /* MODERN PWA BUTTONS - GREEN GRADIENT FOR ALL MODULES */
             .btn-primary, 
