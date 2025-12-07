@@ -13,6 +13,7 @@ const IncomeExpensesModule = {
     scannerStream: null,
     receiptPreview: null,
     isFirebaseAvailable: false,
+    currentUploadTask: null,
 
     // ==================== INITIALIZATION ====================
     initialize() {
@@ -977,42 +978,150 @@ const IncomeExpensesModule = {
         }
     },
 
-    async deleteReceipt(receiptId) {
-        if (!confirm('Are you sure you want to delete this receipt?')) return;
+async deleteReceipt(receiptId, deleteFromStorage = true) {
+    const receipt = this.receiptQueue.find(r => r.id === receiptId);
+    if (!receipt) {
+        this.showNotification('Receipt not found', 'error');
+        return;
+    }
+    
+    // Confirm deletion
+    const confirmMessage = deleteFromStorage 
+        ? 'Are you sure you want to delete this receipt? This will remove it from storage.'
+        : 'Are you sure you want to remove this receipt from the queue?';
+    
+    if (!confirm(confirmMessage)) return;
+    
+    try {
+        let deleteSuccessful = true;
         
-        try {
-            const receipt = this.receiptQueue.find(r => r.id === receiptId);
-            
-            if (this.isFirebaseAvailable && receipt?.fileName && window.storage) {
-                // Delete from Firebase Storage
-                const storageRef = window.storage.ref();
-                await storageRef.child(receipt.fileName).delete();
-                
-                // Delete from Firestore
-                if (window.db) {
-                    await window.db.collection('receipts').doc(receiptId).delete();
+        // Delete from storage if requested and available
+        if (deleteFromStorage && receipt.fileName) {
+            if (this.isFirebaseAvailable && window.storage) {
+                try {
+                    const storageRef = window.storage.ref();
+                    await storageRef.child(receipt.fileName).delete();
+                    this.showNotification('Receipt deleted from storage', 'success');
+                } catch (storageError) {
+                    console.error('Storage delete error:', storageError);
+                    deleteSuccessful = false;
+                    this.showNotification('Could not delete from storage (file might not exist)', 'warning');
                 }
-            } else {
-                // Delete from localStorage
-                const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
-                const updatedReceipts = localReceipts.filter(r => r.id !== receiptId);
-                localStorage.setItem('local-receipts', JSON.stringify(updatedReceipts));
             }
-            
-            // Remove from local queue
-            this.receiptQueue = this.receiptQueue.filter(r => r.id !== receiptId);
-            
-            // Update UI
-            this.updateReceiptQueueUI();
-            
-            this.showNotification('Receipt deleted successfully', 'success');
-            
-        } catch (error) {
-            console.error('Delete error:', error);
-            this.showNotification('Failed to delete receipt', 'error');
         }
-    },
+        
+        // Delete from Firestore if available
+        if (this.isFirebaseAvailable && window.db) {
+            try {
+                await window.db.collection('receipts').doc(receiptId).delete();
+            } catch (firestoreError) {
+                console.error('Firestore delete error:', firestoreError);
+                // Don't fail the entire operation if Firestore delete fails
+            }
+        }
+        
+        // Delete from localStorage if it's a local receipt
+        if (receipt.id.startsWith('local_')) {
+            const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+            const updatedReceipts = localReceipts.filter(r => r.id !== receiptId);
+            localStorage.setItem('local-receipts', JSON.stringify(updatedReceipts));
+        }
+        
+        // Remove from local queue
+        this.receiptQueue = this.receiptQueue.filter(r => r.id !== receiptId);
+        
+        // Update UI
+        this.updateReceiptQueueUI();
+        
+        if (deleteSuccessful) {
+            this.showNotification('Receipt deleted successfully', 'success');
+        }
+        
+    } catch (error) {
+        console.error('Delete error:', error);
+        this.showNotification('Failed to delete receipt', 'error');
+    }
+},
 
+    // Add these methods IMMEDIATELY AFTER deleteReceipt method:
+showDeleteOptions(receiptId) {
+    const receipt = this.receiptQueue.find(r => r.id === receiptId);
+    if (!receipt) return;
+    
+    // Create custom confirmation modal
+    const modalHTML = `
+        <div class="popout-modal" style="display: flex;">
+            <div class="popout-modal-content" style="max-width: 400px;">
+                <div class="popout-modal-header">
+                    <h3 class="popout-modal-title">🗑️ Delete Receipt</h3>
+                    <button class="popout-modal-close" id="close-delete-modal">&times;</button>
+                </div>
+                <div class="popout-modal-body">
+                    <div style="padding: 20px;">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+                            <h4 style="color: var(--text-primary); margin-bottom: 8px;">Delete "${receipt.name}"?</h4>
+                            <p style="color: var(--text-secondary);">Choose how to delete this receipt:</p>
+                        </div>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <button class="btn btn-danger" id="delete-from-storage" style="width: 100%;">
+                                🗑️ Delete Permanently
+                                <div style="font-size: 12px; opacity: 0.8;">Remove from storage and queue</div>
+                            </button>
+                            
+                            <button class="btn btn-outline" id="remove-from-queue" style="width: 100%;">
+                                📋 Remove from Queue Only
+                                <div style="font-size: 12px; opacity: 0.8;">Keep in storage, remove from this list</div>
+                            </button>
+                            
+                            <button class="btn btn-outline" id="cancel-delete" style="width: 100%;">
+                                ↩️ Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Create and show modal
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHTML;
+    document.body.appendChild(modalContainer.firstElementChild);
+    
+    // Setup handlers
+    document.getElementById('delete-from-storage')?.addEventListener('click', () => {
+        this.deleteReceipt(receiptId, true);
+        this.closeDeleteModal();
+    });
+    
+    document.getElementById('remove-from-queue')?.addEventListener('click', () => {
+        this.deleteReceipt(receiptId, false);
+        this.closeDeleteModal();
+    });
+    
+    document.getElementById('cancel-delete')?.addEventListener('click', () => {
+        this.closeDeleteModal();
+    });
+    
+    document.getElementById('close-delete-modal')?.addEventListener('click', () => {
+        this.closeDeleteModal();
+    });
+    
+    // Close when clicking outside
+    modalContainer.querySelector('.popout-modal').addEventListener('click', (e) => {
+        if (e.target.classList.contains('popout-modal')) {
+            this.closeDeleteModal();
+        }
+    });
+},
+
+closeDeleteModal() {
+    const modal = document.querySelector('.popout-modal');
+    if (modal) modal.remove();
+},
+    
     updateReceiptQueueUI() {
         // Update badge
         const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
@@ -1026,6 +1135,13 @@ const IncomeExpensesModule = {
                 }
             } else {
                 badge.textContent = pendingReceipts.length;
+            }
+
+            // Add batch delete UI if there are pending receipts
+            if (pendingReceipts.length > 0) {
+                setTimeout(() => {
+                    this.addBatchDeleteUI();
+                }, 100);
             }
             
             // Update pending section
@@ -1050,24 +1166,25 @@ const IncomeExpensesModule = {
         }
     },
 
-    setupReceiptActionListeners() {
-        // Process buttons
-        document.querySelectorAll('.process-receipt-btn, .process-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const receiptId = e.currentTarget.dataset.id;
-                this.processSingleReceipt(receiptId);
-            });
+    // Find and UPDATE this method:
+setupReceiptActionListeners() {
+    // Process buttons
+    document.querySelectorAll('.process-receipt-btn, .process-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const receiptId = e.currentTarget.dataset.id;
+            this.processSingleReceipt(receiptId);
         });
-        
-        // Remove buttons
-        document.querySelectorAll('.remove-receipt-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const receiptId = e.currentTarget.dataset.id;
-                this.deleteReceipt(receiptId);
-            });
+    });
+    
+    // Remove buttons - UPDATED to show options
+    document.querySelectorAll('.remove-receipt-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const receiptId = e.currentTarget.dataset.id;
+            this.showDeleteOptions(receiptId); // CHANGED from deleteReceipt()
         });
-    },
-
+    });
+},
+    
     // ==================== CAMERA METHODS ====================
     async initializeCamera() {
         try {
@@ -1182,47 +1299,114 @@ const IncomeExpensesModule = {
     },
 
     // ==================== FIREBASE UPLOAD METHODS ====================
-    async handleFileUpload(files) {
-        if (!files || files.length === 0) return;
+async handleFileUpload(files) {
+    if (!files || files.length === 0) return;
+    
+    const totalFiles = files.length;
+    let processedFiles = 0;
+    let cancelled = false;
+    
+    // Show progress with cancel button
+    const progressSection = document.getElementById('upload-progress');
+    const progressBar = document.getElementById('upload-progress-bar');
+    const progressText = document.getElementById('upload-percentage');
+    const fileName = document.getElementById('upload-file-name');
+    
+    if (progressSection) {
+        progressSection.style.display = 'block';
+        progressSection.innerHTML = `
+            <div class="progress-info">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h4>Uploading to ${this.isFirebaseAvailable ? 'Firebase' : 'Local Storage'}...</h4>
+                    <button class="btn btn-sm btn-outline" id="cancel-upload-btn" style="font-size: 12px;">
+                        ❌ Cancel Upload
+                    </button>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="upload-progress-bar"></div>
+                </div>
+                <div class="progress-details">
+                    <span id="upload-file-name">-</span>
+                    <span id="upload-percentage">0%</span>
+                </div>
+                <div id="upload-status" style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+                    Preparing upload...
+                </div>
+            </div>
+        `;
         
-        const totalFiles = files.length;
-        let processedFiles = 0;
+        // Add cancel button handler
+        document.getElementById('cancel-upload-btn')?.addEventListener('click', () => {
+            cancelled = true;
+            if (this.currentUploadTask) {
+                this.currentUploadTask.cancel();
+                this.showNotification('Upload cancelled', 'warning');
+            }
+        });
+    }
+    
+    // Upload each file
+    for (const file of Array.from(files)) {
+        if (cancelled) break;
         
-        // Show progress
-        const progressSection = document.getElementById('upload-progress');
-        const progressBar = document.getElementById('upload-progress-bar');
-        const progressText = document.getElementById('upload-percentage');
-        const fileName = document.getElementById('upload-file-name');
+        if (fileName) fileName.textContent = `Uploading: ${file.name}`;
+        const statusElement = document.getElementById('upload-status');
+        if (statusElement) statusElement.textContent = `Uploading ${processedFiles + 1} of ${totalFiles}: ${file.name}`;
         
-        if (progressSection) progressSection.style.display = 'block';
-        
-        // Upload each file
-        for (const file of Array.from(files)) {
-            if (fileName) fileName.textContent = `Uploading: ${file.name}`;
+        try {
+            // Validate file before upload
+            if (!this.isValidReceiptFile(file)) {
+                this.showNotification(`Skipped ${file.name}: Invalid file type or size`, 'warning');
+                continue;
+            }
             
-            try {
-                await this.uploadReceiptToFirebase(file);
-                processedFiles++;
-                
-                // Update progress
-                const progress = Math.round((processedFiles / totalFiles) * 100);
+            // Upload with progress tracking
+            await this.uploadReceiptToFirebase(file, (progress) => {
                 if (progressBar) progressBar.style.width = `${progress}%`;
                 if (progressText) progressText.textContent = `${progress}%`;
-                
-            } catch (error) {
-                console.error('Upload error:', error);
+            });
+            
+            processedFiles++;
+            
+            // Update overall progress
+            const overallProgress = Math.round((processedFiles / totalFiles) * 100);
+            if (progressBar) progressBar.style.width = `${overallProgress}%`;
+            if (progressText) progressText.textContent = `${overallProgress}%`;
+            
+        } catch (error) {
+            console.error('Upload error:', error);
+            if (error.message.includes('cancelled')) {
+                this.showNotification('Upload cancelled', 'info');
+                break;
+            } else {
                 this.showNotification(`Failed to upload ${file.name}: ${error.message}`, 'error');
             }
         }
-        
-        // Hide progress after completion
-        setTimeout(() => {
-            if (progressSection) progressSection.style.display = 'none';
-            if (progressBar) progressBar.style.width = '0%';
-            if (progressText) progressText.textContent = '0%';
-            if (fileName) fileName.textContent = '-';
-        }, 1000);
-        
+    }
+    
+    // Hide progress after completion
+    setTimeout(() => {
+        if (progressSection) {
+            progressSection.style.display = 'none';
+            progressSection.innerHTML = `
+                <div class="progress-info">
+                    <h4>Uploading to ${this.isFirebaseAvailable ? 'Firebase' : 'Local Storage'}...</h4>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="upload-progress-bar"></div>
+                    </div>
+                    <div class="progress-details">
+                        <span id="upload-file-name">-</span>
+                        <span id="upload-percentage">0%</span>
+                    </div>
+                </div>
+            `;
+        }
+        if (progressBar) progressBar.style.width = '0%';
+        if (progressText) progressText.textContent = '0%';
+        if (fileName) fileName.textContent = '-';
+    }, 1000);
+    
+    if (!cancelled) {
         this.showNotification(`${processedFiles} receipt(s) uploaded successfully!`, 'success');
         
         // Update UI
@@ -1231,78 +1415,119 @@ const IncomeExpensesModule = {
         // Show process button
         const processBtn = document.getElementById('process-receipts-btn');
         if (processBtn) processBtn.style.display = 'inline-block';
-    },
+    }
+    
+    // Reset upload task
+    this.currentUploadTask = null;
+},
 
-    async uploadReceiptToFirebase(file) {
-        if (!file) {
-            throw new Error('No file provided');
-        }
-        
-        // Validate file
-        if (!this.isValidReceiptFile(file)) {
-            throw new Error('Invalid file type or size (max 10MB, JPG/PNG/PDF only)');
-        }
-        
-        if (this.isFirebaseAvailable) {
-            // Upload to Firebase
-            return this.uploadToFirebase(file);
-        } else {
-            // Store locally
-            return this.storeReceiptLocally(file);
-        }
-    },
+   async uploadReceiptToFirebase(file, onProgress = null) {
+    if (!file) {
+        throw new Error('No file provided');
+    }
+    
+    // Validate file
+    if (!this.isValidReceiptFile(file)) {
+        throw new Error('Invalid file type or size (max 10MB, JPG/PNG/PDF only)');
+    }
+    
+    if (this.isFirebaseAvailable) {
+        // Upload to Firebase with progress tracking
+        return this.uploadToFirebase(file, onProgress);
+    } else {
+        // Store locally
+        return this.storeReceiptLocally(file);
+    }
+},
 
-    async uploadToFirebase(file) {
-        try {
-            // Generate unique filename
-            const timestamp = Date.now();
-            const fileExt = file.name.split('.').pop();
-            const fileName = `receipts/${timestamp}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-            
-            // Create storage reference
-            const storageRef = window.storage.ref();
-            const fileRef = storageRef.child(fileName);
-            
-            // Upload file to Firebase Storage
-            const uploadTask = fileRef.put(file);
-            
-            // Wait for upload to complete
-            const snapshot = await uploadTask;
-            
-            // Get download URL
-            const downloadURL = await snapshot.ref.getDownloadURL();
-            
-            // Create receipt record in Firestore
-            const receiptId = `receipt_${timestamp}`;
-            const receiptData = {
-                id: receiptId,
-                name: file.name,
+async uploadToFirebase(file, onProgress = null) {
+    try {
+        // Generate unique filename
+        const timestamp = Date.now();
+        const fileExt = file.name.split('.').pop();
+        const fileName = `receipts/${timestamp}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+        
+        // Create storage reference
+        const storageRef = window.storage.ref();
+        const fileRef = storageRef.child(fileName);
+        
+        // Upload file to Firebase Storage with metadata
+        const metadata = {
+            contentType: file.type,
+            customMetadata: {
                 originalName: file.name,
-                fileName: fileName,
-                downloadURL: downloadURL,
-                size: file.size,
-                type: file.type,
-                status: 'pending',
-                uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                uploadedBy: this.getCurrentUser() || 'unknown',
-                metadata: {
-                    contentType: file.type,
-                    size: file.size
+                uploadedBy: this.getCurrentUser(),
+                uploadedAt: new Date().toISOString()
+            }
+        };
+        
+        const uploadTask = fileRef.put(file, metadata);
+        this.currentUploadTask = uploadTask;
+        
+        // Track upload progress
+        return new Promise((resolve, reject) => {
+            uploadTask.on('state_changed',
+                // Progress callback
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    if (onProgress) onProgress(Math.round(progress));
+                },
+                // Error callback
+                (error) => {
+                    this.currentUploadTask = null;
+                    if (error.code === 'storage/canceled') {
+                        reject(new Error('Upload cancelled by user'));
+                    } else {
+                        reject(error);
+                    }
+                },
+                // Complete callback
+                async () => {
+                    try {
+                        // Get download URL
+                        const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                        
+                        // Create receipt record in Firestore
+                        const receiptId = `receipt_${timestamp}`;
+                        const receiptData = {
+                            id: receiptId,
+                            name: file.name,
+                            originalName: file.name,
+                            fileName: fileName,
+                            downloadURL: downloadURL,
+                            size: file.size,
+                            type: file.type,
+                            status: 'pending',
+                            uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            uploadedBy: this.getCurrentUser() || 'unknown',
+                            metadata: {
+                                contentType: file.type,
+                                size: file.size,
+                                storagePath: fileName
+                            }
+                        };
+                        
+                        // Save to Firestore
+                        await window.db.collection('receipts').doc(receiptId).set(receiptData);
+                        
+                        // Add to local queue
+                        this.receiptQueue.push(receiptData);
+                        
+                        this.currentUploadTask = null;
+                        resolve(receiptData);
+                    } catch (error) {
+                        this.currentUploadTask = null;
+                        reject(error);
+                    }
                 }
-            };
-            
-            // Save to Firestore
-            await window.db.collection('receipts').doc(receiptId).set(receiptData);
-            
-            // Add to local queue
-            this.receiptQueue.push(receiptData);
-            
-            return receiptData;
-        } catch (error) {
-            console.error('Firebase upload error:', error);
-            throw new Error(`Firebase upload failed: ${error.message}`);
-        }
-    },
+            );
+        });
+    } catch (error) {
+        this.currentUploadTask = null;
+        console.error('Firebase upload error:', error);
+        throw new Error(`Firebase upload failed: ${error.message}`);
+    }
+},
 
     storeReceiptLocally(file) {
         const timestamp = Date.now();
@@ -1987,6 +2212,151 @@ const IncomeExpensesModule = {
             alert(`${type.toUpperCase()}: ${message}`);
         }
     }
+    // Add these methods RIGHT BEFORE the closing } of IncomeExpensesModule:
+
+    // ==================== BATCH OPERATIONS ====================
+    
+    addBatchDeleteUI() {
+        const pendingSection = document.getElementById('pending-receipts-section');
+        if (!pendingSection) return;
+        
+        // Remove existing batch controls if any
+        const existingControls = document.getElementById('batch-controls');
+        if (existingControls) existingControls.remove();
+        
+        // Add batch controls
+        const batchControls = `
+            <div id="batch-controls" style="display: none; margin-bottom: 16px; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <input type="checkbox" id="select-all-receipts">
+                        <span style="color: var(--text-primary); font-weight: 600;" id="selected-count">0 selected</span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-sm btn-outline" id="batch-process-btn">
+                            🔍 Process Selected
+                        </button>
+                        <button class="btn btn-sm btn-danger" id="batch-delete-btn">
+                            🗑️ Delete Selected
+                        </button>
+                        <button class="btn btn-sm btn-outline" id="cancel-batch-btn">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        pendingSection.insertAdjacentHTML('afterbegin', batchControls);
+        
+        // Add select checkbox to each receipt
+        const receiptItems = pendingSection.querySelectorAll('.pending-receipt-item');
+        receiptItems.forEach(item => {
+            const receiptId = item.dataset.id;
+            // Check if checkbox already exists
+            if (!item.querySelector('.receipt-select')) {
+                const selectHTML = `
+                    <div style="margin-right: 8px;">
+                        <input type="checkbox" class="receipt-select" data-id="${receiptId}" style="transform: scale(1.2);">
+                    </div>
+                `;
+                item.insertAdjacentHTML('afterbegin', selectHTML);
+            }
+        });
+        
+        this.setupBatchDeleteHandlers();
+    },
+
+    setupBatchDeleteHandlers() {
+        // Select all checkbox
+        document.getElementById('select-all-receipts')?.addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            document.querySelectorAll('.receipt-select').forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            this.updateSelectedCount();
+        });
+        
+        // Individual receipt checkboxes
+        document.querySelectorAll('.receipt-select').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                this.updateSelectedCount();
+            });
+        });
+        
+        // Batch process
+        document.getElementById('batch-process-btn')?.addEventListener('click', () => {
+            const selectedIds = this.getSelectedReceiptIds();
+            if (selectedIds.length === 0) {
+                this.showNotification('No receipts selected', 'warning');
+                return;
+            }
+            
+            if (selectedIds.length === 1) {
+                this.processSingleReceipt(selectedIds[0]);
+            } else {
+                this.showNotification(`Processing ${selectedIds.length} receipts...`, 'info');
+                selectedIds.forEach(id => this.processSingleReceipt(id));
+            }
+            
+            this.hideBatchControls();
+        });
+        
+        // Batch delete
+        document.getElementById('batch-delete-btn')?.addEventListener('click', () => {
+            const selectedIds = this.getSelectedReceiptIds();
+            if (selectedIds.length === 0) {
+                this.showNotification('No receipts selected', 'warning');
+                return;
+            }
+            
+            if (confirm(`Delete ${selectedIds.length} selected receipt(s)?`)) {
+                selectedIds.forEach(id => this.deleteReceipt(id, true));
+                this.hideBatchControls();
+            }
+        });
+        
+        // Cancel batch
+        document.getElementById('cancel-batch-btn')?.addEventListener('click', () => {
+            this.hideBatchControls();
+        });
+    },
+
+    getSelectedReceiptIds() {
+        const selectedIds = [];
+        document.querySelectorAll('.receipt-select:checked').forEach(checkbox => {
+            selectedIds.push(checkbox.dataset.id);
+        });
+        return selectedIds;
+    },
+
+    updateSelectedCount() {
+        const count = this.getSelectedReceiptIds().length;
+        const countElement = document.getElementById('selected-count');
+        if (countElement) {
+            countElement.textContent = `${count} selected`;
+        }
+        
+        // Show/hide batch controls
+        const batchControls = document.getElementById('batch-controls');
+        if (batchControls) {
+            batchControls.style.display = count > 0 ? 'block' : 'none';
+        }
+    },
+
+    hideBatchControls() {
+        const batchControls = document.getElementById('batch-controls');
+        if (batchControls) {
+            batchControls.style.display = 'none';
+        }
+        document.querySelectorAll('.receipt-select').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        document.getElementById('select-all-receipts').checked = false;
+        this.updateSelectedCount();
+    },
+
+    // ==================== END OF BATCH OPERATIONS ====================
 };
 
 // Register with FarmModules framework
