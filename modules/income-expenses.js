@@ -1136,10 +1136,10 @@ const IncomeExpensesModule = {
     /*setupEventListeners() {
         console.log('Setting up event listeners...');
         
-        // Main buttons
+      /*  // Main buttons
         this.setupButton('add-transaction', () => this.showTransactionModal());
         this.setupButton('upload-receipt-btn', () => this.showImportReceiptsModal());
-        
+        */
         // Quick actions
         this.setupButton('add-income-btn', () => this.showAddIncome());
         this.setupButton('add-expense-btn', () => this.showAddExpense());
