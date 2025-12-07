@@ -837,8 +837,16 @@ const IncomeExpensesModule = {
                             </div>
                         </div>
                         <div class="receipt-actions" style="display: flex; gap: 8px;">
-                            <a href="${receipt.downloadURL}" target="_blank" class="btn btn-sm btn-outline" title="View" style="padding: 6px 12px;">
-                                <span class="btn-icon">👁️</span>
+                          <a href="${this.isValidReceiptURL(receipt.downloadURL) ? receipt.downloadURL : '#'}" 
+                                   target="_blank" 
+                                   class="btn btn-sm btn-outline" 
+                                   title="${this.isValidReceiptURL(receipt.downloadURL) ? 'View' : 'Receipt unavailable'}" 
+                                   style="padding: 6px 12px;"
+                                   onclick="${!this.isValidReceiptURL(receipt.downloadURL) ? 'event.preventDefault(); alert(\'Receipt file is no longer available. Please re-upload.\');' : ''}"> 
+                               title="${this.isValidReceiptURL(receipt.downloadURL) ? 'View' : 'Receipt unavailable'}" 
+                               style="padding: 6px 12px;"
+                               onclick="${!this.isValidReceiptURL(receipt.downloadURL) ? 'event.preventDefault(); alert(\'Receipt file is no longer available. Please re-upload.\');' : ''}">
+                            <span class="btn-icon">👁️</span>
                             </a>
                             <button class="btn btn-sm btn-primary process-receipt-btn" data-id="${receipt.id}" style="padding: 6px 12px;">
                                 <span class="btn-icon">🔍</span>
@@ -1529,67 +1537,125 @@ async uploadToFirebase(file, onProgress = null) {
     }
 },
 
-    storeReceiptLocally(file) {
-        const timestamp = Date.now();
-        const receiptId = `local_${timestamp}`;
-        const receiptData = {
-            id: receiptId,
-            name: file.name,
-            originalName: file.name,
-            fileName: file.name,
-            downloadURL: URL.createObjectURL(file),
-            size: file.size,
-            type: file.type,
-            status: 'pending',
-            uploadedAt: new Date(),
-            uploadedBy: 'local-user',
-            metadata: {
-                contentType: file.type,
-                size: file.size
-            }
+storeReceiptLocally(file) {
+    const timestamp = Date.now();
+    const receiptId = `local_${timestamp}`;
+    
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        
+        reader.onload = () => {
+            const receiptData = {
+                id: receiptId,
+                name: file.name,
+                originalName: file.name,
+                fileName: file.name,
+                downloadURL: reader.result, // Data URL instead of blob URL
+                size: file.size,
+                type: file.type,
+                status: 'pending',
+                uploadedAt: new Date(),
+                uploadedBy: 'local-user',
+                metadata: {
+                    contentType: file.type,
+                    size: file.size
+                }
+            };
+            
+            this.receiptQueue.push(receiptData);
+            
+            // Store in localStorage for persistence
+            const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+            localReceipts.push(receiptData);
+            localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
+            
+            resolve(receiptData);
         };
         
-        this.receiptQueue.push(receiptData);
+        reader.onerror = () => {
+            reject(new Error('Failed to read file'));
+        };
         
-        // Store in localStorage for persistence
-        const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
-        localReceipts.push(receiptData);
-        localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
-        
-        return receiptData;
-    },
-
+        // Read as Data URL (permanent)
+        reader.readAsDataURL(file);
+    });
+},
+    
     async loadReceiptsFromFirebase() {
-        try {
-            if (this.isFirebaseAvailable) {
-                // Load from Firebase
-                const receiptsRef = window.db.collection('receipts');
-                const snapshot = await receiptsRef
-                    .where('status', '==', 'pending')
-                    .orderBy('uploadedAt', 'desc')
-                    .limit(10)
-                    .get();
-                
-                this.receiptQueue = [];
-                snapshot.forEach(doc => {
-                    this.receiptQueue.push(doc.data());
-                });
-                
-                console.log('Loaded receipts from Firebase:', this.receiptQueue.length);
-            } else {
-                // Load from localStorage
-                const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
-                this.receiptQueue = localReceipts.filter(r => r.status === 'pending');
-                console.log('Loaded receipts from localStorage:', this.receiptQueue.length);
+    try {
+        if (this.isFirebaseAvailable) {
+            // Load from Firebase
+            const receiptsRef = window.db.collection('receipts');
+            const snapshot = await receiptsRef
+                .where('status', '==', 'pending')
+                .orderBy('uploadedAt', 'desc')
+                .limit(10)
+                .get();
+            
+            this.receiptQueue = [];
+            snapshot.forEach(doc => {
+                this.receiptQueue.push(doc.data());
+            });
+            
+            console.log('Loaded receipts from Firebase:', this.receiptQueue.length);
+        } else {
+            // Load from localStorage and fix broken blob URLs
+            const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+            
+            // Filter out broken blob URLs
+            this.receiptQueue = localReceipts.filter(r => {
+                // Check if it's a blob URL that might be broken
+                if (r.downloadURL && r.downloadURL.startsWith('blob:')) {
+                    console.warn('Skipping broken blob URL receipt:', r.name);
+                    return false;
+                }
+                return r.status === 'pending';
+            });
+            
+            console.log('Loaded receipts from localStorage:', this.receiptQueue.length);
+            
+            // Clean up localStorage by removing broken receipts
+            const validReceipts = localReceipts.filter(r => !r.downloadURL?.startsWith('blob:'));
+            if (validReceipts.length !== localReceipts.length) {
+                localStorage.setItem('local-receipts', JSON.stringify(validReceipts));
+                console.log('Cleaned up broken blob URLs from localStorage');
             }
-            
-            // Update UI
-            this.updateReceiptQueueUI();
-            
-        } catch (error) {
-            console.error('Error loading receipts:', error);
         }
-    },
+        
+        // Update UI
+        this.updateReceiptQueueUI();
+        
+    } catch (error) {
+        console.error('Error loading receipts:', error);
+    }
+},
+
+    isValidReceiptURL(url) {
+    if (!url) return false;
+    
+    // Check for different URL types
+    if (url.startsWith('blob:')) {
+        // Blob URLs are temporary and often broken
+        return false;
+    }
+    
+    if (url.startsWith('data:')) {
+        // Data URLs are permanent and valid
+        return true;
+    }
+    
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+        // HTTP URLs are valid
+        return true;
+    }
+    
+    // Firebase Storage URLs
+    if (url.includes('firebasestorage.googleapis.com')) {
+        return true;
+    }
+    
+    return false;
+},
 
     // ==================== MODAL CONTROL METHODS ====================
     hideImportReceiptsModal() {
