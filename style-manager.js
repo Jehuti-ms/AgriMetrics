@@ -264,23 +264,7 @@ const StyleManager = {
                 z-index: 1;
             }
 
-           /* .nav-brand {
-              display: flex;
-              align-items: flex-end;
-              gap: 8px;
-              padding-bottom: 6px; /* nudges entire brand block upward */
-            } */
-            
-          /*  .brand-text,
-            .brand-subtitle {
-              display: inline-block;
-              line-height: 1;
-              vertical-align: bottom;
-              white-space: nowrap;
-            } */
-
-
-           /* MODERN PWA BUTTONS - GREEN GRADIENT FOR ALL MODULES */
+        /* MODERN PWA BUTTONS - GREEN GRADIENT FOR ALL MODULES */
             .btn-primary, 
             .btn.btn-primary, 
             button[class*="primary"],
