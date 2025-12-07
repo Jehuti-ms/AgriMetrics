@@ -264,6 +264,25 @@ const StyleManager = {
                 z-index: 1;
             }
 
+            .nav-brand {
+              display: flex;
+              align-items: center;     /* vertical centering */
+              gap: 12px;               /* space between logo and text */
+            }
+            
+            .nav-brand img {
+              height: 48px;
+              width: auto;
+            }
+            
+            .brand-text,
+            .brand-subtitle {
+              display: inline-block;
+              font-size: 1rem;
+              line-height: 1.2;
+              white-space: nowrap;     /* prevent wrapping */
+            }
+
            /* MODERN PWA BUTTONS - GREEN GRADIENT FOR ALL MODULES */
             .btn-primary, 
             .btn.btn-primary, 
