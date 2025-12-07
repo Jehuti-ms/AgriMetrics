@@ -264,6 +264,14 @@ const StyleManager = {
                 z-index: 1;
             }
 
+            .brand-text,
+                .brand-subtitle {
+                  display: inline-block;
+                  line-height: 1;
+                  vertical-align: bottom;
+                  white-space: nowrap;
+                }
+
         /* MODERN PWA BUTTONS - GREEN GRADIENT FOR ALL MODULES */
             .btn-primary, 
             .btn.btn-primary, 
