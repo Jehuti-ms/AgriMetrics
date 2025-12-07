@@ -264,30 +264,19 @@ const StyleManager = {
                 z-index: 1;
             }
 
-           .top-nav {
-                  display: flex;
-                  align-items: center;
-                  justify-content: space-between;
-                  height: 64px; /* or whatever your navbar height is */
-                  padding: 0 16px;
-                  background-color: var(--nav-bg);
-                }
-                
-                .nav-brand {
-                  display: flex;
-                  align-items: flex-end; /* aligns logo and text at bottom */
-                  height: 100%;           /* ensures it stays within navbar */
-                  overflow: hidden;       /* prevents spillover */
-                }
-                
-                .brand-text,
-                .brand-subtitle {
-                  display: inline-block;
-                  line-height: 1;
-                  vertical-align: bottom;
-                  white-space: nowrap;
-                }
-
+          .nav-brand {
+              display: flex;
+              align-items: flex-end;   /* aligns text at the bottom */
+              gap: 8px;
+            }
+            
+            .brand-text,
+            .brand-subtitle {
+              display: inline-block;
+              line-height: 1;
+              vertical-align: bottom;
+              white-space: nowrap;
+            }
 
            /* MODERN PWA BUTTONS - GREEN GRADIENT FOR ALL MODULES */
             .btn-primary, 
