@@ -264,14 +264,19 @@ const StyleManager = {
                 z-index: 1;
             }
 
-          .brand-text {
-              font-weight: 600;
-              font-size: 1.1rem;
+            .nav-brand {
+              display: flex;
+              align-items: flex-end;     /* aligns all children at the bottom */
+              gap: 8px;
             }
             
+            .brand-text,
             .brand-subtitle {
+              display: inline-block;
               font-size: 1rem;
-              color: var(--text-secondary);
+              line-height: 1;
+              vertical-align: bottom;
+              white-space: nowrap;
             }
 
 
