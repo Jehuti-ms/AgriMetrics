@@ -238,6 +238,53 @@ const StyleManager = {
                 z-index: 1;
             }
 
+            /* === NAVBAR COMPONENT === */
+                .top-nav {
+                    height: 60px;
+                    background: #ffffff;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 0 16px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                    position: fixed;
+                    top: 0; left: 0; right: 0;
+                    z-index: 1000;
+                }
+                
+                .nav-items {
+                    display: flex;
+                    gap: 8px;
+                    overflow-x: auto;
+                    flex: 1 1 auto;
+                    justify-content: flex-start;
+                    scrollbar-width: none;
+                }
+                .nav-items::-webkit-scrollbar { display: none; }
+                
+                .nav-item {
+                    flex: 0 0 auto;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 6px 10px;
+                    background: none;
+                    border: none;
+                    color: #1a1a1a;
+                    cursor: pointer;
+                    transition: background 0.3s ease, color 0.3s ease;
+                }
+                .nav-item:hover { background: rgba(0,0,0,0.05); }
+                .nav-item.active { color: var(--primary-500); background: rgba(34,197,94,0.1); }
+                
+                .nav-label { font-size: 11px; margin-top: 2px; }
+                
+                @media (max-width: 768px) {
+                    .top-nav { height: 55px; padding: 0 12px; }
+                    .nav-item { font-size: 14px; padding: 4px 8px; }
+                    .nav-label { font-size: 10px; }
+                }
+
             /* MODERN PWA BUTTONS - GREEN GRADIENT FOR ALL MODULES */
             .btn-primary, 
             .btn.btn-primary, 
