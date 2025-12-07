@@ -2211,7 +2211,7 @@ async uploadToFirebase(file, onProgress = null) {
             // Simple alert fallback
             alert(`${type.toUpperCase()}: ${message}`);
         }
-    }
+    },
     // Add these methods RIGHT BEFORE the closing } of IncomeExpensesModule:
 
     // ==================== BATCH OPERATIONS ====================
