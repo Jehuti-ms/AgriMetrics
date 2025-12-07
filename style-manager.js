@@ -264,9 +264,9 @@ const StyleManager = {
                 z-index: 1;
             }
 
-            .nav-brand {
+           .nav-brand {
               display: flex;
-              align-items: flex-end;     /* aligns all children at the bottom */
+              align-items: flex-end; /* aligns all children at their bottom edge */
               gap: 8px;
             }
             
@@ -277,6 +277,7 @@ const StyleManager = {
               line-height: 1;
               vertical-align: bottom;
               white-space: nowrap;
+              padding-bottom: 2px; /* optional tweak to visually balance */
             }
 
 
