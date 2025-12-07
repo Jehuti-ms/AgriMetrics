@@ -1,4 +1,4 @@
-// modules/income-expenses.js - UPDATED WITH RECEIPT UPLOAD, OCR, AND PHOTO
+// modules/income-expenses.js - FIXED VERSION WITH WORKING BUTTONS
 console.log('💰 Loading Income & Expenses module...');
 
 const IncomeExpensesModule = {
@@ -25,7 +25,7 @@ const IncomeExpensesModule = {
 
         this.loadData();
         this.renderModule();
-        this.setupEventListeners();
+        // Event listeners are now set up in renderModule after DOM is created
         this.initialized = true;
         
         console.log('✅ Income & Expenses initialized with StyleManager');
@@ -372,7 +372,7 @@ const IncomeExpensesModule = {
                                         📷 Capture
                                     </button>
                                     <button type="button" id="switch-camera-btn" class="btn-outline">
-                        🔄 Switch Camera
+                                        🔄 Switch Camera
                                     </button>
                                     <button type="button" id="cancel-camera-btn" class="btn-outline">
                                         ❌ Cancel
@@ -458,7 +458,378 @@ const IncomeExpensesModule = {
             </div>
         `;
 
+        // Now set up event listeners AFTER the DOM is created
         this.setupEventListeners();
+    },
+
+    // MODAL CONTROL METHODS - ADD THESE FIRST
+    showTransactionModal(transactionId = null) {
+        console.log('Opening transaction modal...');
+        this.hideAllModals();
+        document.getElementById('transaction-modal').classList.remove('hidden');
+        this.currentEditingId = transactionId;
+        
+        const form = document.getElementById('transaction-form');
+        if (form) {
+            form.reset();
+            document.getElementById('transaction-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('delete-transaction').style.display = 'none';
+            document.getElementById('transaction-modal-title').textContent = 'Add Transaction';
+            this.clearReceiptPreview();
+            document.getElementById('ocr-results').classList.add('hidden');
+            
+            // If editing existing transaction
+            if (transactionId) {
+                this.editTransaction(transactionId);
+            }
+        }
+    },
+
+    hideTransactionModal() {
+        console.log('Closing transaction modal...');
+        document.getElementById('transaction-modal').classList.add('hidden');
+    },
+
+    showReceiptUploadModal() {
+        console.log('Opening receipt upload modal...');
+        this.hideAllModals();
+        document.getElementById('receipt-upload-modal').classList.remove('hidden');
+        document.getElementById('processing-indicator').classList.add('hidden');
+        document.getElementById('camera-interface').classList.add('hidden');
+        document.getElementById('drop-zone').classList.remove('hidden');
+        
+        // Reset file input
+        const fileInput = document.getElementById('receipt-file-input');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+    },
+
+    hideReceiptUploadModal() {
+        console.log('Closing receipt upload modal...');
+        document.getElementById('receipt-upload-modal').classList.add('hidden');
+        this.stopCamera();
+    },
+
+    showScannerModal() {
+        console.log('Opening scanner modal...');
+        this.hideAllModals();
+        document.getElementById('receipt-scanner-modal').classList.remove('hidden');
+        this.startScannerCamera();
+    },
+
+    hideScannerModal() {
+        console.log('Closing scanner modal...');
+        document.getElementById('receipt-scanner-modal').classList.add('hidden');
+        this.stopScannerCamera();
+    },
+
+    showFinancialReportModal() {
+        console.log('Opening financial report modal...');
+        this.hideAllModals();
+        document.getElementById('financial-report-modal').classList.remove('hidden');
+    },
+
+    hideFinancialReportModal() {
+        console.log('Closing financial report modal...');
+        document.getElementById('financial-report-modal').classList.add('hidden');
+    },
+
+    showCategoryAnalysisModal() {
+        console.log('Opening category analysis modal...');
+        this.hideAllModals();
+        document.getElementById('category-analysis-modal').classList.remove('hidden');
+    },
+
+    hideCategoryAnalysisModal() {
+        console.log('Closing category analysis modal...');
+        document.getElementById('category-analysis-modal').classList.add('hidden');
+    },
+
+    hideAllModals() {
+        console.log('Hiding all modals...');
+        this.hideTransactionModal();
+        this.hideReceiptUploadModal();
+        this.hideScannerModal();
+        this.hideFinancialReportModal();
+        this.hideCategoryAnalysisModal();
+    },
+
+    setupEventListeners() {
+        console.log('Setting up event listeners...');
+        
+        // Test if buttons exist
+        console.log('Add transaction button exists:', !!document.getElementById('add-transaction'));
+        console.log('Financial report button exists:', !!document.getElementById('financial-report-btn'));
+        console.log('Category analysis button exists:', !!document.getElementById('category-analysis-btn'));
+
+        // Main buttons - USE DIRECT EVENT LISTENERS
+        const addTransactionBtn = document.getElementById('add-transaction');
+        if (addTransactionBtn) {
+            addTransactionBtn.addEventListener('click', () => {
+                console.log('Add Transaction button clicked');
+                this.showTransactionModal();
+            });
+        }
+
+        const uploadReceiptBtn = document.getElementById('upload-receipt-btn');
+        if (uploadReceiptBtn) {
+            uploadReceiptBtn.addEventListener('click', () => {
+                console.log('Upload Receipt button clicked');
+                this.showReceiptUploadModal();
+            });
+        }
+        
+        // Quick action buttons - USE DIRECT EVENT LISTENERS
+        const addIncomeBtn = document.getElementById('add-income-btn');
+        if (addIncomeBtn) {
+            addIncomeBtn.addEventListener('click', () => {
+                console.log('Add Income button clicked');
+                this.showAddIncome();
+            });
+        }
+
+        const addExpenseBtn = document.getElementById('add-expense-btn');
+        if (addExpenseBtn) {
+            addExpenseBtn.addEventListener('click', () => {
+                console.log('Add Expense button clicked');
+                this.showAddExpense();
+            });
+        }
+
+        const financialReportBtn = document.getElementById('financial-report-btn');
+        if (financialReportBtn) {
+            financialReportBtn.addEventListener('click', () => {
+                console.log('Financial Report button clicked');
+                this.generateFinancialReport();
+            });
+        }
+
+        const categoryAnalysisBtn = document.getElementById('category-analysis-btn');
+        if (categoryAnalysisBtn) {
+            categoryAnalysisBtn.addEventListener('click', () => {
+                console.log('Category Analysis button clicked');
+                this.generateCategoryAnalysis();
+            });
+        }
+        
+        // Transaction modal handlers
+        const saveTransactionBtn = document.getElementById('save-transaction');
+        if (saveTransactionBtn) {
+            saveTransactionBtn.addEventListener('click', () => this.saveTransaction());
+        }
+
+        const deleteTransactionBtn = document.getElementById('delete-transaction');
+        if (deleteTransactionBtn) {
+            deleteTransactionBtn.addEventListener('click', () => this.deleteTransaction());
+        }
+
+        const cancelTransactionBtn = document.getElementById('cancel-transaction');
+        if (cancelTransactionBtn) {
+            cancelTransactionBtn.addEventListener('click', () => this.hideTransactionModal());
+        }
+
+        const closeTransactionModalBtn = document.getElementById('close-transaction-modal');
+        if (closeTransactionModalBtn) {
+            closeTransactionModalBtn.addEventListener('click', () => this.hideTransactionModal());
+        }
+        
+        // Receipt upload handlers
+        const closeReceiptModalBtn = document.getElementById('close-receipt-modal');
+        if (closeReceiptModalBtn) {
+            closeReceiptModalBtn.addEventListener('click', () => this.hideReceiptUploadModal());
+        }
+
+        const cancelReceiptUploadBtn = document.getElementById('cancel-receipt-upload');
+        if (cancelReceiptUploadBtn) {
+            cancelReceiptUploadBtn.addEventListener('click', () => this.hideReceiptUploadModal());
+        }
+
+        const closeScannerModalBtn = document.getElementById('close-scanner-modal');
+        if (closeScannerModalBtn) {
+            closeScannerModalBtn.addEventListener('click', () => this.hideScannerModal());
+        }
+        
+        // Report modal handlers
+        const closeFinancialReportBtn = document.getElementById('close-financial-report');
+        if (closeFinancialReportBtn) {
+            closeFinancialReportBtn.addEventListener('click', () => this.hideFinancialReportModal());
+        }
+
+        const closeFinancialReportBtn2 = document.getElementById('close-financial-report-btn');
+        if (closeFinancialReportBtn2) {
+            closeFinancialReportBtn2.addEventListener('click', () => this.hideFinancialReportModal());
+        }
+
+        const printFinancialReportBtn = document.getElementById('print-financial-report');
+        if (printFinancialReportBtn) {
+            printFinancialReportBtn.addEventListener('click', () => this.printFinancialReport());
+        }
+        
+        const closeCategoryAnalysisBtn = document.getElementById('close-category-analysis');
+        if (closeCategoryAnalysisBtn) {
+            closeCategoryAnalysisBtn.addEventListener('click', () => this.hideCategoryAnalysisModal());
+        }
+
+        const closeCategoryAnalysisBtn2 = document.getElementById('close-category-analysis-btn');
+        if (closeCategoryAnalysisBtn2) {
+            closeCategoryAnalysisBtn2.addEventListener('click', () => this.hideCategoryAnalysisModal());
+        }
+
+        const printCategoryAnalysisBtn = document.getElementById('print-category-analysis');
+        if (printCategoryAnalysisBtn) {
+            printCategoryAnalysisBtn.addEventListener('click', () => this.printCategoryAnalysis());
+        }
+        
+        // Filter
+        const transactionFilter = document.getElementById('transaction-filter');
+        if (transactionFilter) {
+            transactionFilter.addEventListener('change', (e) => {
+                this.filterTransactions(e.target.value);
+            });
+        }
+        
+        // Export
+        const exportTransactionsBtn = document.getElementById('export-transactions');
+        if (exportTransactionsBtn) {
+            exportTransactionsBtn.addEventListener('click', () => {
+                this.exportTransactions();
+            });
+        }
+        
+        // Close modals when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('popout-modal')) {
+                this.hideAllModals();
+            }
+        });
+        
+        // Edit/delete transaction buttons (delegated)
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.edit-transaction')) {
+                const id = e.target.closest('.edit-transaction').dataset.id;
+                this.editTransaction(id);
+            }
+            if (e.target.closest('.delete-transaction')) {
+                const id = e.target.closest('.delete-transaction').dataset.id;
+                this.deleteTransactionRecord(id);
+            }
+            if (e.target.closest('.view-receipt')) {
+                const id = e.target.closest('.view-receipt').dataset.id;
+                this.viewReceipt(id);
+            }
+        });
+        
+        // Hover effects
+        const buttons = document.querySelectorAll('.quick-action-btn');
+        buttons.forEach(button => {
+            button.addEventListener('mouseenter', (e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+            });
+            button.addEventListener('mouseleave', (e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+            });
+        });
+        
+        // Receipt upload specific handlers
+        this.setupReceiptUploadHandlers();
+    },
+
+    // ADD THESE HELPER METHODS for showing specific forms
+    showAddIncome() {
+        this.showTransactionModal();
+        document.getElementById('transaction-type').value = 'income';
+        document.getElementById('transaction-category').value = 'sales';
+        document.getElementById('transaction-modal-title').textContent = 'Add Income';
+    },
+
+    showAddExpense() {
+        this.showTransactionModal();
+        document.getElementById('transaction-type').value = 'expense';
+        document.getElementById('transaction-category').value = 'feed';
+        document.getElementById('transaction-modal-title').textContent = 'Add Expense';
+    },
+
+    // Add the rest of the methods from previous implementation (calculateStats, renderTransactionsList, etc.)
+    calculateStats() {
+        const income = this.transactions.filter(t => t.type === 'income')
+            .reduce((sum, t) => sum + t.amount, 0);
+        const expenses = this.transactions.filter(t => t.type === 'expense')
+            .reduce((sum, t) => sum + t.amount, 0);
+        const net = income - expenses;
+        
+        return {
+            totalIncome: income,
+            totalExpenses: expenses,
+            netIncome: net,
+            transactionCount: this.transactions.length
+        };
+    },
+
+    getRecentTransactions(limit = 10) {
+        return this.transactions.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, limit);
+    },
+
+    renderTransactionsList(transactions) {
+        if (transactions.length === 0) {
+            return `
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">💰</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No transactions yet</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Record your first income or expense</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                ${transactions.map(transaction => {
+                    const isIncome = transaction.type === 'income';
+                    const amountColor = isIncome ? '#22c55e' : '#ef4444';
+                    const icon = isIncome ? '💰' : '💸';
+                    const categoryIcon = this.getCategoryIcon(transaction.category);
+                    
+                    return `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="font-size: 20px;">${icon}</div>
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">${transaction.description}</div>
+                                    <div style="font-size: 14px; color: var(--text-secondary);">
+                                        ${this.formatDate(transaction.date)} • 
+                                        ${categoryIcon} ${this.formatCategory(transaction.category)}
+                                        ${transaction.reference ? ` • Ref: ${transaction.reference}` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div style="text-align: right;">
+                                    <div style="font-weight: bold; color: ${amountColor}; font-size: 18px;">
+                                        ${isIncome ? '+' : '-'}${this.formatCurrency(transaction.amount)}
+                                    </div>
+                                    <div style="font-size: 14px; color: var(--text-secondary);">
+                                        ${transaction.paymentMethod || 'No payment method'}
+                                    </div>
+                                </div>
+                                ${transaction.receipt ? `
+                                    <button class="btn-icon view-receipt" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="View Receipt">
+                                        📄
+                                    </button>
+                                ` : ''}
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn-icon edit-transaction" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Edit">
+                                        ✏️
+                                    </button>
+                                    <button class="btn-icon delete-transaction" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Delete">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
     },
 
     calculateStats() {
@@ -1608,7 +1979,64 @@ const IncomeExpensesModule = {
         }
     }
 };
+    formatCurrency(amount) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(amount);
+    },
 
+    formatDate(dateString) {
+        try {
+            return new Date(dateString).toLocaleDateString();
+        } catch (e) {
+            return 'Invalid date';
+        }
+    },
+
+    getCategoryIcon(category) {
+        const icons = {
+            'sales': '💰', 'services': '🛠️', 'grants': '🏛️', 'other-income': '💼',
+            'feed': '🌾', 'medical': '💊', 'equipment': '🔧', 'labor': '👷',
+            'utilities': '⚡', 'maintenance': '🔨', 'transport': '🚚', 'marketing': '📢',
+            'other-expense': '📦'
+        };
+        return icons[category] || '📦';
+    },
+
+    formatCategory(category) {
+        const names = {
+            'sales': 'Sales', 'services': 'Services', 'grants': 'Grants', 'other-income': 'Other Income',
+            'feed': 'Feed', 'medical': 'Medical', 'equipment': 'Equipment', 'labor': 'Labor',
+            'utilities': 'Utilities', 'maintenance': 'Maintenance', 'transport': 'Transport',
+            'marketing': 'Marketing', 'other-expense': 'Other Expenses'
+        };
+        return names[category] || category;
+    }
+};
+
+ getCategoryIcon(category) {
+        const icons = {
+            'sales': '💰', 'services': '🛠️', 'grants': '🏛️', 'other-income': '💼',
+            'feed': '🌾', 'medical': '💊', 'equipment': '🔧', 'labor': '👷',
+            'utilities': '⚡', 'maintenance': '🔨', 'transport': '🚚', 'marketing': '📢',
+            'other-expense': '📦'
+        };
+        return icons[category] || '📦';
+    },
+
+    formatCategory(category) {
+        const names = {
+            'sales': 'Sales', 'services': 'Services', 'grants': 'Grants', 'other-income': 'Other Income',
+            'feed': 'Feed', 'medical': 'Medical', 'equipment': 'Equipment', 'labor': 'Labor',
+            'utilities': 'Utilities', 'maintenance': 'Maintenance', 'transport': 'Transport',
+            'marketing': 'Marketing', 'other-expense': 'Other Expenses'
+        };
+        return names[category] || category;
+    }
+};
+
+// Register with FarmModules framework
 if (window.FarmModules) {
     window.FarmModules.registerModule('income-expenses', IncomeExpensesModule);
     console.log('✅ Income & Expenses module registered with receipt upload feature');
