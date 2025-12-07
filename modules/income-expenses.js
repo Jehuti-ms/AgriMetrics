@@ -1198,7 +1198,7 @@ const IncomeExpensesModule = {
         setTimeout(() => {
             this.setupReceiptActionListeners();
         }, 100);
-    }, */
+    }, 
 
 
 
