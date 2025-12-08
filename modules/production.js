@@ -615,7 +615,6 @@ updateStats() {
             }, 1000);
         }
     }
-});
 
         // Add this to setupEventListeners():
 document.getElementById('production-for-sale')?.addEventListener('change', (e) => {
