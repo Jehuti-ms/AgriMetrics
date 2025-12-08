@@ -1,4 +1,4 @@
-// modules/production.js - UPDATED WITH STYLE MANAGER INTEGRATION
+// modules/production.js - COMPLETE REWRITTEN VERSION WITH ALL FIXES
 console.log('🚜 Loading production module...');
 
 const ProductionModule = {
@@ -11,16 +11,14 @@ const ProductionModule = {
     initialize() {
         console.log('🚜 Initializing Production Records...');
         
-        // ✅ ADDED: Get the content area element
         this.element = document.getElementById('content-area');
         if (!this.element) {
             console.error('Content area element not found');
             return false;
         }
 
-        // ✅ ADDED: Register with StyleManager
         if (window.StyleManager) {
-            StyleManager.registerModule(this.name, this.element, this);
+            window.StyleManager.registerComponent(this.name);
         }
 
         this.loadData();
@@ -28,14 +26,15 @@ const ProductionModule = {
         this.setupEventListeners();
         this.initialized = true;
         
-        console.log('✅ Production Records initialized with StyleManager');
+        console.log('✅ Production Records initialized');
         return true;
     },
 
-    // ✅ ADDED: Theme change handler
     onThemeChange(theme) {
         console.log(`Production Records updating for theme: ${theme}`);
-        // You can add theme-specific logic here if needed
+        if (this.initialized) {
+            this.renderModule();
+        }
     },
 
     loadData() {
@@ -237,29 +236,7 @@ const ProductionModule = {
                 </div>
             </div>
 
-            // In your production form HTML (in renderModule()), add this section:
-            <div style="margin-bottom: 16px;">
-                <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" id="production-for-sale">
-                    <span style="color: var(--text-primary);">Mark for immediate sale</span>
-                </label>
-                <div class="form-hint">This will create a sales record and adjust inventory automatically</div>
-            </div>
-            
-            <div id="sale-details" style="display: none; margin-bottom: 16px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                    <div>
-                        <label class="form-label">Sale Price per Unit</label>
-                        <input type="number" id="sale-price" class="form-input" placeholder="0.00" min="0" step="0.01">
-                    </div>
-                    <div>
-                        <label class="form-label">Customer Name (Optional)</label>
-                        <input type="text" id="customer-name" class="form-input" placeholder="Wholesale or specific customer">
-                    </div>
-                </div>
-            </div>
-            
-            <!-- POPOUT MODALS - Added at the end to overlay content -->
+            <!-- POPOUT MODALS -->
             <!-- Production Record Modal -->
             <div id="production-modal" class="popout-modal hidden">
                 <div class="popout-modal-content" style="max-width: 600px;">
@@ -332,6 +309,28 @@ const ProductionModule = {
                                 <label class="form-label">Notes</label>
                                 <textarea id="production-notes" class="form-input" placeholder="Add production details, observations, special conditions, or any other relevant information..." rows="3"></textarea>
                             </div>
+
+                            <!-- Sale Options -->
+                            <div style="margin-bottom: 16px;">
+                                <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="production-for-sale">
+                                    <span style="color: var(--text-primary);">Mark for immediate sale</span>
+                                </label>
+                                <div class="form-hint">This will create a sales record and adjust inventory automatically</div>
+                            </div>
+
+                            <div id="sale-details" style="display: none; margin-bottom: 16px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                    <div>
+                                        <label class="form-label">Sale Price per Unit</label>
+                                        <input type="number" id="sale-price" class="form-input" placeholder="0.00" min="0" step="0.01">
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Customer Name (Optional)</label>
+                                        <input type="text" id="customer-name" class="form-input" placeholder="Wholesale or specific customer">
+                                    </div>
+                                </div>
+                            </div>
                         </form>
                     </div>
                     <div class="popout-modal-footer">
@@ -385,40 +384,39 @@ const ProductionModule = {
         this.setupEventListeners();
     },
 
-updateStats() {
-    const today = window.DateUtils ? window.DateUtils.getToday() : new Date().toISOString().split('T')[0];
-    
-    const todayEggs = this.productionData
-        .filter(record => window.DateUtils ? 
-            window.DateUtils.isSameDate(record.date, today) : 
-            record.date === today)
-        .filter(record => record.product === 'eggs')
-        .reduce((sum, record) => sum + record.quantity, 0);
+    updateStats() {
+        const today = new Date().toISOString().split('T')[0];
+        
+        const todayEggs = this.productionData
+            .filter(record => record.date === today && record.product === 'eggs')
+            .reduce((sum, record) => sum + record.quantity, 0);
 
-    // Calculate last 7 days using DateUtils
-    const last7Days = window.DateUtils ? 
-        window.DateUtils.addDays(today, -7) : 
-        (() => {
-            const d = new Date();
-            d.setDate(d.getDate() - 7);
-            return d.toISOString().split('T')[0];
-        })();
-    
-    const weekBirds = this.productionData
-        .filter(record => {
-            const recordDate = new Date(record.date);
-            const last7Date = new Date(last7Days);
-            return recordDate >= last7Date && 
-                   (record.product === 'broilers' || record.product === 'layers');
-        })
-        .reduce((sum, record) => sum + record.quantity, 0);
+        const last7Days = new Date();
+        last7Days.setDate(last7Days.getDate() - 7);
+        const last7DaysStr = last7Days.toISOString().split('T')[0];
+        
+        const weekBirds = this.productionData
+            .filter(record => record.date >= last7DaysStr && 
+                           (record.product === 'broilers' || record.product === 'layers'))
+            .reduce((sum, record) => sum + record.quantity, 0);
 
-    // ... rest of the method remains the same
-    this.updateElement('today-eggs', todayEggs.toLocaleString());
-    this.updateElement('week-birds', weekBirds.toLocaleString());
-    this.updateElement('total-records', this.productionData.length.toLocaleString());
-    this.updateElement('avg-quality', avgQuality);
-},
+        const qualityScores = {
+            'excellent': 5,
+            'grade-a': 4,
+            'grade-b': 3,
+            'standard': 2,
+            'rejects': 1
+        };
+
+        const avgQuality = this.productionData.length > 0 
+            ? (this.productionData.reduce((sum, record) => sum + (qualityScores[record.quality] || 3), 0) / this.productionData.length).toFixed(1)
+            : '0.0';
+
+        this.updateElement('today-eggs', todayEggs.toLocaleString());
+        this.updateElement('week-birds', weekBirds.toLocaleString());
+        this.updateElement('total-records', this.productionData.length.toLocaleString());
+        this.updateElement('avg-quality', avgQuality);
+    },
 
     renderProductionTable(filter = 'all') {
         let filteredProduction = this.productionData;
@@ -461,9 +459,7 @@ updateStats() {
                             
                             return `
                                 <tr style="border-bottom: 1px solid var(--glass-border);">
-                                    <td style="padding: 12px 8px; color: var(--text-primary);">
-                                        ${window.DateUtils ? window.DateUtils.toDisplayFormat(record.date) : this.formatDate(record.date)}
-                                    </td>
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">${this.formatDate(record.date)}</td>
                                     <td style="padding: 12px 8px; color: var(--text-primary);">
                                         <div style="display: flex; align-items: center; gap: 8px;">
                                             <span style="font-size: 18px;">${this.getProductIcon(record.product)}</span>
@@ -562,6 +558,11 @@ updateStats() {
         document.getElementById('cancel-production')?.addEventListener('click', () => this.hideProductionModal());
         document.getElementById('close-production-modal')?.addEventListener('click', () => this.hideProductionModal());
         
+        // Sale checkbox handler
+        document.getElementById('production-for-sale')?.addEventListener('change', (e) => {
+            document.getElementById('sale-details').style.display = e.target.checked ? 'block' : 'none';
+        });
+        
         // Report modal handlers
         document.getElementById('close-production-report')?.addEventListener('click', () => this.hideProductionReportModal());
         document.getElementById('close-production-report-btn')?.addEventListener('click', () => this.hideProductionReportModal());
@@ -584,115 +585,50 @@ updateStats() {
             }
         });
 
-        // Hover effects
-        const buttons = document.querySelectorAll('.quick-action-btn');
-        buttons.forEach(button => {
-            button.addEventListener('mouseenter', (e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-            });
-            button.addEventListener('mouseleave', (e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-            });
-        });
-
         // Edit/delete production buttons (delegated)
-    document.addEventListener('click', (e) => {
-    // Handle delete with better event handling
-    if (e.target.closest('.delete-production')) {
-        e.preventDefault();
-        e.stopPropagation(); // Prevent multiple triggers
-        
-        const deleteBtn = e.target.closest('.delete-production');
-        const recordId = deleteBtn.dataset.id;
-        
-        if (recordId && !deleteBtn.dataset.processing) {
-            deleteBtn.dataset.processing = 'true'; // Mark as processing
-            this.deleteProductionRecord(recordId);
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.edit-production')) {
+                const recordId = e.target.closest('.edit-production').dataset.id;
+                this.editProduction(recordId);
+            }
             
-            // Reset after 1 second to prevent double-clicks
-            setTimeout(() => {
-                deleteBtn.dataset.processing = '';
-            }, 1000);
-        }
-    }
-
-        // Add this to setupEventListeners():
-document.getElementById('production-for-sale')?.addEventListener('change', (e) => {
-    document.getElementById('sale-details').style.display = e.target.checked ? 'block' : 'none';
-});
-
-// Add this method to handle production marked for sale:
-createSalesRecord(productionData, saleDetails) {
-    const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
-    
-    const saleRecord = {
-        id: Date.now(),
-        date: new Date().toISOString().split('T')[0],
-        items: [{
-            product: this.formatProductName(productionData.product),
-            quantity: productionData.quantity,
-            unit: productionData.unit === 'birds' ? 'pieces' : productionData.unit,
-            price: saleDetails.price,
-            total: productionData.quantity * saleDetails.price
-        }],
-        totalAmount: productionData.quantity * saleDetails.price,
-        customer: saleDetails.customer || 'Direct Sale',
-        status: 'completed',
-        paymentMethod: 'cash',
-        notes: `From production batch ${productionData.batch || productionData.id}`,
-        productionId: productionData.id
-    };
-    
-    sales.push(saleRecord);
-    localStorage.setItem('farm-sales', JSON.stringify(sales));
-    
-    console.log('✅ Sales record created:', saleRecord);
-    
-    // Update inventory by subtracting sold amount
-    this.updateInventoryAfterSale(productionData, saleRecord.id);
-},
-
-updateInventoryAfterSale(productionData, saleId) {
-    const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
-    const inventoryItem = inventory.find(item => 
-        item.productionId == productionData.id && item.source === 'production'
-    );
-    
-    if (inventoryItem) {
-        inventoryItem.currentStock -= productionData.quantity;
-        inventoryItem.lastUpdated = new Date().toISOString();
-        
-        if (inventoryItem.currentStock <= 0) {
-            // Remove from inventory if stock is depleted
-            const itemIndex = inventory.findIndex(item => 
-                item.productionId == productionData.id && item.source === 'production'
-            );
-            inventory.splice(itemIndex, 1);
-        }
-        
-        localStorage.setItem('farm-inventory', JSON.stringify(inventory));
-        console.log('✅ Inventory updated after sale:', inventoryItem);
-    }
-},
+            // Fixed delete button with anti-double-click
+            if (e.target.closest('.delete-production')) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const deleteBtn = e.target.closest('.delete-production');
+                const recordId = deleteBtn.dataset.id;
+                
+                if (recordId && !deleteBtn.dataset.processing) {
+                    deleteBtn.dataset.processing = 'true';
+                    this.deleteProductionRecord(recordId);
+                    
+                    setTimeout(() => {
+                        deleteBtn.dataset.processing = '';
+                    }, 1000);
+                }
+            }
+        });
+    },
 
     // MODAL CONTROL METHODS
-showProductionModal() {
-    this.hideAllModals();
-    document.getElementById('production-modal').classList.remove('hidden');
-    this.currentRecordId = null;
-    document.getElementById('production-form').reset();
-    
-    // Get today's date in proper YYYY-MM-DD format
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    const todayStr = `${year}-${month}-${day}`;
-    
-    document.getElementById('production-date').value = todayStr;
-    document.getElementById('delete-production').style.display = 'none';
-    document.getElementById('production-modal-title').textContent = 'New Production Record';
-},
+    showProductionModal() {
+        this.hideAllModals();
+        document.getElementById('production-modal').classList.remove('hidden');
+        this.currentRecordId = null;
+        document.getElementById('production-form').reset();
+        
+        // Set today's date properly
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        document.getElementById('production-date').value = `${year}-${month}-${day}`;
+        
+        document.getElementById('delete-production').style.display = 'none';
+        document.getElementById('production-modal-title').textContent = 'New Production Record';
+    },
 
     hideProductionModal() {
         document.getElementById('production-modal').classList.add('hidden');
@@ -720,6 +656,343 @@ showProductionModal() {
         this.hideProductionModal();
         this.hideProductionReportModal();
         this.hideTrendAnalysisModal();
+    },
+
+    // PRODUCTION CRUD METHODS
+    handleQuickProduction() {
+        const product = document.getElementById('quick-product').value;
+        const quantity = parseInt(document.getElementById('quick-quantity').value);
+        const unit = document.getElementById('quick-unit').value;
+        const quality = document.getElementById('quick-quality').value;
+
+        if (!product || !quantity || !quality) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+
+        const productionData = {
+            id: Date.now(),
+            date: new Date().toISOString().split('T')[0],
+            product: product,
+            quantity: quantity,
+            unit: unit,
+            quality: quality,
+            batch: '',
+            notes: 'Quick entry'
+        };
+
+        this.addProduction(productionData);
+        
+        // Reset form
+        document.getElementById('quick-production-form').reset();
+        this.showNotification('Production recorded successfully!', 'success');
+    },
+
+    saveProduction() {
+        const form = document.getElementById('production-form');
+        if (!form) {
+            console.error('❌ Production form not found');
+            return;
+        }
+
+        const productionId = document.getElementById('production-id').value;
+        const date = document.getElementById('production-date').value;
+        const product = document.getElementById('production-product').value;
+        const quantity = parseInt(document.getElementById('production-quantity').value);
+        const unit = document.getElementById('production-unit').value;
+        const quality = document.getElementById('production-quality').value;
+        const batch = document.getElementById('production-batch').value.trim();
+        const notes = document.getElementById('production-notes').value.trim();
+        const forSale = document.getElementById('production-for-sale').checked;
+        const salePrice = parseFloat(document.getElementById('sale-price').value) || 0;
+        const customer = document.getElementById('customer-name').value.trim();
+
+        if (!date || !product || !quantity || !unit || !quality) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+
+        if (quantity <= 0) {
+            this.showNotification('Quantity must be greater than 0', 'error');
+            return;
+        }
+
+        const productionData = {
+            id: productionId ? parseInt(productionId) : Date.now(),
+            date: date,
+            product: product,
+            quantity: quantity,
+            unit: unit,
+            quality: quality,
+            batch: batch || '',
+            notes: notes || ''
+        };
+
+        if (productionId) {
+            this.updateProduction(parseInt(productionId), productionData);
+        } else {
+            this.addProduction(productionData);
+        }
+
+        // Handle sale if marked for sale
+        if (forSale && salePrice > 0) {
+            this.createSalesRecord(productionData, { price: salePrice, customer: customer });
+        }
+
+        this.hideProductionModal();
+    },
+
+    addProduction(productionData) {
+        this.productionData.unshift(productionData);
+        this.saveData();
+        this.updateStats();
+        this.updateProductionTable();
+        this.updateProductSummary();
+        
+        // Link to inventory if applicable
+        this.linkToInventory(productionData);
+        
+        this.showNotification('Production record saved successfully!', 'success');
+    },
+
+    editProduction(recordId) {
+        const production = this.productionData.find(p => p.id == recordId);
+        
+        if (!production) {
+            console.error('❌ Production not found:', recordId);
+            return;
+        }
+
+        console.log('Editing production record:', production);
+        
+        // Populate form fields
+        document.getElementById('production-id').value = production.id;
+        document.getElementById('production-date').value = production.date;
+        document.getElementById('production-product').value = production.product;
+        document.getElementById('production-quantity').value = production.quantity;
+        document.getElementById('production-unit').value = production.unit;
+        document.getElementById('production-quality').value = production.quality;
+        document.getElementById('production-batch').value = production.batch || '';
+        document.getElementById('production-notes').value = production.notes || '';
+        document.getElementById('delete-production').style.display = 'block';
+        document.getElementById('production-modal-title').textContent = 'Edit Production Record';
+        
+        this.showProductionModal();
+    },
+
+    updateProduction(productionId, productionData) {
+        const productionIndex = this.productionData.findIndex(p => p.id == productionId);
+        
+        if (productionIndex !== -1) {
+            const oldQuantity = this.productionData[productionIndex].quantity;
+            const newQuantity = productionData.quantity;
+            
+            // Update production record
+            this.productionData[productionIndex] = {
+                ...this.productionData[productionIndex],
+                ...productionData
+            };
+            
+            this.saveData();
+            this.updateStats();
+            this.updateProductionTable();
+            this.updateProductSummary();
+            
+            // Update inventory if quantity changed
+            if (oldQuantity !== newQuantity && ['broilers', 'layers', 'pork', 'beef'].includes(productionData.product)) {
+                const quantityDiff = newQuantity - oldQuantity;
+                if (quantityDiff !== 0) {
+                    this.updateInventoryQuantity(productionId, quantityDiff);
+                }
+            }
+            
+            this.showNotification('Production record updated successfully!', 'success');
+        }
+    },
+
+    deleteProduction() {
+        const productionId = document.getElementById('production-id').value;
+        
+        if (confirm('Are you sure you want to delete this production record?')) {
+            this.deleteProductionRecord(productionId);
+            this.hideProductionModal();
+        }
+    },
+
+    deleteProductionRecord(productionId) {
+        // First check if record exists
+        const recordIndex = this.productionData.findIndex(p => p.id == productionId);
+        
+        if (recordIndex === -1) {
+            this.showNotification('Record not found or already deleted', 'error');
+            return;
+        }
+        
+        const record = this.productionData[recordIndex];
+        
+        if (confirm('Are you sure you want to delete this production record? This will also remove it from inventory.')) {
+            // Remove from inventory if it was linked
+            if (['broilers', 'layers', 'pork', 'beef'].includes(record.product)) {
+                this.removeFromInventory(productionId);
+            }
+            
+            // Remove from production data
+            this.productionData = this.productionData.filter(p => p.id != productionId);
+            
+            // Save immediately
+            this.saveData();
+            
+            // Update UI components
+            this.updateStats();
+            this.updateProductionTable();
+            this.updateProductSummary();
+            
+            this.showNotification('Production record deleted successfully', 'success');
+        }
+    },
+
+    // INVENTORY LINKING METHODS
+    linkToInventory(productionRecord) {
+        // For broilers, layers, and other animals that become carcasses
+        if (['broilers', 'layers', 'pork', 'beef'].includes(productionRecord.product)) {
+            const inventoryItem = {
+                name: this.formatProductName(productionRecord.product) + ' Carcasses',
+                category: 'meat',
+                currentStock: productionRecord.quantity,
+                minStock: 0,
+                unit: productionRecord.unit === 'birds' ? 'pieces' : productionRecord.unit,
+                unitCost: this.calculateCost(productionRecord),
+                lastUpdated: new Date().toISOString(),
+                source: 'production',
+                productionId: productionRecord.id,
+                quality: productionRecord.quality
+            };
+            
+            this.updateInventory(inventoryItem);
+        }
+    },
+
+    updateInventory(inventoryItem) {
+        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+        
+        // Check if item already exists
+        const existingIndex = inventory.findIndex(item => 
+            item.name === inventoryItem.name && item.source === 'production'
+        );
+        
+        if (existingIndex !== -1) {
+            // Update existing item
+            inventory[existingIndex].currentStock += inventoryItem.currentStock;
+            inventory[existingIndex].lastUpdated = inventoryItem.lastUpdated;
+        } else {
+            // Add new item
+            inventory.push(inventoryItem);
+        }
+        
+        localStorage.setItem('farm-inventory', JSON.stringify(inventory));
+        
+        console.log('✅ Inventory updated with production:', inventoryItem);
+    },
+
+    calculateCost(productionRecord) {
+        // Simple cost calculation
+        const baseCosts = {
+            'broilers': 5,    // $5 per bird
+            'layers': 8,      // $8 per bird
+            'pork': 50,       // $50 per pig
+            'beef': 300       // $300 per cow
+        };
+        
+        return baseCosts[productionRecord.product] || 10;
+    },
+
+    updateInventoryQuantity(productionId, quantityDiff) {
+        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+        const inventoryItem = inventory.find(item => 
+            item.productionId == productionId && item.source === 'production'
+        );
+        
+        if (inventoryItem) {
+            inventoryItem.currentStock += quantityDiff;
+            inventoryItem.lastUpdated = new Date().toISOString();
+            
+            if (inventoryItem.currentStock <= 0) {
+                // Remove from inventory if stock is 0 or negative
+                const itemIndex = inventory.findIndex(item => 
+                    item.productionId == productionId && item.source === 'production'
+                );
+                inventory.splice(itemIndex, 1);
+            }
+            
+            localStorage.setItem('farm-inventory', JSON.stringify(inventory));
+            console.log('✅ Inventory quantity updated:', quantityDiff);
+        }
+    },
+
+    removeFromInventory(productionId) {
+        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+        const updatedInventory = inventory.filter(item => 
+            item.productionId != productionId
+        );
+        
+        if (inventory.length !== updatedInventory.length) {
+            localStorage.setItem('farm-inventory', JSON.stringify(updatedInventory));
+            console.log('✅ Removed from inventory:', productionId);
+        }
+    },
+
+    // SALES INTEGRATION METHODS
+    createSalesRecord(productionData, saleDetails) {
+        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
+        
+        const saleRecord = {
+            id: Date.now(),
+            date: new Date().toISOString().split('T')[0],
+            items: [{
+                product: this.formatProductName(productionData.product),
+                quantity: productionData.quantity,
+                unit: productionData.unit === 'birds' ? 'pieces' : productionData.unit,
+                price: saleDetails.price,
+                total: productionData.quantity * saleDetails.price
+            }],
+            totalAmount: productionData.quantity * saleDetails.price,
+            customer: saleDetails.customer || 'Direct Sale',
+            status: 'completed',
+            paymentMethod: 'cash',
+            notes: `From production batch ${productionData.batch || productionData.id}`,
+            productionId: productionData.id
+        };
+        
+        sales.push(saleRecord);
+        localStorage.setItem('farm-sales', JSON.stringify(sales));
+        
+        console.log('✅ Sales record created:', saleRecord);
+        
+        // Update inventory by subtracting sold amount
+        this.updateInventoryAfterSale(productionData, saleRecord.id);
+    },
+
+    updateInventoryAfterSale(productionData, saleId) {
+        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+        const inventoryItem = inventory.find(item => 
+            item.productionId == productionData.id && item.source === 'production'
+        );
+        
+        if (inventoryItem) {
+            inventoryItem.currentStock -= productionData.quantity;
+            inventoryItem.lastUpdated = new Date().toISOString();
+            
+            if (inventoryItem.currentStock <= 0) {
+                // Remove from inventory if stock is depleted
+                const itemIndex = inventory.findIndex(item => 
+                    item.productionId == productionData.id && item.source === 'production'
+                );
+                inventory.splice(itemIndex, 1);
+            }
+            
+            localStorage.setItem('farm-inventory', JSON.stringify(inventory));
+            console.log('✅ Inventory updated after sale:', inventoryItem);
+        }
     },
 
     // REPORT METHODS
@@ -905,26 +1178,6 @@ showProductionModal() {
                     </div>
                 </div>`;
             }
-            
-            // Seasonal Patterns (if we have enough data)
-            if (weeklyTrends.length >= 4) {
-                const avgEggs = weeklyTrends.reduce((sum, week) => sum + week.eggs, 0) / weeklyTrends.length;
-                const avgBirds = weeklyTrends.reduce((sum, week) => sum + week.birds, 0) / weeklyTrends.length;
-                
-                analysis += `<div style="margin-bottom: 20px;">
-                    <h5 style="color: var(--text-primary); margin-bottom: 12px;">📊 AVERAGE WEEKLY PRODUCTION:</h5>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                            <div style="font-size: 12px; color: var(--text-secondary);">Avg Weekly Eggs</div>
-                            <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${Math.round(avgEggs)}</div>
-                        </div>
-                        <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                            <div style="font-size: 12px; color: var(--text-secondary);">Avg Weekly Birds</div>
-                            <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${Math.round(avgBirds)}</div>
-                        </div>
-                    </div>
-                </div>`;
-            }
         }
         
         analysis += '</div>';
@@ -934,7 +1187,6 @@ showProductionModal() {
         this.showTrendAnalysisModal();
     },
 
-    // PRINT METHODS
     printProductionReport() {
         this.printReport('production-report-content', 'production-report-title');
     },
@@ -1005,213 +1257,6 @@ showProductionModal() {
         printWindow.document.close();
         printWindow.print();
     },
-
-    // EXISTING METHODS (keep as they were)
-handleQuickProduction() {
-    const product = document.getElementById('quick-product').value;
-    const quantity = parseInt(document.getElementById('quick-quantity').value);
-    const unit = document.getElementById('quick-unit').value;
-    const quality = document.getElementById('quick-quality').value;
-
-    if (!product || !quantity || !quality) {
-        this.showNotification('Please fill in all required fields', 'error');
-        return;
-    }
-
-    const productionData = {
-        id: Date.now(),
-        date: window.DateUtils ? window.DateUtils.getToday() : new Date().toISOString().split('T')[0],
-        product: product,
-        quantity: quantity,
-        unit: unit,
-        quality: quality,
-        batch: '',
-        notes: 'Quick entry'
-    };
-
-    this.addProduction(productionData);
-    
-    // Reset form
-    document.getElementById('quick-production-form').reset();
-    this.showNotification('Production recorded successfully!', 'success');
-},
-
-    saveProduction() {
-        const form = document.getElementById('production-form');
-        if (!form) {
-            console.error('❌ Production form not found');
-            return;
-        }
-
-        const productionId = document.getElementById('production-id').value;
-        const date = document.getElementById('production-date').value;
-        const product = document.getElementById('production-product').value;
-        const quantity = parseInt(document.getElementById('production-quantity').value);
-        const unit = document.getElementById('production-unit').value;
-        const quality = document.getElementById('production-quality').value;
-        const batch = document.getElementById('production-batch').value.trim();
-        const notes = document.getElementById('production-notes').value.trim();
-
-        if (!date || !product || !quantity || !unit || !quality) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
-        }
-
-        if (quantity <= 0) {
-            this.showNotification('Quantity must be greater than 0', 'error');
-            return;
-        }
-
-        const productionData = {
-            id: productionId || Date.now(),
-            date: date,
-            product: product,
-            quantity: quantity,
-            unit: unit,
-            quality: quality,
-            batch: batch || '',
-            notes: notes || ''
-        };
-
-        if (productionId) {
-            this.updateProduction(productionId, productionData);
-        } else {
-            this.addProduction(productionData);
-        }
-
-        this.hideProductionModal();
-    },
-
-    addProduction(productionData) {
-        this.productionData.unshift(productionData);
-        this.saveData();
-        this.updateStats();
-        this.updateProductionTable();
-        this.updateProductSummary();
-        this.showNotification('Production record saved successfully!', 'success');
-    },
-
-editProduction(recordId) {
-    const production = this.productionData.find(p => p.id == recordId);
-    
-    if (!production) {
-        console.error('❌ Production not found:', recordId);
-        return;
-    }
-
-    console.log('Editing production record:', production);
-    
-    // Populate form fields with properly formatted dates
-    document.getElementById('production-id').value = production.id;
-    document.getElementById('production-date').value = this.formatDateForInput(production.date);
-    document.getElementById('production-product').value = production.product;
-    document.getElementById('production-quantity').value = production.quantity;
-    document.getElementById('production-unit').value = production.unit;
-    document.getElementById('production-quality').value = production.quality;
-    document.getElementById('production-batch').value = production.batch || '';
-    document.getElementById('production-notes').value = production.notes || '';
-    document.getElementById('delete-production').style.display = 'block';
-    document.getElementById('production-modal-title').textContent = 'Edit Production Record';
-    
-    this.showProductionModal();
-},
-// Update the saveProduction method to properly check if it's an edit:
-saveProduction() {
-    const form = document.getElementById('production-form');
-    if (!form) {
-        console.error('❌ Production form not found');
-        return;
-    }
-
-    const productionId = document.getElementById('production-id').value;
-    const date = document.getElementById('production-date').value;
-    const product = document.getElementById('production-product').value;
-    const quantity = parseInt(document.getElementById('production-quantity').value);
-    const unit = document.getElementById('production-unit').value;
-    const quality = document.getElementById('production-quality').value;
-    const batch = document.getElementById('production-batch').value.trim();
-    const notes = document.getElementById('production-notes').value.trim();
-
-    if (!date || !product || !quantity || !unit || !quality) {
-        this.showNotification('Please fill in all required fields', 'error');
-        return;
-    }
-
-    if (quantity <= 0) {
-        this.showNotification('Quantity must be greater than 0', 'error');
-        return;
-    }
-
-    const productionData = {
-        id: productionId ? parseInt(productionId) : Date.now(),
-        date: date,
-        product: product,
-        quantity: quantity,
-        unit: unit,
-        quality: quality,
-        batch: batch || '',
-        notes: notes || ''
-    };
-
-    if (productionId) {
-        this.updateProduction(parseInt(productionId), productionData);
-    } else {
-        this.addProduction(productionData);
-    }
-
-    this.hideProductionModal();
-},
-
-    updateProduction(productionId, productionData) {
-        const productionIndex = this.productionData.findIndex(p => p.id == productionId);
-        
-        if (productionIndex !== -1) {
-            this.productionData[productionIndex] = {
-                ...this.productionData[productionIndex],
-                ...productionData
-            };
-            
-            this.saveData();
-            this.updateStats();
-            this.updateProductionTable();
-            this.updateProductSummary();
-            this.showNotification('Production record updated successfully!', 'success');
-        }
-    },
-
-    deleteProduction() {
-        const productionId = document.getElementById('production-id').value;
-        
-        if (confirm('Are you sure you want to delete this production record?')) {
-            this.deleteProductionRecord(productionId);
-            this.hideProductionModal();
-        }
-    },
-
-deleteProductionRecord(productionId) {
-    // First check if record exists
-    const recordIndex = this.productionData.findIndex(p => p.id == productionId);
-    
-    if (recordIndex === -1) {
-        this.showNotification('Record not found or already deleted', 'error');
-        return;
-    }
-    
-    if (confirm('Are you sure you want to delete this production record? This action cannot be undone.')) {
-        // Remove from array
-        this.productionData = this.productionData.filter(p => p.id != productionId);
-        
-        // Save immediately
-        this.saveData();
-        
-        // Update UI components
-        this.updateStats();
-        this.updateProductionTable();
-        this.updateProductSummary();
-        
-        this.showNotification('Production record deleted successfully', 'success');
-    }
-},
 
     exportProduction() {
         const csv = this.convertToCSV(this.productionData);
@@ -1330,176 +1375,6 @@ deleteProductionRecord(productionId) {
         return [headers, ...rows].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
     },
 
-    // Add these methods to your ProductionModule object after the existing methods:
-
-// ==================== INVENTORY LINKING METHODS ====================
-linkToInventory(productionRecord) {
-    // For broilers, layers, and other animals that become carcasses
-    if (['broilers', 'layers', 'pork', 'beef'].includes(productionRecord.product)) {
-        const inventoryItem = {
-            name: this.formatProductName(productionRecord.product) + ' Carcasses',
-            category: 'meat',
-            currentStock: productionRecord.quantity,
-            minStock: 0,
-            unit: productionRecord.unit === 'birds' ? 'pieces' : productionRecord.unit,
-            unitCost: this.calculateCost(productionRecord),
-            lastUpdated: new Date().toISOString(),
-            source: 'production',
-            productionId: productionRecord.id,
-            quality: productionRecord.quality
-        };
-        
-        this.updateInventory(inventoryItem);
-    }
-},
-
-updateInventory(inventoryItem) {
-    const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
-    
-    // Check if item already exists
-    const existingIndex = inventory.findIndex(item => 
-        item.name === inventoryItem.name && item.source === 'production'
-    );
-    
-    if (existingIndex !== -1) {
-        // Update existing item
-        inventory[existingIndex].currentStock += inventoryItem.currentStock;
-        inventory[existingIndex].lastUpdated = inventoryItem.lastUpdated;
-    } else {
-        // Add new item
-        inventory.push(inventoryItem);
-    }
-    
-    localStorage.setItem('farm-inventory', JSON.stringify(inventory));
-    
-    console.log('✅ Inventory updated with production:', inventoryItem);
-},
-
-calculateCost(productionRecord) {
-    // Simple cost calculation - you can make this more sophisticated
-    const baseCosts = {
-        'broilers': 5,    // $5 per bird
-        'layers': 8,      // $8 per bird
-        'pork': 50,       // $50 per pig
-        'beef': 300       // $300 per cow
-    };
-    
-    return baseCosts[productionRecord.product] || 10;
-},
-
-// Update the addProduction method to include inventory linking:
-addProduction(productionData) {
-    this.productionData.unshift(productionData);
-    this.saveData();
-    this.updateStats();
-    this.updateProductionTable();
-    this.updateProductSummary();
-    
-    // Link to inventory if applicable
-    this.linkToInventory(productionData);
-    
-    this.showNotification('Production record saved successfully!', 'success');
-},
-
-// Update the updateProduction method to handle inventory updates:
-updateProduction(productionId, productionData) {
-    const productionIndex = this.productionData.findIndex(p => p.id == productionId);
-    
-    if (productionIndex !== -1) {
-        const oldQuantity = this.productionData[productionIndex].quantity;
-        const newQuantity = productionData.quantity;
-        
-        // Update production record
-        this.productionData[productionIndex] = {
-            ...this.productionData[productionIndex],
-            ...productionData
-        };
-        
-        this.saveData();
-        this.updateStats();
-        this.updateProductionTable();
-        this.updateProductSummary();
-        
-        // Update inventory if quantity changed
-        if (oldQuantity !== newQuantity && ['broilers', 'layers', 'pork', 'beef'].includes(productionData.product)) {
-            const quantityDiff = newQuantity - oldQuantity;
-            if (quantityDiff !== 0) {
-                this.updateInventoryQuantity(productionId, quantityDiff);
-            }
-        }
-        
-        this.showNotification('Production record updated successfully!', 'success');
-    }
-},
-
-updateInventoryQuantity(productionId, quantityDiff) {
-    const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
-    const inventoryItem = inventory.find(item => 
-        item.productionId == productionId && item.source === 'production'
-    );
-    
-    if (inventoryItem) {
-        inventoryItem.currentStock += quantityDiff;
-        inventoryItem.lastUpdated = new Date().toISOString();
-        
-        if (inventoryItem.currentStock <= 0) {
-            // Remove from inventory if stock is 0 or negative
-            const itemIndex = inventory.findIndex(item => 
-                item.productionId == productionId && item.source === 'production'
-            );
-            inventory.splice(itemIndex, 1);
-        }
-        
-        localStorage.setItem('farm-inventory', JSON.stringify(inventory));
-        console.log('✅ Inventory quantity updated:', quantityDiff);
-    }
-},
-
-// Also update deleteProductionRecord to remove from inventory:
-deleteProductionRecord(productionId) {
-    // First check if record exists
-    const recordIndex = this.productionData.findIndex(p => p.id == productionId);
-    
-    if (recordIndex === -1) {
-        this.showNotification('Record not found or already deleted', 'error');
-        return;
-    }
-    
-    const record = this.productionData[recordIndex];
-    
-    if (confirm('Are you sure you want to delete this production record? This will also remove it from inventory.')) {
-        // Remove from inventory if it was linked
-        if (['broilers', 'layers', 'pork', 'beef'].includes(record.product)) {
-            this.removeFromInventory(productionId);
-        }
-        
-        // Remove from production data
-        this.productionData = this.productionData.filter(p => p.id != productionId);
-        
-        // Save immediately
-        this.saveData();
-        
-        // Update UI components
-        this.updateStats();
-        this.updateProductionTable();
-        this.updateProductSummary();
-        
-        this.showNotification('Production record deleted successfully', 'success');
-    }
-},
-
-removeFromInventory(productionId) {
-    const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
-    const updatedInventory = inventory.filter(item => 
-        item.productionId != productionId
-    );
-    
-    if (inventory.length !== updatedInventory.length) {
-        localStorage.setItem('farm-inventory', JSON.stringify(updatedInventory));
-        console.log('✅ Removed from inventory:', productionId);
-    }
-},
-    
     // UTILITY METHODS
     getProductIcon(product) {
         const icons = {
@@ -1525,62 +1400,25 @@ removeFromInventory(productionId) {
         return qualities[quality] || quality;
     },
 
+    formatDate(dateString) {
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                year: 'numeric'
+            });
+        } catch (e) {
+            return 'Invalid date';
+        }
+    },
+
     updateElement(id, value) {
         const element = document.getElementById(id);
         if (element) {
             element.textContent = value;
         }
     },
-
-    // Add this method to your ProductionModule object (in the utility methods section):
-formatDateForInput(dateString) {
-    // Convert any date string to YYYY-MM-DD format for input[type="date"]
-    if (!dateString) return '';
-    
-    try {
-        // If it's already in YYYY-MM-DD format, return as-is
-        if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-            return dateString;
-        }
-        
-        // Parse the date and adjust for timezone
-        const date = new Date(dateString);
-        
-        // Get the local date parts (this handles timezone automatically)
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        
-        return `${year}-${month}-${day}`;
-    } catch (e) {
-        console.error('Error formatting date:', dateString, e);
-        return '';
-    }
-},
-
-// Also add this method for display purposes:
-formatDateForDisplay(dateString) {
-    if (!dateString) return 'Invalid date';
-    
-    try {
-        const date = new Date(dateString);
-        
-        // Use local timezone for display
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            timeZone: 'UTC' // Force UTC to avoid timezone issues
-        });
-    } catch (e) {
-        return 'Invalid date';
-    }
-},
-
-// Replace the existing formatDate method with this:
-formatDate(dateString) {
-    return this.formatDateForDisplay(dateString);
-},
 
     showNotification(message, type = 'info') {
         if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
@@ -1603,5 +1441,14 @@ formatDate(dateString) {
 
 if (window.FarmModules) {
     window.FarmModules.registerModule('production', ProductionModule);
-    console.log('✅ Production Records module registered with StyleManager integration');
+    console.log('✅ Production Records module registered with all fixes');
+} else {
+    console.error('❌ FarmModules framework not found!');
+    const checkFarmModules = setInterval(() => {
+        if (window.FarmModules) {
+            window.FarmModules.registerModule('production', ProductionModule);
+            console.log('✅ Production Records module registered (delayed)!');
+            clearInterval(checkFarmModules);
+        }
+    }, 100);
 }
