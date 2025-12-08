@@ -613,35 +613,59 @@ const ProductionModule = {
     },
 
     // MODAL CONTROL METHODS
-   showProductionModal(recordId = null) {
-    this.hideAllModals();
-    document.getElementById('production-modal').classList.remove('hidden');
+   // MODAL CONTROL METHODS - CORRECTED VERSION
+showProductionModal() {
+    // Hide all modals first
+    this.hideProductionModal();
+    this.hideProductionReportModal();
+    this.hideTrendAnalysisModal();
     
-    if (recordId) {
-        // This is an edit - don't reset the form
-        this.currentRecordId = recordId;
-        // The form should already be populated by editProduction()
-        document.getElementById('delete-production').style.display = 'block';
-        document.getElementById('production-modal-title').textContent = 'Edit Production Record';
-    } else {
-        // This is a new record - reset the form
-        this.currentRecordId = null;
-        document.getElementById('production-form').reset();
-        
-        // Set today's date properly
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        document.getElementById('production-date').value = `${year}-${month}-${day}`;
-        
-        document.getElementById('delete-production').style.display = 'none';
-        document.getElementById('production-modal-title').textContent = 'New Production Record';
-        
-        // Reset sale section
-        document.getElementById('production-for-sale').checked = false;
-        document.getElementById('sale-details').style.display = 'none';
+    document.getElementById('production-modal').classList.remove('hidden');
+},
+
+hideProductionModal() {
+    const modal = document.getElementById('production-modal');
+    if (modal) {
+        modal.classList.add('hidden');
     }
+},
+
+showProductionReportModal() {
+    this.hideProductionModal();
+    this.hideProductionReportModal();
+    this.hideTrendAnalysisModal();
+    
+    document.getElementById('production-report-modal').classList.remove('hidden');
+},
+
+hideProductionReportModal() {
+    const modal = document.getElementById('production-report-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+},
+
+showTrendAnalysisModal() {
+    this.hideProductionModal();
+    this.hideProductionReportModal();
+    this.hideTrendAnalysisModal();
+    
+    document.getElementById('trend-analysis-modal').classList.remove('hidden');
+},
+
+hideTrendAnalysisModal() {
+    const modal = document.getElementById('trend-analysis-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+},
+
+// Remove the hideAllModals() method or fix it:
+hideAllModals() {
+    // Directly hide each modal instead of calling methods
+    document.getElementById('production-modal')?.classList.add('hidden');
+    document.getElementById('production-report-modal')?.classList.add('hidden');
+    document.getElementById('trend-analysis-modal')?.classList.add('hidden');
 },
     showProductionReportModal() {
         this.hideAllModals();
