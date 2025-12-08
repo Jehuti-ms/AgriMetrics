@@ -1009,102 +1009,105 @@ const ReportsModule = {
         this.showReport('Health & Mortality Report', content);
     },
 
-    generateFeedReport() {
-        console.log('🌾 Generating feed report...');
-        
-        const feedRecords = JSON.parse(localStorage.getItem('farm-feed-records') || '[]');
-        const totalFeedUsed = feedRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
-        const totalFeedCost = feedRecords.reduce((sum, record) => sum + (record.cost || 0), 0);
-        
-        // Group by feed type
-        const feedTypeBreakdown = {};
-        feedRecords.forEach(record => {
-            const feedType = record.feedType || 'unknown';
-            if (!feedTypeBreakdown[feedType]) {
-                feedTypeBreakdown[feedType] = {
-                    quantity: 0,
-                    cost: 0
-                };
-            }
-            feedTypeBreakdown[feedType].quantity += record.quantity || 0;
-            feedTypeBreakdown[feedType].cost += record.cost || 0;
-        });
-        
-        const content = `
-            <div class="report-section">
-                <h4>🌾 Feed Consumption Overview</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Feed Used:</span>
-                    <span class="metric-value">${totalFeedUsed} kg</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Feed Cost:</span>
-                    <span class="metric-value expense">${this.formatCurrency(totalFeedCost)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Average Cost per Kg:</span>
-                    <span class="metric-value">${totalFeedUsed > 0 ? this.formatCurrency(totalFeedCost / totalFeedUsed) : '$0.00'}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Feed Records:</span>
-                    <span class="metric-value">${feedRecords.length}</span>
-                </div>
+   generateFeedReport() {
+    console.log('🌾 Generating feed report...');
+    
+    const feedRecords = JSON.parse(localStorage.getItem('farm-feed-records') || '[]');
+    const totalFeedUsed = feedRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
+    const totalFeedCost = feedRecords.reduce((sum, record) => sum + (record.cost || 0), 0);
+    
+    // Get totalBirds from localStorage
+    const totalBirds = parseInt(localStorage.getItem('farm-current-stock') || '1000');
+    
+    // Group by feed type
+    const feedTypeBreakdown = {};
+    feedRecords.forEach(record => {
+        const feedType = record.feedType || 'unknown';
+        if (!feedTypeBreakdown[feedType]) {
+            feedTypeBreakdown[feedType] = {
+                quantity: 0,
+                cost: 0
+            };
+        }
+        feedTypeBreakdown[feedType].quantity += record.quantity || 0;
+        feedTypeBreakdown[feedType].cost += record.cost || 0;
+    });
+    
+    const content = `
+        <div class="report-section">
+            <h4>🌾 Feed Consumption Overview</h4>
+            <div class="metric-row">
+                <span class="metric-label">Total Feed Used:</span>
+                <span class="metric-value">${totalFeedUsed} kg</span>
             </div>
+            <div class="metric-row">
+                <span class="metric-label">Total Feed Cost:</span>
+                <span class="metric-value expense">${this.formatCurrency(totalFeedCost)}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Average Cost per Kg:</span>
+                <span class="metric-value">${totalFeedUsed > 0 ? this.formatCurrency(totalFeedCost / totalFeedUsed) : '$0.00'}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Feed Records:</span>
+                <span class="metric-value">${feedRecords.length}</span>
+            </div>
+        </div>
 
-            <div class="report-section">
-                <h4>📊 Feed Type Analysis</h4>
-                ${Object.keys(feedTypeBreakdown).length > 0 ? `
-                    <div style="max-height: 300px; overflow-y: auto;">
-                        ${Object.entries(feedTypeBreakdown).map(([feedType, data]) => `
-                            <div class="metric-row">
-                                <span class="metric-label">${this.formatFeedType(feedType)}</span>
-                                <div style="text-align: right;">
-                                    <div style="font-weight: 600; color: var(--text-primary);">${data.quantity} kg</div>
-                                    <div style="font-size: 12px; color: var(--text-secondary);">Cost: ${this.formatCurrency(data.cost)}</div>
-                                </div>
+        <div class="report-section">
+            <h4>📊 Feed Type Analysis</h4>
+            ${Object.keys(feedTypeBreakdown).length > 0 ? `
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${Object.entries(feedTypeBreakdown).map(([feedType, data]) => `
+                        <div class="metric-row">
+                            <span class="metric-label">${this.formatFeedType(feedType)}</span>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 600; color: var(--text-primary);">${data.quantity} kg</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">Cost: ${this.formatCurrency(data.cost)}</div>
                             </div>
-                        `).join('')}
-                    </div>
-                ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No feed type data available</p>'}
-            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No feed type data available</p>'}
+        </div>
 
-            <div class="report-section">
-                <h4>📋 Recent Feed Records</h4>
-                ${feedRecords.slice(-5).length > 0 ? `
-                    <div style="max-height: 300px; overflow-y: auto;">
-                        ${feedRecords.slice(-5).reverse().map(record => `
-                            <div class="metric-row">
-                                <span class="metric-label">${record.date}: ${this.formatFeedType(record.feedType)}</span>
-                                <div style="text-align: right;">
-                                    <div style="font-weight: 600; color: var(--text-primary);">${record.quantity} kg</div>
-                                    <div style="font-size: 12px; color: var(--text-secondary);">${this.formatCurrency(record.cost)}</div>
-                                </div>
+        <div class="report-section">
+            <h4>📋 Recent Feed Records</h4>
+            ${feedRecords.slice(-5).length > 0 ? `
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${feedRecords.slice(-5).reverse().map(record => `
+                        <div class="metric-row">
+                            <span class="metric-label">${record.date}: ${this.formatFeedType(record.feedType)}</span>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 600; color: var(--text-primary);">${record.quantity} kg</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">${this.formatCurrency(record.cost)}</div>
                             </div>
-                        `).join('')}
-                    </div>
-                ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No recent feed records</p>'}
-            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No recent feed records</p>'}
+        </div>
 
-            <div class="report-section">
-                <div style="text-align: center; padding: 16px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(34, 197, 94, 0.1)); border-radius: 12px;">
-                    <h4 style="margin-bottom: 8px; color: var(--text-primary);">Feed Management Insights</h4>
-                    <div style="color: var(--text-secondary); font-size: 14px;">
-                        <p>1. Feed represents ${totalFeedCost > 0 ? Math.round((totalFeedCost / (totalFeedCost + 1000)) * 100) + '%' : 'a significant portion'} of operational costs</p>
-                        <p>2. ${totalFeedUsed / (totalBirds || 1000) > 0.1 ? 'Feed efficiency is within normal range' : 'Monitor feed consumption rates'}</p>
-                        <p>3. Consider bulk purchasing for commonly used feed types</p>
-                        <p>4. Track feed-to-weight conversion ratios for optimal results</p>
-                    </div>
+        <div class="report-section">
+            <div style="text-align: center; padding: 16px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(34, 197, 94, 0.1)); border-radius: 12px;">
+                <h4 style="margin-bottom: 8px; color: var(--text-primary);">Feed Management Insights</h4>
+                <div style="color: var(--text-secondary); font-size: 14px;">
+                    <p>1. Feed represents ${totalFeedCost > 0 ? Math.round((totalFeedCost / (totalFeedCost + 1000)) * 100) + '%' : 'a significant portion'} of operational costs</p>
+                    <p>2. ${totalBirds > 0 && totalFeedUsed / totalBirds > 0.1 ? 'Feed efficiency is within normal range' : 'Monitor feed consumption rates'}</p>
+                    <p>3. Consider bulk purchasing for commonly used feed types</p>
+                    <p>4. Track feed-to-weight conversion ratios for optimal results</p>
                 </div>
             </div>
-        `;
-        
-        this.currentReport = {
-            title: 'Feed Consumption Report',
-            content: content
-        };
-        
-        this.showReport('Feed Consumption Report', content);
-    },
+        </div>
+    `;
+    
+    this.currentReport = {
+        title: 'Feed Consumption Report',
+        content: content
+    };
+    
+    this.showReport('Feed Consumption Report', content);
+},
 
     generateComprehensiveReport() {
         console.log('🏆 Generating comprehensive report...');
