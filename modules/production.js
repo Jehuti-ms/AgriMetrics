@@ -674,15 +674,23 @@ updateInventoryAfterSale(productionData, saleId) {
 },
 
     // MODAL CONTROL METHODS
-    showProductionModal() {
-        this.hideAllModals();
-        document.getElementById('production-modal').classList.remove('hidden');
-        this.currentRecordId = null;
-        document.getElementById('production-form').reset();
-        document.getElementById('production-date').value = new Date().toISOString().split('T')[0];
-        document.getElementById('delete-production').style.display = 'none';
-        document.getElementById('production-modal-title').textContent = 'New Production Record';
-    },
+showProductionModal() {
+    this.hideAllModals();
+    document.getElementById('production-modal').classList.remove('hidden');
+    this.currentRecordId = null;
+    document.getElementById('production-form').reset();
+    
+    // Get today's date in proper YYYY-MM-DD format
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${year}-${month}-${day}`;
+    
+    document.getElementById('production-date').value = todayStr;
+    document.getElementById('delete-production').style.display = 'none';
+    document.getElementById('production-modal-title').textContent = 'New Production Record';
+},
 
     hideProductionModal() {
         document.getElementById('production-modal').classList.add('hidden');
@@ -1081,7 +1089,6 @@ updateInventoryAfterSale(productionData, saleId) {
         this.showNotification('Production record saved successfully!', 'success');
     },
 
-    // In the editProduction method, replace with this:
 editProduction(recordId) {
     const production = this.productionData.find(p => p.id == recordId);
     
@@ -1092,9 +1099,9 @@ editProduction(recordId) {
 
     console.log('Editing production record:', production);
     
-    // Populate form fields
+    // Populate form fields with properly formatted dates
     document.getElementById('production-id').value = production.id;
-    document.getElementById('production-date').value = production.date;
+    document.getElementById('production-date').value = this.formatDateForInput(production.date);
     document.getElementById('production-product').value = production.product;
     document.getElementById('production-quantity').value = production.quantity;
     document.getElementById('production-unit').value = production.unit;
@@ -1106,7 +1113,6 @@ editProduction(recordId) {
     
     this.showProductionModal();
 },
-
 // Update the saveProduction method to properly check if it's an edit:
 saveProduction() {
     const form = document.getElementById('production-form');
@@ -1517,25 +1523,62 @@ removeFromInventory(productionId) {
         return qualities[quality] || quality;
     },
 
-    formatDate(dateString) {
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric',
-                year: 'numeric'
-            });
-        } catch (e) {
-            return 'Invalid date';
-        }
-    },
-
     updateElement(id, value) {
         const element = document.getElementById(id);
         if (element) {
             element.textContent = value;
         }
     },
+
+    // Add this method to your ProductionModule object (in the utility methods section):
+formatDateForInput(dateString) {
+    // Convert any date string to YYYY-MM-DD format for input[type="date"]
+    if (!dateString) return '';
+    
+    try {
+        // If it's already in YYYY-MM-DD format, return as-is
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+            return dateString;
+        }
+        
+        // Parse the date and adjust for timezone
+        const date = new Date(dateString);
+        
+        // Get the local date parts (this handles timezone automatically)
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        
+        return `${year}-${month}-${day}`;
+    } catch (e) {
+        console.error('Error formatting date:', dateString, e);
+        return '';
+    }
+},
+
+// Also add this method for display purposes:
+formatDateForDisplay(dateString) {
+    if (!dateString) return 'Invalid date';
+    
+    try {
+        const date = new Date(dateString);
+        
+        // Use local timezone for display
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            timeZone: 'UTC' // Force UTC to avoid timezone issues
+        });
+    } catch (e) {
+        return 'Invalid date';
+    }
+},
+
+// Replace the existing formatDate method with this:
+formatDate(dateString) {
+    return this.formatDateForDisplay(dateString);
+},
 
     showNotification(message, type = 'info') {
         if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
