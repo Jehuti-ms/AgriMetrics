@@ -613,9 +613,18 @@ const ProductionModule = {
     },
 
     // MODAL CONTROL METHODS
-    showProductionModal() {
-        this.hideAllModals();
-        document.getElementById('production-modal').classList.remove('hidden');
+   showProductionModal(recordId = null) {
+    this.hideAllModals();
+    document.getElementById('production-modal').classList.remove('hidden');
+    
+    if (recordId) {
+        // This is an edit - don't reset the form
+        this.currentRecordId = recordId;
+        // The form should already be populated by editProduction()
+        document.getElementById('delete-production').style.display = 'block';
+        document.getElementById('production-modal-title').textContent = 'Edit Production Record';
+    } else {
+        // This is a new record - reset the form
         this.currentRecordId = null;
         document.getElementById('production-form').reset();
         
@@ -628,12 +637,12 @@ const ProductionModule = {
         
         document.getElementById('delete-production').style.display = 'none';
         document.getElementById('production-modal-title').textContent = 'New Production Record';
-    },
-
-    hideProductionModal() {
-        document.getElementById('production-modal').classList.add('hidden');
-    },
-
+        
+        // Reset sale section
+        document.getElementById('production-for-sale').checked = false;
+        document.getElementById('sale-details').style.display = 'none';
+    }
+},
     showProductionReportModal() {
         this.hideAllModals();
         document.getElementById('production-report-modal').classList.remove('hidden');
@@ -755,30 +764,38 @@ const ProductionModule = {
         this.showNotification('Production record saved successfully!', 'success');
     },
 
-    editProduction(recordId) {
-        const production = this.productionData.find(p => p.id == recordId);
-        
-        if (!production) {
-            console.error('❌ Production not found:', recordId);
-            return;
-        }
+editProduction(recordId) {
+    console.log('✏️ Editing record ID:', recordId);
+    
+    const production = this.productionData.find(p => p.id == recordId);
+    
+    if (!production) {
+        console.error('❌ Production not found for ID:', recordId);
+        this.showNotification('Record not found', 'error');
+        return;
+    }
 
-        console.log('Editing production record:', production);
-        
-        // Populate form fields
-        document.getElementById('production-id').value = production.id;
-        document.getElementById('production-date').value = production.date;
-        document.getElementById('production-product').value = production.product;
-        document.getElementById('production-quantity').value = production.quantity;
-        document.getElementById('production-unit').value = production.unit;
-        document.getElementById('production-quality').value = production.quality;
-        document.getElementById('production-batch').value = production.batch || '';
-        document.getElementById('production-notes').value = production.notes || '';
-        document.getElementById('delete-production').style.display = 'block';
-        document.getElementById('production-modal-title').textContent = 'Edit Production Record';
-        
-        this.showProductionModal();
-    },
+    console.log('📋 Found record:', production);
+    
+    // FIRST populate the form
+    document.getElementById('production-id').value = production.id;
+    document.getElementById('production-date').value = production.date;
+    document.getElementById('production-product').value = production.product;
+    document.getElementById('production-quantity').value = production.quantity;
+    document.getElementById('production-unit').value = production.unit;
+    document.getElementById('production-quality').value = production.quality;
+    document.getElementById('production-batch').value = production.batch || '';
+    document.getElementById('production-notes').value = production.notes || '';
+    
+    // Reset sale section for edit (usually you don't want to pre-fill sale info)
+    document.getElementById('production-for-sale').checked = false;
+    document.getElementById('sale-details').style.display = 'none';
+    document.getElementById('sale-price').value = '';
+    document.getElementById('customer-name').value = '';
+    
+    // THEN show the modal WITHOUT resetting
+    this.showProductionModal(recordId);
+},
 
     updateProduction(productionId, productionData) {
         const productionIndex = this.productionData.findIndex(p => p.id == productionId);
