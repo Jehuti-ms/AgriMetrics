@@ -1,4 +1,4 @@
-// modules/reports.js - COMPLETE WITH ALL METHODS
+// modules/reports.js - CORRECTED VERSION
 console.log('📊 Loading reports module...');
 
 const ReportsModule = {
@@ -516,488 +516,705 @@ const ReportsModule = {
         });
     },
 
-    // ==================== REPORT GENERATION METHODS ====================
-    generateFinancialReport() {
-        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
-        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
-        
-        const incomeTransactions = transactions.filter(t => t.type === 'income');
-        const expenseTransactions = transactions.filter(t => t.type === 'expense');
-        
-        const totalIncome = incomeTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
-        const totalExpenses = expenseTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
-        const netProfit = totalIncome - totalExpenses;
-        const profitMargin = totalIncome > 0 ? (netProfit / totalIncome) * 100 : 0;
+    // ==================== EMAIL MODAL STYLES ====================
+    addEmailModalStyles() {
+        const styleId = 'email-modal-styles';
+        if (document.getElementById(styleId)) return;
 
-        const incomeByCategory = {};
-        incomeTransactions.forEach(transaction => {
-            const category = transaction.category || 'uncategorized';
-            incomeByCategory[category] = (incomeByCategory[category] || 0) + (transaction.amount || 0);
-        });
+        const styles = document.createElement('style');
+        styles.id = styleId;
+        styles.textContent = `
+            /* Email Modal Overlay */
+            .email-modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(8px);
+                display: flex;
+                align-items: flex-start;
+                justify-content: center;
+                z-index: 9999;
+                padding: 80px 20px 20px;
+                animation: fadeIn 0.3s ease-out;
+                overflow-y: auto;
+            }
 
-        const expensesByCategory = {};
-        expenseTransactions.forEach(transaction => {
-            const category = transaction.category || 'uncategorized';
-            expensesByCategory[category] = (expensesByCategory[category] || 0) + (transaction.amount || 0);
-        });
+            .email-modal-overlay.hidden {
+                display: none;
+            }
 
-        const reportContent = `
-            <div class="report-section">
-                <h4>💰 Financial Overview</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Income</span>
-                    <span class="metric-value income">${this.formatCurrency(totalIncome)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Expenses</span>
-                    <span class="metric-value expense">${this.formatCurrency(totalExpenses)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Net Profit</span>
-                    <span class="metric-value ${netProfit >= 0 ? 'profit' : 'expense'}">${this.formatCurrency(netProfit)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Profit Margin</span>
-                    <span class="metric-value ${profitMargin >= 0 ? 'profit' : 'expense'}">${profitMargin.toFixed(1)}%</span>
-                </div>
-            </div>
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
 
-            <div class="report-section">
-                <h4>📈 Income by Category</h4>
-                ${Object.entries(incomeByCategory).map(([category, amount]) => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatCategory(category)}</span>
-                        <span class="metric-value income">${this.formatCurrency(amount)}</span>
-                    </div>
-                `).join('')}
-            </div>
+            /* Email Modal Container */
+            .email-modal-container {
+                width: 100%;
+                max-width: 600px;
+                max-height: calc(100vh - 100px);
+                overflow-y: auto;
+                background: var(--glass-bg);
+                border: 1px solid var(--glass-border);
+                border-radius: 24px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                animation: slideDown 0.4s ease-out;
+                margin-top: 40px;
+            }
 
-            <div class="report-section">
-                <h4>📉 Expenses by Category</h4>
-                ${Object.entries(expensesByCategory).map(([category, amount]) => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatCategory(category)}</span>
-                        <span class="metric-value expense">${this.formatCurrency(amount)}</span>
-                    </div>
-                `).join('')}
-            </div>
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-60px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
 
-            <div class="report-section">
-                <h4>💡 Financial Insights</h4>
-                <div style="padding: 16px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #22c55e;">
-                    <p style="margin: 0; color: #166534;">
-                        ${this.getFinancialInsights(totalIncome, totalExpenses, netProfit, profitMargin)}
-                    </p>
-                </div>
-            </div>
+            /* Email Modal Header */
+            .email-modal-header {
+                display: flex;
+                align-items: flex-start;
+                gap: 16px;
+                padding: 28px 32px 20px;
+                border-bottom: 1px solid var(--glass-border);
+                position: relative;
+                background: var(--glass-bg);
+                border-radius: 24px 24px 0 0;
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                backdrop-filter: blur(10px);
+            }
+
+            .email-modal-icon {
+                font-size: 40px;
+                background: linear-gradient(135deg, #22c55e, #3b82f6);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                flex-shrink: 0;
+            }
+
+            .email-modal-title {
+                color: var(--text-primary);
+                font-size: 24px;
+                font-weight: 700;
+                margin: 0 0 4px 0;
+                line-height: 1.2;
+            }
+
+            .email-modal-subtitle {
+                color: var(--text-secondary);
+                font-size: 14px;
+                margin: 0;
+                line-height: 1.4;
+            }
+
+            .email-modal-close {
+                position: absolute;
+                top: 24px;
+                right: 24px;
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid var(--glass-border);
+                color: var(--text-secondary);
+                cursor: pointer;
+                padding: 8px;
+                border-radius: 50%;
+                transition: all 0.2s ease;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .email-modal-close:hover {
+                color: var(--text-primary);
+                background: var(--glass-hover);
+                transform: rotate(90deg);
+            }
+
+            .email-modal-close svg {
+                width: 20px;
+                height: 20px;
+            }
+
+            /* Email Modal Body */
+            .email-modal-body {
+                padding: 24px 32px;
+                background: var(--glass-bg);
+            }
+
+            .email-form {
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
+            }
+
+            .form-group {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .form-row {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 24px;
+            }
+
+            .form-label {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                color: var(--text-primary);
+                font-weight: 600;
+                font-size: 14px;
+            }
+
+            .label-icon {
+                font-size: 16px;
+                width: 24px;
+                text-align: center;
+            }
+
+            .form-input, .form-textarea {
+                padding: 14px 16px;
+                background: var(--glass-bg);
+                border: 1px solid var(--glass-border);
+                border-radius: 12px;
+                color: var(--text-primary);
+                font-size: 15px;
+                transition: all 0.2s ease;
+                width: 100%;
+            }
+
+            .form-input:focus, .form-textarea:focus {
+                outline: none;
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                background: var(--glass-hover);
+            }
+
+            .form-textarea {
+                resize: vertical;
+                min-height: 100px;
+                font-family: inherit;
+            }
+
+            .form-hint {
+                color: var(--text-tertiary);
+                font-size: 12px;
+                margin-top: 4px;
+                font-style: italic;
+            }
+
+            /* Format Options */
+            .format-options {
+                display: flex;
+                gap: 12px;
+                margin-top: 8px;
+            }
+
+            .format-option {
+                flex: 1;
+                cursor: pointer;
+            }
+
+            .format-option input {
+                display: none;
+            }
+
+            .format-card {
+                padding: 20px 12px;
+                background: var(--glass-bg);
+                border: 2px solid var(--glass-border);
+                border-radius: 12px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .format-option:hover .format-card {
+                border-color: var(--glass-hover);
+                background: var(--glass-hover);
+                transform: translateY(-2px);
+            }
+
+            .format-option input:checked + .format-card {
+                border-color: #3b82f6;
+                background: rgba(59, 130, 246, 0.1);
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            }
+
+            .format-icon {
+                font-size: 28px;
+                margin-bottom: 8px;
+            }
+
+            .format-name {
+                color: var(--text-primary);
+                font-weight: 600;
+                font-size: 13px;
+            }
+
+            /* Delivery Options */
+            .delivery-options {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                margin-top: 8px;
+            }
+
+            .delivery-option {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 14px 16px;
+                background: var(--glass-bg);
+                border: 1px solid var(--glass-border);
+                border-radius: 12px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            .delivery-option:hover {
+                background: var(--glass-hover);
+                transform: translateX(4px);
+            }
+
+            .delivery-option input {
+                margin: 0;
+                width: 18px;
+                height: 18px;
+                accent-color: #3b82f6;
+            }
+
+            .delivery-text {
+                flex: 1;
+                color: var(--text-primary);
+                font-size: 14px;
+                font-weight: 500;
+            }
+
+            .delivery-badge {
+                font-size: 16px;
+                opacity: 0.8;
+            }
+
+            /* Email Modal Footer */
+            .email-modal-footer {
+                padding: 24px 32px 28px;
+                border-top: 1px solid var(--glass-border);
+                background: var(--glass-bg);
+                border-radius: 0 0 24px 24px;
+                position: sticky;
+                bottom: 0;
+                backdrop-filter: blur(10px);
+            }
+
+            .footer-actions {
+                display: flex;
+                gap: 16px;
+                margin-bottom: 20px;
+            }
+
+            .footer-actions .btn-outline,
+            .footer-actions .btn-primary {
+                flex: 1;
+                padding: 16px 24px;
+                font-size: 15px;
+                font-weight: 600;
+                border-radius: 12px;
+                transition: all 0.2s ease;
+            }
+
+            .footer-actions .btn-outline:hover,
+            .footer-actions .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            }
+
+            .send-icon {
+                margin-right: 10px;
+                font-size: 18px;
+            }
+
+            .footer-note {
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 16px;
+                background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(34, 197, 94, 0.1));
+                border-radius: 12px;
+                border: 1px solid rgba(59, 130, 246, 0.2);
+            }
+
+            .note-icon {
+                font-size: 18px;
+                flex-shrink: 0;
+                margin-top: 2px;
+            }
+
+            .note-text {
+                color: var(--text-primary);
+                font-size: 13px;
+                line-height: 1.5;
+                flex: 1;
+            }
+
+            /* Responsive Design */
+            @media (max-width: 768px) {
+                .email-modal-overlay {
+                    padding: 100px 16px 16px;
+                    align-items: flex-start;
+                }
+
+                .email-modal-container {
+                    margin-top: 20px;
+                    max-height: calc(100vh - 120px);
+                }
+
+                .email-modal-header {
+                    padding: 24px;
+                }
+
+                .email-modal-body {
+                    padding: 20px 24px;
+                }
+
+                .form-row {
+                    grid-template-columns: 1fr;
+                    gap: 20px;
+                }
+
+                .format-options {
+                    flex-wrap: wrap;
+                }
+
+                .format-option {
+                    min-width: calc(50% - 6px);
+                }
+
+                .email-modal-footer {
+                    padding: 20px 24px 24px;
+                }
+
+                .footer-actions {
+                    flex-direction: column;
+                }
+
+                .email-modal-close {
+                    top: 20px;
+                    right: 20px;
+                    width: 36px;
+                    height: 36px;
+                }
+            }
+
+            @media (max-width: 480px) {
+                .email-modal-overlay {
+                    padding: 80px 12px 12px;
+                }
+
+                .email-modal-container {
+                    border-radius: 20px;
+                }
+
+                .email-modal-header {
+                    padding: 20px;
+                    flex-direction: column;
+                    text-align: center;
+                    gap: 12px;
+                }
+
+                .email-modal-icon {
+                    font-size: 36px;
+                }
+
+                .email-modal-title {
+                    font-size: 20px;
+                }
+
+                .email-modal-close {
+                    position: fixed;
+                    top: 12px;
+                    right: 12px;
+                    width: 32px;
+                    height: 32px;
+                    background: rgba(0, 0, 0, 0.5);
+                    backdrop-filter: blur(10px);
+                }
+
+                .format-option {
+                    min-width: 100%;
+                }
+
+                .delivery-option {
+                    padding: 12px;
+                }
+            }
+
+            /* Dark mode adjustments */
+            @media (prefers-color-scheme: dark) {
+                .email-modal-container {
+                    background: rgba(20, 20, 25, 0.95);
+                    backdrop-filter: blur(20px);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                }
+
+                .email-modal-header,
+                .email-modal-body,
+                .email-modal-footer {
+                    background: rgba(20, 20, 25, 0.95);
+                }
+
+                .form-input, .form-textarea, .format-card, .delivery-option {
+                    background: rgba(255, 255, 255, 0.05);
+                    border-color: rgba(255, 255, 255, 0.1);
+                }
+
+                .email-modal-close {
+                    background: rgba(255, 255, 255, 0.1);
+                    border-color: rgba(255, 255, 255, 0.2);
+                }
+
+                .footer-note {
+                    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(34, 197, 94, 0.15));
+                    border-color: rgba(59, 130, 246, 0.3);
+                }
+            }
+
+            /* Loading state */
+            .sending-email .btn-primary {
+                position: relative;
+                color: transparent;
+            }
+
+            .sending-email .btn-primary::after {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 20px;
+                height: 20px;
+                margin: -10px 0 0 -10px;
+                border: 2px solid transparent;
+                border-top-color: white;
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+            }
+
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+
+            /* Success animation */
+            @keyframes successPulse {
+                0% { 
+                    transform: scale(1);
+                    box-shadow: 0 4px 12px rgba(34, 197, 94, 0);
+                }
+                50% { 
+                    transform: scale(1.05);
+                    box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
+                }
+                100% { 
+                    transform: scale(1);
+                    box-shadow: 0 4px 12px rgba(34, 197, 94, 0);
+                }
+            }
+
+            .email-sent .btn-primary {
+                background: linear-gradient(135deg, #22c55e, #16a34a);
+                animation: successPulse 0.6s ease;
+            }
+
+            /* Smooth transitions for modal show/hide */
+            .email-modal-overlay {
+                transition: opacity 0.3s ease;
+            }
+
+            .email-modal-overlay.hiding {
+                opacity: 0;
+            }
+
+            .email-modal-container {
+                transition: transform 0.3s ease, opacity 0.3s ease;
+            }
+
+            .email-modal-overlay.hiding .email-modal-container {
+                transform: translateY(40px);
+                opacity: 0;
+            }
+
+            /* Ensure modal is above everything */
+            .email-modal-overlay {
+                z-index: 99999 !important;
+            }
         `;
-
-        this.currentReport = {
-            title: 'Financial Performance Report',
-            content: reportContent,
-            timestamp: new Date().toISOString(),
-            type: 'financial'
-        };
-        
-        this.showReport('Financial Performance Report', reportContent);
+        document.head.appendChild(styles);
     },
 
-    generateProductionReport() {
-        const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
-        const mortality = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
+    // ==================== EMAIL MODAL METHODS ====================
+    showEmailModal() {
+        if (!this.currentReport) {
+            this.showNotification('Please generate a report first', 'error');
+            return;
+        }
         
-        const totalProduction = production.reduce((sum, record) => sum + (record.quantity || 0), 0);
-        const totalMortality = mortality.reduce((sum, record) => sum + (record.quantity || 0), 0);
-        
-        const productionByProduct = {};
-        production.forEach(record => {
-            const product = record.product || 'unknown';
-            productionByProduct[product] = (productionByProduct[product] || 0) + (record.quantity || 0);
-        });
-
-        const qualityDistribution = {};
-        production.forEach(record => {
-            const quality = record.quality || 'unknown';
-            qualityDistribution[quality] = (qualityDistribution[quality] || 0) + 1;
-        });
-
-        const currentStock = parseInt(localStorage.getItem('farm-birds-stock') || '1000');
-        const mortalityRate = currentStock > 0 ? (totalMortality / currentStock) * 100 : 0;
-
-        const reportContent = `
-            <div class="report-section">
-                <h4>🚜 Production Overview</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Production</span>
-                    <span class="metric-value">${totalProduction} units</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Current Stock</span>
-                    <span class="metric-value">${currentStock} birds</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Mortality</span>
-                    <span class="metric-value">${totalMortality} birds</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Mortality Rate</span>
-                    <span class="metric-value ${mortalityRate > 5 ? 'expense' : 'profit'}">${mortalityRate.toFixed(2)}%</span>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>📊 Production by Product</h4>
-                ${Object.entries(productionByProduct).map(([product, quantity]) => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatProductName(product)}</span>
-                        <span class="metric-value">${quantity} units</span>
-                    </div>
-                `).join('')}
-            </div>
-
-            <div class="report-section">
-                <h4>⭐ Quality Distribution</h4>
-                ${Object.entries(qualityDistribution).map(([quality, count]) => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatQuality(quality)}</span>
-                        <span class="metric-value">${count} records</span>
-                    </div>
-                `).join('')}
-            </div>
-
-            <div class="report-section">
-                <h4>📈 Production Insights</h4>
-                <div style="padding: 16px; background: #eff6ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
-                    <p style="margin: 0; color: #1e40af;">
-                        ${this.getProductionInsights(totalProduction, mortalityRate, qualityDistribution)}
-                    </p>
-                </div>
-            </div>
-        `;
-
-        this.currentReport = {
-            title: 'Production Analysis Report',
-            content: reportContent,
-            timestamp: new Date().toISOString(),
-            type: 'production'
-        };
-        
-        this.showReport('Production Analysis Report', reportContent);
+        const modal = document.getElementById('email-report-modal');
+        if (modal) {
+            // Add modal-open class to body
+            document.body.classList.add('modal-open');
+            
+            // Show modal
+            modal.classList.remove('hidden');
+            
+            // Pre-fill subject with report title and date
+            const subjectInput = document.getElementById('email-subject');
+            if (subjectInput) {
+                const date = new Date().toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                subjectInput.value = `${this.currentReport.title} - ${date}`;
+            }
+            
+            // Focus on email input
+            const emailInput = document.getElementById('recipient-email');
+            if (emailInput) {
+                setTimeout(() => {
+                    emailInput.focus();
+                    // Scroll to ensure input is visible on mobile
+                    emailInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            }
+        }
     },
 
-    generateInventoryReport() {
-        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
-        const feedInventory = JSON.parse(localStorage.getItem('farm-feed-inventory') || '[]');
-        
-        const lowStockItems = inventory.filter(item => item.currentStock <= item.minStock);
-        const totalInventoryValue = inventory.reduce((sum, item) => 
-            sum + ((item.currentStock || 0) * (item.unitPrice || 0)), 0);
-
-        const reportContent = `
-            <div class="report-section">
-                <h4>📦 Inventory Overview</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Items</span>
-                    <span class="metric-value">${inventory.length + feedInventory.length}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Low Stock Items</span>
-                    <span class="metric-value ${lowStockItems.length > 0 ? 'warning' : 'profit'}">${lowStockItems.length}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Inventory Value</span>
-                    <span class="metric-value income">${this.formatCurrency(totalInventoryValue)}</span>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>⚠️ Low Stock Alerts</h4>
-                ${lowStockItems.length > 0 ? lowStockItems.map(item => `
-                    <div class="metric-row">
-                        <span class="metric-label">${item.name || 'Unnamed Item'}</span>
-                        <span class="metric-value warning">
-                            ${item.currentStock || 0} / ${item.minStock || 0}
-                        </span>
-                    </div>
-                `).join('') : '<p style="color: #22c55e;">✅ All items are sufficiently stocked</p>'}
-            </div>
-
-            <div class="report-section">
-                <h4>🌾 Feed Inventory</h4>
-                ${feedInventory.map(item => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatFeedType(item.feedType)}</span>
-                        <span class="metric-value ${(item.currentStock || 0) <= (item.minStock || 0) ? 'warning' : ''}">
-                            ${item.currentStock || 0} kg (min: ${item.minStock || 0}kg)
-                        </span>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-
-        this.currentReport = {
-            title: 'Inventory Analysis Report',
-            content: reportContent,
-            timestamp: new Date().toISOString(),
-            type: 'inventory'
-        };
-        
-        this.showReport('Inventory Analysis Report', reportContent);
+    hideEmailModal() {
+        const modal = document.getElementById('email-report-modal');
+        if (modal) {
+            // Remove modal-open class from body
+            document.body.classList.remove('modal-open');
+            
+            // Add hiding animation
+            modal.classList.add('hiding');
+            
+            // Hide after animation
+            setTimeout(() => {
+                modal.classList.remove('hidden', 'hiding');
+                document.getElementById('email-report-form')?.reset();
+                
+                // Reset format selection visuals
+                const formatCards = document.querySelectorAll('.format-card');
+                formatCards.forEach(card => {
+                    card.style.transform = '';
+                    card.style.boxShadow = '';
+                });
+            }, 300);
+        }
     },
 
-    generateSalesReport() {
-        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
-        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
+    async sendEmailReport() {
+        const emailInput = document.getElementById('recipient-email');
+        const subjectInput = document.getElementById('email-subject');
+        const messageInput = document.getElementById('email-message');
+        const formatRadios = document.querySelectorAll('input[name="email-format"]:checked');
+        const urgentCheckbox = document.getElementById('urgent-delivery');
+        const readReceiptCheckbox = document.getElementById('read-receipt');
         
-        const incomeTransactions = transactions.filter(t => t.type === 'income');
-        const totalSales = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
-        const totalIncome = incomeTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
-
-        const reportContent = `
-            <div class="report-section">
-                <h4>📊 Sales Performance</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Sales</span>
-                    <span class="metric-value income">${this.formatCurrency(totalSales)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Income</span>
-                    <span class="metric-value income">${this.formatCurrency(totalIncome)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Number of Sales</span>
-                    <span class="metric-value">${sales.length}</span>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>📈 Recent Sales</h4>
-                ${sales.slice(0, 5).map(sale => `
-                    <div class="metric-row">
-                        <span class="metric-label">${sale.date || 'Unknown Date'} - ${sale.customer || 'Walk-in'}</span>
-                        <span class="metric-value income">${this.formatCurrency(sale.totalAmount || 0)}</span>
-                    </div>
-                `).join('')}
-            </div>
-
-            <div class="report-section">
-                <h4>💡 Sales Insights</h4>
-                <div style="padding: 16px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
-                    <p style="margin: 0; color: #1e40af;">
-                        ${this.getSalesInsights(sales.length, totalSales)}
-                    </p>
-                </div>
-            </div>
-        `;
-
-        this.currentReport = {
-            title: 'Sales Performance Report',
-            content: reportContent,
+        if (!emailInput?.value) {
+            this.showNotification('Please enter recipient email', 'error');
+            return;
+        }
+        
+        // Get email addresses (support multiple emails)
+        const emailAddresses = emailInput.value.split(',').map(email => email.trim()).filter(email => email);
+        
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const invalidEmails = emailAddresses.filter(email => !emailRegex.test(email));
+        
+        if (invalidEmails.length > 0) {
+            this.showNotification(`Invalid email format: ${invalidEmails.join(', ')}`, 'error');
+            return;
+        }
+        
+        // Show sending state
+        const sendBtn = document.getElementById('send-email-btn');
+        const originalText = sendBtn.innerHTML;
+        sendBtn.classList.add('sending-email');
+        sendBtn.disabled = true;
+        
+        // Prepare email data
+        const emailData = {
+            recipients: emailAddresses,
+            subject: subjectInput?.value || `${this.currentReport.title}`,
+            message: messageInput?.value || '',
+            format: formatRadios[0]?.value || 'text',
+            urgent: urgentCheckbox?.checked || false,
+            readReceipt: readReceiptCheckbox?.checked || false,
+            report: this.currentReport,
             timestamp: new Date().toISOString(),
-            type: 'sales'
+            sent: true,
+            status: 'sending'
         };
         
-        this.showReport('Sales Performance Report', reportContent);
-    },
-
-    generateHealthReport() {
-        const mortalityRecords = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
-        const birdsStock = parseInt(localStorage.getItem('farm-birds-stock') || '1000');
-        
-        const totalMortality = mortalityRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
-        const mortalityRate = birdsStock > 0 ? (totalMortality / birdsStock) * 100 : 0;
-
-        const causeBreakdown = {};
-        mortalityRecords.forEach(record => {
-            const cause = record.cause || 'unknown';
-            causeBreakdown[cause] = (causeBreakdown[cause] || 0) + (record.quantity || 0);
-        });
-
-        const reportContent = `
-            <div class="report-section">
-                <h4>🐔 Flock Health Overview</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Current Bird Count</span>
-                    <span class="metric-value">${birdsStock}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Mortality</span>
-                    <span class="metric-value">${totalMortality} birds</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Mortality Rate</span>
-                    <span class="metric-value ${mortalityRate > 5 ? 'expense' : 'profit'}">${mortalityRate.toFixed(2)}%</span>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>📊 Mortality by Cause</h4>
-                ${Object.entries(causeBreakdown).map(([cause, count]) => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatCause(cause)}</span>
-                        <span class="metric-value">${count} birds</span>
-                    </div>
-                `).join('')}
-            </div>
-
-            <div class="report-section">
-                <h4>💡 Health Recommendations</h4>
-                <div style="padding: 16px; background: #fef7ed; border-radius: 8px; border-left: 4px solid #f59e0b;">
-                    <p style="margin: 0; color: #92400e;">
-                        ${this.getHealthRecommendations(mortalityRate, causeBreakdown)}
-                    </p>
-                </div>
-            </div>
-        `;
-
-        this.currentReport = {
-            title: 'Flock Health Report',
-            content: reportContent,
-            timestamp: new Date().toISOString(),
-            type: 'health'
-        };
-        
-        this.showReport('Flock Health Report', reportContent);
-    },
-
-    generateFeedReport() {
-        const feedRecords = JSON.parse(localStorage.getItem('farm-feed-records') || '[]');
-        const feedInventory = JSON.parse(localStorage.getItem('farm-feed-inventory') || '[]');
-        
-        const totalFeedUsed = feedRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
-        const totalFeedCost = feedRecords.reduce((sum, record) => sum + (record.cost || 0), 0);
-        
-        const feedTypeBreakdown = {};
-        feedRecords.forEach(record => {
-            const feedType = record.feedType || 'unknown';
-            feedTypeBreakdown[feedType] = (feedTypeBreakdown[feedType] || 0) + (record.quantity || 0);
-        });
-
-        const reportContent = `
-            <div class="report-section">
-                <h4>🌾 Feed Consumption Summary</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Feed Used</span>
-                    <span class="metric-value">${totalFeedUsed.toFixed(2)} kg</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Feed Cost</span>
-                    <span class="metric-value expense">${this.formatCurrency(totalFeedCost)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Average Cost per kg</span>
-                    <span class="metric-value">${this.formatCurrency(totalFeedCost / (totalFeedUsed || 1))}</span>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>📊 Feed Usage by Type</h4>
-                ${Object.entries(feedTypeBreakdown).map(([feedType, quantity]) => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatFeedType(feedType)}</span>
-                        <span class="metric-value">${quantity.toFixed(2)} kg</span>
-                    </div>
-                `).join('')}
-            </div>
-
-            <div class="report-section">
-                <h4>📦 Current Feed Inventory</h4>
-                ${feedInventory.map(item => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatFeedType(item.feedType)}</span>
-                        <span class="metric-value ${(item.currentStock || 0) <= (item.minStock || 0) ? 'warning' : ''}">
-                            ${item.currentStock || 0} kg (min: ${item.minStock || 0}kg)
-                        </span>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-
-        this.currentReport = {
-            title: 'Feed Consumption Report',
-            content: reportContent,
-            timestamp: new Date().toISOString(),
-            type: 'feed'
-        };
-        
-        this.showReport('Feed Consumption Report', reportContent);
-    },
-
-    generateComprehensiveReport() {
-        const stats = this.getFarmStats();
-        
-        const reportContent = `
-            <div class="report-section">
-                <h2>🏆 Comprehensive Farm Report</h2>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
-                    <div style="padding: 20px; background: #f0f9ff; border-radius: 12px;">
-                        <h4 style="color: #1e40af; margin-bottom: 10px;">Financial Health</h4>
-                        <div class="metric-row">
-                            <span>Revenue:</span>
-                            <span class="income">${this.formatCurrency(stats.totalRevenue)}</span>
-                        </div>
-                        <div class="metric-row">
-                            <span>Profit:</span>
-                            <span class="${stats.netProfit >= 0 ? 'profit' : 'expense'}">${this.formatCurrency(stats.netProfit)}</span>
-                        </div>
-                    </div>
-                    <div style="padding: 20px; background: #f0fdf4; border-radius: 12px;">
-                        <h4 style="color: #166534; margin-bottom: 10px;">Production</h4>
-                        <div class="metric-row">
-                            <span>Total Birds:</span>
-                            <span>${stats.totalBirds}</span>
-                        </div>
-                        <div class="metric-row">
-                            <span>Production:</span>
-                            <span>${stats.totalProduction} units</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div style="padding: 20px; background: #fef7ed; border-radius: 12px;">
-                        <h4 style="color: #92400e; margin-bottom: 10px;">Inventory</h4>
-                        <div class="metric-row">
-                            <span>Low Stock Items:</span>
-                            <span class="${stats.lowStockItems > 0 ? 'warning' : 'profit'}">${stats.lowStockItems}</span>
-                        </div>
-                        <div class="metric-row">
-                            <span>Feed Used:</span>
-                            <span>${stats.totalFeedUsed} kg</span>
-                        </div>
-                    </div>
-                    <div style="padding: 20px; background: #fae8ff; border-radius: 12px;">
-                        <h4 style="color: #86198f; margin-bottom: 10px;">Performance</h4>
-                        <div class="metric-row">
-                            <span>Farm Score:</span>
-                            <span style="color: #22c55e; font-weight: bold;">${this.calculateFarmScore(stats)}%</span>
-                        </div>
-                        <div class="metric-row">
-                            <span>Status:</span>
-                            <span style="color: ${this.getFarmStatusColor(stats)};">${this.getFarmStatus(stats)}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="report-section" style="margin-top: 30px;">
-                    <h4>📈 Overall Assessment</h4>
-                    <div style="padding: 20px; background: linear-gradient(135deg, #dcfce7, #dbeafe); border-radius: 12px;">
-                        <p style="margin: 0; color: #1a1a1a; line-height: 1.6;">
-                            ${this.getOverallAssessment(stats)}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        this.currentReport = {
-            title: 'Comprehensive Farm Report',
-            content: reportContent,
-            timestamp: new Date().toISOString(),
-            type: 'comprehensive'
-        };
-        
-        this.showReport('Comprehensive Farm Report', reportContent);
+        try {
+            // Simulate API call with loading state
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Save to localStorage (in a real app, this would be sent to a server)
+            const sentEmails = JSON.parse(localStorage.getItem('farm-sent-emails') || '[]');
+            emailData.status = 'sent';
+            sentEmails.push(emailData);
+            localStorage.setItem('farm-sent-emails', JSON.stringify(sentEmails));
+            
+            // Show success animation
+            sendBtn.classList.remove('sending-email');
+            sendBtn.classList.add('email-sent');
+            sendBtn.innerHTML = '✓ Sent!';
+            
+            // Show success notification
+            const recipientCount = emailAddresses.length;
+            const recipientText = recipientCount === 1 ? 'recipient' : 'recipients';
+            this.showNotification(`Report sent to ${recipientCount} ${recipientText}`, 'success');
+            
+            // Close modal after delay
+            setTimeout(() => {
+                this.hideEmailModal();
+                // Reset button state
+                setTimeout(() => {
+                    sendBtn.classList.remove('email-sent');
+                    sendBtn.innerHTML = originalText;
+                    sendBtn.disabled = false;
+                }, 500);
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Error sending email:', error);
+            
+            // Reset button state
+            sendBtn.classList.remove('sending-email');
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = originalText;
+            
+            this.showNotification('Failed to send email. Please try again.', 'error');
+        }
     },
 
     // ==================== REPORT DISPLAY METHODS ====================
@@ -1141,723 +1358,6 @@ const ReportsModule = {
         linkElement.click();
         
         this.showNotification('Report exported successfully!', 'success');
-    },
-
-    // ==================== EMAIL MODAL METHODS ====================
-   // Update the addEmailModalStyles method in the ReportsModule:
-
-addEmailModalStyles() {
-    const styleId = 'email-modal-styles';
-    if (document.getElementById(styleId)) return;
-
-    const styles = document.createElement('style');
-    styles.id = styleId;
-    styles.textContent = `
-        /* Email Modal Overlay */
-        .email-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: flex-start; /* Changed from center to flex-start */
-            justify-content: center;
-            z-index: 9999;
-            padding: 80px 20px 20px; /* Added top padding to avoid header */
-            animation: fadeIn 0.3s ease-out;
-            overflow-y: auto;
-        }
-
-        .email-modal-overlay.hidden {
-            display: none;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        /* Email Modal Container */
-        .email-modal-container {
-            width: 100%;
-            max-width: 600px;
-            max-height: calc(100vh - 100px); /* Limit height to viewport minus padding */
-            overflow-y: auto;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            animation: slideDown 0.4s ease-out; /* Changed animation */
-            margin-top: 40px; /* Added margin to push it down further */
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-60px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Email Modal Header */
-        .email-modal-header {
-            display: flex;
-            align-items: flex-start;
-            gap: 16px;
-            padding: 28px 32px 20px;
-            border-bottom: 1px solid var(--glass-border);
-            position: relative;
-            background: var(--glass-bg);
-            border-radius: 24px 24px 0 0;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            backdrop-filter: blur(10px);
-        }
-
-        .email-modal-icon {
-            font-size: 40px;
-            background: linear-gradient(135deg, #22c55e, #3b82f6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            flex-shrink: 0;
-        }
-
-        .email-modal-title {
-            color: var(--text-primary);
-            font-size: 24px;
-            font-weight: 700;
-            margin: 0 0 4px 0;
-            line-height: 1.2;
-        }
-
-        .email-modal-subtitle {
-            color: var(--text-secondary);
-            font-size: 14px;
-            margin: 0;
-            line-height: 1.4;
-        }
-
-        .email-modal-close {
-            position: absolute;
-            top: 24px;
-            right: 24px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid var(--glass-border);
-            color: var(--text-secondary);
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 50%;
-            transition: all 0.2s ease;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .email-modal-close:hover {
-            color: var(--text-primary);
-            background: var(--glass-hover);
-            transform: rotate(90deg);
-        }
-
-        .email-modal-close svg {
-            width: 20px;
-            height: 20px;
-        }
-
-        /* Email Modal Body */
-        .email-modal-body {
-            padding: 24px 32px;
-            background: var(--glass-bg);
-        }
-
-        .email-form {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-        }
-
-        .form-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-primary);
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .label-icon {
-            font-size: 16px;
-            width: 24px;
-            text-align: center;
-        }
-
-        .form-input, .form-textarea {
-            padding: 14px 16px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            color: var(--text-primary);
-            font-size: 15px;
-            transition: all 0.2s ease;
-            width: 100%;
-        }
-
-        .form-input:focus, .form-textarea:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-            background: var(--glass-hover);
-        }
-
-        .form-textarea {
-            resize: vertical;
-            min-height: 100px;
-            font-family: inherit;
-        }
-
-        .form-hint {
-            color: var(--text-tertiary);
-            font-size: 12px;
-            margin-top: 4px;
-            font-style: italic;
-        }
-
-        /* Format Options */
-        .format-options {
-            display: flex;
-            gap: 12px;
-            margin-top: 8px;
-        }
-
-        .format-option {
-            flex: 1;
-            cursor: pointer;
-        }
-
-        .format-option input {
-            display: none;
-        }
-
-        .format-card {
-            padding: 20px 12px;
-            background: var(--glass-bg);
-            border: 2px solid var(--glass-border);
-            border-radius: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .format-option:hover .format-card {
-            border-color: var(--glass-hover);
-            background: var(--glass-hover);
-            transform: translateY(-2px);
-        }
-
-        .format-option input:checked + .format-card {
-            border-color: #3b82f6;
-            background: rgba(59, 130, 246, 0.1);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-        }
-
-        .format-icon {
-            font-size: 28px;
-            margin-bottom: 8px;
-        }
-
-        .format-name {
-            color: var(--text-primary);
-            font-weight: 600;
-            font-size: 13px;
-        }
-
-        /* Delivery Options */
-        .delivery-options {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 8px;
-        }
-
-        .delivery-option {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 16px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .delivery-option:hover {
-            background: var(--glass-hover);
-            transform: translateX(4px);
-        }
-
-        .delivery-option input {
-            margin: 0;
-            width: 18px;
-            height: 18px;
-            accent-color: #3b82f6;
-        }
-
-        .delivery-text {
-            flex: 1;
-            color: var(--text-primary);
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .delivery-badge {
-            font-size: 16px;
-            opacity: 0.8;
-        }
-
-        /* Email Modal Footer */
-        .email-modal-footer {
-            padding: 24px 32px 28px;
-            border-top: 1px solid var(--glass-border);
-            background: var(--glass-bg);
-            border-radius: 0 0 24px 24px;
-            position: sticky;
-            bottom: 0;
-            backdrop-filter: blur(10px);
-        }
-
-        .footer-actions {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-
-        .footer-actions .btn-outline,
-        .footer-actions .btn-primary {
-            flex: 1;
-            padding: 16px 24px;
-            font-size: 15px;
-            font-weight: 600;
-            border-radius: 12px;
-            transition: all 0.2s ease;
-        }
-
-        .footer-actions .btn-outline:hover,
-        .footer-actions .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .send-icon {
-            margin-right: 10px;
-            font-size: 18px;
-        }
-
-        .footer-note {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 16px;
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(34, 197, 94, 0.1));
-            border-radius: 12px;
-            border: 1px solid rgba(59, 130, 246, 0.2);
-        }
-
-        .note-icon {
-            font-size: 18px;
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-
-        .note-text {
-            color: var(--text-primary);
-            font-size: 13px;
-            line-height: 1.5;
-            flex: 1;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .email-modal-overlay {
-                padding: 100px 16px 16px; /* More top padding on mobile */
-                align-items: flex-start;
-            }
-
-            .email-modal-container {
-                margin-top: 20px;
-                max-height: calc(100vh - 120px);
-            }
-
-            .email-modal-header {
-                padding: 24px;
-            }
-
-            .email-modal-body {
-                padding: 20px 24px;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .format-options {
-                flex-wrap: wrap;
-            }
-
-            .format-option {
-                min-width: calc(50% - 6px);
-            }
-
-            .email-modal-footer {
-                padding: 20px 24px 24px;
-            }
-
-            .footer-actions {
-                flex-direction: column;
-            }
-
-            .email-modal-close {
-                top: 20px;
-                right: 20px;
-                width: 36px;
-                height: 36px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .email-modal-overlay {
-                padding: 80px 12px 12px;
-            }
-
-            .email-modal-container {
-                border-radius: 20px;
-            }
-
-            .email-modal-header {
-                padding: 20px;
-                flex-direction: column;
-                text-align: center;
-                gap: 12px;
-            }
-
-            .email-modal-icon {
-                font-size: 36px;
-            }
-
-            .email-modal-title {
-                font-size: 20px;
-            }
-
-            .email-modal-close {
-                position: fixed;
-                top: 12px;
-                right: 12px;
-                width: 32px;
-                height: 32px;
-                background: rgba(0, 0, 0, 0.5);
-                backdrop-filter: blur(10px);
-            }
-
-            .format-option {
-                min-width: 100%;
-            }
-
-            .delivery-option {
-                padding: 12px;
-            }
-        }
-
-        /* Dark mode adjustments */
-        @media (prefers-color-scheme: dark) {
-            .email-modal-container {
-                background: rgba(20, 20, 25, 0.95);
-                backdrop-filter: blur(20px);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-            }
-
-            .email-modal-header,
-            .email-modal-body,
-            .email-modal-footer {
-                background: rgba(20, 20, 25, 0.95);
-            }
-
-            .form-input, .form-textarea, .format-card, .delivery-option {
-                background: rgba(255, 255, 255, 0.05);
-                border-color: rgba(255, 255, 255, 0.1);
-            }
-
-            .email-modal-close {
-                background: rgba(255, 255, 255, 0.1);
-                border-color: rgba(255, 255, 255, 0.2);
-            }
-
-            .footer-note {
-                background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(34, 197, 94, 0.15));
-                border-color: rgba(59, 130, 246, 0.3);
-            }
-        }
-
-        /* Loading state */
-        .sending-email .btn-primary {
-            position: relative;
-            color: transparent;
-        }
-
-        .sending-email .btn-primary::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 20px;
-            height: 20px;
-            margin: -10px 0 0 -10px;
-            border: 2px solid transparent;
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Success animation */
-        @keyframes successPulse {
-            0% { 
-                transform: scale(1);
-                box-shadow: 0 4px 12px rgba(34, 197, 94, 0);
-            }
-            50% { 
-                transform: scale(1.05);
-                box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
-            }
-            100% { 
-                transform: scale(1);
-                box-shadow: 0 4px 12px rgba(34, 197, 94, 0);
-            }
-        }
-
-        .email-sent .btn-primary {
-            background: linear-gradient(135deg, #22c55e, #16a34a);
-            animation: successPulse 0.6s ease;
-        }
-
-        /* Smooth transitions for modal show/hide */
-        .email-modal-overlay {
-            transition: opacity 0.3s ease;
-        }
-
-        .email-modal-overlay.hiding {
-            opacity: 0;
-        }
-
-        .email-modal-container {
-            transition: transform 0.3s ease, opacity 0.3s ease;
-        }
-
-        .email-modal-overlay.hiding .email-modal-container {
-            transform: translateY(40px);
-            opacity: 0;
-        }
-
-        /* Ensure modal is above everything */
-        .email-modal-overlay {
-            z-index: 99999 !important;
-        }
-
-        /* Make sure header is visible when modal is open */
-        body.modal-open {
-            overflow: hidden;
-        }
-
-        body.modal-open .top-navigation,
-        body.modal-open .side-menu {
-            z-index: 99998;
-        }
-    `;
-    document.head.appendChild(styles);
-}
-
-// Also update the showEmailModal and hideEmailModal methods:
-
-showEmailModal() {
-    if (!this.currentReport) {
-        this.showNotification('Please generate a report first', 'error');
-        return;
-    }
-    
-    const modal = document.getElementById('email-report-modal');
-    if (modal) {
-        // Add modal-open class to body
-        document.body.classList.add('modal-open');
-        
-        // Show modal
-        modal.classList.remove('hidden');
-        
-        // Pre-fill subject with report title and date
-        const subjectInput = document.getElementById('email-subject');
-        if (subjectInput) {
-            const date = new Date().toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            subjectInput.value = `${this.currentReport.title} - ${date}`;
-        }
-        
-        // Focus on email input
-        const emailInput = document.getElementById('recipient-email');
-        if (emailInput) {
-            setTimeout(() => {
-                emailInput.focus();
-                // Scroll to ensure input is visible on mobile
-                emailInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 300);
-        }
-        
-        // Add animation class
-        modal.classList.add('modal-visible');
-    }
-},
-
-hideEmailModal() {
-    const modal = document.getElementById('email-report-modal');
-    if (modal) {
-        // Remove modal-open class from body
-        document.body.classList.remove('modal-open');
-        
-        // Add hiding animation
-        modal.classList.add('hiding');
-        
-        // Hide after animation
-        setTimeout(() => {
-            modal.classList.remove('hidden', 'modal-visible', 'hiding');
-            document.getElementById('email-report-form')?.reset();
-            
-            // Reset format selection visuals
-            const formatCards = document.querySelectorAll('.format-card');
-            formatCards.forEach(card => {
-                card.style.transform = '';
-                card.style.boxShadow = '';
-            });
-        }, 300);
-    }
-},
-    
-    async sendEmailReport() {
-        const emailInput = document.getElementById('recipient-email');
-        const subjectInput = document.getElementById('email-subject');
-        const messageInput = document.getElementById('email-message');
-        const formatRadios = document.querySelectorAll('input[name="email-format"]:checked');
-        const urgentCheckbox = document.getElementById('urgent-delivery');
-        const readReceiptCheckbox = document.getElementById('read-receipt');
-        
-        if (!emailInput?.value) {
-            this.showNotification('Please enter recipient email', 'error');
-            return;
-        }
-        
-        // Get email addresses (support multiple emails)
-        const emailAddresses = emailInput.value.split(',').map(email => email.trim()).filter(email => email);
-        
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const invalidEmails = emailAddresses.filter(email => !emailRegex.test(email));
-        
-        if (invalidEmails.length > 0) {
-            this.showNotification(`Invalid email format: ${invalidEmails.join(', ')}`, 'error');
-            return;
-        }
-        
-        // Show sending state
-        const sendBtn = document.getElementById('send-email-btn');
-        const originalText = sendBtn.innerHTML;
-        sendBtn.classList.add('sending-email');
-        sendBtn.disabled = true;
-        
-        // Prepare email data
-        const emailData = {
-            recipients: emailAddresses,
-            subject: subjectInput?.value || `${this.currentReport.title}`,
-            message: messageInput?.value || '',
-            format: formatRadios[0]?.value || 'text',
-            urgent: urgentCheckbox?.checked || false,
-            readReceipt: readReceiptCheckbox?.checked || false,
-            report: this.currentReport,
-            timestamp: new Date().toISOString(),
-            sent: true,
-            status: 'sending'
-        };
-        
-        try {
-            // Simulate API call with loading state
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            // Save to localStorage (in a real app, this would be sent to a server)
-            const sentEmails = JSON.parse(localStorage.getItem('farm-sent-emails') || '[]');
-            emailData.status = 'sent';
-            sentEmails.push(emailData);
-            localStorage.setItem('farm-sent-emails', JSON.stringify(sentEmails));
-            
-            // Show success animation
-            sendBtn.classList.remove('sending-email');
-            sendBtn.classList.add('email-sent');
-            sendBtn.innerHTML = '✓ Sent!';
-            
-            // Show success notification
-            const recipientCount = emailAddresses.length;
-            const recipientText = recipientCount === 1 ? 'recipient' : 'recipients';
-            this.showNotification(`Report sent to ${recipientCount} ${recipientText}`, 'success');
-            
-            // Close modal after delay
-            setTimeout(() => {
-                this.hideEmailModal();
-                // Reset button state
-                setTimeout(() => {
-                    sendBtn.classList.remove('email-sent');
-                    sendBtn.innerHTML = originalText;
-                    sendBtn.disabled = false;
-                }, 500);
-            }, 1000);
-            
-        } catch (error) {
-            console.error('Error sending email:', error);
-            
-            // Reset button state
-            sendBtn.classList.remove('sending-email');
-            sendBtn.disabled = false;
-            sendBtn.innerHTML = originalText;
-            
-            this.showNotification('Failed to send email. Please try again.', 'error');
-        }
     },
 
     showNotification(message, type = 'success') {
