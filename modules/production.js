@@ -237,6 +237,28 @@ const ProductionModule = {
                 </div>
             </div>
 
+            // In your production form HTML (in renderModule()), add this section:
+            <div style="margin-bottom: 16px;">
+                <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="production-for-sale">
+                    <span style="color: var(--text-primary);">Mark for immediate sale</span>
+                </label>
+                <div class="form-hint">This will create a sales record and adjust inventory automatically</div>
+            </div>
+            
+            <div id="sale-details" style="display: none; margin-bottom: 16px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div>
+                        <label class="form-label">Sale Price per Unit</label>
+                        <input type="number" id="sale-price" class="form-input" placeholder="0.00" min="0" step="0.01">
+                    </div>
+                    <div>
+                        <label class="form-label">Customer Name (Optional)</label>
+                        <input type="text" id="customer-name" class="form-input" placeholder="Wholesale or specific customer">
+                    </div>
+                </div>
+            </div>
+            
             <!-- POPOUT MODALS - Added at the end to overlay content -->
             <!-- Production Record Modal -->
             <div id="production-modal" class="popout-modal hidden">
@@ -571,17 +593,85 @@ const ProductionModule = {
         });
 
         // Edit/delete production buttons (delegated)
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.edit-production')) {
-                const recordId = e.target.closest('.edit-production').dataset.id;
-                this.editProduction(recordId);
-            }
-            if (e.target.closest('.delete-production')) {
-                const recordId = e.target.closest('.delete-production').dataset.id;
-                this.deleteProductionRecord(recordId);
-            }
-        });
-    },
+    document.addEventListener('click', (e) => {
+    // Handle delete with better event handling
+    if (e.target.closest('.delete-production')) {
+        e.preventDefault();
+        e.stopPropagation(); // Prevent multiple triggers
+        
+        const deleteBtn = e.target.closest('.delete-production');
+        const recordId = deleteBtn.dataset.id;
+        
+        if (recordId && !deleteBtn.dataset.processing) {
+            deleteBtn.dataset.processing = 'true'; // Mark as processing
+            this.deleteProductionRecord(recordId);
+            
+            // Reset after 1 second to prevent double-clicks
+            setTimeout(() => {
+                deleteBtn.dataset.processing = '';
+            }, 1000);
+        }
+    }
+});
+
+        // Add this to setupEventListeners():
+document.getElementById('production-for-sale')?.addEventListener('change', (e) => {
+    document.getElementById('sale-details').style.display = e.target.checked ? 'block' : 'none';
+});
+
+// Add this method to handle production marked for sale:
+createSalesRecord(productionData, saleDetails) {
+    const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
+    
+    const saleRecord = {
+        id: Date.now(),
+        date: new Date().toISOString().split('T')[0],
+        items: [{
+            product: this.formatProductName(productionData.product),
+            quantity: productionData.quantity,
+            unit: productionData.unit === 'birds' ? 'pieces' : productionData.unit,
+            price: saleDetails.price,
+            total: productionData.quantity * saleDetails.price
+        }],
+        totalAmount: productionData.quantity * saleDetails.price,
+        customer: saleDetails.customer || 'Direct Sale',
+        status: 'completed',
+        paymentMethod: 'cash',
+        notes: `From production batch ${productionData.batch || productionData.id}`,
+        productionId: productionData.id
+    };
+    
+    sales.push(saleRecord);
+    localStorage.setItem('farm-sales', JSON.stringify(sales));
+    
+    console.log('✅ Sales record created:', saleRecord);
+    
+    // Update inventory by subtracting sold amount
+    this.updateInventoryAfterSale(productionData, saleRecord.id);
+},
+
+updateInventoryAfterSale(productionData, saleId) {
+    const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+    const inventoryItem = inventory.find(item => 
+        item.productionId == productionData.id && item.source === 'production'
+    );
+    
+    if (inventoryItem) {
+        inventoryItem.currentStock -= productionData.quantity;
+        inventoryItem.lastUpdated = new Date().toISOString();
+        
+        if (inventoryItem.currentStock <= 0) {
+            // Remove from inventory if stock is depleted
+            const itemIndex = inventory.findIndex(item => 
+                item.productionId == productionData.id && item.source === 'production'
+            );
+            inventory.splice(itemIndex, 1);
+        }
+        
+        localStorage.setItem('farm-inventory', JSON.stringify(inventory));
+        console.log('✅ Inventory updated after sale:', inventoryItem);
+    }
+},
 
     // MODAL CONTROL METHODS
     showProductionModal() {
@@ -991,28 +1081,78 @@ const ProductionModule = {
         this.showNotification('Production record saved successfully!', 'success');
     },
 
-    editProduction(recordId) {
-        const production = this.productionData.find(p => p.id == recordId);
-        
-        if (!production) {
-            console.error('❌ Production not found:', recordId);
-            return;
-        }
+    // In the editProduction method, replace with this:
+editProduction(recordId) {
+    const production = this.productionData.find(p => p.id == recordId);
+    
+    if (!production) {
+        console.error('❌ Production not found:', recordId);
+        return;
+    }
 
-        // Populate form fields
-        document.getElementById('production-id').value = production.id;
-        document.getElementById('production-date').value = production.date;
-        document.getElementById('production-product').value = production.product;
-        document.getElementById('production-quantity').value = production.quantity;
-        document.getElementById('production-unit').value = production.unit;
-        document.getElementById('production-quality').value = production.quality;
-        document.getElementById('production-batch').value = production.batch || '';
-        document.getElementById('production-notes').value = production.notes || '';
-        document.getElementById('delete-production').style.display = 'block';
-        document.getElementById('production-modal-title').textContent = 'Edit Production Record';
-        
-        this.showProductionModal();
-    },
+    console.log('Editing production record:', production);
+    
+    // Populate form fields
+    document.getElementById('production-id').value = production.id;
+    document.getElementById('production-date').value = production.date;
+    document.getElementById('production-product').value = production.product;
+    document.getElementById('production-quantity').value = production.quantity;
+    document.getElementById('production-unit').value = production.unit;
+    document.getElementById('production-quality').value = production.quality;
+    document.getElementById('production-batch').value = production.batch || '';
+    document.getElementById('production-notes').value = production.notes || '';
+    document.getElementById('delete-production').style.display = 'block';
+    document.getElementById('production-modal-title').textContent = 'Edit Production Record';
+    
+    this.showProductionModal();
+},
+
+// Update the saveProduction method to properly check if it's an edit:
+saveProduction() {
+    const form = document.getElementById('production-form');
+    if (!form) {
+        console.error('❌ Production form not found');
+        return;
+    }
+
+    const productionId = document.getElementById('production-id').value;
+    const date = document.getElementById('production-date').value;
+    const product = document.getElementById('production-product').value;
+    const quantity = parseInt(document.getElementById('production-quantity').value);
+    const unit = document.getElementById('production-unit').value;
+    const quality = document.getElementById('production-quality').value;
+    const batch = document.getElementById('production-batch').value.trim();
+    const notes = document.getElementById('production-notes').value.trim();
+
+    if (!date || !product || !quantity || !unit || !quality) {
+        this.showNotification('Please fill in all required fields', 'error');
+        return;
+    }
+
+    if (quantity <= 0) {
+        this.showNotification('Quantity must be greater than 0', 'error');
+        return;
+    }
+
+    const productionData = {
+        id: productionId ? parseInt(productionId) : Date.now(),
+        date: date,
+        product: product,
+        quantity: quantity,
+        unit: unit,
+        quality: quality,
+        batch: batch || '',
+        notes: notes || ''
+    };
+
+    if (productionId) {
+        this.updateProduction(parseInt(productionId), productionData);
+    } else {
+        this.addProduction(productionData);
+    }
+
+    this.hideProductionModal();
+},
 
     updateProduction(productionId, productionData) {
         const productionIndex = this.productionData.findIndex(p => p.id == productionId);
@@ -1040,17 +1180,30 @@ const ProductionModule = {
         }
     },
 
-    deleteProductionRecord(productionId) {
-        if (confirm('Are you sure you want to delete this production record?')) {
-            this.productionData = this.productionData.filter(p => p.id != productionId);
-            
-            this.saveData();
-            this.updateStats();
-            this.updateProductionTable();
-            this.updateProductSummary();
-            this.showNotification('Production record deleted successfully', 'success');
-        }
-    },
+deleteProductionRecord(productionId) {
+    // First check if record exists
+    const recordIndex = this.productionData.findIndex(p => p.id == productionId);
+    
+    if (recordIndex === -1) {
+        this.showNotification('Record not found or already deleted', 'error');
+        return;
+    }
+    
+    if (confirm('Are you sure you want to delete this production record? This action cannot be undone.')) {
+        // Remove from array
+        this.productionData = this.productionData.filter(p => p.id != productionId);
+        
+        // Save immediately
+        this.saveData();
+        
+        // Update UI components
+        this.updateStats();
+        this.updateProductionTable();
+        this.updateProductSummary();
+        
+        this.showNotification('Production record deleted successfully', 'success');
+    }
+},
 
     exportProduction() {
         const csv = this.convertToCSV(this.productionData);
@@ -1169,6 +1322,176 @@ const ProductionModule = {
         return [headers, ...rows].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
     },
 
+    // Add these methods to your ProductionModule object after the existing methods:
+
+// ==================== INVENTORY LINKING METHODS ====================
+linkToInventory(productionRecord) {
+    // For broilers, layers, and other animals that become carcasses
+    if (['broilers', 'layers', 'pork', 'beef'].includes(productionRecord.product)) {
+        const inventoryItem = {
+            name: this.formatProductName(productionRecord.product) + ' Carcasses',
+            category: 'meat',
+            currentStock: productionRecord.quantity,
+            minStock: 0,
+            unit: productionRecord.unit === 'birds' ? 'pieces' : productionRecord.unit,
+            unitCost: this.calculateCost(productionRecord),
+            lastUpdated: new Date().toISOString(),
+            source: 'production',
+            productionId: productionRecord.id,
+            quality: productionRecord.quality
+        };
+        
+        this.updateInventory(inventoryItem);
+    }
+},
+
+updateInventory(inventoryItem) {
+    const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+    
+    // Check if item already exists
+    const existingIndex = inventory.findIndex(item => 
+        item.name === inventoryItem.name && item.source === 'production'
+    );
+    
+    if (existingIndex !== -1) {
+        // Update existing item
+        inventory[existingIndex].currentStock += inventoryItem.currentStock;
+        inventory[existingIndex].lastUpdated = inventoryItem.lastUpdated;
+    } else {
+        // Add new item
+        inventory.push(inventoryItem);
+    }
+    
+    localStorage.setItem('farm-inventory', JSON.stringify(inventory));
+    
+    console.log('✅ Inventory updated with production:', inventoryItem);
+},
+
+calculateCost(productionRecord) {
+    // Simple cost calculation - you can make this more sophisticated
+    const baseCosts = {
+        'broilers': 5,    // $5 per bird
+        'layers': 8,      // $8 per bird
+        'pork': 50,       // $50 per pig
+        'beef': 300       // $300 per cow
+    };
+    
+    return baseCosts[productionRecord.product] || 10;
+},
+
+// Update the addProduction method to include inventory linking:
+addProduction(productionData) {
+    this.productionData.unshift(productionData);
+    this.saveData();
+    this.updateStats();
+    this.updateProductionTable();
+    this.updateProductSummary();
+    
+    // Link to inventory if applicable
+    this.linkToInventory(productionData);
+    
+    this.showNotification('Production record saved successfully!', 'success');
+},
+
+// Update the updateProduction method to handle inventory updates:
+updateProduction(productionId, productionData) {
+    const productionIndex = this.productionData.findIndex(p => p.id == productionId);
+    
+    if (productionIndex !== -1) {
+        const oldQuantity = this.productionData[productionIndex].quantity;
+        const newQuantity = productionData.quantity;
+        
+        // Update production record
+        this.productionData[productionIndex] = {
+            ...this.productionData[productionIndex],
+            ...productionData
+        };
+        
+        this.saveData();
+        this.updateStats();
+        this.updateProductionTable();
+        this.updateProductSummary();
+        
+        // Update inventory if quantity changed
+        if (oldQuantity !== newQuantity && ['broilers', 'layers', 'pork', 'beef'].includes(productionData.product)) {
+            const quantityDiff = newQuantity - oldQuantity;
+            if (quantityDiff !== 0) {
+                this.updateInventoryQuantity(productionId, quantityDiff);
+            }
+        }
+        
+        this.showNotification('Production record updated successfully!', 'success');
+    }
+},
+
+updateInventoryQuantity(productionId, quantityDiff) {
+    const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+    const inventoryItem = inventory.find(item => 
+        item.productionId == productionId && item.source === 'production'
+    );
+    
+    if (inventoryItem) {
+        inventoryItem.currentStock += quantityDiff;
+        inventoryItem.lastUpdated = new Date().toISOString();
+        
+        if (inventoryItem.currentStock <= 0) {
+            // Remove from inventory if stock is 0 or negative
+            const itemIndex = inventory.findIndex(item => 
+                item.productionId == productionId && item.source === 'production'
+            );
+            inventory.splice(itemIndex, 1);
+        }
+        
+        localStorage.setItem('farm-inventory', JSON.stringify(inventory));
+        console.log('✅ Inventory quantity updated:', quantityDiff);
+    }
+},
+
+// Also update deleteProductionRecord to remove from inventory:
+deleteProductionRecord(productionId) {
+    // First check if record exists
+    const recordIndex = this.productionData.findIndex(p => p.id == productionId);
+    
+    if (recordIndex === -1) {
+        this.showNotification('Record not found or already deleted', 'error');
+        return;
+    }
+    
+    const record = this.productionData[recordIndex];
+    
+    if (confirm('Are you sure you want to delete this production record? This will also remove it from inventory.')) {
+        // Remove from inventory if it was linked
+        if (['broilers', 'layers', 'pork', 'beef'].includes(record.product)) {
+            this.removeFromInventory(productionId);
+        }
+        
+        // Remove from production data
+        this.productionData = this.productionData.filter(p => p.id != productionId);
+        
+        // Save immediately
+        this.saveData();
+        
+        // Update UI components
+        this.updateStats();
+        this.updateProductionTable();
+        this.updateProductSummary();
+        
+        this.showNotification('Production record deleted successfully', 'success');
+    }
+},
+
+removeFromInventory(productionId) {
+    const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+    const updatedInventory = inventory.filter(item => 
+        item.productionId != productionId
+    );
+    
+    if (inventory.length !== updatedInventory.length) {
+        localStorage.setItem('farm-inventory', JSON.stringify(updatedInventory));
+        console.log('✅ Removed from inventory:', productionId);
+    }
+},
+    
     // UTILITY METHODS
     getProductIcon(product) {
         const icons = {
