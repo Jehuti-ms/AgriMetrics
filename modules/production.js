@@ -385,39 +385,40 @@ const ProductionModule = {
         this.setupEventListeners();
     },
 
-    updateStats() {
-        const today = new Date().toISOString().split('T')[0];
-        
-        const todayEggs = this.productionData
-            .filter(record => record.date === today && record.product === 'eggs')
-            .reduce((sum, record) => sum + record.quantity, 0);
+updateStats() {
+    const today = window.DateUtils ? window.DateUtils.getToday() : new Date().toISOString().split('T')[0];
+    
+    const todayEggs = this.productionData
+        .filter(record => window.DateUtils ? 
+            window.DateUtils.isSameDate(record.date, today) : 
+            record.date === today)
+        .filter(record => record.product === 'eggs')
+        .reduce((sum, record) => sum + record.quantity, 0);
 
-        const last7Days = new Date();
-        last7Days.setDate(last7Days.getDate() - 7);
-        const last7DaysStr = last7Days.toISOString().split('T')[0];
-        
-        const weekBirds = this.productionData
-            .filter(record => record.date >= last7DaysStr && 
-                           (record.product === 'broilers' || record.product === 'layers'))
-            .reduce((sum, record) => sum + record.quantity, 0);
+    // Calculate last 7 days using DateUtils
+    const last7Days = window.DateUtils ? 
+        window.DateUtils.addDays(today, -7) : 
+        (() => {
+            const d = new Date();
+            d.setDate(d.getDate() - 7);
+            return d.toISOString().split('T')[0];
+        })();
+    
+    const weekBirds = this.productionData
+        .filter(record => {
+            const recordDate = new Date(record.date);
+            const last7Date = new Date(last7Days);
+            return recordDate >= last7Date && 
+                   (record.product === 'broilers' || record.product === 'layers');
+        })
+        .reduce((sum, record) => sum + record.quantity, 0);
 
-        const qualityScores = {
-            'excellent': 5,
-            'grade-a': 4,
-            'grade-b': 3,
-            'standard': 2,
-            'rejects': 1
-        };
-
-        const avgQuality = this.productionData.length > 0 
-            ? (this.productionData.reduce((sum, record) => sum + (qualityScores[record.quality] || 3), 0) / this.productionData.length).toFixed(1)
-            : '0.0';
-
-        this.updateElement('today-eggs', todayEggs.toLocaleString());
-        this.updateElement('week-birds', weekBirds.toLocaleString());
-        this.updateElement('total-records', this.productionData.length.toLocaleString());
-        this.updateElement('avg-quality', avgQuality);
-    },
+    // ... rest of the method remains the same
+    this.updateElement('today-eggs', todayEggs.toLocaleString());
+    this.updateElement('week-birds', weekBirds.toLocaleString());
+    this.updateElement('total-records', this.productionData.length.toLocaleString());
+    this.updateElement('avg-quality', avgQuality);
+},
 
     renderProductionTable(filter = 'all') {
         let filteredProduction = this.productionData;
@@ -460,7 +461,9 @@ const ProductionModule = {
                             
                             return `
                                 <tr style="border-bottom: 1px solid var(--glass-border);">
-                                    <td style="padding: 12px 8px; color: var(--text-primary);">${this.formatDate(record.date)}</td>
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">
+                                        ${window.DateUtils ? window.DateUtils.toDisplayFormat(record.date) : this.formatDate(record.date)}
+                                    </td>
                                     <td style="padding: 12px 8px; color: var(--text-primary);">
                                         <div style="display: flex; align-items: center; gap: 8px;">
                                             <span style="font-size: 18px;">${this.getProductIcon(record.product)}</span>
@@ -1005,34 +1008,34 @@ showProductionModal() {
     },
 
     // EXISTING METHODS (keep as they were)
-    handleQuickProduction() {
-        const product = document.getElementById('quick-product').value;
-        const quantity = parseInt(document.getElementById('quick-quantity').value);
-        const unit = document.getElementById('quick-unit').value;
-        const quality = document.getElementById('quick-quality').value;
+handleQuickProduction() {
+    const product = document.getElementById('quick-product').value;
+    const quantity = parseInt(document.getElementById('quick-quantity').value);
+    const unit = document.getElementById('quick-unit').value;
+    const quality = document.getElementById('quick-quality').value;
 
-        if (!product || !quantity || !quality) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
-        }
+    if (!product || !quantity || !quality) {
+        this.showNotification('Please fill in all required fields', 'error');
+        return;
+    }
 
-        const productionData = {
-            id: Date.now(),
-            date: new Date().toISOString().split('T')[0],
-            product: product,
-            quantity: quantity,
-            unit: unit,
-            quality: quality,
-            batch: '',
-            notes: 'Quick entry'
-        };
+    const productionData = {
+        id: Date.now(),
+        date: window.DateUtils ? window.DateUtils.getToday() : new Date().toISOString().split('T')[0],
+        product: product,
+        quantity: quantity,
+        unit: unit,
+        quality: quality,
+        batch: '',
+        notes: 'Quick entry'
+    };
 
-        this.addProduction(productionData);
-        
-        // Reset form
-        document.getElementById('quick-production-form').reset();
-        this.showNotification('Production recorded successfully!', 'success');
-    },
+    this.addProduction(productionData);
+    
+    // Reset form
+    document.getElementById('quick-production-form').reset();
+    this.showNotification('Production recorded successfully!', 'success');
+},
 
     saveProduction() {
         const form = document.getElementById('production-form');
