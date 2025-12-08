@@ -516,6 +516,748 @@ const ReportsModule = {
         });
     },
 
+    // ==================== REPORT GENERATION METHODS ====================
+generateFinancialReport() {
+    console.log('💰 Generating financial report...');
+    
+    // Get data
+    const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
+    const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
+    
+    // Calculate totals
+    const incomeTransactions = transactions.filter(t => t.type === 'income');
+    const expenseTransactions = transactions.filter(t => t.type === 'expense');
+    
+    const totalIncome = incomeTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+    const totalExpenses = expenseTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+    const totalSalesRevenue = sales.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+    const netProfit = totalIncome + totalSalesRevenue - totalExpenses;
+    const profitMargin = totalIncome > 0 ? (netProfit / (totalIncome + totalSalesRevenue)) * 100 : 0;
+    
+    // Generate report content
+    const content = `
+        <div class="report-section">
+            <h4>📊 Financial Overview</h4>
+            <div class="metric-row">
+                <span class="metric-label">Total Income:</span>
+                <span class="metric-value income">${this.formatCurrency(totalIncome)}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Sales Revenue:</span>
+                <span class="metric-value income">${this.formatCurrency(totalSalesRevenue)}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Total Expenses:</span>
+                <span class="metric-value expense">${this.formatCurrency(totalExpenses)}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Net Profit:</span>
+                <span class="metric-value ${netProfit >= 0 ? 'profit' : 'expense'}">${this.formatCurrency(netProfit)}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Profit Margin:</span>
+                <span class="metric-value ${profitMargin >= 0 ? 'profit' : 'expense'}">${profitMargin.toFixed(1)}%</span>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <h4>💼 Income Breakdown</h4>
+            ${incomeTransactions.length > 0 ? `
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${incomeTransactions.map(transaction => `
+                        <div class="metric-row">
+                            <span class="metric-label">${transaction.description}</span>
+                            <span class="metric-value income">${this.formatCurrency(transaction.amount)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No income records found</p>'}
+        </div>
+
+        <div class="report-section">
+            <h4>📉 Expense Breakdown</h4>
+            ${expenseTransactions.length > 0 ? `
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${expenseTransactions.map(transaction => `
+                        <div class="metric-row">
+                            <span class="metric-label">${transaction.description}</span>
+                            <span class="metric-value expense">${this.formatCurrency(transaction.amount)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No expense records found</p>'}
+        </div>
+
+        <div class="report-section">
+            <h4>📈 Sales Revenue</h4>
+            ${sales.length > 0 ? `
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${sales.map(sale => `
+                        <div class="metric-row">
+                            <span class="metric-label">Sale ${sale.date}</span>
+                            <span class="metric-value income">${this.formatCurrency(sale.totalAmount)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No sales records found</p>'}
+        </div>
+
+        <div class="report-section">
+            <h4>💡 Financial Insights</h4>
+            <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                <p style="margin: 0; color: var(--text-primary);">
+                    ${this.getFinancialInsights(totalIncome, totalExpenses, netProfit, profitMargin)}
+                </p>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <div style="text-align: center; padding: 16px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(34, 197, 94, 0.1)); border-radius: 12px;">
+                <h4 style="margin-bottom: 8px; color: var(--text-primary);">Recommendations</h4>
+                <div style="color: var(--text-secondary); font-size: 14px;">
+                    <p>1. ${netProfit < 0 ? 'Focus on reducing expenses and increasing revenue streams.' : 'Maintain current financial discipline.'}</p>
+                    <p>2. ${profitMargin < 10 ? 'Explore premium products and optimize operational costs.' : 'Good profit margin, consider reinvestment opportunities.'}</p>
+                    <p>3. Monitor expense categories for cost-saving opportunities.</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    this.currentReport = {
+        title: 'Financial Performance Report',
+        content: content
+    };
+    
+    this.showReport('Financial Performance Report', content);
+},
+
+generateProductionReport() {
+    console.log('🚜 Generating production report...');
+    
+    const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
+    const totalProduction = production.reduce((sum, record) => sum + (record.quantity || 0), 0);
+    
+    const productGroups = {};
+    production.forEach(record => {
+        if (!productGroups[record.product]) {
+            productGroups[record.product] = {
+                total: 0,
+                records: []
+            };
+        }
+        productGroups[record.product].total += record.quantity || 0;
+        productGroups[record.product].records.push(record);
+    });
+    
+    // Get quality distribution
+    const qualityDistribution = { excellent: 0, good: 0, poor: 0, unknown: 0 };
+    production.forEach(record => {
+        const quality = record.quality || 'unknown';
+        qualityDistribution[quality] = (qualityDistribution[quality] || 0) + 1;
+    });
+    
+    const content = `
+        <div class="report-section">
+            <h4>📊 Production Overview</h4>
+            <div class="metric-row">
+                <span class="metric-label">Total Production:</span>
+                <span class="metric-value">${totalProduction} units</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Production Records:</span>
+                <span class="metric-value">${production.length}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Products Tracked:</span>
+                <span class="metric-value">${Object.keys(productGroups).length}</span>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <h4>📦 Product Breakdown</h4>
+            ${Object.keys(productGroups).length > 0 ? `
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${Object.entries(productGroups).map(([product, data]) => `
+                        <div class="metric-row">
+                            <span class="metric-label">${this.formatProductName(product)}</span>
+                            <span class="metric-value">${data.total} units</span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No production records found</p>'}
+        </div>
+
+        <div class="report-section">
+            <h4>⭐ Quality Distribution</h4>
+            <div style="max-height: 300px; overflow-y: auto;">
+                ${Object.entries(qualityDistribution).map(([quality, count]) => `
+                    <div class="metric-row">
+                        <span class="metric-label">${this.formatQuality(quality)}</span>
+                        <span class="metric-value">${count} records</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+
+        <div class="report-section">
+            <h4>📋 Recent Production Records</h4>
+            ${production.slice(-5).length > 0 ? `
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${production.slice(-5).reverse().map(record => `
+                        <div class="metric-row">
+                            <span class="metric-label">${record.date}: ${this.formatProductName(record.product)}</span>
+                            <span class="metric-value">${record.quantity} ${record.unit || 'units'}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No recent production records</p>'}
+        </div>
+
+        <div class="report-section">
+            <h4>💡 Production Insights</h4>
+            <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; border-left: 4px solid #22c55e;">
+                <p style="margin: 0; color: var(--text-primary);">
+                    ${this.getProductionInsights(totalProduction, 0, qualityDistribution)}
+                </p>
+            </div>
+        </div>
+    `;
+    
+    this.currentReport = {
+        title: 'Production Analysis Report',
+        content: content
+    };
+    
+    this.showReport('Production Analysis Report', content);
+},
+
+generateInventoryReport() {
+    console.log('📦 Generating inventory report...');
+    
+    const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+    const lowStockItems = inventory.filter(item => item.currentStock <= item.minStock);
+    const outOfStockItems = inventory.filter(item => item.currentStock === 0);
+    
+    const totalValue = inventory.reduce((sum, item) => {
+        return sum + (item.currentStock * (item.unitCost || 0));
+    }, 0);
+    
+    const content = `
+        <div class="report-section">
+            <h4>📊 Inventory Overview</h4>
+            <div class="metric-row">
+                <span class="metric-label">Total Items:</span>
+                <span class="metric-value">${inventory.length}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Total Inventory Value:</span>
+                <span class="metric-value">${this.formatCurrency(totalValue)}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Low Stock Items:</span>
+                <span class="metric-value ${lowStockItems.length > 0 ? 'warning' : ''}">${lowStockItems.length}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Out of Stock Items:</span>
+                <span class="metric-value ${outOfStockItems.length > 0 ? 'warning' : ''}">${outOfStockItems.length}</span>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <h4>⚠️ Low Stock Items</h4>
+            ${lowStockItems.length > 0 ? `
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${lowStockItems.map(item => `
+                        <div class="metric-row">
+                            <span class="metric-label">${item.name}</span>
+                            <span class="metric-value warning">${item.currentStock} / ${item.minStock}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No low stock items 👍</p>'}
+        </div>
+
+        <div class="report-section">
+            <h4>📦 Complete Inventory List</h4>
+            ${inventory.length > 0 ? `
+                <div style="max-height: 400px; overflow-y: auto;">
+                    ${inventory.map(item => `
+                        <div class="metric-row">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 500; color: var(--text-primary);">${item.name}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">${item.category || 'Uncategorized'}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 600; color: var(--text-primary);">${item.currentStock} ${item.unit || 'units'}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">Value: ${this.formatCurrency(item.currentStock * (item.unitCost || 0))}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No inventory items found</p>'}
+        </div>
+
+        <div class="report-section">
+            <h4>💡 Inventory Management Insights</h4>
+            <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                <p style="margin: 0; color: var(--text-primary);">
+                    ${lowStockItems.length > 0 
+                        ? `⚠️ Attention needed for ${lowStockItems.length} low stock items. Consider reordering soon.`
+                        : '✅ Inventory levels are healthy. Maintain current stock levels.'}
+                </p>
+            </div>
+            <div style="margin-top: 12px; color: var(--text-secondary); font-size: 14px;">
+                <p>Recommendations:</p>
+                <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+                    <li>${lowStockItems.length > 0 ? 'Place orders for low stock items immediately.' : 'Continue regular inventory monitoring.'}</li>
+                    <li>Set up automatic reorder alerts for critical items</li>
+                    <li>Review seasonal demand patterns for better inventory planning</li>
+                </ul>
+            </div>
+        </div>
+    `;
+    
+    this.currentReport = {
+        title: 'Inventory Status Report',
+        content: content
+    };
+    
+    this.showReport('Inventory Status Report', content);
+},
+
+generateSalesReport() {
+    console.log('💰 Generating sales report...');
+    
+    const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
+    const totalSales = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
+    const averageSale = sales.length > 0 ? totalSales / sales.length : 0;
+    
+    // Group sales by month
+    const monthlySales = {};
+    sales.forEach(sale => {
+        const date = new Date(sale.date);
+        const monthYear = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+        if (!monthlySales[monthYear]) {
+            monthlySales[monthYear] = {
+                total: 0,
+                count: 0
+            };
+        }
+        monthlySales[monthYear].total += sale.totalAmount || 0;
+        monthlySales[monthYear].count += 1;
+    });
+    
+    const content = `
+        <div class="report-section">
+            <h4>📊 Sales Overview</h4>
+            <div class="metric-row">
+                <span class="metric-label">Total Sales Revenue:</span>
+                <span class="metric-value income">${this.formatCurrency(totalSales)}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Number of Sales:</span>
+                <span class="metric-value">${sales.length}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Average Sale Value:</span>
+                <span class="metric-value income">${this.formatCurrency(averageSale)}</span>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <h4>📅 Monthly Sales Trend</h4>
+            ${Object.keys(monthlySales).length > 0 ? `
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${Object.entries(monthlySales).map(([month, data]) => `
+                        <div class="metric-row">
+                            <span class="metric-label">${month}</span>
+                            <span class="metric-value income">${this.formatCurrency(data.total)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No sales data by month</p>'}
+        </div>
+
+        <div class="report-section">
+            <h4>📋 Recent Sales</h4>
+            ${sales.slice(-5).length > 0 ? `
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${sales.slice(-5).reverse().map(sale => `
+                        <div class="metric-row">
+                            <span class="metric-label">${sale.date}</span>
+                            <span class="metric-value income">${this.formatCurrency(sale.totalAmount)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No recent sales found</p>'}
+        </div>
+
+        <div class="report-section">
+            <h4>💡 Sales Insights</h4>
+            <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                <p style="margin: 0; color: var(--text-primary);">
+                    ${this.getSalesInsights(sales.length, totalSales)}
+                </p>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <div style="text-align: center; padding: 16px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(34, 197, 94, 0.1)); border-radius: 12px;">
+                <h4 style="margin-bottom: 8px; color: var(--text-primary);">Sales Strategies</h4>
+                <div style="color: var(--text-secondary); font-size: 14px;">
+                    <p>1. ${sales.length < 10 ? 'Focus on increasing sales volume through marketing.' : 'Expand customer base and explore bulk sales.'}</p>
+                    <p>2. ${averageSale < 100 ? 'Bundle products to increase average sale value.' : 'Maintain product quality and customer relationships.'}</p>
+                    <p>3. Analyze monthly trends to plan for seasonal demand</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    this.currentReport = {
+        title: 'Sales Performance Report',
+        content: content
+    };
+    
+    this.showReport('Sales Performance Report', content);
+},
+
+generateHealthReport() {
+    console.log('🐔 Generating health report...');
+    
+    const mortalityRecords = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
+    const totalMortality = mortalityRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
+    const totalBirds = parseInt(localStorage.getItem('farm-current-stock') || '1000');
+    const mortalityRate = totalBirds > 0 ? (totalMortality / totalBirds) * 100 : 0;
+    
+    // Group by cause
+    const causeBreakdown = {};
+    mortalityRecords.forEach(record => {
+        const cause = record.cause || 'unknown';
+        causeBreakdown[cause] = (causeBreakdown[cause] || 0) + (record.quantity || 0);
+    });
+    
+    const content = `
+        <div class="report-section">
+            <h4>😔 Mortality Overview</h4>
+            <div class="metric-row">
+                <span class="metric-label">Total Mortality Count:</span>
+                <span class="metric-value ${mortalityRate > 5 ? 'warning' : ''}">${totalMortality} birds</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Mortality Rate:</span>
+                <span class="metric-value ${mortalityRate > 5 ? 'warning' : ''}">${mortalityRate.toFixed(2)}%</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Current Flock Size:</span>
+                <span class="metric-value">${totalBirds} birds</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Health Records:</span>
+                <span class="metric-value">${mortalityRecords.length}</span>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <h4>⚕️ Cause Analysis</h4>
+            ${Object.keys(causeBreakdown).length > 0 ? `
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${Object.entries(causeBreakdown).map(([cause, count]) => `
+                        <div class="metric-row">
+                            <span class="metric-label">${this.formatCause(cause)}</span>
+                            <span class="metric-value">${count} birds</span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No cause data available</p>'}
+        </div>
+
+        <div class="report-section">
+            <h4>📋 Recent Health Records</h4>
+            ${mortalityRecords.slice(-5).length > 0 ? `
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${mortalityRecords.slice(-5).reverse().map(record => `
+                        <div class="metric-row">
+                            <span class="metric-label">${record.date}: ${this.formatCause(record.cause)}</span>
+                            <span class="metric-value">${record.quantity} birds</span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No recent health records</p>'}
+        </div>
+
+        <div class="report-section">
+            <h4>💡 Health Insights</h4>
+            <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; border-left: 4px solid #ef4444;">
+                <p style="margin: 0; color: var(--text-primary);">
+                    ${this.getHealthRecommendations(mortalityRate, causeBreakdown)}
+                </p>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <div style="text-align: center; padding: 16px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(245, 158, 11, 0.1)); border-radius: 12px;">
+                <h4 style="margin-bottom: 8px; color: var(--text-primary);">Prevention Strategies</h4>
+                <div style="color: var(--text-secondary); font-size: 14px;">
+                    <p>1. ${mortalityRate > 5 ? 'Implement strict biosecurity measures and regular health checks.' : 'Maintain current health monitoring protocols.'}</p>
+                    <p>2. ${Object.keys(causeBreakdown).includes('disease') ? 'Schedule veterinary consultations and consider vaccination programs.' : 'Focus on preventive care and proper nutrition.'}</p>
+                    <p>3. Monitor environmental conditions (temperature, ventilation, cleanliness)</p>
+                    <p>4. Keep detailed health records for early problem detection</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    this.currentReport = {
+        title: 'Health & Mortality Report',
+        content: content
+    };
+    
+    this.showReport('Health & Mortality Report', content);
+},
+
+generateFeedReport() {
+    console.log('🌾 Generating feed report...');
+    
+    const feedRecords = JSON.parse(localStorage.getItem('farm-feed-records') || '[]');
+    const totalFeedUsed = feedRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
+    const totalFeedCost = feedRecords.reduce((sum, record) => sum + (record.cost || 0), 0);
+    
+    // Group by feed type
+    const feedTypeBreakdown = {};
+    feedRecords.forEach(record => {
+        const feedType = record.feedType || 'unknown';
+        if (!feedTypeBreakdown[feedType]) {
+            feedTypeBreakdown[feedType] = {
+                quantity: 0,
+                cost: 0
+            };
+        }
+        feedTypeBreakdown[feedType].quantity += record.quantity || 0;
+        feedTypeBreakdown[feedType].cost += record.cost || 0;
+    });
+    
+    const content = `
+        <div class="report-section">
+            <h4>🌾 Feed Consumption Overview</h4>
+            <div class="metric-row">
+                <span class="metric-label">Total Feed Used:</span>
+                <span class="metric-value">${totalFeedUsed} kg</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Total Feed Cost:</span>
+                <span class="metric-value expense">${this.formatCurrency(totalFeedCost)}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Average Cost per Kg:</span>
+                <span class="metric-value">${totalFeedUsed > 0 ? this.formatCurrency(totalFeedCost / totalFeedUsed) : '$0.00'}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Feed Records:</span>
+                <span class="metric-value">${feedRecords.length}</span>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <h4>📊 Feed Type Analysis</h4>
+            ${Object.keys(feedTypeBreakdown).length > 0 ? `
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${Object.entries(feedTypeBreakdown).map(([feedType, data]) => `
+                        <div class="metric-row">
+                            <span class="metric-label">${this.formatFeedType(feedType)}</span>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 600; color: var(--text-primary);">${data.quantity} kg</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">Cost: ${this.formatCurrency(data.cost)}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No feed type data available</p>'}
+        </div>
+
+        <div class="report-section">
+            <h4>📋 Recent Feed Records</h4>
+            ${feedRecords.slice(-5).length > 0 ? `
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${feedRecords.slice(-5).reverse().map(record => `
+                        <div class="metric-row">
+                            <span class="metric-label">${record.date}: ${this.formatFeedType(record.feedType)}</span>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 600; color: var(--text-primary);">${record.quantity} kg</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">${this.formatCurrency(record.cost)}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No recent feed records</p>'}
+        </div>
+
+        <div class="report-section">
+            <div style="text-align: center; padding: 16px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(34, 197, 94, 0.1)); border-radius: 12px;">
+                <h4 style="margin-bottom: 8px; color: var(--text-primary);">Feed Management Insights</h4>
+                <div style="color: var(--text-secondary); font-size: 14px;">
+                    <p>1. Feed represents ${totalFeedCost > 0 ? Math.round((totalFeedCost / (totalFeedCost + 1000)) * 100) + '%' : 'a significant portion'} of operational costs</p>
+                    <p>2. ${totalFeedUsed / (totalBirds || 1000) > 0.1 ? 'Feed efficiency is within normal range' : 'Monitor feed consumption rates'}</p>
+                    <p>3. Consider bulk purchasing for commonly used feed types</p>
+                    <p>4. Track feed-to-weight conversion ratios for optimal results</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    this.currentReport = {
+        title: 'Feed Consumption Report',
+        content: content
+    };
+    
+    this.showReport('Feed Consumption Report', content);
+},
+
+generateComprehensiveReport() {
+    console.log('🏆 Generating comprehensive report...');
+    
+    const stats = this.getFarmStats();
+    const farmScore = this.calculateFarmScore(stats);
+    const farmStatus = this.getFarmStatus(stats);
+    const farmStatusColor = this.getFarmStatusColor(stats);
+    
+    // Get current date
+    const currentDate = new Date();
+    const formattedDate = currentDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'long'
+    });
+    
+    const content = `
+        <div style="text-align: center; margin-bottom: 32px;">
+            <h2 style="color: var(--text-primary); margin-bottom: 8px;">Farm Comprehensive Report</h2>
+            <p style="color: var(--text-secondary);">Generated on ${formattedDate}</p>
+            <div style="margin: 24px 0; padding: 20px; background: var(--glass-bg); border-radius: 16px; border: 2px solid ${farmStatusColor};">
+                <div style="font-size: 48px; font-weight: bold; color: ${farmStatusColor}; margin-bottom: 8px;">
+                    ${farmScore}/100
+                </div>
+                <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 8px;">
+                    ${farmStatus}
+                </div>
+                <div style="color: var(--text-secondary); font-size: 14px;">
+                    Overall Farm Performance Score
+                </div>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <h4>📊 Executive Summary</h4>
+            <div style="background: var(--glass-bg); padding: 20px; border-radius: 12px; margin: 16px 0;">
+                <p style="color: var(--text-primary); margin: 0; line-height: 1.6;">
+                    ${this.getOverallAssessment(stats)}
+                </p>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <h4>🏆 Farm Performance Metrics</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin: 16px 0;">
+                <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Financial Score</div>
+                    <div style="font-size: 24px; font-weight: bold; color: ${stats.netProfit >= 0 ? '#22c55e' : '#ef4444'};">${stats.netProfit >= 0 ? 'Good' : 'Needs Review'}</div>
+                </div>
+                <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Production Score</div>
+                    <div style="font-size: 24px; font-weight: bold; color: ${stats.totalProduction > 500 ? '#22c55e' : '#f59e0b'};">${stats.totalProduction > 500 ? 'Good' : 'Fair'}</div>
+                </div>
+                <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Inventory Score</div>
+                    <div style="font-size: 24px; font-weight: bold; color: ${stats.lowStockItems === 0 ? '#22c55e' : '#f59e0b'};">${stats.lowStockItems === 0 ? 'Good' : 'Needs Attention'}</div>
+                </div>
+                <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Health Score</div>
+                    <div style="font-size: 24px; font-weight: bold; color: '#3b82f6';">Monitored</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <h4>📈 Key Statistics</h4>
+            <div style="max-height: 300px; overflow-y: auto;">
+                <div class="metric-row">
+                    <span class="metric-label">Total Revenue:</span>
+                    <span class="metric-value income">${this.formatCurrency(stats.totalRevenue)}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Net Profit:</span>
+                    <span class="metric-value ${stats.netProfit >= 0 ? 'profit' : 'expense'}">${this.formatCurrency(stats.netProfit)}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Total Birds:</span>
+                    <span class="metric-value">${stats.totalBirds}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Total Production:</span>
+                    <span class="metric-value">${stats.totalProduction} units</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Low Stock Items:</span>
+                    <span class="metric-value ${stats.lowStockItems > 0 ? 'warning' : ''}">${stats.lowStockItems}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Feed Used:</span>
+                    <span class="metric-value">${stats.totalFeedUsed} kg</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <h4>🎯 Priority Actions</h4>
+            <div style="background: var(--glass-bg); padding: 20px; border-radius: 12px; margin: 16px 0;">
+                <ul style="margin: 0; padding-left: 20px; color: var(--text-primary);">
+                    ${stats.netProfit < 0 ? '<li style="margin-bottom: 8px;"><strong>🔴 High Priority:</strong> Address negative profitability immediately</li>' : ''}
+                    ${stats.lowStockItems > 0 ? '<li style="margin-bottom: 8px;"><strong>🟡 Medium Priority:</strong> Replenish low stock inventory items</li>' : ''}
+                    <li style="margin-bottom: 8px;"><strong>🟢 Ongoing:</strong> Maintain production quality standards</li>
+                    <li><strong>🟢 Ongoing:</strong> Continue regular health monitoring</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <h4>📅 Next Quarter Goals</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 16px 0;">
+                <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Revenue Target</div>
+                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(stats.totalRevenue * 1.1)}</div>
+                </div>
+                <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Production Goal</div>
+                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${Math.round(stats.totalProduction * 1.05)} units</div>
+                </div>
+                <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Cost Reduction</div>
+                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">5% Target</div>
+                </div>
+                <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Farm Score Goal</div>
+                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${Math.min(100, farmScore + 10)}/100</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; padding-top: 24px; border-top: 2px solid var(--glass-border); margin-top: 32px;">
+            <p style="color: var(--text-secondary); font-size: 12px;">
+                Report ID: FARM-COMP-${Date.now().toString().slice(-8)}<br>
+                Generated by Farm Management System<br>
+                © ${currentDate.getFullYear()} All rights reserved
+            </p>
+        </div>
+    `;
+    
+    this.currentReport = {
+        title: 'Farm Comprehensive Report',
+        content: content
+    };
+    
+    this.showReport('Farm Comprehensive Report', content);
+},
+    
     // ==================== EMAIL MODAL STYLES ====================
     addEmailModalStyles() {
         const styleId = 'email-modal-styles';
