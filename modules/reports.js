@@ -1,4 +1,4 @@
-// modules/reports.js - CORRECTED VERSION
+// modules/reports.js - FIXED VERSION WITH PROPER REGISTRATION
 console.log('📊 Loading reports module...');
 
 const ReportsModule = {
@@ -1305,16 +1305,21 @@ const ReportsModule = {
     }
 };
 
-// Check if FarmModules exists and register the module
+// ==================== REGISTRATION ====================
 console.log('📊 Reports module loaded successfully!');
 
-// Wait for DOM to be ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.FarmModules = window.FarmModules || {};
-        window.FarmModules.reports = ReportsModule;
-    });
+// Register the module with FarmModules framework
+if (window.FarmModules) {
+    window.FarmModules.registerModule('reports', ReportsModule);
+    console.log('✅ Reports module registered successfully!');
 } else {
-    window.FarmModules = window.FarmModules || {};
-    window.FarmModules.reports = ReportsModule;
+    console.error('❌ FarmModules framework not found!');
+    // Fallback: register when FarmModules is available
+    const checkFarmModules = setInterval(() => {
+        if (window.FarmModules) {
+            window.FarmModules.registerModule('reports', ReportsModule);
+            console.log('✅ Reports module registered (delayed)!');
+            clearInterval(checkFarmModules);
+        }
+    }, 100);
 }
