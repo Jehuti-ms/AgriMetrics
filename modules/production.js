@@ -787,8 +787,20 @@ handleQuickProduction() {
     }
 
     const productionId = document.getElementById('production-id').value;
-    const date = document.getElementById('production-date').value;
+//const date = document.getElementById('production-date').value;
+
+    const dateInput = document.getElementById('production-date').value;
+    console.log('📅 Raw date from input:', dateInput);
     
+    // Convert input date to storage format
+    const storageDate = this.toStorageFormat(dateInput);
+    console.log('📅 Date for storage:', storageDate);
+    
+    const productionData = {
+        id: productionId ? parseInt(productionId) : Date.now(),
+        date: storageDate, // Use the converted date
+        // ... other fields ...
+        
     console.log('📅 Date from form input:', date);
     console.log('📅 Date from form input (raw):', document.getElementById('production-date').value);
     
@@ -852,8 +864,16 @@ editProduction(recordId) {
     }
 
     console.log('📋 Found record:', production);
-    console.log('📅 Original date:', production.date);
+    console.log('📅 Original stored date:', production.date);
     
+    // Populate form fields
+    document.getElementById('production-id').value = production.id;
+    
+    // Convert stored date to local date for input
+    const localDate = this.toLocalDateInput(production.date);
+    console.log('📅 Local date for input field:', localDate);
+    document.getElementById('production-date').value = localDate;
+        
     // Populate form fields using DateUtils
     document.getElementById('production-id').value = production.id;
     
@@ -952,6 +972,106 @@ editProduction(recordId) {
             this.showNotification('Production record deleted successfully', 'success');
         }
     },
+
+    // Add these methods to your ProductionModule
+
+// CORRECTED: Get today's date in YOUR local timezone (GMT-4)
+getLocalToday() {
+    const now = new Date();
+    
+    // For your GMT-4 timezone, we need to account for the offset
+    // When it's midnight UTC, it's 8 PM previous day in Bolivia
+    // So we need to use LOCAL methods, not UTC methods
+    
+    const localYear = now.getFullYear();
+    const localMonth = now.getMonth() + 1; // 0-indexed
+    const localDay = now.getDate();
+    
+    console.log('📅 getLocalToday():', {
+        now: now.toString(),
+        localYear, localMonth, localDay,
+        getUTCDate: now.getUTCDate(),
+        getDate: now.getDate(),
+        timezoneOffset: now.getTimezoneOffset()
+    });
+    
+    return `${localYear}-${String(localMonth).padStart(2, '0')}-${String(localDay).padStart(2, '0')}`;
+},
+
+// CORRECTED: Convert date string to local date for input field
+toLocalDateInput(dateString) {
+    if (!dateString) return '';
+    
+    console.log('📅 toLocalDateInput input:', dateString);
+    
+    // If it's already in YYYY-MM-DD format from storage
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        // Parse it as LOCAL date (midnight in local timezone)
+        const date = new Date(dateString + 'T00:00:00');
+        const localYear = date.getFullYear();
+        const localMonth = date.getMonth() + 1;
+        const localDay = date.getDate();
+        
+        const result = `${localYear}-${String(localMonth).padStart(2, '0')}-${String(localDay).padStart(2, '0')}`;
+        console.log('📅 toLocalDateInput result:', result, {
+            original: dateString,
+            dateObj: date.toString(),
+            getDate: date.getDate(),
+            getUTCDate: date.getUTCDate()
+        });
+        
+        return result;
+    }
+    
+    try {
+        const date = new Date(dateString);
+        const localYear = date.getFullYear();
+        const localMonth = date.getMonth() + 1;
+        const localDay = date.getDate();
+        
+        return `${localYear}-${String(localMonth).padStart(2, '0')}-${String(localDay).padStart(2, '0')}`;
+    } catch (e) {
+        console.error('Date conversion error:', e);
+        return '';
+    }
+},
+
+// For saving: Convert input date to storage format
+toStorageFormat(dateString) {
+    if (!dateString) return '';
+    
+    console.log('📅 toStorageFormat input:', dateString);
+    
+    // Input is in YYYY-MM-DD (local date)
+    // We need to store it as YYYY-MM-DD but interpreted as LOCAL date
+    // When we create a Date object from YYYY-MM-DD, JavaScript assumes UTC
+    // So we need to adjust for timezone
+    
+    const date = new Date(dateString + 'T00:00:00');
+    
+    // Adjust for timezone offset (add offset minutes to get UTC midnight)
+    const offsetMinutes = date.getTimezoneOffset();
+    const adjustedDate = new Date(date.getTime() + (offsetMinutes * 60000));
+    
+    const year = adjustedDate.getUTCFullYear();
+    const month = String(adjustedDate.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(adjustedDate.getUTCDate()).padStart(2, '0');
+    
+    const result = `${year}-${month}-${day}`;
+    
+    console.log('📅 toStorageFormat result:', result, {
+        input: dateString,
+        dateObj: date.toString(),
+        adjustedDate: adjustedDate.toString(),
+        offsetMinutes,
+        getDate: date.getDate(),
+        getUTCDate: date.getUTCDate()
+    });
+    
+    return result;
+},
+
+    
 
     // INVENTORY LINKING METHODS
     linkToInventory(productionRecord) {
