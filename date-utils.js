@@ -1655,6 +1655,335 @@ const SalesRecordModule = {
         }
     },
 
+    // FIX THE DATE ISSUE - Add this method to properly handle dates:
+
+// Add this method to convert any date string to YYYY-MM-DD format (local timezone)
+formatDateForInput(dateString) {
+    if (!dateString) return '';
+    
+    // If using DateUtils, use it
+    if (window.DateUtils) {
+        return window.DateUtils.toInputFormat(dateString);
+    }
+    
+    // Fallback: Parse the date and format it
+    try {
+        // Create date object
+        const date = new Date(dateString);
+        
+        // If date is invalid, return empty
+        if (isNaN(date.getTime())) return '';
+        
+        // Get local date components
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        
+        return `${year}-${month}-${day}`;
+    } catch (e) {
+        console.error('Error formatting date:', e);
+        return '';
+    }
+},
+
+// FIX THE EDIT ISSUE - Update the editSale() method:
+editSale(saleId) {
+    const sales = window.FarmModules.appData.sales || [];
+    const sale = sales.find(s => s.id === saleId);
+    
+    if (!sale) {
+        console.error('❌ Sale not found:', saleId);
+        this.showNotification('Sale not found', 'error');
+        return;
+    }
+
+    console.log('📝 Editing sale:', sale);
+
+    // Populate form fields - FIXED: Use correct ID
+    document.getElementById('sale-id').value = sale.id;
+    
+    // FIXED: Use proper date formatting for input field
+    const displayDate = this.formatDateForInput(sale.date);
+    document.getElementById('sale-date').value = displayDate;
+    
+    document.getElementById('sale-customer').value = sale.customer || '';
+    document.getElementById('sale-product').value = sale.product;
+    document.getElementById('sale-unit').value = sale.unit;
+    document.getElementById('sale-payment').value = sale.paymentMethod;
+    document.getElementById('sale-status').value = sale.paymentStatus || 'paid';
+    document.getElementById('sale-notes').value = sale.notes || '';
+    
+    // Populate meat or standard fields
+    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+    if (meatProducts.includes(sale.product)) {
+        document.getElementById('meat-animal-count').value = sale.animalCount || sale.quantity || '';
+        document.getElementById('meat-weight').value = sale.weight || '';
+        document.getElementById('meat-weight-unit').value = sale.weightUnit || 'kg';
+        document.getElementById('meat-price').value = sale.unitPrice || '';
+        
+        // Update price unit label based on saved weight unit
+        setTimeout(() => {
+            this.updatePriceUnitLabel();
+        }, 10);
+    } else {
+        document.getElementById('standard-quantity').value = sale.quantity || '';
+        document.getElementById('standard-price').value = sale.unitPrice || '';
+    }
+    
+    document.getElementById('delete-sale').style.display = 'block';
+    document.getElementById('sale-modal-title').textContent = 'Edit Sale';
+    
+    // Show the modal
+    this.showSaleModal();
+    
+    // Force handleProductChange after a short delay to ensure DOM is ready
+    setTimeout(() => {
+        this.handleProductChange();
+        this.calculateSaleTotal();
+    }, 50);
+},
+
+// Also update the saveSale() method to properly check for existing ID:
+saveSale() {
+    const saleId = document.getElementById('sale-id')?.value;
+    const date = document.getElementById('sale-date')?.value;
+    const customer = document.getElementById('sale-customer')?.value;
+    const product = document.getElementById('sale-product')?.value;
+    const unit = document.getElementById('sale-unit')?.value;
+    const paymentMethod = document.getElementById('sale-payment')?.value;
+    const paymentStatus = document.getElementById('sale-status')?.value;
+    const notes = document.getElementById('sale-notes')?.value;
+
+    if (!date || !product || !unit || !paymentMethod) {
+        this.showNotification('Please fill in all required fields', 'error');
+        return;
+    }
+
+    console.log('💾 Saving sale. Existing ID:', saleId);
+
+    // FIXED: Use DateUtils for proper date storage or fallback
+    let storageDate;
+    if (window.DateUtils) {
+        storageDate = window.DateUtils.toStorageFormat(date);
+    } else {
+        // Fallback: Use the date as-is (assumes it's already in YYYY-MM-DD)
+        storageDate = date;
+    }
+
+    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+    const isMeatProduct = meatProducts.includes(product);
+
+    let saleData;
+    
+    if (isMeatProduct) {
+        // Get meat product values
+        const animalCount = parseInt(document.getElementById('meat-animal-count')?.value) || 0;
+        const weight = parseFloat(document.getElementById('meat-weight')?.value) || 0;
+        const weightUnit = document.getElementById('meat-weight-unit')?.value;
+        const unitPrice = parseFloat(document.getElementById('meat-price')?.value) || 0;
+        
+        // Calculate total based on unit
+        let totalAmount;
+        let priceUnit;
+        
+        if (weightUnit === 'lbs') {
+            // Price is per lb
+            totalAmount = weight * unitPrice;
+            priceUnit = 'per-lb';
+        } else {
+            // Price is per kg (default)
+            totalAmount = weight * unitPrice;
+            priceUnit = 'per-kg';
+        }
+        
+        saleData = {
+            id: saleId || 'SALE-' + Date.now().toString().slice(-6), // Only generate new ID if none exists
+            date: storageDate,
+            customer: customer || 'Walk-in',
+            product: product,
+            unit: unit,
+            quantity: animalCount,
+            unitPrice: unitPrice,
+            totalAmount: totalAmount,
+            paymentMethod: paymentMethod,
+            paymentStatus: paymentStatus || 'paid',
+            notes: notes,
+            weight: weight,
+            weightUnit: weightUnit,
+            animalCount: animalCount,
+            priceUnit: priceUnit,
+            avgWeightPerAnimal: animalCount > 0 ? weight / animalCount : 0,
+            avgValuePerAnimal: animalCount > 0 ? totalAmount / animalCount : 0
+        };
+    } else {
+        // Get standard product values
+        const quantity = parseFloat(document.getElementById('standard-quantity')?.value) || 0;
+        const unitPrice = parseFloat(document.getElementById('standard-price')?.value) || 0;
+        const totalAmount = quantity * unitPrice;
+        
+        saleData = {
+            id: saleId || 'SALE-' + Date.now().toString().slice(-6), // Only generate new ID if none exists
+            date: storageDate,
+            customer: customer || 'Walk-in',
+            product: product,
+            unit: unit,
+            quantity: quantity,
+            unitPrice: unitPrice,
+            totalAmount: totalAmount,
+            paymentMethod: paymentMethod,
+            paymentStatus: paymentStatus || 'paid',
+            notes: notes
+        };
+    }
+
+    // Add production source if applicable
+    if (this.pendingProductionSale) {
+        saleData.productionSource = true;
+        saleData.productionSourceId = this.pendingProductionSale.id;
+        this.updateProductionAfterSale(this.pendingProductionSale.id, saleData);
+    }
+
+    // Validate data
+    const validation = this.validateSaleData(saleData);
+    if (!validation.isValid) {
+        this.showNotification(validation.errors.join(', '), 'error');
+        return;
+    }
+
+    if (saleId && saleId.trim() !== '') {
+        // Update existing sale
+        this.updateSale(saleId, saleData);
+        console.log('✅ Updating existing sale:', saleId);
+    } else {
+        // Create new sale
+        this.addSale(saleData);
+        console.log('✅ Creating new sale');
+    }
+
+    this.hideSaleModal();
+},
+
+// Also update the showSaleModal() method to properly reset the form:
+showSaleModal() {
+    this.hideAllModals();
+    const modal = document.getElementById('sale-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+    }
+    
+    // FIXED: Use DateUtils for timezone handling
+    const dateInput = document.getElementById('sale-date');
+    if (dateInput) {
+        dateInput.value = window.DateUtils ? window.DateUtils.getToday() : this.getTodayFallback();
+    }
+    
+    // IMPORTANT: Don't reset the form if we're editing
+    // Only reset if sale-id is empty (new sale)
+    const saleId = document.getElementById('sale-id')?.value;
+    if (!saleId || saleId.trim() === '') {
+        // Reset form for new sale
+        const form = document.getElementById('sale-form');
+        if (form) {
+            form.reset();
+        }
+        
+        // Clear specific fields
+        const fieldsToClear = [
+            'meat-animal-count',
+            'meat-weight',
+            'meat-price',
+            'standard-quantity',
+            'standard-price',
+            'sale-customer',
+            'sale-notes',
+            'sale-id' // Ensure ID is cleared
+        ];
+        
+        fieldsToClear.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) field.value = '';
+        });
+        
+        // Reset title
+        document.getElementById('sale-modal-title').textContent = 'Record Sale';
+        document.getElementById('delete-sale').style.display = 'none';
+    }
+    
+    document.getElementById('production-source-notice').style.display = 'none';
+    
+    // Set default values (only for new sales)
+    if (!saleId || saleId.trim() === '') {
+        const unitSelect = document.getElementById('sale-unit');
+        if (unitSelect) unitSelect.value = '';
+        
+        const weightUnit = document.getElementById('meat-weight-unit');
+        if (weightUnit) weightUnit.value = 'kg';
+        
+        const paymentMethod = document.getElementById('sale-payment');
+        if (paymentMethod) paymentMethod.value = 'cash';
+        
+        const paymentStatus = document.getElementById('sale-status');
+        if (paymentStatus) paymentStatus.value = 'paid';
+        
+        // Set default product if from production
+        if (this.pendingProductionSale) {
+            this.prefillFromProduction(this.pendingProductionSale);
+            this.showProductionSourceNotice();
+        } else {
+            // Set default to empty
+            const productSelect = document.getElementById('sale-product');
+            if (productSelect) productSelect.value = '';
+        }
+    }
+    
+    // Initialize product handling
+    setTimeout(() => {
+        this.handleProductChange();
+    }, 10);
+    
+    // Re-attach form field listeners
+    this.setupFormFieldListeners();
+},
+
+// Also update the hideSaleModal() method to clear the sale-id:
+hideSaleModal() {
+    const modal = document.getElementById('sale-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+    // Clear the sale ID when hiding modal
+    const saleIdInput = document.getElementById('sale-id');
+    if (saleIdInput) {
+        saleIdInput.value = '';
+    }
+    this.pendingProductionSale = null;
+},
+
+// Also update the updateSale() method to properly handle the update:
+updateSale(saleId, saleData) {
+    const sales = window.FarmModules.appData.sales || [];
+    const saleIndex = sales.findIndex(s => s.id === saleId);
+    
+    if (saleIndex !== -1) {
+        // Preserve the original ID
+        saleData.id = saleId;
+        
+        // Update the sale
+        window.FarmModules.appData.sales[saleIndex] = saleData;
+        
+        this.saveData();
+        this.updateSummary();
+        this.updateSalesTable();
+        
+        this.updateIncomeRecord(saleId, saleData);
+        this.showNotification('Sale updated successfully!', 'success');
+        console.log('✅ Sale updated:', saleId);
+    } else {
+        console.error('❌ Sale not found for update:', saleId);
+        this.showNotification('Sale not found for update', 'error');
+    }
+},
+    
     // UTILITY METHODS
     getProductIcon(product) {
         const icons = {
