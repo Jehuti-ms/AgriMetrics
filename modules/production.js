@@ -1,4 +1,4 @@
-// modules/production.js - COMPLETE REWRITTEN VERSION WITH ALL FIXES
+// modules/production.js - UPDATED WITH VEGETABLES AND DUAL UNITS
 console.log('🚜 Loading production module...');
 
 const ProductionModule = {
@@ -26,7 +26,7 @@ const ProductionModule = {
         this.setupEventListeners();
         this.initialized = true;
         
-        console.log('✅ Production Records initialized');
+        console.log('✅ Production Records initialized with DateUtils');
         return true;
     },
 
@@ -52,67 +52,64 @@ const ProductionModule = {
         localStorage.setItem('farm-production-data', JSON.stringify(this.productionData));
     },
 
-getDemoData() {
-    const today = window.DateUtils 
-        ? window.DateUtils.getToday() 
-        : new Date().toISOString().split('T')[0];
-    
-    // Helper function to get previous dates
-    const getPreviousDate = (daysAgo) => {
-        if (window.DateUtils && typeof window.DateUtils.addDays === 'function') {
-            return window.DateUtils.addDays(today, -daysAgo);
-        }
-        const date = new Date();
-        date.setDate(date.getDate() - daysAgo);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
-    
-    return [
-        { 
-            id: 1, 
-            date: today,
-            product: 'eggs', 
-            quantity: 450, 
-            unit: 'pieces', 
-            quality: 'grade-a', 
-            batch: 'BATCH-001',
-            notes: 'Morning collection' 
-        },
-        { 
-            id: 2, 
-            date: getPreviousDate(1),
-            product: 'eggs', 
-            quantity: 420, 
-            unit: 'pieces', 
-            quality: 'grade-a', 
-            batch: 'BATCH-001',
-            notes: 'Regular production' 
-        },
-        { 
-            id: 3, 
-            date: getPreviousDate(2),
-            product: 'broilers', 
-            quantity: 150, 
-            unit: 'birds', 
-            quality: 'grade-a', 
-            batch: 'BATCH-002',
-            notes: 'Weekly harvest' 
-        },
-        { 
-            id: 4, 
-            date: getPreviousDate(3),
-            product: 'milk', 
-            quantity: 120, 
-            unit: 'liters', 
-            quality: 'grade-b', 
-            batch: 'BATCH-003',
-            notes: 'Morning milking' 
-        }
-    ];
-},
+    getDemoData() {
+        // Use DateUtils for demo dates
+        const today = window.DateUtils ? window.DateUtils.getToday() : new Date().toISOString().split('T')[0];
+        
+        const getPreviousDate = (daysAgo) => {
+            if (window.DateUtils && window.DateUtils.addDays) {
+                return window.DateUtils.addDays(today, -daysAgo);
+            }
+            const date = new Date();
+            date.setDate(date.getDate() - daysAgo);
+            return date.toISOString().split('T')[0];
+        };
+        
+        return [
+            { 
+                id: 1, 
+                date: today,
+                product: 'eggs', 
+                quantity: 450, 
+                unit: 'pieces', 
+                quality: 'grade-a', 
+                batch: 'BATCH-001',
+                notes: 'Morning collection' 
+            },
+            { 
+                id: 2, 
+                date: getPreviousDate(1),
+                product: 'broilers', 
+                quantity: 150, 
+                unit: 'birds',
+                weight: 450,
+                weightUnit: 'kg',
+                quality: 'grade-a', 
+                batch: 'BATCH-002',
+                notes: 'Weekly harvest - average 3kg per bird' 
+            },
+            { 
+                id: 3, 
+                date: getPreviousDate(2),
+                product: 'tomatoes', 
+                quantity: 120, 
+                unit: 'kg', 
+                quality: 'grade-a', 
+                batch: 'BATCH-003',
+                notes: 'Greenhouse harvest' 
+            },
+            { 
+                id: 4, 
+                date: getPreviousDate(3),
+                product: 'milk', 
+                quantity: 120, 
+                unit: 'liters', 
+                quality: 'grade-b', 
+                batch: 'BATCH-004',
+                notes: 'Morning milking' 
+            }
+        ];
+    },
 
     renderModule() {
         if (!this.element) return;
@@ -138,14 +135,14 @@ getDemoData() {
                         <div style="font-size: 14px; color: var(--text-secondary);">Birds This Week</div>
                     </div>
                     <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">🥦</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="week-vegetables">0</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Vegetables This Week</div>
+                    </div>
+                    <div class="stat-card">
                         <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
                         <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-records">0</div>
                         <div style="font-size: 14px; color: var(--text-secondary);">Total Records</div>
-                    </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">⭐</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="avg-quality">0.0</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Avg Quality</div>
                     </div>
                 </div>
 
@@ -188,6 +185,10 @@ getDemoData() {
                                     <option value="milk">🥛 Milk</option>
                                     <option value="pork">🐖 Pork</option>
                                     <option value="beef">🐄 Beef</option>
+                                    <option value="tomatoes">🍅 Tomatoes</option>
+                                    <option value="lettuce">🥬 Lettuce</option>
+                                    <option value="carrots">🥕 Carrots</option>
+                                    <option value="potatoes">🥔 Potatoes</option>
                                     <option value="other">📦 Other</option>
                                 </select>
                             </div>
@@ -201,6 +202,7 @@ getDemoData() {
                                     <option value="pieces">Pieces</option>
                                     <option value="birds">Birds</option>
                                     <option value="kg">Kilograms</option>
+                                    <option value="lbs">Pounds</option>
                                     <option value="liters">Liters</option>
                                     <option value="crates">Crates</option>
                                     <option value="cartons">Cartons</option>
@@ -236,6 +238,7 @@ getDemoData() {
                                 <option value="milk">Milk</option>
                                 <option value="pork">Pork</option>
                                 <option value="beef">Beef</option>
+                                <option value="vegetables">Vegetables</option>
                             </select>
                         </div>
                     </div>
@@ -246,7 +249,7 @@ getDemoData() {
 
                 <!-- Production Summary by Product -->
                 <div class="glass-card" style="padding: 24px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">📈 Production by Product</h3>
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">📈 Production by Category</h3>
                     <div id="product-summary">
                         ${this.renderProductSummary()}
                     </div>
@@ -256,7 +259,7 @@ getDemoData() {
             <!-- POPOUT MODALS -->
             <!-- Production Record Modal -->
             <div id="production-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 600px;">
+                <div class="popout-modal-content" style="max-width: 700px;">
                     <div class="popout-modal-header">
                         <h3 class="popout-modal-title" id="production-modal-title">New Production Record</h3>
                         <button class="popout-modal-close" id="close-production-modal">&times;</button>
@@ -272,36 +275,103 @@ getDemoData() {
                                 </div>
                                 <div>
                                     <label class="form-label">Product Type *</label>
-                                    <select id="production-product" class="form-input" required>
+                                    <select id="production-product" class="form-input" required onchange="ProductionModule.handleProductChange()">
                                         <option value="">Select Product</option>
+                                        <!-- Animal Products -->
                                         <option value="eggs">🥚 Eggs</option>
-                                        <option value="broilers">🐔 Broilers</option>
-                                        <option value="layers">🐓 Layers</option>
+                                        <option value="broilers">🐔 Broilers (Chicken)</option>
+                                        <option value="layers">🐓 Layers (Egg-laying Chickens)</option>
                                         <option value="pork">🐖 Pork</option>
                                         <option value="beef">🐄 Beef</option>
                                         <option value="milk">🥛 Milk</option>
-                                        <option value="other">📦 Other</option>
+                                        <option value="goat">🐐 Goat Meat</option>
+                                        <option value="lamb">🐑 Lamb</option>
+                                        
+                                        <!-- Vegetables -->
+                                        <option value="tomatoes">🍅 Tomatoes</option>
+                                        <option value="lettuce">🥬 Lettuce</option>
+                                        <option value="carrots">🥕 Carrots</option>
+                                        <option value="potatoes">🥔 Potatoes</option>
+                                        <option value="onions">🧅 Onions</option>
+                                        <option value="cabbage">🥬 Cabbage</option>
+                                        <option value="peppers">🫑 Peppers</option>
+                                        <option value="cucumbers">🥒 Cucumbers</option>
+                                        <option value="spinach">🥬 Spinach</option>
+                                        <option value="beans">🫘 Beans</option>
+                                        <option value="corn">🌽 Corn</option>
+                                        
+                                        <!-- Fruits -->
+                                        <option value="apples">🍎 Apples</option>
+                                        <option value="oranges">🍊 Oranges</option>
+                                        <option value="bananas">🍌 Bananas</option>
+                                        <option value="berries">🫐 Berries</option>
+                                        <option value="mangoes">🥭 Mangoes</option>
+                                        
+                                        <!-- Other -->
+                                        <option value="honey">🍯 Honey</option>
+                                        <option value="other">📦 Other (Specify)</option>
                                     </select>
                                 </div>
                             </div>
 
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Quantity *</label>
-                                    <input type="number" id="production-quantity" class="form-input" min="1" required placeholder="0">
+                            <!-- Custom Product Name (for "Other") -->
+                            <div id="custom-product-container" style="display: none; margin-bottom: 16px;">
+                                <label class="form-label">Product Name *</label>
+                                <input type="text" id="custom-product-name" class="form-input" placeholder="Enter product name (e.g., Quail Eggs, Duck Meat, etc.)">
+                            </div>
+
+                            <!-- Quantity Section -->
+                            <div style="margin-bottom: 16px;">
+                                <label class="form-label">Quantity Information *</label>
+                                
+                                <!-- For Animals (Birds/Heads + Weight) -->
+                                <div id="animal-quantity-section" style="display: none; margin-top: 12px;">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                        <div>
+                                            <label class="form-label">Number of Birds/Animals</label>
+                                            <input type="number" id="animal-count" class="form-input" placeholder="0" min="1">
+                                        </div>
+                                        <div>
+                                            <label class="form-label">Weight</label>
+                                            <div style="display: flex; gap: 8px;">
+                                                <input type="number" id="animal-weight" class="form-input" placeholder="0" min="0.1" step="0.1">
+                                                <select id="animal-weight-unit" class="form-input" style="min-width: 100px;">
+                                                    <option value="kg">kg</option>
+                                                    <option value="lbs">lbs</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-hint">Enter both count and weight for accurate tracking</div>
                                 </div>
-                                <div>
-                                    <label class="form-label">Unit *</label>
-                                    <select id="production-unit" class="form-input" required>
-                                        <option value="pieces">Pieces</option>
-                                        <option value="birds">Birds</option>
-                                        <option value="kg">Kilograms (kg)</option>
-                                        <option value="lbs">Pounds (lbs)</option>
-                                        <option value="liters">Liters (L)</option>
-                                        <option value="crates">Crates</option>
-                                        <option value="cartons">Cartons</option>
-                                        <option value="dozen">Dozen</option>
-                                    </select>
+                                
+                                <!-- Standard Quantity Input -->
+                                <div id="standard-quantity-section">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                        <div>
+                                            <label class="form-label">Quantity *</label>
+                                            <input type="number" id="production-quantity" class="form-input" min="1" required placeholder="0">
+                                        </div>
+                                        <div>
+                                            <label class="form-label">Unit *</label>
+                                            <select id="production-unit" class="form-input" required>
+                                                <option value="">Select Unit</option>
+                                                <option value="pieces">Pieces</option>
+                                                <option value="birds">Birds</option>
+                                                <option value="animals">Animals</option>
+                                                <option value="kg">Kilograms (kg)</option>
+                                                <option value="lbs">Pounds (lbs)</option>
+                                                <option value="liters">Liters (L)</option>
+                                                <option value="gallons">Gallons</option>
+                                                <option value="crates">Crates</option>
+                                                <option value="cartons">Cartons</option>
+                                                <option value="dozen">Dozen</option>
+                                                <option value="boxes">Boxes</option>
+                                                <option value="bunches">Bunches</option>
+                                                <option value="heads">Heads</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -401,59 +471,60 @@ getDemoData() {
         this.setupEventListeners();
     },
 
-updateStats() {
-    // Get today's date using DateUtils
-    const today = window.DateUtils 
-        ? window.DateUtils.getToday() 
-        : new Date().toISOString().split('T')[0];
-    
-    console.log('📅 Today is:', today);
-    
-    const todayEggs = this.productionData
-        .filter(record => record.date === today && record.product === 'eggs')
-        .reduce((sum, record) => sum + record.quantity, 0);
+    updateStats() {
+        // Get today's date using DateUtils
+        const today = window.DateUtils ? window.DateUtils.getToday() : new Date().toISOString().split('T')[0];
+        
+        console.log('📅 Stats - Today is:', today);
+        
+        // Today's eggs
+        const todayEggs = this.productionData
+            .filter(record => {
+                const recordDate = window.DateUtils ? window.DateUtils.toInputFormat(record.date) : record.date;
+                return recordDate === today && record.product === 'eggs';
+            })
+            .reduce((sum, record) => sum + record.quantity, 0);
 
-    // Calculate last 7 days using DateUtils if available
-    let last7DaysStr;
-    if (window.DateUtils && typeof window.DateUtils.addDays === 'function') {
-        last7DaysStr = window.DateUtils.addDays(today, -7);
-    } else {
-        const last7DaysDate = new Date();
-        last7DaysDate.setDate(last7DaysDate.getDate() - 7);
-        const year = last7DaysDate.getFullYear();
-        const month = String(last7DaysDate.getMonth() + 1).padStart(2, '0');
-        const day = String(last7DaysDate.getDate()).padStart(2, '0');
-        last7DaysStr = `${year}-${month}-${day}`;
-    }
-    
-    console.log('📅 Last 7 days from:', last7DaysStr);
-    
-    const weekBirds = this.productionData
-        .filter(record => record.date >= last7DaysStr && 
-                       (record.product === 'broilers' || record.product === 'layers'))
-        .reduce((sum, record) => sum + record.quantity, 0);
+        // Birds this week
+        const last7DaysDate = window.DateUtils ? 
+            window.DateUtils.addDays(today, -7) : 
+            (() => {
+                const d = new Date();
+                d.setDate(d.getDate() - 7);
+                return d.toISOString().split('T')[0];
+            })();
+        
+        const weekBirds = this.productionData
+            .filter(record => {
+                const recordDate = window.DateUtils ? window.DateUtils.toInputFormat(record.date) : record.date;
+                return recordDate >= last7DaysDate && 
+                       (record.product === 'broilers' || record.product === 'layers');
+            })
+            .reduce((sum, record) => sum + record.quantity, 0);
 
-    const qualityScores = {
-        'excellent': 5,
-        'grade-a': 4,
-        'grade-b': 3,
-        'standard': 2,
-        'rejects': 1
-    };
+        // Vegetables this week
+        const vegetables = ['tomatoes', 'lettuce', 'carrots', 'potatoes', 'onions', 'cabbage', 'peppers', 'cucumbers', 'spinach', 'beans', 'corn'];
+        const weekVegetables = this.productionData
+            .filter(record => {
+                const recordDate = window.DateUtils ? window.DateUtils.toInputFormat(record.date) : record.date;
+                return recordDate >= last7DaysDate && vegetables.includes(record.product);
+            })
+            .reduce((sum, record) => sum + record.quantity, 0);
 
-    const avgQuality = this.productionData.length > 0 
-        ? (this.productionData.reduce((sum, record) => sum + (qualityScores[record.quality] || 3), 0) / this.productionData.length).toFixed(1)
-        : '0.0';
-
-    this.updateElement('today-eggs', todayEggs.toLocaleString());
-    this.updateElement('week-birds', weekBirds.toLocaleString());
-    this.updateElement('total-records', this.productionData.length.toLocaleString());
-    this.updateElement('avg-quality', avgQuality);
-},
+        this.updateElement('today-eggs', todayEggs.toLocaleString());
+        this.updateElement('week-birds', weekBirds.toLocaleString());
+        this.updateElement('week-vegetables', weekVegetables.toLocaleString());
+        this.updateElement('total-records', this.productionData.length.toLocaleString());
+    },
 
     renderProductionTable(filter = 'all') {
         let filteredProduction = this.productionData;
-        if (filter !== 'all') {
+        
+        // Handle vegetable filter
+        if (filter === 'vegetables') {
+            const vegetables = ['tomatoes', 'lettuce', 'carrots', 'potatoes', 'onions', 'cabbage', 'peppers', 'cucumbers', 'spinach', 'beans', 'corn'];
+            filteredProduction = this.productionData.filter(record => vegetables.includes(record.product));
+        } else if (filter !== 'all') {
             filteredProduction = this.productionData.filter(record => record.product === filter);
         }
 
@@ -477,6 +548,7 @@ updateStats() {
                             <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Date</th>
                             <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Product</th>
                             <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Quantity</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Weight/Details</th>
                             <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Quality</th>
                             <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Batch</th>
                             <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Notes</th>
@@ -490,18 +562,28 @@ updateStats() {
                                                 record.quality === 'grade-b' ? '#f59e0b' :
                                                 record.quality === 'standard' ? '#3b82f6' : '#ef4444';
                             
+                            // Display weight information for animals
+                            let weightInfo = '-';
+                            if (record.weight && record.weightUnit) {
+                                weightInfo = `${record.weight} ${record.weightUnit}`;
+                            }
+                            
                             return `
                                 <tr style="border-bottom: 1px solid var(--glass-border);">
                                     <td style="padding: 12px 8px; color: var(--text-primary);">${this.formatDate(record.date)}</td>
                                     <td style="padding: 12px 8px; color: var(--text-primary);">
                                         <div style="display: flex; align-items: center; gap: 8px;">
                                             <span style="font-size: 18px;">${this.getProductIcon(record.product)}</span>
-                                            <span style="font-weight: 500;">${this.formatProductName(record.product)}</span>
+                                            <span style="font-weight: 500;">${this.getProductDisplayName(record)}</span>
                                         </div>
                                     </td>
                                     <td style="padding: 12px 8px; color: var(--text-primary);">
                                         <div style="font-weight: 600;">${record.quantity.toLocaleString()}</div>
                                         <div style="font-size: 12px; color: var(--text-secondary);">${record.unit}</div>
+                                    </td>
+                                    <td style="padding: 12px 8px; color: var(--text-secondary);">
+                                        ${weightInfo}
+                                        ${record.product === 'broilers' && record.unit === 'birds' ? `<div style="font-size: 11px; color: #888;">Count: ${record.quantity}</div>` : ''}
                                     </td>
                                     <td style="padding: 12px 8px;">
                                         <span style="padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; 
@@ -527,44 +609,59 @@ updateStats() {
     },
 
     renderProductSummary() {
-        const productData = {};
-        const products = ['eggs', 'broilers', 'layers', 'milk', 'pork', 'beef', 'other'];
+        const categories = {
+            'poultry': ['eggs', 'broilers', 'layers'],
+            'livestock': ['pork', 'beef', 'goat', 'lamb', 'milk'],
+            'vegetables': ['tomatoes', 'lettuce', 'carrots', 'potatoes', 'onions', 'cabbage', 'peppers', 'cucumbers', 'spinach', 'beans', 'corn'],
+            'fruits': ['apples', 'oranges', 'bananas', 'berries', 'mangoes'],
+            'other': ['honey', 'other']
+        };
+
+        const categoryData = {};
         
-        products.forEach(product => {
-            const productRecords = this.productionData.filter(record => record.product === product);
-            productData[product] = {
-                count: productRecords.length,
-                totalQuantity: productRecords.reduce((sum, record) => sum + record.quantity, 0),
-                avgQuality: productRecords.length > 0 ? 
-                    (productRecords.reduce((sum, record) => {
-                        const qualityScores = { 'excellent': 5, 'grade-a': 4, 'grade-b': 3, 'standard': 2, 'rejects': 1 };
-                        return sum + (qualityScores[record.quality] || 3);
-                    }, 0) / productRecords.length).toFixed(1) : 0
+        Object.keys(categories).forEach(category => {
+            const products = categories[category];
+            const categoryRecords = this.productionData.filter(record => products.includes(record.product));
+            
+            categoryData[category] = {
+                count: categoryRecords.length,
+                totalQuantity: categoryRecords.reduce((sum, record) => sum + record.quantity, 0),
+                totalWeight: categoryRecords.reduce((sum, record) => sum + (record.weight || 0), 0),
+                weightUnit: categoryRecords.find(record => record.weightUnit)?.weightUnit || 'kg'
             };
         });
 
         return `
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                ${products.filter(product => productData[product].count > 0).map(product => {
-                    const data = productData[product];
+                ${Object.entries(categoryData).filter(([category, data]) => data.count > 0).map(([category, data]) => {
+                    const icons = {
+                        'poultry': '🐔',
+                        'livestock': '🐄',
+                        'vegetables': '🥦',
+                        'fruits': '🍎',
+                        'other': '📦'
+                    };
+                    
                     return `
                         <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
                             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                                <div style="font-size: 20px;">${this.getProductIcon(product)}</div>
-                                <div style="font-weight: 600; color: var(--text-primary);">${this.formatProductName(product)}</div>
+                                <div style="font-size: 24px;">${icons[category]}</div>
+                                <div style="font-weight: 600; color: var(--text-primary); text-transform: capitalize;">${category}</div>
                             </div>
                             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                                 <span style="color: var(--text-secondary);">Records:</span>
                                 <span style="font-weight: 600; color: var(--text-primary);">${data.count}</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="color: var(--text-secondary);">Quantity:</span>
+                                <span style="color: var(--text-secondary);">Total Items:</span>
                                 <span style="font-weight: 600; color: var(--text-primary);">${data.totalQuantity.toLocaleString()}</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span style="color: var(--text-secondary);">Avg Quality:</span>
-                                <span style="font-weight: 600; color: ${data.avgQuality >= 4 ? '#22c55e' : data.avgQuality >= 3 ? '#f59e0b' : '#ef4444'};">${data.avgQuality}/5.0</span>
-                            </div>
+                            ${data.totalWeight > 0 ? `
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: var(--text-secondary);">Total Weight:</span>
+                                    <span style="font-weight: 600; color: var(--text-primary);">${data.totalWeight.toLocaleString()} ${data.weightUnit}</span>
+                                </div>
+                            ` : ''}
                         </div>
                     `;
                 }).join('')}
@@ -591,6 +688,9 @@ updateStats() {
         document.getElementById('cancel-production')?.addEventListener('click', () => this.hideProductionModal());
         document.getElementById('close-production-modal')?.addEventListener('click', () => this.hideProductionModal());
         
+        // Product change handler
+        document.getElementById('production-product')?.addEventListener('change', () => this.handleProductChange());
+        
         // Sale checkbox handler
         document.getElementById('production-for-sale')?.addEventListener('change', (e) => {
             document.getElementById('sale-details').style.display = e.target.checked ? 'block' : 'none';
@@ -614,7 +714,9 @@ updateStats() {
         // Close modals when clicking outside
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('popout-modal')) {
-                this.hideAllModals();
+                this.hideProductionModal();
+                this.hideProductionReportModal();
+                this.hideTrendAnalysisModal();
             }
         });
 
@@ -625,7 +727,6 @@ updateStats() {
                 this.editProduction(recordId);
             }
             
-            // Fixed delete button with anti-double-click
             if (e.target.closest('.delete-production')) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -645,82 +746,102 @@ updateStats() {
         });
     },
 
-// MODAL CONTROL METHODS - CORRECTED VERSION
-showProductionModal() {
-    // Hide any open modals
-    document.querySelectorAll('.popout-modal').forEach(modal => {
-        modal.classList.add('hidden');
-    });
-    
-    // Show the production modal
-    document.getElementById('production-modal').classList.remove('hidden');
-    
-    // Check if we're editing or creating new
-    const productionId = document.getElementById('production-id').value;
-    
-    if (!productionId) {
-        // New record - set today's date using DateUtils
-        const today = window.DateUtils 
-            ? window.DateUtils.getToday() 
-            : new Date().toISOString().split('T')[0];
+    // PRODUCT HANDLING METHODS
+    handleProductChange() {
+        const productSelect = document.getElementById('production-product');
+        const selectedValue = productSelect.value;
         
-        console.log('📅 Setting today\'s date:', today);
-        document.getElementById('production-date').value = today;
-        document.getElementById('production-modal-title').textContent = 'New Production Record';
-        document.getElementById('delete-production').style.display = 'none';
-    } else {
-        // Editing - show delete button
-        document.getElementById('delete-production').style.display = 'block';
-        document.getElementById('production-modal-title').textContent = 'Edit Production Record';
-    }
-},
+        // Show/hide custom product name field
+        const customProductContainer = document.getElementById('custom-product-container');
+        customProductContainer.style.display = selectedValue === 'other' ? 'block' : 'none';
+        
+        // Show/hide animal quantity section
+        const animalProducts = ['broilers', 'layers', 'pork', 'beef', 'goat', 'lamb'];
+        const animalSection = document.getElementById('animal-quantity-section');
+        const standardSection = document.getElementById('standard-quantity-section');
+        
+        if (animalProducts.includes(selectedValue)) {
+            animalSection.style.display = 'block';
+            standardSection.style.display = 'none';
+            
+            // Set appropriate unit defaults
+            document.getElementById('production-unit').value = 'birds';
+            if (selectedValue === 'broilers' || selectedValue === 'layers') {
+                document.getElementById('production-unit').value = 'birds';
+            } else {
+                document.getElementById('production-unit').value = 'animals';
+            }
+        } else {
+            animalSection.style.display = 'none';
+            standardSection.style.display = 'block';
+            
+            // Set appropriate unit based on product type
+            const unitSelect = document.getElementById('production-unit');
+            if (selectedValue === 'eggs') {
+                unitSelect.value = 'pieces';
+            } else if (selectedValue === 'milk') {
+                unitSelect.value = 'liters';
+            } else if (['tomatoes', 'carrots', 'potatoes', 'onions'].includes(selectedValue)) {
+                unitSelect.value = 'kg';
+            } else if (selectedValue === 'honey') {
+                unitSelect.value = 'kg';
+            } else {
+                unitSelect.value = '';
+            }
+        }
+    },
 
-hideProductionModal() {
-    const modal = document.getElementById('production-modal');
-    if (modal) {
-        modal.classList.add('hidden');
-    }
-},
+    // MODAL CONTROL METHODS
+    showProductionModal() {
+        // Hide any open modals
+        document.querySelectorAll('.popout-modal').forEach(modal => {
+            modal.classList.add('hidden');
+        });
+        
+        // Show the production modal
+        document.getElementById('production-modal').classList.remove('hidden');
+        
+        // Reset custom product name
+        document.getElementById('custom-product-name').value = '';
+        document.getElementById('custom-product-container').style.display = 'none';
+        
+        // Reset animal quantity section
+        document.getElementById('animal-count').value = '';
+        document.getElementById('animal-weight').value = '';
+        document.getElementById('animal-weight-unit').value = 'kg';
+        
+        // Check if we're editing or creating new
+        const productionId = document.getElementById('production-id').value;
+        
+        if (!productionId) {
+            // New record - set today's date using DateUtils
+            const today = window.DateUtils ? window.DateUtils.getToday() : new Date().toISOString().split('T')[0];
+            
+            console.log('📅 Setting today\'s date in modal:', today);
+            document.getElementById('production-date').value = today;
+            document.getElementById('production-modal-title').textContent = 'New Production Record';
+            document.getElementById('delete-production').style.display = 'none';
+            
+            // Reset form
+            document.getElementById('production-form').reset();
+            this.handleProductChange(); // Initialize the correct sections
+        } else {
+            // Editing - show delete button
+            document.getElementById('delete-production').style.display = 'block';
+            document.getElementById('production-modal-title').textContent = 'Edit Production Record';
+        }
+    },
 
-showProductionReportModal() {
-    this.hideProductionModal();
-    this.hideProductionReportModal();
-    this.hideTrendAnalysisModal();
-    
-    document.getElementById('production-report-modal').classList.remove('hidden');
-},
+    hideProductionModal() {
+        document.getElementById('production-modal').classList.add('hidden');
+        document.getElementById('production-id').value = '';
+        document.getElementById('production-form').reset();
+    },
 
-hideProductionReportModal() {
-    const modal = document.getElementById('production-report-modal');
-    if (modal) {
-        modal.classList.add('hidden');
-    }
-},
-
-showTrendAnalysisModal() {
-    this.hideProductionModal();
-    this.hideProductionReportModal();
-    this.hideTrendAnalysisModal();
-    
-    document.getElementById('trend-analysis-modal').classList.remove('hidden');
-},
-
-hideTrendAnalysisModal() {
-    const modal = document.getElementById('trend-analysis-modal');
-    if (modal) {
-        modal.classList.add('hidden');
-    }
-},
-
-// Remove the hideAllModals() method or fix it:
-hideAllModals() {
-    // Directly hide each modal instead of calling methods
-    document.getElementById('production-modal')?.classList.add('hidden');
-    document.getElementById('production-report-modal')?.classList.add('hidden');
-    document.getElementById('trend-analysis-modal')?.classList.add('hidden');
-},
     showProductionReportModal() {
-        this.hideAllModals();
+        document.querySelectorAll('.popout-modal').forEach(modal => {
+            modal.classList.add('hidden');
+        });
         document.getElementById('production-report-modal').classList.remove('hidden');
     },
 
@@ -729,7 +850,9 @@ hideAllModals() {
     },
 
     showTrendAnalysisModal() {
-        this.hideAllModals();
+        document.querySelectorAll('.popout-modal').forEach(modal => {
+            modal.classList.add('hidden');
+        });
         document.getElementById('trend-analysis-modal').classList.remove('hidden');
     },
 
@@ -737,948 +860,573 @@ hideAllModals() {
         document.getElementById('trend-analysis-modal').classList.add('hidden');
     },
 
-    hideAllModals() {
-        this.hideProductionModal();
-        this.hideProductionReportModal();
-        this.hideTrendAnalysisModal();
+    // PRODUCTION CRUD METHODS
+    handleQuickProduction() {
+        const product = document.getElementById('quick-product').value;
+        const quantity = parseInt(document.getElementById('quick-quantity').value);
+        const unit = document.getElementById('quick-unit').value;
+        const quality = document.getElementById('quick-quality').value;
+
+        if (!product || !quantity || !quality) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+
+        // Get today's date using DateUtils
+        const today = window.DateUtils ? window.DateUtils.getToday() : new Date().toISOString().split('T')[0];
+        const storageDate = window.DateUtils ? window.DateUtils.toStorageFormat(today) : today;
+
+        console.log('📅 Quick production - Today:', today, 'Storage:', storageDate);
+
+        const productionData = {
+            id: Date.now(),
+            date: storageDate,
+            product: product,
+            quantity: quantity,
+            unit: unit,
+            quality: quality,
+            batch: '',
+            notes: 'Quick entry'
+        };
+
+        this.addProduction(productionData);
+        
+        // Reset form
+        document.getElementById('quick-production-form').reset();
+        this.showNotification('Production recorded successfully!', 'success');
     },
 
-    // PRODUCTION CRUD METHODS
-handleQuickProduction() {
-    const product = document.getElementById('quick-product').value;
-    const quantity = parseInt(document.getElementById('quick-quantity').value);
-    const unit = document.getElementById('quick-unit').value;
-    const quality = document.getElementById('quick-quality').value;
+    saveProduction() {
+        const form = document.getElementById('production-form');
+        if (!form) {
+            console.error('❌ Production form not found');
+            return;
+        }
 
-    if (!product || !quantity || !quality) {
-        this.showNotification('Please fill in all required fields', 'error');
-        return;
-    }
+        const productionId = document.getElementById('production-id').value;
+        const dateInput = document.getElementById('production-date').value;
+        const productSelect = document.getElementById('production-product').value;
+        const customProductName = document.getElementById('custom-product-name').value.trim();
+        const batch = document.getElementById('production-batch').value.trim();
+        const notes = document.getElementById('production-notes').value.trim();
+        const forSale = document.getElementById('production-for-sale').checked;
+        const salePrice = parseFloat(document.getElementById('sale-price').value) || 0;
+        const customer = document.getElementById('customer-name').value.trim();
 
-    // Get today's date using DateUtils
-    const today = window.DateUtils 
-        ? window.DateUtils.getToday() 
-        : new Date().toISOString().split('T')[0];
+        console.log('📅 Save - Raw date input:', dateInput);
 
-    const productionData = {
-        id: Date.now(),
-        date: today,
-        product: product,
-        quantity: quantity,
-        unit: unit,
-        quality: quality,
-        batch: '',
-        notes: 'Quick entry'
-    };
+        // Validate required fields
+        if (!dateInput || !productSelect) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
 
-    console.log('📅 Saving quick record with date:', today);
-    this.addProduction(productionData);
-    
-    // Reset form
-    document.getElementById('quick-production-form').reset();
-    this.showNotification('Production recorded successfully!', 'success');
-},
+        // For "Other" product, require custom name
+        if (productSelect === 'other' && !customProductName) {
+            this.showNotification('Please specify the product name for "Other" category', 'error');
+            return;
+        }
 
-   saveProduction() {
-    const form = document.getElementById('production-form');
-    if (!form) {
-        console.error('❌ Production form not found');
-        return;
-    }
+        // Determine product name
+        const product = productSelect === 'other' ? customProductName.toLowerCase().replace(/\s+/g, '-') : productSelect;
 
-    const productionId = document.getElementById('production-id').value;
-//const date = document.getElementById('production-date').value;
+        // Check if animal product for dual input
+        const animalProducts = ['broilers', 'layers', 'pork', 'beef', 'goat', 'lamb'];
+        let quantity, unit, weight, weightUnit;
 
-    const dateInput = document.getElementById('production-date').value;
-    console.log('📅 Raw date from input:', dateInput);
-    
-    // Convert input date to storage format
-    const storageDate = this.toStorageFormat(dateInput);
-    console.log('📅 Date for storage:', storageDate);
-    
-    const productionData = {
-        id: productionId ? parseInt(productionId) : Date.now(),
-        date: storageDate, // Use the converted date
-        // ... other fields ...
-        
-    console.log('📅 Date from form input:', date);
-    console.log('📅 Date from form input (raw):', document.getElementById('production-date').value);
-    
-    const product = document.getElementById('production-product').value;
-    const quantity = parseInt(document.getElementById('production-quantity').value);
-    const unit = document.getElementById('production-unit').value;
-    const quality = document.getElementById('production-quality').value;
-    const batch = document.getElementById('production-batch').value.trim();
-    const notes = document.getElementById('production-notes').value.trim();
-    const forSale = document.getElementById('production-for-sale').checked;
-    const salePrice = parseFloat(document.getElementById('sale-price').value) || 0;
-    const customer = document.getElementById('customer-name').value.trim();
-
-    if (!date || !product || !quantity || !unit || !quality) {
-        this.showNotification('Please fill in all required fields', 'error');
-        return;
-    }
-
-    if (quantity <= 0) {
-        this.showNotification('Quantity must be greater than 0', 'error');
-        return;
-    }
-
-    const productionData = {
-        id: productionId ? parseInt(productionId) : Date.now(),
-        date: date, // This should already be in YYYY-MM-DD format from DateUtils
-        product: product,
-        quantity: quantity,
-        unit: unit,
-        quality: quality,
-        batch: batch || '',
-        notes: notes || ''
-    };
-
-    console.log('💾 Saving production data:', productionData);
-
-    if (productionId) {
-        console.log('🔄 Updating existing record');
-        this.updateProduction(parseInt(productionId), productionData);
-    } else {
-        console.log('🆕 Creating new record');
-        this.addProduction(productionData);
-    }
-
-    if (forSale && salePrice > 0) {
-        this.createSalesRecord(productionData, { price: salePrice, customer: customer });
-    }
-
-    this.hideProductionModal();
-},
-    
-editProduction(recordId) {
-    console.log('✏️ Editing record ID:', recordId);
-    
-    const production = this.productionData.find(p => p.id == recordId);
-    
-    if (!production) {
-        console.error('❌ Production not found for ID:', recordId);
-        this.showNotification('Record not found', 'error');
-        return;
-    }
-
-    console.log('📋 Found record:', production);
-    console.log('📅 Original stored date:', production.date);
-    
-    // Populate form fields
-    document.getElementById('production-id').value = production.id;
-    
-    // Convert stored date to local date for input
-    const localDate = this.toLocalDateInput(production.date);
-    console.log('📅 Local date for input field:', localDate);
-    document.getElementById('production-date').value = localDate;
-        
-    // Populate form fields using DateUtils
-    document.getElementById('production-id').value = production.id;
-    
-    // Use DateUtils for date formatting
-    const formattedDate = window.DateUtils 
-        ? window.DateUtils.toInputFormat(production.date)
-        : production.date;
-    
-    console.log('📅 Formatted date for input:', formattedDate);
-    document.getElementById('production-date').value = formattedDate;
-    
-    document.getElementById('production-product').value = production.product;
-    document.getElementById('production-quantity').value = production.quantity;
-    document.getElementById('production-unit').value = production.unit;
-    document.getElementById('production-quality').value = production.quality;
-    document.getElementById('production-batch').value = production.batch || '';
-    document.getElementById('production-notes').value = production.notes || '';
-    document.getElementById('delete-production').style.display = 'block';
-    document.getElementById('production-modal-title').textContent = 'Edit Production Record';
-    
-    // Reset sale section
-    document.getElementById('production-for-sale').checked = false;
-    document.getElementById('sale-details').style.display = 'none';
-    
-    // Show the modal
-    this.showProductionModal();
-},
-    
-    updateProduction(productionId, productionData) {
-        const productionIndex = this.productionData.findIndex(p => p.id == productionId);
-        
-        if (productionIndex !== -1) {
-            const oldQuantity = this.productionData[productionIndex].quantity;
-            const newQuantity = productionData.quantity;
+        if (animalProducts.includes(productSelect)) {
+            // Get animal data
+            const animalCount = parseInt(document.getElementById('animal-count').value) || 0;
+            weight = parseFloat(document.getElementById('animal-weight').value) || 0;
+            weightUnit = document.getElementById('animal-weight-unit').value;
             
-            // Update production record
-            this.productionData[productionIndex] = {
-                ...this.productionData[productionIndex],
-                ...productionData
-            };
-            
-            this.saveData();
-            this.updateStats();
-            this.updateProductionTable();
-            this.updateProductSummary();
-            
-            // Update inventory if quantity changed
-            if (oldQuantity !== newQuantity && ['broilers', 'layers', 'pork', 'beef'].includes(productionData.product)) {
-                const quantityDiff = newQuantity - oldQuantity;
-                if (quantityDiff !== 0) {
-                    this.updateInventoryQuantity(productionId, quantityDiff);
-                }
+            if (animalCount === 0 || weight === 0) {
+                this.showNotification('Please enter both count and weight for animals', 'error');
+                return;
             }
             
-            this.showNotification('Production record updated successfully!', 'success');
+            quantity = animalCount;
+            unit = productSelect === 'broilers' || productSelect === 'layers' ? 'birds' : 'animals';
+        } else {
+            // Get standard quantity
+            quantity = parseInt(document.getElementById('production-quantity').value) || 0;
+            unit = document.getElementById('production-unit').value;
+            
+            if (quantity === 0 || !unit) {
+                this.showNotification('Please enter quantity and select unit', 'error');
+                return;
+            }
+        }
+
+        // Use DateUtils for consistent date handling
+        let storageDate;
+        if (window.DateUtils) {
+            storageDate = window.DateUtils.toStorageFormat(dateInput);
+            console.log('📅 Save - Using DateUtils:', dateInput, '->', storageDate);
+        } else {
+            storageDate = dateInput;
+        }
+
+        const productionData = {
+            id: productionId ? parseInt(productionId) : Date.now(),
+            date: storageDate,
+            product: product,
+            productCategory: productSelect,
+            quantity: quantity,
+            unit: unit,
+            quality: document.getElementById('production-quality').value,
+            batch: batch || '',
+            notes: notes || ''
+        };
+
+        // Add weight data for animals
+        if (weight && weightUnit) {
+            productionData.weight = weight;
+            productionData.weightUnit = weightUnit;
+        }
+
+        if (productionId) {
+            // Update existing record
+            const index = this.productionData.findIndex(record => record.id === parseInt(productionId));
+            if (index !== -1) {
+                this.productionData[index] = productionData;
+                this.showNotification('Production record updated!', 'success');
+            }
+        } else {
+            // Add new record
+            this.productionData.unshift(productionData);
+            this.showNotification('Production record added!', 'success');
+            
+            // Handle sale if marked for sale
+            if (forSale && salePrice > 0) {
+                this.createSaleRecord(productionData, salePrice, customer);
+            }
+        }
+
+        this.saveData();
+        this.updateStats();
+        this.hideProductionModal();
+        this.renderModule();
+    },
+
+    createSaleRecord(productionData, price, customer = '') {
+        console.log('💵 Creating sale record for production:', productionData);
+        
+        // Get today's date for sale
+        const saleDate = window.DateUtils ? 
+            window.DateUtils.getToday() : 
+            new Date().toISOString().split('T')[0];
+        
+        const saleRecord = {
+            id: Date.now(),
+            productionId: productionData.id,
+            date: saleDate,
+            product: productionData.product,
+            quantity: productionData.quantity,
+            unit: productionData.unit,
+            pricePerUnit: price,
+            totalPrice: productionData.quantity * price,
+            customer: customer || '',
+            status: 'completed',
+            notes: `Auto-generated from production record #${productionData.id}`
+        };
+
+        // Save to sales module if available
+        if (window.SalesModule && window.SalesModule.addSale) {
+            window.SalesModule.addSale(saleRecord);
+            this.showNotification(`Sale record created for $${saleRecord.totalPrice.toFixed(2)}!`, 'success');
+        } else {
+            // Store in local storage for later use
+            const salesData = JSON.parse(localStorage.getItem('farm-sales-data') || '[]');
+            salesData.push(saleRecord);
+            localStorage.setItem('farm-sales-data', JSON.stringify(salesData));
+            this.showNotification(`Sale record saved for later import!`, 'info');
         }
     },
 
-    deleteProduction() {
-        const productionId = document.getElementById('production-id').value;
+    editProduction(recordId) {
+        const record = this.productionData.find(r => r.id === parseInt(recordId));
+        if (!record) return;
+
+        this.currentRecordId = record.id;
         
+        // Convert date for input field using DateUtils
+        let inputDate;
+        if (window.DateUtils) {
+            inputDate = window.DateUtils.toInputFormat(record.date);
+            console.log('📅 Edit - Converting date for input:', record.date, '->', inputDate);
+        } else {
+            inputDate = record.date;
+        }
+
+        document.getElementById('production-id').value = record.id;
+        document.getElementById('production-date').value = inputDate;
+        
+        // Set product - handle custom "other" products
+        const productSelect = document.getElementById('production-product');
+        if (record.productCategory) {
+            productSelect.value = record.productCategory;
+        } else {
+            // Try to determine category from product name
+            const knownProducts = ['eggs', 'broilers', 'layers', 'milk', 'pork', 'beef', 'goat', 'lamb', 
+                                  'tomatoes', 'lettuce', 'carrots', 'potatoes', 'onions', 'cabbage', 
+                                  'peppers', 'cucumbers', 'spinach', 'beans', 'corn',
+                                  'apples', 'oranges', 'bananas', 'berries', 'mangoes', 'honey'];
+            
+            if (knownProducts.includes(record.product)) {
+                productSelect.value = record.product;
+            } else {
+                productSelect.value = 'other';
+                document.getElementById('custom-product-name').value = this.formatProductName(record.product);
+                document.getElementById('custom-product-container').style.display = 'block';
+            }
+        }
+        
+        // Trigger product change to show correct sections
+        this.handleProductChange();
+        
+        // Set quantity data
+        if (record.weight && record.weightUnit) {
+            // Animal product with weight
+            document.getElementById('animal-count').value = record.quantity;
+            document.getElementById('animal-weight').value = record.weight;
+            document.getElementById('animal-weight-unit').value = record.weightUnit;
+        } else {
+            // Standard product
+            document.getElementById('production-quantity').value = record.quantity;
+            document.getElementById('production-unit').value = record.unit;
+        }
+        
+        document.getElementById('production-quality').value = record.quality;
+        document.getElementById('production-batch').value = record.batch || '';
+        document.getElementById('production-notes').value = record.notes || '';
+        
+        this.showProductionModal();
+    },
+
+    deleteProduction() {
+        if (!this.currentRecordId) return;
+
         if (confirm('Are you sure you want to delete this production record?')) {
-            this.deleteProductionRecord(productionId);
+            this.deleteProductionRecord(this.currentRecordId);
             this.hideProductionModal();
         }
     },
 
-    deleteProductionRecord(productionId) {
-        // First check if record exists
-        const recordIndex = this.productionData.findIndex(p => p.id == productionId);
-        
-        if (recordIndex === -1) {
-            this.showNotification('Record not found or already deleted', 'error');
-            return;
-        }
-        
-        const record = this.productionData[recordIndex];
-        
-        if (confirm('Are you sure you want to delete this production record? This will also remove it from inventory.')) {
-            // Remove from inventory if it was linked
-            if (['broilers', 'layers', 'pork', 'beef'].includes(record.product)) {
-                this.removeFromInventory(productionId);
-            }
-            
-            // Remove from production data
-            this.productionData = this.productionData.filter(p => p.id != productionId);
-            
-            // Save immediately
+    deleteProductionRecord(recordId) {
+        const index = this.productionData.findIndex(r => r.id === parseInt(recordId));
+        if (index !== -1) {
+            this.productionData.splice(index, 1);
             this.saveData();
-            
-            // Update UI components
             this.updateStats();
-            this.updateProductionTable();
-            this.updateProductSummary();
-            
-            this.showNotification('Production record deleted successfully', 'success');
+            this.renderModule();
+            this.showNotification('Production record deleted', 'success');
         }
     },
 
-    // Add these methods to your ProductionModule
-
-// CORRECTED: Get today's date in YOUR local timezone (GMT-4)
-getLocalToday() {
-    const now = new Date();
-    
-    // For your GMT-4 timezone, we need to account for the offset
-    // When it's midnight UTC, it's 8 PM previous day in Bolivia
-    // So we need to use LOCAL methods, not UTC methods
-    
-    const localYear = now.getFullYear();
-    const localMonth = now.getMonth() + 1; // 0-indexed
-    const localDay = now.getDate();
-    
-    console.log('📅 getLocalToday():', {
-        now: now.toString(),
-        localYear, localMonth, localDay,
-        getUTCDate: now.getUTCDate(),
-        getDate: now.getDate(),
-        timezoneOffset: now.getTimezoneOffset()
-    });
-    
-    return `${localYear}-${String(localMonth).padStart(2, '0')}-${String(localDay).padStart(2, '0')}`;
-},
-
-// CORRECTED: Convert date string to local date for input field
-toLocalDateInput(dateString) {
-    if (!dateString) return '';
-    
-    console.log('📅 toLocalDateInput input:', dateString);
-    
-    // If it's already in YYYY-MM-DD format from storage
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-        // Parse it as LOCAL date (midnight in local timezone)
-        const date = new Date(dateString + 'T00:00:00');
-        const localYear = date.getFullYear();
-        const localMonth = date.getMonth() + 1;
-        const localDay = date.getDate();
-        
-        const result = `${localYear}-${String(localMonth).padStart(2, '0')}-${String(localDay).padStart(2, '0')}`;
-        console.log('📅 toLocalDateInput result:', result, {
-            original: dateString,
-            dateObj: date.toString(),
-            getDate: date.getDate(),
-            getUTCDate: date.getUTCDate()
-        });
-        
-        return result;
-    }
-    
-    try {
-        const date = new Date(dateString);
-        const localYear = date.getFullYear();
-        const localMonth = date.getMonth() + 1;
-        const localDay = date.getDate();
-        
-        return `${localYear}-${String(localMonth).padStart(2, '0')}-${String(localDay).padStart(2, '0')}`;
-    } catch (e) {
-        console.error('Date conversion error:', e);
-        return '';
-    }
-},
-
-// For saving: Convert input date to storage format
-toStorageFormat(dateString) {
-    if (!dateString) return '';
-    
-    console.log('📅 toStorageFormat input:', dateString);
-    
-    // Input is in YYYY-MM-DD (local date)
-    // We need to store it as YYYY-MM-DD but interpreted as LOCAL date
-    // When we create a Date object from YYYY-MM-DD, JavaScript assumes UTC
-    // So we need to adjust for timezone
-    
-    const date = new Date(dateString + 'T00:00:00');
-    
-    // Adjust for timezone offset (add offset minutes to get UTC midnight)
-    const offsetMinutes = date.getTimezoneOffset();
-    const adjustedDate = new Date(date.getTime() + (offsetMinutes * 60000));
-    
-    const year = adjustedDate.getUTCFullYear();
-    const month = String(adjustedDate.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(adjustedDate.getUTCDate()).padStart(2, '0');
-    
-    const result = `${year}-${month}-${day}`;
-    
-    console.log('📅 toStorageFormat result:', result, {
-        input: dateString,
-        dateObj: date.toString(),
-        adjustedDate: adjustedDate.toString(),
-        offsetMinutes,
-        getDate: date.getDate(),
-        getUTCDate: date.getUTCDate()
-    });
-    
-    return result;
-},
-
-    
-
-    // INVENTORY LINKING METHODS
-    linkToInventory(productionRecord) {
-        // For broilers, layers, and other animals that become carcasses
-        if (['broilers', 'layers', 'pork', 'beef'].includes(productionRecord.product)) {
-            const inventoryItem = {
-                name: this.formatProductName(productionRecord.product) + ' Carcasses',
-                category: 'meat',
-                currentStock: productionRecord.quantity,
-                minStock: 0,
-                unit: productionRecord.unit === 'birds' ? 'pieces' : productionRecord.unit,
-                unitCost: this.calculateCost(productionRecord),
-                lastUpdated: new Date().toISOString(),
-                source: 'production',
-                productionId: productionRecord.id,
-                quality: productionRecord.quality
-            };
-            
-            this.updateInventory(inventoryItem);
-        }
+    addProduction(productionData) {
+        this.productionData.unshift(productionData);
+        this.saveData();
+        this.updateStats();
+        this.renderModule();
     },
 
-    updateInventory(inventoryItem) {
-        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
-        
-        // Check if item already exists
-        const existingIndex = inventory.findIndex(item => 
-            item.name === inventoryItem.name && item.source === 'production'
-        );
-        
-        if (existingIndex !== -1) {
-            // Update existing item
-            inventory[existingIndex].currentStock += inventoryItem.currentStock;
-            inventory[existingIndex].lastUpdated = inventoryItem.lastUpdated;
-        } else {
-            // Add new item
-            inventory.push(inventoryItem);
-        }
-        
-        localStorage.setItem('farm-inventory', JSON.stringify(inventory));
-        
-        console.log('✅ Inventory updated with production:', inventoryItem);
-    },
-
-    calculateCost(productionRecord) {
-        // Simple cost calculation
-        const baseCosts = {
-            'broilers': 5,    // $5 per bird
-            'layers': 8,      // $8 per bird
-            'pork': 50,       // $50 per pig
-            'beef': 300       // $300 per cow
-        };
-        
-        return baseCosts[productionRecord.product] || 10;
-    },
-
-    updateInventoryQuantity(productionId, quantityDiff) {
-        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
-        const inventoryItem = inventory.find(item => 
-            item.productionId == productionId && item.source === 'production'
-        );
-        
-        if (inventoryItem) {
-            inventoryItem.currentStock += quantityDiff;
-            inventoryItem.lastUpdated = new Date().toISOString();
-            
-            if (inventoryItem.currentStock <= 0) {
-                // Remove from inventory if stock is 0 or negative
-                const itemIndex = inventory.findIndex(item => 
-                    item.productionId == productionId && item.source === 'production'
-                );
-                inventory.splice(itemIndex, 1);
-            }
-            
-            localStorage.setItem('farm-inventory', JSON.stringify(inventory));
-            console.log('✅ Inventory quantity updated:', quantityDiff);
-        }
-    },
-
-    removeFromInventory(productionId) {
-        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
-        const updatedInventory = inventory.filter(item => 
-            item.productionId != productionId
-        );
-        
-        if (inventory.length !== updatedInventory.length) {
-            localStorage.setItem('farm-inventory', JSON.stringify(updatedInventory));
-            console.log('✅ Removed from inventory:', productionId);
-        }
-    },
-
-    // SALES INTEGRATION METHODS
-    createSalesRecord(productionData, saleDetails) {
-        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
-        
-        const saleRecord = {
-            id: Date.now(),
-            date: new Date().toISOString().split('T')[0],
-            items: [{
-                product: this.formatProductName(productionData.product),
-                quantity: productionData.quantity,
-                unit: productionData.unit === 'birds' ? 'pieces' : productionData.unit,
-                price: saleDetails.price,
-                total: productionData.quantity * saleDetails.price
-            }],
-            totalAmount: productionData.quantity * saleDetails.price,
-            customer: saleDetails.customer || 'Direct Sale',
-            status: 'completed',
-            paymentMethod: 'cash',
-            notes: `From production batch ${productionData.batch || productionData.id}`,
-            productionId: productionData.id
-        };
-        
-        sales.push(saleRecord);
-        localStorage.setItem('farm-sales', JSON.stringify(sales));
-        
-        console.log('✅ Sales record created:', saleRecord);
-        
-        // Update inventory by subtracting sold amount
-        this.updateInventoryAfterSale(productionData, saleRecord.id);
-    },
-
-    updateInventoryAfterSale(productionData, saleId) {
-        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
-        const inventoryItem = inventory.find(item => 
-            item.productionId == productionData.id && item.source === 'production'
-        );
-        
-        if (inventoryItem) {
-            inventoryItem.currentStock -= productionData.quantity;
-            inventoryItem.lastUpdated = new Date().toISOString();
-            
-            if (inventoryItem.currentStock <= 0) {
-                // Remove from inventory if stock is depleted
-                const itemIndex = inventory.findIndex(item => 
-                    item.productionId == productionData.id && item.source === 'production'
-                );
-                inventory.splice(itemIndex, 1);
-            }
-            
-            localStorage.setItem('farm-inventory', JSON.stringify(inventory));
-            console.log('✅ Inventory updated after sale:', inventoryItem);
-        }
-    },
-
-    // REPORT METHODS
+    // REPORT GENERATION METHODS
     generateProductionReport() {
-        const stats = this.calculateDetailedStats();
-        
-        let report = '<div class="report-content">';
-        report += '<h4 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">📊 Production Overview Report</h4>';
-        
-        // Summary Section
-        report += `<div style="margin-bottom: 24px;">
-            <h5 style="color: var(--text-primary); margin-bottom: 12px;">📈 PRODUCTION SUMMARY:</h5>
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px;">
-                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                    <div style="font-size: 12px; color: var(--text-secondary);">Total Records</div>
-                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${stats.totalRecords}</div>
-                </div>
-                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                    <div style="font-size: 12px; color: var(--text-secondary);">Today\'s Eggs</div>
-                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${stats.todayEggs}</div>
-                </div>
-                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                    <div style="font-size: 12px; color: var(--text-secondary);">Weekly Birds</div>
-                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${stats.weekBirds}</div>
-                </div>
-                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                    <div style="font-size: 12px; color: var(--text-secondary);">Avg Quality</div>
-                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${stats.avgQuality}/5.0</div>
-                </div>
-            </div>
-        </div>`;
-        
-        // Product Distribution
-        report += `<div style="margin-bottom: 24px;">
-            <h5 style="color: var(--text-primary); margin-bottom: 12px;">🗂️ PRODUCT DISTRIBUTION:</h5>
-            <div style="display: flex; flex-direction: column; gap: 8px;">`;
-        
-        Object.entries(stats.productDistribution).forEach(([product, quantity]) => {
-            const percentage = stats.totalQuantity > 0 ? Math.round((quantity / stats.totalQuantity) * 100) : 0;
-            report += `<div style="padding: 12px; background: var(--glass-bg); border-radius: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 18px;">${this.getProductIcon(product)}</span>
-                        <span style="font-weight: 600; color: var(--text-primary);">${this.formatProductName(product)}</span>
-                    </div>
-                    <span style="font-weight: 600; color: var(--text-primary);">${quantity.toLocaleString()}</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="flex-grow: 1; height: 8px; background: var(--glass-border); border-radius: 4px; overflow: hidden;">
-                        <div style="width: ${percentage}%; height: 100%; background: var(--primary-color); border-radius: 4px;"></div>
-                    </div>
-                    <span style="font-size: 12px; color: var(--text-secondary);">${percentage}%</span>
-                </div>
-            </div>`;
-        });
-        report += '</div></div>';
-        
-        // Quality Distribution
-        report += `<div style="margin-bottom: 20px;">
-            <h5 style="color: var(--text-primary); margin-bottom: 12px;">⭐ QUALITY DISTRIBUTION:</h5>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">`;
-        
-        Object.entries(stats.qualityDistribution).forEach(([quality, count]) => {
-            const percentage = stats.totalRecords > 0 ? Math.round((count / stats.totalRecords) * 100) : 0;
-            const qualityColor = quality === 'excellent' ? '#10b981' :
-                               quality === 'grade-a' ? '#22c55e' :
-                               quality === 'grade-b' ? '#f59e0b' :
-                               quality === 'standard' ? '#3b82f6' : '#ef4444';
-            
-            report += `<div style="padding: 12px; background: ${qualityColor}10; border-radius: 8px; border-left: 4px solid ${qualityColor};">
-                <div style="font-weight: 600; color: ${qualityColor}; margin-bottom: 4px;">${this.formatQuality(quality)}</div>
-                <div style="font-size: 14px; color: var(--text-primary);">${count} records</div>
-                <div style="font-size: 12px; color: var(--text-secondary);">${percentage}% of total</div>
-            </div>`;
-        });
-        report += '</div></div>';
-        
-        // Recent Production Activity
-        const recentProduction = this.productionData.slice(0, 5);
-        if (recentProduction.length > 0) {
-            report += `<div style="margin-bottom: 20px;">
-                <h5 style="color: var(--text-primary); margin-bottom: 12px;">📋 RECENT ACTIVITY (Last 5):</h5>
-                <div style="display: flex; flex-direction: column; gap: 8px;">`;
-            
-            recentProduction.forEach(record => {
-                report += `<div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; border-left: 4px solid var(--primary-color);">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <div style="font-weight: 600; color: var(--text-primary);">${this.formatProductName(record.product)}</div>
-                            <div style="font-size: 12px; color: var(--text-secondary);">${this.formatDate(record.date)} • ${record.batch || 'No batch'}</div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-weight: 600; color: var(--text-primary);">${record.quantity} ${record.unit}</div>
-                            <div style="font-size: 12px; color: var(--text-secondary);">${this.formatQuality(record.quality)}</div>
-                        </div>
-                    </div>
-                </div>`;
-            });
-            report += '</div></div>';
-        }
-        
-        report += '</div>';
-
-        document.getElementById('production-report-content').innerHTML = report;
-        document.getElementById('production-report-title').textContent = 'Production Report';
+        const reportContent = this.getProductionReportContent();
+        document.getElementById('production-report-content').innerHTML = reportContent;
         this.showProductionReportModal();
     },
 
-    generateTrendAnalysis() {
-        const weeklyTrends = this.calculateWeeklyTrends();
+    getProductionReportContent() {
+        const today = window.DateUtils ? window.DateUtils.getToday() : new Date().toISOString().split('T')[0];
+        const startOfMonth = window.DateUtils ? 
+            window.DateUtils.getFirstDayOfMonth(today) : 
+            (() => {
+                const d = new Date();
+                d.setDate(1);
+                return d.toISOString().split('T')[0];
+            })();
         
-        let analysis = '<div class="report-content">';
-        analysis += '<h4 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">📈 Production Trend Analysis</h4>';
-        
-        if (weeklyTrends.length === 0) {
-            analysis += `<div style="text-align: center; padding: 40px 20px;">
-                <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                <h5 style="color: #374151; margin-bottom: 8px;">Not enough data</h5>
-                <p style="color: var(--text-secondary);">Need more production records to analyze trends</p>
-            </div>`;
-        } else {
-            // Weekly Trends
-            analysis += `<div style="margin-bottom: 24px;">
-                <h5 style="color: var(--text-primary); margin-bottom: 12px;">📅 WEEKLY PRODUCTION TRENDS:</h5>
-                <div style="display: flex; flex-direction: column; gap: 12px;">`;
+        // Group data by category
+        const categories = {
+            'Poultry': ['eggs', 'broilers', 'layers'],
+            'Livestock': ['pork', 'beef', 'goat', 'lamb', 'milk'],
+            'Vegetables': ['tomatoes', 'lettuce', 'carrots', 'potatoes', 'onions', 'cabbage', 'peppers', 'cucumbers', 'spinach', 'beans', 'corn'],
+            'Fruits': ['apples', 'oranges', 'bananas', 'berries', 'mangoes'],
+            'Other': ['honey']
+        };
+
+        const monthlyData = this.productionData.filter(record => {
+            const recordDate = window.DateUtils ? window.DateUtils.toInputFormat(record.date) : record.date;
+            return recordDate >= startOfMonth;
+        });
+
+        const categoryStats = {};
+        Object.keys(categories).forEach(category => {
+            const categoryProducts = categories[category];
+            const categoryRecords = monthlyData.filter(record => categoryProducts.includes(record.product));
             
-            weeklyTrends.forEach(week => {
-                const eggsGrowth = week.eggs > 0 ? '📈' : '📉';
-                const birdsGrowth = week.birds > 0 ? '📈' : '📉';
+            categoryStats[category] = {
+                totalItems: categoryRecords.reduce((sum, record) => sum + record.quantity, 0),
+                totalWeight: categoryRecords.reduce((sum, record) => sum + (record.weight || 0), 0),
+                weightUnit: categoryRecords.find(record => record.weightUnit)?.weightUnit || 'kg',
+                recordCount: categoryRecords.length
+            };
+        });
+
+        return `
+            <div style="padding: 20px; font-family: system-ui, -apple-system, sans-serif;">
+                <h1 style="color: var(--text-primary); margin-bottom: 4px;">Farm Production Report</h1>
+                <p style="color: var(--text-secondary); margin-bottom: 24px;">
+                    Generated on ${this.formatDate(today)} | Records: ${this.productionData.length}
+                </p>
                 
-                analysis += `<div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 12px; text-align: center;">${week.week}</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        <div style="text-align: center;">
-                            <div style="font-size: 24px; margin-bottom: 4px;">🥚</div>
-                            <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${week.eggs}</div>
-                            <div style="font-size: 14px; color: var(--text-secondary);">Eggs ${eggsGrowth}</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 24px; margin-bottom: 4px;">🐔</div>
-                            <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${week.birds}</div>
-                            <div style="font-size: 14px; color: var(--text-secondary);">Birds ${birdsGrowth}</div>
-                        </div>
-                    </div>
-                </div>`;
-            });
-            analysis += '</div></div>';
-            
-            // Recommendations
-            const latestWeek = weeklyTrends[weeklyTrends.length - 1];
-            const previousWeek = weeklyTrends.length > 1 ? weeklyTrends[weeklyTrends.length - 2] : null;
-            
-            if (previousWeek) {
-                const eggChange = ((latestWeek.eggs - previousWeek.eggs) / previousWeek.eggs * 100).toFixed(1);
-                const birdChange = ((latestWeek.birds - previousWeek.birds) / previousWeek.birds * 100).toFixed(1);
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 32px;">
+                    ${Object.entries(categoryStats).filter(([category, stats]) => stats.recordCount > 0).map(([category, stats]) => {
+                        const icons = {
+                            'Poultry': '🐔',
+                            'Livestock': '🐄',
+                            'Vegetables': '🥦',
+                            'Fruits': '🍎',
+                            'Other': '📦'
+                        };
+                        
+                        return `
+                            <div style="background: var(--glass-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--glass-border);">
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                                    <div style="font-size: 32px;">${icons[category]}</div>
+                                    <div>
+                                        <h3 style="color: var(--text-primary); margin: 0; font-size: 18px;">${category}</h3>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">${stats.recordCount} records</div>
+                                    </div>
+                                </div>
+                                <div style="font-size: 24px; font-weight: bold; color: var(--primary); margin-bottom: 8px;">
+                                    ${stats.totalItems.toLocaleString()} items
+                                </div>
+                                ${stats.totalWeight > 0 ? `
+                                    <div style="color: var(--text-secondary); font-size: 14px;">
+                                        ${stats.totalWeight.toLocaleString()} ${stats.weightUnit} total weight
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
                 
-                analysis += `<div style="margin-bottom: 20px;">
-                    <h5 style="color: var(--text-primary); margin-bottom: 12px;">💡 INSIGHTS & RECOMMENDATIONS:</h5>
-                    <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border-left: 4px solid var(--primary-color);">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px;">
-                            <div>
-                                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">🥚 Egg Production</div>
-                                <div style="color: ${eggChange >= 0 ? '#22c55e' : '#ef4444'}; font-weight: 600;">
-                                    ${eggChange >= 0 ? '+' : ''}${eggChange}%
-                                </div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">
-                                    ${eggChange >= 0 ? 'Increase from last week' : 'Decrease from last week'}
-                                </div>
-                            </div>
-                            <div>
-                                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">🐔 Bird Production</div>
-                                <div style="color: ${birdChange >= 0 ? '#22c55e' : '#ef4444'}; font-weight: 600;">
-                                    ${birdChange >= 0 ? '+' : ''}${birdChange}%
-                                </div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">
-                                    ${birdChange >= 0 ? 'Increase from last week' : 'Decrease from last week'}
-                                </div>
-                            </div>
-                        </div>
-                        ${eggChange < 0 ? '<div style="color: #ef4444; font-size: 14px; margin-top: 8px;">⚠️ Consider reviewing feed quality and hen health for egg production</div>' : ''}
-                        ${birdChange < 0 ? '<div style="color: #ef4444; font-size: 14px; margin-top: 8px;">⚠️ Review bird health and husbandry practices for bird production</div>' : ''}
-                        ${eggChange > 10 || birdChange > 10 ? '<div style="color: #22c55e; font-size: 14px; margin-top: 8px;">✅ Excellent growth! Maintain current practices</div>' : ''}
-                    </div>
-                </div>`;
-            }
-        }
-        
-        analysis += '</div>';
-
-        document.getElementById('trend-analysis-content').innerHTML = analysis;
-        document.getElementById('trend-analysis-title').textContent = 'Production Trend Analysis';
-        this.showTrendAnalysisModal();
+                <h3 style="color: var(--text-primary); margin-bottom: 16px;">📊 Detailed Production Records</h3>
+                <div style="overflow-x: auto; margin-bottom: 32px;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--glass-border);">
+                                <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Date</th>
+                                <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Product</th>
+                                <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Quantity</th>
+                                <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Weight</th>
+                                <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Quality</th>
+                                <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Batch</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${monthlyData.map(record => {
+                                const qualityClass = this.getQualityColor(record.quality);
+                                return `
+                                    <tr style="border-bottom: 1px solid var(--glass-border);">
+                                        <td style="padding: 12px; color: var(--text-primary);">${this.formatDate(record.date)}</td>
+                                        <td style="padding: 12px; color: var(--text-primary);">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <span style="font-size: 18px;">${this.getProductIcon(record.product)}</span>
+                                                <span>${this.getProductDisplayName(record)}</span>
+                                            </div>
+                                        </td>
+                                        <td style="padding: 12px; color: var(--text-primary);">
+                                            ${record.quantity.toLocaleString()} ${record.unit}
+                                        </td>
+                                        <td style="padding: 12px; color: var(--text-primary);">
+                                            ${record.weight ? `${record.weight} ${record.weightUnit}` : '-'}
+                                        </td>
+                                        <td style="padding: 12px;">
+                                            <span style="padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; 
+                                                background: ${qualityClass}20; color: ${qualityClass};">
+                                                ${this.formatQuality(record.quality)}
+                                            </span>
+                                        </td>
+                                        <td style="padding: 12px; color: var(--text-secondary);">${record.batch || '-'}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
     },
 
-    printProductionReport() {
-        this.printReport('production-report-content', 'production-report-title');
-    },
-
-    printTrendAnalysis() {
-        this.printReport('trend-analysis-content', 'trend-analysis-title');
-    },
-
-    printReport(contentId, titleId) {
-        const reportContent = document.getElementById(contentId).innerHTML;
-        const reportTitle = document.getElementById(titleId).textContent;
-        
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-            <html>
-                <head>
-                    <title>${reportTitle}</title>
-                    <style>
-                        body { 
-                            font-family: Arial, sans-serif; 
-                            margin: 20px; 
-                            color: #1f2937;
-                            line-height: 1.6;
-                        }
-                        .report-content { 
-                            max-width: 800px; 
-                            margin: 0 auto;
-                        }
-                        h4 { 
-                            color: #1f2937; 
-                            border-bottom: 2px solid #3b82f6; 
-                            padding-bottom: 10px; 
-                            margin-bottom: 20px;
-                        }
-                        h5 { 
-                            color: #374151; 
-                            margin: 20px 0 10px 0;
-                        }
-                        .stats-grid { 
-                            display: grid; 
-                            grid-template-columns: repeat(4, 1fr); 
-                            gap: 15px; 
-                            margin: 15px 0; 
-                        }
-                        .stat-item { 
-                            padding: 10px; 
-                            background: #f8f9fa; 
-                            border-radius: 5px; 
-                            text-align: center; 
-                        }
-                        @media print {
-                            body { margin: 0.5in; }
-                            .no-print { display: none; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <h1>${reportTitle}</h1>
-                    <div style="color: #6b7280; margin-bottom: 20px;">Generated on: ${new Date().toLocaleDateString()}</div>
-                    <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
-                    ${reportContent}
-                    <div class="no-print" style="margin-top: 20px; text-align: center; font-size: 12px; color: #666;">
-                        Printed on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
-                    </div>
-                </body>
-            </html>
-        `);
-        printWindow.document.close();
-        printWindow.print();
-    },
-
+    // EXPORT FUNCTIONALITY
     exportProduction() {
-        const csv = this.convertToCSV(this.productionData);
-        const blob = new Blob([csv], { type: 'text/csv' });
+        const dataStr = JSON.stringify(this.productionData, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
         
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `production-export-${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
+        const exportFileName = `farm-production-${window.DateUtils ? window.DateUtils.getToday() : new Date().toISOString().split('T')[0]}.json`;
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileName);
+        linkElement.click();
         
         this.showNotification('Production data exported successfully!', 'success');
     },
 
-    calculateDetailedStats() {
-        const today = new Date().toISOString().split('T')[0];
-        
-        const todayEggs = this.productionData
-            .filter(record => record.date === today && record.product === 'eggs')
-            .reduce((sum, record) => sum + record.quantity, 0);
-
-        const last7Days = new Date();
-        last7Days.setDate(last7Days.getDate() - 7);
-        const last7DaysStr = last7Days.toISOString().split('T')[0];
-        
-        const weekBirds = this.productionData
-            .filter(record => record.date >= last7DaysStr && 
-                           (record.product === 'broilers' || record.product === 'layers'))
-            .reduce((sum, record) => sum + record.quantity, 0);
-
-        const productDistribution = {};
-        this.productionData.forEach(record => {
-            productDistribution[record.product] = (productDistribution[record.product] || 0) + record.quantity;
-        });
-
-        const qualityDistribution = {};
-        this.productionData.forEach(record => {
-            qualityDistribution[record.quality] = (qualityDistribution[record.quality] || 0) + 1;
-        });
-
-        const qualityScores = {
-            'excellent': 5, 'grade-a': 4, 'grade-b': 3, 'standard': 2, 'rejects': 1
-        };
-        const avgQuality = this.productionData.length > 0 
-            ? (this.productionData.reduce((sum, record) => sum + (qualityScores[record.quality] || 3), 0) / this.productionData.length).toFixed(1)
-            : '0.0';
-
-        const totalQuantity = this.productionData.reduce((sum, record) => sum + record.quantity, 0);
-
-        return {
-            totalRecords: this.productionData.length,
-            totalQuantity: totalQuantity,
-            todayEggs,
-            weekBirds,
-            avgQuality,
-            productDistribution,
-            qualityDistribution
-        };
-    },
-
-    calculateWeeklyTrends() {
-        const weeks = [];
-        for (let i = 3; i >= 0; i--) {
-            const startDate = new Date();
-            startDate.setDate(startDate.getDate() - (i * 7));
-            const endDate = new Date(startDate);
-            endDate.setDate(endDate.getDate() + 6);
-            
-            const weekStr = this.getWeekLabel(startDate);
-            const weekProduction = this.productionData.filter(record => {
-                const recordDate = new Date(record.date);
-                return recordDate >= startDate && recordDate <= endDate;
-            });
-
-            const eggs = weekProduction
-                .filter(record => record.product === 'eggs')
-                .reduce((sum, record) => sum + record.quantity, 0);
-
-            const birds = weekProduction
-                .filter(record => record.product === 'broilers' || record.product === 'layers')
-                .reduce((sum, record) => sum + record.quantity, 0);
-
-            weeks.push({ week: weekStr, eggs, birds });
-        }
-        return weeks;
-    },
-
-    getWeekLabel(date) {
-        const start = new Date(date);
-        const end = new Date(date);
-        end.setDate(end.getDate() + 6);
-        return `${start.getDate()} ${start.toLocaleString('default', { month: 'short' })} - ${end.getDate()} ${end.toLocaleString('default', { month: 'short' })}`;
-    },
-
-    updateProductionTable() {
-        const periodFilter = document.getElementById('production-filter');
-        const filter = periodFilter ? periodFilter.value : 'all';
-        document.getElementById('production-table').innerHTML = this.renderProductionTable(filter);
-    },
-
-    updateProductSummary() {
-        document.getElementById('product-summary').innerHTML = this.renderProductSummary();
-    },
-
-    convertToCSV(production) {
-        const headers = ['Date', 'Product', 'Quantity', 'Unit', 'Quality', 'Batch', 'Notes'];
-        const rows = production.map(record => [
-            record.date,
-            this.formatProductName(record.product),
-            record.quantity,
-            record.unit,
-            this.formatQuality(record.quality),
-            record.batch || '',
-            record.notes || ''
-        ]);
-        
-        return [headers, ...rows].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
-    },
-
     // UTILITY METHODS
+    getProductDisplayName(record) {
+        if (record.productCategory === 'other' || !['eggs', 'broilers', 'layers', 'milk', 'pork', 'beef', 
+            'tomatoes', 'lettuce', 'carrots', 'potatoes', 'onions', 'cabbage', 'peppers', 'cucumbers', 
+            'spinach', 'beans', 'corn', 'apples', 'oranges', 'bananas', 'berries', 'mangoes', 'honey', 
+            'goat', 'lamb'].includes(record.product)) {
+            // Custom product or unknown - format nicely
+            return record.product.split('-').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+        }
+        return this.formatProductName(record.product);
+    },
+
+    formatDate(dateString) {
+        if (window.DateUtils) {
+            return window.DateUtils.formatDate(dateString);
+        }
+        
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+        });
+    },
+
     getProductIcon(product) {
         const icons = {
-            'eggs': '🥚', 'broilers': '🐔', 'layers': '🐓', 'pork': '🐖',
-            'beef': '🐄', 'milk': '🥛', 'other': '📦'
+            'eggs': '🥚',
+            'broilers': '🐔',
+            'layers': '🐓',
+            'milk': '🥛',
+            'pork': '🐖',
+            'beef': '🐄',
+            'goat': '🐐',
+            'lamb': '🐑',
+            'tomatoes': '🍅',
+            'lettuce': '🥬',
+            'carrots': '🥕',
+            'potatoes': '🥔',
+            'onions': '🧅',
+            'cabbage': '🥬',
+            'peppers': '🫑',
+            'cucumbers': '🥒',
+            'spinach': '🥬',
+            'beans': '🫘',
+            'corn': '🌽',
+            'apples': '🍎',
+            'oranges': '🍊',
+            'bananas': '🍌',
+            'berries': '🫐',
+            'mangoes': '🥭',
+            'honey': '🍯'
         };
+        
+        // Default icons for product categories
+        if (product.includes('tomato')) return '🍅';
+        if (product.includes('lettuce') || product.includes('cabbage') || product.includes('spinach')) return '🥬';
+        if (product.includes('carrot')) return '🥕';
+        if (product.includes('potato')) return '🥔';
+        if (product.includes('onion')) return '🧅';
+        if (product.includes('pepper')) return '🫑';
+        if (product.includes('cucumber')) return '🥒';
+        if (product.includes('bean')) return '🫘';
+        if (product.includes('corn')) return '🌽';
+        if (product.includes('apple')) return '🍎';
+        if (product.includes('orange')) return '🍊';
+        if (product.includes('banana')) return '🍌';
+        if (product.includes('berry')) return '🫐';
+        if (product.includes('mango')) return '🥭';
+        
         return icons[product] || '📦';
     },
 
     formatProductName(product) {
         const names = {
-            'eggs': 'Eggs', 'broilers': 'Broilers', 'layers': 'Layers',
-            'pork': 'Pork', 'beef': 'Beef', 'milk': 'Milk', 'other': 'Other'
+            'eggs': 'Eggs',
+            'broilers': 'Broilers',
+            'layers': 'Layers',
+            'milk': 'Milk',
+            'pork': 'Pork',
+            'beef': 'Beef',
+            'goat': 'Goat',
+            'lamb': 'Lamb',
+            'tomatoes': 'Tomatoes',
+            'lettuce': 'Lettuce',
+            'carrots': 'Carrots',
+            'potatoes': 'Potatoes',
+            'onions': 'Onions',
+            'cabbage': 'Cabbage',
+            'peppers': 'Peppers',
+            'cucumbers': 'Cucumbers',
+            'spinach': 'Spinach',
+            'beans': 'Beans',
+            'corn': 'Corn',
+            'apples': 'Apples',
+            'oranges': 'Oranges',
+            'bananas': 'Bananas',
+            'berries': 'Berries',
+            'mangoes': 'Mangoes',
+            'honey': 'Honey'
         };
-        return names[product] || product;
+        
+        if (names[product]) {
+            return names[product];
+        }
+        
+        // Format custom product names
+        return product.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
     },
 
     formatQuality(quality) {
-        const qualities = {
-            'excellent': 'Excellent', 'grade-a': 'Grade A', 'grade-b': 'Grade B',
-            'standard': 'Standard', 'rejects': 'Rejects'
+        const qualityMap = {
+            'excellent': '⭐ Excellent',
+            'grade-a': '🟢 Grade A',
+            'grade-b': '🟡 Grade B',
+            'standard': '🔵 Standard',
+            'rejects': '🔴 Rejects'
         };
-        return qualities[quality] || quality;
+        return qualityMap[quality] || quality;
     },
 
-formatDate(dateString) {
-    if (!dateString) return 'Invalid date';
-    
-    // Use DateUtils if available
-    if (window.DateUtils && typeof window.DateUtils.toDisplayFormat === 'function') {
-        return window.DateUtils.toDisplayFormat(dateString);
-    }
-    
-    // Fallback
-    try {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    } catch (e) {
-        return 'Invalid date';
-    }
-},
+    getQualityColor(quality) {
+        const colors = {
+            'excellent': '#10b981',
+            'grade-a': '#22c55e',
+            'grade-b': '#f59e0b',
+            'standard': '#3b82f6',
+            'rejects': '#ef4444'
+        };
+        return colors[quality] || '#6b7280';
+    },
 
-    updateElement(id, value) {
+    updateElement(id, content) {
         const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value;
-        }
+        if (element) element.textContent = content;
     },
 
     showNotification(message, type = 'info') {
-        if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
-            window.coreModule.showNotification(message, type);
-        } else if (type === 'error') {
-            console.error('❌ ' + message);
-            alert('❌ ' + message);
-        } else if (type === 'success') {
-            console.log('✅ ' + message);
-            alert('✅ ' + message);
-        } else if (type === 'warning') {
-            console.warn('⚠️ ' + message);
-            alert('⚠️ ' + message);
+        if (window.App && window.App.showNotification) {
+            window.App.showNotification(message, type);
         } else {
-            console.log('ℹ️ ' + message);
-            alert('ℹ️ ' + message);
+            alert(message); // Fallback
         }
     }
 };
 
-if (window.FarmModules) {
-    window.FarmModules.registerModule('production', ProductionModule);
-    console.log('✅ Production Records module registered with all fixes');
-} else {
-    console.error('❌ FarmModules framework not found!');
-    const checkFarmModules = setInterval(() => {
-        if (window.FarmModules) {
-            window.FarmModules.registerModule('production', ProductionModule);
-            console.log('✅ Production Records module registered (delayed)!');
-            clearInterval(checkFarmModules);
-        }
-    }, 100);
-}
+// Export module
+window.ProductionModule = ProductionModule;
+console.log('✅ Production module loaded and ready');
