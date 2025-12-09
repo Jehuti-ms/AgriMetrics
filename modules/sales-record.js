@@ -866,35 +866,41 @@ const SalesRecordModule = {
         });
     },
 
-    setupFormFieldListeners() {
-        // Product change
-        const productSelect = document.getElementById('sale-product');
-        if (productSelect) {
-            productSelect.addEventListener('change', () => this.handleProductChange());
+setupFormFieldListeners() {
+    // Product change
+    const productSelect = document.getElementById('sale-product');
+    if (productSelect) {
+        productSelect.addEventListener('change', () => this.handleProductChange());
+    }
+    
+    // Real-time total calculation
+    const fieldsToWatch = [
+        'standard-quantity',
+        'standard-price',
+        'meat-animal-count',
+        'meat-weight',
+        'meat-price'
+    ];
+    
+    fieldsToWatch.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('input', () => this.calculateSaleTotal());
         }
-        
-        // Real-time total calculation
-        const fieldsToWatch = [
-            'standard-quantity',
-            'standard-price',
-            'meat-animal-count',
-            'meat-weight',
-            'meat-price'
-        ];
-        
-        fieldsToWatch.forEach(fieldId => {
-            const field = document.getElementById(fieldId);
-            if (field) {
-                field.addEventListener('input', () => this.calculateSaleTotal());
-            }
+    });
+    
+    // Weight unit change - move this here instead of in handleProductChange
+    const weightUnit = document.getElementById('meat-weight-unit');
+    if (weightUnit) {
+        // Remove any existing listeners to prevent duplicates
+        weightUnit.removeEventListener('change', this.handleWeightUnitChange);
+        // Add new listener
+        weightUnit.addEventListener('change', () => {
+            this.updatePriceUnitLabel();
+            this.calculateSaleTotal();
         });
-        
-        // Weight unit change
-        const weightUnit = document.getElementById('meat-weight-unit');
-        if (weightUnit) {
-            weightUnit.addEventListener('change', () => this.calculateSaleTotal());
-        }
-    },
+    }
+},
 
     // Add this new method to update price unit label based on weight unit:
 updatePriceUnitLabel() {
@@ -911,7 +917,7 @@ updatePriceUnitLabel() {
     }
 },
 
-   handleProductChange() {
+  handleProductChange() {
     const productSelect = document.getElementById('sale-product');
     if (!productSelect) return;
     
@@ -940,7 +946,7 @@ updatePriceUnitLabel() {
         if (weightUnit) {
             weightUnit.value = 'kg';
             // Add event listener for weight unit change
-            weightUnit.addEventListener('change', () => this.updatePriceUnitLabel());
+            //weightUnit.addEventListener('change', () => this.updatePriceUnitLabel());
         }
         
         // Set animal label
@@ -986,15 +992,13 @@ updatePriceUnitLabel() {
             }
         }
         
-        // Update standard price unit label
+        // Update standard price unit label - FIXED: Added const declaration
+        const standardPriceUnitLabel = document.getElementById('standard-price-unit-label');
         if (standardPriceUnitLabel) {
-            const standardPriceUnitLabel = document.getElementById('standard-price-unit-label');
-            if (standardPriceUnitLabel) {
-                standardPriceUnitLabel.textContent = selectedValue === 'eggs' ? 'per dozen' : 
-                                                   selectedValue === 'milk' ? 'per liter' :
-                                                   selectedValue.includes('broilers') || selectedValue === 'layers' || selectedValue === 'chicks' ? 'per bird' :
-                                                   'per kg';
-            }
+            standardPriceUnitLabel.textContent = selectedValue === 'eggs' ? 'per dozen' : 
+                                               selectedValue === 'milk' ? 'per liter' :
+                                               selectedValue.includes('broilers') || selectedValue === 'layers' || selectedValue === 'chicks' ? 'per bird' :
+                                               'per kg';
         }
         
         // Clear meat fields
