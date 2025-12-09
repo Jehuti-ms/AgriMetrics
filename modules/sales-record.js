@@ -1366,68 +1366,54 @@ const SalesRecordModule = {
     },
 
     recordRevenueInIncome(saleData) {
-        // Check if Income module exists
-        const incomeModule = window.FarmModules.Income;
-        if (!incomeModule || !incomeModule.addRevenueFromSale) {
-            console.log('Income module not available for revenue tracking');
-            return;
-        }
+    // Check if Income module exists - try different possible names
+    let incomeModule = window.FarmModules.Income || 
+                      window.FarmModules.IncomeExpenses || 
+                      window.FarmModules['income-expenses'];
+    
+    if (!incomeModule) {
+        console.log('❌ Income module not available for revenue tracking');
+        console.log('Available modules:', Object.keys(window.FarmModules || {}));
+        return;
+    }
 
-        // Create income record from sale
-        const incomeRecord = {
-            id: 'INC-' + Date.now().toString().slice(-6),
-            date: saleData.date,
-            source: 'sales',
-            category: this.getIncomeCategory(saleData.product),
-            description: `Sale of ${this.formatProductName(saleData.product)} to ${saleData.customer || 'Walk-in'}`,
-            amount: saleData.totalAmount,
-            paymentMethod: saleData.paymentMethod,
-            paymentStatus: saleData.paymentStatus,
-            reference: saleData.id,
-            notes: saleData.notes
-        };
+    // Check for the method with different possible names
+    const addRevenueMethod = incomeModule.addRevenueFromSale || 
+                            incomeModule.addIncomeFromSale ||
+                            incomeModule.addRevenue;
+    
+    if (!addRevenueMethod) {
+        console.log('❌ Income module does not have add revenue method');
+        console.log('Available methods:', Object.keys(incomeModule));
+        return;
+    }
 
-        // Add meat-specific info to income record
-        if (saleData.weight && saleData.weight > 0) {
-            incomeRecord.weight = saleData.weight;
-            incomeRecord.weightUnit = saleData.weightUnit;
-            incomeRecord.animalCount = saleData.animalCount;
-        }
+    // Create income record from sale
+    const incomeRecord = {
+        id: 'INC-' + Date.now().toString().slice(-6),
+        date: saleData.date,
+        source: 'sales',
+        category: this.getIncomeCategory(saleData.product),
+        description: `Sale of ${this.formatProductName(saleData.product)} to ${saleData.customer || 'Walk-in'}`,
+        amount: saleData.totalAmount,
+        paymentMethod: saleData.paymentMethod,
+        paymentStatus: saleData.paymentStatus,
+        reference: saleData.id,
+        notes: saleData.notes
+    };
 
-        incomeModule.addRevenueFromSale(incomeRecord);
-    },
+    // Add meat-specific info to income record
+    if (saleData.weight && saleData.weight > 0) {
+        incomeRecord.weight = saleData.weight;
+        incomeRecord.weightUnit = saleData.weightUnit;
+        incomeRecord.animalCount = saleData.animalCount;
+    }
 
-    getIncomeCategory(product) {
-        const categories = {
-            'broilers-dressed': 'Meat Sales',
-            'pork': 'Meat Sales',
-            'beef': 'Meat Sales',
-            'chicken-parts': 'Meat Sales',
-            'goat': 'Meat Sales',
-            'lamb': 'Meat Sales',
-            'broilers-live': 'Livestock Sales',
-            'layers': 'Livestock Sales',
-            'chicks': 'Livestock Sales',
-            'eggs': 'Egg Sales',
-            'tomatoes': 'Produce Sales',
-            'peppers': 'Produce Sales',
-            'cucumbers': 'Produce Sales',
-            'lettuce': 'Produce Sales',
-            'carrots': 'Produce Sales',
-            'potatoes': 'Produce Sales',
-            'milk': 'Dairy Sales',
-            'cheese': 'Dairy Sales',
-            'yogurt': 'Dairy Sales',
-            'butter': 'Dairy Sales',
-            'honey': 'Other Sales',
-            'jam': 'Other Sales',
-            'bread': 'Other Sales',
-            'other': 'Other Sales'
-        };
-        
-        return categories[product] || 'Product Sales';
-    },
-
+    // Call the method
+    addRevenueMethod.call(incomeModule, incomeRecord);
+    console.log('✅ Revenue recorded in Income module:', incomeRecord);
+},
+    
     editSale(saleId) {
         const sales = window.FarmModules.appData.sales || [];
         const sale = sales.find(s => s.id === saleId);
