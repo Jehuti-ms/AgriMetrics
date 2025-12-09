@@ -281,7 +281,7 @@ const SalesRecordModule = {
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end;">
                             <div>
                                 <label class="form-label">Product *</label>
-                                <select id="quick-product" required class="form-input" onchange="SalesRecordModule.handleQuickProductChange()">
+                                <select id="quick-product" required class="form-input" onchange="window.FarmModules.SalesRecord.handleQuickProductChange()">
                                     <option value="">Select Product</option>
                                     <optgroup label="Livestock (Meat)">
                                         <option value="broilers-dressed">Broilers (Dressed)</option>
@@ -397,7 +397,7 @@ const SalesRecordModule = {
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                                 <div>
                                     <label class="form-label">Product *</label>
-                                    <select id="sale-product" class="form-input" required onchange="SalesRecordModule.handleProductChange()">
+                                    <select id="sale-product" class="form-input" required onchange="window.FarmModules.SalesRecord.handleProductChange()">
                                         <option value="">Select Product</option>
                                         <optgroup label="Livestock (Meat - Weight Required)">
                                             <option value="broilers-dressed">Broilers (Dressed)</option>
@@ -460,8 +460,8 @@ const SalesRecordModule = {
                                     <div>
                                         <label class="form-label">Total Weight *</label>
                                         <div style="display: flex; gap: 8px;">
-                                            <input type="number" id="sale-weight" class="form-input" min="0.1" step="0.1" placeholder="0.0" oninput="SalesRecordModule.calculateSaleTotal()">
-                                            <select id="sale-weight-unit" class="form-input" style="min-width: 100px;" onchange="SalesRecordModule.calculateSaleTotal()">
+                                            <input type="number" id="sale-weight" class="form-input" min="0.1" step="0.1" placeholder="0.0" oninput="window.FarmModules.SalesRecord.calculateSaleTotal()">
+                                            <select id="sale-weight-unit" class="form-input" style="min-width: 100px;" onchange="window.FarmModules.SalesRecord.calculateSaleTotal()">
                                                 <option value="kg">kg</option>
                                                 <option value="lbs">lbs</option>
                                             </select>
@@ -469,7 +469,7 @@ const SalesRecordModule = {
                                     </div>
                                     <div>
                                         <label class="form-label">Number of Animals *</label>
-                                        <input type="number" id="sale-animal-count" class="form-input" min="1" placeholder="0" oninput="SalesRecordModule.calculateSaleTotal()">
+                                        <input type="number" id="sale-animal-count" class="form-input" min="1" placeholder="0" oninput="window.FarmModules.SalesRecord.calculateSaleTotal()">
                                     </div>
                                 </div>
                                 <div class="form-hint">For meat sales, price is calculated based on weight. Enter total weight and number of animals.</div>
@@ -480,13 +480,13 @@ const SalesRecordModule = {
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                                     <div>
                                         <label class="form-label">Quantity *</label>
-                                        <input type="number" id="sale-quantity" class="form-input" min="0.01" step="0.01" required placeholder="0.00" oninput="SalesRecordModule.calculateSaleTotal()">
+                                        <input type="number" id="sale-quantity" class="form-input" min="0.01" step="0.01" required placeholder="0.00" oninput="window.FarmModules.SalesRecord.calculateSaleTotal()">
                                     </div>
                                     <div>
                                         <label class="form-label">Unit Price ($) *</label>
                                         <div style="display: flex; align-items: center; gap: 4px;">
                                             <span style="color: var(--text-secondary);">$</span>
-                                            <input type="number" id="sale-price" class="form-input" step="0.01" min="0" required placeholder="0.00" oninput="SalesRecordModule.calculateSaleTotal()">
+                                            <input type="number" id="sale-price" class="form-input" step="0.01" min="0" required placeholder="0.00" oninput="window.FarmModules.SalesRecord.calculateSaleTotal()">
                                             <span id="price-unit-label" style="color: var(--text-secondary); font-size: 14px; white-space: nowrap;">per unit</span>
                                         </div>
                                     </div>
@@ -634,7 +634,7 @@ const SalesRecordModule = {
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;">
                     ${availableProducts.slice(0, 3).map(item => `
                         <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #bae6fd; cursor: pointer;" 
-                             onclick="SalesRecordModule.selectProductionItem('${item.id}')"
+                             onclick="window.FarmModules.SalesRecord.selectProductionItem('${item.id}')"
                              class="production-item">
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
                                 <span style="font-size: 20px;">${this.getProductIcon(item.type || item.product)}</span>
@@ -1033,7 +1033,7 @@ const SalesRecordModule = {
             productionItems.forEach(item => {
                 content += `
                     <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border); cursor: pointer;" 
-                         onclick="SalesRecordModule.selectProductionItem('${item.id}')"
+                         onclick="window.FarmModules.SalesRecord.selectProductionItem('${item.id}')"
                          class="production-item-select">
                         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
                             <span style="font-size: 24px;">${this.getProductIcon(item.type || item.product)}</span>
@@ -1956,8 +1956,29 @@ const SalesRecordModule = {
     }
 };
 
-// Export the module
-window.FarmModules = window.FarmModules || {};
-window.FarmModules.SalesRecord = SalesRecordModule;
-
+// PROPER REGISTRATION WITH FarmModules FRAMEWORK
 console.log('✅ Enhanced Sales Records module loaded successfully!');
+
+// Check if framework exists and register the module
+if (window.FarmModules && window.FarmModules.registerModule) {
+    window.FarmModules.registerModule('sales-record', SalesRecordModule);
+    console.log('📝 Sales Record module registered with FarmModules framework');
+} else {
+    console.warn('⚠️ FarmModules framework not available, registering globally');
+    window.FarmModules = window.FarmModules || {};
+    window.FarmModules.SalesRecord = SalesRecordModule;
+    
+    // Also register it in the modules object if it exists
+    if (window.FarmModules.modules) {
+        window.FarmModules.modules['sales-record'] = SalesRecordModule;
+    }
+}
+
+// Export for module loading
+try {
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = SalesRecordModule;
+    }
+} catch (e) {
+    // Not in Node.js environment, ignore
+}
