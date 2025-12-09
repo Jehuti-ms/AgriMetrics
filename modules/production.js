@@ -52,50 +52,67 @@ const ProductionModule = {
         localStorage.setItem('farm-production-data', JSON.stringify(this.productionData));
     },
 
-    getDemoData() {
-        return [
-            { 
-                id: 1, 
-                date: new Date().toISOString().split('T')[0], 
-                product: 'eggs', 
-                quantity: 450, 
-                unit: 'pieces', 
-                quality: 'grade-a', 
-                batch: 'BATCH-001',
-                notes: 'Morning collection' 
-            },
-            { 
-                id: 2, 
-                date: '2024-03-14', 
-                product: 'eggs', 
-                quantity: 420, 
-                unit: 'pieces', 
-                quality: 'grade-a', 
-                batch: 'BATCH-001',
-                notes: 'Regular production' 
-            },
-            { 
-                id: 3, 
-                date: '2024-03-13', 
-                product: 'broilers', 
-                quantity: 150, 
-                unit: 'birds', 
-                quality: 'grade-a', 
-                batch: 'BATCH-002',
-                notes: 'Weekly harvest' 
-            },
-            { 
-                id: 4, 
-                date: '2024-03-12', 
-                product: 'milk', 
-                quantity: 120, 
-                unit: 'liters', 
-                quality: 'grade-b', 
-                batch: 'BATCH-003',
-                notes: 'Morning milking' 
-            }
-        ];
-    },
+getDemoData() {
+    const today = window.DateUtils 
+        ? window.DateUtils.getToday() 
+        : new Date().toISOString().split('T')[0];
+    
+    // Helper function to get previous dates
+    const getPreviousDate = (daysAgo) => {
+        if (window.DateUtils && typeof window.DateUtils.addDays === 'function') {
+            return window.DateUtils.addDays(today, -daysAgo);
+        }
+        const date = new Date();
+        date.setDate(date.getDate() - daysAgo);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+    
+    return [
+        { 
+            id: 1, 
+            date: today,
+            product: 'eggs', 
+            quantity: 450, 
+            unit: 'pieces', 
+            quality: 'grade-a', 
+            batch: 'BATCH-001',
+            notes: 'Morning collection' 
+        },
+        { 
+            id: 2, 
+            date: getPreviousDate(1),
+            product: 'eggs', 
+            quantity: 420, 
+            unit: 'pieces', 
+            quality: 'grade-a', 
+            batch: 'BATCH-001',
+            notes: 'Regular production' 
+        },
+        { 
+            id: 3, 
+            date: getPreviousDate(2),
+            product: 'broilers', 
+            quantity: 150, 
+            unit: 'birds', 
+            quality: 'grade-a', 
+            batch: 'BATCH-002',
+            notes: 'Weekly harvest' 
+        },
+        { 
+            id: 4, 
+            date: getPreviousDate(3),
+            product: 'milk', 
+            quantity: 120, 
+            unit: 'liters', 
+            quality: 'grade-b', 
+            batch: 'BATCH-003',
+            notes: 'Morning milking' 
+        }
+    ];
+},
 
     renderModule() {
         if (!this.element) return;
@@ -384,39 +401,55 @@ const ProductionModule = {
         this.setupEventListeners();
     },
 
-    updateStats() {
-        const today = new Date().toISOString().split('T')[0];
-        
-        const todayEggs = this.productionData
-            .filter(record => record.date === today && record.product === 'eggs')
-            .reduce((sum, record) => sum + record.quantity, 0);
+updateStats() {
+    // Get today's date using DateUtils
+    const today = window.DateUtils 
+        ? window.DateUtils.getToday() 
+        : new Date().toISOString().split('T')[0];
+    
+    console.log('📅 Today is:', today);
+    
+    const todayEggs = this.productionData
+        .filter(record => record.date === today && record.product === 'eggs')
+        .reduce((sum, record) => sum + record.quantity, 0);
 
-        const last7Days = new Date();
-        last7Days.setDate(last7Days.getDate() - 7);
-        const last7DaysStr = last7Days.toISOString().split('T')[0];
-        
-        const weekBirds = this.productionData
-            .filter(record => record.date >= last7DaysStr && 
-                           (record.product === 'broilers' || record.product === 'layers'))
-            .reduce((sum, record) => sum + record.quantity, 0);
+    // Calculate last 7 days using DateUtils if available
+    let last7DaysStr;
+    if (window.DateUtils && typeof window.DateUtils.addDays === 'function') {
+        last7DaysStr = window.DateUtils.addDays(today, -7);
+    } else {
+        const last7DaysDate = new Date();
+        last7DaysDate.setDate(last7DaysDate.getDate() - 7);
+        const year = last7DaysDate.getFullYear();
+        const month = String(last7DaysDate.getMonth() + 1).padStart(2, '0');
+        const day = String(last7DaysDate.getDate()).padStart(2, '0');
+        last7DaysStr = `${year}-${month}-${day}`;
+    }
+    
+    console.log('📅 Last 7 days from:', last7DaysStr);
+    
+    const weekBirds = this.productionData
+        .filter(record => record.date >= last7DaysStr && 
+                       (record.product === 'broilers' || record.product === 'layers'))
+        .reduce((sum, record) => sum + record.quantity, 0);
 
-        const qualityScores = {
-            'excellent': 5,
-            'grade-a': 4,
-            'grade-b': 3,
-            'standard': 2,
-            'rejects': 1
-        };
+    const qualityScores = {
+        'excellent': 5,
+        'grade-a': 4,
+        'grade-b': 3,
+        'standard': 2,
+        'rejects': 1
+    };
 
-        const avgQuality = this.productionData.length > 0 
-            ? (this.productionData.reduce((sum, record) => sum + (qualityScores[record.quality] || 3), 0) / this.productionData.length).toFixed(1)
-            : '0.0';
+    const avgQuality = this.productionData.length > 0 
+        ? (this.productionData.reduce((sum, record) => sum + (qualityScores[record.quality] || 3), 0) / this.productionData.length).toFixed(1)
+        : '0.0';
 
-        this.updateElement('today-eggs', todayEggs.toLocaleString());
-        this.updateElement('week-birds', weekBirds.toLocaleString());
-        this.updateElement('total-records', this.productionData.length.toLocaleString());
-        this.updateElement('avg-quality', avgQuality);
-    },
+    this.updateElement('today-eggs', todayEggs.toLocaleString());
+    this.updateElement('week-birds', weekBirds.toLocaleString());
+    this.updateElement('total-records', this.productionData.length.toLocaleString());
+    this.updateElement('avg-quality', avgQuality);
+},
 
     renderProductionTable(filter = 'all') {
         let filteredProduction = this.productionData;
@@ -612,15 +645,34 @@ const ProductionModule = {
         });
     },
 
-    // MODAL CONTROL METHODS
-   // MODAL CONTROL METHODS - CORRECTED VERSION
+// MODAL CONTROL METHODS - CORRECTED VERSION
 showProductionModal() {
-    // Hide all modals first
-    this.hideProductionModal();
-    this.hideProductionReportModal();
-    this.hideTrendAnalysisModal();
+    // Hide any open modals
+    document.querySelectorAll('.popout-modal').forEach(modal => {
+        modal.classList.add('hidden');
+    });
     
+    // Show the production modal
     document.getElementById('production-modal').classList.remove('hidden');
+    
+    // Check if we're editing or creating new
+    const productionId = document.getElementById('production-id').value;
+    
+    if (!productionId) {
+        // New record - set today's date using DateUtils
+        const today = window.DateUtils 
+            ? window.DateUtils.getToday() 
+            : new Date().toISOString().split('T')[0];
+        
+        console.log('📅 Setting today\'s date:', today);
+        document.getElementById('production-date').value = today;
+        document.getElementById('production-modal-title').textContent = 'New Production Record';
+        document.getElementById('delete-production').style.display = 'none';
+    } else {
+        // Editing - show delete button
+        document.getElementById('delete-production').style.display = 'block';
+        document.getElementById('production-modal-title').textContent = 'Edit Production Record';
+    }
 },
 
 hideProductionModal() {
@@ -692,102 +744,102 @@ hideAllModals() {
     },
 
     // PRODUCTION CRUD METHODS
-    handleQuickProduction() {
-        const product = document.getElementById('quick-product').value;
-        const quantity = parseInt(document.getElementById('quick-quantity').value);
-        const unit = document.getElementById('quick-unit').value;
-        const quality = document.getElementById('quick-quality').value;
+handleQuickProduction() {
+    const product = document.getElementById('quick-product').value;
+    const quantity = parseInt(document.getElementById('quick-quantity').value);
+    const unit = document.getElementById('quick-unit').value;
+    const quality = document.getElementById('quick-quality').value;
 
-        if (!product || !quantity || !quality) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
-        }
+    if (!product || !quantity || !quality) {
+        this.showNotification('Please fill in all required fields', 'error');
+        return;
+    }
 
-        const productionData = {
-            id: Date.now(),
-            date: new Date().toISOString().split('T')[0],
-            product: product,
-            quantity: quantity,
-            unit: unit,
-            quality: quality,
-            batch: '',
-            notes: 'Quick entry'
-        };
+    // Get today's date using DateUtils
+    const today = window.DateUtils 
+        ? window.DateUtils.getToday() 
+        : new Date().toISOString().split('T')[0];
 
+    const productionData = {
+        id: Date.now(),
+        date: today,
+        product: product,
+        quantity: quantity,
+        unit: unit,
+        quality: quality,
+        batch: '',
+        notes: 'Quick entry'
+    };
+
+    console.log('📅 Saving quick record with date:', today);
+    this.addProduction(productionData);
+    
+    // Reset form
+    document.getElementById('quick-production-form').reset();
+    this.showNotification('Production recorded successfully!', 'success');
+},
+
+   saveProduction() {
+    const form = document.getElementById('production-form');
+    if (!form) {
+        console.error('❌ Production form not found');
+        return;
+    }
+
+    const productionId = document.getElementById('production-id').value;
+    const date = document.getElementById('production-date').value;
+    
+    console.log('📅 Date from form input:', date);
+    console.log('📅 Date from form input (raw):', document.getElementById('production-date').value);
+    
+    const product = document.getElementById('production-product').value;
+    const quantity = parseInt(document.getElementById('production-quantity').value);
+    const unit = document.getElementById('production-unit').value;
+    const quality = document.getElementById('production-quality').value;
+    const batch = document.getElementById('production-batch').value.trim();
+    const notes = document.getElementById('production-notes').value.trim();
+    const forSale = document.getElementById('production-for-sale').checked;
+    const salePrice = parseFloat(document.getElementById('sale-price').value) || 0;
+    const customer = document.getElementById('customer-name').value.trim();
+
+    if (!date || !product || !quantity || !unit || !quality) {
+        this.showNotification('Please fill in all required fields', 'error');
+        return;
+    }
+
+    if (quantity <= 0) {
+        this.showNotification('Quantity must be greater than 0', 'error');
+        return;
+    }
+
+    const productionData = {
+        id: productionId ? parseInt(productionId) : Date.now(),
+        date: date, // This should already be in YYYY-MM-DD format from DateUtils
+        product: product,
+        quantity: quantity,
+        unit: unit,
+        quality: quality,
+        batch: batch || '',
+        notes: notes || ''
+    };
+
+    console.log('💾 Saving production data:', productionData);
+
+    if (productionId) {
+        console.log('🔄 Updating existing record');
+        this.updateProduction(parseInt(productionId), productionData);
+    } else {
+        console.log('🆕 Creating new record');
         this.addProduction(productionData);
-        
-        // Reset form
-        document.getElementById('quick-production-form').reset();
-        this.showNotification('Production recorded successfully!', 'success');
-    },
+    }
 
-    saveProduction() {
-        const form = document.getElementById('production-form');
-        if (!form) {
-            console.error('❌ Production form not found');
-            return;
-        }
+    if (forSale && salePrice > 0) {
+        this.createSalesRecord(productionData, { price: salePrice, customer: customer });
+    }
 
-        const productionId = document.getElementById('production-id').value;
-        const date = document.getElementById('production-date').value;
-        const product = document.getElementById('production-product').value;
-        const quantity = parseInt(document.getElementById('production-quantity').value);
-        const unit = document.getElementById('production-unit').value;
-        const quality = document.getElementById('production-quality').value;
-        const batch = document.getElementById('production-batch').value.trim();
-        const notes = document.getElementById('production-notes').value.trim();
-        const forSale = document.getElementById('production-for-sale').checked;
-        const salePrice = parseFloat(document.getElementById('sale-price').value) || 0;
-        const customer = document.getElementById('customer-name').value.trim();
-
-        if (!date || !product || !quantity || !unit || !quality) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
-        }
-
-        if (quantity <= 0) {
-            this.showNotification('Quantity must be greater than 0', 'error');
-            return;
-        }
-
-        const productionData = {
-            id: productionId ? parseInt(productionId) : Date.now(),
-            date: date,
-            product: product,
-            quantity: quantity,
-            unit: unit,
-            quality: quality,
-            batch: batch || '',
-            notes: notes || ''
-        };
-
-        if (productionId) {
-            this.updateProduction(parseInt(productionId), productionData);
-        } else {
-            this.addProduction(productionData);
-        }
-
-        // Handle sale if marked for sale
-        if (forSale && salePrice > 0) {
-            this.createSalesRecord(productionData, { price: salePrice, customer: customer });
-        }
-
-        this.hideProductionModal();
-    },
-
-    addProduction(productionData) {
-        this.productionData.unshift(productionData);
-        this.saveData();
-        this.updateStats();
-        this.updateProductionTable();
-        this.updateProductSummary();
-        
-        // Link to inventory if applicable
-        this.linkToInventory(productionData);
-        
-        this.showNotification('Production record saved successfully!', 'success');
-    },
-
+    this.hideProductionModal();
+},
+    
 editProduction(recordId) {
     console.log('✏️ Editing record ID:', recordId);
     
@@ -800,27 +852,36 @@ editProduction(recordId) {
     }
 
     console.log('📋 Found record:', production);
+    console.log('📅 Original date:', production.date);
     
-    // FIRST populate the form
+    // Populate form fields using DateUtils
     document.getElementById('production-id').value = production.id;
-    document.getElementById('production-date').value = production.date;
+    
+    // Use DateUtils for date formatting
+    const formattedDate = window.DateUtils 
+        ? window.DateUtils.toInputFormat(production.date)
+        : production.date;
+    
+    console.log('📅 Formatted date for input:', formattedDate);
+    document.getElementById('production-date').value = formattedDate;
+    
     document.getElementById('production-product').value = production.product;
     document.getElementById('production-quantity').value = production.quantity;
     document.getElementById('production-unit').value = production.unit;
     document.getElementById('production-quality').value = production.quality;
     document.getElementById('production-batch').value = production.batch || '';
     document.getElementById('production-notes').value = production.notes || '';
+    document.getElementById('delete-production').style.display = 'block';
+    document.getElementById('production-modal-title').textContent = 'Edit Production Record';
     
-    // Reset sale section for edit (usually you don't want to pre-fill sale info)
+    // Reset sale section
     document.getElementById('production-for-sale').checked = false;
     document.getElementById('sale-details').style.display = 'none';
-    document.getElementById('sale-price').value = '';
-    document.getElementById('customer-name').value = '';
     
-    // THEN show the modal WITHOUT resetting
-    this.showProductionModal(recordId);
+    // Show the modal
+    this.showProductionModal();
 },
-
+    
     updateProduction(productionId, productionData) {
         const productionIndex = this.productionData.findIndex(p => p.id == productionId);
         
@@ -1441,18 +1502,26 @@ editProduction(recordId) {
         return qualities[quality] || quality;
     },
 
-    formatDate(dateString) {
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric',
-                year: 'numeric'
-            });
-        } catch (e) {
-            return 'Invalid date';
-        }
-    },
+formatDate(dateString) {
+    if (!dateString) return 'Invalid date';
+    
+    // Use DateUtils if available
+    if (window.DateUtils && typeof window.DateUtils.toDisplayFormat === 'function') {
+        return window.DateUtils.toDisplayFormat(dateString);
+    }
+    
+    // Fallback
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    } catch (e) {
+        return 'Invalid date';
+    }
+},
 
     updateElement(id, value) {
         const element = document.getElementById(id);
