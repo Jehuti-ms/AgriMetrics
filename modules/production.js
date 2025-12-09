@@ -1,4 +1,4 @@
-// modules/production.js - UPDATED WITH VEGETABLES AND DUAL UNITS
+// modules/production.js - UPDATED: Weight tracking moved to Sales module
 console.log('🚜 Loading production module...');
 
 const ProductionModule = {
@@ -26,7 +26,7 @@ const ProductionModule = {
         this.setupEventListeners();
         this.initialized = true;
         
-        console.log('✅ Production Records initialized with DateUtils');
+        console.log('✅ Production Records initialized');
         return true;
     },
 
@@ -53,13 +53,9 @@ const ProductionModule = {
     },
 
     getDemoData() {
-        // Use DateUtils for demo dates
-        const today = window.DateUtils ? window.DateUtils.getToday() : new Date().toISOString().split('T')[0];
+        const today = new Date().toISOString().split('T')[0];
         
         const getPreviousDate = (daysAgo) => {
-            if (window.DateUtils && window.DateUtils.addDays) {
-                return window.DateUtils.addDays(today, -daysAgo);
-            }
             const date = new Date();
             date.setDate(date.getDate() - daysAgo);
             return date.toISOString().split('T')[0];
@@ -82,11 +78,9 @@ const ProductionModule = {
                 product: 'broilers', 
                 quantity: 150, 
                 unit: 'birds',
-                weight: 450,
-                weightUnit: 'kg',
                 quality: 'grade-a', 
                 batch: 'BATCH-002',
-                notes: 'Weekly harvest - average 3kg per bird' 
+                notes: 'Weekly harvest' 
             },
             { 
                 id: 3, 
@@ -320,19 +314,41 @@ const ProductionModule = {
                                 <input type="text" id="custom-product-name" class="form-input" placeholder="Enter product name (e.g., Quail Eggs, Duck Meat, etc.)">
                             </div>
 
-                            <!-- Quantity Section -->
+                            <!-- SIMPLIFIED Quantity Section - No weight required for animals -->
                             <div style="margin-bottom: 16px;">
                                 <label class="form-label">Quantity Information *</label>
                                 
-                                <!-- For Animals (Birds/Heads + Weight) -->
-                                <div id="animal-quantity-section" style="display: none; margin-top: 12px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                    <div>
+                                        <label class="form-label">Quantity *</label>
+                                        <input type="number" id="production-quantity" class="form-input" min="1" required placeholder="0">
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Unit *</label>
+                                        <select id="production-unit" class="form-input" required>
+                                            <option value="">Select Unit</option>
+                                            <option value="pieces">Pieces</option>
+                                            <option value="birds">Birds</option>
+                                            <option value="animals">Animals</option>
+                                            <option value="kg">Kilograms (kg)</option>
+                                            <option value="lbs">Pounds (lbs)</option>
+                                            <option value="liters">Liters (L)</option>
+                                            <option value="gallons">Gallons</option>
+                                            <option value="crates">Crates</option>
+                                            <option value="cartons">Cartons</option>
+                                            <option value="dozen">Dozen</option>
+                                            <option value="boxes">Boxes</option>
+                                            <option value="bunches">Bunches</option>
+                                            <option value="heads">Heads</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Optional Weight Field (for information only, not required) -->
+                                <div id="optional-weight-section" style="display: none; margin-top: 12px;">
                                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                                         <div>
-                                            <label class="form-label">Number of Birds/Animals</label>
-                                            <input type="number" id="animal-count" class="form-input" placeholder="0" min="1">
-                                        </div>
-                                        <div>
-                                            <label class="form-label">Weight</label>
+                                            <label class="form-label">Average Weight per Animal (Optional)</label>
                                             <div style="display: flex; gap: 8px;">
                                                 <input type="number" id="animal-weight" class="form-input" placeholder="0" min="0.1" step="0.1">
                                                 <select id="animal-weight-unit" class="form-input" style="min-width: 100px;">
@@ -341,37 +357,14 @@ const ProductionModule = {
                                                 </select>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="form-hint">Enter both count and weight for accurate tracking</div>
-                                </div>
-                                
-                                <!-- Standard Quantity Input -->
-                                <div id="standard-quantity-section">
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                                        <div>
-                                            <label class="form-label">Quantity *</label>
-                                            <input type="number" id="production-quantity" class="form-input" min="1" required placeholder="0">
-                                        </div>
-                                        <div>
-                                            <label class="form-label">Unit *</label>
-                                            <select id="production-unit" class="form-input" required>
-                                                <option value="">Select Unit</option>
-                                                <option value="pieces">Pieces</option>
-                                                <option value="birds">Birds</option>
-                                                <option value="animals">Animals</option>
-                                                <option value="kg">Kilograms (kg)</option>
-                                                <option value="lbs">Pounds (lbs)</option>
-                                                <option value="liters">Liters (L)</option>
-                                                <option value="gallons">Gallons</option>
-                                                <option value="crates">Crates</option>
-                                                <option value="cartons">Cartons</option>
-                                                <option value="dozen">Dozen</option>
-                                                <option value="boxes">Boxes</option>
-                                                <option value="bunches">Bunches</option>
-                                                <option value="heads">Heads</option>
-                                            </select>
+                                        <div id="calculated-total-weight" style="display: none;">
+                                            <label class="form-label">Estimated Total Weight</label>
+                                            <div class="form-input" style="background: var(--glass-bg); padding: 8px 12px; border-radius: 6px;">
+                                                <span id="total-weight-value">0</span> <span id="total-weight-unit">kg</span>
+                                            </div>
                                         </div>
                                     </div>
+                                    <div class="form-hint">Optional: Enter average weight for weight estimation. Actual sales weight should be recorded in Sales module.</div>
                                 </div>
                             </div>
 
@@ -403,19 +396,30 @@ const ProductionModule = {
                                     <input type="checkbox" id="production-for-sale">
                                     <span style="color: var(--text-primary);">Mark for immediate sale</span>
                                 </label>
-                                <div class="form-hint">This will create a sales record and adjust inventory automatically</div>
+                                <div class="form-hint">This will create a sales record in the Sales module. Weight details for meat sales should be added there.</div>
                             </div>
 
                             <div id="sale-details" style="display: none; margin-bottom: 16px;">
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                                     <div>
-                                        <label class="form-label">Sale Price per Unit</label>
-                                        <input type="number" id="sale-price" class="form-input" placeholder="0.00" min="0" step="0.01">
+                                        <label class="form-label">Sale Price</label>
+                                        <div style="display: flex; gap: 8px;">
+                                            <input type="number" id="sale-price" class="form-input" placeholder="0.00" min="0" step="0.01">
+                                            <select id="sale-price-unit" class="form-input" style="min-width: 100px;">
+                                                <option value="per-unit">Per Unit</option>
+                                                <option value="per-kg">Per kg</option>
+                                                <option value="per-lb">Per lb</option>
+                                                <option value="total">Total</option>
+                                            </select>
+                                        </div>
                                     </div>
                                     <div>
                                         <label class="form-label">Customer Name (Optional)</label>
                                         <input type="text" id="customer-name" class="form-input" placeholder="Wholesale or specific customer">
                                     </div>
+                                </div>
+                                <div class="form-hint" style="margin-top: 8px;">
+                                    For meat sales, use "per kg" or "per lb" and add weight details in Sales module.
                                 </div>
                             </div>
                         </form>
@@ -472,32 +476,25 @@ const ProductionModule = {
     },
 
     updateStats() {
-        // Get today's date using DateUtils
-        const today = window.DateUtils ? window.DateUtils.getToday() : new Date().toISOString().split('T')[0];
-        
-        console.log('📅 Stats - Today is:', today);
+        const today = new Date().toISOString().split('T')[0];
         
         // Today's eggs
         const todayEggs = this.productionData
             .filter(record => {
-                const recordDate = window.DateUtils ? window.DateUtils.toInputFormat(record.date) : record.date;
+                const recordDate = record.date ? record.date.split('T')[0] : '';
                 return recordDate === today && record.product === 'eggs';
             })
             .reduce((sum, record) => sum + record.quantity, 0);
 
         // Birds this week
-        const last7DaysDate = window.DateUtils ? 
-            window.DateUtils.addDays(today, -7) : 
-            (() => {
-                const d = new Date();
-                d.setDate(d.getDate() - 7);
-                return d.toISOString().split('T')[0];
-            })();
+        const last7DaysDate = new Date();
+        last7DaysDate.setDate(last7DaysDate.getDate() - 7);
+        const last7DaysString = last7DaysDate.toISOString().split('T')[0];
         
         const weekBirds = this.productionData
             .filter(record => {
-                const recordDate = window.DateUtils ? window.DateUtils.toInputFormat(record.date) : record.date;
-                return recordDate >= last7DaysDate && 
+                const recordDate = record.date ? record.date.split('T')[0] : '';
+                return recordDate >= last7DaysString && 
                        (record.product === 'broilers' || record.product === 'layers');
             })
             .reduce((sum, record) => sum + record.quantity, 0);
@@ -506,8 +503,8 @@ const ProductionModule = {
         const vegetables = ['tomatoes', 'lettuce', 'carrots', 'potatoes', 'onions', 'cabbage', 'peppers', 'cucumbers', 'spinach', 'beans', 'corn'];
         const weekVegetables = this.productionData
             .filter(record => {
-                const recordDate = window.DateUtils ? window.DateUtils.toInputFormat(record.date) : record.date;
-                return recordDate >= last7DaysDate && vegetables.includes(record.product);
+                const recordDate = record.date ? record.date.split('T')[0] : '';
+                return recordDate >= last7DaysString && vegetables.includes(record.product);
             })
             .reduce((sum, record) => sum + record.quantity, 0);
 
@@ -548,7 +545,6 @@ const ProductionModule = {
                             <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Date</th>
                             <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Product</th>
                             <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Quantity</th>
-                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Weight/Details</th>
                             <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Quality</th>
                             <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Batch</th>
                             <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Notes</th>
@@ -562,12 +558,6 @@ const ProductionModule = {
                                                 record.quality === 'grade-b' ? '#f59e0b' :
                                                 record.quality === 'standard' ? '#3b82f6' : '#ef4444';
                             
-                            // Display weight information for animals
-                            let weightInfo = '-';
-                            if (record.weight && record.weightUnit) {
-                                weightInfo = `${record.weight} ${record.weightUnit}`;
-                            }
-                            
                             return `
                                 <tr style="border-bottom: 1px solid var(--glass-border);">
                                     <td style="padding: 12px 8px; color: var(--text-primary);">${this.formatDate(record.date)}</td>
@@ -580,10 +570,7 @@ const ProductionModule = {
                                     <td style="padding: 12px 8px; color: var(--text-primary);">
                                         <div style="font-weight: 600;">${record.quantity.toLocaleString()}</div>
                                         <div style="font-size: 12px; color: var(--text-secondary);">${record.unit}</div>
-                                    </td>
-                                    <td style="padding: 12px 8px; color: var(--text-secondary);">
-                                        ${weightInfo}
-                                        ${record.product === 'broilers' && record.unit === 'birds' ? `<div style="font-size: 11px; color: #888;">Count: ${record.quantity}</div>` : ''}
+                                        ${record.weight ? `<div style="font-size: 11px; color: #888; margin-top: 2px;">Avg: ${record.weight} ${record.weightUnit || 'kg'}</div>` : ''}
                                     </td>
                                     <td style="padding: 12px 8px;">
                                         <span style="padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; 
@@ -626,7 +613,7 @@ const ProductionModule = {
             categoryData[category] = {
                 count: categoryRecords.length,
                 totalQuantity: categoryRecords.reduce((sum, record) => sum + record.quantity, 0),
-                totalWeight: categoryRecords.reduce((sum, record) => sum + (record.weight || 0), 0),
+                estimatedWeight: categoryRecords.reduce((sum, record) => sum + (record.weight ? record.weight * record.quantity : 0), 0),
                 weightUnit: categoryRecords.find(record => record.weightUnit)?.weightUnit || 'kg'
             };
         });
@@ -656,10 +643,10 @@ const ProductionModule = {
                                 <span style="color: var(--text-secondary);">Total Items:</span>
                                 <span style="font-weight: 600; color: var(--text-primary);">${data.totalQuantity.toLocaleString()}</span>
                             </div>
-                            ${data.totalWeight > 0 ? `
+                            ${data.estimatedWeight > 0 ? `
                                 <div style="display: flex; justify-content: space-between;">
-                                    <span style="color: var(--text-secondary);">Total Weight:</span>
-                                    <span style="font-weight: 600; color: var(--text-primary);">${data.totalWeight.toLocaleString()} ${data.weightUnit}</span>
+                                    <span style="color: var(--text-secondary);">Est. Weight:</span>
+                                    <span style="font-weight: 600; color: var(--text-primary);">${data.estimatedWeight.toLocaleString()} ${data.weightUnit}</span>
                                 </div>
                             ` : ''}
                         </div>
@@ -690,6 +677,10 @@ const ProductionModule = {
         
         // Product change handler
         document.getElementById('production-product')?.addEventListener('change', () => this.handleProductChange());
+        
+        // Quantity change for weight calculation
+        document.getElementById('production-quantity')?.addEventListener('input', () => this.calculateTotalWeight());
+        document.getElementById('animal-weight')?.addEventListener('input', () => this.calculateTotalWeight());
         
         // Sale checkbox handler
         document.getElementById('production-for-sale')?.addEventListener('change', (e) => {
@@ -755,25 +746,22 @@ const ProductionModule = {
         const customProductContainer = document.getElementById('custom-product-container');
         customProductContainer.style.display = selectedValue === 'other' ? 'block' : 'none';
         
-        // Show/hide animal quantity section
+        // Show/hide optional weight section for animals
         const animalProducts = ['broilers', 'layers', 'pork', 'beef', 'goat', 'lamb'];
-        const animalSection = document.getElementById('animal-quantity-section');
-        const standardSection = document.getElementById('standard-quantity-section');
+        const weightSection = document.getElementById('optional-weight-section');
         
         if (animalProducts.includes(selectedValue)) {
-            animalSection.style.display = 'block';
-            standardSection.style.display = 'none';
+            weightSection.style.display = 'block';
             
             // Set appropriate unit defaults
-            document.getElementById('production-unit').value = 'birds';
+            const unitSelect = document.getElementById('production-unit');
             if (selectedValue === 'broilers' || selectedValue === 'layers') {
-                document.getElementById('production-unit').value = 'birds';
+                unitSelect.value = 'birds';
             } else {
-                document.getElementById('production-unit').value = 'animals';
+                unitSelect.value = 'animals';
             }
         } else {
-            animalSection.style.display = 'none';
-            standardSection.style.display = 'block';
+            weightSection.style.display = 'none';
             
             // Set appropriate unit based on product type
             const unitSelect = document.getElementById('production-unit');
@@ -788,6 +776,26 @@ const ProductionModule = {
             } else {
                 unitSelect.value = '';
             }
+        }
+        
+        // Reset weight calculation
+        this.calculateTotalWeight();
+    },
+
+    calculateTotalWeight() {
+        const quantity = parseInt(document.getElementById('production-quantity').value) || 0;
+        const avgWeight = parseFloat(document.getElementById('animal-weight').value) || 0;
+        const weightUnit = document.getElementById('animal-weight-unit').value;
+        
+        const totalWeightSection = document.getElementById('calculated-total-weight');
+        
+        if (quantity > 0 && avgWeight > 0) {
+            const totalWeight = quantity * avgWeight;
+            document.getElementById('total-weight-value').textContent = totalWeight.toFixed(1);
+            document.getElementById('total-weight-unit').textContent = weightUnit;
+            totalWeightSection.style.display = 'block';
+        } else {
+            totalWeightSection.style.display = 'none';
         }
     },
 
@@ -805,17 +813,17 @@ const ProductionModule = {
         document.getElementById('custom-product-name').value = '';
         document.getElementById('custom-product-container').style.display = 'none';
         
-        // Reset animal quantity section
-        document.getElementById('animal-count').value = '';
+        // Reset optional weight section
         document.getElementById('animal-weight').value = '';
         document.getElementById('animal-weight-unit').value = 'kg';
+        document.getElementById('calculated-total-weight').style.display = 'none';
         
         // Check if we're editing or creating new
         const productionId = document.getElementById('production-id').value;
         
         if (!productionId) {
-            // New record - set today's date using DateUtils
-            const today = window.DateUtils ? window.DateUtils.getToday() : new Date().toISOString().split('T')[0];
+            // New record - set today's date
+            const today = new Date().toISOString().split('T')[0];
             
             console.log('📅 Setting today\'s date in modal:', today);
             document.getElementById('production-date').value = today;
@@ -872,15 +880,12 @@ const ProductionModule = {
             return;
         }
 
-        // Get today's date using DateUtils
-        const today = window.DateUtils ? window.DateUtils.getToday() : new Date().toISOString().split('T')[0];
-        const storageDate = window.DateUtils ? window.DateUtils.toStorageFormat(today) : today;
-
-        console.log('📅 Quick production - Today:', today, 'Storage:', storageDate);
+        // Get today's date
+        const today = new Date().toISOString().split('T')[0];
 
         const productionData = {
             id: Date.now(),
-            date: storageDate,
+            date: today,
             product: product,
             quantity: quantity,
             unit: unit,
@@ -907,16 +912,22 @@ const ProductionModule = {
         const dateInput = document.getElementById('production-date').value;
         const productSelect = document.getElementById('production-product').value;
         const customProductName = document.getElementById('custom-product-name').value.trim();
+        const quantity = parseInt(document.getElementById('production-quantity').value) || 0;
+        const unit = document.getElementById('production-unit').value;
+        const quality = document.getElementById('production-quality').value;
         const batch = document.getElementById('production-batch').value.trim();
         const notes = document.getElementById('production-notes').value.trim();
         const forSale = document.getElementById('production-for-sale').checked;
         const salePrice = parseFloat(document.getElementById('sale-price').value) || 0;
+        const salePriceUnit = document.getElementById('sale-price-unit').value;
         const customer = document.getElementById('customer-name').value.trim();
+        const avgWeight = parseFloat(document.getElementById('animal-weight').value) || 0;
+        const weightUnit = document.getElementById('animal-weight-unit').value;
 
         console.log('📅 Save - Raw date input:', dateInput);
 
         // Validate required fields
-        if (!dateInput || !productSelect) {
+        if (!dateInput || !productSelect || !quantity || !unit || !quality) {
             this.showNotification('Please fill in all required fields', 'error');
             return;
         }
@@ -930,58 +941,21 @@ const ProductionModule = {
         // Determine product name
         const product = productSelect === 'other' ? customProductName.toLowerCase().replace(/\s+/g, '-') : productSelect;
 
-        // Check if animal product for dual input
-        const animalProducts = ['broilers', 'layers', 'pork', 'beef', 'goat', 'lamb'];
-        let quantity, unit, weight, weightUnit;
-
-        if (animalProducts.includes(productSelect)) {
-            // Get animal data
-            const animalCount = parseInt(document.getElementById('animal-count').value) || 0;
-            weight = parseFloat(document.getElementById('animal-weight').value) || 0;
-            weightUnit = document.getElementById('animal-weight-unit').value;
-            
-            if (animalCount === 0 || weight === 0) {
-                this.showNotification('Please enter both count and weight for animals', 'error');
-                return;
-            }
-            
-            quantity = animalCount;
-            unit = productSelect === 'broilers' || productSelect === 'layers' ? 'birds' : 'animals';
-        } else {
-            // Get standard quantity
-            quantity = parseInt(document.getElementById('production-quantity').value) || 0;
-            unit = document.getElementById('production-unit').value;
-            
-            if (quantity === 0 || !unit) {
-                this.showNotification('Please enter quantity and select unit', 'error');
-                return;
-            }
-        }
-
-        // Use DateUtils for consistent date handling
-        let storageDate;
-        if (window.DateUtils) {
-            storageDate = window.DateUtils.toStorageFormat(dateInput);
-            console.log('📅 Save - Using DateUtils:', dateInput, '->', storageDate);
-        } else {
-            storageDate = dateInput;
-        }
-
         const productionData = {
             id: productionId ? parseInt(productionId) : Date.now(),
-            date: storageDate,
+            date: dateInput,
             product: product,
             productCategory: productSelect,
             quantity: quantity,
             unit: unit,
-            quality: document.getElementById('production-quality').value,
+            quality: quality,
             batch: batch || '',
             notes: notes || ''
         };
 
-        // Add weight data for animals
-        if (weight && weightUnit) {
-            productionData.weight = weight;
+        // Add optional weight data for animals
+        if (avgWeight > 0) {
+            productionData.weight = avgWeight;
             productionData.weightUnit = weightUnit;
         }
 
@@ -999,7 +973,7 @@ const ProductionModule = {
             
             // Handle sale if marked for sale
             if (forSale && salePrice > 0) {
-                this.createSaleRecord(productionData, salePrice, customer);
+                this.createSaleRecord(productionData, salePrice, salePriceUnit, customer);
             }
         }
 
@@ -1009,13 +983,27 @@ const ProductionModule = {
         this.renderModule();
     },
 
-    createSaleRecord(productionData, price, customer = '') {
+    createSaleRecord(productionData, price, priceUnit = 'per-unit', customer = '') {
         console.log('💵 Creating sale record for production:', productionData);
         
         // Get today's date for sale
-        const saleDate = window.DateUtils ? 
-            window.DateUtils.getToday() : 
-            new Date().toISOString().split('T')[0];
+        const saleDate = new Date().toISOString().split('T')[0];
+        
+        // Calculate total price based on price unit
+        let totalPrice = 0;
+        let priceNote = '';
+        
+        if (priceUnit === 'per-unit') {
+            totalPrice = productionData.quantity * price;
+            priceNote = `$${price.toFixed(2)} per ${productionData.unit}`;
+        } else if (priceUnit === 'total') {
+            totalPrice = price;
+            priceNote = `Total: $${price.toFixed(2)}`;
+        } else {
+            // For per-kg or per-lb, need weight which should be added in Sales module
+            totalPrice = 0;
+            priceNote = `$${price.toFixed(2)} ${priceUnit} - Add weight in Sales module`;
+        }
         
         const saleRecord = {
             id: Date.now(),
@@ -1024,23 +1012,30 @@ const ProductionModule = {
             product: productionData.product,
             quantity: productionData.quantity,
             unit: productionData.unit,
-            pricePerUnit: price,
-            totalPrice: productionData.quantity * price,
+            pricePerUnit: priceUnit === 'per-unit' ? price : 0,
+            priceUnit: priceUnit,
+            totalPrice: totalPrice,
             customer: customer || '',
-            status: 'completed',
-            notes: `Auto-generated from production record #${productionData.id}`
+            status: 'pending', // Mark as pending to add weight details
+            notes: `Auto-generated from production record #${productionData.id}. ${priceNote}`
         };
+
+        // Add weight data if available
+        if (productionData.weight && productionData.weightUnit) {
+            saleRecord.weight = productionData.weight * productionData.quantity;
+            saleRecord.weightUnit = productionData.weightUnit;
+        }
 
         // Save to sales module if available
         if (window.SalesModule && window.SalesModule.addSale) {
             window.SalesModule.addSale(saleRecord);
-            this.showNotification(`Sale record created for $${saleRecord.totalPrice.toFixed(2)}!`, 'success');
+            this.showNotification(`Sale record created! ${priceNote}`, 'success');
         } else {
             // Store in local storage for later use
             const salesData = JSON.parse(localStorage.getItem('farm-sales-data') || '[]');
             salesData.push(saleRecord);
             localStorage.setItem('farm-sales-data', JSON.stringify(salesData));
-            this.showNotification(`Sale record saved for later import!`, 'info');
+            this.showNotification(`Sale record saved for later import! ${priceNote}`, 'info');
         }
     },
 
@@ -1050,14 +1045,8 @@ const ProductionModule = {
 
         this.currentRecordId = record.id;
         
-        // Convert date for input field using DateUtils
-        let inputDate;
-        if (window.DateUtils) {
-            inputDate = window.DateUtils.toInputFormat(record.date);
-            console.log('📅 Edit - Converting date for input:', record.date, '->', inputDate);
-        } else {
-            inputDate = record.date;
-        }
+        // Convert date for input field
+        const inputDate = record.date;
 
         document.getElementById('production-id').value = record.id;
         document.getElementById('production-date').value = inputDate;
@@ -1086,15 +1075,16 @@ const ProductionModule = {
         this.handleProductChange();
         
         // Set quantity data
-        if (record.weight && record.weightUnit) {
-            // Animal product with weight
-            document.getElementById('animal-count').value = record.quantity;
+        document.getElementById('production-quantity').value = record.quantity;
+        document.getElementById('production-unit').value = record.unit;
+        
+        // Set optional weight data
+        if (record.weight) {
             document.getElementById('animal-weight').value = record.weight;
-            document.getElementById('animal-weight-unit').value = record.weightUnit;
-        } else {
-            // Standard product
-            document.getElementById('production-quantity').value = record.quantity;
-            document.getElementById('production-unit').value = record.unit;
+            if (record.weightUnit) {
+                document.getElementById('animal-weight-unit').value = record.weightUnit;
+            }
+            this.calculateTotalWeight();
         }
         
         document.getElementById('production-quality').value = record.quality;
@@ -1139,14 +1129,10 @@ const ProductionModule = {
     },
 
     getProductionReportContent() {
-        const today = window.DateUtils ? window.DateUtils.getToday() : new Date().toISOString().split('T')[0];
-        const startOfMonth = window.DateUtils ? 
-            window.DateUtils.getFirstDayOfMonth(today) : 
-            (() => {
-                const d = new Date();
-                d.setDate(1);
-                return d.toISOString().split('T')[0];
-            })();
+        const today = new Date().toISOString().split('T')[0];
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        const startOfMonthString = startOfMonth.toISOString().split('T')[0];
         
         // Group data by category
         const categories = {
@@ -1158,8 +1144,8 @@ const ProductionModule = {
         };
 
         const monthlyData = this.productionData.filter(record => {
-            const recordDate = window.DateUtils ? window.DateUtils.toInputFormat(record.date) : record.date;
-            return recordDate >= startOfMonth;
+            const recordDate = record.date ? record.date.split('T')[0] : '';
+            return recordDate >= startOfMonthString;
         });
 
         const categoryStats = {};
@@ -1169,7 +1155,7 @@ const ProductionModule = {
             
             categoryStats[category] = {
                 totalItems: categoryRecords.reduce((sum, record) => sum + record.quantity, 0),
-                totalWeight: categoryRecords.reduce((sum, record) => sum + (record.weight || 0), 0),
+                estimatedWeight: categoryRecords.reduce((sum, record) => sum + (record.weight ? record.weight * record.quantity : 0), 0),
                 weightUnit: categoryRecords.find(record => record.weightUnit)?.weightUnit || 'kg',
                 recordCount: categoryRecords.length
             };
@@ -1204,9 +1190,9 @@ const ProductionModule = {
                                 <div style="font-size: 24px; font-weight: bold; color: var(--primary); margin-bottom: 8px;">
                                     ${stats.totalItems.toLocaleString()} items
                                 </div>
-                                ${stats.totalWeight > 0 ? `
+                                ${stats.estimatedWeight > 0 ? `
                                     <div style="color: var(--text-secondary); font-size: 14px;">
-                                        ${stats.totalWeight.toLocaleString()} ${stats.weightUnit} total weight
+                                        Est. ${stats.estimatedWeight.toLocaleString()} ${stats.weightUnit} total weight
                                     </div>
                                 ` : ''}
                             </div>
@@ -1222,7 +1208,7 @@ const ProductionModule = {
                                 <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Date</th>
                                 <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Product</th>
                                 <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Quantity</th>
-                                <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Weight</th>
+                                <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Est. Weight</th>
                                 <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Quality</th>
                                 <th style="padding: 12px; text-align: left; color: var(--text-secondary);">Batch</th>
                             </tr>
@@ -1230,6 +1216,8 @@ const ProductionModule = {
                         <tbody>
                             ${monthlyData.map(record => {
                                 const qualityClass = this.getQualityColor(record.quality);
+                                const estimatedWeight = record.weight ? record.weight * record.quantity : 0;
+                                
                                 return `
                                     <tr style="border-bottom: 1px solid var(--glass-border);">
                                         <td style="padding: 12px; color: var(--text-primary);">${this.formatDate(record.date)}</td>
@@ -1243,7 +1231,7 @@ const ProductionModule = {
                                             ${record.quantity.toLocaleString()} ${record.unit}
                                         </td>
                                         <td style="padding: 12px; color: var(--text-primary);">
-                                            ${record.weight ? `${record.weight} ${record.weightUnit}` : '-'}
+                                            ${estimatedWeight > 0 ? `${estimatedWeight.toLocaleString()} ${record.weightUnit || 'kg'}` : '-'}
                                         </td>
                                         <td style="padding: 12px;">
                                             <span style="padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; 
@@ -1267,7 +1255,7 @@ const ProductionModule = {
         const dataStr = JSON.stringify(this.productionData, null, 2);
         const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
         
-        const exportFileName = `farm-production-${window.DateUtils ? window.DateUtils.getToday() : new Date().toISOString().split('T')[0]}.json`;
+        const exportFileName = `farm-production-${new Date().toISOString().split('T')[0]}.json`;
         
         const linkElement = document.createElement('a');
         linkElement.setAttribute('href', dataUri);
@@ -1277,7 +1265,7 @@ const ProductionModule = {
         this.showNotification('Production data exported successfully!', 'success');
     },
 
-    // UTILITY METHODS
+    // UTILITY METHODS (keeping these the same as before)
     getProductDisplayName(record) {
         if (record.productCategory === 'other' || !['eggs', 'broilers', 'layers', 'milk', 'pork', 'beef', 
             'tomatoes', 'lettuce', 'carrots', 'potatoes', 'onions', 'cabbage', 'peppers', 'cucumbers', 
@@ -1291,49 +1279,40 @@ const ProductionModule = {
         return this.formatProductName(record.product);
     },
 
-   formatDate(dateString) {
-    // Handle various date formats
-    if (!dateString) return 'Invalid Date';
-    
-    // If DateUtils exists and has formatDate method, use it
-    if (window.DateUtils && typeof window.DateUtils.formatDate === 'function') {
-        try {
-            return window.DateUtils.formatDate(dateString);
-        } catch (error) {
-            console.warn('DateUtils.formatDate failed, using fallback:', error);
-        }
-    }
-    
-    // Fallback to JavaScript Date
-    try {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) {
-            // Try to parse as just a date string (YYYY-MM-DD)
-            const parts = dateString.split('-');
-            if (parts.length === 3) {
-                const [year, month, day] = parts;
-                const parsedDate = new Date(year, month - 1, day);
-                if (!isNaN(parsedDate.getTime())) {
-                    return parsedDate.toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                    });
-                }
-            }
-            return dateString; // Return original string if can't parse
-        }
+    formatDate(dateString) {
+        // Handle various date formats
+        if (!dateString) return 'Invalid Date';
         
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    } catch (error) {
-        console.warn('Date formatting error:', error);
-        return dateString;
-    }
-},
+        // Fallback to JavaScript Date
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) {
+                // Try to parse as just a date string (YYYY-MM-DD)
+                const parts = dateString.split('-');
+                if (parts.length === 3) {
+                    const [year, month, day] = parts;
+                    const parsedDate = new Date(year, month - 1, day);
+                    if (!isNaN(parsedDate.getTime())) {
+                        return parsedDate.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+                    }
+                }
+                return dateString; // Return original string if can't parse
+            }
+            
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        } catch (error) {
+            console.warn('Date formatting error:', error);
+            return dateString;
+        }
+    },
 
     getProductIcon(product) {
         const icons = {
