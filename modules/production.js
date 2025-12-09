@@ -1,33 +1,6 @@
 // modules/production.js - COMPLETE REWRITTEN VERSION WITH ALL FIXES
 console.log('🚜 Loading production module...');
 
-// Add this debug function to your production.js, then call it:
-debugDateIssue() {
-    console.log('=== DATE DEBUG INFO ===');
-    console.log('Your local timezone offset:', new Date().getTimezoneOffset(), 'minutes');
-    console.log('Current local time:', new Date().toString());
-    console.log('Current UTC time:', new Date().toISOString());
-    console.log('DateUtils exists:', !!window.DateUtils);
-    
-    if (window.DateUtils) {
-        console.log('DateUtils.getToday():', window.DateUtils.getToday());
-        const testDate = '2025-09-18';
-        console.log('Test date formatting:');
-        console.log('  Original:', testDate);
-        console.log('  toInputFormat:', window.DateUtils.toInputFormat(testDate));
-        console.log('  toDisplayFormat:', window.DateUtils.toDisplayFormat(testDate));
-    }
-    
-    // Test what happens with a date input
-    const testInput = document.createElement('input');
-    testInput.type = 'date';
-    testInput.value = '2025-09-18';
-    console.log('Input type="date" with 2025-09-18:', testInput.value);
-    console.log('Input valueAsDate:', testInput.valueAsDate);
-    console.log('Input valueAsDate (ISO):', testInput.valueAsDate?.toISOString());
-    console.log('=== END DATE DEBUG ===');
-}
-
 const ProductionModule = {
     name: 'production',
     initialized: false,
@@ -140,7 +113,32 @@ getDemoData() {
         }
     ];
 },
-
+// Add this debug function to your production.js, then call it:
+debugDateIssue() {
+    console.log('=== DATE DEBUG INFO ===');
+    console.log('Your local timezone offset:', new Date().getTimezoneOffset(), 'minutes');
+    console.log('Current local time:', new Date().toString());
+    console.log('Current UTC time:', new Date().toISOString());
+    console.log('DateUtils exists:', !!window.DateUtils);
+    
+    if (window.DateUtils) {
+        console.log('DateUtils.getToday():', window.DateUtils.getToday());
+        const testDate = '2025-09-18';
+        console.log('Test date formatting:');
+        console.log('  Original:', testDate);
+        console.log('  toInputFormat:', window.DateUtils.toInputFormat(testDate));
+        console.log('  toDisplayFormat:', window.DateUtils.toDisplayFormat(testDate));
+    }
+    
+    // Test what happens with a date input
+    const testInput = document.createElement('input');
+    testInput.type = 'date';
+    testInput.value = '2025-09-18';
+    console.log('Input type="date" with 2025-09-18:', testInput.value);
+    console.log('Input valueAsDate:', testInput.valueAsDate);
+    console.log('Input valueAsDate (ISO):', testInput.valueAsDate?.toISOString());
+    console.log('=== END DATE DEBUG ===');
+}
     renderModule() {
         if (!this.element) return;
 
