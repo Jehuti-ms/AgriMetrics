@@ -1291,18 +1291,49 @@ const ProductionModule = {
         return this.formatProductName(record.product);
     },
 
-    formatDate(dateString) {
-        if (window.DateUtils) {
+   formatDate(dateString) {
+    // Handle various date formats
+    if (!dateString) return 'Invalid Date';
+    
+    // If DateUtils exists and has formatDate method, use it
+    if (window.DateUtils && typeof window.DateUtils.formatDate === 'function') {
+        try {
             return window.DateUtils.formatDate(dateString);
+        } catch (error) {
+            console.warn('DateUtils.formatDate failed, using fallback:', error);
+        }
+    }
+    
+    // Fallback to JavaScript Date
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+            // Try to parse as just a date string (YYYY-MM-DD)
+            const parts = dateString.split('-');
+            if (parts.length === 3) {
+                const [year, month, day] = parts;
+                const parsedDate = new Date(year, month - 1, day);
+                if (!isNaN(parsedDate.getTime())) {
+                    return parsedDate.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                }
+            }
+            return dateString; // Return original string if can't parse
         }
         
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
         });
-    },
+    } catch (error) {
+        console.warn('Date formatting error:', error);
+        return dateString;
+    }
+},
 
     getProductIcon(product) {
         const icons = {
