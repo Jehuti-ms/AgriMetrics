@@ -1,4 +1,4 @@
-// modules/sales-record.js - ENHANCED VERSION WITH PRODUCTION INTEGRATION AND WEIGHT TRACKING
+// modules/sales-record.js - ENHANCED VERSION WITH PROPER MEAT SALES MODAL
 console.log('💰 Loading Enhanced Sales Records module...');
 
 const SalesRecordModule = {
@@ -108,11 +108,11 @@ const SalesRecordModule = {
             
             if (meatProducts.includes(productValue)) {
                 // For meat products, show available weight and animal count
-                document.getElementById('sale-animal-count').value = availableQuantity;
-                document.getElementById('sale-weight').value = availableWeight;
+                document.getElementById('meat-animal-count').value = availableQuantity;
+                document.getElementById('meat-weight').value = availableWeight;
             } else {
                 // For non-meat products
-                document.getElementById('sale-quantity').value = availableQuantity;
+                document.getElementById('standard-quantity').value = availableQuantity;
             }
             
             // Set reasonable default price
@@ -157,8 +157,8 @@ const SalesRecordModule = {
             'bread': 2.75
         };
         
-        const priceInput = document.getElementById('sale-price');
-        const priceStandardInput = document.getElementById('sale-price-standard');
+        const priceInput = document.getElementById('meat-price');
+        const priceStandardInput = document.getElementById('standard-price');
         
         if (defaultPrices[product]) {
             const price = defaultPrices[product];
@@ -364,7 +364,7 @@ const SalesRecordModule = {
             </div>
 
             <!-- POPOUT MODALS -->
-            <!-- Sales Record Modal (FIXED WITH BOTH QUANTITY AND WEIGHT) -->
+            <!-- Sales Record Modal (FIXED - MATCHES PRODUCTION MODULE FOR MEAT) -->
             <div id="sale-modal" class="popout-modal hidden">
                 <div class="popout-modal-content" style="max-width: 700px;">
                     <div class="popout-modal-header">
@@ -457,53 +457,75 @@ const SalesRecordModule = {
                                 </div>
                             </div>
 
-                            <!-- Meat Sales Section (with BOTH quantity and weight) -->
+                            <!-- MEAT SALES SECTION - MATCHES PRODUCTION MODULE -->
                             <div id="meat-section" style="display: none; margin-bottom: 16px;">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px;">
-                                    <div>
-                                        <label class="form-label">Number of Animals *</label>
-                                        <input type="number" id="sale-animal-count" class="form-input" min="1" placeholder="0" oninput="window.FarmModules.SalesRecord.calculateSaleTotal()">
+                                <div style="background: #fef3f3; padding: 16px; border-radius: 8px; border: 1px solid #fed7d7; margin-bottom: 16px;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                                        <span style="font-size: 20px; color: #dc2626;">🍗</span>
+                                        <div style="font-weight: 600; color: #7c2d12;">Meat Sale Details</div>
                                     </div>
-                                    <div>
-                                        <label class="form-label">Total Weight *</label>
-                                        <div style="display: flex; gap: 8px;">
-                                            <input type="number" id="sale-weight" class="form-input" min="0.1" step="0.1" placeholder="0.0" oninput="window.FarmModules.SalesRecord.calculateSaleTotal()">
-                                            <select id="sale-weight-unit" class="form-input" style="min-width: 100px;" onchange="window.FarmModules.SalesRecord.calculateSaleTotal()">
-                                                <option value="kg">kg</option>
-                                                <option value="lbs">lbs</option>
-                                            </select>
+                                    
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                        <div>
+                                            <label class="form-label">Number of Animals *</label>
+                                            <input type="number" id="meat-animal-count" class="form-input" min="1" placeholder="0" oninput="window.FarmModules.SalesRecord.calculateSaleTotal()">
+                                            <div class="form-hint">Number of birds/carcasses being sold</div>
+                                        </div>
+                                        <div>
+                                            <label class="form-label">Total Weight *</label>
+                                            <div style="display: flex; gap: 8px;">
+                                                <input type="number" id="meat-weight" class="form-input" min="0.1" step="0.1" placeholder="0.0" oninput="window.FarmModules.SalesRecord.calculateSaleTotal()">
+                                                <select id="meat-weight-unit" class="form-input" style="min-width: 100px;" onchange="window.FarmModules.SalesRecord.calculateSaleTotal()">
+                                                    <option value="kg">kg</option>
+                                                    <option value="lbs">lbs</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-hint">Total weight of all animals</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px;">
+                                        <div>
+                                            <label class="form-label">Price per kg *</label>
+                                            <div style="display: flex; align-items: center; gap: 4px;">
+                                                <span style="color: var(--text-secondary);">$</span>
+                                                <input type="number" id="meat-price" class="form-input" step="0.01" min="0" required placeholder="0.00" oninput="window.FarmModules.SalesRecord.calculateSaleTotal()">
+                                                <span id="meat-price-unit-label" style="color: var(--text-secondary); font-size: 14px; white-space: nowrap;">per kg</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="form-label">Average per Animal</label>
+                                            <div style="padding: 8px; background: #f3f4f6; border-radius: 6px; text-align: center;">
+                                                <div id="meat-avg-weight" style="font-weight: 600; color: #dc2626;">0.00 kg</div>
+                                                <div id="meat-avg-value" style="font-size: 12px; color: #6b7280;">$0.00</div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                                    <div>
-                                        <label class="form-label">Price per kg *</label>
-                                        <div style="display: flex; align-items: center; gap: 4px;">
-                                            <span style="color: var(--text-secondary);">$</span>
-                                            <input type="number" id="sale-price" class="form-input" step="0.01" min="0" required placeholder="0.00" oninput="window.FarmModules.SalesRecord.calculateSaleTotal()">
-                                            <span id="price-unit-label" style="color: var(--text-secondary); font-size: 14px; white-space: nowrap;">per kg</span>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="form-label">Average Weight per Animal</label>
-                                        <input type="number" id="sale-avg-weight" class="form-input" placeholder="Auto-calculated" readonly style="background-color: #f3f4f6;">
-                                    </div>
-                                </div>
-                                <div class="form-hint">For meat sales: Enter number of animals and total weight. Price is calculated based on weight.</div>
                             </div>
 
-                            <!-- Standard Quantity Section (for non-meat products) -->
-                            <div id="standard-section" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Quantity *</label>
-                                    <input type="number" id="sale-quantity" class="form-input" min="0.01" step="0.01" required placeholder="0.00" oninput="window.FarmModules.SalesRecord.calculateSaleTotal()">
-                                </div>
-                                <div>
-                                    <label class="form-label">Unit Price ($) *</label>
-                                    <div style="display: flex; align-items: center; gap: 4px;">
-                                        <span style="color: var(--text-secondary);">$</span>
-                                        <input type="number" id="sale-price-standard" class="form-input" step="0.01" min="0" required placeholder="0.00" oninput="window.FarmModules.SalesRecord.calculateSaleTotal()">
-                                        <span id="standard-price-unit-label" style="color: var(--text-secondary); font-size: 14px; white-space: nowrap;">per unit</span>
+                            <!-- STANDARD QUANTITY SECTION (for non-meat products) -->
+                            <div id="standard-section" style="margin-bottom: 16px;">
+                                <div style="background: #f0f9ff; padding: 16px; border-radius: 8px; border: 1px solid #bae6fd;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                                        <span style="font-size: 20px; color: #0ea5e9;">📦</span>
+                                        <div style="font-weight: 600; color: #0369a1;">Standard Product Sale</div>
+                                    </div>
+                                    
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                        <div>
+                                            <label class="form-label">Quantity *</label>
+                                            <input type="number" id="standard-quantity" class="form-input" min="0.01" step="0.01" required placeholder="0.00" oninput="window.FarmModules.SalesRecord.calculateSaleTotal()">
+                                            <div class="form-hint">Amount to sell</div>
+                                        </div>
+                                        <div>
+                                            <label class="form-label">Unit Price *</label>
+                                            <div style="display: flex; align-items: center; gap: 4px;">
+                                                <span style="color: var(--text-secondary);">$</span>
+                                                <input type="number" id="standard-price" class="form-input" step="0.01" min="0" required placeholder="0.00" oninput="window.FarmModules.SalesRecord.calculateSaleTotal()">
+                                                <span id="standard-price-unit-label" style="color: var(--text-secondary); font-size: 14px; white-space: nowrap;">per unit</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -539,9 +561,11 @@ const SalesRecordModule = {
                                 <h4 style="color: var(--text-primary); margin: 0; text-align: center;">
                                     Sale Total: <span id="sale-total-amount" style="color: var(--primary-color);">$0.00</span>
                                 </h4>
-                                <div id="meat-details" style="display: none; text-align: center; margin-top: 8px; font-size: 14px; color: var(--text-secondary);">
-                                    <div id="weight-info">0 kg total weight</div>
-                                    <div id="avg-weight-info" style="font-size: 12px; margin-top: 4px;">Average: 0 kg per animal</div>
+                                <div id="meat-summary" style="display: none; text-align: center; margin-top: 8px; font-size: 14px; color: var(--text-secondary);">
+                                    <div id="meat-summary-info">0 animals • 0 kg total • $0.00/animal average</div>
+                                </div>
+                                <div id="standard-summary" style="display: none; text-align: center; margin-top: 8px; font-size: 14px; color: var(--text-secondary);">
+                                    <div id="standard-summary-info">0 units at $0.00/unit</div>
                                 </div>
                             </div>
                         </form>
@@ -730,7 +754,7 @@ const SalesRecordModule = {
                             <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Date</th>
                             <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Product</th>
                             <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Customer</th>
-                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Quantity/Weight</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Animals/Quantity</th>
                             <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Unit Price</th>
                             <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Total</th>
                             <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Source</th>
@@ -745,9 +769,9 @@ const SalesRecordModule = {
                             // Display quantity/weight info
                             let quantityInfo = `${sale.quantity} ${sale.unit}`;
                             if (sale.weight && sale.weight > 0) {
-                                quantityInfo = `${sale.weight} ${sale.weightUnit || 'kg'}`;
-                                if (sale.animalCount && sale.animalCount > 0) {
-                                    quantityInfo += ` (${sale.animalCount} animals)`;
+                                quantityInfo = `${sale.animalCount || sale.quantity} animals`;
+                                if (sale.weight) {
+                                    quantityInfo += ` • ${sale.weight} ${sale.weightUnit || 'kg'}`;
                                 }
                             }
                             
@@ -826,12 +850,12 @@ const SalesRecordModule = {
         document.getElementById('close-production-items-btn')?.addEventListener('click', () => this.hideProductionItemsModal());
         
         // Real-time total calculation
-        document.getElementById('sale-quantity')?.addEventListener('input', () => this.calculateSaleTotal());
-        document.getElementById('sale-price-standard')?.addEventListener('input', () => this.calculateSaleTotal());
-        document.getElementById('sale-weight')?.addEventListener('input', () => this.calculateSaleTotal());
-        document.getElementById('sale-animal-count')?.addEventListener('input', () => this.calculateSaleTotal());
-        document.getElementById('sale-price')?.addEventListener('input', () => this.calculateSaleTotal());
-        document.getElementById('sale-weight-unit')?.addEventListener('change', () => this.calculateSaleTotal());
+        document.getElementById('standard-quantity')?.addEventListener('input', () => this.calculateSaleTotal());
+        document.getElementById('standard-price')?.addEventListener('input', () => this.calculateSaleTotal());
+        document.getElementById('meat-animal-count')?.addEventListener('input', () => this.calculateSaleTotal());
+        document.getElementById('meat-weight')?.addEventListener('input', () => this.calculateSaleTotal());
+        document.getElementById('meat-price')?.addEventListener('input', () => this.calculateSaleTotal());
+        document.getElementById('meat-weight-unit')?.addEventListener('change', () => this.calculateSaleTotal());
 
         // Filter
         document.getElementById('period-filter')?.addEventListener('change', (e) => {
@@ -858,7 +882,7 @@ const SalesRecordModule = {
         });
     },
 
-    // PRODUCT HANDLING METHODS
+    // PRODUCT HANDLING METHODS - UPDATED
     handleProductChange() {
         const productSelect = document.getElementById('sale-product');
         const selectedValue = productSelect.value;
@@ -867,30 +891,43 @@ const SalesRecordModule = {
         const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
         const meatSection = document.getElementById('meat-section');
         const standardSection = document.getElementById('standard-section');
-        const meatDetails = document.getElementById('meat-details');
-        const priceUnitLabel = document.getElementById('price-unit-label');
+        const meatSummary = document.getElementById('meat-summary');
+        const standardSummary = document.getElementById('standard-summary');
+        const meatPriceUnitLabel = document.getElementById('meat-price-unit-label');
         const standardPriceUnitLabel = document.getElementById('standard-price-unit-label');
         
         if (meatProducts.includes(selectedValue)) {
-            // Show meat section for meat products (with BOTH quantity and weight)
+            // Show meat section for meat products
             meatSection.style.display = 'block';
-            meatDetails.style.display = 'block';
+            meatSummary.style.display = 'block';
             standardSection.style.display = 'none';
+            standardSummary.style.display = 'none';
             
             // Set unit defaults
             document.getElementById('sale-unit').value = 'animals';
-            document.getElementById('sale-weight-unit').value = 'kg';
-            document.getElementById('sale-animal-count').required = true;
-            document.getElementById('sale-weight').required = true;
+            document.getElementById('meat-weight-unit').value = 'kg';
+            document.getElementById('meat-animal-count').required = true;
+            document.getElementById('meat-weight').required = true;
             
             // Update price unit label
-            priceUnitLabel.textContent = 'per kg';
+            meatPriceUnitLabel.textContent = 'per kg';
+            
+            // Set appropriate labels based on product
+            const animalLabel = selectedValue === 'chicken-parts' ? 'Number of Packages' : 
+                              selectedValue.includes('broilers') ? 'Number of Birds' : 
+                              selectedValue === 'pork' ? 'Number of Pigs' :
+                              selectedValue === 'beef' ? 'Number of Cattle' :
+                              selectedValue === 'goat' ? 'Number of Goats' :
+                              selectedValue === 'lamb' ? 'Number of Lambs' : 'Number of Animals';
+            
+            document.querySelector('label[for="meat-animal-count"]').textContent = animalLabel + ' *';
             
         } else {
             // Hide meat section for non-meat products
             meatSection.style.display = 'none';
-            meatDetails.style.display = 'none';
-            standardSection.style.display = 'grid';
+            meatSummary.style.display = 'none';
+            standardSection.style.display = 'block';
+            standardSummary.style.display = 'block';
             
             // Set appropriate unit defaults
             const unitSelect = document.getElementById('sale-unit');
@@ -909,8 +946,8 @@ const SalesRecordModule = {
             }
             
             // Make meat fields optional
-            document.getElementById('sale-animal-count').required = false;
-            document.getElementById('sale-weight').required = false;
+            document.getElementById('meat-animal-count').required = false;
+            document.getElementById('meat-weight').required = false;
         }
         
         this.calculateSaleTotal();
@@ -943,10 +980,10 @@ const SalesRecordModule = {
         
         if (meatProducts.includes(product)) {
             // For meat products: price × weight
-            const weight = parseFloat(document.getElementById('sale-weight').value) || 0;
-            const weightUnit = document.getElementById('sale-weight-unit').value;
-            const animalCount = parseFloat(document.getElementById('sale-animal-count').value) || 0;
-            const price = parseFloat(document.getElementById('sale-price').value) || 0;
+            const animalCount = parseFloat(document.getElementById('meat-animal-count').value) || 0;
+            const weight = parseFloat(document.getElementById('meat-weight').value) || 0;
+            const weightUnit = document.getElementById('meat-weight-unit').value;
+            const pricePerKg = parseFloat(document.getElementById('meat-price').value) || 0;
             
             // Convert to kg for calculation if needed
             let weightInKg = weight;
@@ -954,31 +991,38 @@ const SalesRecordModule = {
                 weightInKg = weight * 0.453592; // Convert lbs to kg
             }
             
-            total = weightInKg * price;
+            total = weightInKg * pricePerKg;
             
-            // Update weight info and calculate average
-            const weightInfo = document.getElementById('weight-info');
-            const avgWeightInfo = document.getElementById('avg-weight-info');
-            const avgWeightInput = document.getElementById('sale-avg-weight');
+            // Update meat summary
+            const meatSummary = document.getElementById('meat-summary-info');
+            const avgWeightElement = document.getElementById('meat-avg-weight');
+            const avgValueElement = document.getElementById('meat-avg-value');
             
-            if (weightInfo && avgWeightInfo && avgWeightInput) {
-                let infoText = `${weight} ${weightUnit} total weight`;
-                if (animalCount > 0) {
+            if (meatSummary && avgWeightElement && avgValueElement) {
+                if (animalCount > 0 && weightInKg > 0) {
                     const avgWeight = weightInKg / animalCount;
-                    infoText += ` (${animalCount} animals)`;
-                    avgWeightInfo.textContent = `Average: ${avgWeight.toFixed(2)} kg per animal`;
-                    avgWeightInput.value = avgWeight.toFixed(2);
+                    const avgValue = total / animalCount;
+                    
+                    meatSummary.textContent = `${animalCount} animals • ${weight} ${weightUnit} total • ${this.formatCurrency(avgValue)}/animal average`;
+                    avgWeightElement.textContent = `${avgWeight.toFixed(2)} kg`;
+                    avgValueElement.textContent = `${this.formatCurrency(avgValue)}`;
                 } else {
-                    avgWeightInfo.textContent = '';
-                    avgWeightInput.value = '';
+                    meatSummary.textContent = '0 animals • 0 kg total • $0.00/animal average';
+                    avgWeightElement.textContent = '0.00 kg';
+                    avgValueElement.textContent = '$0.00';
                 }
-                weightInfo.textContent = infoText;
             }
         } else {
             // For non-meat products: price × quantity
-            const quantity = parseFloat(document.getElementById('sale-quantity').value) || 0;
-            const price = parseFloat(document.getElementById('sale-price-standard').value) || 0;
+            const quantity = parseFloat(document.getElementById('standard-quantity').value) || 0;
+            const price = parseFloat(document.getElementById('standard-price').value) || 0;
             total = quantity * price;
+            
+            // Update standard summary
+            const standardSummary = document.getElementById('standard-summary-info');
+            if (standardSummary) {
+                standardSummary.textContent = `${quantity} units at ${this.formatCurrency(price)}/unit`;
+            }
         }
         
         const totalElement = document.getElementById('sale-total-amount');
@@ -1215,10 +1259,10 @@ const SalesRecordModule = {
         
         if (isMeatProduct) {
             // For meat products: use animal count and weight
-            const animalCount = parseInt(document.getElementById('sale-animal-count').value) || 0;
-            const weight = parseFloat(document.getElementById('sale-weight').value) || 0;
-            const weightUnit = document.getElementById('sale-weight-unit').value;
-            const unitPrice = parseFloat(document.getElementById('sale-price').value) || 0;
+            const animalCount = parseInt(document.getElementById('meat-animal-count').value) || 0;
+            const weight = parseFloat(document.getElementById('meat-weight').value) || 0;
+            const weightUnit = document.getElementById('meat-weight-unit').value;
+            const unitPrice = parseFloat(document.getElementById('meat-price').value) || 0;
             
             // Convert to kg for calculation
             let weightInKg = weight;
@@ -1247,8 +1291,8 @@ const SalesRecordModule = {
             };
         } else {
             // For non-meat products: use standard quantity
-            const quantity = parseFloat(document.getElementById('sale-quantity').value) || 0;
-            const unitPrice = parseFloat(document.getElementById('sale-price-standard').value) || 0;
+            const quantity = parseFloat(document.getElementById('standard-quantity').value) || 0;
+            const unitPrice = parseFloat(document.getElementById('standard-price').value) || 0;
             const totalAmount = quantity * unitPrice;
             
             saleData = {
@@ -1406,23 +1450,13 @@ const SalesRecordModule = {
         // Populate meat-specific fields or standard fields
         const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
         if (meatProducts.includes(sale.product)) {
-            document.getElementById('sale-animal-count').value = sale.animalCount || '';
-            document.getElementById('sale-weight').value = sale.weight || '';
-            document.getElementById('sale-weight-unit').value = sale.weightUnit || 'kg';
-            document.getElementById('sale-price').value = sale.unitPrice;
-            
-            // Calculate and set average weight
-            if (sale.animalCount && sale.animalCount > 0 && sale.weight) {
-                let weightInKg = sale.weight;
-                if (sale.weightUnit === 'lbs') {
-                    weightInKg = sale.weight * 0.453592;
-                }
-                const avgWeight = weightInKg / sale.animalCount;
-                document.getElementById('sale-avg-weight').value = avgWeight.toFixed(2);
-            }
+            document.getElementById('meat-animal-count').value = sale.animalCount || '';
+            document.getElementById('meat-weight').value = sale.weight || '';
+            document.getElementById('meat-weight-unit').value = sale.weightUnit || 'kg';
+            document.getElementById('meat-price').value = sale.unitPrice;
         } else {
-            document.getElementById('sale-quantity').value = sale.quantity;
-            document.getElementById('sale-price-standard').value = sale.unitPrice;
+            document.getElementById('standard-quantity').value = sale.quantity;
+            document.getElementById('standard-price').value = sale.unitPrice;
         }
         
         document.getElementById('delete-sale').style.display = 'block';
@@ -1512,6 +1546,7 @@ const SalesRecordModule = {
         const meatSales = todaySales.filter(sale => meatProducts.includes(sale.product));
         const meatRevenue = meatSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
         const totalMeatWeight = meatSales.reduce((sum, sale) => sum + (sale.weight || 0), 0);
+        const totalMeatAnimals = meatSales.reduce((sum, sale) => sum + (sale.animalCount || 0), 0);
         
         let report = '<div class="report-content">';
         report += `<h4 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">📊 Daily Sales Report - ${today}</h4>`;
@@ -1540,8 +1575,8 @@ const SalesRecordModule = {
                         <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(meatRevenue)}</div>
                     </div>
                     <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                        <div style="font-size: 12px; color: var(--text-secondary);">Meat Weight</div>
-                        <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${totalMeatWeight.toFixed(2)} kg</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">Meat Animals</div>
+                        <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${totalMeatAnimals}</div>
                     </div>
                 </div>
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
@@ -1553,6 +1588,10 @@ const SalesRecordModule = {
                         <div style="font-size: 12px; color: var(--text-secondary);">From Production</div>
                         <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${todaySales.filter(s => s.productionSource).length}</div>
                     </div>
+                </div>
+                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center; margin-top: 12px;">
+                    <div style="font-size: 12px; color: var(--text-secondary);">Total Meat Weight</div>
+                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${totalMeatWeight.toFixed(2)} kg</div>
                 </div>
             </div>`;
             
@@ -1566,6 +1605,11 @@ const SalesRecordModule = {
                 const meatBadge = isMeat ? '<span style="background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 10px; font-size: 10px; margin-left: 6px;">MEAT</span>' : '';
                 const prodBadge = isFromProduction ? '<span style="background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 10px; font-size: 10px; margin-left: 6px;">PROD</span>' : '';
                 
+                let quantityInfo = `${sale.quantity} ${sale.unit}`;
+                if (isMeat && sale.weight) {
+                    quantityInfo = `${sale.animalCount || sale.quantity} animals • ${sale.weight} ${sale.weightUnit || 'kg'}`;
+                }
+                
                 report += `<div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; border-left: 4px solid ${isMeat ? '#dc2626' : 'var(--primary-color)'};">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
@@ -1575,7 +1619,7 @@ const SalesRecordModule = {
                         <div style="text-align: right;">
                             <div style="font-weight: 600; color: var(--text-primary);">${this.formatCurrency(sale.totalAmount)}</div>
                             <div style="font-size: 12px; color: var(--text-secondary);">
-                                ${sale.weight ? `${sale.weight} ${sale.weightUnit || 'kg'}` : `${sale.quantity} ${sale.unit}`}
+                                ${quantityInfo}
                                 ${sale.priceUnit === 'per-kg' ? '/kg' : sale.priceUnit === 'per-lb' ? '/lb' : ''}
                             </div>
                         </div>
@@ -1636,6 +1680,8 @@ const SalesRecordModule = {
                     salesCount: 0,
                     animalCount: 0,
                     avgPricePerKg: 0,
+                    avgWeightPerAnimal: 0,
+                    avgValuePerAnimal: 0,
                     fromProduction: 0
                 };
             }
@@ -1646,10 +1692,12 @@ const SalesRecordModule = {
             if (sale.productionSource) productStats[productName].fromProduction += 1;
         });
         
-        // Calculate average price per kg
+        // Calculate averages
         Object.keys(productStats).forEach(product => {
             const stats = productStats[product];
             stats.avgPricePerKg = stats.weight > 0 ? stats.revenue / stats.weight : 0;
+            stats.avgWeightPerAnimal = stats.animalCount > 0 ? stats.weight / stats.animalCount : 0;
+            stats.avgValuePerAnimal = stats.animalCount > 0 ? stats.revenue / stats.animalCount : 0;
         });
         
         // Sort by revenue
@@ -1671,6 +1719,9 @@ const SalesRecordModule = {
             const totalMeatWeight = sortedProducts.reduce((sum, [, stats]) => sum + stats.weight, 0);
             const totalAnimals = sortedProducts.reduce((sum, [, stats]) => sum + stats.animalCount, 0);
             const fromProductionCount = sortedProducts.reduce((sum, [, stats]) => sum + stats.fromProduction, 0);
+            const avgPricePerKg = totalMeatWeight > 0 ? totalMeatRevenue / totalMeatWeight : 0;
+            const avgWeightPerAnimal = totalAnimals > 0 ? totalMeatWeight / totalAnimals : 0;
+            const avgValuePerAnimal = totalAnimals > 0 ? totalMeatRevenue / totalAnimals : 0;
             
             report += `<div style="margin-bottom: 24px;">
                 <h5 style="color: var(--text-primary); margin-bottom: 12px;">📊 MEAT SALES SUMMARY:</h5>
@@ -1692,9 +1743,19 @@ const SalesRecordModule = {
                         <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${fromProductionCount}</div>
                     </div>
                 </div>
-                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                    <div style="font-size: 12px; color: var(--text-secondary);">Average Price per kg</div>
-                    <div style="font-size: 18px; font-weight: bold; color: var(--primary-color);">${this.formatCurrency(totalMeatWeight > 0 ? totalMeatRevenue / totalMeatWeight : 0)}/kg</div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                    <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
+                        <div style="font-size: 12px; color: var(--text-secondary);">Average Price/kg</div>
+                        <div style="font-size: 18px; font-weight: bold; color: var(--primary-color);">${this.formatCurrency(avgPricePerKg)}/kg</div>
+                    </div>
+                    <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
+                        <div style="font-size: 12px; color: var(--text-secondary);">Avg Weight/Animal</div>
+                        <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${avgWeightPerAnimal.toFixed(2)} kg</div>
+                    </div>
+                    <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
+                        <div style="font-size: 12px; color: var(--text-secondary);">Avg Value/Animal</div>
+                        <div style="font-size: 18px; font-weight: bold; color: var(--primary-color);">${this.formatCurrency(avgValuePerAnimal)}</div>
+                    </div>
                 </div>
             </div>`;
             
@@ -1707,25 +1768,23 @@ const SalesRecordModule = {
                             <tr style="border-bottom: 2px solid var(--glass-border);">
                                 <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Product</th>
                                 <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Revenue</th>
-                                <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Weight Sold</th>
                                 <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Animals</th>
-                                <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Avg Price/kg</th>
-                                <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Sales Count</th>
+                                <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Weight</th>
+                                <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Avg/kg</th>
+                                <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Avg/Animal</th>
                             </tr>
                         </thead>
                         <tbody>`;
             
             sortedProducts.forEach(([productName, stats]) => {
-                const revenuePercentage = totalMeatRevenue > 0 ? Math.round((stats.revenue / totalMeatRevenue) * 100) : 0;
-                
                 report += `
                     <tr style="border-bottom: 1px solid var(--glass-border);">
                         <td style="padding: 12px 8px; font-weight: 500; color: var(--text-primary);">${productName}</td>
                         <td style="padding: 12px 8px; color: var(--text-primary); font-weight: 600;">${this.formatCurrency(stats.revenue)}</td>
-                        <td style="padding: 12px 8px; color: var(--text-primary);">${stats.weight.toFixed(2)} kg</td>
                         <td style="padding: 12px 8px; color: var(--text-primary);">${stats.animalCount}</td>
+                        <td style="padding: 12px 8px; color: var(--text-primary);">${stats.weight.toFixed(2)} kg</td>
                         <td style="padding: 12px 8px; color: var(--primary-color); font-weight: 600;">${this.formatCurrency(stats.avgPricePerKg)}/kg</td>
-                        <td style="padding: 12px 8px; color: var(--text-primary);">${stats.salesCount}</td>
+                        <td style="padding: 12px 8px; color: var(--primary-color); font-weight: 600;">${this.formatCurrency(stats.avgValuePerAnimal)}</td>
                     </tr>
                 `;
             });
@@ -1905,16 +1964,15 @@ const SalesRecordModule = {
     },
 
     convertToCSV(sales) {
-        const headers = ['Date', 'Product', 'Customer', 'Quantity', 'Unit', 'Weight', 'Weight Unit', 'Animal Count', 'Unit Price', 'Price Unit', 'Total', 'Payment Method', 'Payment Status', 'Production Source', 'Notes'];
+        const headers = ['Date', 'Product', 'Customer', 'Animals', 'Unit', 'Weight', 'Weight Unit', 'Unit Price', 'Price Unit', 'Total', 'Payment Method', 'Payment Status', 'Production Source', 'Notes'];
         const rows = sales.map(sale => [
             sale.date,
             this.formatProductName(sale.product),
             sale.customer || 'Walk-in',
-            sale.quantity,
+            sale.animalCount || sale.quantity,
             sale.unit,
             sale.weight || '',
             sale.weightUnit || '',
-            sale.animalCount || '',
             sale.unitPrice,
             sale.priceUnit || 'per-unit',
             sale.totalAmount,
