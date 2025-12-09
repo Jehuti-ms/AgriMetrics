@@ -853,19 +853,30 @@ const SalesRecordModule = {
             }
         });
 
-        // Edit/delete sale buttons (delegated)
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.edit-sale')) {
-                const saleId = e.target.closest('.edit-sale').dataset.id;
-                this.editSale(saleId);
-            }
-            if (e.target.closest('.delete-sale')) {
-                const saleId = e.target.closest('.delete-sale').dataset.id;
-                this.deleteSaleRecord(saleId);
-            }
-        });
-    },
-
+        // Edit/delete sale buttons (delegated) - FIXED
+    document.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('.edit-sale');
+        const deleteBtn = e.target.closest('.delete-sale');
+        
+        if (editBtn) {
+            const saleId = editBtn.dataset.id;
+            console.log('✏️ Edit button clicked for sale:', saleId);
+            e.preventDefault();
+            e.stopPropagation();
+            this.editSale(saleId);
+        }
+        
+        if (deleteBtn) {
+            const saleId = deleteBtn.dataset.id;
+            console.log('🗑️ Delete button clicked for sale:', saleId);
+            e.preventDefault();
+            e.stopPropagation();
+            this.deleteSaleRecord(saleId);
+        }
+    });
+    
+    console.log('✅ Event listeners set up');
+},
 setupFormFieldListeners() {
     // Product change
     const productSelect = document.getElementById('sale-product');
@@ -1555,50 +1566,146 @@ saveSale() {
     },
     
    // Update the editSale() method to properly set price unit label when editing:
+// FIXED editSale method that works with filtered tables
 editSale(saleId) {
+    console.log('🔄 Edit sale clicked:', saleId);
+    
+    // ALWAYS search in the FULL sales array, not filtered results
     const sales = window.FarmModules.appData.sales || [];
     const sale = sales.find(s => s.id === saleId);
     
     if (!sale) {
         console.error('❌ Sale not found:', saleId);
+        this.showNotification('Sale not found', 'error');
         return;
     }
 
-    // Populate form fields
-    document.getElementById('sale-id').value = sale.id;
-    document.getElementById('sale-date').value = sale.date;
+    console.log('📝 Found sale to edit:', sale);
+
+    // HIDE ALL MODALS FIRST
+    this.hideAllModals();
+    
+    // MANUALLY SHOW THE MODAL WITHOUT CALLING showSaleModal()
+    const modal = document.getElementById('sale-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        console.log('✅ Modal shown');
+    }
+    
+    // MANUALLY POPULATE ALL FIELDS - DO NOT RESET ANYTHING
+    
+    // Set the sale ID FIRST
+    const saleIdInput = document.getElementById('sale-id');
+    if (saleIdInput) {
+        saleIdInput.value = sale.id;
+        console.log('✅ Set sale ID:', sale.id);
+    }
+    
+    // Set the modal title
+    document.getElementById('sale-modal-title').textContent = 'Edit Sale';
+    document.getElementById('delete-sale').style.display = 'block';
+    document.getElementById('production-source-notice').style.display = 'none';
+    
+    // Populate basic fields - FIXED DATE FORMATTING
+    const dateInput = document.getElementById('sale-date');
+    if (dateInput) {
+        // Use DateUtils if available, otherwise fallback
+        let displayDate;
+        if (window.DateUtils && window.DateUtils.formatDateForInput) {
+            displayDate = window.DateUtils.formatDateForInput(sale.date);
+        } else {
+            // Fallback date parsing
+            const dateObj = new Date(sale.date);
+            if (!isNaN(dateObj.getTime())) {
+                const year = dateObj.getFullYear();
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                displayDate = `${year}-${month}-${day}`;
+            } else {
+                // Try to parse as YYYY-MM-DD directly
+                displayDate = sale.date;
+            }
+        }
+        dateInput.value = displayDate || '';
+        console.log('✅ Set date:', displayDate, 'from original:', sale.date);
+    }
+    
+    // Populate other fields
     document.getElementById('sale-customer').value = sale.customer || '';
-    document.getElementById('sale-product').value = sale.product;
-    document.getElementById('sale-unit').value = sale.unit;
-    document.getElementById('sale-payment').value = sale.paymentMethod;
+    document.getElementById('sale-product').value = sale.product || '';
+    document.getElementById('sale-unit').value = sale.unit || 'animals';
+    document.getElementById('sale-payment').value = sale.paymentMethod || 'cash';
     document.getElementById('sale-status').value = sale.paymentStatus || 'paid';
     document.getElementById('sale-notes').value = sale.notes || '';
+    
+    console.log('✅ Basic fields populated');
     
     // Populate meat or standard fields
     const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
     if (meatProducts.includes(sale.product)) {
+        console.log('✅ This is a meat product');
+        
+        // Show meat section, hide standard section
+        const meatSection = document.getElementById('meat-section');
+        const standardSection = document.getElementById('standard-section');
+        const meatSummary = document.getElementById('meat-summary');
+        const standardSummary = document.getElementById('standard-summary');
+        
+        if (meatSection) meatSection.style.display = 'block';
+        if (standardSection) standardSection.style.display = 'none';
+        if (meatSummary) meatSummary.style.display = 'block';
+        if (standardSummary) standardSummary.style.display = 'none';
+        
+        // Populate meat fields
         document.getElementById('meat-animal-count').value = sale.animalCount || sale.quantity || '';
         document.getElementById('meat-weight').value = sale.weight || '';
         document.getElementById('meat-weight-unit').value = sale.weightUnit || 'kg';
-        document.getElementById('meat-price').value = sale.unitPrice;
+        document.getElementById('meat-price').value = sale.unitPrice || '';
         
-        // Update price unit label based on saved weight unit
+        // Clear standard fields
+        document.getElementById('standard-quantity').value = '';
+        document.getElementById('standard-price').value = '';
+        
+        // Update price unit label
         setTimeout(() => {
             this.updatePriceUnitLabel();
         }, 10);
+        
     } else {
-        document.getElementById('standard-quantity').value = sale.quantity;
-        document.getElementById('standard-price').value = sale.unitPrice;
+        console.log('✅ This is a standard product');
+        
+        // Show standard section, hide meat section
+        const meatSection = document.getElementById('meat-section');
+        const standardSection = document.getElementById('standard-section');
+        const meatSummary = document.getElementById('meat-summary');
+        const standardSummary = document.getElementById('standard-summary');
+        
+        if (meatSection) meatSection.style.display = 'none';
+        if (standardSection) standardSection.style.display = 'block';
+        if (meatSummary) meatSummary.style.display = 'none';
+        if (standardSummary) standardSummary.style.display = 'block';
+        
+        // Populate standard fields
+        document.getElementById('standard-quantity').value = sale.quantity || '';
+        document.getElementById('standard-price').value = sale.unitPrice || '';
+        
+        // Clear meat fields
+        document.getElementById('meat-animal-count').value = '';
+        document.getElementById('meat-weight').value = '';
+        document.getElementById('meat-price').value = '';
     }
     
-    document.getElementById('delete-sale').style.display = 'block';
-    document.getElementById('sale-modal-title').textContent = 'Edit Sale';
+    // Calculate total
+    setTimeout(() => {
+        this.calculateSaleTotal();
+        console.log('✅ Total calculated');
+    }, 100);
     
-    this.handleProductChange();
-    this.calculateSaleTotal();
-    this.showSaleModal();
+    // Re-attach event listeners
+    this.setupFormFieldListeners();
+    
+    console.log('✅ Edit sale modal ready');
 },
-
     updateSale(saleId, saleData) {
         const sales = window.FarmModules.appData.sales || [];
         const saleIndex = sales.findIndex(s => s.id === saleId);
