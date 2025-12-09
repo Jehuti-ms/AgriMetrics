@@ -1148,74 +1148,86 @@ const SalesRecordModule = {
     },
 
     // FIXED editSale METHOD with DateUtils
-    editSale(saleId) {
-        console.log('🔄 Edit sale clicked:', saleId);
-        
-        const sales = window.FarmModules.appData.sales || [];
-        const sale = sales.find(s => s.id === saleId);
-        
-        if (!sale) {
-            console.error('❌ Sale not found:', saleId);
-            this.showNotification('Sale not found', 'error');
-            return;
-        }
+editSale(saleId) {
+    console.log('🔄 Edit sale clicked:', saleId);
+    
+    const sales = window.FarmModules.appData.sales || [];
+    const sale = sales.find(s => s.id === saleId);
+    
+    if (!sale) {
+        console.error('❌ Sale not found:', saleId);
+        this.showNotification('Sale not found', 'error');
+        return;
+    }
 
-        console.log('📝 Found sale to edit:', sale);
-        console.log('📅 Original sale date:', sale.date);
+    console.log('📝 Found sale to edit:', sale);
+    console.log('📅 Original sale date stored as:', sale.date);
 
-        this.hideAllModals();
+    this.hideAllModals();
+    
+    const modal = document.getElementById('sale-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+    }
+    
+    const saleIdInput = document.getElementById('sale-id');
+    if (saleIdInput) {
+        saleIdInput.value = sale.id;
+    }
+    
+    document.getElementById('sale-modal-title').textContent = 'Edit Sale';
+    document.getElementById('delete-sale').style.display = 'block';
+    document.getElementById('production-source-notice').style.display = 'none';
+    
+    // FIXED: SIMPLE DATE HANDLING - NO DATE OBJECTS
+    const dateInput = document.getElementById('sale-date');
+    if (dateInput) {
+        let displayDate = '';
         
-        const modal = document.getElementById('sale-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-        }
+        // Check what format the date is stored in
+        console.log('🔍 Date stored as:', sale.date, 'Type:', typeof sale.date);
         
-        const saleIdInput = document.getElementById('sale-id');
-        if (saleIdInput) {
-            saleIdInput.value = sale.id;
-        }
-        
-        document.getElementById('sale-modal-title').textContent = 'Edit Sale';
-        document.getElementById('delete-sale').style.display = 'block';
-        document.getElementById('production-source-notice').style.display = 'none';
-        
-        // FIXED DATE HANDLING
-        const dateInput = document.getElementById('sale-date');
-        if (dateInput) {
-            let displayDate;
-            
-            // Use DateUtils if available
-            if (window.DateUtils && window.DateUtils.formatDateForInput) {
-                displayDate = window.DateUtils.formatDateForInput(sale.date);
-                console.log('✅ Using DateUtils to format date:', sale.date, '->', displayDate);
-            } else {
-                // Fallback: Direct parsing
-                console.warn('⚠️ DateUtils not available, using fallback');
-                try {
-                    // If date is already YYYY-MM-DD
-                    if (typeof sale.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(sale.date)) {
-                        displayDate = sale.date;
-                    } else {
-                        // Parse as Date
-                        const dateObj = new Date(sale.date);
-                        if (!isNaN(dateObj.getTime())) {
-                            const year = dateObj.getFullYear();
-                            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-                            const day = String(dateObj.getDate()).padStart(2, '0');
-                            displayDate = `${year}-${month}-${day}`;
-                        } else {
-                            displayDate = sale.date;
-                        }
-                    }
-                } catch (e) {
-                    console.error('Error parsing date:', e);
-                    displayDate = sale.date;
+        if (typeof sale.date === 'string') {
+            // If it's already YYYY-MM-DD, use it directly
+            if (/^\d{4}-\d{2}-\d{2}$/.test(sale.date)) {
+                displayDate = sale.date;
+                console.log('✅ Date already in YYYY-MM-DD format:', displayDate);
+            } 
+            // If it's a different string format, parse it
+            else if (sale.date.includes('T') || sale.date.includes(' ')) {
+                // It's an ISO string or date string - extract YYYY-MM-DD
+                const dateParts = sale.date.split('T')[0];
+                if (dateParts && /^\d{4}-\d{2}-\d{2}$/.test(dateParts)) {
+                    displayDate = dateParts;
+                    console.log('✅ Extracted YYYY-MM-DD from ISO string:', displayDate);
                 }
             }
-            
-            dateInput.value = displayDate || '';
-            console.log('📅 Date input set to:', dateInput.value);
         }
+        
+        // If we couldn't parse it, try DateUtils as last resort
+        if (!displayDate && window.DateUtils && window.DateUtils.formatDateForInput) {
+            displayDate = window.DateUtils.formatDateForInput(sale.date);
+            console.log('✅ Used DateUtils to format:', sale.date, '->', displayDate);
+        }
+        
+        // Final fallback: manual extraction
+        if (!displayDate) {
+            try {
+                // Try to extract YYYY-MM-DD from any string
+                const match = sale.date.toString().match(/(\d{4})-(\d{2})-(\d{2})/);
+                if (match) {
+                    displayDate = match[0];
+                    console.log('✅ Extracted via regex:', displayDate);
+                }
+            } catch (e) {
+                console.error('Could not parse date:', e);
+            }
+        }
+        
+        // Set the date input
+        dateInput.value = displayDate || '';
+        console.log('📅 FINAL Date input set to:', dateInput.value);
+    }
         
         document.getElementById('sale-customer').value = sale.customer || '';
         document.getElementById('sale-product').value = sale.product;
@@ -1440,48 +1452,67 @@ const SalesRecordModule = {
     },
 
     handleQuickSale() {
-        const product = document.getElementById('quick-product')?.value;
-        const quantity = parseFloat(document.getElementById('quick-quantity')?.value) || 0;
-        const unit = document.getElementById('quick-unit')?.value;
-        const price = parseFloat(document.getElementById('quick-price')?.value) || 0;
+    const product = document.getElementById('quick-product')?.value;
+    const quantity = parseFloat(document.getElementById('quick-quantity')?.value) || 0;
+    const unit = document.getElementById('quick-unit')?.value;
+    const price = parseFloat(document.getElementById('quick-price')?.value) || 0;
 
-        if (!product || !quantity || !price) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
-        }
+    if (!product || !quantity || !price) {
+        this.showNotification('Please fill in all required fields', 'error');
+        return;
+    }
 
-        const today = window.DateUtils ? window.DateUtils.getToday() : this.getTodayFallback();
-        let storageDate = today;
-        
-        if (window.DateUtils && window.DateUtils.toStorageFormat) {
-            storageDate = window.DateUtils.toStorageFormat(today);
-        }
+    // Get today's date as YYYY-MM-DD directly
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const storageDate = `${year}-${month}-${day}`;
+    
+    console.log('📅 Quick sale date:', storageDate);
 
-        const saleData = {
-            id: 'SALE-' + Date.now().toString().slice(-6),
-            product: product,
-            quantity: quantity,
-            unit: unit,
-            unitPrice: price,
-            totalAmount: quantity * price,
-            date: storageDate,
-            paymentMethod: 'cash',
-            paymentStatus: 'paid',
-            customer: 'Walk-in'
-        };
+    const saleData = {
+        id: 'SALE-' + Date.now().toString().slice(-6),
+        product: product,
+        quantity: quantity,
+        unit: unit,
+        unitPrice: price,
+        totalAmount: quantity * price,
+        date: storageDate, // Store YYYY-MM-DD string directly
+        paymentMethod: 'cash',
+        paymentStatus: 'paid',
+        customer: 'Walk-in'
+    };
 
-        this.addSale(saleData);
-        
-        const form = document.getElementById('quick-sale-form');
-        if (form) {
-            form.reset();
-            const unitSelect = document.getElementById('quick-unit');
-            if (unitSelect) unitSelect.value = 'kg';
-        }
-        
-        this.showNotification('Quick sale recorded!', 'success');
-    },
-
+    this.addSale(saleData);
+    
+    const form = document.getElementById('quick-sale-form');
+    if (form) {
+        form.reset();
+        const unitSelect = document.getElementById('quick-unit');
+        if (unitSelect) unitSelect.value = 'kg';
+    }
+    
+    this.showNotification('Quick sale recorded!', 'success');
+},
+    // ADD A DEBUG FUNCTION TO CHECK ALL DATES
+debugAllSalesDates() {
+    console.log('🔍 DEBUGGING ALL SALES DATES:');
+    const sales = window.FarmModules.appData.sales || [];
+    
+    sales.forEach((sale, index) => {
+        console.log(`Sale ${index} (ID: ${sale.id}):`);
+        console.log('  - Stored date:', sale.date);
+        console.log('  - Type:', typeof sale.date);
+        console.log('  - As new Date():', new Date(sale.date));
+        console.log('  - Local date string:', new Date(sale.date).toLocaleDateString());
+        console.log('  - ISO string:', new Date(sale.date).toISOString());
+        console.log('  - getDate():', new Date(sale.date).getDate());
+        console.log('  - getUTCDate():', new Date(sale.date).getUTCDate());
+        console.log('---');
+    });
+},
+    
     addSale(saleData) {
         if (!saleData.id) {
             saleData.id = 'SALE-' + Date.now();
@@ -1539,129 +1570,119 @@ const SalesRecordModule = {
         }
     },
 
-    createNewSale() {
-        const product = document.getElementById('sale-product')?.value;
-        const dateInputValue = document.getElementById('sale-date')?.value;
-        const customer = document.getElementById('sale-customer')?.value || 'Walk-in';
-        const paymentMethod = document.getElementById('sale-payment')?.value;
-        const paymentStatus = document.getElementById('sale-status')?.value;
-        const notes = document.getElementById('sale-notes')?.value;
-        const unit = document.getElementById('sale-unit')?.value || 'animals';
+createNewSale() {
+    const product = document.getElementById('sale-product')?.value;
+    const dateInputValue = document.getElementById('sale-date')?.value;
+    const customer = document.getElementById('sale-customer')?.value || 'Walk-in';
+    const paymentMethod = document.getElementById('sale-payment')?.value;
+    const paymentStatus = document.getElementById('sale-status')?.value;
+    const notes = document.getElementById('sale-notes')?.value;
+    const unit = document.getElementById('sale-unit')?.value || 'animals';
+    
+    console.log('📅 Raw date from form input:', dateInputValue);
+    
+    // FIXED: Store EXACTLY what the date input gives us
+    // Input type="date" ALWAYS gives YYYY-MM-DD in local timezone
+    const storageDate = dateInputValue; // Just store it as-is
+    console.log('✅ Storing date exactly as from input:', storageDate);
+    
+    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+    const isMeatProduct = meatProducts.includes(product);
+    
+    let saleData;
+    
+    if (isMeatProduct) {
+        const animalCount = parseFloat(document.getElementById('meat-animal-count')?.value) || 0;
+        const weight = parseFloat(document.getElementById('meat-weight')?.value) || 0;
+        const weightUnit = document.getElementById('meat-weight-unit')?.value || 'kg';
+        const price = parseFloat(document.getElementById('meat-price')?.value) || 0;
+        const total = weight * price;
         
-        console.log('📅 Raw date for new sale:', dateInputValue);
+        saleData = {
+            id: 'SALE-' + Date.now().toString().slice(-6),
+            product: product,
+            animalCount: animalCount,
+            quantity: animalCount,
+            weight: weight,
+            weightUnit: weightUnit,
+            unitPrice: price,
+            totalAmount: total,
+            unit: unit,
+            date: storageDate, // Store YYYY-MM-DD string directly
+            customer: customer,
+            paymentMethod: paymentMethod,
+            paymentStatus: paymentStatus,
+            notes: notes,
+            priceUnit: weightUnit === 'lbs' ? 'per-lb' : 'per-kg'
+        };
+    } else {
+        const quantity = parseFloat(document.getElementById('standard-quantity')?.value) || 0;
+        const price = parseFloat(document.getElementById('standard-price')?.value) || 0;
+        const total = quantity * price;
         
-        // FIXED: Use DateUtils for date storage
-        let storageDate;
-        if (window.DateUtils && window.DateUtils.toStorageFormat) {
-            storageDate = window.DateUtils.toStorageFormat(dateInputValue);
-            console.log('✅ New sale date formatted:', dateInputValue, '->', storageDate);
-        } else {
-            storageDate = dateInputValue;
-            console.log('⚠️ DateUtils not available, using date as-is:', storageDate);
-        }
-        
-        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
-        const isMeatProduct = meatProducts.includes(product);
-        
-        let saleData;
-        
-        if (isMeatProduct) {
-            const animalCount = parseFloat(document.getElementById('meat-animal-count')?.value) || 0;
-            const weight = parseFloat(document.getElementById('meat-weight')?.value) || 0;
-            const weightUnit = document.getElementById('meat-weight-unit')?.value || 'kg';
-            const price = parseFloat(document.getElementById('meat-price')?.value) || 0;
-            const total = weight * price;
-            
-            saleData = {
-                id: 'SALE-' + Date.now().toString().slice(-6),
-                product: product,
-                animalCount: animalCount,
-                quantity: animalCount,
-                weight: weight,
-                weightUnit: weightUnit,
-                unitPrice: price,
-                totalAmount: total,
-                unit: unit,
-                date: storageDate, // Use DateUtils formatted date
-                customer: customer,
-                paymentMethod: paymentMethod,
-                paymentStatus: paymentStatus,
-                notes: notes,
-                priceUnit: weightUnit === 'lbs' ? 'per-lb' : 'per-kg'
-            };
-        } else {
-            const quantity = parseFloat(document.getElementById('standard-quantity')?.value) || 0;
-            const price = parseFloat(document.getElementById('standard-price')?.value) || 0;
-            const total = quantity * price;
-            
-            saleData = {
-                id: 'SALE-' + Date.now().toString().slice(-6),
-                product: product,
-                quantity: quantity,
-                unitPrice: price,
-                totalAmount: total,
-                unit: unit,
-                date: storageDate, // Use DateUtils formatted date
-                customer: customer,
-                paymentMethod: paymentMethod,
-                paymentStatus: paymentStatus,
-                notes: notes
-            };
-        }
-        
-        console.log('New sale data to add:', saleData);
-        const success = this.addSale(saleData);
-        
-        if (success) {
-            console.log('✅ Sale created successfully');
-            this.hideSaleModal();
-        }
-    },
+        saleData = {
+            id: 'SALE-' + Date.now().toString().slice(-6),
+            product: product,
+            quantity: quantity,
+            unitPrice: price,
+            totalAmount: total,
+            unit: unit,
+            date: storageDate, // Store YYYY-MM-DD string directly
+            customer: customer,
+            paymentMethod: paymentMethod,
+            paymentStatus: paymentStatus,
+            notes: notes
+        };
+    }
+    
+    console.log('💾 New sale data to save:', saleData);
+    const success = this.addSale(saleData);
+    
+    if (success) {
+        console.log('✅ Sale created successfully');
+        this.hideSaleModal();
+    }
+},
 
-    updateSale(saleId) {
-        console.log('📝 Updating sale ID:', saleId);
-        
-        const sales = window.FarmModules.appData.sales || [];
-        const saleIndex = sales.findIndex(s => s.id === saleId);
-        
-        if (saleIndex === -1) {
-            console.error('❌ Sale not found for update:', saleId);
-            this.showNotification('Sale not found', 'error');
-            return;
-        }
-        
-        const product = document.getElementById('sale-product')?.value;
-        const dateInputValue = document.getElementById('sale-date')?.value;
-        const customer = document.getElementById('sale-customer')?.value || 'Walk-in';
-        const paymentMethod = document.getElementById('sale-payment')?.value;
-        const paymentStatus = document.getElementById('sale-status')?.value;
-        const notes = document.getElementById('sale-notes')?.value;
-        const unit = document.getElementById('sale-unit')?.value || 'animals';
-        
-        console.log('📅 Raw update date:', dateInputValue);
-        
-        // FIXED: Use DateUtils for date storage
-        let storageDate;
-        if (window.DateUtils && window.DateUtils.toStorageFormat) {
-            storageDate = window.DateUtils.toStorageFormat(dateInputValue);
-            console.log('✅ Update date formatted:', dateInputValue, '->', storageDate);
-        } else {
-            storageDate = dateInputValue;
-            console.log('⚠️ DateUtils not available, using date as-is:', storageDate);
-        }
-        
-        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
-        const isMeatProduct = meatProducts.includes(product);
-        
-        let updatedSale = { ...sales[saleIndex] };
-        
-        updatedSale.product = product;
-        updatedSale.date = storageDate; // Use DateUtils formatted date
-        updatedSale.customer = customer;
-        updatedSale.paymentMethod = paymentMethod;
-        updatedSale.paymentStatus = paymentStatus;
-        updatedSale.notes = notes;
-        updatedSale.unit = unit;
+   // IN THE updateSale METHOD - SIMPLIFIED DATE HANDLING
+updateSale(saleId) {
+    console.log('📝 Updating sale ID:', saleId);
+    
+    const sales = window.FarmModules.appData.sales || [];
+    const saleIndex = sales.findIndex(s => s.id === saleId);
+    
+    if (saleIndex === -1) {
+        console.error('❌ Sale not found for update:', saleId);
+        this.showNotification('Sale not found', 'error');
+        return;
+    }
+    
+    const product = document.getElementById('sale-product')?.value;
+    const dateInputValue = document.getElementById('sale-date')?.value;
+    const customer = document.getElementById('sale-customer')?.value || 'Walk-in';
+    const paymentMethod = document.getElementById('sale-payment')?.value;
+    const paymentStatus = document.getElementById('sale-status')?.value;
+    const notes = document.getElementById('sale-notes')?.value;
+    const unit = document.getElementById('sale-unit')?.value || 'animals';
+    
+    console.log('📅 Raw update date from form:', dateInputValue);
+    
+    // FIXED: Store EXACTLY what the date input gives us
+    const storageDate = dateInputValue; // Just store it as-is
+    console.log('✅ Storing update date exactly as from input:', storageDate);
+    
+    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+    const isMeatProduct = meatProducts.includes(product);
+    
+    let updatedSale = { ...sales[saleIndex] };
+    
+    updatedSale.product = product;
+    updatedSale.date = storageDate; // Store YYYY-MM-DD string directly
+    updatedSale.customer = customer;
+    updatedSale.paymentMethod = paymentMethod;
+    updatedSale.paymentStatus = paymentStatus;
+    updatedSale.notes = notes;
+    updatedSale.unit = unit;
         
         if (isMeatProduct) {
             const animalCount = parseFloat(document.getElementById('meat-animal-count')?.value) || 0;
