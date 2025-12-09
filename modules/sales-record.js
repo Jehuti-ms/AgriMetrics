@@ -35,6 +35,122 @@ const SalesRecordModule = {
         return true;
     },
 
+    // ADD THIS RIGHT AFTER THE initialize() METHOD in sales-record.js
+
+// Add the migrateSalesDates function
+migrateSalesDates() {
+    console.log('🔄 Migrating sales dates to YYYY-MM-DD format...');
+    const sales = window.FarmModules.appData.sales || [];
+    let migrated = 0;
+    
+    sales.forEach(sale => {
+        if (sale.date && typeof sale.date === 'string') {
+            // If it's already YYYY-MM-DD, leave it
+            if (/^\d{4}-\d{2}-\d{2}$/.test(sale.date)) {
+                return;
+            }
+            
+            // Try to extract YYYY-MM-DD from any string format
+            const match = sale.date.match(/(\d{4})-(\d{2})-(\d{2})/);
+            if (match) {
+                const oldDate = sale.date;
+                sale.date = match[0];
+                console.log(`✅ Migrated sale ${sale.id}: ${oldDate} -> ${sale.date}`);
+                migrated++;
+            } else {
+                // Try to parse as Date and format
+                try {
+                    const dateObj = new Date(sale.date);
+                    if (!isNaN(dateObj.getTime())) {
+                        const year = dateObj.getFullYear();
+                        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                        const day = String(dateObj.getDate()).padStart(2, '0');
+                        const newDate = `${year}-${month}-${day}`;
+                        console.log(`✅ Migrated sale ${sale.id}: ${sale.date} -> ${newDate}`);
+                        sale.date = newDate;
+                        migrated++;
+                    }
+                } catch (e) {
+                    console.error('Could not migrate date for sale:', sale.id, sale.date);
+                }
+            }
+        }
+    });
+    
+    if (migrated > 0) {
+        this.saveData();
+        console.log(`✅ Migrated ${migrated} sales dates to YYYY-MM-DD format`);
+        this.showNotification(`Fixed ${migrated} sales dates`, 'info');
+    }
+    
+    return migrated;
+},
+
+// Then update the initialize() method to call it:
+initialize() {
+    console.log('💰 Initializing Enhanced Sales Records...');
+    
+    if (!this.checkDependencies()) {
+        console.error('❌ Sales Records initialization failed');
+        return false;
+    }
+    
+    this.element = document.getElementById('content-area');
+    if (!this.element) {
+        console.error('Content area element not found');
+        return false;
+    }
+    
+    if (window.StyleManager) {
+        window.StyleManager.registerComponent(this.name);
+    }
+    
+    this.loadSalesData();
+    
+    // FIX: Migrate dates before rendering
+    this.migrateSalesDates();
+    
+    this.renderModule();
+    this.setupEventListeners();
+    this.initialized = true;
+    
+    console.log('✅ Enhanced Sales Records initialized');
+    return true;
+},
+    // Add this after the migrateSalesDates function
+debugAllSalesDates() {
+    console.log('🔍 DEBUGGING ALL SALES DATES:');
+    const sales = window.FarmModules.appData.sales || [];
+    
+    if (sales.length === 0) {
+        console.log('No sales to debug');
+        return;
+    }
+    
+    console.log(`Total sales: ${sales.length}`);
+    console.log('---');
+    
+    sales.forEach((sale, index) => {
+        console.log(`Sale ${index} (ID: ${sale.id || 'N/A'}):`);
+        console.log('  - Stored date:', sale.date);
+        console.log('  - Type:', typeof sale.date);
+        
+        if (sale.date) {
+            try {
+                const dateObj = new Date(sale.date);
+                console.log('  - As new Date():', dateObj.toString());
+                console.log('  - Local date string:', dateObj.toLocaleDateString());
+                console.log('  - getDate() [local]:', dateObj.getDate());
+                console.log('  - getUTCDate():', dateObj.getUTCDate());
+                console.log('  - Timezone offset:', dateObj.getTimezoneOffset(), 'minutes');
+            } catch (e) {
+                console.log('  - Error parsing date:', e.message);
+            }
+        }
+        console.log('---');
+    });
+},
+    
     checkDependencies() {
         if (!window.FarmModules || !window.FarmModules.appData) {
             console.error('❌ App data not available');
