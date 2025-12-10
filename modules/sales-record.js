@@ -1,4 +1,5 @@
-// modules/sales-record.js - COMPLETE FIXED VERSION
+javascript
+// modules/sales-record.js - FIXED DATE ISSUE
 console.log('💰 Loading Enhanced Sales Records module...');
 
 const SalesRecordModule = {
@@ -48,7 +49,8 @@ const SalesRecordModule = {
         return true;
     },
 
-    getCurrentDate() {
+     getCurrentDate() {
+        // Get today's date in local timezone
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -56,17 +58,25 @@ const SalesRecordModule = {
         return `${year}-${month}-${day}`;
     },
 
-    formatDateForInput(dateString) {
+ formatDateForInput(dateString) {
         if (!dateString) return this.getCurrentDate();
         
+        // If the date is already in YYYY-MM-DD format, use it directly
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+            return dateString;
+        }
+        
+        // Otherwise parse it properly
         const date = new Date(dateString);
         if (isNaN(date.getTime())) return this.getCurrentDate();
         
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
+        // Use UTC methods to avoid timezone issues
+        const year = date.getUTCFullYear();
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(date.getUTCDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
     },
+
 
     onThemeChange(theme) {
         console.log(`Sales module updating for theme: ${theme}`);
@@ -1390,9 +1400,9 @@ const SalesRecordModule = {
         this.showNotification('Sale recorded successfully!', 'success');
     },
 
-    saveSale() {
+ saveSale() {
         const saleId = document.getElementById('sale-id')?.value;
-        const date = document.getElementById('sale-date')?.value;
+        let date = document.getElementById('sale-date')?.value;
         const customer = document.getElementById('sale-customer')?.value;
         const product = document.getElementById('sale-product')?.value;
         const unit = document.getElementById('sale-unit')?.value;
@@ -1403,6 +1413,13 @@ const SalesRecordModule = {
         if (!date || !product || !unit || !paymentMethod) {
             this.showNotification('Please fill in all required fields', 'error');
             return;
+        }
+
+        // FIXED: Ensure date is in correct format
+        // Remove any timezone offset that might be added by the browser
+        if (date.includes('T')) {
+            // If browser added timezone info, extract just the date part
+            date = date.split('T')[0];
         }
 
         const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
@@ -1433,7 +1450,7 @@ const SalesRecordModule = {
             
             saleData = {
                 id: saleId || 'SALE-' + Date.now().toString().slice(-6),
-                date: date,
+                date: date, // Use the cleaned date
                 customer: customer || 'Walk-in',
                 product: product,
                 unit: unit,
@@ -1458,7 +1475,7 @@ const SalesRecordModule = {
             
             saleData = {
                 id: saleId || 'SALE-' + Date.now().toString().slice(-6),
-                date: date,
+                date: date, // Use the cleaned date
                 customer: customer || 'Walk-in',
                 product: product,
                 unit: unit,
@@ -1556,7 +1573,7 @@ const SalesRecordModule = {
         addRevenueMethod.call(incomeModule, incomeRecord);
     },
     
-    editSale(saleId) {
+editSale(saleId) {
         console.log('🔄 Edit sale clicked:', saleId);
         
         const sales = window.FarmModules.appData.sales || [];
@@ -1588,11 +1605,19 @@ const SalesRecordModule = {
         document.getElementById('delete-sale').style.display = 'block';
         document.getElementById('production-source-notice').style.display = 'none';
         
+        // FIXED: Use the sale.date directly without reformatting
         const dateInput = document.getElementById('sale-date');
         if (dateInput) {
-            let displayDate = this.formatDateForInput(sale.date);
-            dateInput.value = displayDate || '';
-            console.log('✅ Set date:', displayDate, 'from original:', sale.date);
+            // If sale.date is already in YYYY-MM-DD format, use it directly
+            if (/^\d{4}-\d{2}-\d{2}$/.test(sale.date)) {
+                dateInput.value = sale.date;
+                console.log('✅ Set date (direct format):', sale.date);
+            } else {
+                // Otherwise use the fixed formatDateForInput method
+                const displayDate = this.formatDateForInput(sale.date);
+                dateInput.value = displayDate;
+                console.log('✅ Set date (formatted):', displayDate, 'from original:', sale.date);
+            }
         }
         
         document.getElementById('sale-customer').value = sale.customer || '';
