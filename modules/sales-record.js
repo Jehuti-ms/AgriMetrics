@@ -299,7 +299,40 @@ const SalesRecordModule = {
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
+                <!-- Quick Actions --> // Edit/delete sale buttons (delegated) - UPDATED VERSION
+    document.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('.edit-sale');
+        const deleteBtn = e.target.closest('.delete-sale');
+        
+        if (editBtn) {
+            const saleId = editBtn.getAttribute('data-id');
+            if (!saleId) {
+                console.error('❌ No sale ID found on edit button');
+                return;
+            }
+            console.log('✏️ Edit button clicked for sale:', saleId);
+            e.preventDefault();
+            e.stopPropagation();
+            this.editSale(saleId);
+        }
+        
+        if (deleteBtn) {
+            const saleId = deleteBtn.getAttribute('data-id');
+            if (!saleId) {
+                console.error('❌ No sale ID found on delete button');
+                return;
+            }
+            console.log('🗑️ Delete button clicked for sale:', saleId);
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Call deleteSaleRecord directly
+            if (confirm('Are you sure you want to delete this sale?')) {
+                this.deleteSaleRecord(saleId);
+            }
+        }
+    });
+},
                 <div class="quick-action-grid">
                     <button class="quick-action-btn" id="add-sale-btn">
                         <div style="font-size: 32px;">➕</div>
@@ -815,38 +848,42 @@ const SalesRecordModule = {
                                 ? '<span style="background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 10px; font-size: 10px; margin-left: 4px;">PROD</span>'
                                 : '';
                             
-                            return `
-                                <tr style="border-bottom: 1px solid var(--glass-border);">
-                                    <td style="padding: 12px 8px; color: var(--text-primary);">${this.formatDate(sale.date)}</td>
-                                    <td style="padding: 12px 8px; color: var(--text-primary);">
-                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                            <span style="font-size: 18px;">${this.getProductIcon(sale.product)}</span>
-                                            <span style="font-weight: 500;">${this.formatProductName(sale.product)}</span>
-                                            ${sourceBadge}
-                                        </div>
-                                    </td>
-                                    <td style="padding: 12px 8px; color: var(--text-secondary);">${sale.customer || 'Walk-in'}</td>
-                                    <td style="padding: 12px 8px; color: var(--text-primary);">${quantityInfo}</td>
-                                    <td style="padding: 12px 8px; color: var(--text-primary);">
-                                        ${this.formatCurrency(sale.unitPrice)}
-                                        ${sale.weightUnit === 'lbs' ? '/lb' : sale.weightUnit ? `/${sale.weightUnit}` : sale.priceUnit === 'per-lb' ? '/lb' : '/kg'}
-                                    </td>
-                                    <td style="padding: 12px 8px; color: var(--text-primary); font-weight: 600;">${this.formatCurrency(sale.totalAmount)}</td>
-                                    <td style="padding: 12px 8px; color: var(--text-secondary); font-size: 12px;">
-                                        ${sale.productionSource ? 'Production' : 'Direct'}
-                                    </td>
-                                    <td style="padding: 12px 8px;">
-                                        <div style="display: flex; gap: 4px;">
-                                            <button class="btn-icon edit-sale" data-id="${sale.id}" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary);" title="Edit">✏️</button>
-                                            <button class="btn-icon delete-sale" data-id="${sale.id}" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary);" title="Delete">🗑️</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            </div>
+                // In renderSalesTable method, update the action buttons section:
+        return `
+            <tr style="border-bottom: 1px solid var(--glass-border);">
+                <td style="padding: 12px 8px; color: var(--text-primary);">${this.formatDate(sale.date)}</td>
+                <td style="padding: 12px 8px; color: var(--text-primary);">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 18px;">${this.getProductIcon(sale.product)}</span>
+                        <span style="font-weight: 500;">${this.formatProductName(sale.product)}</span>
+                        ${sourceBadge}
+                    </div>
+                </td>
+                <td style="padding: 12px 8px; color: var(--text-secondary);">${sale.customer || 'Walk-in'}</td>
+                <td style="padding: 12px 8px; color: var(--text-primary);">${quantityInfo}</td>
+                <td style="padding: 12px 8px; color: var(--text-primary);">
+                    ${this.formatCurrency(sale.unitPrice)}
+                    ${sale.weightUnit === 'lbs' ? '/lb' : sale.weightUnit ? `/${sale.weightUnit}` : sale.priceUnit === 'per-lb' ? '/lb' : '/kg'}
+                </td>
+                <td style="padding: 12px 8px; color: var(--text-primary); font-weight: 600;">${this.formatCurrency(sale.totalAmount)}</td>
+                <td style="padding: 12px 8px; color: var(--text-secondary); font-size: 12px;">
+                    ${sale.productionSource ? 'Production' : 'Direct'}
+                </td>
+                <td style="padding: 12px 8px;">
+                    <div style="display: flex; gap: 4px;">
+                        <button type="button" class="btn-icon edit-sale" data-id="${sale.id}" 
+                                style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary);" 
+                                title="Edit">
+                            ✏️
+                        </button>
+                        <button type="button" class="btn-icon delete-sale" data-id="${sale.id}" 
+                                style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary);" 
+                                title="Delete">
+                            🗑️
+                        </button>
+                    </div>
+                </td>
+            </tr>
         `;
     },
 
@@ -908,39 +945,150 @@ const SalesRecordModule = {
             }
         });
 
-        // Edit/delete sale buttons (delegated)
-        document.addEventListener('click', (e) => {
-            const editBtn = e.target.closest('.edit-sale');
-            const deleteBtn = e.target.closest('.delete-sale');
-            
-            if (editBtn) {
-                const saleId = editBtn.getAttribute('data-id');
-                if (!saleId) {
-                    console.error('❌ No sale ID found on edit button');
-                    return;
-                }
-                console.log('✏️ Edit button clicked for sale:', saleId);
-                e.preventDefault();
-                e.stopPropagation();
-                this.editSale(saleId);
+        // Fix the delete functionality
+
+// First, update the delete button handler in setupEventListeners
+setupEventListeners() {
+    // ... [rest of your existing setupEventListeners code] ...
+
+    // Edit/delete sale buttons (delegated) - UPDATED VERSION
+    document.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('.edit-sale');
+        const deleteBtn = e.target.closest('.delete-sale');
+        
+        if (editBtn) {
+            const saleId = editBtn.getAttribute('data-id');
+            if (!saleId) {
+                console.error('❌ No sale ID found on edit button');
+                return;
             }
-            
-            if (deleteBtn) {
-                const saleId = deleteBtn.getAttribute('data-id');
-                if (!saleId) {
-                    console.error('❌ No sale ID found on delete button');
-                    return;
-                }
-                console.log('🗑️ Delete button clicked for sale:', saleId);
-                e.preventDefault();
-                e.stopPropagation();
-                
-                if (confirm('Are you sure you want to delete this sale?')) {
-                    this.deleteSaleRecord(saleId);
-                }
+            console.log('✏️ Edit button clicked for sale:', saleId);
+            e.preventDefault();
+            e.stopPropagation();
+            this.editSale(saleId);
+        }
+        
+        if (deleteBtn) {
+            const saleId = deleteBtn.getAttribute('data-id');
+            if (!saleId) {
+                console.error('❌ No sale ID found on delete button');
+                return;
             }
-        });
-    },
+            console.log('🗑️ Delete button clicked for sale:', saleId);
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Call deleteSaleRecord directly
+            if (confirm('Are you sure you want to delete this sale?')) {
+                this.deleteSaleRecord(saleId);
+            }
+        }
+    });
+},
+
+// FIXED: deleteSaleRecord method
+deleteSaleRecord(saleId) {
+    console.log('🗑️ Deleting sale:', saleId);
+    
+    if (!saleId) {
+        console.error('❌ No sale ID provided for deletion');
+        this.showNotification('Sale ID not found', 'error');
+        return;
+    }
+    
+    // Find the sale first to confirm it exists
+    const sales = window.FarmModules.appData.sales || [];
+    const saleIndex = sales.findIndex(s => s.id === saleId);
+    
+    console.log('🔍 Looking for sale:', saleId);
+    console.log('🔍 Total sales:', sales.length);
+    console.log('🔍 Found at index:', saleIndex);
+    
+    if (saleIndex === -1) {
+        console.error('❌ Sale not found for deletion:', saleId);
+        console.log('🔍 Available sale IDs:', sales.map(s => s.id));
+        this.showNotification('Sale not found for deletion', 'error');
+        return;
+    }
+    
+    // Get sale details before deletion for notification
+    const sale = sales[saleIndex];
+    
+    // Remove the sale
+    window.FarmModules.appData.sales.splice(saleIndex, 1);
+    
+    // Save to localStorage
+    this.saveData();
+    
+    // Remove from income records
+    this.removeIncomeRecord(saleId);
+    
+    // Update UI
+    this.updateSummary();
+    this.updateSalesTable();
+    
+    // Show success message
+    this.showNotification(`Sale deleted: ${this.formatProductName(sale.product)} for ${this.formatCurrency(sale.totalAmount)}`, 'success');
+    
+    console.log('✅ Sale deleted successfully');
+},
+
+// FIXED: removeIncomeRecord method
+removeIncomeRecord(saleId) {
+    const incomeModule = window.FarmModules.Income;
+    if (incomeModule && incomeModule.removeRevenueFromSale) {
+        incomeModule.removeRevenueFromSale(saleId);
+    }
+},
+
+// Also fix the deleteSale method (for the modal delete button)
+deleteSale() {
+    const saleId = document.getElementById('sale-id')?.value;
+    
+    if (!saleId) {
+        console.error('❌ No sale ID in deleteSale method');
+        this.showNotification('No sale selected for deletion', 'error');
+        return;
+    }
+    
+    console.log('🗑️ Delete sale from modal:', saleId);
+    
+    if (confirm('Are you sure you want to delete this sale?')) {
+        this.deleteSaleRecord(saleId);
+        this.hideSaleModal();
+    }
+},
+
+
+// Add a debug method to check button functionality
+debugButtonFunctionality() {
+    console.log('🔍 Debugging button functionality...');
+    
+    // Check if edit/delete buttons exist
+    const editButtons = document.querySelectorAll('.edit-sale');
+    const deleteButtons = document.querySelectorAll('.delete-sale');
+    
+    console.log(`🔍 Found ${editButtons.length} edit buttons`);
+    console.log(`🔍 Found ${deleteButtons.length} delete buttons`);
+    
+    // Check data attributes
+    editButtons.forEach((btn, index) => {
+        const saleId = btn.getAttribute('data-id');
+        console.log(`Edit button ${index}: data-id="${saleId}"`);
+    });
+    
+    deleteButtons.forEach((btn, index) => {
+        const saleId = btn.getAttribute('data-id');
+        console.log(`Delete button ${index}: data-id="${saleId}"`);
+    });
+    
+    // Test click simulation
+    if (deleteButtons.length > 0) {
+        const firstDeleteBtn = deleteButtons[0];
+        const saleId = firstDeleteBtn.getAttribute('data-id');
+        console.log(`🔍 First delete button would delete sale: ${saleId}`);
+    }
+}
     
     setupFormFieldListeners() {
         // Product change
@@ -1729,24 +1877,61 @@ const SalesRecordModule = {
         }
     },
 
-    deleteSaleRecord(saleId) {
-        if (confirm('Are you sure you want to delete this sale?')) {
-            window.FarmModules.appData.sales = window.FarmModules.appData.sales.filter(s => s.id !== saleId);
-            this.removeIncomeRecord(saleId);
-            this.saveData();
-            this.updateSummary();
-            this.updateSalesTable();
-            this.showNotification('Sale deleted successfully', 'success');
-        }
-    },
+// FIXED: deleteSaleRecord method
+deleteSaleRecord(saleId) {
+    console.log('🗑️ Deleting sale:', saleId);
+    
+    if (!saleId) {
+        console.error('❌ No sale ID provided for deletion');
+        this.showNotification('Sale ID not found', 'error');
+        return;
+    }
+    
+    // Find the sale first to confirm it exists
+    const sales = window.FarmModules.appData.sales || [];
+    const saleIndex = sales.findIndex(s => s.id === saleId);
+    
+    console.log('🔍 Looking for sale:', saleId);
+    console.log('🔍 Total sales:', sales.length);
+    console.log('🔍 Found at index:', saleIndex);
+    
+    if (saleIndex === -1) {
+        console.error('❌ Sale not found for deletion:', saleId);
+        console.log('🔍 Available sale IDs:', sales.map(s => s.id));
+        this.showNotification('Sale not found for deletion', 'error');
+        return;
+    }
+    
+    // Get sale details before deletion for notification
+    const sale = sales[saleIndex];
+    
+    // Remove the sale
+    window.FarmModules.appData.sales.splice(saleIndex, 1);
+    
+    // Save to localStorage
+    this.saveData();
+    
+    // Remove from income records
+    this.removeIncomeRecord(saleId);
+    
+    // Update UI
+    this.updateSummary();
+    this.updateSalesTable();
+    
+    // Show success message
+    this.showNotification(`Sale deleted: ${this.formatProductName(sale.product)} for ${this.formatCurrency(sale.totalAmount)}`, 'success');
+    
+    console.log('✅ Sale deleted successfully');
+},
 
-    removeIncomeRecord(saleId) {
-        const incomeModule = window.FarmModules.Income;
-        if (incomeModule && incomeModule.removeRevenueFromSale) {
-            incomeModule.removeRevenueFromSale(saleId);
-        }
-    },
-
+    // FIXED: removeIncomeRecord method
+removeIncomeRecord(saleId) {
+    const incomeModule = window.FarmModules.Income;
+    if (incomeModule && incomeModule.removeRevenueFromSale) {
+        incomeModule.removeRevenueFromSale(saleId);
+    }
+},
+    
     generateDailyReport() {
         const today = this.getCurrentDate();
         const sales = window.FarmModules.appData.sales || [];
