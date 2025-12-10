@@ -1,5 +1,5 @@
+javascript
 // modules/sales-record.js - FIXED DATE ISSUE
-// modules/sales-record.js - FIXED DUPLICATE EVENT LISTENERS
 console.log('💰 Loading Enhanced Sales Records module...');
 
 const SalesRecordModule = {
@@ -8,8 +8,6 @@ const SalesRecordModule = {
     element: null,
     currentEditingId: null,
     pendingProductionSale: null,
-    // Track which event listeners we've already attached
-    eventListenersAttached: false,
 
     initialize() {
         console.log('💰 Initializing Enhanced Sales Records...');
@@ -37,7 +35,7 @@ const SalesRecordModule = {
         console.log('✅ Enhanced Sales Records initialized');
         return true;
     },
-    
+
     checkDependencies() {
         if (!window.FarmModules || !window.FarmModules.appData) {
             console.error('❌ App data not available');
@@ -819,50 +817,47 @@ const SalesRecordModule = {
     },
 
     setupEventListeners() {
-        // Remove existing listeners first to prevent duplicates
-        this.removeEventListeners();
-        
         // Quick sale form
         const quickSaleForm = document.getElementById('quick-sale-form');
         if (quickSaleForm) {
-            quickSaleForm.addEventListener('submit', this.handleQuickSale.bind(this));
+            quickSaleForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleQuickSale();
+            });
         }
 
-        // Modal buttons with named functions
-        this.setupModalButton('add-sale', () => this.showSaleModal());
-        this.setupModalButton('add-sale-btn', () => this.showSaleModal());
-        this.setupModalButton('from-production-btn', () => this.showProductionItems());
-        this.setupModalButton('meat-sales-btn', () => this.generateMeatSalesReport());
-        this.setupModalButton('daily-report-btn', () => this.generateDailyReport());
-        this.setupModalButton('view-production-items', () => this.showProductionItems());
+        // Modal buttons
+        document.getElementById('add-sale')?.addEventListener('click', () => this.showSaleModal());
+        document.getElementById('add-sale-btn')?.addEventListener('click', () => this.showSaleModal());
+        document.getElementById('from-production-btn')?.addEventListener('click', () => this.showProductionItems());
+        document.getElementById('meat-sales-btn')?.addEventListener('click', () => this.generateMeatSalesReport());
+        document.getElementById('daily-report-btn')?.addEventListener('click', () => this.generateDailyReport());
+        document.getElementById('view-production-items')?.addEventListener('click', () => this.showProductionItems());
         
         // Sale modal handlers
-        this.setupModalButton('save-sale', () => this.saveSale());
-        this.setupModalButton('delete-sale', () => this.deleteSale());
-        this.setupModalButton('cancel-sale', () => this.hideSaleModal());
-        this.setupModalButton('close-sale-modal', () => this.hideSaleModal());
+        document.getElementById('save-sale')?.addEventListener('click', () => this.saveSale());
+        document.getElementById('delete-sale')?.addEventListener('click', () => this.deleteSale());
+        document.getElementById('cancel-sale')?.addEventListener('click', () => this.hideSaleModal());
+        document.getElementById('close-sale-modal')?.addEventListener('click', () => this.hideSaleModal());
         
         // Report modal handlers
-        this.setupModalButton('close-daily-report', () => this.hideDailyReportModal());
-        this.setupModalButton('close-daily-report-btn', () => this.hideDailyReportModal());
-        this.setupModalButton('print-daily-report', () => this.printDailyReport());
+        document.getElementById('close-daily-report')?.addEventListener('click', () => this.hideDailyReportModal());
+        document.getElementById('close-daily-report-btn')?.addEventListener('click', () => this.hideDailyReportModal());
+        document.getElementById('print-daily-report')?.addEventListener('click', () => this.printDailyReport());
         
-        this.setupModalButton('close-meat-sales', () => this.hideMeatSalesModal());
-        this.setupModalButton('close-meat-sales-btn', () => this.hideMeatSalesModal());
-        this.setupModalButton('print-meat-sales', () => this.printMeatSalesReport());
+        document.getElementById('close-meat-sales')?.addEventListener('click', () => this.hideMeatSalesModal());
+        document.getElementById('close-meat-sales-btn')?.addEventListener('click', () => this.hideMeatSalesModal());
+        document.getElementById('print-meat-sales')?.addEventListener('click', () => this.printMeatSalesReport());
         
         // Production items modal
-        this.setupModalButton('close-production-items', () => this.hideProductionItemsModal());
-        this.setupModalButton('close-production-items-btn', () => this.hideProductionItemsModal());
+        document.getElementById('close-production-items')?.addEventListener('click', () => this.hideProductionItemsModal());
+        document.getElementById('close-production-items-btn')?.addEventListener('click', () => this.hideProductionItemsModal());
         
         // Form field event listeners
         this.setupFormFieldListeners();
         
         // Quick product change
-        const quickProduct = document.getElementById('quick-product');
-        if (quickProduct) {
-            quickProduct.addEventListener('change', this.handleQuickProductChange.bind(this));
-        }
+        document.getElementById('quick-product')?.addEventListener('change', () => this.handleQuickProductChange());
 
         // Filter
         const periodFilter = document.getElementById('period-filter');
@@ -879,76 +874,34 @@ const SalesRecordModule = {
             }
         });
 
-        // Edit/delete sale buttons (delegated) - use named function
-        document.addEventListener('click', this.handleTableClick.bind(this));
-    },
-
-    // NEW METHOD: Helper to set up modal buttons
-    setupModalButton(buttonId, handler) {
-        const button = document.getElementById(buttonId);
-        if (button) {
-            // Remove any existing listener
-            button.removeEventListener('click', handler);
-            // Add new listener
-            button.addEventListener('click', handler);
-        }
-    },
-
-    // NEW METHOD: Handle table clicks
-    handleTableClick(e) {
-        const editBtn = e.target.closest('.edit-sale');
-        const deleteBtn = e.target.closest('.delete-sale');
-        
-        if (editBtn) {
-            const saleId = editBtn.dataset.id;
-            console.log('✏️ Edit button clicked for sale:', saleId);
-            e.preventDefault();
-            e.stopPropagation();
-            this.editSale(saleId);
-        }
-        
-        if (deleteBtn) {
-            const saleId = deleteBtn.dataset.id;
-            console.log('🗑️ Delete button clicked for sale:', saleId);
-            e.preventDefault();
-            e.stopPropagation();
-            this.deleteSaleRecord(saleId);
-        }
-    },
-
-    // NEW METHOD: Remove all event listeners
-    removeEventListeners() {
-        // Store references to elements
-        const quickSaleForm = document.getElementById('quick-sale-form');
-        const quickProduct = document.getElementById('quick-product');
-        const periodFilter = document.getElementById('period-filter');
-        
-        // Clone elements to remove all event listeners
-        if (quickSaleForm) {
-            quickSaleForm.replaceWith(quickSaleForm.cloneNode(true));
-        }
-        if (quickProduct) {
-            quickProduct.replaceWith(quickProduct.cloneNode(true));
-        }
-        if (periodFilter) {
-            periodFilter.replaceWith(periodFilter.cloneNode(true));
-        }
-        
-        // Remove delegated event listener
-        document.removeEventListener('click', this.handleTableClick);
-        document.removeEventListener('click', this.handleOutsideClick);
-        
-        console.log('🧹 Event listeners removed');
+        // Edit/delete sale buttons (delegated)
+        document.addEventListener('click', (e) => {
+            const editBtn = e.target.closest('.edit-sale');
+            const deleteBtn = e.target.closest('.delete-sale');
+            
+            if (editBtn) {
+                const saleId = editBtn.dataset.id;
+                console.log('✏️ Edit button clicked for sale:', saleId);
+                e.preventDefault();
+                e.stopPropagation();
+                this.editSale(saleId);
+            }
+            
+            if (deleteBtn) {
+                const saleId = deleteBtn.dataset.id;
+                console.log('🗑️ Delete button clicked for sale:', saleId);
+                e.preventDefault();
+                e.stopPropagation();
+                this.deleteSaleRecord(saleId);
+            }
+        });
     },
 
     setupFormFieldListeners() {
         // Product change
         const productSelect = document.getElementById('sale-product');
         if (productSelect) {
-            // Clone to remove existing listeners
-            productSelect.replaceWith(productSelect.cloneNode(true));
-            const newProductSelect = document.getElementById('sale-product');
-            newProductSelect.addEventListener('change', () => this.handleProductChange());
+            productSelect.addEventListener('change', () => this.handleProductChange());
         }
         
         // Real-time total calculation
@@ -963,26 +916,47 @@ const SalesRecordModule = {
         fieldsToWatch.forEach(fieldId => {
             const field = document.getElementById(fieldId);
             if (field) {
-                // Clone to remove existing listeners
-                field.replaceWith(field.cloneNode(true));
-                const newField = document.getElementById(fieldId);
-                newField.addEventListener('input', () => this.calculateSaleTotal());
+                field.addEventListener('input', () => this.calculateSaleTotal());
             }
         });
         
         // Weight unit change - updates labels to lbs when selected
         const weightUnit = document.getElementById('meat-weight-unit');
         if (weightUnit) {
-            // Clone to remove existing listeners
-            weightUnit.replaceWith(weightUnit.cloneNode(true));
-            const newWeightUnit = document.getElementById('meat-weight-unit');
-            newWeightUnit.addEventListener('change', () => {
+            weightUnit.addEventListener('change', () => {
                 this.updateMeatLabels();
                 this.calculateSaleTotal();
             });
         }
     },
-    
+
+    // NEW METHOD: Update meat section labels based on weight unit
+    updateMeatLabels() {
+        const weightUnit = document.getElementById('meat-weight-unit')?.value;
+        
+        // Update price label
+        const priceLabel = document.getElementById('meat-price-label');
+        const priceUnitLabel = document.getElementById('meat-price-unit-label');
+        const avgLabel = document.getElementById('meat-avg-label');
+        const avgWeightElement = document.getElementById('meat-avg-weight');
+        
+        if (weightUnit === 'lbs') {
+            if (priceLabel) priceLabel.textContent = 'Price per lb *';
+            if (priceUnitLabel) priceUnitLabel.textContent = 'per lb';
+            if (avgLabel) avgLabel.textContent = 'Average per Animal';
+            if (avgWeightElement && avgWeightElement.textContent.includes('kg')) {
+                avgWeightElement.textContent = avgWeightElement.textContent.replace('kg', 'lbs');
+            }
+        } else {
+            if (priceLabel) priceLabel.textContent = 'Price per kg *';
+            if (priceUnitLabel) priceUnitLabel.textContent = 'per kg';
+            if (avgLabel) avgLabel.textContent = 'Average per Animal';
+            if (avgWeightElement && avgWeightElement.textContent.includes('lbs')) {
+                avgWeightElement.textContent = avgWeightElement.textContent.replace('lbs', 'kg');
+            }
+        }
+    },
+
     handleProductChange() {
         const productSelect = document.getElementById('sale-product');
         if (!productSelect) return;
@@ -1158,7 +1132,6 @@ const SalesRecordModule = {
         }
     },
 
-    // FIXED: showSaleModal - don't call setupFormFieldListeners()
     showSaleModal() {
         this.hideAllModals();
         const modal = document.getElementById('sale-modal');
@@ -1166,7 +1139,7 @@ const SalesRecordModule = {
             modal.classList.remove('hidden');
         }
         
-        // Set today's date
+        // Set today's date using FIXED method
         const dateInput = document.getElementById('sale-date');
         if (dateInput) {
             dateInput.value = this.getCurrentDate();
@@ -1216,6 +1189,7 @@ const SalesRecordModule = {
             this.prefillFromProduction(this.pendingProductionSale);
             this.showProductionSourceNotice();
         } else {
+            // Set default to empty
             const productSelect = document.getElementById('sale-product');
             if (productSelect) productSelect.value = '';
         }
@@ -1225,8 +1199,8 @@ const SalesRecordModule = {
             this.handleProductChange();
         }, 10);
         
-        // DO NOT call setupFormFieldListeners() here!
-        console.log('✅ Sale modal shown');
+        // Re-attach form field listeners
+        this.setupFormFieldListeners();
     },
 
     showProductionSourceNotice() {
@@ -1599,8 +1573,7 @@ const SalesRecordModule = {
         addRevenueMethod.call(incomeModule, incomeRecord);
     },
     
-    // FIXED: editSale method - don't call setupFormFieldListeners()
-    editSale(saleId) {
+editSale(saleId) {
         console.log('🔄 Edit sale clicked:', saleId);
         
         const sales = window.FarmModules.appData.sales || [];
@@ -1632,11 +1605,19 @@ const SalesRecordModule = {
         document.getElementById('delete-sale').style.display = 'block';
         document.getElementById('production-source-notice').style.display = 'none';
         
-        // Use the sale.date directly
+        // FIXED: Use the sale.date directly without reformatting
         const dateInput = document.getElementById('sale-date');
         if (dateInput) {
-            dateInput.value = sale.date;
-            console.log('✅ Set date:', sale.date);
+            // If sale.date is already in YYYY-MM-DD format, use it directly
+            if (/^\d{4}-\d{2}-\d{2}$/.test(sale.date)) {
+                dateInput.value = sale.date;
+                console.log('✅ Set date (direct format):', sale.date);
+            } else {
+                // Otherwise use the fixed formatDateForInput method
+                const displayDate = this.formatDateForInput(sale.date);
+                dateInput.value = displayDate;
+                console.log('✅ Set date (formatted):', displayDate, 'from original:', sale.date);
+            }
         }
         
         document.getElementById('sale-customer').value = sale.customer || '';
@@ -1700,7 +1681,8 @@ const SalesRecordModule = {
             console.log('✅ Total calculated');
         }, 100);
         
-        // DO NOT call setupFormFieldListeners() here!
+        this.setupFormFieldListeners();
+        
         console.log('✅ Edit sale modal ready');
     },
 
