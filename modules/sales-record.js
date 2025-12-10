@@ -873,29 +873,41 @@ const SalesRecordModule = {
             }
         });
 
-        // Edit/delete sale buttons (delegated)
-        document.addEventListener('click', (e) => {
-            const editBtn = e.target.closest('.edit-sale');
-            const deleteBtn = e.target.closest('.delete-sale');
-            
-            if (editBtn) {
-                const saleId = editBtn.dataset.id;
-                console.log('✏️ Edit button clicked for sale:', saleId);
-                e.preventDefault();
-                e.stopPropagation();
-                this.editSale(saleId);
+            // Edit/delete sale buttons (delegated) - UPDATED VERSION
+    document.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('.edit-sale');
+        const deleteBtn = e.target.closest('.delete-sale');
+        
+        if (editBtn) {
+            const saleId = editBtn.getAttribute('data-id');
+            if (!saleId) {
+                console.error('❌ No sale ID found on edit button');
+                return;
             }
+            console.log('✏️ Edit button clicked for sale:', saleId);
+            e.preventDefault();
+            e.stopPropagation();
+            this.editSale(saleId);
+        }
+        
+        if (deleteBtn) {
+            const saleId = deleteBtn.getAttribute('data-id');
+            if (!saleId) {
+                console.error('❌ No sale ID found on delete button');
+                return;
+            }
+            console.log('🗑️ Delete button clicked for sale:', saleId);
+            e.preventDefault();
+            e.stopPropagation();
             
-            if (deleteBtn) {
-                const saleId = deleteBtn.dataset.id;
-                console.log('🗑️ Delete button clicked for sale:', saleId);
-                e.preventDefault();
-                e.stopPropagation();
+            // Call deleteSaleRecord directly
+            if (confirm('Are you sure you want to delete this sale?')) {
                 this.deleteSaleRecord(saleId);
             }
-        });
-    },
-
+        }
+    });
+},
+    
     setupFormFieldListeners() {
         // Product change
         const productSelect = document.getElementById('sale-product');
