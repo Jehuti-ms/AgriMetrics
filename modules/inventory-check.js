@@ -1,551 +1,375 @@
-// modules/sales-record.js - COMPLETE WITH MODALS & FIXES
-console.log('💰 Loading Sales Records Module...');
+// modules/inventory-check.js - UPDATED WITH STYLE MANAGER INTEGRATION
+console.log('Loading inventory-check module...');
 
-const SalesRecordModule = {
-    name: 'sales-record',
+const InventoryCheckModule = {
+    name: 'inventory-check',
     initialized: false,
+    inventory: [],
+    categories: ['feed', 'medical', 'packaging', 'equipment', 'cleaning', 'other'],
     element: null,
-    sales: [],
-    
-    // Settings
-    settings: {
-        currency: 'USD',
-        dateFormat: 'YYYY-MM-DD',
-        taxRate: 0.0,
-        defaultCategory: 'Eggs',
-        defaultPaymentMethod: 'Cash',
-        defaultCustomerType: 'Walk-in',
-        enableReceipts: true,
-        autoGenerateReceiptId: true,
-        receiptPrefix: 'SALE-'
-    },
-    
-    // Categories for sales
-    categories: ['Eggs', 'Broilers', 'Layers', 'Poultry Meat', 'Chicks', 'Manure/Fertilizer', 'Crops', 'Other'],
-    
-    // Payment methods
-    paymentMethods: ['Cash', 'Bank Transfer', 'Mobile Money', 'Credit', 'Other'],
-    
-    // Customer types
-    customerTypes: ['Regular', 'Wholesaler', 'Retailer', 'Walk-in', 'Online'],
-    
-    // Initialize module
+
     initialize() {
-        console.log('📊 Initializing SalesRecord module...');
+        console.log('📦 Initializing Inventory Check...');
         
-        // Get content area element
+        // ✅ ADDED: Get the content area element
         this.element = document.getElementById('content-area');
-        if (!this.element) {
-            console.error('Content area element not found');
-            return false;
-        }
-        
-        // Register with StyleManager
+        if (!this.element) return false;
+
+        // ✅ ADDED: Register with StyleManager
         if (window.StyleManager) {
-            window.StyleManager.registerModule(this.name, this.element, this);
+            StyleManager.registerModule(this.id, this.element, this);
         }
-        
-        this.loadSettings();
-        this.loadSales();
-        this.migrateSalesDates();
+
+        this.loadData();
         this.renderModule();
         this.setupEventListeners();
-        this.updateStats();
-        this.registerWithReports();
-        
         this.initialized = true;
-        console.log('✅ SalesRecord module initialized');
+        
+        // Sync initial stats with profile
+        this.syncStatsWithProfile();
+        
+        console.log('✅ Inventory Check initialized with StyleManager');
         return true;
     },
-    
+
+    // ✅ ADDED: Theme change handler (optional)
     onThemeChange(theme) {
-        console.log(`SalesRecord module: Theme changed to ${theme}`);
-        if (this.initialized) {
-            this.renderModule();
-        }
+        console.log(`Inventory Check updating for theme: ${theme}`);
+        // You can add theme-specific logic here if needed
     },
-    
-    // ==================== DATA MANAGEMENT ====================
-    loadSales() {
-        try {
-            // Try version 2 first
-            const savedV2 = localStorage.getItem('farm_sales_v2');
-            if (savedV2) {
-                const data = JSON.parse(savedV2);
-                this.sales = data.sales || [];
-                this.settings = data.settings || this.getDefaultSettings();
-                console.log(`📈 Loaded ${this.sales.length} sales records (v2)`);
-                return;
+
+    loadData() {
+        const saved = localStorage.getItem('farm-inventory');
+        this.inventory = saved ? JSON.parse(saved) : this.getDemoData();
+    },
+
+    getDemoData() {
+        return [
+            { 
+                id: 1, 
+                name: 'Chicken Feed - Starter', 
+                category: 'feed', 
+                currentStock: 50, 
+                unit: 'kg', 
+                minStock: 20, 
+                cost: 2.5,
+                supplier: 'FeedCo',
+                lastRestocked: '2024-03-10',
+                notes: 'For chicks 0-3 weeks'
+            },
+            { 
+                id: 2, 
+                name: 'Egg Cartons - Large', 
+                category: 'packaging', 
+                currentStock: 200, 
+                unit: 'pcs', 
+                minStock: 50, 
+                cost: 0.5,
+                supplier: 'Packaging Inc',
+                lastRestocked: '2024-03-12',
+                notes: '30-dozen capacity'
+            },
+            { 
+                id: 3, 
+                name: 'Poultry Vaccines', 
+                category: 'medical', 
+                currentStock: 5, 
+                unit: 'bottles', 
+                minStock: 10, 
+                cost: 15,
+                supplier: 'VetSupply',
+                lastRestocked: '2024-03-05',
+                notes: 'Keep refrigerated'
+            },
+            { 
+                id: 4, 
+                name: 'Water Troughs', 
+                category: 'equipment', 
+                currentStock: 8, 
+                unit: 'pcs', 
+                minStock: 5, 
+                cost: 25,
+                supplier: 'FarmGear',
+                lastRestocked: '2024-02-28',
+                notes: '10L capacity'
+            },
+            { 
+                id: 5, 
+                name: 'Disinfectant Spray', 
+                category: 'cleaning', 
+                currentStock: 3, 
+                unit: 'bottles', 
+                minStock: 5, 
+                cost: 8,
+                supplier: 'CleanCo',
+                lastRestocked: '2024-03-08',
+                notes: 'For equipment cleaning'
             }
-            
-            // Try legacy version
-            const legacy = localStorage.getItem('farm_sales');
-            if (legacy) {
-                const legacyData = JSON.parse(legacy);
-                if (Array.isArray(legacyData)) {
-                    // Convert legacy format to v2
-                    this.sales = legacyData.map(sale => this.convertLegacySale(sale));
-                    this.saveToStorage();
-                    console.log(`📈 Migrated ${this.sales.length} legacy sales records to v2`);
-                } else {
-                    this.sales = [];
-                }
-            } else {
-                this.sales = [];
-            }
-            
-        } catch (e) {
-            console.error('❌ Error loading sales:', e);
-            this.sales = [];
-        }
+        ];
     },
-    
-    getDefaultSettings() {
-        return {
-            currency: 'USD',
-            dateFormat: 'YYYY-MM-DD',
-            taxRate: 0.0,
-            defaultCategory: 'Eggs',
-            defaultPaymentMethod: 'Cash',
-            defaultCustomerType: 'Walk-in',
-            enableReceipts: true,
-            autoGenerateReceiptId: true,
-            receiptPrefix: 'SALE-'
-        };
-    },
-    
-    loadSettings() {
-        const saved = localStorage.getItem('farm_sales_settings');
-        if (saved) {
-            try {
-                this.settings = JSON.parse(saved);
-            } catch (e) {
-                this.settings = this.getDefaultSettings();
-            }
-        }
-    },
-    
-    saveSettings() {
-        try {
-            localStorage.setItem('farm_sales_settings', JSON.stringify(this.settings));
-            return true;
-        } catch (e) {
-            console.error('❌ Error saving settings:', e);
-            return false;
-        }
-    },
-    
-    saveToStorage() {
-        try {
-            const data = {
-                version: '2.0',
-                sales: this.sales,
-                settings: this.settings,
-                lastUpdated: new Date().toISOString()
-            };
-            localStorage.setItem('farm_sales_v2', JSON.stringify(data));
-            console.log('💾 Sales data saved successfully');
-            
-            // Update reports module data
-            this.updateReportsData();
-            
-            return true;
-        } catch (e) {
-            console.error('❌ Error saving sales:', e);
-            return false;
-        }
-    },
-    
-    convertLegacySale(legacySale) {
-        const now = new Date().toISOString();
-        return {
-            id: legacySale.id || Date.now(),
-            date: this.normalizeDate(legacySale.date || now),
-            product: legacySale.product || 'Unknown',
-            category: legacySale.category || 'Other',
-            quantity: parseFloat(legacySale.quantity) || 0,
-            price: parseFloat(legacySale.price) || 0,
-            total: parseFloat(legacySale.total) || 0,
-            customerName: legacySale.customer || 'Walk-in',
-            customerType: 'Walk-in',
-            paymentMethod: 'Cash',
-            paymentStatus: 'paid',
-            notes: '',
-            timestamp: legacySale.timestamp || now,
-            updatedAt: now,
-            receiptId: `SALE-${legacySale.id || Date.now().toString().slice(-6)}`
-        };
-    },
-    
-    // ==================== DATE FIXES ====================
-    normalizeDate(dateString) {
-        if (!dateString) {
-            return new Date().toISOString().split('T')[0];
-        }
-        
-        // If already in YYYY-MM-DD format
-        if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-            return dateString;
-        }
-        
-        try {
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) {
-                throw new Error('Invalid date');
-            }
-            return date.toISOString().split('T')[0];
-        } catch (e) {
-            console.warn(`⚠️ Could not parse date: ${dateString}, using today's date`);
-            return new Date().toISOString().split('T')[0];
-        }
-    },
-    
-    migrateSalesDates() {
-        if (!this.sales.length) return;
-        
-        let migratedCount = 0;
-        const now = new Date().toISOString();
-        
-        this.sales = this.sales.map(sale => {
-            const originalDate = sale.date;
-            const normalizedDate = this.normalizeDate(originalDate);
-            
-            if (originalDate !== normalizedDate) {
-                migratedCount++;
-                console.log(`🔄 Migrating: ${originalDate} → ${normalizedDate}`);
-                return { 
-                    ...sale, 
-                    date: normalizedDate,
-                    updatedAt: now
-                };
-            }
-            return sale;
-        });
-        
-        if (migratedCount > 0) {
-            this.saveToStorage();
-            console.log(`✅ Migrated ${migratedCount} sales records to YYYY-MM-DD format`);
-        }
-    },
-    
-    // ==================== SALES OPERATIONS ====================
-    generateReceiptId() {
-        const prefix = this.settings.receiptPrefix || 'SALE-';
-        const timestamp = Date.now().toString().slice(-6);
-        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        return `${prefix}${timestamp}${random}`;
-    },
-    
-    addSale(saleData) {
-        const receiptId = this.settings.autoGenerateReceiptId ? 
-            this.generateReceiptId() : saleData.receiptId;
-        
-        const total = (saleData.quantity || 0) * (saleData.price || 0);
-        const tax = total * (this.settings.taxRate / 100);
-        
-        const newSale = {
-            id: Date.now(),
-            receiptId: receiptId,
-            date: this.normalizeDate(saleData.date),
-            product: saleData.product?.trim() || '',
-            category: saleData.category || this.settings.defaultCategory,
-            quantity: parseFloat(saleData.quantity) || 0,
-            price: parseFloat(saleData.price) || 0,
-            total: total,
-            tax: tax,
-            grandTotal: total + tax,
-            customerName: saleData.customerName?.trim() || 'Walk-in',
-            customerType: saleData.customerType || this.settings.defaultCustomerType,
-            customerPhone: saleData.customerPhone || '',
-            customerEmail: saleData.customerEmail || '',
-            paymentMethod: saleData.paymentMethod || this.settings.defaultPaymentMethod,
-            paymentStatus: saleData.paymentStatus || 'paid',
-            notes: saleData.notes || '',
-            timestamp: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            createdBy: saleData.createdBy || 'user'
-        };
-        
-        this.sales.unshift(newSale);
-        this.saveToStorage();
-        this.updateStats();
-        
-        if (this.element && document.getElementById('sales-container')) {
-            this.renderModule();
-        }
-        
-        console.log(`✅ Sale added: ${receiptId} - ${newSale.product} for ${this.formatCurrency(newSale.grandTotal)}`);
-        
-        // Show receipt if enabled
-        if (this.settings.enableReceipts) {
-            this.showReceiptModal(newSale);
-        }
-        
-        return newSale;
-    },
-    
-    updateSale(id, updates) {
-        const index = this.sales.findIndex(sale => sale.id === id);
-        if (index === -1) return false;
-        
-        const sale = this.sales[index];
-        const total = (updates.quantity || sale.quantity) * (updates.price || sale.price);
-        const tax = total * (this.settings.taxRate / 100);
-        
-        this.sales[index] = {
-            ...sale,
-            ...updates,
-            date: updates.date ? this.normalizeDate(updates.date) : sale.date,
-            total: total,
-            tax: tax,
-            grandTotal: total + tax,
-            updatedAt: new Date().toISOString()
-        };
-        
-        this.saveToStorage();
-        this.updateStats();
-        
-        if (this.element && document.getElementById('sales-container')) {
-            this.renderModule();
-        }
-        
-        console.log(`✏️ Sale updated: ${sale.receiptId}`);
-        return true;
-    },
-    
-    deleteSale(id) {
-        const index = this.sales.findIndex(sale => sale.id === id);
-        if (index === -1) return false;
-        
-        const deleted = this.sales.splice(index, 1)[0];
-        this.saveToStorage();
-        this.updateStats();
-        
-        if (this.element && document.getElementById('sales-container')) {
-            this.renderModule();
-        }
-        
-        console.log(`🗑️ Sale deleted: ${deleted.receiptId} - ${deleted.product}`);
-        return true;
-    },
-    
-    // ==================== UI RENDERING ====================
+
     renderModule() {
         if (!this.element) return;
+
+        const stats = this.calculateStats();
+        const lowStockItems = this.getLowStockItems();
 
         this.element.innerHTML = `
             <div class="module-container">
                 <div class="module-header">
-                    <h1 class="module-title">Sales Records</h1>
-                    <p class="module-subtitle">Manage and track your farm sales</p>
+                    <h1 class="module-title">Inventory Check</h1>
+                    <p class="module-subtitle">Manage your farm inventory</p>
                 </div>
 
-                <!-- Stats Overview -->
+                <!-- Inventory Overview -->
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-icon">💰</div>
-                        <div class="stat-content">
-                            <div class="stat-value">${this.formatCurrency(this.getTotalSalesAmount())}</div>
-                            <div class="stat-label">Total Revenue</div>
-                        </div>
+                        <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.totalItems}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Items</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon">📊</div>
-                        <div class="stat-content">
-                            <div class="stat-value">${this.sales.length}</div>
-                            <div class="stat-label">Total Sales</div>
-                        </div>
+                        <div style="font-size: 24px; margin-bottom: 8px;">✅</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.inStock}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">In Stock</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon">📈</div>
-                        <div class="stat-content">
-                            <div class="stat-value">${this.formatCurrency(this.getAverageSaleValue())}</div>
-                            <div class="stat-label">Avg. Sale</div>
-                        </div>
+                        <div style="font-size: 24px; margin-bottom: 8px;">⚠️</div>
+                        <div style="font-size: 24px; font-weight: bold; color: ${lowStockItems.length > 0 ? '#f59e0b' : '#22c55e'}; margin-bottom: 4px;">${lowStockItems.length}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Low Stock</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon">📅</div>
-                        <div class="stat-content">
-                            <div class="stat-value">${this.sales.length > 0 ? this.sales[0].date : 'N/A'}</div>
-                            <div class="stat-label">Latest Sale</div>
-                        </div>
+                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.formatCurrency(stats.totalValue)}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Value</div>
                     </div>
                 </div>
 
                 <!-- Quick Actions -->
                 <div class="quick-action-grid">
-                    <button class="quick-action-btn" id="add-sale-btn">
+                    <button class="quick-action-btn" id="add-item-btn">
                         <div style="font-size: 32px;">➕</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Sale</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record a new sale</span>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Item</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Add new inventory item</span>
                     </button>
-                    <button class="quick-action-btn" id="generate-report-btn">
+                    <button class="quick-action-btn" id="stock-check-btn">
+                        <div style="font-size: 32px;">🔍</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Stock Check</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Update stock levels</span>
+                    </button>
+                    <button class="quick-action-btn" id="low-stock-report-btn">
                         <div style="font-size: 32px;">📋</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Sales Report</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Generate sales report</span>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Low Stock Report</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View items to reorder</span>
                     </button>
-                    <button class="quick-action-btn" id="export-sales-btn">
-                        <div style="font-size: 32px;">📥</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Export Data</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Export sales to CSV/JSON</span>
-                    </button>
-                    <button class="quick-action-btn" id="manage-customers-btn">
-                        <div style="font-size: 32px;">👥</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Customers</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Manage customers</span>
+                    <button class="quick-action-btn" id="inventory-report-btn">
+                        <div style="font-size: 32px;">📈</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Inventory Report</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Full inventory analysis</span>
                     </button>
                 </div>
 
-                <!-- Recent Sales Table -->
-                <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="color: var(--text-primary); font-size: 20px;">Recent Sales</h3>
-                        <button class="btn-primary" id="view-all-sales-btn">View All</button>
-                    </div>
-                    ${this.renderSalesTable()}
-                </div>
-
-                <!-- Summary -->
-                <div class="glass-card" style="padding: 24px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Sales Summary</h3>
-                    <div class="summary-grid">
-                        <div class="summary-item">
-                            <div class="summary-label">Total Sales Count</div>
-                            <div class="summary-value">${this.sales.length}</div>
-                        </div>
-                        <div class="summary-item">
-                            <div class="summary-label">Total Revenue</div>
-                            <div class="summary-value">${this.formatCurrency(this.getTotalSalesAmount())}</div>
-                        </div>
-                        <div class="summary-item">
-                            <div class="summary-label">Average Sale Value</div>
-                            <div class="summary-value">${this.formatCurrency(this.getAverageSaleValue())}</div>
-                        </div>
-                        <div class="summary-item">
-                            <div class="summary-label">Top Product</div>
-                            <div class="summary-value">${this.getTopProduct()}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Add Sale Modal -->
-            <div id="add-sale-modal" class="modal-overlay hidden">
-                <div class="modal-container">
-                    <div class="modal-header">
-                        <h3>➕ Add New Sale</h3>
-                        <button class="modal-close" id="close-modal-btn">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="add-sale-form" class="modal-form">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Date *</label>
-                                    <input type="date" id="sale-date" required 
-                                           value="${new Date().toISOString().split('T')[0]}">
+                <!-- Add Item Form -->
+                <div id="inventory-form-container" class="hidden">
+                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                        <h3 style="color: var(--text-primary); margin-bottom: 20px;">Add Inventory Item</h3>
+                        <form id="inventory-form">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Item Name</label>
+                                    <input type="text" class="form-input" id="item-name" required placeholder="e.g., Chicken Feed - Starter">
                                 </div>
-                                <div class="form-group">
-                                    <label>Product *</label>
-                                    <input type="text" id="sale-product" required 
-                                           placeholder="Enter product name">
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Category</label>
-                                    <select id="sale-category">
-                                        ${this.categories.map(cat => 
-                                            `<option value="${cat}">${cat}</option>`
-                                        ).join('')}
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Customer Name</label>
-                                    <input type="text" id="sale-customer" 
-                                           placeholder="Customer name">
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Quantity *</label>
-                                    <input type="number" id="sale-quantity" required 
-                                           step="0.01" min="0.01" placeholder="0.00">
-                                </div>
-                                <div class="form-group">
-                                    <label>Price *</label>
-                                    <input type="number" id="sale-price" required 
-                                           step="0.01" min="0.01" placeholder="0.00">
-                                </div>
-                                <div class="form-group">
-                                    <label>Total</label>
-                                    <input type="text" id="sale-total" disabled 
-                                           placeholder="Auto-calculated">
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Payment Method</label>
-                                    <select id="sale-payment-method">
-                                        ${this.paymentMethods.map(method => 
-                                            `<option value="${method}">${method}</option>`
-                                        ).join('')}
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Payment Status</label>
-                                    <select id="sale-payment-status">
-                                        <option value="paid">Paid</option>
-                                        <option value="pending">Pending</option>
-                                        <option value="partial">Partial</option>
+                                <div>
+                                    <label class="form-label">Category</label>
+                                    <select class="form-input" id="item-category" required>
+                                        <option value="">Select category</option>
+                                        ${this.categories.map(cat => `
+                                            <option value="${cat}">${this.formatCategory(cat)}</option>
+                                        `).join('')}
                                     </select>
                                 </div>
                             </div>
-                            
-                            <div class="form-group">
-                                <label>Notes</label>
-                                <textarea id="sale-notes" rows="3" 
-                                          placeholder="Additional notes..."></textarea>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Current Stock</label>
+                                    <input type="number" class="form-input" id="current-stock" min="0" required>
+                                </div>
+                                <div>
+                                    <label class="form-label">Unit</label>
+                                    <input type="text" class="form-input" id="item-unit" required placeholder="e.g., kg, pcs, bottles">
+                                </div>
+                                <div>
+                                    <label class="form-label">Min Stock Level</label>
+                                    <input type="number" class="form-input" id="min-stock" min="0" required>
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Cost per Unit ($)</label>
+                                    <input type="number" class="form-input" id="item-cost" step="0.01" min="0" required>
+                                </div>
+                                <div>
+                                    <label class="form-label">Supplier</label>
+                                    <input type="text" class="form-input" id="item-supplier" placeholder="Supplier name">
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <label class="form-label">Notes</label>
+                                <textarea class="form-input" id="item-notes" rows="3" placeholder="Storage instructions, usage notes, etc."></textarea>
+                            </div>
+                            <div style="display: flex; gap: 12px;">
+                                <button type="submit" class="btn-primary">Save Item</button>
+                                <button type="button" class="btn-outline" id="cancel-inventory-form">Cancel</button>
                             </div>
                         </form>
                     </div>
-                    <div class="modal-footer">
-                        <button class="btn-outline" id="cancel-sale-btn">Cancel</button>
-                        <button class="btn-primary" id="save-sale-btn">Save Sale</button>
+                </div>
+
+                <!-- Stock Update Form -->
+                <div id="stock-update-container" class="hidden">
+                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                        <h3 style="color: var(--text-primary); margin-bottom: 20px;" id="stock-update-title">Update Stock Level</h3>
+                        <form id="stock-update-form">
+                            <input type="hidden" id="update-item-id">
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-weight: 600; color: var(--text-primary); font-size: 18px;" id="update-item-name"></div>
+                                <div style="font-size: 14px; color: var(--text-secondary);" id="update-item-details"></div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Current Stock</label>
+                                    <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; font-weight: 600; color: var(--text-primary);" id="current-stock-display"></div>
+                                </div>
+                                <div>
+                                    <label class="form-label">New Stock Level</label>
+                                    <input type="number" class="form-input" id="new-stock-level" min="0" required>
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <label class="form-label">Update Reason</label>
+                                <select class="form-input" id="stock-update-reason" required>
+                                    <option value="restock">Restock/New Delivery</option>
+                                    <option value="usage">Daily Usage</option>
+                                    <option value="damage">Damage/Loss</option>
+                                    <option value="adjustment">Stock Adjustment</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 12px;">
+                                <button type="submit" class="btn-primary">Update Stock</button>
+                                <button type="button" class="btn-outline" id="cancel-stock-update">Cancel</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-            </div>
 
-            <!-- Receipt Modal -->
-            <div id="receipt-modal" class="modal-overlay hidden">
-                <div class="modal-container receipt-modal">
-                    <div class="receipt-content" id="receipt-content">
-                        <!-- Receipt content will be generated here -->
-                    </div>
-                    <div class="receipt-actions">
-                        <button class="btn-outline" id="print-receipt-btn">🖨️ Print</button>
-                        <button class="btn-outline" id="close-receipt-btn">Close</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Report Modal -->
-            <div id="sales-report-modal" class="modal-overlay hidden">
-                <div class="modal-container" style="max-width: 800px;">
-                    <div class="modal-header">
-                        <h3>📊 Sales Report</h3>
-                        <button class="modal-close" id="close-report-btn">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="sales-report-content">
-                            <!-- Report content will be generated here -->
+                <!-- Low Stock Alerts -->
+                ${lowStockItems.length > 0 ? `
+                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px; border-left: 4px solid #f59e0b;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h3 style="color: var(--text-primary); font-size: 20px;">⚠️ Low Stock Alerts</h3>
+                            <span style="background: #f59e0b; color: white; padding: 4px 12px; border-radius: 12px; font-size: 14px; font-weight: 600;">
+                                ${lowStockItems.length} item${lowStockItems.length > 1 ? 's' : ''}
+                            </span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                            ${lowStockItems.map(item => `
+                                <div style="padding: 12px; background: #fef3c7; border-radius: 8px; border: 1px solid #f59e0b;">
+                                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${item.name}</div>
+                                    <div style="font-size: 14px; color: #92400e;">
+                                        ${item.currentStock} ${item.unit} • Min: ${item.minStock} ${item.unit}
+                                    </div>
+                                    <button class="btn-outline restock-item" data-id="${item.id}" style="margin-top: 8px; padding: 4px 12px; font-size: 12px; width: 100%;">
+                                        Restock Now
+                                    </button>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button class="btn-outline" id="print-report-btn">🖨️ Print</button>
-                        <button class="btn-primary" id="close-report-modal-btn">Close</button>
+                ` : ''}
+
+                <!-- Inventory List -->
+                <div class="glass-card" style="padding: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: var(--text-primary); font-size: 20px;">All Inventory Items</h3>
+                        <div style="display: flex; gap: 12px;">
+                            <select class="form-input" id="category-filter" style="width: auto;">
+                                <option value="">All Categories</option>
+                                ${this.categories.map(cat => `
+                                    <option value="${cat}">${this.formatCategory(cat)}</option>
+                                `).join('')}
+                            </select>
+                            <button class="btn-primary" id="show-add-form">Add Item</button>
+                        </div>
+                    </div>
+                    <div id="inventory-list">
+                        ${this.renderInventoryList()}
+                    </div>
+                </div>
+
+                <!-- Category Summary -->
+                <div class="glass-card" style="padding: 24px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Inventory by Category</h3>
+                    <div id="category-summary">
+                        ${this.renderCategorySummary()}
+                    </div>
+                </div>
+            </div>
+
+            <!-- POPOUT MODALS - Added at the end to overlay content -->
+            <!-- Inventory Report Popout Modal -->
+            <div id="inventory-report-modal" class="popout-modal hidden">
+                <div class="popout-modal-content" style="max-width: 800px;">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title" id="inventory-report-title">Inventory Report</h3>
+                        <button class="popout-modal-close" id="close-inventory-report">&times;</button>
+                    </div>
+                    <div class="popout-modal-body">
+                        <div id="inventory-report-content">
+                            <!-- Report content will be inserted here -->
+                        </div>
+                    </div>
+                    <div class="popout-modal-footer">
+                        <button class="btn-outline" id="print-inventory-report">🖨️ Print</button>
+                        <button class="btn-primary" id="close-inventory-report-btn">Close</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Low Stock Report Popout Modal -->
+            <div id="low-stock-report-modal" class="popout-modal hidden">
+                <div class="popout-modal-content" style="max-width: 800px;">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title" id="low-stock-report-title">Low Stock Report</h3>
+                        <button class="popout-modal-close" id="close-low-stock-report">&times;</button>
+                    </div>
+                    <div class="popout-modal-body">
+                        <div id="low-stock-report-content">
+                            <!-- Report content will be inserted here -->
+                        </div>
+                    </div>
+                    <div class="popout-modal-footer">
+                        <button class="btn-outline" id="print-low-stock-report">🖨️ Print</button>
+                        <button class="btn-primary" id="close-low-stock-report-btn">Close</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stock Check Popout Modal -->
+            <div id="stock-check-modal" class="popout-modal hidden">
+                <div class="popout-modal-content" style="max-width: 800px;">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title" id="stock-check-title">Stock Check Report</h3>
+                        <button class="popout-modal-close" id="close-stock-check">&times;</button>
+                    </div>
+                    <div class="popout-modal-body">
+                        <div id="stock-check-content">
+                            <!-- Report content will be inserted here -->
+                        </div>
+                    </div>
+                    <div class="popout-modal-footer">
+                        <button class="btn-outline" id="print-stock-check">🖨️ Print</button>
+                        <button class="btn-primary" id="close-stock-check-btn">Close</button>
                     </div>
                 </div>
             </div>
@@ -553,660 +377,721 @@ const SalesRecordModule = {
 
         this.setupEventListeners();
     },
-    
-    renderSalesTable() {
-        if (this.sales.length === 0) {
+
+    // KEEP ALL THE EXISTING METHODS EXACTLY AS THEY WERE WORKING
+    calculateStats() {
+        const totalItems = this.inventory.length;
+        const inStock = this.inventory.filter(item => item.currentStock > 0).length;
+        const totalValue = this.inventory.reduce((sum, item) => sum + (item.currentStock * item.cost), 0);
+        const lowStockItems = this.getLowStockItems().length;
+        const outOfStockItems = this.getOutOfStockItems().length;
+        
+        return { totalItems, inStock, totalValue, lowStockItems, outOfStockItems };
+    },
+
+    getLowStockItems() {
+        return this.inventory.filter(item => item.currentStock <= item.minStock && item.currentStock > 0);
+    },
+
+    getOutOfStockItems() {
+        return this.inventory.filter(item => item.currentStock === 0);
+    },
+
+    renderInventoryList() {
+        if (this.inventory.length === 0) {
             return `
                 <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No sales records yet</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Click "Add Sale" to record your first sale</div>
+                    <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No inventory items</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Add your first inventory item to get started</div>
                 </div>
             `;
         }
 
-        const recentSales = this.sales.slice(0, 10);
-        
         return `
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="background: var(--glass-hover);">
-                            <th style="padding: 12px; text-align: left; color: var(--text-primary); font-weight: 600; border-bottom: 1px solid var(--glass-border);">Date</th>
-                            <th style="padding: 12px; text-align: left; color: var(--text-primary); font-weight: 600; border-bottom: 1px solid var(--glass-border);">Receipt ID</th>
-                            <th style="padding: 12px; text-align: left; color: var(--text-primary); font-weight: 600; border-bottom: 1px solid var(--glass-border);">Product</th>
-                            <th style="padding: 12px; text-align: left; color: var(--text-primary); font-weight: 600; border-bottom: 1px solid var(--glass-border);">Customer</th>
-                            <th style="padding: 12px; text-align: left; color: var(--text-primary); font-weight: 600; border-bottom: 1px solid var(--glass-border);">Amount</th>
-                            <th style="padding: 12px; text-align: left; color: var(--text-primary); font-weight: 600; border-bottom: 1px solid var(--glass-border);">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${recentSales.map(sale => `
-                            <tr style="border-bottom: 1px solid var(--glass-border);">
-                                <td style="padding: 12px; color: var(--text-primary);">${sale.date}</td>
-                                <td style="padding: 12px;">
-                                    <span style="font-family: monospace; background: rgba(59, 130, 246, 0.1); padding: 4px 8px; border-radius: 6px; font-size: 12px;">${sale.receiptId}</span>
-                                </td>
-                                <td style="padding: 12px; color: var(--text-primary);">
-                                    <div style="font-weight: 600;">${sale.product}</div>
-                                    <div style="font-size: 12px; color: var(--text-secondary);">${sale.category}</div>
-                                </td>
-                                <td style="padding: 12px; color: var(--text-primary);">
-                                    <div style="font-weight: 600;">${sale.customerName}</div>
-                                    <div style="font-size: 12px; color: var(--text-secondary);">${sale.customerType}</div>
-                                </td>
-                                <td style="padding: 12px;">
-                                    <div style="font-weight: bold; color: var(--text-primary);">${this.formatCurrency(sale.grandTotal)}</div>
-                                    <div style="font-size: 12px; color: var(--text-secondary);">${sale.quantity} × ${this.formatCurrency(sale.price)}</div>
-                                </td>
-                                <td style="padding: 12px;">
-                                    <div style="display: flex; gap: 8px;">
-                                        <button class="btn-icon view-sale-btn" data-id="${sale.id}" title="View">
-                                            👁️
-                                        </button>
-                                        <button class="btn-icon delete-sale-btn" data-id="${sale.id}" title="Delete">
-                                            🗑️
-                                        </button>
-                                        <button class="btn-icon receipt-btn" data-id="${sale.id}" title="Receipt">
-                                            🧾
-                                        </button>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                ${this.inventory.map(item => {
+                    const status = this.getStockStatus(item);
+                    const statusColor = status === 'Adequate' ? '#22c55e' : status === 'Low' ? '#f59e0b' : '#ef4444';
+                    const totalValue = item.currentStock * item.cost;
+                    
+                    return `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="font-size: 20px;">${this.getCategoryIcon(item.category)}</div>
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">${item.name}</div>
+                                    <div style="font-size: 14px; color: var(--text-secondary);">
+                                        ${this.formatCategory(item.category)} • ${item.supplier || 'No supplier'}
+                                        ${item.lastRestocked ? ` • Last: ${item.lastRestocked}` : ''}
                                     </div>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
+                                    ${item.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${item.notes}</div>` : ''}
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div style="text-align: right;">
+                                    <div style="font-weight: bold; color: var(--text-primary); font-size: 18px;">
+                                        ${item.currentStock} ${item.unit}
+                                    </div>
+                                    <div style="font-size: 14px; color: var(--text-secondary);">
+                                        Min: ${item.minStock} ${item.unit} • ${this.formatCurrency(totalValue)}
+                                    </div>
+                                </div>
+                                <div style="padding: 4px 12px; border-radius: 12px; background: ${statusColor}20; color: ${statusColor}; font-size: 12px; font-weight: 600;">
+                                    ${status} Stock
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn-icon update-stock" data-id="${item.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Update Stock">
+                                        ✏️
+                                    </button>
+                                    <button class="btn-icon delete-item" data-id="${item.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Delete Item">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
             </div>
         `;
     },
-    
-    // ==================== EVENT LISTENERS ====================
-    setupEventListeners() {
-        // Add sale button
-        const addSaleBtn = document.getElementById('add-sale-btn');
-        if (addSaleBtn) {
-            addSaleBtn.addEventListener('click', () => this.showAddSaleModal());
-        }
-        
-        // Report button
-        const reportBtn = document.getElementById('generate-report-btn');
-        if (reportBtn) {
-            reportBtn.addEventListener('click', () => this.showSalesReportModal());
-        }
-        
-        // Export button
-        const exportBtn = document.getElementById('export-sales-btn');
-        if (exportBtn) {
-            exportBtn.addEventListener('click', () => this.exportSales());
-        }
-        
-        // View all button
-        const viewAllBtn = document.getElementById('view-all-sales-btn');
-        if (viewAllBtn) {
-            viewAllBtn.addEventListener('click', () => this.showAllSales());
-        }
-        
-        // Modal buttons
-        const closeModalBtn = document.getElementById('close-modal-btn');
-        const cancelSaleBtn = document.getElementById('cancel-sale-btn');
-        const saveSaleBtn = document.getElementById('save-sale-btn');
-        
-        if (closeModalBtn) closeModalBtn.addEventListener('click', () => this.hideAddSaleModal());
-        if (cancelSaleBtn) cancelSaleBtn.addEventListener('click', () => this.hideAddSaleModal());
-        if (saveSaleBtn) saveSaleBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.saveNewSale();
-        });
-        
-        // Report modal buttons
-        const closeReportBtn = document.getElementById('close-report-btn');
-        const closeReportModalBtn = document.getElementById('close-report-modal-btn');
-        const printReportBtn = document.getElementById('print-report-btn');
-        
-        if (closeReportBtn) closeReportBtn.addEventListener('click', () => this.hideSalesReportModal());
-        if (closeReportModalBtn) closeReportModalBtn.addEventListener('click', () => this.hideSalesReportModal());
-        if (printReportBtn) printReportBtn.addEventListener('click', () => this.printSalesReport());
-        
-        // Receipt modal buttons
-        const printReceiptBtn = document.getElementById('print-receipt-btn');
-        const closeReceiptBtn = document.getElementById('close-receipt-btn');
-        
-        if (printReceiptBtn) printReceiptBtn.addEventListener('click', () => this.printReceipt());
-        if (closeReceiptBtn) closeReceiptBtn.addEventListener('click', () => this.hideReceiptModal());
-        
-        // Auto-calculate total
-        const quantityInput = document.getElementById('sale-quantity');
-        const priceInput = document.getElementById('sale-price');
-        const totalInput = document.getElementById('sale-total');
-        
-        if (quantityInput && priceInput && totalInput) {
-            const calculateTotal = () => {
-                const quantity = parseFloat(quantityInput.value) || 0;
-                const price = parseFloat(priceInput.value) || 0;
-                const total = quantity * price;
-                const tax = total * (this.settings.taxRate / 100);
-                totalInput.value = this.formatCurrency(total + tax);
+
+    renderCategorySummary() {
+        const categoryData = {};
+        this.categories.forEach(cat => {
+            categoryData[cat] = {
+                count: 0,
+                totalValue: 0,
+                lowStock: 0
             };
-            
-            quantityInput.addEventListener('input', calculateTotal);
-            priceInput.addEventListener('input', calculateTotal);
-        }
-        
-        // Close modals on overlay click
-        const modals = document.querySelectorAll('.modal-overlay');
-        modals.forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    if (modal.id === 'add-sale-modal') this.hideAddSaleModal();
-                    if (modal.id === 'receipt-modal') this.hideReceiptModal();
-                    if (modal.id === 'sales-report-modal') this.hideSalesReportModal();
+        });
+
+        this.inventory.forEach(item => {
+            if (categoryData[item.category]) {
+                categoryData[item.category].count++;
+                categoryData[item.category].totalValue += item.currentStock * item.cost;
+                if (item.currentStock <= item.minStock) {
+                    categoryData[item.category].lowStock++;
                 }
-            });
-        });
-        
-        // Attach dynamic button listeners
-        setTimeout(() => {
-            this.attachDynamicEventListeners();
-        }, 100);
-    },
-    
-    attachDynamicEventListeners() {
-        // View sale buttons
-        document.querySelectorAll('.view-sale-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = parseInt(e.currentTarget.dataset.id);
-                this.viewSale(id);
-            });
-        });
-        
-        // Delete sale buttons
-        document.querySelectorAll('.delete-sale-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = parseInt(e.currentTarget.dataset.id);
-                this.confirmDeleteSale(id);
-            });
-        });
-        
-        // Receipt buttons
-        document.querySelectorAll('.receipt-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = parseInt(e.currentTarget.dataset.id);
-                const sale = this.sales.find(s => s.id === id);
-                if (sale) {
-                    this.showReceiptModal(sale);
-                }
-            });
-        });
-    },
-    
-    // ==================== MODAL OPERATIONS ====================
-    showAddSaleModal() {
-        const modal = document.getElementById('add-sale-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-            
-            // Reset form
-            const form = document.getElementById('add-sale-form');
-            if (form) form.reset();
-            
-            // Set today's date
-            const dateInput = document.getElementById('sale-date');
-            if (dateInput) {
-                dateInput.value = new Date().toISOString().split('T')[0];
             }
-            
-            // Set default category
-            const categorySelect = document.getElementById('sale-category');
-            if (categorySelect) {
-                categorySelect.value = this.settings.defaultCategory;
-            }
-        }
-    },
-    
-    hideAddSaleModal() {
-        const modal = document.getElementById('add-sale-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
-    },
-    
-    showReceiptModal(sale) {
-        const modal = document.getElementById('receipt-modal');
-        const content = document.getElementById('receipt-content');
-        
-        if (!modal || !content || !sale) return;
-        
-        const receiptHTML = `
-            <div class="receipt">
-                <div class="receipt-header">
-                    <h2>${window.FarmModules?.appData?.profile?.farmName || 'Farm'} Receipt</h2>
-                    <div class="receipt-id">${sale.receiptId}</div>
-                </div>
-                
-                <div class="receipt-info">
-                    <div class="info-row">
-                        <span>Date:</span>
-                        <span>${sale.date}</span>
-                    </div>
-                    <div class="info-row">
-                        <span>Time:</span>
-                        <span>${new Date(sale.timestamp).toLocaleTimeString()}</span>
-                    </div>
-                </div>
-                
-                <div class="receipt-items">
-                    <div class="item-header">
-                        <span>Item</span>
-                        <span>Qty</span>
-                        <span>Price</span>
-                        <span>Total</span>
-                    </div>
-                    <div class="item-row">
-                        <span>${sale.product}</span>
-                        <span>${sale.quantity}</span>
-                        <span>${this.formatCurrency(sale.price)}</span>
-                        <span>${this.formatCurrency(sale.total)}</span>
-                    </div>
-                </div>
-                
-                <div class="receipt-totals">
-                    <div class="total-row">
-                        <span>Subtotal:</span>
-                        <span>${this.formatCurrency(sale.total)}</span>
-                    </div>
-                    <div class="total-row">
-                        <span>Tax (${this.settings.taxRate}%):</span>
-                        <span>${this.formatCurrency(sale.tax)}</span>
-                    </div>
-                    <div class="total-row grand-total">
-                        <span>GRAND TOTAL:</span>
-                        <span>${this.formatCurrency(sale.grandTotal)}</span>
-                    </div>
-                </div>
-                
-                <div class="receipt-payment">
-                    <div class="payment-info">
-                        <div><strong>Payment Method:</strong> ${sale.paymentMethod}</div>
-                        <div><strong>Status:</strong> ${sale.paymentStatus}</div>
-                    </div>
-                </div>
-                
-                <div class="receipt-customer">
-                    <div><strong>Customer:</strong> ${sale.customerName}</div>
-                    ${sale.customerPhone ? `<div><strong>Phone:</strong> ${sale.customerPhone}</div>` : ''}
-                </div>
-                
-                <div class="receipt-footer">
-                    <p>Thank you for your business!</p>
-                    <p class="footer-note">
-                        ${window.FarmModules?.appData?.profile?.receiptFooter || 
-                          'Please keep this receipt for your records.'}
-                    </p>
-                </div>
+        });
+
+        return `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                ${this.categories.map(cat => {
+                    const data = categoryData[cat];
+                    return `
+                        <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                <div style="font-size: 20px;">${this.getCategoryIcon(cat)}</div>
+                                <div style="font-weight: 600; color: var(--text-primary);">${this.formatCategory(cat)}</div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span style="color: var(--text-secondary);">Items:</span>
+                                <span style="font-weight: 600; color: var(--text-primary);">${data.count}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span style="color: var(--text-secondary);">Value:</span>
+                                <span style="font-weight: 600; color: var(--text-primary);">${this.formatCurrency(data.totalValue)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Low Stock:</span>
+                                <span style="font-weight: 600; color: ${data.lowStock > 0 ? '#f59e0b' : '#22c55e'};">${data.lowStock}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
             </div>
         `;
-        
-        content.innerHTML = receiptHTML;
-        modal.classList.remove('hidden');
     },
-    
-    hideReceiptModal() {
-        const modal = document.getElementById('receipt-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
+
+    getStockStatus(item) {
+        if (item.currentStock === 0) return 'Out of Stock';
+        if (item.currentStock <= item.minStock) return 'Low';
+        return 'Adequate';
     },
-    
-    showSalesReportModal() {
-        const modal = document.getElementById('sales-report-modal');
-        const content = document.getElementById('sales-report-content');
-        
-        if (!modal || !content) return;
-        
-        const reportHTML = this.generateSalesReportHTML();
-        content.innerHTML = reportHTML;
-        modal.classList.remove('hidden');
-    },
-    
-    hideSalesReportModal() {
-        const modal = document.getElementById('sales-report-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
-    },
-    
-    saveNewSale() {
-        const form = document.getElementById('add-sale-form');
-        if (!form || !form.checkValidity()) {
-            alert('Please fill in all required fields (marked with *)');
-            return;
-        }
-        
-        const saleData = {
-            date: document.getElementById('sale-date').value,
-            product: document.getElementById('sale-product').value,
-            category: document.getElementById('sale-category').value,
-            quantity: document.getElementById('sale-quantity').value,
-            price: document.getElementById('sale-price').value,
-            customerName: document.getElementById('sale-customer').value || 'Walk-in',
-            paymentMethod: document.getElementById('sale-payment-method').value,
-            paymentStatus: document.getElementById('sale-payment-status').value,
-            notes: document.getElementById('sale-notes').value
+
+    getCategoryIcon(category) {
+        const icons = {
+            'feed': '🌾',
+            'medical': '💊',
+            'packaging': '📦',
+            'equipment': '🔧',
+            'cleaning': '🧼',
+            'other': '📋'
         };
-        
-        this.addSale(saleData);
-        this.hideAddSaleModal();
+        return icons[category] || '📦';
     },
-    
-    // ==================== UTILITY METHODS ====================
+
+    formatCategory(category) {
+        const categories = {
+            'feed': 'Feed',
+            'medical': 'Medical',
+            'packaging': 'Packaging',
+            'equipment': 'Equipment',
+            'cleaning': 'Cleaning',
+            'other': 'Other'
+        };
+        return categories[category] || category;
+    },
+
+    setupEventListeners() {
+        // Form buttons
+        document.getElementById('show-add-form')?.addEventListener('click', () => this.showInventoryForm());
+        document.getElementById('add-item-btn')?.addEventListener('click', () => this.showInventoryForm());
+        document.getElementById('stock-check-btn')?.addEventListener('click', () => this.showStockCheck());
+        document.getElementById('low-stock-report-btn')?.addEventListener('click', () => this.generateLowStockReport());
+        document.getElementById('inventory-report-btn')?.addEventListener('click', () => this.generateInventoryReport());
+        
+        // Form handlers
+        document.getElementById('inventory-form')?.addEventListener('submit', (e) => this.handleInventorySubmit(e));
+        document.getElementById('stock-update-form')?.addEventListener('submit', (e) => this.handleStockUpdate(e));
+        document.getElementById('cancel-inventory-form')?.addEventListener('click', () => this.hideInventoryForm());
+        document.getElementById('cancel-stock-update')?.addEventListener('click', () => this.hideStockUpdate());
+        
+        // Popout modal handlers
+        document.getElementById('close-inventory-report')?.addEventListener('click', () => this.hideInventoryReportModal());
+        document.getElementById('close-inventory-report-btn')?.addEventListener('click', () => this.hideInventoryReportModal());
+        document.getElementById('print-inventory-report')?.addEventListener('click', () => this.printInventoryReport());
+        
+        document.getElementById('close-low-stock-report')?.addEventListener('click', () => this.hideLowStockReportModal());
+        document.getElementById('close-low-stock-report-btn')?.addEventListener('click', () => this.hideLowStockReportModal());
+        document.getElementById('print-low-stock-report')?.addEventListener('click', () => this.printLowStockReport());
+        
+        document.getElementById('close-stock-check')?.addEventListener('click', () => this.hideStockCheckModal());
+        document.getElementById('close-stock-check-btn')?.addEventListener('click', () => this.hideStockCheckModal());
+        document.getElementById('print-stock-check')?.addEventListener('click', () => this.printStockCheck());
+        
+        // Category filter
+        document.getElementById('category-filter')?.addEventListener('change', (e) => this.filterByCategory(e.target.value));
+        
+        // Action buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.delete-item')) {
+                const id = parseInt(e.target.closest('.delete-item').dataset.id);
+                this.deleteItem(id);
+            }
+            if (e.target.closest('.update-stock')) {
+                const id = parseInt(e.target.closest('.update-stock').dataset.id);
+                this.showUpdateStockForm(id);
+            }
+            if (e.target.closest('.restock-item')) {
+                const id = parseInt(e.target.closest('.restock-item').dataset.id);
+                this.quickRestock(id);
+            }
+        });
+
+        // Close modals when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('popout-modal')) {
+                this.hideAllModals();
+            }
+        });
+
+        // Hover effects
+        const buttons = document.querySelectorAll('.quick-action-btn');
+        buttons.forEach(button => {
+            button.addEventListener('mouseenter', (e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+            });
+            button.addEventListener('mouseleave', (e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+            });
+        });
+    },
+
+    // MODAL CONTROL METHODS
+    showInventoryReportModal() {
+        document.getElementById('inventory-report-modal').classList.remove('hidden');
+    },
+
+    hideInventoryReportModal() {
+        document.getElementById('inventory-report-modal').classList.add('hidden');
+    },
+
+    showLowStockReportModal() {
+        document.getElementById('low-stock-report-modal').classList.remove('hidden');
+    },
+
+    hideLowStockReportModal() {
+        document.getElementById('low-stock-report-modal').classList.add('hidden');
+    },
+
+    showStockCheckModal() {
+        document.getElementById('stock-check-modal').classList.remove('hidden');
+    },
+
+    hideStockCheckModal() {
+        document.getElementById('stock-check-modal').classList.add('hidden');
+    },
+
+    hideAllModals() {
+        this.hideInventoryReportModal();
+        this.hideLowStockReportModal();
+        this.hideStockCheckModal();
+    },
+
+    // KEEP ALL EXISTING FORM METHODS EXACTLY THE SAME
+    showInventoryForm() {
+        document.getElementById('inventory-form-container').classList.remove('hidden');
+        document.getElementById('inventory-form').reset();
+        document.getElementById('inventory-form-container').scrollIntoView({ behavior: 'smooth' });
+    },
+
+    hideInventoryForm() {
+        document.getElementById('inventory-form-container').classList.add('hidden');
+    },
+
+    showUpdateStockForm(id) {
+        const item = this.inventory.find(item => item.id === id);
+        if (!item) return;
+
+        document.getElementById('stock-update-container').classList.remove('hidden');
+        document.getElementById('update-item-id').value = item.id;
+        document.getElementById('update-item-name').textContent = item.name;
+        document.getElementById('update-item-details').textContent = `${this.formatCategory(item.category)} • ${item.supplier || 'No supplier'}`;
+        document.getElementById('current-stock-display').textContent = `${item.currentStock} ${item.unit}`;
+        document.getElementById('new-stock-level').value = item.currentStock;
+        document.getElementById('stock-update-form').reset();
+        
+        document.getElementById('stock-update-container').scrollIntoView({ behavior: 'smooth' });
+    },
+
+    hideStockUpdate() {
+        document.getElementById('stock-update-container').classList.add('hidden');
+    },
+
+    // UPDATE REPORT METHODS TO USE POPOUT MODALS
+    showStockCheck() {
+        const lowStock = this.getLowStockItems();
+        const outOfStock = this.getOutOfStockItems();
+        const stats = this.calculateStats();
+        
+        let report = '<div class="report-content">';
+        report += '<h4 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">📦 Stock Check Report</h4>';
+        
+        if (lowStock.length > 0) {
+            report += `<div style="margin-bottom: 20px;">
+                <h5 style="color: #f59e0b; margin-bottom: 12px;">⚠️ LOW STOCK ITEMS (${lowStock.length}):</h5>
+                <div style="display: flex; flex-direction: column; gap: 8px;">`;
+            lowStock.forEach(item => {
+                report += `<div style="padding: 8px; background: #fef3c7; border-radius: 6px; border-left: 4px solid #f59e0b;">
+                    <strong>${item.name}</strong>: ${item.currentStock} ${item.unit} (min: ${item.minStock} ${item.unit})
+                </div>`;
+            });
+            report += '</div></div>';
+        }
+        
+        if (outOfStock.length > 0) {
+            report += `<div style="margin-bottom: 20px;">
+                <h5 style="color: #ef4444; margin-bottom: 12px;">❌ OUT OF STOCK (${outOfStock.length}):</h5>
+                <div style="display: flex; flex-direction: column; gap: 8px;">`;
+            outOfStock.forEach(item => {
+                report += `<div style="padding: 8px; background: #fee2e2; border-radius: 6px; border-left: 4px solid #ef4444;">
+                    <strong>${item.name}</strong>: 0 ${item.unit}
+                </div>`;
+            });
+            report += '</div></div>';
+        }
+        
+        if (lowStock.length === 0 && outOfStock.length === 0) {
+            report += `<div style="text-align: center; padding: 20px; background: #d1fae5; border-radius: 8px; border-left: 4px solid #22c55e;">
+                <div style="font-size: 24px; margin-bottom: 8px;">✅</div>
+                <strong style="color: #065f46;">All items are adequately stocked!</strong>
+            </div>`;
+        }
+        
+        report += `<div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div style="text-align: center;">
+                    <div style="font-size: 12px; color: var(--text-secondary);">Total Items</div>
+                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${stats.totalItems}</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 12px; color: var(--text-secondary);">Total Value</div>
+                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(stats.totalValue)}</div>
+                </div>
+            </div>
+        </div>`;
+        
+        report += '</div>';
+
+        document.getElementById('stock-check-content').innerHTML = report;
+        document.getElementById('stock-check-title').textContent = 'Stock Check Report';
+        this.showStockCheckModal();
+    },
+
+    generateLowStockReport() {
+        const lowStock = this.getLowStockItems();
+        const outOfStock = this.getOutOfStockItems();
+        
+        let report = '<div class="report-content">';
+        report += '<h4 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">📋 LOW STOCK & REORDER REPORT</h4>';
+        
+        if (outOfStock.length === 0 && lowStock.length === 0) {
+            report += `<div style="text-align: center; padding: 40px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
+                <h5 style="color: #065f46; margin-bottom: 8px;">No low stock items!</h5>
+                <p style="color: var(--text-secondary);">All inventory is adequately stocked</p>
+            </div>`;
+        } else {
+            if (outOfStock.length > 0) {
+                report += `<div style="margin-bottom: 24px;">
+                    <h5 style="color: #ef4444; margin-bottom: 16px; padding: 8px 12px; background: #fee2e2; border-radius: 6px;">🚨 URGENT - OUT OF STOCK:</h5>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">`;
+                outOfStock.forEach(item => {
+                    const suggestedOrder = item.minStock * 2;
+                    report += `<div style="padding: 12px; background: #fef2f2; border-radius: 8px; border: 1px solid #fecaca;">
+                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${item.name}</div>
+                        <div style="color: #dc2626; font-size: 14px; margin-bottom: 8px;">
+                            <strong>ORDER ${suggestedOrder} ${item.unit}</strong> (Supplier: ${item.supplier || 'Not specified'})
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">Current: 0 ${item.unit} • Min: ${item.minStock} ${item.unit}</div>
+                    </div>`;
+                });
+                report += '</div></div>';
+            }
+            
+            if (lowStock.length > 0) {
+                report += `<div style="margin-bottom: 20px;">
+                    <h5 style="color: #f59e0b; margin-bottom: 16px; padding: 8px 12px; background: #fef3c7; border-radius: 6px;">📉 LOW STOCK - REORDER SOON:</h5>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">`;
+                lowStock.forEach(item => {
+                    const suggestedOrder = Math.max(item.minStock * 2 - item.currentStock, 10);
+                    report += `<div style="padding: 12px; background: #fffbeb; border-radius: 8px; border: 1px solid #fcd34d;">
+                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${item.name}</div>
+                        <div style="color: #d97706; font-size: 14px; margin-bottom: 8px;">
+                            <strong>Order ${suggestedOrder} ${item.unit}</strong> - ${item.currentStock} ${item.unit} left
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">Min stock: ${item.minStock} ${item.unit} • Supplier: ${item.supplier || 'Not specified'}</div>
+                    </div>`;
+                });
+                report += '</div></div>';
+            }
+        }
+        
+        report += '</div>';
+
+        document.getElementById('low-stock-report-content').innerHTML = report;
+        document.getElementById('low-stock-report-title').textContent = 'Low Stock Report';
+        this.showLowStockReportModal();
+    },
+
+    generateInventoryReport() {
+        const stats = this.calculateStats();
+        const categoryData = {};
+        
+        this.categories.forEach(cat => {
+            const items = this.inventory.filter(item => item.category === cat);
+            categoryData[cat] = {
+                count: items.length,
+                totalValue: items.reduce((sum, item) => sum + (item.currentStock * item.cost), 0),
+                lowStock: items.filter(item => item.currentStock <= item.minStock).length
+            };
+        });
+
+        let report = '<div class="report-content">';
+        report += '<h4 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">📊 COMPLETE INVENTORY REPORT</h4>';
+        
+        // Overview Section
+        report += `<div style="margin-bottom: 24px;">
+            <h5 style="color: var(--text-primary); margin-bottom: 12px;">📈 OVERVIEW:</h5>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px;">
+                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
+                    <div style="font-size: 12px; color: var(--text-secondary);">Total Items</div>
+                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${stats.totalItems}</div>
+                </div>
+                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
+                    <div style="font-size: 12px; color: var(--text-secondary);">Items in Stock</div>
+                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${stats.inStock}</div>
+                </div>
+                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
+                    <div style="font-size: 12px; color: var(--text-secondary);">Total Value</div>
+                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(stats.totalValue)}</div>
+                </div>
+                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
+                    <div style="font-size: 12px; color: var(--text-secondary);">Low Stock Items</div>
+                    <div style="font-size: 18px; font-weight: bold; color: #f59e0b;">${stats.lowStockItems}</div>
+                </div>
+            </div>
+        </div>`;
+        
+        // Category Breakdown
+        report += `<div style="margin-bottom: 24px;">
+            <h5 style="color: var(--text-primary); margin-bottom: 12px;">🗂️ CATEGORY BREAKDOWN:</h5>
+            <div style="display: flex; flex-direction: column; gap: 8px;">`;
+        this.categories.forEach(cat => {
+            const data = categoryData[cat];
+            if (data.count > 0) {
+                const lowStockColor = data.lowStock > 0 ? '#f59e0b' : '#22c55e';
+                report += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px;">
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-primary);">${this.formatCategory(cat)}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">${data.count} items</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 600; color: var(--text-primary);">${this.formatCurrency(data.totalValue)}</div>
+                        <div style="font-size: 12px; color: ${lowStockColor};">${data.lowStock} low stock</div>
+                    </div>
+                </div>`;
+            }
+        });
+        report += '</div></div>';
+        
+        // Low Stock Summary
+        const lowStock = this.getLowStockItems();
+        report += `<div style="margin-bottom: 20px;">
+            <h5 style="color: var(--text-primary); margin-bottom: 12px;">⚠️ LOW STOCK SUMMARY:</h5>`;
+        if (lowStock.length > 0) {
+            report += '<div style="display: flex; flex-direction: column; gap: 8px;">';
+            lowStock.forEach(item => {
+                const statusColor = item.currentStock === 0 ? '#ef4444' : '#f59e0b';
+                report += `<div style="padding: 8px; background: ${statusColor}10; border-radius: 6px; border-left: 4px solid ${statusColor};">
+                    <div style="font-weight: 600; color: var(--text-primary);">${item.name}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        ${item.currentStock} ${item.unit} (min: ${item.minStock} ${item.unit}) • ${this.formatCategory(item.category)}
+                    </div>
+                </div>`;
+            });
+            report += '</div>';
+        } else {
+            report += `<div style="text-align: center; padding: 20px; background: #d1fae5; border-radius: 8px;">
+                <div style="font-size: 24px; margin-bottom: 8px;">✅</div>
+                <strong style="color: #065f46;">No low stock items</strong>
+            </div>`;
+        }
+        report += '</div>';
+        
+        report += '</div>';
+
+        document.getElementById('inventory-report-content').innerHTML = report;
+        document.getElementById('inventory-report-title').textContent = 'Complete Inventory Report';
+        this.showInventoryReportModal();
+    },
+
+    // PRINT METHODS
+    printInventoryReport() {
+        this.printReport('inventory-report-content', 'inventory-report-title');
+    },
+
+    printLowStockReport() {
+        this.printReport('low-stock-report-content', 'low-stock-report-title');
+    },
+
+    printStockCheck() {
+        this.printReport('stock-check-content', 'stock-check-title');
+    },
+
+    printReport(contentId, titleId) {
+        const reportContent = document.getElementById(contentId).innerHTML;
+        const reportTitle = document.getElementById(titleId).textContent;
+        
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>${reportTitle}</title>
+                    <style>
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            margin: 20px; 
+                            color: #1f2937;
+                            line-height: 1.6;
+                        }
+                        .report-content { 
+                            max-width: 800px; 
+                            margin: 0 auto;
+                        }
+                        h4 { 
+                            color: #1f2937; 
+                            border-bottom: 2px solid #3b82f6; 
+                            padding-bottom: 10px; 
+                            margin-bottom: 20px;
+                        }
+                        h5 { 
+                            color: #374151; 
+                            margin: 20px 0 10px 0;
+                        }
+                        .stats-grid { 
+                            display: grid; 
+                            grid-template-columns: repeat(2, 1fr); 
+                            gap: 15px; 
+                            margin: 15px 0; 
+                        }
+                        .stat-item { 
+                            padding: 10px; 
+                            background: #f8f9fa; 
+                            border-radius: 5px; 
+                            text-align: center; 
+                        }
+                        .alert-item { 
+                            padding: 8px; 
+                            margin: 5px 0; 
+                            border-left: 4px solid; 
+                            border-radius: 4px; 
+                        }
+                        @media print {
+                            body { margin: 0.5in; }
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>${reportTitle}</h1>
+                    <div style="color: #6b7280; margin-bottom: 20px;">Generated on: ${new Date().toLocaleDateString()}</div>
+                    <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
+                    ${reportContent}
+                    <div class="no-print" style="margin-top: 20px; text-align: center; font-size: 12px; color: #666;">
+                        Printed on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
+                    </div>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    },
+
+    // KEEP ALL EXISTING DATA METHODS EXACTLY THE SAME
+    handleInventorySubmit(e) {
+        e.preventDefault();
+        
+        const formData = {
+            id: Date.now(),
+            name: document.getElementById('item-name').value,
+            category: document.getElementById('item-category').value,
+            currentStock: parseInt(document.getElementById('current-stock').value),
+            unit: document.getElementById('item-unit').value,
+            minStock: parseInt(document.getElementById('min-stock').value),
+            cost: parseFloat(document.getElementById('item-cost').value),
+            supplier: document.getElementById('item-supplier').value || '',
+            lastRestocked: new Date().toISOString().split('T')[0],
+            notes: document.getElementById('item-notes').value || ''
+        };
+
+        this.inventory.unshift(formData);
+        this.saveData();
+        this.renderModule();
+        
+        // SYNC WITH PROFILE - Update inventory stats
+        this.syncStatsWithProfile();
+        
+        if (window.coreModule) {
+            window.coreModule.showNotification('Inventory item added successfully!', 'success');
+        }
+    },
+
+    handleStockUpdate(e) {
+        e.preventDefault();
+        
+        const id = parseInt(document.getElementById('update-item-id').value);
+        const newStock = parseInt(document.getElementById('new-stock-level').value);
+        const reason = document.getElementById('stock-update-reason').value;
+
+        const item = this.inventory.find(item => item.id === id);
+        if (!item) return;
+
+        const oldStock = item.currentStock;
+        item.currentStock = newStock;
+        
+        if (reason === 'restock') {
+            item.lastRestocked = new Date().toISOString().split('T')[0];
+        }
+
+        this.saveData();
+        this.renderModule();
+        
+        // SYNC WITH PROFILE - Update stats after stock change
+        this.syncStatsWithProfile();
+        
+        if (window.coreModule) {
+            const change = newStock - oldStock;
+            const changeText = change > 0 ? `+${change}` : change;
+            window.coreModule.showNotification(`Stock updated: ${changeText} ${item.unit} (${reason})`, 'success');
+        }
+    },
+
+    deleteItem(id) {
+        const item = this.inventory.find(item => item.id === id);
+        if (!item) return;
+
+        if (confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`)) {
+            this.inventory = this.inventory.filter(item => item.id !== id);
+            this.saveData();
+            this.renderModule();
+            
+            // SYNC WITH PROFILE - Update stats after deletion
+            this.syncStatsWithProfile();
+            
+            if (window.coreModule) {
+                window.coreModule.showNotification('Item deleted successfully!', 'success');
+            }
+        }
+    },
+
+    quickRestock(id) {
+        const item = this.inventory.find(item => item.id === id);
+        if (!item) return;
+
+        const suggestedRestock = Math.max(item.minStock * 2, item.currentStock + 10);
+        const restockAmount = prompt(`Restock "${item.name}"\nCurrent: ${item.currentStock} ${item.unit}\nMin: ${item.minStock} ${item.unit}\nEnter amount to add:`, suggestedRestock.toString());
+        
+        if (restockAmount !== null && !isNaN(restockAmount)) {
+            const amount = parseInt(restockAmount);
+            item.currentStock += amount;
+            item.lastRestocked = new Date().toISOString().split('T')[0];
+            
+            this.saveData();
+            this.renderModule();
+            
+            // SYNC WITH PROFILE - Update stats after restock
+            this.syncStatsWithProfile();
+            
+            if (window.coreModule) {
+                window.coreModule.showNotification(`Restocked ${amount} ${item.unit} of ${item.name}`, 'success');
+            }
+        }
+    },
+
+    filterByCategory(category) {
+        const items = document.querySelectorAll('#inventory-list > div > div');
+        items.forEach(item => {
+            const itemCategory = item.querySelector('div > div:nth-child(2) > div:nth-child(2)')?.textContent;
+            if (!category || (itemCategory && itemCategory.includes(this.formatCategory(category)))) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    },
+
+    // KEEP THE EXISTING SYNC AND UTILITY METHODS:
+    syncStatsWithProfile() {
+        const stats = this.calculateStats();
+        
+        if (window.ProfileModule && window.profileInstance) {
+            window.profileInstance.updateStats({
+                totalInventoryItems: stats.totalItems,
+                inStockItems: stats.inStock,
+                lowStockItems: stats.lowStockItems,
+                outOfStockItems: stats.outOfStockItems,
+                inventoryValue: stats.totalValue
+            });
+        }
+    },
+
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: this.settings.currency || 'USD',
-            minimumFractionDigits: 2
+            currency: 'USD'
         }).format(amount);
     },
-    
-    getTotalSalesAmount() {
-        return this.sales.reduce((sum, sale) => sum + sale.grandTotal, 0);
-    },
-    
-    getAverageSaleValue() {
-        return this.sales.length > 0 ? 
-            this.getTotalSalesAmount() / this.sales.length : 0;
-    },
-    
-    getTopProduct() {
-        if (this.sales.length === 0) return 'N/A';
-        
-        const productCounts = {};
-        this.sales.forEach(sale => {
-            productCounts[sale.product] = (productCounts[sale.product] || 0) + 1;
-        });
-        
-        return Object.entries(productCounts)
-            .sort(([,a], [,b]) => b - a)[0][0];
-    },
-    
-    updateStats() {
-        // Update any stats displays if needed
-    },
-    
-    updateReportsData() {
-        if (window.FarmModules && window.FarmModules.appData) {
-            window.FarmModules.appData.sales = {
-                total: this.getTotalSalesAmount(),
-                count: this.sales.length,
-                average: this.getAverageSaleValue()
-            };
-        }
-    },
-    
-    registerWithReports() {
-        if (window.FarmModules && window.FarmModules.appData) {
-            window.FarmModules.appData.salesModule = this;
-        }
-    },
-    
-    // ==================== REPORT GENERATION ====================
-    generateSalesReportHTML() {
-        const total = this.getTotalSalesAmount();
-        const avg = this.getAverageSaleValue();
-        const count = this.sales.length;
-        const topProduct = this.getTopProduct();
-        
-        const salesByCategory = {};
-        this.sales.forEach(sale => {
-            salesByCategory[sale.category] = (salesByCategory[sale.category] || 0) + sale.grandTotal;
-        });
-        
-        return `
-            <div class="report-content">
-                <h4 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">📊 SALES REPORT</h4>
-                
-                <div style="margin-bottom: 24px;">
-                    <h5 style="color: var(--text-primary); margin-bottom: 12px;">📈 OVERVIEW:</h5>
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px;">
-                        <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                            <div style="font-size: 12px; color: var(--text-secondary);">Total Sales</div>
-                            <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${count}</div>
-                        </div>
-                        <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                            <div style="font-size: 12px; color: var(--text-secondary);">Total Revenue</div>
-                            <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(total)}</div>
-                        </div>
-                        <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                            <div style="font-size: 12px; color: var(--text-secondary);">Average Sale</div>
-                            <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(avg)}</div>
-                        </div>
-                        <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
-                            <div style="font-size: 12px; color: var(--text-secondary);">Top Product</div>
-                            <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${topProduct}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div style="margin-bottom: 24px;">
-                    <h5 style="color: var(--text-primary); margin-bottom: 12px;">🗂️ REVENUE BY CATEGORY:</h5>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        ${Object.entries(salesByCategory).map(([category, amount]) => `
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px;">
-                                <div>
-                                    <div style="font-weight: 600; color: var(--text-primary);">${category}</div>
-                                </div>
-                                <div style="text-align: right;">
-                                    <div style="font-weight: 600; color: var(--text-primary);">${this.formatCurrency(amount)}</div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                
-                <div style="margin-bottom: 20px;">
-                    <h5 style="color: var(--text-primary); margin-bottom: 12px;">📅 DATE RANGE:</h5>
-                    <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px;">
-                        <div style="font-weight: 600; color: var(--text-primary);">${this.getDateRange()}</div>
-                    </div>
-                </div>
-            </div>
-        `;
-    },
-    
-    getDateRange() {
-        if (this.sales.length === 0) return 'No sales';
-        
-        const dates = this.sales.map(s => new Date(s.date));
-        const oldest = new Date(Math.min(...dates));
-        const newest = new Date(Math.max(...dates));
-        
-        return `${oldest.toLocaleDateString()} - ${newest.toLocaleDateString()}`;
-    },
-    
-    exportSales() {
-        const exportData = {
-            metadata: {
-                exportedAt: new Date().toISOString(),
-                totalSales: this.sales.length,
-                totalRevenue: this.getTotalSalesAmount(),
-                version: '2.0'
-            },
-            sales: this.sales
-        };
-        
-        const dataStr = JSON.stringify(exportData, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-        const exportFileDefaultName = `sales-export-${Date.now()}.json`;
-        
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.click();
-        
-        console.log('📤 Sales exported successfully');
-    },
-    
-    printReceipt() {
-        const receiptContent = document.getElementById('receipt-content');
-        if (!receiptContent) return;
-        
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-            <html>
-                <head>
-                    <title>Sales Receipt</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; }
-                        .receipt { width: 300px; margin: 0 auto; }
-                        .receipt-header { text-align: center; margin-bottom: 20px; }
-                        .receipt-id { font-size: 12px; color: #666; }
-                        .info-row { display: flex; justify-content: space-between; margin: 5px 0; }
-                        .item-header, .item-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; }
-                        .item-header { border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold; }
-                        .item-row { padding: 5px 0; }
-                        .total-row { display: flex; justify-content: space-between; margin: 5px 0; }
-                        .grand-total { font-weight: bold; border-top: 2px solid #000; padding-top: 10px; }
-                        .receipt-footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
-                        @media print { body { padding: 0; } }
-                    </style>
-                </head>
-                <body>
-                    ${receiptContent.innerHTML}
-                </body>
-            </html>
-        `);
-        printWindow.document.close();
-        printWindow.focus();
-        
-        setTimeout(() => {
-            printWindow.print();
-            printWindow.close();
-        }, 250);
-    },
-    
-    printSalesReport() {
-        const reportContent = document.getElementById('sales-report-content');
-        if (!reportContent) return;
-        
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-            <html>
-                <head>
-                    <title>Sales Report</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; }
-                        h4 { color: #1e40af; border-bottom: 2px solid #1e40af; padding-bottom: 10px; }
-                        h5 { color: #374151; margin: 20px 0 10px 0; }
-                        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
-                        .stat-item { padding: 10px; background: #f8f9fa; border-radius: 5px; text-align: center; }
-                        @media print { body { margin: 0.5in; } }
-                    </style>
-                </head>
-                <body>
-                    <h1>Sales Report</h1>
-                    <div>Generated on: ${new Date().toLocaleDateString()}</div>
-                    <hr style="margin: 20px 0;">
-                    ${reportContent.innerHTML}
-                </body>
-            </html>
-        `);
-        printWindow.document.close();
-        printWindow.focus();
-        
-        setTimeout(() => {
-            printWindow.print();
-            printWindow.close();
-        }, 250);
-    },
-    
-    viewSale(id) {
-        const sale = this.sales.find(s => s.id === id);
-        if (!sale) return;
-        
-        alert(`Sale Details:\n
-Receipt ID: ${sale.receiptId}
-Date: ${sale.date}
-Product: ${sale.product}
-Category: ${sale.category}
-Customer: ${sale.customerName}
-Quantity: ${sale.quantity}
-Price: ${this.formatCurrency(sale.price)}
-Total: ${this.formatCurrency(sale.grandTotal)}
-Payment: ${sale.paymentMethod} (${sale.paymentStatus})
-Notes: ${sale.notes || 'None'}`);
-    },
-    
-    confirmDeleteSale(id) {
-        const sale = this.sales.find(s => s.id === id);
-        if (!sale) return;
-        
-        if (confirm(`Are you sure you want to delete sale ${sale.receiptId}?\n\nProduct: ${sale.product}\nAmount: ${this.formatCurrency(sale.grandTotal)}\n\nThis action cannot be undone.`)) {
-            this.deleteSale(id);
-        }
-    },
-    
-    showAllSales() {
-        // For now, just refresh with all sales
-        this.renderModule();
-    },
-    
-    // ==================== DEBUG METHODS ====================
-    debugAllSalesDates() {
-        console.group('🔍 Sales Date Debug Info');
-        console.log(`Total sales: ${this.sales.length}`);
-        console.log('Current date formats:');
-        this.sales.forEach((sale, index) => {
-            const isStandard = /^\d{4}-\d{2}-\d{2}$/.test(sale.date);
-            console.log(`${index + 1}. ${sale.date} - ${sale.receiptId} - ${sale.product} ${isStandard ? '✅' : '❌'}`);
-        });
-        console.groupEnd();
-    },
-    
-    testAddSampleSales() {
-        const samples = [
-            {
-                product: 'Grade A Eggs',
-                quantity: 120,
-                price: 0.25,
-                category: 'Eggs',
-                customerName: 'Local Market',
-                paymentMethod: 'Cash'
-            },
-            {
-                product: 'Broilers',
-                quantity: 50,
-                price: 8.50,
-                category: 'Poultry Meat',
-                customerName: 'Restaurant XYZ',
-                paymentMethod: 'Bank Transfer'
-            }
-        ];
-        
-        const today = new Date().toISOString().split('T')[0];
-        
-        samples.forEach(sample => {
-            this.addSale({
-                ...sample,
-                date: today
-            });
-        });
-        
-        console.log('✅ Added sample sales for testing');
-        this.debugAllSalesDates();
+
+    saveData() {
+        localStorage.setItem('farm-inventory', JSON.stringify(this.inventory));
     }
 };
 
-// ==================== MODULE REGISTRATION ====================
-// Register with FarmModules framework (EXACTLY LIKE INVENTORY-CHECK)
 if (window.FarmModules) {
-    window.FarmModules.registerModule('sales-record', SalesRecordModule);
-    console.log('✅ SalesRecord module registered successfully!');
-} else {
-    console.error('❌ FarmModules framework not found!');
+    window.FarmModules.registerModule('inventory-check', InventoryCheckModule);
+    console.log('✅ Inventory Check module registered');
 }
-
-// ==================== GLOBAL ACCESS ====================
-// Also expose globally for backward compatibility
-window.FarmModules = window.FarmModules || {};
-window.FarmModules.SalesRecord = SalesRecordModule;
-
-console.log('✅ SalesRecord module loaded successfully!');
