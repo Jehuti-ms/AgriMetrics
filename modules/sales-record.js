@@ -1,4 +1,3 @@
-javascript
 // modules/sales-record.js - FIXED DATE ISSUE
 console.log('💰 Loading Enhanced Sales Records module...');
 
