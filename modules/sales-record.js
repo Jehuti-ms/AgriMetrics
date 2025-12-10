@@ -885,8 +885,7 @@ const SalesRecordModule = {
                 </td>
             </tr>
         `;
-    },
-
+    
     setupEventListeners() {
         // Quick sale form
         const quickSaleForm = document.getElementById('quick-sale-form');
