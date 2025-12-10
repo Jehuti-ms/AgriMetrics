@@ -1,2159 +1,1798 @@
-// modules/reports.js - COMPLETE WITH ALL METHODS
-console.log('📊 Loading reports module...');
+// modules/sales-record.js - FIXED VERSION
+console.log('💰 Loading Enhanced Sales Records module...');
 
-const ReportsModule = {
-    name: 'reports',
+const SalesRecordModule = {
+    name: 'sales-record',
     initialized: false,
     element: null,
-    currentReport: null,
+    currentEditingId: null,
+    pendingProductionSale: null,
 
     initialize() {
-        console.log('📈 Initializing reports...');
+        console.log('💰 Initializing Enhanced Sales Records...');
         
-        // Get content area element
+        if (!this.checkDependencies()) {
+            console.error('❌ Sales Records initialization failed');
+            return false;
+        }
+        
         this.element = document.getElementById('content-area');
         if (!this.element) {
             console.error('Content area element not found');
             return false;
         }
         
-        // Register with StyleManager for theme support
         if (window.StyleManager) {
             window.StyleManager.registerComponent(this.name);
         }
         
+        this.loadSalesData();
         this.renderModule();
+        this.setupEventListeners();
         this.initialized = true;
+        
+        console.log('✅ Enhanced Sales Records initialized');
+        return true;
+    },
+
+    checkDependencies() {
+        if (!window.FarmModules || !window.FarmModules.appData) {
+            console.error('❌ App data not available');
+            return false;
+        }
+        
+        if (!window.FarmModules.appData.sales) {
+            window.FarmModules.appData.sales = [];
+        }
+        
         return true;
     },
 
     onThemeChange(theme) {
-        console.log(`Reports module: Theme changed to ${theme}`);
+        console.log(`Sales module updating for theme: ${theme}`);
         if (this.initialized) {
             this.renderModule();
+        }
+    },
+
+    startSaleFromProduction(productionData) {
+        console.log('🔄 Starting sale from production:', productionData);
+        
+        this.pendingProductionSale = productionData;
+        this.showSaleModal();
+        this.prefillFromProduction(productionData);
+    },
+
+    prefillFromProduction(productionData) {
+        if (!productionData) return;
+        
+        const productSelect = document.getElementById('sale-product');
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        
+        let productValue = '';
+        const productName = productionData.type?.toLowerCase() || '';
+        
+        if (productName.includes('broiler')) {
+            productValue = productName.includes('dressed') ? 'broilers-dressed' : 'broilers-live';
+        } else if (productName.includes('pig') || productName.includes('pork')) {
+            productValue = 'pork';
+        } else if (productName.includes('cow') || productName.includes('beef')) {
+            productValue = 'beef';
+        } else if (productName.includes('chicken') && productName.includes('part')) {
+            productValue = 'chicken-parts';
+        } else if (productName.includes('goat')) {
+            productValue = 'goat';
+        } else if (productName.includes('lamb')) {
+            productValue = 'lamb';
+        } else if (productName.includes('egg')) {
+            productValue = 'eggs';
+        } else if (productName.includes('milk')) {
+            productValue = 'milk';
+        }
+        
+        if (productValue) {
+            productSelect.value = productValue;
+            this.handleProductChange();
+            
+            const availableQuantity = productionData.quantity || productionData.count || 0;
+            const availableWeight = productionData.totalWeight || productionData.weight || 0;
+            
+            if (meatProducts.includes(productValue)) {
+                document.getElementById('meat-animal-count').value = availableQuantity;
+                document.getElementById('meat-weight').value = availableWeight;
+            } else {
+                document.getElementById('standard-quantity').value = availableQuantity;
+            }
+            
+            // Set default price but allow override
+            this.setDefaultPrice(productValue);
+        }
+        
+        const notesField = document.getElementById('sale-notes');
+        const productionNote = `From production: ${productionData.type || productionData.product} (ID: ${productionData.id || 'N/A'})`;
+        
+        if (notesField.value) {
+            notesField.value += `\n${productionNote}`;
+        } else {
+            notesField.value = productionNote;
+        }
+    },
+
+    setDefaultPrice(product) {
+        const defaultPrices = {
+            'broilers-dressed': 5.50,
+            'pork': 4.25,
+            'beef': 6.75,
+            'chicken-parts': 3.95,
+            'goat': 5.25,
+            'lamb': 6.50,
+            'broilers-live': 4.00,
+            'layers': 12.00,
+            'chicks': 2.50,
+            'eggs': 3.25,
+            'tomatoes': 1.75,
+            'peppers': 2.25,
+            'cucumbers': 1.50,
+            'lettuce': 1.25,
+            'carrots': 1.00,
+            'potatoes': 0.75,
+            'milk': 2.50,
+            'cheese': 6.00,
+            'yogurt': 3.50,
+            'butter': 4.50,
+            'honey': 8.00,
+            'jam': 5.00,
+            'bread': 2.75
+        };
+        
+        if (defaultPrices[product]) {
+            const price = defaultPrices[product];
+            
+            const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+            if (meatProducts.includes(product)) {
+                const priceInput = document.getElementById('meat-price');
+                if (priceInput) priceInput.value = price;
+            } else {
+                const priceStandardInput = document.getElementById('standard-price');
+                if (priceStandardInput) priceStandardInput.value = price;
+            }
+            
+            this.calculateSaleTotal();
+        }
+    },
+
+    loadSalesData() {
+        const savedData = localStorage.getItem('farm-sales-data');
+        if (savedData) {
+            try {
+                window.FarmModules.appData.sales = JSON.parse(savedData);
+            } catch (e) {
+                console.error('Error parsing sales data:', e);
+                window.FarmModules.appData.sales = [];
+            }
+        } else {
+            window.FarmModules.appData.sales = [];
+        }
+        console.log('📊 Loaded sales data:', window.FarmModules.appData.sales.length, 'records');
+    },
+
+    saveData() {
+        localStorage.setItem('farm-sales-data', JSON.stringify(window.FarmModules.appData.sales));
+        
+        if (window.FarmModules.Income) {
+            window.FarmModules.Income.updateFromSales();
         }
     },
 
     renderModule() {
         if (!this.element) return;
 
+        const today = new Date().toISOString().split('T')[0];
+        const sales = window.FarmModules.appData.sales || [];
+        
+        const todaySales = sales
+            .filter(sale => sale.date === today)
+            .reduce((sum, sale) => sum + sale.totalAmount, 0);
+        
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        const meatSales = sales.filter(sale => meatProducts.includes(sale.product));
+        const totalMeatWeight = meatSales.reduce((sum, sale) => sum + (sale.weight || 0), 0);
+        const totalAnimalsSold = meatSales.reduce((sum, sale) => sum + (sale.animalCount || sale.quantity || 0), 0);
+
         this.element.innerHTML = `
             <div class="module-container">
+                <!-- Header -->
                 <div class="module-header">
-                    <h1 class="module-title">Farm Reports & Analytics</h1>
-                    <p class="module-subtitle">Comprehensive insights and analytics for your farm operations</p>
+                    <h1 class="module-title">Sales Records</h1>
+                    <p class="module-subtitle">Track product sales, revenue, and weight (for meat)</p>
+                    <div class="header-actions">
+                        <button class="btn-primary" id="add-sale">
+                            ➕ Record Sale
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Quick Stats Overview -->
+                <!-- Sales Summary -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="today-sales">${this.formatCurrency(todaySales)}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Today's Revenue</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">⚖️</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-meat-weight">${totalMeatWeight.toFixed(2)}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Meat Weight Sold</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">🐄</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-animals">${totalAnimalsSold}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Animals Sold</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📈</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-sales">${sales.length}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Sales Records</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-action-grid">
+                    <button class="quick-action-btn" id="add-sale-btn">
+                        <div style="font-size: 32px;">➕</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Record Sale</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Add new sale record</span>
+                    </button>
+                    <button class="quick-action-btn" id="from-production-btn">
+                        <div style="font-size: 32px;">🔄</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">From Production</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Sell from production items</span>
+                    </button>
+                    <button class="quick-action-btn" id="meat-sales-btn">
+                        <div style="font-size: 32px;">🍗</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Meat Sales</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Weight-based sales report</span>
+                    </button>
+                    <button class="quick-action-btn" id="daily-report-btn">
+                        <div style="font-size: 32px;">📊</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Daily Report</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Today's sales summary</span>
+                    </button>
+                </div>
+
+                <!-- Production Items Available -->
+                ${this.renderProductionItems()}
+
+                <!-- Quick Sale Form -->
                 <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Quick Stats Overview</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                        ${this.renderQuickStats()}
-                    </div>
+                    <h3 style="color: var(--text-primary); margin-bottom: 16px;">⚡ Quick Sale</h3>
+                    <form id="quick-sale-form">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end;">
+                            <div>
+                                <label class="form-label">Product *</label>
+                                <select id="quick-product" required class="form-input">
+                                    <option value="">Select Product</option>
+                                    <optgroup label="Livestock (Meat)">
+                                        <option value="broilers-dressed">Broilers (Dressed)</option>
+                                        <option value="pork">Pork</option>
+                                        <option value="beef">Beef</option>
+                                        <option value="chicken-parts">Chicken Parts</option>
+                                        <option value="goat">Goat</option>
+                                        <option value="lamb">Lamb</option>
+                                    </optgroup>
+                                    <optgroup label="Poultry">
+                                        <option value="broilers-live">Broilers (Live)</option>
+                                        <option value="layers">Layers (Egg-laying)</option>
+                                        <option value="eggs">Eggs</option>
+                                        <option value="chicks">Baby Chicks</option>
+                                    </optgroup>
+                                    <optgroup label="Produce">
+                                        <option value="tomatoes">Tomatoes</option>
+                                        <option value="peppers">Peppers</option>
+                                        <option value="cucumbers">Cucumbers</option>
+                                        <option value="lettuce">Lettuce</option>
+                                        <option value="carrots">Carrots</option>
+                                        <option value="potatoes">Potatoes</option>
+                                    </optgroup>
+                                    <optgroup label="Other">
+                                        <option value="honey">Honey</option>
+                                        <option value="milk">Milk</option>
+                                        <option value="other">Other</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Quantity *</label>
+                                <input type="number" id="quick-quantity" placeholder="0" required class="form-input" min="1">
+                            </div>
+                            <div>
+                                <label class="form-label">Unit</label>
+                                <select id="quick-unit" class="form-input">
+                                    <option value="kg">kg</option>
+                                    <option value="lbs">lbs</option>
+                                    <option value="birds">Birds</option>
+                                    <option value="animals">Animals</option>
+                                    <option value="pieces">Pieces</option>
+                                    <option value="dozen">Dozen</option>
+                                    <option value="case">Case</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label" id="quick-price-label">Price *</label>
+                                <input type="number" id="quick-price" placeholder="0.00" step="0.01" required class="form-input" min="0">
+                            </div>
+                            <div>
+                                <button type="submit" class="btn-primary" style="height: 42px;">Record Sale</button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
 
-                <!-- Report Categories Grid -->
-                <div class="reports-grid">
-                    <!-- Financial Reports -->
-                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
-                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">💰</div>
-                        <div class="report-content">
-                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Financial Reports</h3>
-                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Income, expenses, profit analysis and financial performance</p>
-                            <button class="btn-primary generate-financial-report" style="width: 100%;">
-                                Generate Report
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Production Reports -->
-                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
-                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">🚜</div>
-                        <div class="report-content">
-                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Production Reports</h3>
-                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Egg production, poultry output, and productivity metrics</p>
-                            <button class="btn-primary generate-production-report" style="width: 100%;">
-                                Generate Report
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Inventory Reports -->
-                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
-                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">📦</div>
-                        <div class="report-content">
-                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Inventory Reports</h3>
-                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Stock levels, consumption patterns, and reorder analysis</p>
-                            <button class="btn-primary generate-inventory-report" style="width: 100%;">
-                                Generate Report
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Sales Reports -->
-                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
-                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                        <div class="report-content">
-                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Sales Reports</h3>
-                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Revenue, customer analysis, and sales performance</p>
-                            <button class="btn-primary generate-sales-report" style="width: 100%;">
-                                Generate Report
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Health & Mortality Reports -->
-                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
-                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">🐔</div>
-                        <div class="report-content">
-                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Health Reports</h3>
-                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Mortality rates, health trends, and flock management</p>
-                            <button class="btn-primary generate-health-report" style="width: 100%;">
-                                Generate Report
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Feed Consumption Reports -->
-                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
-                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">🌾</div>
-                        <div class="report-content">
-                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Feed Reports</h3>
-                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Feed usage, cost analysis, and consumption patterns</p>
-                            <button class="btn-primary generate-feed-report" style="width: 100%;">
-                                Generate Report
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Comprehensive Farm Report -->
-                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center; grid-column: 1 / -1;">
-                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">🏆</div>
-                        <div class="report-content">
-                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Comprehensive Farm Report</h3>
-                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Complete overview of all farm operations and performance metrics</p>
-                            <button class="btn-primary generate-comprehensive-report" style="width: 100%; background: linear-gradient(135deg, #22c55e, #3b82f6);">
-                                Generate Full Report
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Report Output Section -->
-                <div id="report-output" class="report-output glass-card hidden" style="margin-top: 32px;">
-                    <div class="output-header" style="display: flex; justify-content: space-between; align-items: center; padding: 24px; border-bottom: 1px solid var(--glass-border);">
-                        <h3 style="color: var(--text-primary); margin: 0;" id="report-title">Report Output</h3>
+                <!-- Sales Records Table -->
+                <div class="glass-card" style="padding: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: var(--text-primary); font-size: 20px;">📋 Recent Sales</h3>
                         <div style="display: flex; gap: 12px;">
-                            <button class="btn-outline" id="print-report-btn">
-                                🖨️ Print
-                            </button>
-                            <button class="btn-outline" id="export-report-btn">
-                                📥 Export
-                            </button>
-                            <button class="btn-outline" id="email-report-btn">
-                                📧 Email
-                            </button>
-                            <button class="btn-outline" id="close-report-btn">
-                                ✕ Close
-                            </button>
+                            <select id="period-filter" class="form-input" style="width: auto;">
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="all">All Time</option>
+                                <option value="meat">Meat Sales Only</option>
+                                <option value="production">From Production</option>
+                            </select>
                         </div>
                     </div>
-                    <div class="output-content" style="padding: 24px;">
-                        <div id="report-content">
-                            <!-- Report content will be generated here -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Activity -->
-                <div class="glass-card" style="padding: 24px; margin-top: 24px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Recent Farm Activity</h3>
-                    <div id="recent-activity">
-                        ${this.renderRecentActivity()}
+                    <div id="sales-table">
+                        ${this.renderSalesTable('today')}
                     </div>
                 </div>
             </div>
 
-            <!-- BEAUTIFUL EMAIL MODAL -->
-            <div id="email-report-modal" class="email-modal-overlay hidden">
-                <div class="email-modal-container glass-card">
-                    <div class="email-modal-header">
-                        <div class="email-modal-icon">📧</div>
-                        <div>
-                            <h3 class="email-modal-title">Send Report via Email</h3>
-                            <p class="email-modal-subtitle">Share this report with team members or stakeholders</p>
-                        </div>
-                        <button class="email-modal-close" id="close-email-modal-btn">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M18 6L6 18M6 6l12 12"/>
-                            </svg>
-                        </button>
+            <!-- POPOUT MODALS -->
+            <!-- Sales Record Modal -->
+            <div id="sale-modal" class="popout-modal hidden">
+                <div class="popout-modal-content" style="max-width: 700px;">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title" id="sale-modal-title">Record Sale</h3>
+                        <button class="popout-modal-close" id="close-sale-modal">&times;</button>
                     </div>
-
-                    <div class="email-modal-body">
-                        <form id="email-report-form" class="email-form">
-                            <div class="form-group">
-                                <label class="form-label">
-                                    <span class="label-icon">👤</span>
-                                    Recipient Email Address
-                                </label>
-                                <input type="email" id="recipient-email" class="form-input" required 
-                                       placeholder="name@example.com">
-                                <div class="form-hint">You can enter multiple emails separated by commas</div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">
-                                        <span class="label-icon">📋</span>
-                                        Subject
-                                    </label>
-                                    <input type="text" id="email-subject" class="form-input" 
-                                           placeholder="Farm Report - [Date]">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">
-                                        <span class="label-icon">📁</span>
-                                        Format
-                                    </label>
-                                    <div class="format-options">
-                                        <label class="format-option">
-                                            <input type="radio" name="email-format" value="text" checked>
-                                            <div class="format-card">
-                                                <div class="format-icon">📝</div>
-                                                <div class="format-name">Text</div>
-                                            </div>
-                                        </label>
-                                        <label class="format-option">
-                                            <input type="radio" name="email-format" value="html">
-                                            <div class="format-card">
-                                                <div class="format-icon">🎨</div>
-                                                <div class="format-name">HTML</div>
-                                            </div>
-                                        </label>
-                                        <label class="format-option">
-                                            <input type="radio" name="email-format" value="pdf">
-                                            <div class="format-card">
-                                                <div class="format-icon">📄</div>
-                                                <div class="format-name">PDF</div>
-                                            </div>
-                                        </label>
+                    <div class="popout-modal-body">
+                        <form id="sale-form">
+                            <input type="hidden" id="sale-id" value="">
+                            <input type="hidden" id="production-source-id" value="">
+                            
+                            <div id="production-source-notice" style="padding: 12px; background: #dbeafe; border-radius: 8px; margin-bottom: 16px; display: none;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 18px;">🔄</span>
+                                    <div>
+                                        <div style="font-weight: 600; color: #1e40af;">Selling from Production</div>
+                                        <div style="font-size: 14px; color: #4b5563;" id="production-source-info"></div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="form-group">
-                                <label class="form-label">
-                                    <span class="label-icon">💬</span>
-                                    Personal Message (Optional)
-                                </label>
-                                <textarea id="email-message" class="form-textarea" rows="4" 
-                                          placeholder="Add a personal note to accompany the report..."></textarea>
-                                <div class="form-hint">This message will be included above the report</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Sale Date *</label>
+                                    <input type="date" id="sale-date" class="form-input" required>
+                                </div>
+                                <div>
+                                    <label class="form-label">Customer Name</label>
+                                    <input type="text" id="sale-customer" class="form-input" placeholder="Customer name (optional)">
+                                </div>
                             </div>
 
-                            <div class="form-group">
-                                <label class="form-label">
-                                    <span class="label-icon">⚡</span>
-                                    Delivery Options
-                                </label>
-                                <div class="delivery-options">
-                                    <label class="delivery-option">
-                                        <input type="checkbox" id="urgent-delivery" name="urgent">
-                                        <span class="delivery-text">Mark as urgent</span>
-                                        <span class="delivery-badge">🚨</span>
-                                    </label>
-                                    <label class="delivery-option">
-                                        <input type="checkbox" id="read-receipt" name="read-receipt">
-                                        <span class="delivery-text">Request read receipt</span>
-                                        <span class="delivery-badge">✓</span>
-                                    </label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Product *</label>
+                                    <select id="sale-product" class="form-input" required>
+                                        <option value="">Select Product</option>
+                                        <optgroup label="Livestock (Meat - Weight Required)">
+                                            <option value="broilers-dressed">Broilers (Dressed)</option>
+                                            <option value="pork">Pork</option>
+                                            <option value="beef">Beef</option>
+                                            <option value="chicken-parts">Chicken Parts</option>
+                                            <option value="goat">Goat</option>
+                                            <option value="lamb">Lamb</option>
+                                        </optgroup>
+                                        <optgroup label="Poultry (Count)">
+                                            <option value="broilers-live">Broilers (Live)</option>
+                                            <option value="layers">Layers (Egg-laying)</option>
+                                            <option value="chicks">Baby Chicks</option>
+                                        </optgroup>
+                                        <optgroup label="Eggs & Dairy">
+                                            <option value="eggs">Eggs</option>
+                                            <option value="milk">Milk</option>
+                                            <option value="cheese">Cheese</option>
+                                            <option value="yogurt">Yogurt</option>
+                                            <option value="butter">Butter</option>
+                                        </optgroup>
+                                        <optgroup label="Vegetables">
+                                            <option value="tomatoes">Tomatoes</option>
+                                            <option value="peppers">Peppers</option>
+                                            <option value="cucumbers">Cucumbers</option>
+                                            <option value="lettuce">Lettuce</option>
+                                            <option value="carrots">Carrots</option>
+                                            <option value="potatoes">Potatoes</option>
+                                        </optgroup>
+                                        <optgroup label="Other">
+                                            <option value="honey">Honey</option>
+                                            <option value="jam">Jam/Preserves</option>
+                                            <option value="bread">Bread</option>
+                                            <option value="other">Other</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">Unit *</label>
+                                    <select id="sale-unit" class="form-input" required>
+                                        <option value="">Select Unit</option>
+                                        <option value="kg">Kilograms (kg)</option>
+                                        <option value="lbs">Pounds (lbs)</option>
+                                        <option value="birds">Birds</option>
+                                        <option value="animals">Animals</option>
+                                        <option value="pieces">Pieces</option>
+                                        <option value="dozen">Dozen</option>
+                                        <option value="case">Case</option>
+                                        <option value="crate">Crate</option>
+                                        <option value="bag">Bag</option>
+                                        <option value="bottle">Bottle</option>
+                                        <option value="jar">Jar</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- MEAT SALES SECTION -->
+                            <div id="meat-section" style="display: none; margin-bottom: 16px;">
+                                <div style="background: #fef3f3; padding: 16px; border-radius: 8px; border: 1px solid #fed7d7; margin-bottom: 16px;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                                        <span style="font-size: 20px; color: #dc2626;">🍗</span>
+                                        <div style="font-weight: 600; color: #7c2d12;">Meat Sale Details</div>
+                                    </div>
+                                    
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                        <div>
+                                            <label class="form-label">Number of Animals *</label>
+                                            <input type="number" id="meat-animal-count" class="form-input" min="1" placeholder="0">
+                                            <div class="form-hint">Number of birds/carcasses being sold</div>
+                                        </div>
+                                        <div>
+                                            <label class="form-label">Total Weight *</label>
+                                            <div style="display: flex; gap: 8px;">
+                                                <input type="number" id="meat-weight" class="form-input" min="0.1" step="0.1" placeholder="0.0">
+                                                <select id="meat-weight-unit" class="form-input" style="min-width: 100px;">
+                                                    <option value="kg">kg</option>
+                                                    <option value="lbs">lbs</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-hint">Total weight of all animals</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px;">
+                                        <div>
+                                            <label class="form-label">Price per kg *</label>
+                                            <div style="display: flex; align-items: center; gap: 4px;">
+                                                <span style="color: var(--text-secondary);">$</span>
+                                                <input type="number" id="meat-price" class="form-input" step="0.01" min="0" placeholder="0.00">
+                                                <span id="meat-price-unit-label" style="color: var(--text-secondary); font-size: 14px; white-space: nowrap;">per kg</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="form-label">Average per Animal</label>
+                                            <div style="padding: 8px; background: #f3f4f6; border-radius: 6px; text-align: center;">
+                                                <div id="meat-avg-weight" style="font-weight: 600; color: #dc2626;">0.00 kg</div>
+                                                <div id="meat-avg-value" style="font-size: 12px; color: #6b7280;">$0.00</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- STANDARD QUANTITY SECTION -->
+                            <div id="standard-section" style="margin-bottom: 16px;">
+                                <div style="background: #f0f9ff; padding: 16px; border-radius: 8px; border: 1px solid #bae6fd;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                                        <span style="font-size: 20px; color: #0ea5e9;">📦</span>
+                                        <div style="font-weight: 600; color: #0369a1;">Standard Product Sale</div>
+                                    </div>
+                                    
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                        <div>
+                                            <label class="form-label">Quantity *</label>
+                                            <input type="number" id="standard-quantity" class="form-input" min="0.01" step="0.01" placeholder="0.00">
+                                            <div class="form-hint">Amount to sell</div>
+                                        </div>
+                                        <div>
+                                            <label class="form-label">Unit Price *</label>
+                                            <div style="display: flex; align-items: center; gap: 4px;">
+                                                <span style="color: var(--text-secondary);">$</span>
+                                                <input type="number" id="standard-price" class="form-input" step="0.01" min="0" placeholder="0.00">
+                                                <span id="standard-price-unit-label" style="color: var(--text-secondary); font-size: 14px; white-space: nowrap;">per unit</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Payment Method *</label>
+                                    <select id="sale-payment" class="form-input" required>
+                                        <option value="cash">Cash</option>
+                                        <option value="card">Credit/Debit Card</option>
+                                        <option value="transfer">Bank Transfer</option>
+                                        <option value="check">Check</option>
+                                        <option value="mobile">Mobile Payment</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">Payment Status</label>
+                                    <select id="sale-status" class="form-input">
+                                        <option value="paid">Paid</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="partial">Partial Payment</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 16px;">
+                                <label class="form-label">Notes (Optional)</label>
+                                <textarea id="sale-notes" class="form-input" placeholder="Sale notes, customer details, etc." rows="3"></textarea>
+                            </div>
+
+                            <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border); margin-bottom: 16px;">
+                                <h4 style="color: var(--text-primary); margin: 0; text-align: center;">
+                                    Sale Total: <span id="sale-total-amount" style="color: var(--primary-color);">$0.00</span>
+                                </h4>
+                                <div id="meat-summary" style="display: none; text-align: center; margin-top: 8px; font-size: 14px; color: var(--text-secondary);">
+                                    <div id="meat-summary-info">0 animals • 0 kg total • $0.00/animal average</div>
+                                </div>
+                                <div id="standard-summary" style="display: none; text-align: center; margin-top: 8px; font-size: 14px; color: var(--text-secondary);">
+                                    <div id="standard-summary-info">0 units at $0.00/unit</div>
                                 </div>
                             </div>
                         </form>
                     </div>
+                    <div class="popout-modal-footer">
+                        <button type="button" class="btn-outline" id="cancel-sale">Cancel</button>
+                        <button type="button" class="btn-danger" id="delete-sale" style="display: none;">Delete</button>
+                        <button type="button" class="btn-primary" id="save-sale">Save Sale</button>
+                    </div>
+                </div>
+            </div>
 
-                    <div class="email-modal-footer">
-                        <div class="footer-actions">
-                            <button class="btn-outline" id="cancel-email-btn">
-                                <span>Cancel</span>
-                            </button>
-                            <button class="btn-primary" id="send-email-btn">
-                                <span class="send-icon">✈️</span>
-                                <span>Send Email</span>
-                            </button>
+            <!-- Daily Report Modal -->
+            <div id="daily-report-modal" class="popout-modal hidden">
+                <div class="popout-modal-content" style="max-width: 800px;">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title" id="daily-report-title">Daily Sales Report</h3>
+                        <button class="popout-modal-close" id="close-daily-report">&times;</button>
+                    </div>
+                    <div class="popout-modal-body">
+                        <div id="daily-report-content">
+                            <!-- Report content will be inserted here -->
                         </div>
-                        <div class="footer-note">
-                            <div class="note-icon">ℹ️</div>
-                            <div class="note-text">Reports are sent instantly and stored in your sent items</div>
+                    </div>
+                    <div class="popout-modal-footer">
+                        <button class="btn-outline" id="print-daily-report">🖨️ Print</button>
+                        <button class="btn-primary" id="close-daily-report-btn">Close</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Meat Sales Report Modal -->
+            <div id="meat-sales-modal" class="popout-modal hidden">
+                <div class="popout-modal-content" style="max-width: 800px;">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title" id="meat-sales-title">Meat Sales Report</h3>
+                        <button class="popout-modal-close" id="close-meat-sales">&times;</button>
+                    </div>
+                    <div class="popout-modal-body">
+                        <div id="meat-sales-content">
+                            <!-- Report content will be inserted here -->
                         </div>
+                    </div>
+                    <div class="popout-modal-footer">
+                        <button class="btn-outline" id="print-meat-sales">🖨️ Print</button>
+                        <button class="btn-primary" id="close-meat-sales-btn">Close</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Production Items Modal -->
+            <div id="production-items-modal" class="popout-modal hidden">
+                <div class="popout-modal-content" style="max-width: 800px;">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title">Available Production Items</h3>
+                        <button class="popout-modal-close" id="close-production-items">&times;</button>
+                    </div>
+                    <div class="popout-modal-body">
+                        <div id="production-items-content">
+                            <!-- Production items will be inserted here -->
+                        </div>
+                    </div>
+                    <div class="popout-modal-footer">
+                        <button class="btn-outline" id="close-production-items-btn">Close</button>
                     </div>
                 </div>
             </div>
         `;
 
+        // Set today's date
+        const todayInput = document.getElementById('sale-date');
+        if (todayInput) {
+            const today = new Date();
+            const timezoneOffset = today.getTimezoneOffset() * 60000;
+            const localISOTime = new Date(today - timezoneOffset).toISOString().split('T')[0];
+            todayInput.value = localISOTime;
+        }
+
         this.setupEventListeners();
-        this.addEmailModalStyles();
     },
 
-    // ==================== CORE METHODS ====================
-    renderQuickStats() {
-        const stats = this.getFarmStats();
-        
+    renderProductionItems() {
+        const productionModule = window.FarmModules.Production;
+        if (!productionModule || !productionModule.getAvailableProducts) {
+            return '';
+        }
+
+        const availableProducts = productionModule.getAvailableProducts();
+        if (availableProducts.length === 0) {
+            return '';
+        }
+
         return `
-            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Total Revenue</div>
-                <div style="font-size: 20px; font-weight: bold; color: #22c55e;">${this.formatCurrency(stats.totalRevenue)}</div>
-            </div>
-            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Net Profit</div>
-                <div style="font-size: 20px; font-weight: bold; color: ${stats.netProfit >= 0 ? '#22c55e' : '#ef4444'};">${this.formatCurrency(stats.netProfit)}</div>
-            </div>
-            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Total Birds</div>
-                <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${stats.totalBirds}</div>
-            </div>
-            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Production</div>
-                <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${stats.totalProduction}</div>
-            </div>
-            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Low Stock Items</div>
-                <div style="font-size: 20px; font-weight: bold; color: ${stats.lowStockItems > 0 ? '#f59e0b' : '#22c55e'};">${stats.lowStockItems}</div>
-            </div>
-            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Feed Used</div>
-                <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${stats.totalFeedUsed} kg</div>
+            <div class="glass-card" style="padding: 24px; margin-bottom: 24px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #bae6fd;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div>
+                        <h3 style="color: #0369a1; margin: 0; font-size: 18px;">🔄 Available Production Items</h3>
+                        <p style="color: #0c4a6e; margin: 4px 0 0 0; font-size: 14px;">Ready to sell from production</p>
+                    </div>
+                    <button class="btn-primary" id="view-production-items" style="background: #0ea5e9;">
+                        View All Items
+                    </button>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;">
+                    ${availableProducts.slice(0, 3).map(item => `
+                        <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #bae6fd; cursor: pointer;" 
+                             onclick="window.FarmModules.SalesRecord.selectProductionItem('${item.id}')"
+                             class="production-item">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                <span style="font-size: 20px;">${this.getProductIcon(item.type || item.product)}</span>
+                                <div style="font-weight: 600; color: #1e293b;">${item.type || item.product}</div>
+                            </div>
+                            <div style="font-size: 12px; color: #475569;">
+                                Quantity: ${item.quantity || item.count || 0}
+                                ${item.totalWeight ? ` | Weight: ${item.totalWeight} kg` : ''}
+                            </div>
+                            <div style="font-size: 11px; color: #64748b; margin-top: 4px;">
+                                Produced: ${this.formatDate(item.date || item.productionDate)}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
             </div>
         `;
     },
 
-    getFarmStats() {
-        // Try to get from shared app data first
-        if (window.FarmModules && window.FarmModules.appData && window.FarmModules.appData.profile && window.FarmModules.appData.profile.dashboardStats) {
-            const sharedStats = window.FarmModules.appData.profile.dashboardStats;
-            return {
-                totalRevenue: sharedStats.totalRevenue || 0,
-                netProfit: sharedStats.netProfit || 0,
-                totalBirds: sharedStats.totalBirds || 0,
-                totalProduction: sharedStats.totalProduction || 0,
-                lowStockItems: sharedStats.lowStockItems || 0,
-                totalFeedUsed: sharedStats.totalFeedUsed || 0
-            };
+    selectProductionItem(itemId) {
+        const productionModule = window.FarmModules.Production;
+        if (!productionModule || !productionModule.getProductionItem) {
+            this.showNotification('Production module not available', 'error');
+            return;
         }
 
-        // Fallback to localStorage
-        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
-        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
-        const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
-        const feedRecords = JSON.parse(localStorage.getItem('farm-feed-records') || '[]');
-        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
-        const currentStock = parseInt(localStorage.getItem('farm-current-stock') || '1000');
+        const productionItem = productionModule.getProductionItem(itemId);
+        if (!productionItem) {
+            this.showNotification('Production item not found', 'error');
+            return;
+        }
 
-        const totalRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
-        const totalExpenses = transactions
-            .filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + (t.amount || 0), 0);
-        
-        const netProfit = totalRevenue - totalExpenses;
-        const totalProduction = production.reduce((sum, record) => sum + (record.quantity || 0), 0);
-        const lowStockItems = inventory.filter(item => item.currentStock <= item.minStock).length;
-        const totalFeedUsed = feedRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
-
-        return {
-            totalRevenue,
-            netProfit,
-            totalBirds: currentStock,
-            totalProduction,
-            lowStockItems,
-            totalFeedUsed
-        };
+        this.startSaleFromProduction(productionItem);
     },
 
-    renderRecentActivity() {
-        const activities = this.getRecentActivities();
+    renderSalesTable(period = 'today') {
+        const sales = window.FarmModules.appData.sales || [];
+        
+        let filteredSales = sales;
+        if (period === 'meat') {
+            const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+            filteredSales = sales.filter(sale => meatProducts.includes(sale.product));
+        } else if (period === 'production') {
+            filteredSales = sales.filter(sale => sale.productionSource);
+        } else if (period !== 'all') {
+            const cutoffDate = new Date();
+            if (period === 'today') {
+                cutoffDate.setDate(cutoffDate.getDate() - 1);
+            } else if (period === 'week') {
+                cutoffDate.setDate(cutoffDate.getDate() - 7);
+            } else if (period === 'month') {
+                cutoffDate.setDate(cutoffDate.getDate() - 30);
+            }
+            filteredSales = sales.filter(sale => new Date(sale.date) >= cutoffDate);
+        }
 
-        if (activities.length === 0) {
+        if (filteredSales.length === 0) {
             return `
                 <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No recent activity</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Start using the app to see activity here</div>
+                    <div style="font-size: 48px; margin-bottom: 16px;">💰</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No sales recorded</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Record your first sale to get started</div>
                 </div>
             `;
         }
 
+        const sortedSales = filteredSales.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+
         return `
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${activities.map(activity => `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="font-size: 20px;">${activity.icon}</div>
-                            <div>
-                                <div style="font-weight: 600; color: var(--text-primary);">${activity.description}</div>
-                                <div style="font-size: 14px; color: var(--text-secondary);">${activity.date}</div>
-                            </div>
-                        </div>
-                        ${activity.amount !== null ? `
-                            <div style="font-weight: bold; color: var(--text-primary);">
-                                ${this.formatCurrency(activity.amount)}
-                            </div>
-                        ` : ''}
-                    </div>
-                `).join('')}
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--glass-border);">
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Date</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Product</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Customer</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Animals/Quantity</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Unit Price</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Total</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Source</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sortedSales.map(sale => {
+                            const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+                            const isMeat = meatProducts.includes(sale.product);
+                            
+                            let quantityInfo = `${sale.quantity} ${sale.unit}`;
+                            if (isMeat && sale.weight && sale.weight > 0) {
+                                quantityInfo = `${sale.animalCount || sale.quantity} animal${(sale.animalCount || sale.quantity) !== 1 ? 's' : ''}`;
+                                if (sale.weight) {
+                                    quantityInfo += ` • ${sale.weight} ${sale.weightUnit || 'kg'}`;
+                                }
+                            }
+                            
+                            const sourceBadge = sale.productionSource 
+                                ? '<span style="background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 10px; font-size: 10px; margin-left: 4px;">PROD</span>'
+                                : '';
+                            
+                            return `
+                                <tr style="border-bottom: 1px solid var(--glass-border);">
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">${this.formatDate(sale.date)}</td>
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span style="font-size: 18px;">${this.getProductIcon(sale.product)}</span>
+                                            <span style="font-weight: 500;">${this.formatProductName(sale.product)}</span>
+                                            ${sourceBadge}
+                                        </div>
+                                    </td>
+                                    <td style="padding: 12px 8px; color: var(--text-secondary);">${sale.customer || 'Walk-in'}</td>
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">${quantityInfo}</td>
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">
+                                        ${this.formatCurrency(sale.unitPrice)}
+                                        ${sale.priceUnit === 'per-kg' ? '/kg' : sale.priceUnit === 'per-lb' ? '/lb' : ''}
+                                    </td>
+                                    <td style="padding: 12px 8px; color: var(--text-primary); font-weight: 600;">${this.formatCurrency(sale.totalAmount)}</td>
+                                    <td style="padding: 12px 8px; color: var(--text-secondary); font-size: 12px;">
+                                        ${sale.productionSource ? 'Production' : 'Direct'}
+                                    </td>
+                                    <td style="padding: 12px 8px;">
+                                        <div style="display: flex; gap: 4px;">
+                                            <button class="btn-icon edit-sale" data-id="${sale.id}" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary);" title="Edit">✏️</button>
+                                            <button class="btn-icon delete-sale" data-id="${sale.id}" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary);" title="Delete">🗑️</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
             </div>
         `;
-    },
-
-    getRecentActivities() {
-        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]').slice(0, 3);
-        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]').slice(0, 3);
-        const production = JSON.parse(localStorage.getItem('farm-production') || '[]').slice(0, 3);
-        const feedRecords = JSON.parse(localStorage.getItem('farm-feed-records') || '[]').slice(0, 3);
-        const mortalityRecords = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]').slice(0, 3);
-
-        const activities = [];
-
-        transactions.forEach(transaction => {
-            activities.push({
-                type: 'transaction',
-                date: transaction.date,
-                description: `${transaction.type === 'income' ? '💰 Income' : '💸 Expense'}: ${transaction.description}`,
-                amount: transaction.amount,
-                icon: transaction.type === 'income' ? '💰' : '💸'
-            });
-        });
-
-        sales.forEach(sale => {
-            activities.push({
-                type: 'sale',
-                date: sale.date,
-                description: `📦 Sale: ${sale.items?.length || 0} items`,
-                amount: sale.totalAmount,
-                icon: '📦'
-            });
-        });
-
-        production.forEach(record => {
-            activities.push({
-                type: 'production',
-                date: record.date,
-                description: `🚜 Production: ${record.quantity} ${record.unit} of ${record.product}`,
-                amount: null,
-                icon: '🚜'
-            });
-        });
-
-        feedRecords.forEach(record => {
-            activities.push({
-                type: 'feed',
-                date: record.date,
-                description: `🌾 Feed: ${record.quantity}kg ${record.feedType}`,
-                amount: record.cost,
-                icon: '🌾'
-            });
-        });
-
-        mortalityRecords.forEach(record => {
-            activities.push({
-                type: 'mortality',
-                date: record.date,
-                description: `😔 Mortality: ${record.quantity} birds (${this.formatCause(record.cause)})`,
-                amount: null,
-                icon: '😔'
-            });
-        });
-
-        activities.sort((a, b) => new Date(b.date) - new Date(a.date));
-        return activities.slice(0, 5);
     },
 
     setupEventListeners() {
-        // Report generation buttons
-        const financialBtn = document.querySelector('.generate-financial-report');
-        const productionBtn = document.querySelector('.generate-production-report');
-        const inventoryBtn = document.querySelector('.generate-inventory-report');
-        const salesBtn = document.querySelector('.generate-sales-report');
-        const healthBtn = document.querySelector('.generate-health-report');
-        const feedBtn = document.querySelector('.generate-feed-report');
-        const comprehensiveBtn = document.querySelector('.generate-comprehensive-report');
-        
-        if (financialBtn) financialBtn.addEventListener('click', () => this.generateFinancialReport());
-        if (productionBtn) productionBtn.addEventListener('click', () => this.generateProductionReport());
-        if (inventoryBtn) inventoryBtn.addEventListener('click', () => this.generateInventoryReport());
-        if (salesBtn) salesBtn.addEventListener('click', () => this.generateSalesReport());
-        if (healthBtn) healthBtn.addEventListener('click', () => this.generateHealthReport());
-        if (feedBtn) feedBtn.addEventListener('click', () => this.generateFeedReport());
-        if (comprehensiveBtn) comprehensiveBtn.addEventListener('click', () => this.generateComprehensiveReport());
-        
-        // Report action buttons
-        const printBtn = document.getElementById('print-report-btn');
-        const exportBtn = document.getElementById('export-report-btn');
-        const emailBtn = document.getElementById('email-report-btn');
-        const closeBtn = document.getElementById('close-report-btn');
-        
-        if (printBtn) printBtn.addEventListener('click', () => this.printReport());
-        if (exportBtn) exportBtn.addEventListener('click', () => this.exportReport());
-        if (emailBtn) emailBtn.addEventListener('click', () => this.showEmailModal());
-        if (closeBtn) closeBtn.addEventListener('click', () => this.closeReport());
-        
-        // Email modal buttons
-        const closeEmailModalBtn = document.getElementById('close-email-modal-btn');
-        const cancelEmailBtn = document.getElementById('cancel-email-btn');
-        const sendEmailBtn = document.getElementById('send-email-btn');
-        
-        if (closeEmailModalBtn) closeEmailModalBtn.addEventListener('click', () => this.hideEmailModal());
-        if (cancelEmailBtn) cancelEmailBtn.addEventListener('click', () => this.hideEmailModal());
-        if (sendEmailBtn) sendEmailBtn.addEventListener('click', () => this.sendEmailReport());
-
-        // Format selection
-        const formatOptions = document.querySelectorAll('.format-option');
-        formatOptions.forEach(option => {
-            option.addEventListener('click', (e) => {
-                formatOptions.forEach(o => o.classList.remove('selected'));
-                option.classList.add('selected');
+        // Quick sale form
+        const quickSaleForm = document.getElementById('quick-sale-form');
+        if (quickSaleForm) {
+            quickSaleForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleQuickSale();
             });
-        });
-    },
+        }
 
-    // ==================== REPORT GENERATION METHODS ====================
-    generateFinancialReport() {
-        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
-        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
+        // Modal buttons
+        document.getElementById('add-sale')?.addEventListener('click', () => this.showSaleModal());
+        document.getElementById('add-sale-btn')?.addEventListener('click', () => this.showSaleModal());
+        document.getElementById('from-production-btn')?.addEventListener('click', () => this.showProductionItems());
+        document.getElementById('meat-sales-btn')?.addEventListener('click', () => this.generateMeatSalesReport());
+        document.getElementById('daily-report-btn')?.addEventListener('click', () => this.generateDailyReport());
+        document.getElementById('view-production-items')?.addEventListener('click', () => this.showProductionItems());
         
-        const incomeTransactions = transactions.filter(t => t.type === 'income');
-        const expenseTransactions = transactions.filter(t => t.type === 'expense');
+        // Sale modal handlers
+        document.getElementById('save-sale')?.addEventListener('click', () => this.saveSale());
+        document.getElementById('delete-sale')?.addEventListener('click', () => this.deleteSale());
+        document.getElementById('cancel-sale')?.addEventListener('click', () => this.hideSaleModal());
+        document.getElementById('close-sale-modal')?.addEventListener('click', () => this.hideSaleModal());
         
-        const totalIncome = incomeTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
-        const totalExpenses = expenseTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
-        const netProfit = totalIncome - totalExpenses;
-        const profitMargin = totalIncome > 0 ? (netProfit / totalIncome) * 100 : 0;
-
-        const incomeByCategory = {};
-        incomeTransactions.forEach(transaction => {
-            const category = transaction.category || 'uncategorized';
-            incomeByCategory[category] = (incomeByCategory[category] || 0) + (transaction.amount || 0);
-        });
-
-        const expensesByCategory = {};
-        expenseTransactions.forEach(transaction => {
-            const category = transaction.category || 'uncategorized';
-            expensesByCategory[category] = (expensesByCategory[category] || 0) + (transaction.amount || 0);
-        });
-
-        const reportContent = `
-            <div class="report-section">
-                <h4>💰 Financial Overview</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Income</span>
-                    <span class="metric-value income">${this.formatCurrency(totalIncome)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Expenses</span>
-                    <span class="metric-value expense">${this.formatCurrency(totalExpenses)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Net Profit</span>
-                    <span class="metric-value ${netProfit >= 0 ? 'profit' : 'expense'}">${this.formatCurrency(netProfit)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Profit Margin</span>
-                    <span class="metric-value ${profitMargin >= 0 ? 'profit' : 'expense'}">${profitMargin.toFixed(1)}%</span>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>📈 Income by Category</h4>
-                ${Object.entries(incomeByCategory).map(([category, amount]) => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatCategory(category)}</span>
-                        <span class="metric-value income">${this.formatCurrency(amount)}</span>
-                    </div>
-                `).join('')}
-            </div>
-
-            <div class="report-section">
-                <h4>📉 Expenses by Category</h4>
-                ${Object.entries(expensesByCategory).map(([category, amount]) => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatCategory(category)}</span>
-                        <span class="metric-value expense">${this.formatCurrency(amount)}</span>
-                    </div>
-                `).join('')}
-            </div>
-
-            <div class="report-section">
-                <h4>💡 Financial Insights</h4>
-                <div style="padding: 16px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #22c55e;">
-                    <p style="margin: 0; color: #166534;">
-                        ${this.getFinancialInsights(totalIncome, totalExpenses, netProfit, profitMargin)}
-                    </p>
-                </div>
-            </div>
-        `;
-
-        this.currentReport = {
-            title: 'Financial Performance Report',
-            content: reportContent,
-            timestamp: new Date().toISOString(),
-            type: 'financial'
-        };
+        // Report modal handlers
+        document.getElementById('close-daily-report')?.addEventListener('click', () => this.hideDailyReportModal());
+        document.getElementById('close-daily-report-btn')?.addEventListener('click', () => this.hideDailyReportModal());
+        document.getElementById('print-daily-report')?.addEventListener('click', () => this.printDailyReport());
         
-        this.showReport('Financial Performance Report', reportContent);
-    },
-
-    generateProductionReport() {
-        const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
-        const mortality = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
+        document.getElementById('close-meat-sales')?.addEventListener('click', () => this.hideMeatSalesModal());
+        document.getElementById('close-meat-sales-btn')?.addEventListener('click', () => this.hideMeatSalesModal());
+        document.getElementById('print-meat-sales')?.addEventListener('click', () => this.printMeatSalesReport());
         
-        const totalProduction = production.reduce((sum, record) => sum + (record.quantity || 0), 0);
-        const totalMortality = mortality.reduce((sum, record) => sum + (record.quantity || 0), 0);
+        // Production items modal
+        document.getElementById('close-production-items')?.addEventListener('click', () => this.hideProductionItemsModal());
+        document.getElementById('close-production-items-btn')?.addEventListener('click', () => this.hideProductionItemsModal());
         
-        const productionByProduct = {};
-        production.forEach(record => {
-            const product = record.product || 'unknown';
-            productionByProduct[product] = (productionByProduct[product] || 0) + (record.quantity || 0);
-        });
-
-        const qualityDistribution = {};
-        production.forEach(record => {
-            const quality = record.quality || 'unknown';
-            qualityDistribution[quality] = (qualityDistribution[quality] || 0) + 1;
-        });
-
-        const currentStock = parseInt(localStorage.getItem('farm-birds-stock') || '1000');
-        const mortalityRate = currentStock > 0 ? (totalMortality / currentStock) * 100 : 0;
-
-        const reportContent = `
-            <div class="report-section">
-                <h4>🚜 Production Overview</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Production</span>
-                    <span class="metric-value">${totalProduction} units</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Current Stock</span>
-                    <span class="metric-value">${currentStock} birds</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Mortality</span>
-                    <span class="metric-value">${totalMortality} birds</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Mortality Rate</span>
-                    <span class="metric-value ${mortalityRate > 5 ? 'expense' : 'profit'}">${mortalityRate.toFixed(2)}%</span>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>📊 Production by Product</h4>
-                ${Object.entries(productionByProduct).map(([product, quantity]) => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatProductName(product)}</span>
-                        <span class="metric-value">${quantity} units</span>
-                    </div>
-                `).join('')}
-            </div>
-
-            <div class="report-section">
-                <h4>⭐ Quality Distribution</h4>
-                ${Object.entries(qualityDistribution).map(([quality, count]) => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatQuality(quality)}</span>
-                        <span class="metric-value">${count} records</span>
-                    </div>
-                `).join('')}
-            </div>
-
-            <div class="report-section">
-                <h4>📈 Production Insights</h4>
-                <div style="padding: 16px; background: #eff6ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
-                    <p style="margin: 0; color: #1e40af;">
-                        ${this.getProductionInsights(totalProduction, mortalityRate, qualityDistribution)}
-                    </p>
-                </div>
-            </div>
-        `;
-
-        this.currentReport = {
-            title: 'Production Analysis Report',
-            content: reportContent,
-            timestamp: new Date().toISOString(),
-            type: 'production'
-        };
+        // Form field event listeners
+        this.setupFormFieldListeners();
         
-        this.showReport('Production Analysis Report', reportContent);
-    },
-
-    generateInventoryReport() {
-        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
-        const feedInventory = JSON.parse(localStorage.getItem('farm-feed-inventory') || '[]');
-        
-        const lowStockItems = inventory.filter(item => item.currentStock <= item.minStock);
-        const totalInventoryValue = inventory.reduce((sum, item) => 
-            sum + ((item.currentStock || 0) * (item.unitPrice || 0)), 0);
-
-        const reportContent = `
-            <div class="report-section">
-                <h4>📦 Inventory Overview</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Items</span>
-                    <span class="metric-value">${inventory.length + feedInventory.length}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Low Stock Items</span>
-                    <span class="metric-value ${lowStockItems.length > 0 ? 'warning' : 'profit'}">${lowStockItems.length}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Inventory Value</span>
-                    <span class="metric-value income">${this.formatCurrency(totalInventoryValue)}</span>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>⚠️ Low Stock Alerts</h4>
-                ${lowStockItems.length > 0 ? lowStockItems.map(item => `
-                    <div class="metric-row">
-                        <span class="metric-label">${item.name || 'Unnamed Item'}</span>
-                        <span class="metric-value warning">
-                            ${item.currentStock || 0} / ${item.minStock || 0}
-                        </span>
-                    </div>
-                `).join('') : '<p style="color: #22c55e;">✅ All items are sufficiently stocked</p>'}
-            </div>
-
-            <div class="report-section">
-                <h4>🌾 Feed Inventory</h4>
-                ${feedInventory.map(item => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatFeedType(item.feedType)}</span>
-                        <span class="metric-value ${(item.currentStock || 0) <= (item.minStock || 0) ? 'warning' : ''}">
-                            ${item.currentStock || 0} kg (min: ${item.minStock || 0}kg)
-                        </span>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-
-        this.currentReport = {
-            title: 'Inventory Analysis Report',
-            content: reportContent,
-            timestamp: new Date().toISOString(),
-            type: 'inventory'
-        };
-        
-        this.showReport('Inventory Analysis Report', reportContent);
-    },
-
-    generateSalesReport() {
-        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
-        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
-        
-        const incomeTransactions = transactions.filter(t => t.type === 'income');
-        const totalSales = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
-        const totalIncome = incomeTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
-
-        const reportContent = `
-            <div class="report-section">
-                <h4>📊 Sales Performance</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Sales</span>
-                    <span class="metric-value income">${this.formatCurrency(totalSales)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Income</span>
-                    <span class="metric-value income">${this.formatCurrency(totalIncome)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Number of Sales</span>
-                    <span class="metric-value">${sales.length}</span>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>📈 Recent Sales</h4>
-                ${sales.slice(0, 5).map(sale => `
-                    <div class="metric-row">
-                        <span class="metric-label">${sale.date || 'Unknown Date'} - ${sale.customer || 'Walk-in'}</span>
-                        <span class="metric-value income">${this.formatCurrency(sale.totalAmount || 0)}</span>
-                    </div>
-                `).join('')}
-            </div>
-
-            <div class="report-section">
-                <h4>💡 Sales Insights</h4>
-                <div style="padding: 16px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
-                    <p style="margin: 0; color: #1e40af;">
-                        ${this.getSalesInsights(sales.length, totalSales)}
-                    </p>
-                </div>
-            </div>
-        `;
-
-        this.currentReport = {
-            title: 'Sales Performance Report',
-            content: reportContent,
-            timestamp: new Date().toISOString(),
-            type: 'sales'
-        };
-        
-        this.showReport('Sales Performance Report', reportContent);
-    },
-
-    generateHealthReport() {
-        const mortalityRecords = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
-        const birdsStock = parseInt(localStorage.getItem('farm-birds-stock') || '1000');
-        
-        const totalMortality = mortalityRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
-        const mortalityRate = birdsStock > 0 ? (totalMortality / birdsStock) * 100 : 0;
-
-        const causeBreakdown = {};
-        mortalityRecords.forEach(record => {
-            const cause = record.cause || 'unknown';
-            causeBreakdown[cause] = (causeBreakdown[cause] || 0) + (record.quantity || 0);
-        });
-
-        const reportContent = `
-            <div class="report-section">
-                <h4>🐔 Flock Health Overview</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Current Bird Count</span>
-                    <span class="metric-value">${birdsStock}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Mortality</span>
-                    <span class="metric-value">${totalMortality} birds</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Mortality Rate</span>
-                    <span class="metric-value ${mortalityRate > 5 ? 'expense' : 'profit'}">${mortalityRate.toFixed(2)}%</span>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>📊 Mortality by Cause</h4>
-                ${Object.entries(causeBreakdown).map(([cause, count]) => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatCause(cause)}</span>
-                        <span class="metric-value">${count} birds</span>
-                    </div>
-                `).join('')}
-            </div>
-
-            <div class="report-section">
-                <h4>💡 Health Recommendations</h4>
-                <div style="padding: 16px; background: #fef7ed; border-radius: 8px; border-left: 4px solid #f59e0b;">
-                    <p style="margin: 0; color: #92400e;">
-                        ${this.getHealthRecommendations(mortalityRate, causeBreakdown)}
-                    </p>
-                </div>
-            </div>
-        `;
-
-        this.currentReport = {
-            title: 'Flock Health Report',
-            content: reportContent,
-            timestamp: new Date().toISOString(),
-            type: 'health'
-        };
-        
-        this.showReport('Flock Health Report', reportContent);
-    },
-
-    generateFeedReport() {
-        const feedRecords = JSON.parse(localStorage.getItem('farm-feed-records') || '[]');
-        const feedInventory = JSON.parse(localStorage.getItem('farm-feed-inventory') || '[]');
-        
-        const totalFeedUsed = feedRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
-        const totalFeedCost = feedRecords.reduce((sum, record) => sum + (record.cost || 0), 0);
-        
-        const feedTypeBreakdown = {};
-        feedRecords.forEach(record => {
-            const feedType = record.feedType || 'unknown';
-            feedTypeBreakdown[feedType] = (feedTypeBreakdown[feedType] || 0) + (record.quantity || 0);
-        });
-
-        const reportContent = `
-            <div class="report-section">
-                <h4>🌾 Feed Consumption Summary</h4>
-                <div class="metric-row">
-                    <span class="metric-label">Total Feed Used</span>
-                    <span class="metric-value">${totalFeedUsed.toFixed(2)} kg</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Total Feed Cost</span>
-                    <span class="metric-value expense">${this.formatCurrency(totalFeedCost)}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Average Cost per kg</span>
-                    <span class="metric-value">${this.formatCurrency(totalFeedCost / (totalFeedUsed || 1))}</span>
-                </div>
-            </div>
-
-            <div class="report-section">
-                <h4>📊 Feed Usage by Type</h4>
-                ${Object.entries(feedTypeBreakdown).map(([feedType, quantity]) => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatFeedType(feedType)}</span>
-                        <span class="metric-value">${quantity.toFixed(2)} kg</span>
-                    </div>
-                `).join('')}
-            </div>
-
-            <div class="report-section">
-                <h4>📦 Current Feed Inventory</h4>
-                ${feedInventory.map(item => `
-                    <div class="metric-row">
-                        <span class="metric-label">${this.formatFeedType(item.feedType)}</span>
-                        <span class="metric-value ${(item.currentStock || 0) <= (item.minStock || 0) ? 'warning' : ''}">
-                            ${item.currentStock || 0} kg (min: ${item.minStock || 0}kg)
-                        </span>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-
-        this.currentReport = {
-            title: 'Feed Consumption Report',
-            content: reportContent,
-            timestamp: new Date().toISOString(),
-            type: 'feed'
-        };
-        
-        this.showReport('Feed Consumption Report', reportContent);
-    },
-
-    generateComprehensiveReport() {
-        const stats = this.getFarmStats();
-        
-        const reportContent = `
-            <div class="report-section">
-                <h2>🏆 Comprehensive Farm Report</h2>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
-                    <div style="padding: 20px; background: #f0f9ff; border-radius: 12px;">
-                        <h4 style="color: #1e40af; margin-bottom: 10px;">Financial Health</h4>
-                        <div class="metric-row">
-                            <span>Revenue:</span>
-                            <span class="income">${this.formatCurrency(stats.totalRevenue)}</span>
-                        </div>
-                        <div class="metric-row">
-                            <span>Profit:</span>
-                            <span class="${stats.netProfit >= 0 ? 'profit' : 'expense'}">${this.formatCurrency(stats.netProfit)}</span>
-                        </div>
-                    </div>
-                    <div style="padding: 20px; background: #f0fdf4; border-radius: 12px;">
-                        <h4 style="color: #166534; margin-bottom: 10px;">Production</h4>
-                        <div class="metric-row">
-                            <span>Total Birds:</span>
-                            <span>${stats.totalBirds}</span>
-                        </div>
-                        <div class="metric-row">
-                            <span>Production:</span>
-                            <span>${stats.totalProduction} units</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div style="padding: 20px; background: #fef7ed; border-radius: 12px;">
-                        <h4 style="color: #92400e; margin-bottom: 10px;">Inventory</h4>
-                        <div class="metric-row">
-                            <span>Low Stock Items:</span>
-                            <span class="${stats.lowStockItems > 0 ? 'warning' : 'profit'}">${stats.lowStockItems}</span>
-                        </div>
-                        <div class="metric-row">
-                            <span>Feed Used:</span>
-                            <span>${stats.totalFeedUsed} kg</span>
-                        </div>
-                    </div>
-                    <div style="padding: 20px; background: #fae8ff; border-radius: 12px;">
-                        <h4 style="color: #86198f; margin-bottom: 10px;">Performance</h4>
-                        <div class="metric-row">
-                            <span>Farm Score:</span>
-                            <span style="color: #22c55e; font-weight: bold;">${this.calculateFarmScore(stats)}%</span>
-                        </div>
-                        <div class="metric-row">
-                            <span>Status:</span>
-                            <span style="color: ${this.getFarmStatusColor(stats)};">${this.getFarmStatus(stats)}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="report-section" style="margin-top: 30px;">
-                    <h4>📈 Overall Assessment</h4>
-                    <div style="padding: 20px; background: linear-gradient(135deg, #dcfce7, #dbeafe); border-radius: 12px;">
-                        <p style="margin: 0; color: #1a1a1a; line-height: 1.6;">
-                            ${this.getOverallAssessment(stats)}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        this.currentReport = {
-            title: 'Comprehensive Farm Report',
-            content: reportContent,
-            timestamp: new Date().toISOString(),
-            type: 'comprehensive'
-        };
-        
-        this.showReport('Comprehensive Farm Report', reportContent);
-    },
-
-    // ==================== REPORT DISPLAY METHODS ====================
-    showReport(title, content) {
-        this.addReportStyles();
-        
-        const reportTitle = document.getElementById('report-title');
-        const reportContent = document.getElementById('report-content');
-        const outputSection = document.getElementById('report-output');
-        
-        if (reportTitle && reportContent && outputSection) {
-            reportTitle.textContent = title;
-            reportContent.innerHTML = content;
-            outputSection.classList.remove('hidden');
-            outputSection.scrollIntoView({ behavior: 'smooth' });
-        }
-    },
-
-    addReportStyles() {
-        if (!document.getElementById('report-styles')) {
-            const styles = document.createElement('style');
-            styles.id = 'report-styles';
-            styles.textContent = `
-                .report-section {
-                    margin-bottom: 32px;
-                    padding-bottom: 24px;
-                    border-bottom: 1px solid var(--glass-border);
-                }
-                .report-section:last-child {
-                    border-bottom: none;
-                    margin-bottom: 0;
-                    padding-bottom: 0;
-                }
-                .report-section h4 {
-                    color: var(--text-primary);
-                    margin-bottom: 16px;
-                    font-size: 18px;
-                    font-weight: 600;
-                }
-                .metric-row {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 12px 0;
-                    border-bottom: 1px solid rgba(0,0,0,0.05);
-                }
-                .metric-row:last-child {
-                    border-bottom: none;
-                }
-                .metric-label {
-                    color: var(--text-secondary);
-                    font-size: 14px;
-                }
-                .metric-value {
-                    font-weight: 600;
-                    font-size: 14px;
-                }
-                .metric-value.income {
-                    color: #22c55e;
-                }
-                .metric-value.expense {
-                    color: #ef4444;
-                }
-                .metric-value.profit {
-                    color: #22c55e;
-                }
-                .metric-value.warning {
-                    color: #f59e0b;
-                }
-            `;
-            document.head.appendChild(styles);
-        }
-    },
-
-    closeReport() {
-        const outputSection = document.getElementById('report-output');
-        if (outputSection) {
-            outputSection.classList.add('hidden');
-        }
-    },
-
-    printReport() {
-        if (!this.currentReport) return;
-        
-        const printWindow = window.open('', '_blank');
-        const printContent = `
-            <html>
-                <head>
-                    <title>${this.currentReport.title}</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; }
-                        h1 { color: #1e40af; border-bottom: 2px solid #1e40af; padding-bottom: 10px; }
-                        .section { margin-bottom: 30px; }
-                        .metric-row { display: flex; justify-content: space-between; padding: 5px 0; }
-                        .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ccc; font-size: 12px; color: #666; }
-                    </style>
-                </head>
-                <body>
-                    <h1>${this.currentReport.title}</h1>
-                    <div>Generated on: ${new Date().toLocaleString()}</div>
-                    <div>Report ID: FARM-${Date.now().toString().slice(-8)}</div>
-                    <hr>
-                    ${this.currentReport.content}
-                    <div class="footer">
-                        <p>Confidential Farm Report - Generated by Farm Management System</p>
-                        <p>© ${new Date().getFullYear()} All rights reserved</p>
-                    </div>
-                </body>
-            </html>
-        `;
-        
-        printWindow.document.write(printContent);
-        printWindow.document.close();
-        printWindow.focus();
-        
-        setTimeout(() => {
-            printWindow.print();
-            printWindow.close();
-        }, 250);
-    },
-
-    exportReport() {
-        if (!this.currentReport) return;
-        
-        const exportData = {
-            title: this.currentReport.title,
-            content: this.currentReport.content,
-            generatedAt: new Date().toISOString(),
-            reportId: `FARM-${Date.now().toString().slice(-8)}`,
-            farmStats: this.getFarmStats()
-        };
-        
-        const dataStr = JSON.stringify(exportData, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-        
-        const exportFileDefaultName = `farm-report-${Date.now()}.json`;
-        
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.click();
-        
-        this.showNotification('Report exported successfully!', 'success');
-    },
-
-    // ==================== EMAIL MODAL METHODS ====================
-   // Update the addEmailModalStyles method in the ReportsModule:
-
-addEmailModalStyles() {
-    const styleId = 'email-modal-styles';
-    if (document.getElementById(styleId)) return;
-
-    const styles = document.createElement('style');
-    styles.id = styleId;
-    styles.textContent = `
-        /* Email Modal Overlay */
-        .email-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: flex-start; /* Changed from center to flex-start */
-            justify-content: center;
-            z-index: 9999;
-            padding: 80px 20px 20px; /* Added top padding to avoid header */
-            animation: fadeIn 0.3s ease-out;
-            overflow-y: auto;
-        }
-
-        .email-modal-overlay.hidden {
-            display: none;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        /* Email Modal Container */
-        .email-modal-container {
-            width: 100%;
-            max-width: 600px;
-            max-height: calc(100vh - 100px); /* Limit height to viewport minus padding */
-            overflow-y: auto;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            animation: slideDown 0.4s ease-out; /* Changed animation */
-            margin-top: 40px; /* Added margin to push it down further */
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-60px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Email Modal Header */
-        .email-modal-header {
-            display: flex;
-            align-items: flex-start;
-            gap: 16px;
-            padding: 28px 32px 20px;
-            border-bottom: 1px solid var(--glass-border);
-            position: relative;
-            background: var(--glass-bg);
-            border-radius: 24px 24px 0 0;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            backdrop-filter: blur(10px);
-        }
-
-        .email-modal-icon {
-            font-size: 40px;
-            background: linear-gradient(135deg, #22c55e, #3b82f6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            flex-shrink: 0;
-        }
-
-        .email-modal-title {
-            color: var(--text-primary);
-            font-size: 24px;
-            font-weight: 700;
-            margin: 0 0 4px 0;
-            line-height: 1.2;
-        }
-
-        .email-modal-subtitle {
-            color: var(--text-secondary);
-            font-size: 14px;
-            margin: 0;
-            line-height: 1.4;
-        }
-
-        .email-modal-close {
-            position: absolute;
-            top: 24px;
-            right: 24px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid var(--glass-border);
-            color: var(--text-secondary);
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 50%;
-            transition: all 0.2s ease;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .email-modal-close:hover {
-            color: var(--text-primary);
-            background: var(--glass-hover);
-            transform: rotate(90deg);
-        }
-
-        .email-modal-close svg {
-            width: 20px;
-            height: 20px;
-        }
-
-        /* Email Modal Body */
-        .email-modal-body {
-            padding: 24px 32px;
-            background: var(--glass-bg);
-        }
-
-        .email-form {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-        }
-
-        .form-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-primary);
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .label-icon {
-            font-size: 16px;
-            width: 24px;
-            text-align: center;
-        }
-
-        .form-input, .form-textarea {
-            padding: 14px 16px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            color: var(--text-primary);
-            font-size: 15px;
-            transition: all 0.2s ease;
-            width: 100%;
-        }
-
-        .form-input:focus, .form-textarea:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-            background: var(--glass-hover);
-        }
-
-        .form-textarea {
-            resize: vertical;
-            min-height: 100px;
-            font-family: inherit;
-        }
-
-        .form-hint {
-            color: var(--text-tertiary);
-            font-size: 12px;
-            margin-top: 4px;
-            font-style: italic;
-        }
-
-        /* Format Options */
-        .format-options {
-            display: flex;
-            gap: 12px;
-            margin-top: 8px;
-        }
-
-        .format-option {
-            flex: 1;
-            cursor: pointer;
-        }
-
-        .format-option input {
-            display: none;
-        }
-
-        .format-card {
-            padding: 20px 12px;
-            background: var(--glass-bg);
-            border: 2px solid var(--glass-border);
-            border-radius: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .format-option:hover .format-card {
-            border-color: var(--glass-hover);
-            background: var(--glass-hover);
-            transform: translateY(-2px);
-        }
-
-        .format-option input:checked + .format-card {
-            border-color: #3b82f6;
-            background: rgba(59, 130, 246, 0.1);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-        }
-
-        .format-icon {
-            font-size: 28px;
-            margin-bottom: 8px;
-        }
-
-        .format-name {
-            color: var(--text-primary);
-            font-weight: 600;
-            font-size: 13px;
-        }
-
-        /* Delivery Options */
-        .delivery-options {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 8px;
-        }
-
-        .delivery-option {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 16px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .delivery-option:hover {
-            background: var(--glass-hover);
-            transform: translateX(4px);
-        }
-
-        .delivery-option input {
-            margin: 0;
-            width: 18px;
-            height: 18px;
-            accent-color: #3b82f6;
-        }
-
-        .delivery-text {
-            flex: 1;
-            color: var(--text-primary);
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .delivery-badge {
-            font-size: 16px;
-            opacity: 0.8;
-        }
-
-        /* Email Modal Footer */
-        .email-modal-footer {
-            padding: 24px 32px 28px;
-            border-top: 1px solid var(--glass-border);
-            background: var(--glass-bg);
-            border-radius: 0 0 24px 24px;
-            position: sticky;
-            bottom: 0;
-            backdrop-filter: blur(10px);
-        }
-
-        .footer-actions {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-
-        .footer-actions .btn-outline,
-        .footer-actions .btn-primary {
-            flex: 1;
-            padding: 16px 24px;
-            font-size: 15px;
-            font-weight: 600;
-            border-radius: 12px;
-            transition: all 0.2s ease;
-        }
-
-        .footer-actions .btn-outline:hover,
-        .footer-actions .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .send-icon {
-            margin-right: 10px;
-            font-size: 18px;
-        }
-
-        .footer-note {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 16px;
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(34, 197, 94, 0.1));
-            border-radius: 12px;
-            border: 1px solid rgba(59, 130, 246, 0.2);
-        }
-
-        .note-icon {
-            font-size: 18px;
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-
-        .note-text {
-            color: var(--text-primary);
-            font-size: 13px;
-            line-height: 1.5;
-            flex: 1;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .email-modal-overlay {
-                padding: 100px 16px 16px; /* More top padding on mobile */
-                align-items: flex-start;
-            }
-
-            .email-modal-container {
-                margin-top: 20px;
-                max-height: calc(100vh - 120px);
-            }
-
-            .email-modal-header {
-                padding: 24px;
-            }
-
-            .email-modal-body {
-                padding: 20px 24px;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .format-options {
-                flex-wrap: wrap;
-            }
-
-            .format-option {
-                min-width: calc(50% - 6px);
-            }
-
-            .email-modal-footer {
-                padding: 20px 24px 24px;
-            }
-
-            .footer-actions {
-                flex-direction: column;
-            }
-
-            .email-modal-close {
-                top: 20px;
-                right: 20px;
-                width: 36px;
-                height: 36px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .email-modal-overlay {
-                padding: 80px 12px 12px;
-            }
-
-            .email-modal-container {
-                border-radius: 20px;
-            }
-
-            .email-modal-header {
-                padding: 20px;
-                flex-direction: column;
-                text-align: center;
-                gap: 12px;
-            }
-
-            .email-modal-icon {
-                font-size: 36px;
-            }
-
-            .email-modal-title {
-                font-size: 20px;
-            }
-
-            .email-modal-close {
-                position: fixed;
-                top: 12px;
-                right: 12px;
-                width: 32px;
-                height: 32px;
-                background: rgba(0, 0, 0, 0.5);
-                backdrop-filter: blur(10px);
-            }
-
-            .format-option {
-                min-width: 100%;
-            }
-
-            .delivery-option {
-                padding: 12px;
-            }
-        }
-
-        /* Dark mode adjustments */
-        @media (prefers-color-scheme: dark) {
-            .email-modal-container {
-                background: rgba(20, 20, 25, 0.95);
-                backdrop-filter: blur(20px);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-            }
-
-            .email-modal-header,
-            .email-modal-body,
-            .email-modal-footer {
-                background: rgba(20, 20, 25, 0.95);
-            }
-
-            .form-input, .form-textarea, .format-card, .delivery-option {
-                background: rgba(255, 255, 255, 0.05);
-                border-color: rgba(255, 255, 255, 0.1);
-            }
-
-            .email-modal-close {
-                background: rgba(255, 255, 255, 0.1);
-                border-color: rgba(255, 255, 255, 0.2);
-            }
-
-            .footer-note {
-                background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(34, 197, 94, 0.15));
-                border-color: rgba(59, 130, 246, 0.3);
-            }
-        }
-
-        /* Loading state */
-        .sending-email .btn-primary {
-            position: relative;
-            color: transparent;
-        }
-
-        .sending-email .btn-primary::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 20px;
-            height: 20px;
-            margin: -10px 0 0 -10px;
-            border: 2px solid transparent;
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Success animation */
-        @keyframes successPulse {
-            0% { 
-                transform: scale(1);
-                box-shadow: 0 4px 12px rgba(34, 197, 94, 0);
-            }
-            50% { 
-                transform: scale(1.05);
-                box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
-            }
-            100% { 
-                transform: scale(1);
-                box-shadow: 0 4px 12px rgba(34, 197, 94, 0);
-            }
-        }
-
-        .email-sent .btn-primary {
-            background: linear-gradient(135deg, #22c55e, #16a34a);
-            animation: successPulse 0.6s ease;
-        }
-
-        /* Smooth transitions for modal show/hide */
-        .email-modal-overlay {
-            transition: opacity 0.3s ease;
-        }
-
-        .email-modal-overlay.hiding {
-            opacity: 0;
-        }
-
-        .email-modal-container {
-            transition: transform 0.3s ease, opacity 0.3s ease;
-        }
-
-        .email-modal-overlay.hiding .email-modal-container {
-            transform: translateY(40px);
-            opacity: 0;
-        }
-
-        /* Ensure modal is above everything */
-        .email-modal-overlay {
-            z-index: 99999 !important;
-        }
-
-        /* Make sure header is visible when modal is open */
-        body.modal-open {
-            overflow: hidden;
-        }
-
-        body.modal-open .top-navigation,
-        body.modal-open .side-menu {
-            z-index: 99998;
-        }
-    `;
-    document.head.appendChild(styles);
-}
-
-// Also update the showEmailModal and hideEmailModal methods:
-
-showEmailModal() {
-    if (!this.currentReport) {
-        this.showNotification('Please generate a report first', 'error');
-        return;
-    }
-    
-    const modal = document.getElementById('email-report-modal');
-    if (modal) {
-        // Add modal-open class to body
-        document.body.classList.add('modal-open');
-        
-        // Show modal
-        modal.classList.remove('hidden');
-        
-        // Pre-fill subject with report title and date
-        const subjectInput = document.getElementById('email-subject');
-        if (subjectInput) {
-            const date = new Date().toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
+        // Quick product change
+        document.getElementById('quick-product')?.addEventListener('change', () => this.handleQuickProductChange());
+
+        // Filter
+        const periodFilter = document.getElementById('period-filter');
+        if (periodFilter) {
+            periodFilter.addEventListener('change', (e) => {
+                document.getElementById('sales-table').innerHTML = this.renderSalesTable(e.target.value);
             });
-            subjectInput.value = `${this.currentReport.title} - ${date}`;
         }
-        
-        // Focus on email input
-        const emailInput = document.getElementById('recipient-email');
-        if (emailInput) {
-            setTimeout(() => {
-                emailInput.focus();
-                // Scroll to ensure input is visible on mobile
-                emailInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 300);
-        }
-        
-        // Add animation class
-        modal.classList.add('modal-visible');
-    }
-},
 
-hideEmailModal() {
-    const modal = document.getElementById('email-report-modal');
-    if (modal) {
-        // Remove modal-open class from body
-        document.body.classList.remove('modal-open');
+        // Close modals when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('popout-modal')) {
+                this.hideAllModals();
+            }
+        });
+
+        // Edit/delete sale buttons (delegated)
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.edit-sale')) {
+                const saleId = e.target.closest('.edit-sale').dataset.id;
+                this.editSale(saleId);
+            }
+            if (e.target.closest('.delete-sale')) {
+                const saleId = e.target.closest('.delete-sale').dataset.id;
+                this.deleteSaleRecord(saleId);
+            }
+        });
+    },
+
+    setupFormFieldListeners() {
+        // Product change
+        const productSelect = document.getElementById('sale-product');
+        if (productSelect) {
+            productSelect.addEventListener('change', () => this.handleProductChange());
+        }
         
-        // Add hiding animation
-        modal.classList.add('hiding');
+        // Real-time total calculation
+        const fieldsToWatch = [
+            'standard-quantity',
+            'standard-price',
+            'meat-animal-count',
+            'meat-weight',
+            'meat-price'
+        ];
         
-        // Hide after animation
-        setTimeout(() => {
-            modal.classList.remove('hidden', 'modal-visible', 'hiding');
-            document.getElementById('email-report-form')?.reset();
+        fieldsToWatch.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.addEventListener('input', () => this.calculateSaleTotal());
+            }
+        });
+        
+        // Weight unit change
+        const weightUnit = document.getElementById('meat-weight-unit');
+        if (weightUnit) {
+            weightUnit.addEventListener('change', () => this.calculateSaleTotal());
+        }
+    },
+
+    handleProductChange() {
+        const productSelect = document.getElementById('sale-product');
+        if (!productSelect) return;
+        
+        const selectedValue = productSelect.value;
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        const isMeatProduct = meatProducts.includes(selectedValue);
+        
+        const meatSection = document.getElementById('meat-section');
+        const standardSection = document.getElementById('standard-section');
+        const meatSummary = document.getElementById('meat-summary');
+        const standardSummary = document.getElementById('standard-summary');
+        
+        if (isMeatProduct) {
+            // Show meat section
+            if (meatSection) meatSection.style.display = 'block';
+            if (meatSummary) meatSummary.style.display = 'block';
+            if (standardSection) standardSection.style.display = 'none';
+            if (standardSummary) standardSummary.style.display = 'none';
             
-            // Reset format selection visuals
-            const formatCards = document.querySelectorAll('.format-card');
-            formatCards.forEach(card => {
-                card.style.transform = '';
-                card.style.boxShadow = '';
-            });
-        }, 300);
-    }
-},
-    
-    async sendEmailReport() {
-        const emailInput = document.getElementById('recipient-email');
-        const subjectInput = document.getElementById('email-subject');
-        const messageInput = document.getElementById('email-message');
-        const formatRadios = document.querySelectorAll('input[name="email-format"]:checked');
-        const urgentCheckbox = document.getElementById('urgent-delivery');
-        const readReceiptCheckbox = document.getElementById('read-receipt');
+            // Set appropriate defaults
+            const unitSelect = document.getElementById('sale-unit');
+            if (unitSelect) unitSelect.value = 'animals';
+            
+            const weightUnit = document.getElementById('meat-weight-unit');
+            if (weightUnit) weightUnit.value = 'kg';
+            
+            // Set animal label
+            const animalLabel = selectedValue === 'chicken-parts' ? 'Number of Packages' : 
+                              selectedValue.includes('broilers') ? 'Number of Birds' : 
+                              selectedValue === 'pork' ? 'Number of Pigs' :
+                              selectedValue === 'beef' ? 'Number of Cattle' :
+                              selectedValue === 'goat' ? 'Number of Goats' :
+                              selectedValue === 'lamb' ? 'Number of Lambs' : 'Number of Animals';
+            
+            const animalLabelElement = document.querySelector('label[for="meat-animal-count"]');
+            if (animalLabelElement) {
+                animalLabelElement.textContent = animalLabel + ' *';
+            }
+            
+            // Clear standard fields
+            const standardQuantity = document.getElementById('standard-quantity');
+            const standardPrice = document.getElementById('standard-price');
+            if (standardQuantity) standardQuantity.value = '';
+            if (standardPrice) standardPrice.value = '';
+            
+        } else {
+            // Show standard section
+            if (meatSection) meatSection.style.display = 'none';
+            if (meatSummary) meatSummary.style.display = 'none';
+            if (standardSection) standardSection.style.display = 'block';
+            if (standardSummary) standardSummary.style.display = 'block';
+            
+            // Set appropriate unit
+            const unitSelect = document.getElementById('sale-unit');
+            if (unitSelect) {
+                if (selectedValue === 'eggs') {
+                    unitSelect.value = 'dozen';
+                } else if (selectedValue === 'milk') {
+                    unitSelect.value = 'liters';
+                } else if (selectedValue === 'broilers-live' || selectedValue === 'layers' || selectedValue === 'chicks') {
+                    unitSelect.value = 'birds';
+                } else {
+                    unitSelect.value = 'kg';
+                }
+            }
+            
+            // Clear meat fields
+            const meatAnimalCount = document.getElementById('meat-animal-count');
+            const meatWeight = document.getElementById('meat-weight');
+            const meatPrice = document.getElementById('meat-price');
+            if (meatAnimalCount) meatAnimalCount.value = '';
+            if (meatWeight) meatWeight.value = '';
+            if (meatPrice) meatPrice.value = '';
+        }
         
-        if (!emailInput?.value) {
-            this.showNotification('Please enter recipient email', 'error');
+        this.calculateSaleTotal();
+        this.setDefaultPrice(selectedValue);
+    },
+
+    handleQuickProductChange() {
+        const productSelect = document.getElementById('quick-product');
+        const selectedValue = productSelect.value;
+        const unitSelect = document.getElementById('quick-unit');
+        
+        if (!unitSelect) return;
+        
+        if (selectedValue === 'eggs') {
+            unitSelect.value = 'dozen';
+        } else if (selectedValue === 'milk') {
+            unitSelect.value = 'liters';
+        } else if (selectedValue.includes('broilers') || selectedValue === 'layers' || selectedValue === 'chicks') {
+            unitSelect.value = 'birds';
+        } else if (['pork', 'beef', 'goat', 'lamb', 'chicken-parts'].includes(selectedValue)) {
+            unitSelect.value = 'kg';
+        } else {
+            unitSelect.value = 'kg';
+        }
+    },
+
+    calculateSaleTotal() {
+        const product = document.getElementById('sale-product')?.value;
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        
+        let total = 0;
+        
+        if (meatProducts.includes(product)) {
+            // Meat product calculation
+            const animalCount = parseFloat(document.getElementById('meat-animal-count')?.value) || 0;
+            const weight = parseFloat(document.getElementById('meat-weight')?.value) || 0;
+            const weightUnit = document.getElementById('meat-weight-unit')?.value;
+            const pricePerKg = parseFloat(document.getElementById('meat-price')?.value) || 0;
+            
+            let weightInKg = weight;
+            if (weightUnit === 'lbs') {
+                weightInKg = weight * 0.453592;
+            }
+            
+            total = weightInKg * pricePerKg;
+            
+            // Update summary
+            const meatSummary = document.getElementById('meat-summary-info');
+            const avgWeightElement = document.getElementById('meat-avg-weight');
+            const avgValueElement = document.getElementById('meat-avg-value');
+            
+            if (meatSummary && avgWeightElement && avgValueElement) {
+                if (animalCount > 0 && weightInKg > 0) {
+                    const avgWeight = weightInKg / animalCount;
+                    const avgValue = total / animalCount;
+                    
+                    meatSummary.textContent = `${animalCount} animal${animalCount !== 1 ? 's' : ''} • ${weight.toFixed(2)} ${weightUnit} total • ${this.formatCurrency(avgValue)} per animal`;
+                    avgWeightElement.textContent = `${avgWeight.toFixed(2)} kg/animal`;
+                    avgValueElement.textContent = `${this.formatCurrency(avgValue)}/animal`;
+                } else {
+                    meatSummary.textContent = '0 animals • 0 kg total • $0.00 per animal';
+                    avgWeightElement.textContent = '0.00 kg/animal';
+                    avgValueElement.textContent = '$0.00/animal';
+                }
+            }
+        } else {
+            // Standard product calculation
+            const quantity = parseFloat(document.getElementById('standard-quantity')?.value) || 0;
+            const price = parseFloat(document.getElementById('standard-price')?.value) || 0;
+            total = quantity * price;
+            
+            const standardSummary = document.getElementById('standard-summary-info');
+            if (standardSummary) {
+                standardSummary.textContent = `${quantity} ${quantity !== 1 ? 'units' : 'unit'} at ${this.formatCurrency(price)} per unit`;
+            }
+        }
+        
+        const totalElement = document.getElementById('sale-total-amount');
+        if (totalElement) {
+            totalElement.textContent = this.formatCurrency(total);
+        }
+    },
+
+    showSaleModal() {
+        this.hideAllModals();
+        const modal = document.getElementById('sale-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+        
+        // Set today's date
+        const today = new Date();
+        const timezoneOffset = today.getTimezoneOffset() * 60000;
+        const localISOTime = new Date(today - timezoneOffset).toISOString().split('T')[0];
+        
+        const dateInput = document.getElementById('sale-date');
+        if (dateInput) {
+            dateInput.value = localISOTime;
+        }
+        
+        // Reset form
+        const form = document.getElementById('sale-form');
+        if (form) {
+            form.reset();
+        }
+        
+        document.getElementById('sale-modal-title').textContent = 'Record Sale';
+        document.getElementById('delete-sale').style.display = 'none';
+        document.getElementById('production-source-notice').style.display = 'none';
+        
+        // Clear all fields
+        const fieldsToClear = [
+            'meat-animal-count',
+            'meat-weight',
+            'meat-price',
+            'standard-quantity',
+            'standard-price',
+            'sale-customer',
+            'sale-notes'
+        ];
+        
+        fieldsToClear.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) field.value = '';
+        });
+        
+        // Set default values
+        const unitSelect = document.getElementById('sale-unit');
+        if (unitSelect) unitSelect.value = '';
+        
+        const weightUnit = document.getElementById('meat-weight-unit');
+        if (weightUnit) weightUnit.value = 'kg';
+        
+        const paymentMethod = document.getElementById('sale-payment');
+        if (paymentMethod) paymentMethod.value = 'cash';
+        
+        const paymentStatus = document.getElementById('sale-status');
+        if (paymentStatus) paymentStatus.value = 'paid';
+        
+        // Set default product if from production
+        if (this.pendingProductionSale) {
+            this.prefillFromProduction(this.pendingProductionSale);
+            this.showProductionSourceNotice();
+        } else {
+            // Set default to empty
+            const productSelect = document.getElementById('sale-product');
+            if (productSelect) productSelect.value = '';
+        }
+        
+        // Initialize product handling
+        setTimeout(() => {
+            this.handleProductChange();
+        }, 10);
+        
+        // Re-attach form field listeners (in case modal was re-rendered)
+        this.setupFormFieldListeners();
+    },
+
+    showProductionSourceNotice() {
+        if (!this.pendingProductionSale) return;
+        
+        const noticeElement = document.getElementById('production-source-notice');
+        const infoElement = document.getElementById('production-source-info');
+        
+        if (noticeElement && infoElement) {
+            noticeElement.style.display = 'block';
+            infoElement.textContent = `${this.pendingProductionSale.type || this.pendingProductionSale.product} • ${this.pendingProductionSale.quantity || this.pendingProductionSale.count || 0} units`;
+        }
+    },
+
+    showProductionItems() {
+        this.hideAllModals();
+        
+        const productionModule = window.FarmModules.Production;
+        if (!productionModule || !productionModule.getAvailableProducts) {
+            this.showNotification('Production module not available', 'error');
             return;
         }
         
-        // Get email addresses (support multiple emails)
-        const emailAddresses = emailInput.value.split(',').map(email => email.trim()).filter(email => email);
+        const productionItems = productionModule.getAvailableProducts();
         
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const invalidEmails = emailAddresses.filter(email => !emailRegex.test(email));
+        let content = '<div class="production-items-list">';
         
-        if (invalidEmails.length > 0) {
-            this.showNotification(`Invalid email format: ${invalidEmails.join(', ')}`, 'error');
+        if (productionItems.length === 0) {
+            content += `
+                <div style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
+                    <h4 style="color: #374151; margin-bottom: 8px;">No production items available</h4>
+                    <p style="color: var(--text-secondary);">Add production items in the Production module first</p>
+                </div>
+            `;
+        } else {
+            content += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px;">';
+            
+            productionItems.forEach(item => {
+                content += `
+                    <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border); cursor: pointer;" 
+                         onclick="window.FarmModules.SalesRecord.selectProductionItem('${item.id}')"
+                         class="production-item-select">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                            <span style="font-size: 24px;">${this.getProductIcon(item.type || item.product)}</span>
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary);">${item.type || item.product}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">ID: ${item.id}</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                            <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 6px;">
+                                <div style="font-size: 11px; color: #6b7280;">Quantity</div>
+                                <div style="font-weight: 600; color: var(--text-primary);">${item.quantity || item.count || 0}</div>
+                            </div>
+                            ${item.totalWeight ? `
+                                <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 6px;">
+                                    <div style="font-size: 11px; color: #6b7280;">Total Weight</div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">${item.totalWeight} kg</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div style="font-size: 12px; color: var(--text-secondary);">
+                            <div>Produced: ${this.formatDate(item.date || item.productionDate)}</div>
+                            ${item.notes ? `<div style="margin-top: 4px;">Notes: ${item.notes.substring(0, 50)}${item.notes.length > 50 ? '...' : ''}</div>` : ''}
+                        </div>
+                        
+                        <button style="width: 100%; margin-top: 12px; padding: 8px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                            Sell This Item
+                        </button>
+                    </div>
+                `;
+            });
+            
+            content += '</div>';
+        }
+        
+        content += '</div>';
+        
+        const contentElement = document.getElementById('production-items-content');
+        if (contentElement) {
+            contentElement.innerHTML = content;
+        }
+        
+        const modal = document.getElementById('production-items-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    },
+
+    hideSaleModal() {
+        const modal = document.getElementById('sale-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+        this.pendingProductionSale = null;
+    },
+
+    hideProductionItemsModal() {
+        const modal = document.getElementById('production-items-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    },
+
+    showDailyReportModal() {
+        this.hideAllModals();
+        const modal = document.getElementById('daily-report-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    },
+
+    hideDailyReportModal() {
+        const modal = document.getElementById('daily-report-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    },
+
+    showMeatSalesModal() {
+        this.hideAllModals();
+        const modal = document.getElementById('meat-sales-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    },
+
+    hideMeatSalesModal() {
+        const modal = document.getElementById('meat-sales-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    },
+
+    hideAllModals() {
+        this.hideSaleModal();
+        this.hideDailyReportModal();
+        this.hideMeatSalesModal();
+        this.hideProductionItemsModal();
+    },
+
+    validateSaleData(saleData) {
+        const errors = [];
+        
+        if (!saleData.date) errors.push('Date is required');
+        if (!saleData.product) errors.push('Product is required');
+        if (!saleData.paymentMethod) errors.push('Payment method is required');
+        
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        if (meatProducts.includes(saleData.product)) {
+            // Validate meat product fields
+            if (!saleData.weight || saleData.weight <= 0) {
+                errors.push('Weight must be greater than 0');
+            }
+            if (!saleData.animalCount || saleData.animalCount <= 0) {
+                errors.push('Number of animals must be greater than 0');
+            }
+            if (!saleData.unitPrice || saleData.unitPrice <= 0) {
+                errors.push('Price per kg must be greater than 0');
+            }
+        } else {
+            // Validate standard product fields
+            if (!saleData.quantity || saleData.quantity <= 0) {
+                errors.push('Quantity must be greater than 0');
+            }
+            if (!saleData.unitPrice || saleData.unitPrice <= 0) {
+                errors.push('Price must be greater than 0');
+            }
+        }
+        
+        return {
+            isValid: errors.length === 0,
+            errors: errors
+        };
+    },
+
+    handleQuickSale() {
+        const product = document.getElementById('quick-product')?.value;
+        const quantity = parseFloat(document.getElementById('quick-quantity')?.value) || 0;
+        const unit = document.getElementById('quick-unit')?.value;
+        const price = parseFloat(document.getElementById('quick-price')?.value) || 0;
+
+        if (!product || !quantity || !price) {
+            this.showNotification('Please fill in all required fields', 'error');
             return;
         }
-        
-        // Show sending state
-        const sendBtn = document.getElementById('send-email-btn');
-        const originalText = sendBtn.innerHTML;
-        sendBtn.classList.add('sending-email');
-        sendBtn.disabled = true;
-        
-        // Prepare email data
-        const emailData = {
-            recipients: emailAddresses,
-            subject: subjectInput?.value || `${this.currentReport.title}`,
-            message: messageInput?.value || '',
-            format: formatRadios[0]?.value || 'text',
-            urgent: urgentCheckbox?.checked || false,
-            readReceipt: readReceiptCheckbox?.checked || false,
-            report: this.currentReport,
-            timestamp: new Date().toISOString(),
-            sent: true,
-            status: 'sending'
+
+        const today = new Date();
+        const timezoneOffset = today.getTimezoneOffset() * 60000;
+        const localISOTime = new Date(today - timezoneOffset).toISOString().split('T')[0];
+
+        const saleData = {
+            id: 'SALE-' + Date.now().toString().slice(-6),
+            product: product,
+            quantity: quantity,
+            unit: unit,
+            unitPrice: price,
+            totalAmount: quantity * price,
+            date: localISOTime,
+            paymentMethod: 'cash',
+            paymentStatus: 'paid',
+            customer: 'Walk-in'
         };
+
+        this.addSale(saleData);
         
-        try {
-            // Simulate API call with loading state
-            await new Promise(resolve => setTimeout(resolve, 1500));
+        const form = document.getElementById('quick-sale-form');
+        if (form) {
+            form.reset();
+        }
+        this.showNotification('Sale recorded successfully!', 'success');
+    },
+
+    saveSale() {
+        const saleId = document.getElementById('sale-id')?.value;
+        const date = document.getElementById('sale-date')?.value;
+        const customer = document.getElementById('sale-customer')?.value;
+        const product = document.getElementById('sale-product')?.value;
+        const unit = document.getElementById('sale-unit')?.value;
+        const paymentMethod = document.getElementById('sale-payment')?.value;
+        const paymentStatus = document.getElementById('sale-status')?.value;
+        const notes = document.getElementById('sale-notes')?.value;
+
+        if (!date || !product || !unit || !paymentMethod) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        const isMeatProduct = meatProducts.includes(product);
+
+        let saleData;
+        
+        if (isMeatProduct) {
+            // Get meat product values
+            const animalCount = parseInt(document.getElementById('meat-animal-count')?.value) || 0;
+            const weight = parseFloat(document.getElementById('meat-weight')?.value) || 0;
+            const weightUnit = document.getElementById('meat-weight-unit')?.value;
+            const unitPrice = parseFloat(document.getElementById('meat-price')?.value) || 0;
             
-            // Save to localStorage (in a real app, this would be sent to a server)
-            const sentEmails = JSON.parse(localStorage.getItem('farm-sent-emails') || '[]');
-            emailData.status = 'sent';
-            sentEmails.push(emailData);
-            localStorage.setItem('farm-sent-emails', JSON.stringify(sentEmails));
+            // Convert weight to kg for calculation
+            let weightInKg = weight;
+            if (weightUnit === 'lbs') {
+                weightInKg = weight * 0.453592;
+            }
             
-            // Show success animation
-            sendBtn.classList.remove('sending-email');
-            sendBtn.classList.add('email-sent');
-            sendBtn.innerHTML = '✓ Sent!';
+            const totalAmount = weightInKg * unitPrice;
             
-            // Show success notification
-            const recipientCount = emailAddresses.length;
-            const recipientText = recipientCount === 1 ? 'recipient' : 'recipients';
-            this.showNotification(`Report sent to ${recipientCount} ${recipientText}`, 'success');
+            saleData = {
+                id: saleId || 'SALE-' + Date.now().toString().slice(-6),
+                date: date,
+                customer: customer || 'Walk-in',
+                product: product,
+                unit: unit,
+                quantity: animalCount, // Store animal count as quantity for stock
+                unitPrice: unitPrice,
+                totalAmount: totalAmount,
+                paymentMethod: paymentMethod,
+                paymentStatus: paymentStatus || 'paid',
+                notes: notes,
+                weight: weight,
+                weightUnit: weightUnit,
+                animalCount: animalCount,
+                priceUnit: 'per-kg',
+                avgWeightPerAnimal: animalCount > 0 ? weight / animalCount : 0,
+                avgValuePerAnimal: animalCount > 0 ? totalAmount / animalCount : 0
+            };
+        } else {
+            // Get standard product values
+            const quantity = parseFloat(document.getElementById('standard-quantity')?.value) || 0;
+            const unitPrice = parseFloat(document.getElementById('standard-price')?.value) || 0;
+            const totalAmount = quantity * unitPrice;
             
-            // Close modal after delay
-            setTimeout(() => {
-                this.hideEmailModal();
-                // Reset button state
-                setTimeout(() => {
-                    sendBtn.classList.remove('email-sent');
-                    sendBtn.innerHTML = originalText;
-                    sendBtn.disabled = false;
-                }, 500);
-            }, 1000);
-            
-        } catch (error) {
-            console.error('Error sending email:', error);
-            
-            // Reset button state
-            sendBtn.classList.remove('sending-email');
-            sendBtn.disabled = false;
-            sendBtn.innerHTML = originalText;
-            
-            this.showNotification('Failed to send email. Please try again.', 'error');
+            saleData = {
+                id: saleId || 'SALE-' + Date.now().toString().slice(-6),
+                date: date,
+                customer: customer || 'Walk-in',
+                product: product,
+                unit: unit,
+                quantity: quantity,
+                unitPrice: unitPrice,
+                totalAmount: totalAmount,
+                paymentMethod: paymentMethod,
+                paymentStatus: paymentStatus || 'paid',
+                notes: notes
+            };
+        }
+
+        // Add production source if applicable
+        if (this.pendingProductionSale) {
+            saleData.productionSource = true;
+            saleData.productionSourceId = this.pendingProductionSale.id;
+            this.updateProductionAfterSale(this.pendingProductionSale.id, saleData);
+        }
+
+        // Validate data
+        const validation = this.validateSaleData(saleData);
+        if (!validation.isValid) {
+            this.showNotification(validation.errors.join(', '), 'error');
+            return;
+        }
+
+        if (saleId) {
+            this.updateSale(saleId, saleData);
+        } else {
+            this.addSale(saleData);
+        }
+
+        this.hideSaleModal();
+    },
+
+    updateProductionAfterSale(productionId, saleData) {
+        const productionModule = window.FarmModules.Production;
+        if (productionModule && productionModule.markAsSold) {
+            productionModule.markAsSold(productionId, {
+                saleId: saleData.id,
+                saleDate: saleData.date,
+                weightSold: saleData.weight,
+                animalsSold: saleData.animalCount,
+                revenue: saleData.totalAmount
+            });
         }
     },
 
-    showNotification(message, type = 'success') {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `email-notification ${type}`;
+    addSale(saleData) {
+        if (!window.FarmModules.appData.sales) {
+            window.FarmModules.appData.sales = [];
+        }
+
+        window.FarmModules.appData.sales.push(saleData);
+        this.saveData();
+        this.updateSummary();
+        this.updateSalesTable();
         
-        // Add notification styles if not present
-        if (!document.getElementById('email-notification-styles')) {
-            const style = document.createElement('style');
-            style.id = 'email-notification-styles';
-            style.textContent = `
-                .email-notification {
-                    position: fixed;
-                    top: 24px;
-                    right: 24px;
-                    padding: 16px 24px;
-                    background: var(--glass-bg);
-                    border: 1px solid var(--glass-border);
-                    border-radius: 12px;
-                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-                    backdrop-filter: blur(20px);
-                    z-index: 10000;
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    min-width: 300px;
-                    max-width: 400px;
-                    animation: slideInRight 0.4s ease-out;
-                    transform-origin: top right;
-                }
+        this.recordRevenueInIncome(saleData);
+        this.showNotification('Sale recorded successfully!', 'success');
+    },
 
-                .email-notification.success {
-                    border-left: 4px solid #22c55e;
-                }
+    recordRevenueInIncome(saleData) {
+        let incomeModule = window.FarmModules.Income || 
+                          window.FarmModules.IncomeExpenses || 
+                          window.FarmModules['income-expenses'];
+        
+        if (!incomeModule) return;
+        
+        const addRevenueMethod = incomeModule.addRevenueFromSale || 
+                                incomeModule.addIncomeFromSale ||
+                                incomeModule.addRevenue;
+        
+        if (!addRevenueMethod) return;
+        
+        const incomeRecord = {
+            id: 'INC-' + Date.now().toString().slice(-6),
+            date: saleData.date,
+            source: 'sales',
+            category: this.getIncomeCategory(saleData.product),
+            description: `Sale of ${this.formatProductName(saleData.product)} to ${saleData.customer || 'Walk-in'}`,
+            amount: saleData.totalAmount,
+            paymentMethod: saleData.paymentMethod,
+            paymentStatus: saleData.paymentStatus,
+            reference: saleData.id,
+            notes: saleData.notes
+        };
 
-                .email-notification.error {
-                    border-left: 4px solid #ef4444;
-                }
+        if (saleData.weight && saleData.weight > 0) {
+            incomeRecord.weight = saleData.weight;
+            incomeRecord.weightUnit = saleData.weightUnit;
+            incomeRecord.animalCount = saleData.animalCount;
+        }
 
-                .email-notification::before {
-                    content: '';
-                    display: block;
-                    width: 24px;
-                    height: 24px;
-                    border-radius: 50%;
-                    flex-shrink: 0;
-                }
+        addRevenueMethod.call(incomeModule, incomeRecord);
+    },
+    
+    editSale(saleId) {
+        const sales = window.FarmModules.appData.sales || [];
+        const sale = sales.find(s => s.id === saleId);
+        
+        if (!sale) {
+            console.error('❌ Sale not found:', saleId);
+            return;
+        }
 
-                .email-notification.success::before {
-                    background: #22c55e;
-                    content: '✓';
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    font-weight: bold;
-                }
-
-                .email-notification.error::before {
-                    background: #ef4444;
-                    content: '!';
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    font-weight: bold;
-                }
-
-                .email-notification-content {
-                    flex: 1;
-                    color: var(--text-primary);
-                    font-size: 14px;
-                    line-height: 1.4;
-                }
-
-                @keyframes slideInRight {
-                    from {
-                        opacity: 0;
-                        transform: translateX(100%);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateX(0);
-                    }
-                }
-
-                @keyframes slideOutRight {
-                    from {
-                        opacity: 1;
-                        transform: translateX(0);
-                    }
-                    to {
-                        opacity: 0;
-                        transform: translateX(100%);
-                    }
-                }
-            `;
-            document.head.appendChild(style);
+        // Populate form fields
+        document.getElementById('sale-id').value = sale.id;
+        document.getElementById('sale-date').value = sale.date;
+        document.getElementById('sale-customer').value = sale.customer || '';
+        document.getElementById('sale-product').value = sale.product;
+        document.getElementById('sale-unit').value = sale.unit;
+        document.getElementById('sale-payment').value = sale.paymentMethod;
+        document.getElementById('sale-status').value = sale.paymentStatus || 'paid';
+        document.getElementById('sale-notes').value = sale.notes || '';
+        
+        // Populate meat or standard fields
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        if (meatProducts.includes(sale.product)) {
+            document.getElementById('meat-animal-count').value = sale.animalCount || sale.quantity || '';
+            document.getElementById('meat-weight').value = sale.weight || '';
+            document.getElementById('meat-weight-unit').value = sale.weightUnit || 'kg';
+            document.getElementById('meat-price').value = sale.unitPrice;
+        } else {
+            document.getElementById('standard-quantity').value = sale.quantity;
+            document.getElementById('standard-price').value = sale.unitPrice;
         }
         
-        // Add notification content
-        notification.innerHTML = `
-            <div class="email-notification-content">${message}</div>
-        `;
+        document.getElementById('delete-sale').style.display = 'block';
+        document.getElementById('sale-modal-title').textContent = 'Edit Sale';
         
-        document.body.appendChild(notification);
-        
-        // Remove after 4 seconds with animation
-        setTimeout(() => {
-            notification.style.animation = 'slideOutRight 0.3s ease-in forwards';
-            setTimeout(() => notification.remove(), 300);
-        }, 4000);
+        this.handleProductChange();
+        this.calculateSaleTotal();
+        this.showSaleModal();
     },
 
-    // ==================== UTILITY METHODS ====================
-    formatCurrency(amount) {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 2
-        }).format(amount);
+    updateSale(saleId, saleData) {
+        const sales = window.FarmModules.appData.sales || [];
+        const saleIndex = sales.findIndex(s => s.id === saleId);
+        
+        if (saleIndex !== -1) {
+            window.FarmModules.appData.sales[saleIndex] = {
+                ...sales[saleIndex],
+                ...saleData
+            };
+            
+            this.saveData();
+            this.updateSummary();
+            this.updateSalesTable();
+            
+            this.updateIncomeRecord(saleId, saleData);
+            this.showNotification('Sale updated successfully!', 'success');
+        }
     },
 
-    formatCategory(category) {
-        const categories = {
-            'egg-sales': 'Egg Sales',
-            'poultry-sales': 'Poultry Sales',
-            'crop-sales': 'Crop Sales',
-            'feed': 'Feed',
-            'medication': 'Medication',
-            'equipment': 'Equipment',
-            'labor': 'Labor',
-            'other': 'Other',
-            'uncategorized': 'Uncategorized'
+    updateIncomeRecord(saleId, saleData) {
+        const incomeModule = window.FarmModules.Income;
+        if (incomeModule && incomeModule.updateRevenueFromSale) {
+            incomeModule.updateRevenueFromSale(saleId, {
+                amount: saleData.totalAmount,
+                date: saleData.date,
+                description: `Sale of ${this.formatProductName(saleData.product)} to ${saleData.customer || 'Walk-in'}`,
+                paymentStatus: saleData.paymentStatus
+            });
+        }
+    },
+
+    deleteSale() {
+        const saleId = document.getElementById('sale-id')?.value;
+        
+        if (confirm('Are you sure you want to delete this sale?')) {
+            this.deleteSaleRecord(saleId);
+            this.hideSaleModal();
+        }
+    },
+
+    deleteSaleRecord(saleId) {
+        if (confirm('Are you sure you want to delete this sale?')) {
+            window.FarmModules.appData.sales = window.FarmModules.appData.sales.filter(s => s.id !== saleId);
+            this.removeIncomeRecord(saleId);
+            this.saveData();
+            this.updateSummary();
+            this.updateSalesTable();
+            this.showNotification('Sale deleted successfully', 'success');
+        }
+    },
+
+    removeIncomeRecord(saleId) {
+        const incomeModule = window.FarmModules.Income;
+        if (incomeModule && incomeModule.removeRevenueFromSale) {
+            incomeModule.removeRevenueFromSale(saleId);
+        }
+    },
+
+    // UTILITY METHODS
+    getProductIcon(product) {
+        const icons = {
+            'broilers-dressed': '🍗',
+            'broilers-live': '🐔',
+            'pork': '🐖',
+            'beef': '🐄',
+            'chicken-parts': '🍗',
+            'goat': '🐐',
+            'lamb': '🐑',
+            'layers': '🐓',
+            'chicks': '🐣',
+            'eggs': '🥚',
+            'tomatoes': '🍅',
+            'peppers': '🫑',
+            'cucumbers': '🥒',
+            'lettuce': '🥬',
+            'carrots': '🥕',
+            'potatoes': '🥔',
+            'milk': '🥛',
+            'cheese': '🧀',
+            'yogurt': '🥛',
+            'butter': '🧈',
+            'honey': '🍯',
+            'jam': '🍓',
+            'bread': '🍞'
         };
-        return categories[category] || this.formatText(category);
+        return icons[product] || '📦';
     },
 
     formatProductName(product) {
-        const products = {
-            'eggs': 'Eggs',
-            'broilers': 'Broilers',
+        const productNames = {
+            'broilers-dressed': 'Broilers (Dressed)',
+            'broilers-live': 'Broilers (Live)',
             'layers': 'Layers',
-            'poultry': 'Poultry',
-            'other': 'Other',
-            'unknown': 'Unknown'
+            'chicks': 'Baby Chicks',
+            'eggs': 'Eggs',
+            'pork': 'Pork',
+            'beef': 'Beef',
+            'chicken-parts': 'Chicken Parts',
+            'goat': 'Goat',
+            'lamb': 'Lamb',
+            'tomatoes': 'Tomatoes',
+            'peppers': 'Peppers',
+            'cucumbers': 'Cucumbers',
+            'lettuce': 'Lettuce',
+            'carrots': 'Carrots',
+            'potatoes': 'Potatoes',
+            'milk': 'Milk',
+            'cheese': 'Cheese',
+            'yogurt': 'Yogurt',
+            'butter': 'Butter',
+            'honey': 'Honey',
+            'jam': 'Jam/Preserves',
+            'bread': 'Bread',
+            'other': 'Other'
         };
-        return products[product] || this.formatText(product);
+        return productNames[product] || product;
     },
 
-    formatQuality(quality) {
-        const qualities = {
-            'grade-a': 'Grade A',
-            'grade-b': 'Grade B',
-            'grade-c': 'Grade C',
-            'excellent': 'Excellent',
-            'good': 'Good',
-            'poor': 'Poor',
-            'rejects': 'Rejects',
-            'unknown': 'Unknown'
+    getIncomeCategory(product) {
+        const categories = {
+            'broilers-dressed': 'meat-poultry',
+            'broilers-live': 'livestock',
+            'pork': 'meat-pork',
+            'beef': 'meat-beef',
+            'chicken-parts': 'meat-poultry',
+            'goat': 'meat-other',
+            'lamb': 'meat-other',
+            'layers': 'livestock',
+            'chicks': 'livestock',
+            'eggs': 'eggs',
+            'tomatoes': 'vegetables',
+            'peppers': 'vegetables',
+            'cucumbers': 'vegetables',
+            'lettuce': 'vegetables',
+            'carrots': 'vegetables',
+            'potatoes': 'vegetables',
+            'milk': 'dairy',
+            'cheese': 'dairy',
+            'yogurt': 'dairy',
+            'butter': 'dairy',
+            'honey': 'other',
+            'jam': 'other',
+            'bread': 'other'
         };
-        return qualities[quality] || this.formatText(quality);
+        return categories[product] || 'other';
     },
 
-    formatCause(cause) {
-        const causes = {
-            'natural': 'Natural Causes',
-            'disease': 'Disease',
-            'predator': 'Predator',
-            'accident': 'Accident',
-            'heat-stress': 'Heat Stress',
-            'other': 'Other',
-            'unknown': 'Unknown'
-        };
-        return causes[cause] || this.formatText(cause);
+    formatCurrency(amount) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(amount);
     },
 
-    formatFeedType(feedType) {
-        const types = {
-            'starter': 'Starter',
-            'grower': 'Grower',
-            'finisher': 'Finisher',
-            'layer': 'Layer',
-            'unknown': 'Unknown'
-        };
-        return types[feedType] || this.formatText(feedType);
+    formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
     },
 
-    formatText(text) {
-        return text
-            .split('-')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ');
+    updateSummary() {
+        const today = new Date().toISOString().split('T')[0];
+        const sales = window.FarmModules.appData.sales || [];
+        
+        const todaySales = sales
+            .filter(sale => sale.date === today)
+            .reduce((sum, sale) => sum + sale.totalAmount, 0);
+        
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        const meatSales = sales.filter(sale => meatProducts.includes(sale.product));
+        const totalMeatWeight = meatSales.reduce((sum, sale) => sum + (sale.weight || 0), 0);
+        const totalAnimalsSold = meatSales.reduce((sum, sale) => sum + (sale.animalCount || sale.quantity || 0), 0);
+
+        this.updateElement('today-sales', this.formatCurrency(todaySales));
+        this.updateElement('total-meat-weight', totalMeatWeight.toFixed(2));
+        this.updateElement('total-animals', totalAnimalsSold);
+        this.updateElement('total-sales', sales.length);
     },
 
-    getFinancialInsights(income, expenses, netProfit, profitMargin) {
-        if (netProfit < 0) {
-            return "⚠️ Your farm is operating at a loss. Consider reviewing expenses and increasing revenue streams.";
-        } else if (profitMargin < 10) {
-            return "📈 Profit margin is low. Focus on cost optimization and premium product offerings.";
-        } else if (profitMargin > 25) {
-            return "🎉 Excellent profitability! Consider reinvesting in farm expansion or improvements.";
-        } else {
-            return "✅ Healthy financial performance. Maintain current operations and monitor trends.";
+    updateElement(id, content) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = content;
         }
     },
 
-    getProductionInsights(totalProduction, mortalityRate, qualityDistribution) {
-        if (totalProduction === 0) return "No production data recorded. Start tracking your farm's output.";
-        if (mortalityRate > 10) return "⚠️ High mortality rate affecting production. Review flock management practices.";
-        if (qualityDistribution['excellent'] > (qualityDistribution['good'] || 0)) {
-            return "✅ Excellent quality production! Maintain current standards and practices.";
+    updateSalesTable() {
+        const periodFilter = document.getElementById('period-filter');
+        const period = periodFilter ? periodFilter.value : 'today';
+        const salesTable = document.getElementById('sales-table');
+        if (salesTable) {
+            salesTable.innerHTML = this.renderSalesTable(period);
         }
-        return "Good production levels. Focus on quality improvement and mortality reduction.";
     },
 
-    getSalesInsights(salesCount, totalSales) {
-        if (salesCount === 0) return "No sales recorded yet. Focus on marketing and customer acquisition.";
-        if (totalSales < 1000) return "Sales are starting. Consider expanding product offerings and marketing efforts.";
-        if (totalSales > 5000) return "Strong sales performance! Consider scaling operations and exploring new markets.";
-        return "Steady sales performance. Continue current strategies and monitor customer feedback.";
+    generateDailyReport() {
+        // Daily report generation code
+        this.showDailyReportModal();
     },
 
-    getHealthRecommendations(mortalityRate, causeBreakdown) {
-        if (mortalityRate > 10) return "⚠️ High mortality rate detected! Immediate veterinary consultation recommended.";
-        if (mortalityRate > 5) return "Monitor flock health closely. Review feeding, housing, and environmental conditions.";
-        if (causeBreakdown.disease > 0) return "Disease cases detected. Implement biosecurity measures and consider vaccination.";
-        return "✅ Good flock health. Maintain current management practices and regular monitoring.";
+    generateMeatSalesReport() {
+        // Meat sales report generation code
+        this.showMeatSalesModal();
     },
 
-    calculateFarmScore(stats) {
-        let score = 50;
-        
-        // Profit contribution
-        if (stats.netProfit > 0) score += 20;
-        else score -= 20;
-        
-        // Production contribution
-        if (stats.totalProduction > 1000) score += 15;
-        else if (stats.totalProduction > 500) score += 10;
-        
-        // Inventory health
-        if (stats.lowStockItems === 0) score += 15;
-        else score -= stats.lowStockItems * 5;
-        
-        return Math.max(0, Math.min(100, Math.round(score)));
-    },
-
-    getFarmStatus(stats) {
-        const score = this.calculateFarmScore(stats);
-        
-        if (score >= 80) return 'Excellent';
-        if (score >= 60) return 'Good';
-        if (score >= 40) return 'Fair';
-        return 'Needs Improvement';
-    },
-
-    getFarmStatusColor(stats) {
-        const score = this.calculateFarmScore(stats);
-        
-        if (score >= 80) return '#22c55e';
-        if (score >= 60) return '#3b82f6';
-        if (score >= 40) return '#f59e0b';
-        return '#ef4444';
-    },
-
-    getOverallAssessment(stats) {
-        const score = this.calculateFarmScore(stats);
-        
-        if (score >= 80) {
-            return "Your farm is performing exceptionally well! Strong financial results, good production levels, and healthy inventory management. Consider expansion opportunities and continue current best practices.";
-        } else if (score >= 60) {
-            return "Good overall performance with room for improvement. Focus on increasing profitability and reducing low stock items. Maintain current production levels and monitor trends closely.";
-        } else if (score >= 40) {
-            return "Farm performance is fair. Review financial operations, improve inventory management, and consider consulting with agricultural experts. There's significant potential for improvement.";
-        } else {
-            return "Immediate attention required. Review all aspects of farm operations including finances, production, and inventory. Consider consulting with farm management experts to develop a turnaround strategy.";
+    showNotification(message, type = 'success') {
+        if (window.FarmModules && window.FarmModules.notify) {
+            window.FarmModules.notify(message, type);
+            return;
         }
+        console.log(`${type}: ${message}`);
+        alert(message);
+    },
+
+    printDailyReport() {
+        // Print daily report
+    },
+
+    printMeatSalesReport() {
+        // Print meat sales report
+    },
+
+    cleanup() {
+        console.log('🧹 Cleaning up Sales Records...');
+        this.initialized = false;
+        this.pendingProductionSale = null;
     }
 };
 
-// ==================== REGISTRATION ====================
-console.log('📊 Reports module loaded successfully!');
+// Register module
+console.log('✅ Enhanced Sales Records module loaded successfully!');
 
-// Register the module with FarmModules framework
-if (window.FarmModules) {
-    window.FarmModules.registerModule('reports', ReportsModule);
-    console.log('✅ Reports module registered successfully!');
+if (window.FarmModules && window.FarmModules.registerModule) {
+    window.FarmModules.registerModule('sales-record', SalesRecordModule);
+    console.log('📝 Sales Record module registered with FarmModules framework');
 } else {
-    console.error('❌ FarmModules framework not found!');
-    const checkFarmModules = setInterval(() => {
-        if (window.FarmModules) {
-            window.FarmModules.registerModule('reports', ReportsModule);
-            console.log('✅ Reports module registered (delayed)!');
-            clearInterval(checkFarmModules);
-        }
-    }, 100);
+    console.warn('⚠️ FarmModules framework not available, registering globally');
+    window.FarmModules = window.FarmModules || {};
+    window.FarmModules.SalesRecord = SalesRecordModule;
+    
+    if (window.FarmModules.modules) {
+        window.FarmModules.modules['sales-record'] = SalesRecordModule;
+    }
+}
+
+try {
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = SalesRecordModule;
+    }
+} catch (e) {
+    // Not in Node.js environment, ignore
 }
