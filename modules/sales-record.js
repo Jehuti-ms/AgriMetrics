@@ -104,6 +104,7 @@ const SalesRecordModule = {
                 document.getElementById('standard-quantity').value = availableQuantity;
             }
             
+            // Set default price but allow override
             this.setDefaultPrice(productValue);
         }
         
@@ -620,6 +621,7 @@ const SalesRecordModule = {
             </div>
         `;
 
+        // Set today's date using DateUtils
         const todayInput = document.getElementById('sale-date');
         if (todayInput) {
             todayInput.value = today;
@@ -790,9 +792,11 @@ const SalesRecordModule = {
         `;
     },
 
+    // FIXED: CORRECTED SETUP EVENT LISTENERS
     setupEventListeners() {
         console.log('🔗 Setting up event listeners...');
         
+        // Quick sale form
         const quickSaleForm = document.getElementById('quick-sale-form');
         if (quickSaleForm) {
             quickSaleForm.addEventListener('submit', (e) => {
@@ -801,6 +805,7 @@ const SalesRecordModule = {
             });
         }
 
+        // Modal buttons
         const addSaleBtn = document.getElementById('add-sale');
         if (addSaleBtn) {
             addSaleBtn.addEventListener('click', () => this.showSaleModal());
@@ -816,11 +821,13 @@ const SalesRecordModule = {
         document.getElementById('daily-report-btn')?.addEventListener('click', () => this.generateDailyReport());
         document.getElementById('view-production-items')?.addEventListener('click', () => this.showProductionItems());
         
+        // Sale modal handlers
         document.getElementById('save-sale')?.addEventListener('click', () => this.saveSale());
         document.getElementById('delete-sale')?.addEventListener('click', () => this.deleteSale());
         document.getElementById('cancel-sale')?.addEventListener('click', () => this.hideSaleModal());
         document.getElementById('close-sale-modal')?.addEventListener('click', () => this.hideSaleModal());
         
+        // Report modal handlers
         document.getElementById('close-daily-report')?.addEventListener('click', () => this.hideDailyReportModal());
         document.getElementById('close-daily-report-btn')?.addEventListener('click', () => this.hideDailyReportModal());
         document.getElementById('print-daily-report')?.addEventListener('click', () => this.printDailyReport());
@@ -829,13 +836,17 @@ const SalesRecordModule = {
         document.getElementById('close-meat-sales-btn')?.addEventListener('click', () => this.hideMeatSalesModal());
         document.getElementById('print-meat-sales')?.addEventListener('click', () => this.printMeatSalesReport());
         
+        // Production items modal
         document.getElementById('close-production-items')?.addEventListener('click', () => this.hideProductionItemsModal());
         document.getElementById('close-production-items-btn')?.addEventListener('click', () => this.hideProductionItemsModal());
         
+        // Form field event listeners
         this.setupFormFieldListeners();
         
+        // Quick product change
         document.getElementById('quick-product')?.addEventListener('change', () => this.handleQuickProductChange());
 
+        // Filter
         const periodFilter = document.getElementById('period-filter');
         if (periodFilter) {
             periodFilter.addEventListener('change', (e) => {
@@ -843,12 +854,14 @@ const SalesRecordModule = {
             });
         }
 
+        // Close modals when clicking outside
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('popout-modal')) {
                 this.hideAllModals();
             }
         });
 
+        // Edit/delete sale buttons (delegated)
         document.addEventListener('click', (e) => {
             if (e.target.closest('.edit-sale')) {
                 const saleId = e.target.closest('.edit-sale').dataset.id;
@@ -865,11 +878,13 @@ const SalesRecordModule = {
     },
 
     setupFormFieldListeners() {
+        // Product change
         const productSelect = document.getElementById('sale-product');
         if (productSelect) {
             productSelect.addEventListener('change', () => this.handleProductChange());
         }
         
+        // Real-time total calculation
         const fieldsToWatch = [
             'standard-quantity',
             'standard-price',
@@ -885,6 +900,7 @@ const SalesRecordModule = {
             }
         });
         
+        // Weight unit change - for dynamic label updates
         const weightUnit = document.getElementById('meat-weight-unit');
         if (weightUnit) {
             weightUnit.addEventListener('change', () => {
@@ -902,6 +918,30 @@ const SalesRecordModule = {
         return `${year}-${month}-${day}`;
     },
 
+    // ADDED: Date formatting helper
+    formatDateForInput(dateString) {
+        if (!dateString) return '';
+        
+        if (window.DateUtils) {
+            return window.DateUtils.toInputFormat(dateString);
+        }
+        
+        try {
+            const date = new Date(dateString);
+            
+            if (isNaN(date.getTime())) return '';
+            
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}`;
+        } catch (e) {
+            console.error('Error formatting date:', e);
+            return '';
+        }
+    },
+
     handleProductChange() {
         const productSelect = document.getElementById('sale-product');
         if (!productSelect) return;
@@ -916,11 +956,13 @@ const SalesRecordModule = {
         const standardSummary = document.getElementById('standard-summary');
         
         if (isMeatProduct) {
+            // Show meat section
             if (meatSection) meatSection.style.display = 'block';
             if (meatSummary) meatSummary.style.display = 'block';
             if (standardSection) standardSection.style.display = 'none';
             if (standardSummary) standardSummary.style.display = 'none';
             
+            // Set appropriate defaults
             const unitSelect = document.getElementById('sale-unit');
             if (unitSelect) unitSelect.value = 'animals';
             
@@ -929,6 +971,7 @@ const SalesRecordModule = {
                 weightUnit.value = 'kg';
             }
             
+            // Set animal label
             const animalLabel = selectedValue === 'chicken-parts' ? 'Number of Packages' : 
                               selectedValue.includes('broilers') ? 'Number of Birds' : 
                               selectedValue === 'pork' ? 'Number of Pigs' :
@@ -941,19 +984,23 @@ const SalesRecordModule = {
                 animalLabelElement.textContent = animalLabel + ' *';
             }
             
+            // Update price unit label based on selected weight unit
             this.updatePriceUnitLabel();
             
+            // Clear standard fields
             const standardQuantity = document.getElementById('standard-quantity');
             const standardPrice = document.getElementById('standard-price');
             if (standardQuantity) standardQuantity.value = '';
             if (standardPrice) standardPrice.value = '';
             
         } else {
+            // Show standard section
             if (meatSection) meatSection.style.display = 'none';
             if (meatSummary) meatSummary.style.display = 'none';
             if (standardSection) standardSection.style.display = 'block';
             if (standardSummary) standardSummary.style.display = 'block';
             
+            // Set appropriate unit
             const unitSelect = document.getElementById('sale-unit');
             if (unitSelect) {
                 if (selectedValue === 'eggs') {
@@ -967,6 +1014,7 @@ const SalesRecordModule = {
                 }
             }
             
+            // Update standard price unit label
             const standardPriceUnitLabel = document.getElementById('standard-price-unit-label');
             if (standardPriceUnitLabel) {
                 standardPriceUnitLabel.textContent = selectedValue === 'eggs' ? 'per dozen' : 
@@ -975,6 +1023,7 @@ const SalesRecordModule = {
                                                    'per kg';
             }
             
+            // Clear meat fields
             const meatAnimalCount = document.getElementById('meat-animal-count');
             const meatWeight = document.getElementById('meat-weight');
             const meatPrice = document.getElementById('meat-price');
@@ -1028,17 +1077,20 @@ const SalesRecordModule = {
         let total = 0;
         
         if (meatProducts.includes(product)) {
+            // Meat product calculation
             const animalCount = parseFloat(document.getElementById('meat-animal-count')?.value) || 0;
             const weight = parseFloat(document.getElementById('meat-weight')?.value) || 0;
             const weightUnit = document.getElementById('meat-weight-unit')?.value;
             const pricePerUnit = parseFloat(document.getElementById('meat-price')?.value) || 0;
             
+            // Calculate based on selected unit
             if (weightUnit === 'lbs') {
                 total = weight * pricePerUnit;
             } else {
                 total = weight * pricePerUnit;
             }
             
+            // Update summary
             const meatSummary = document.getElementById('meat-summary-info');
             const avgWeightElement = document.getElementById('meat-avg-weight');
             const avgValueElement = document.getElementById('meat-avg-value');
@@ -1061,6 +1113,7 @@ const SalesRecordModule = {
                 }
             }
         } else {
+            // Standard product calculation
             const quantity = parseFloat(document.getElementById('standard-quantity')?.value) || 0;
             const price = parseFloat(document.getElementById('standard-price')?.value) || 0;
             total = quantity * price;
@@ -1077,6 +1130,7 @@ const SalesRecordModule = {
         }
     },
 
+    // FIXED: CORRECTED SHOW SALE MODAL FOR NEW SALE
     showSaleModal() {
         console.log('🆕 Showing modal for NEW sale');
         
@@ -1086,21 +1140,27 @@ const SalesRecordModule = {
             modal.classList.remove('hidden');
         }
         
+        // CRITICAL: Clear the sale ID to indicate this is a new sale
         const saleIdInput = document.getElementById('sale-id');
         if (saleIdInput) {
             saleIdInput.value = '';
+            console.log('✅ Cleared sale ID for new sale');
         }
         
+        // Set today's date
         const dateInput = document.getElementById('sale-date');
         if (dateInput) {
             dateInput.value = window.DateUtils ? window.DateUtils.getToday() : this.getTodayFallback();
         }
         
+        // RESET THE FORM COMPLETELY for new sale
         const form = document.getElementById('sale-form');
         if (form) {
             form.reset();
+            console.log('✅ Form reset for new sale');
         }
         
+        // Set default values
         const unitSelect = document.getElementById('sale-unit');
         if (unitSelect) unitSelect.value = '';
         
@@ -1113,10 +1173,12 @@ const SalesRecordModule = {
         const paymentStatus = document.getElementById('sale-status');
         if (paymentStatus) paymentStatus.value = 'paid';
         
+        // Set modal for new sale
         document.getElementById('sale-modal-title').textContent = 'Record Sale';
         document.getElementById('delete-sale').style.display = 'none';
         document.getElementById('production-source-notice').style.display = 'none';
         
+        // Clear specific fields to be sure
         const fieldsToClear = [
             'sale-customer',
             'sale-notes',
@@ -1132,22 +1194,27 @@ const SalesRecordModule = {
             if (field) field.value = '';
         });
         
+        // Set default product if from production
         if (this.pendingProductionSale) {
             this.prefillFromProduction(this.pendingProductionSale);
             this.showProductionSourceNotice();
         } else {
+            // Set default to empty
             const productSelect = document.getElementById('sale-product');
             if (productSelect) productSelect.value = '';
         }
         
+        // Initialize product handling
         setTimeout(() => {
             this.handleProductChange();
+            console.log('✅ Product handling initialized for new sale');
         }, 10);
         
+        // Re-attach form field listeners
         this.setupFormFieldListeners();
     },
 
-    // FIXED editSale METHOD with DateUtils
+    // FIXED: CORRECTED EDIT SALE METHOD
     editSale(saleId) {
         console.log('🔄 Edit sale clicked:', saleId);
         
@@ -1161,60 +1228,37 @@ const SalesRecordModule = {
         }
 
         console.log('📝 Found sale to edit:', sale);
-        console.log('📅 Original sale date:', sale.date);
 
+        // HIDE ALL MODALS FIRST
         this.hideAllModals();
         
+        // MANUALLY SHOW THE MODAL WITHOUT CALLING showSaleModal()
         const modal = document.getElementById('sale-modal');
         if (modal) {
             modal.classList.remove('hidden');
+            console.log('✅ Modal shown');
         }
         
+        // MANUALLY POPULATE ALL FIELDS - DO NOT RESET ANYTHING
+        
+        // Set the sale ID FIRST
         const saleIdInput = document.getElementById('sale-id');
         if (saleIdInput) {
             saleIdInput.value = sale.id;
+            console.log('✅ Set sale ID:', sale.id);
         }
         
+        // Set the modal title
         document.getElementById('sale-modal-title').textContent = 'Edit Sale';
         document.getElementById('delete-sale').style.display = 'block';
         document.getElementById('production-source-notice').style.display = 'none';
         
-        // FIXED DATE HANDLING
+        // Populate basic fields
         const dateInput = document.getElementById('sale-date');
         if (dateInput) {
-            let displayDate;
-            
-            // Use DateUtils if available
-            if (window.DateUtils && window.DateUtils.formatDateForInput) {
-                displayDate = window.DateUtils.formatDateForInput(sale.date);
-                console.log('✅ Using DateUtils to format date:', sale.date, '->', displayDate);
-            } else {
-                // Fallback: Direct parsing
-                console.warn('⚠️ DateUtils not available, using fallback');
-                try {
-                    // If date is already YYYY-MM-DD
-                    if (typeof sale.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(sale.date)) {
-                        displayDate = sale.date;
-                    } else {
-                        // Parse as Date
-                        const dateObj = new Date(sale.date);
-                        if (!isNaN(dateObj.getTime())) {
-                            const year = dateObj.getFullYear();
-                            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-                            const day = String(dateObj.getDate()).padStart(2, '0');
-                            displayDate = `${year}-${month}-${day}`;
-                        } else {
-                            displayDate = sale.date;
-                        }
-                    }
-                } catch (e) {
-                    console.error('Error parsing date:', e);
-                    displayDate = sale.date;
-                }
-            }
-            
-            dateInput.value = displayDate || '';
-            console.log('📅 Date input set to:', dateInput.value);
+            const displayDate = this.formatDateForInput(sale.date);
+            dateInput.value = displayDate;
+            console.log('✅ Set date:', displayDate, 'from original:', sale.date);
         }
         
         document.getElementById('sale-customer').value = sale.customer || '';
@@ -1224,44 +1268,73 @@ const SalesRecordModule = {
         document.getElementById('sale-status').value = sale.paymentStatus || 'paid';
         document.getElementById('sale-notes').value = sale.notes || '';
         
+        console.log('✅ Basic fields populated');
+        
+        // Populate meat or standard fields
         const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
         if (meatProducts.includes(sale.product)) {
-            document.getElementById('meat-section').style.display = 'block';
-            document.getElementById('standard-section').style.display = 'none';
-            document.getElementById('meat-summary').style.display = 'block';
-            document.getElementById('standard-summary').style.display = 'none';
+            console.log('✅ This is a meat product');
             
+            // Show meat section, hide standard section
+            const meatSection = document.getElementById('meat-section');
+            const standardSection = document.getElementById('standard-section');
+            const meatSummary = document.getElementById('meat-summary');
+            const standardSummary = document.getElementById('standard-summary');
+            
+            if (meatSection) meatSection.style.display = 'block';
+            if (standardSection) standardSection.style.display = 'none';
+            if (meatSummary) meatSummary.style.display = 'block';
+            if (standardSummary) standardSummary.style.display = 'none';
+            
+            // Populate meat fields
             document.getElementById('meat-animal-count').value = sale.animalCount || sale.quantity || '';
             document.getElementById('meat-weight').value = sale.weight || '';
             document.getElementById('meat-weight-unit').value = sale.weightUnit || 'kg';
             document.getElementById('meat-price').value = sale.unitPrice || '';
             
+            // Clear standard fields
             document.getElementById('standard-quantity').value = '';
             document.getElementById('standard-price').value = '';
             
+            // Update price unit label
             setTimeout(() => {
                 this.updatePriceUnitLabel();
             }, 10);
             
         } else {
-            document.getElementById('meat-section').style.display = 'none';
-            document.getElementById('standard-section').style.display = 'block';
-            document.getElementById('meat-summary').style.display = 'none';
-            document.getElementById('standard-summary').style.display = 'block';
+            console.log('✅ This is a standard product');
             
+            // Show standard section, hide meat section
+            const meatSection = document.getElementById('meat-section');
+            const standardSection = document.getElementById('standard-section');
+            const meatSummary = document.getElementById('meat-summary');
+            const standardSummary = document.getElementById('standard-summary');
+            
+            if (meatSection) meatSection.style.display = 'none';
+            if (standardSection) standardSection.style.display = 'block';
+            if (meatSummary) meatSummary.style.display = 'none';
+            if (standardSummary) standardSummary.style.display = 'block';
+            
+            // Populate standard fields
             document.getElementById('standard-quantity').value = sale.quantity || '';
             document.getElementById('standard-price').value = sale.unitPrice || '';
             
+            // Clear meat fields
             document.getElementById('meat-animal-count').value = '';
             document.getElementById('meat-weight').value = '';
             document.getElementById('meat-price').value = '';
         }
         
+        // Calculate total
         setTimeout(() => {
             this.calculateSaleTotal();
+            console.log('✅ Total calculated');
         }, 100);
         
+        // Re-attach event listeners
         this.setupFormFieldListeners();
+        
+        console.log('✅ Edit sale modal ready');
     },
 
     showProductionSourceNotice() {
@@ -1415,6 +1488,7 @@ const SalesRecordModule = {
         
         const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
         if (meatProducts.includes(saleData.product)) {
+            // Validate meat product fields
             if (!saleData.weight || saleData.weight <= 0) {
                 errors.push('Weight must be greater than 0');
             }
@@ -1425,6 +1499,7 @@ const SalesRecordModule = {
                 errors.push('Price must be greater than 0');
             }
         } else {
+            // Validate standard product fields
             if (!saleData.quantity || saleData.quantity <= 0) {
                 errors.push('Quantity must be greater than 0');
             }
@@ -1450,12 +1525,9 @@ const SalesRecordModule = {
             return;
         }
 
+        // FIXED: Use DateUtils for proper date handling
         const today = window.DateUtils ? window.DateUtils.getToday() : this.getTodayFallback();
-        let storageDate = today;
-        
-        if (window.DateUtils && window.DateUtils.toStorageFormat) {
-            storageDate = window.DateUtils.toStorageFormat(today);
-        }
+        const storageDate = window.DateUtils ? window.DateUtils.toStorageFormat(today) : today;
 
         const saleData = {
             id: 'SALE-' + Date.now().toString().slice(-6),
@@ -1472,9 +1544,11 @@ const SalesRecordModule = {
 
         this.addSale(saleData);
         
+        // Reset the form
         const form = document.getElementById('quick-sale-form');
         if (form) {
             form.reset();
+            // Set default unit
             const unitSelect = document.getElementById('quick-unit');
             if (unitSelect) unitSelect.value = 'kg';
         }
@@ -1482,6 +1556,7 @@ const SalesRecordModule = {
         this.showNotification('Quick sale recorded!', 'success');
     },
 
+    // FIXED: ADD THIS MISSING METHOD
     addSale(saleData) {
         if (!saleData.id) {
             saleData.id = 'SALE-' + Date.now();
@@ -1493,6 +1568,7 @@ const SalesRecordModule = {
             return false;
         }
         
+        // Ensure total amount is calculated
         if (!saleData.totalAmount) {
             if (saleData.weight && saleData.unitPrice) {
                 saleData.totalAmount = saleData.weight * saleData.unitPrice;
@@ -1501,10 +1577,12 @@ const SalesRecordModule = {
             }
         }
         
+        // If this sale is from production, update production module
         if (this.pendingProductionSale) {
             saleData.productionSource = true;
             saleData.productionItemId = this.pendingProductionSale.id;
             
+            // Update production module to mark item as sold
             const productionModule = window.FarmModules.Production;
             if (productionModule && productionModule.markAsSold) {
                 const soldQuantity = saleData.animalCount || saleData.quantity;
@@ -1522,9 +1600,11 @@ const SalesRecordModule = {
         return true;
     },
 
+    // FIXED: CORRECTED SAVE SALE METHOD
     saveSale() {
         console.log('💾 Saving sale...');
         
+        // Get the sale ID to determine if we're updating or creating
         const saleIdInput = document.getElementById('sale-id');
         const saleId = saleIdInput?.value;
         
@@ -1539,26 +1619,16 @@ const SalesRecordModule = {
         }
     },
 
+    // FIXED: CORRECTED CREATE NEW SALE METHOD
     createNewSale() {
+        // Gather form data
         const product = document.getElementById('sale-product')?.value;
-        const dateInputValue = document.getElementById('sale-date')?.value;
+        const date = document.getElementById('sale-date')?.value;
         const customer = document.getElementById('sale-customer')?.value || 'Walk-in';
         const paymentMethod = document.getElementById('sale-payment')?.value;
         const paymentStatus = document.getElementById('sale-status')?.value;
         const notes = document.getElementById('sale-notes')?.value;
         const unit = document.getElementById('sale-unit')?.value || 'animals';
-        
-        console.log('📅 Raw date for new sale:', dateInputValue);
-        
-        // FIXED: Use DateUtils for date storage
-        let storageDate;
-        if (window.DateUtils && window.DateUtils.toStorageFormat) {
-            storageDate = window.DateUtils.toStorageFormat(dateInputValue);
-            console.log('✅ New sale date formatted:', dateInputValue, '->', storageDate);
-        } else {
-            storageDate = dateInputValue;
-            console.log('⚠️ DateUtils not available, using date as-is:', storageDate);
-        }
         
         const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
         const isMeatProduct = meatProducts.includes(product);
@@ -1566,6 +1636,7 @@ const SalesRecordModule = {
         let saleData;
         
         if (isMeatProduct) {
+            // Meat product data
             const animalCount = parseFloat(document.getElementById('meat-animal-count')?.value) || 0;
             const weight = parseFloat(document.getElementById('meat-weight')?.value) || 0;
             const weightUnit = document.getElementById('meat-weight-unit')?.value || 'kg';
@@ -1582,7 +1653,7 @@ const SalesRecordModule = {
                 unitPrice: price,
                 totalAmount: total,
                 unit: unit,
-                date: storageDate, // Use DateUtils formatted date
+                date: window.DateUtils ? window.DateUtils.toStorageFormat(date) : date,
                 customer: customer,
                 paymentMethod: paymentMethod,
                 paymentStatus: paymentStatus,
@@ -1590,6 +1661,7 @@ const SalesRecordModule = {
                 priceUnit: weightUnit === 'lbs' ? 'per-lb' : 'per-kg'
             };
         } else {
+            // Standard product data
             const quantity = parseFloat(document.getElementById('standard-quantity')?.value) || 0;
             const price = parseFloat(document.getElementById('standard-price')?.value) || 0;
             const total = quantity * price;
@@ -1601,7 +1673,7 @@ const SalesRecordModule = {
                 unitPrice: price,
                 totalAmount: total,
                 unit: unit,
-                date: storageDate, // Use DateUtils formatted date
+                date: window.DateUtils ? window.DateUtils.toStorageFormat(date) : date,
                 customer: customer,
                 paymentMethod: paymentMethod,
                 paymentStatus: paymentStatus,
@@ -1618,9 +1690,11 @@ const SalesRecordModule = {
         }
     },
 
+    // FIXED: CORRECTED UPDATE SALE METHOD
     updateSale(saleId) {
         console.log('📝 Updating sale ID:', saleId);
         
+        // Find the sale in the data
         const sales = window.FarmModules.appData.sales || [];
         const saleIndex = sales.findIndex(s => s.id === saleId);
         
@@ -1630,33 +1704,23 @@ const SalesRecordModule = {
             return;
         }
         
+        // Gather updated form data
         const product = document.getElementById('sale-product')?.value;
-        const dateInputValue = document.getElementById('sale-date')?.value;
+        const date = document.getElementById('sale-date')?.value;
         const customer = document.getElementById('sale-customer')?.value || 'Walk-in';
         const paymentMethod = document.getElementById('sale-payment')?.value;
         const paymentStatus = document.getElementById('sale-status')?.value;
         const notes = document.getElementById('sale-notes')?.value;
         const unit = document.getElementById('sale-unit')?.value || 'animals';
         
-        console.log('📅 Raw update date:', dateInputValue);
-        
-        // FIXED: Use DateUtils for date storage
-        let storageDate;
-        if (window.DateUtils && window.DateUtils.toStorageFormat) {
-            storageDate = window.DateUtils.toStorageFormat(dateInputValue);
-            console.log('✅ Update date formatted:', dateInputValue, '->', storageDate);
-        } else {
-            storageDate = dateInputValue;
-            console.log('⚠️ DateUtils not available, using date as-is:', storageDate);
-        }
-        
         const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
         const isMeatProduct = meatProducts.includes(product);
         
         let updatedSale = { ...sales[saleIndex] };
         
+        // Update common fields
         updatedSale.product = product;
-        updatedSale.date = storageDate; // Use DateUtils formatted date
+        updatedSale.date = window.DateUtils ? window.DateUtils.toStorageFormat(date) : date;
         updatedSale.customer = customer;
         updatedSale.paymentMethod = paymentMethod;
         updatedSale.paymentStatus = paymentStatus;
@@ -1664,6 +1728,7 @@ const SalesRecordModule = {
         updatedSale.unit = unit;
         
         if (isMeatProduct) {
+            // Update meat product fields
             const animalCount = parseFloat(document.getElementById('meat-animal-count')?.value) || 0;
             const weight = parseFloat(document.getElementById('meat-weight')?.value) || 0;
             const weightUnit = document.getElementById('meat-weight-unit')?.value || 'kg';
@@ -1678,9 +1743,11 @@ const SalesRecordModule = {
             updatedSale.totalAmount = total;
             updatedSale.priceUnit = weightUnit === 'lbs' ? 'per-lb' : 'per-kg';
             
+            // Remove standard fields if they exist
             delete updatedSale.standardQuantity;
             delete updatedSale.standardPrice;
         } else {
+            // Update standard product fields
             const quantity = parseFloat(document.getElementById('standard-quantity')?.value) || 0;
             const price = parseFloat(document.getElementById('standard-price')?.value) || 0;
             const total = quantity * price;
@@ -1689,6 +1756,7 @@ const SalesRecordModule = {
             updatedSale.unitPrice = price;
             updatedSale.totalAmount = total;
             
+            // Remove meat fields if they exist
             delete updatedSale.animalCount;
             delete updatedSale.weight;
             delete updatedSale.weightUnit;
@@ -1697,15 +1765,18 @@ const SalesRecordModule = {
         
         console.log('Updated sale data:', updatedSale);
         
+        // Validate the updated data
         const validation = this.validateSaleData(updatedSale);
         if (!validation.isValid) {
             this.showNotification(validation.errors.join(', '), 'error');
             return;
         }
         
+        // Update the sale in the array
         sales[saleIndex] = updatedSale;
         window.FarmModules.appData.sales = sales;
         
+        // Save and refresh
         this.saveData();
         this.renderModule();
         this.hideSaleModal();
@@ -1738,8 +1809,10 @@ const SalesRecordModule = {
             return;
         }
         
+        // Get the sale before deleting to check if it's from production
         const sale = sales[saleIndex];
         
+        // Remove the sale
         sales.splice(saleIndex, 1);
         window.FarmModules.appData.sales = sales;
         this.saveData();
@@ -1747,6 +1820,7 @@ const SalesRecordModule = {
         
         this.showNotification('Sale deleted successfully', 'success');
         
+        // If this sale was from production, we could potentially update production module
         if (sale.productionSource && sale.productionItemId) {
             console.log(`Note: Sale ${saleId} was from production item ${sale.productionItemId}. You may want to restore production quantities.`);
         }
@@ -1888,6 +1962,7 @@ const SalesRecordModule = {
                 </div>
             `;
         } else {
+            // Summary statistics
             const totalWeight = meatSales.reduce((sum, sale) => sum + (sale.weight || 0), 0);
             const totalRevenue = meatSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
             const totalAnimals = meatSales.reduce((sum, sale) => sum + (sale.animalCount || sale.quantity || 0), 0);
@@ -1915,6 +1990,7 @@ const SalesRecordModule = {
                 </div>
             `;
             
+            // Breakdown by product type
             const productBreakdown = {};
             meatSales.forEach(sale => {
                 if (!productBreakdown[sale.product]) {
@@ -1971,10 +2047,7 @@ const SalesRecordModule = {
                 </div>
             `;
             
-            const recentSales = meatSales
-                .sort((a, b) => new Date(b.date) - new Date(a.date))
-                .slice(0, 20);
-            
+            // Recent meat sales table
             reportHtml += `
                 <div>
                     <h4 style="color: var(--text-primary); margin-bottom: 12px;">Recent Meat Sales</h4>
@@ -1991,6 +2064,10 @@ const SalesRecordModule = {
                             </thead>
                             <tbody>
             `;
+            
+            const recentSales = meatSales
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 20);
             
             recentSales.forEach(sale => {
                 reportHtml += `
@@ -2108,8 +2185,9 @@ const SalesRecordModule = {
     formatDate(dateString) {
         if (!dateString) return 'N/A';
         if (window.DateUtils) {
-            return window.DateUtils.formatDateForDisplay(dateString);
+            return window.DateUtils.formatDate(dateString);
         }
+        // Fallback formatting
         try {
             const date = new Date(dateString);
             return date.toLocaleDateString();
@@ -2183,6 +2261,7 @@ const SalesRecordModule = {
         if (window.FarmModules && window.FarmModules.notify) {
             window.FarmModules.notify(message, type);
         } else {
+            // Fallback notification
             alert(`${type.toUpperCase()}: ${message}`);
         }
     },
@@ -2202,11 +2281,9 @@ const SalesRecordModule = {
 };
 
 // Register the module
-console.log('✅ Enhanced Sales Records module loaded');
-
-if (window.FarmModules && window.FarmModules.registerModule) {
-    window.FarmModules.registerModule('sales-record', SalesRecordModule);
-} else {
-    window.FarmModules = window.FarmModules || {};
-    window.FarmModules.SalesRecord = SalesRecordModule;
+if (typeof window.FarmModules === 'undefined') {
+    window.FarmModules = {};
 }
+window.FarmModules.SalesRecord = SalesRecordModule;
+
+console.log('✅ Enhanced Sales Records module loaded');
