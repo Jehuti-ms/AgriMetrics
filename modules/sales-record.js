@@ -1,6 +1,28 @@
 // modules/sales-record.js - FIXED DATE ISSUE
 console.log('💰 Loading Enhanced Sales Records module...');
 
+ready() {
+    console.log('✅ Sales Record module is ready');
+    return new Promise((resolve) => {
+        // Check if all dependencies are loaded
+        if (window.FarmModules && window.FarmModules.dateUtils) {
+            console.log('✅ Dependencies verified for Sales Record');
+            resolve(true);
+        } else {
+            console.warn('⚠️ Waiting for dependencies...');
+            // Try again after a short delay
+            setTimeout(() => {
+                if (window.FarmModules && window.FarmModules.dateUtils) {
+                    resolve(true);
+                } else {
+                    console.error('❌ Dependencies not available');
+                    resolve(false);
+                }
+            }, 500);
+        }
+    });
+}
+
 const SalesRecordModule = {
     name: 'sales-record',
     initialized: false,
@@ -299,7 +321,7 @@ const SalesRecordModule = {
                     </div>
                 </div>
 
-                <!-- Quick Actions --> // Edit/delete sale buttons (delegated) - UPDATED VERSION
+    // Edit/delete sale buttons (delegated) - UPDATED VERSION
     document.addEventListener('click', (e) => {
         const editBtn = e.target.closest('.edit-sale');
         const deleteBtn = e.target.closest('.delete-sale');
@@ -844,48 +866,52 @@ const SalesRecordModule = {
                                 }
                             }
                             
-                            const sourceBadge = sale.productionSource 
+                                                        const sourceBadge = sale.productionSource 
                                 ? '<span style="background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 10px; font-size: 10px; margin-left: 4px;">PROD</span>'
                                 : '';
                             
-                // In renderSalesTable method, update the action buttons section:
-        return `
-            <tr style="border-bottom: 1px solid var(--glass-border);">
-                <td style="padding: 12px 8px; color: var(--text-primary);">${this.formatDate(sale.date)}</td>
-                <td style="padding: 12px 8px; color: var(--text-primary);">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 18px;">${this.getProductIcon(sale.product)}</span>
-                        <span style="font-weight: 500;">${this.formatProductName(sale.product)}</span>
-                        ${sourceBadge}
-                    </div>
-                </td>
-                <td style="padding: 12px 8px; color: var(--text-secondary);">${sale.customer || 'Walk-in'}</td>
-                <td style="padding: 12px 8px; color: var(--text-primary);">${quantityInfo}</td>
-                <td style="padding: 12px 8px; color: var(--text-primary);">
-                    ${this.formatCurrency(sale.unitPrice)}
-                    ${sale.weightUnit === 'lbs' ? '/lb' : sale.weightUnit ? `/${sale.weightUnit}` : sale.priceUnit === 'per-lb' ? '/lb' : '/kg'}
-                </td>
-                <td style="padding: 12px 8px; color: var(--text-primary); font-weight: 600;">${this.formatCurrency(sale.totalAmount)}</td>
-                <td style="padding: 12px 8px; color: var(--text-secondary); font-size: 12px;">
-                    ${sale.productionSource ? 'Production' : 'Direct'}
-                </td>
-                <td style="padding: 12px 8px;">
-                    <div style="display: flex; gap: 4px;">
-                        <button type="button" class="btn-icon edit-sale" data-id="${sale.id}" 
-                                style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary);" 
-                                title="Edit">
-                            ✏️
-                        </button>
-                        <button type="button" class="btn-icon delete-sale" data-id="${sale.id}" 
-                                style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary);" 
-                                title="Delete">
-                            🗑️
-                        </button>
-                    </div>
-                </td>
-            </tr>
+                            return `
+                                <tr style="border-bottom: 1px solid var(--glass-border);">
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">${this.formatDate(sale.date)}</td>
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span style="font-size: 18px;">${this.getProductIcon(sale.product)}</span>
+                                            <span style="font-weight: 500;">${this.formatProductName(sale.product)}</span>
+                                            ${sourceBadge}
+                                        </div>
+                                    </td>
+                                    <td style="padding: 12px 8px; color: var(--text-secondary);">${sale.customer || 'Walk-in'}</td>
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">${quantityInfo}</td>
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">
+                                        ${this.formatCurrency(sale.unitPrice)}
+                                        ${sale.weightUnit === 'lbs' ? '/lb' : sale.weightUnit ? `/${sale.weightUnit}` : sale.priceUnit === 'per-lb' ? '/lb' : '/kg'}
+                                    </td>
+                                    <td style="padding: 12px 8px; color: var(--text-primary); font-weight: 600;">${this.formatCurrency(sale.totalAmount)}</td>
+                                    <td style="padding: 12px 8px; color: var(--text-secondary); font-size: 12px;">
+                                        ${sale.productionSource ? 'Production' : 'Direct'}
+                                    </td>
+                                    <td style="padding: 12px 8px;">
+                                        <div style="display: flex; gap: 4px;">
+                                            <button type="button" class="btn-icon edit-sale" data-id="${sale.id}" 
+                                                    style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary);" 
+                                                    title="Edit">
+                                                ✏️
+                                            </button>
+                                            <button type="button" class="btn-icon delete-sale" data-id="${sale.id}" 
+                                                    style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary);" 
+                                                    title="Delete">
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
         `;
-    
+        
     setupEventListeners() {
         // Quick sale form
         const quickSaleForm = document.getElementById('quick-sale-form');
@@ -944,13 +970,9 @@ const SalesRecordModule = {
             }
         });
 
-        // Fix the delete functionality
-
 // First, update the delete button handler in setupEventListeners
 setupEventListeners() {
-    // ... [rest of your existing setupEventListeners code] ...
-
-    // Edit/delete sale buttons (delegated) - UPDATED VERSION
+   // Edit/delete sale buttons (delegated) - UPDATED VERSION
     document.addEventListener('click', (e) => {
         const editBtn = e.target.closest('.edit-sale');
         const deleteBtn = e.target.closest('.delete-sale');
