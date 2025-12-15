@@ -1,28 +1,6 @@
 // modules/sales-record.js - FIXED DATE ISSUE
 console.log('💰 Loading Enhanced Sales Records module...');
 
-ready() {
-    console.log('✅ Sales Record module is ready');
-    return new Promise((resolve) => {
-        // Check if all dependencies are loaded
-        if (window.FarmModules && window.FarmModules.dateUtils) {
-            console.log('✅ Dependencies verified for Sales Record');
-            resolve(true);
-        } else {
-            console.warn('⚠️ Waiting for dependencies...');
-            // Try again after a short delay
-            setTimeout(() => {
-                if (window.FarmModules && window.FarmModules.dateUtils) {
-                    resolve(true);
-                } else {
-                    console.error('❌ Dependencies not available');
-                    resolve(false);
-                }
-            }, 500);
-        }
-    });
-}
-
 const SalesRecordModule = {
     name: 'sales-record',
     initialized: false,
