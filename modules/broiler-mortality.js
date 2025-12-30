@@ -1343,3 +1343,30 @@ if (window.FarmModules) {
     window.FarmModules.registerModule('broiler-mortality', BroilerMortalityModule);
     console.log('✅ Broiler Health & Mortality module registered with StyleManager integration');
 }
+
+// ==================== CORRECT REGISTRATION ====================
+// Add this at the VERY BOTTOM of each module file
+
+(function() {
+    // Get module name from the module object
+    const moduleName = SalesRecordModule.name || 'sales-record'; // Change for each module
+    
+    console.log(`📦 Registering ${moduleName} module...`);
+    
+    if (window.FarmModules) {
+        // Use the framework's registerModule method
+        FarmModules.registerModule(moduleName, SalesRecordModule); // Change for each module
+        
+        // Also set globally for backward compatibility
+        const propertyName = moduleName.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join('');
+        
+        window.FarmModules[propertyName] = SalesRecordModule; // Change for each module
+        
+        console.log(`✅ ${moduleName} registered as FarmModules.${propertyName}`);
+    } else {
+        console.error('❌ FarmModules framework not found');
+    }
+})();
+
