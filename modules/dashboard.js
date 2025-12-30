@@ -703,26 +703,18 @@ if (window.FarmModules) {
 }
 
 // ==================== CORRECT REGISTRATION ====================
-// Add this at the VERY BOTTOM of each module file
+// Add at the BOTTOM of dashboard.js
 
 (function() {
-    // Get module name from the module object
-    const moduleName = SalesRecordModule.name || 'sales-record'; // Change for each module
+    console.log('📦 Registering dashboard module...');
     
-    console.log(`📦 Registering ${moduleName} module...`);
+    // Use the module object defined in THIS file
+    const moduleName = 'dashboard';
+    const moduleObject = DashboardModule; // NOT SalesRecordModule!
     
     if (window.FarmModules) {
-        // Use the framework's registerModule method
-        FarmModules.registerModule(moduleName, SalesRecordModule); // Change for each module
-        
-        // Also set globally for backward compatibility
-        const propertyName = moduleName.split('-').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1)
-        ).join('');
-        
-        window.FarmModules[propertyName] = SalesRecordModule; // Change for each module
-        
-        console.log(`✅ ${moduleName} registered as FarmModules.${propertyName}`);
+        FarmModules.registerModule(moduleName, moduleObject);
+        console.log(`✅ ${moduleName} module registered successfully!`);
     } else {
         console.error('❌ FarmModules framework not found');
     }
