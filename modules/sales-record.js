@@ -2161,47 +2161,39 @@ window.FarmModules.SalesRecord = SalesRecordModule;
 
 console.log('✅ Enhanced Sales Records module loaded successfully');
 
-// ==================== UNIVERSAL MODULE REGISTRATION ====================
-(function registerModule() {
-    console.log(`📦 Registering ${moduleName} module...`);
+// ==================== FIXED REGISTRATION ====================
+// This will properly register with FarmModules framework
+(function() {
+    const moduleName = 'sales-record';
+    console.log(`📦 Registering ${moduleName} module with FarmModules...`);
     
-    // The module object name (ReportsModule, SalesRecordModule, etc)
-    const moduleObjectName = Object.keys(window).find(key => 
-        key.toLowerCase().includes(moduleName.toLowerCase()) && 
-        key.endsWith('Module')
-    );
-    
-    const moduleObject = moduleObjectName ? window[moduleObjectName] : null;
-    
-    if (!moduleObject) {
-        console.error(`❌ Module object not found for ${moduleName}`);
-        return;
+    if (window.FarmModules) {
+        // Method 1: Use registerModule if available
+        if (typeof FarmModules.registerModule === 'function') {
+            FarmModules.registerModule(moduleName, SalesRecordModule);
+            console.log(`✅ ${moduleName} registered via FarmModules.registerModule()`);
+        }
+        // Method 2: Directly add to modules Map
+        else {
+            // Ensure modules Map exists
+            FarmModules.modules = FarmModules.modules || new Map();
+            
+            // Add to modules Map
+            FarmModules.modules.set(moduleName, SalesRecordModule);
+            
+            // Also set as property for backward compatibility
+            FarmModules[moduleName] = SalesRecordModule;
+            FarmModules.SalesRecord = SalesRecordModule;
+            
+            console.log(`✅ ${moduleName} added to FarmModules.modules Map`);
+            console.log(`✅ Also available as FarmModules.${moduleName} and FarmModules.SalesRecord`);
+        }
+        
+        // Verify registration
+        console.log(`🔍 Verification: ${moduleName} in modules Map?`, 
+                   FarmModules.modules?.has(moduleName));
+    } else {
+        console.error('❌ FarmModules framework not found!');
     }
-    
-    // Ensure FarmModules exists
-    window.FarmModules = window.FarmModules || {};
-    window.FarmModules.modules = window.FarmModules.modules || {};
-    
-    // Register with multiple names for compatibility
-    const moduleNames = [
-        moduleName, // 'sales-record'
-        moduleName.replace(/-([a-z])/g, (g) => g[1].toUpperCase()), // 'salesRecord'
-        moduleName.split('-').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1)
-        ).join('') // 'SalesRecord'
-    ];
-    
-    // Remove duplicates
-    const uniqueNames = [...new Set(moduleNames)];
-    
-    uniqueNames.forEach(name => {
-        window.FarmModules[name] = moduleObject;
-        console.log(`   ✅ Registered as window.FarmModules.${name}`);
-    });
-    
-    // Also add to modules object
-    window.FarmModules.modules[moduleName] = moduleObject;
-    console.log(`   ✅ Added to window.FarmModules.modules.${moduleName}`);
-    
-    console.log(`✅ ${moduleName} module fully registered!`);
 })();
+
