@@ -2161,50 +2161,47 @@ window.FarmModules.SalesRecord = SalesRecordModule;
 
 console.log('✅ Enhanced Sales Records module loaded successfully');
 
-// ==================== REGISTRATION FIX ====================
-// MATCH THE PATTERN OF YOUR WORKING MODULES
-
-console.log('💰 Attempting to register SalesRecord module...');
-
-// Method 1: Check if registerModule exists (like other modules)
-if (window.FarmModules) {
-    // Check if registerModule function exists (from framework)
-    if (typeof window.FarmModules.registerModule === 'function') {
-        console.log('💰 Using registerModule() like other modules');
-        window.FarmModules.registerModule('sales-record', SalesRecordModule);
-    } 
-    // Fallback: Direct assignment
-    else {
-        console.log('💰 Direct assignment to FarmModules');
-        window.FarmModules.SalesRecord = SalesRecordModule;
-        window.FarmModules.modules = window.FarmModules.modules || {};
-        window.FarmModules.modules['sales-record'] = SalesRecordModule;
-    }
-    console.log('✅ SalesRecord module registered successfully');
-} else {
-    console.error('❌ FarmModules not found! Registration failed.');
+// ==================== UNIVERSAL MODULE REGISTRATION ====================
+(function registerModule() {
+    console.log(`📦 Registering ${moduleName} module...`);
     
-    // Emergency: Create FarmModules and register
-    window.FarmModules = {
-        SalesRecord: SalesRecordModule,
-        modules: {
-            'sales-record': SalesRecordModule
-        },
-        registerModule: function(name, module) {
-            this[name] = module;
-            this.modules = this.modules || {};
-            this.modules[name] = module;
-            console.log(`✅ Module '${name}' registered`);
-            return true;
-        }
-    };
-    console.log('⚠️ Created FarmModules and registered SalesRecord');
-}
-
-// Debug: Verify registration
-setTimeout(() => {
-    console.log('🔍 SalesRecord registration check:');
-    console.log('- window.FarmModules exists:', !!window.FarmModules);
-    console.log('- SalesRecord in FarmModules:', !!window.FarmModules?.SalesRecord);
-    console.log('- sales-record in modules:', !!window.FarmModules?.modules?.['sales-record']);
-}, 100);
+    // The module object name (ReportsModule, SalesRecordModule, etc)
+    const moduleObjectName = Object.keys(window).find(key => 
+        key.toLowerCase().includes(moduleName.toLowerCase()) && 
+        key.endsWith('Module')
+    );
+    
+    const moduleObject = moduleObjectName ? window[moduleObjectName] : null;
+    
+    if (!moduleObject) {
+        console.error(`❌ Module object not found for ${moduleName}`);
+        return;
+    }
+    
+    // Ensure FarmModules exists
+    window.FarmModules = window.FarmModules || {};
+    window.FarmModules.modules = window.FarmModules.modules || {};
+    
+    // Register with multiple names for compatibility
+    const moduleNames = [
+        moduleName, // 'sales-record'
+        moduleName.replace(/-([a-z])/g, (g) => g[1].toUpperCase()), // 'salesRecord'
+        moduleName.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join('') // 'SalesRecord'
+    ];
+    
+    // Remove duplicates
+    const uniqueNames = [...new Set(moduleNames)];
+    
+    uniqueNames.forEach(name => {
+        window.FarmModules[name] = moduleObject;
+        console.log(`   ✅ Registered as window.FarmModules.${name}`);
+    });
+    
+    // Also add to modules object
+    window.FarmModules.modules[moduleName] = moduleObject;
+    console.log(`   ✅ Added to window.FarmModules.modules.${moduleName}`);
+    
+    console.log(`✅ ${moduleName} module fully registered!`);
+})();
