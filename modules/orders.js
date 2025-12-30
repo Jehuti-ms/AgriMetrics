@@ -796,3 +796,48 @@ if (window.FarmModules) {
     window.FarmModules.registerModule('orders', OrdersModule);
     console.log('✅ Orders Management module registered');
 }
+
+// ==================== UNIVERSAL MODULE REGISTRATION ====================
+(function registerModule() {
+    console.log(`📦 Registering ${moduleName} module...`);
+    
+    // The module object name (ReportsModule, SalesRecordModule, etc)
+    const moduleObjectName = Object.keys(window).find(key => 
+        key.toLowerCase().includes(moduleName.toLowerCase()) && 
+        key.endsWith('Module')
+    );
+    
+    const moduleObject = moduleObjectName ? window[moduleObjectName] : null;
+    
+    if (!moduleObject) {
+        console.error(`❌ Module object not found for ${moduleName}`);
+        return;
+    }
+    
+    // Ensure FarmModules exists
+    window.FarmModules = window.FarmModules || {};
+    window.FarmModules.modules = window.FarmModules.modules || {};
+    
+    // Register with multiple names for compatibility
+    const moduleNames = [
+        moduleName, // 'sales-record'
+        moduleName.replace(/-([a-z])/g, (g) => g[1].toUpperCase()), // 'salesRecord'
+        moduleName.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join('') // 'SalesRecord'
+    ];
+    
+    // Remove duplicates
+    const uniqueNames = [...new Set(moduleNames)];
+    
+    uniqueNames.forEach(name => {
+        window.FarmModules[name] = moduleObject;
+        console.log(`   ✅ Registered as window.FarmModules.${name}`);
+    });
+    
+    // Also add to modules object
+    window.FarmModules.modules[moduleName] = moduleObject;
+    console.log(`   ✅ Added to window.FarmModules.modules.${moduleName}`);
+    
+    console.log(`✅ ${moduleName} module fully registered!`);
+})();
