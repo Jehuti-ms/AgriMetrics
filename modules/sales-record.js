@@ -2160,3 +2160,51 @@ window.FarmModules = window.FarmModules || {};
 window.FarmModules.SalesRecord = SalesRecordModule;
 
 console.log('✅ Enhanced Sales Records module loaded successfully');
+
+// ==================== REGISTRATION FIX ====================
+// MATCH THE PATTERN OF YOUR WORKING MODULES
+
+console.log('💰 Attempting to register SalesRecord module...');
+
+// Method 1: Check if registerModule exists (like other modules)
+if (window.FarmModules) {
+    // Check if registerModule function exists (from framework)
+    if (typeof window.FarmModules.registerModule === 'function') {
+        console.log('💰 Using registerModule() like other modules');
+        window.FarmModules.registerModule('sales-record', SalesRecordModule);
+    } 
+    // Fallback: Direct assignment
+    else {
+        console.log('💰 Direct assignment to FarmModules');
+        window.FarmModules.SalesRecord = SalesRecordModule;
+        window.FarmModules.modules = window.FarmModules.modules || {};
+        window.FarmModules.modules['sales-record'] = SalesRecordModule;
+    }
+    console.log('✅ SalesRecord module registered successfully');
+} else {
+    console.error('❌ FarmModules not found! Registration failed.');
+    
+    // Emergency: Create FarmModules and register
+    window.FarmModules = {
+        SalesRecord: SalesRecordModule,
+        modules: {
+            'sales-record': SalesRecordModule
+        },
+        registerModule: function(name, module) {
+            this[name] = module;
+            this.modules = this.modules || {};
+            this.modules[name] = module;
+            console.log(`✅ Module '${name}' registered`);
+            return true;
+        }
+    };
+    console.log('⚠️ Created FarmModules and registered SalesRecord');
+}
+
+// Debug: Verify registration
+setTimeout(() => {
+    console.log('🔍 SalesRecord registration check:');
+    console.log('- window.FarmModules exists:', !!window.FarmModules);
+    console.log('- SalesRecord in FarmModules:', !!window.FarmModules?.SalesRecord);
+    console.log('- sales-record in modules:', !!window.FarmModules?.modules?.['sales-record']);
+}, 100);
