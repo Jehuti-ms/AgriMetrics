@@ -1073,63 +1073,51 @@ const ProfileModule = {
         }
     },
 
-   async handleLogout() {
-       // Add at the BEGINNING of handleLogout()
-console.log('=== LOGOUT DEBUG ===');
-console.log('1. Current URL:', window.location.href);
-console.log('2. Firebase user:', firebase?.auth()?.currentUser);
-console.log('3. Has farm-profile:', localStorage.getItem('farm-profile') ? 'Yes' : 'No');
-console.log('4. All localStorage keys:', Array.from({length: localStorage.length}, (_, i) => localStorage.key(i)));
+  async handleLogout() {
+    // Add at the BEGINNING of handleLogout()
+    console.log('=== LOGOUT DEBUG ===');
+    console.log('1. Current URL:', window.location.href);
+    console.log('2. Firebase user:', firebase?.auth()?.currentUser);
+    console.log('3. Has farm-profile:', localStorage.getItem('farm-profile') ? 'Yes' : 'No');
+    console.log('4. All localStorage keys:', Array.from({length: localStorage.length}, (_, i) => localStorage.key(i)));
 
-// Check if there are any auth state listeners
-console.log('5. Checking for auth state listeners...');
     const rememberUser = window.FarmModules.appData.profile?.rememberUser;
     
     if (confirm('Are you sure you want to logout?' + (rememberUser ? '\n\nYou have "Remember Me" enabled. Your data will be saved for next login.' : ''))) {
         try {
-            // 1. First, show logout notification
-            this.showNotification('Logging out...', 'info');
+            // 1. FIRST AND MOST IMPORTANT: Switch UI to auth IMMEDIATELY
+            console.log('🔄 Switching UI to auth screen...');
+            document.getElementById('app-container').classList.add('hidden');
+            document.getElementById('auth-container').classList.remove('hidden');
             
-            // 2. Clear Firebase auth persistence BEFORE sign out
+            // 2. Clear Firebase
             if (typeof firebase !== 'undefined' && firebase.auth) {
-                // IMPORTANT: Clear persistence first
-                await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.NONE);
-                
-                // Then sign out
+                console.log('🔥 Signing out from Firebase...');
                 await firebase.auth().signOut();
-                
-                console.log('✅ Firebase auth cleared');
+                console.log('✅ Firebase signed out');
             }
             
-            // 3. Clear ALL auth-related localStorage
-            const authKeys = [
-                'firebase:authUser:', // Firebase auth keys
-                'firebase:host:', 
-                'firebase:',
-                'auth_',
-                'user_'
-            ];
-            
+            // 3. Clear auth localStorage
+            const authKeys = ['firebase:', 'auth_', 'user_'];
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                // Remove any auth-related items
                 if (authKeys.some(authKey => key.includes(authKey))) {
                     localStorage.removeItem(key);
+                    console.log(`🗑️ Removed auth key: ${key}`);
                 }
             }
             
-            // 4. Handle "Remember Me" logic
+            // 4. Handle "Remember Me" - only clear data if disabled
             if (!rememberUser) {
-                // Clear all app data
-                localStorage.removeItem('farm-user');
-                localStorage.removeItem('farm-orders');
-                localStorage.removeItem('farm-inventory');
-                localStorage.removeItem('farm-customers');
-                localStorage.removeItem('farm-products');
-                localStorage.removeItem('farm-profile');
-                
-                // Clear current input values
-                this.currentInputValues = {};
+                console.log('🧹 Clearing app data (Remember Me disabled)');
+                const appKeys = ['farm-', 'profileData', 'transactions', 'sales', 'inventory'];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (appKeys.some(appKey => key.includes(appKey))) {
+                        localStorage.removeItem(key);
+                        console.log(`🗑️ Removed app key: ${key}`);
+                    }
+                }
                 
                 // Reset app data
                 window.FarmModules.appData = {
@@ -1151,25 +1139,26 @@ console.log('5. Checking for auth state listeners...');
                 };
             }
             
-            // 5. Force redirect IMMEDIATELY (no setTimeout)
+            // 5. Show success message
             this.showNotification('Logged out successfully', 'success');
             
-            // Use replace() to prevent going back
-            window.location.replace('index.html');
+            // 6. IMPORTANT: DO NOT REDIRECT - we're already on index.html!
+            // Just stay on the auth page we already switched to
             
-            // Force stop any further execution
-            throw new Error('Logout complete - redirecting');
+            console.log('✅ Logout complete - showing login screen');
+            
+            // Optional: Clear any URL parameters
+            if (window.history.replaceState) {
+                window.history.replaceState(null, '', window.location.pathname);
+            }
             
         } catch (error) {
-            if (error.message.includes('Logout complete')) {
-                // This is expected - we're redirecting
-                return;
-            }
             console.error('Logout error:', error);
             this.showNotification('Error during logout', 'error');
             
-            // Still try to redirect even on error
-            window.location.replace('index.html');
+            // Still ensure we show auth screen on error
+            document.getElementById('app-container')?.classList.add('hidden');
+            document.getElementById('auth-container')?.classList.remove('hidden');
         }
     }
 },
