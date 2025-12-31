@@ -246,31 +246,31 @@ hideLoading() {
         }
     }
     
-    async loadUserPreferences() {
-        try {
-            // Try to use ProfileModule if available
-            if (typeof ProfileModule !== 'undefined' && ProfileModule.loadUserPreferences) {
-                this.userPreferences = ProfileModule.loadUserPreferences();
-                console.log('✅ User preferences loaded via ProfileModule');
-            } else {
-                // Fallback to direct localStorage access
-                const savedPrefs = localStorage.getItem('farm-user-preferences');
-                this.userPreferences = savedPrefs ? JSON.parse(savedPrefs) : this.getDefaultPreferences();
-                console.log('⚠️ ProfileModule not available, using localStorage fallback');
-                
-                // Create a complete ProfileModule fallback for other modules to use
-                this.createProfileModuleFallback();
-            }
+   async loadUserPreferences() {
+    try {
+        // Try to use ProfileModule if available
+        if (window.ProfileModule && typeof window.ProfileModule.loadUserPreferences === 'function') {
+            this.userPreferences = window.ProfileModule.loadUserPreferences();
+            console.log('✅ User preferences loaded via ProfileModule');
+        } else {
+            // Fallback to direct localStorage access
+            const savedPrefs = localStorage.getItem('farm-user-preferences');
+            this.userPreferences = savedPrefs ? JSON.parse(savedPrefs) : this.getDefaultPreferences();
+            console.log('⚠️ ProfileModule not available, using localStorage fallback');
             
-            // Apply theme preference immediately
-            this.applyUserTheme();
-            
-        } catch (error) {
-            console.error('❌ Error loading user preferences:', error);
-            this.userPreferences = this.getDefaultPreferences();
+            // Create a complete ProfileModule fallback for other modules to use
             this.createProfileModuleFallback();
         }
+        
+        // Apply theme preference immediately
+        this.applyUserTheme();
+        
+    } catch (error) {
+        console.error('❌ Error loading user preferences:', error);
+        this.userPreferences = this.getDefaultPreferences();
+        this.createProfileModuleFallback();
     }
+}
 
     getDefaultPreferences() {
         return {
@@ -591,7 +591,13 @@ hideLoading() {
             }
         });
     }
-        
+
+     // Add active class to the clicked nav item
+    const activeNavItem = document.querySelector(`.nav-item[data-view="${sectionId}"]`);
+    if (activeNavItem) {
+        activeNavItem.classList.add('active');
+    }
+    
     setupSideMenuEvents() {
         const sideMenuItems = document.querySelectorAll('.side-menu-item');
         sideMenuItems.forEach(item => {
@@ -613,8 +619,28 @@ hideLoading() {
         
         console.log('✅ Side menu events setup');
     }
+
+     // Also add active class to side menu item if it exists
+    const activeSideMenuItem = document.querySelector(`.side-menu-item[data-section="${sectionId}"]`);
+    if (activeSideMenuItem) {
+        activeSideMenuItem.classList.add('active');
+    }
     
-    showSection(sectionId) {
+    // Also check with .js extension
+    if (!activeNavItem && !activeSideMenuItem) {
+        const activeNavItemWithJS = document.querySelector(`.nav-item[data-view="${sectionId}.js"]`);
+        if (activeNavItemWithJS) {
+            activeNavItemWithJS.classList.add('active');
+        }
+        
+        const activeSideMenuItemWithJS = document.querySelector(`.side-menu-item[data-section="${sectionId}.js"]`);
+        if (activeSideMenuItemWithJS) {
+            activeSideMenuItemWithJS.classList.add('active');
+        }
+    }
+}
+
+showSection(sectionId) {
     console.log(`🔄 Switching to section: ${sectionId}`);
     
     const contentArea = document.getElementById('content-area');
@@ -632,25 +658,70 @@ hideLoading() {
     // Update active menu item
     this.setActiveMenuItem(cleanSectionId);
     
-    // Try to render the module
-    if (FarmModules && FarmModules.renderModule) {
-        const success = FarmModules.renderModule(cleanSectionId, contentArea);
-        if (!success) {
-            // Try with .js extension
-            FarmModules.renderModule(sectionId, contentArea);
-        }
-    } else {
-        console.error('❌ FarmModules.renderModule not available');
-        contentArea.innerHTML = `
-            <div style="padding: 40px; text-align: center;">
-                <h3>Module System Error</h3>
-                <p>Cannot load module: ${cleanSectionId}</p>
-                <button onclick="location.reload()">Reload App</button>
-            </div>
+    // Clear content area with a loading state
+    contentArea.innerHTML = `
+        <div style="padding: 40px; text-align: center;">
+            <div style="
+                width: 40px;
+                height: 40px;
+                border: 4px solid #f3f3f3;
+                border-top: 4px solid #4CAF50;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 20px;
+            "></div>
+            <p>Loading ${cleanSectionId} module...</p>
+        </div>
+    `;
+    
+    // Add CSS for spinner if not already added
+    if (!document.querySelector('#spinner-styles')) {
+        const style = document.createElement('style');
+        style.id = 'spinner-styles';
+        style.textContent = `
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
         `;
+        document.head.appendChild(style);
     }
+    
+    // Try to render the module after a short delay
+    setTimeout(() => {
+        if (FarmModules && FarmModules.renderModule) {
+            const success = FarmModules.renderModule(cleanSectionId, contentArea);
+            if (!success) {
+                // Try with .js extension
+                FarmModules.renderModule(sectionId, contentArea);
+            }
+        } else {
+            console.error('❌ FarmModules.renderModule not available');
+            this.loadFallbackContent(cleanSectionId);
+        }
+    }, 100);
 }
 
+    setActiveMenuItem(sectionId) {
+    console.log(`🎯 Setting active menu item: ${sectionId}`);
+    
+    // Remove active class from all nav items and side menu items
+    document.querySelectorAll('.nav-item, .side-menu-item').forEach(item => {
+        item.classList.remove('active');
+    });
+
+    showAuth() {
+    console.log('🔐 Showing auth interface');
+    const authContainer = document.getElementById('auth-container');
+    const appContainer = document.getElementById('app-container');
+    
+    if (authContainer) authContainer.classList.remove('hidden');
+    if (appContainer) appContainer.classList.add('hidden');
+    
+    // Also ensure loading screen is hidden
+    this.hideLoading();
+}
+        
     loadFallbackContent(sectionId) {
         const contentArea = document.getElementById('content-area');
         if (!contentArea) return;
@@ -677,6 +748,7 @@ hideLoading() {
         `;
     }
 }
+
 
 // Initialize the app
 if (document.readyState === 'loading') {
