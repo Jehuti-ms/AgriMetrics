@@ -597,37 +597,41 @@ hideLoading() {
     }
     
     showSection(sectionId) {
-        console.log(`🔄 Switching to section: ${sectionId}`);
-        
-        // Update active nav state for top navigation
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        
-        const activeNavItem = document.querySelector(`.nav-item[data-view="${sectionId}"]`);
-        if (activeNavItem) {
-            activeNavItem.classList.add('active');
-        }
-
-        // Update active state for sidebar items
-        document.querySelectorAll('.side-menu-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        
-        const activeSideItem = document.querySelector(`.side-menu-item[data-section="${sectionId}"]`);
-        if (activeSideItem) {
-            activeSideItem.classList.add('active');
-        }
-
-        this.currentSection = sectionId;
-        
-        // Load the module content
-        if (window.FarmModules && typeof window.FarmModules.initializeModule === 'function') {
-            window.FarmModules.initializeModule(sectionId);
-        } else {
-            this.loadFallbackContent(sectionId);
-        }
+    console.log(`🔄 Switching to section: ${sectionId}`);
+    
+    const contentArea = document.getElementById('content-area');
+    if (!contentArea) {
+        console.error('❌ Content area not found');
+        return;
     }
+    
+    // Remove .js extension if present
+    const cleanSectionId = sectionId.replace('.js', '');
+    
+    // Update current section
+    this.currentSection = cleanSectionId;
+    
+    // Update active menu item
+    this.setActiveMenuItem(cleanSectionId);
+    
+    // Try to render the module
+    if (FarmModules && FarmModules.renderModule) {
+        const success = FarmModules.renderModule(cleanSectionId, contentArea);
+        if (!success) {
+            // Try with .js extension
+            FarmModules.renderModule(sectionId, contentArea);
+        }
+    } else {
+        console.error('❌ FarmModules.renderModule not available');
+        contentArea.innerHTML = `
+            <div style="padding: 40px; text-align: center;">
+                <h3>Module System Error</h3>
+                <p>Cannot load module: ${cleanSectionId}</p>
+                <button onclick="location.reload()">Reload App</button>
+            </div>
+        `;
+    }
+}
 
     loadFallbackContent(sectionId) {
         const contentArea = document.getElementById('content-area');
