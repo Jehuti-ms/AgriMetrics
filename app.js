@@ -3,6 +3,19 @@ console.log('Loading main app...');
 
 class FarmManagementApp {
     constructor() {
+
+        // ========== ADD THIS CHECK ==========
+        // Check for logout flags BEFORE initializing
+        const forceLogout = sessionStorage.getItem('forceLogout') === 'true';
+        const urlLogout = new URLSearchParams(window.location.search).has('logout');
+        
+        if (forceLogout || urlLogout) {
+            console.log('🚫 Logout detected - showing auth screen');
+            this.showAuthScreen();
+            return; // STOP app initialization
+        }
+        // ====================================
+        
         this.currentUser = null;
         this.currentSection = 'dashboard';
         this.isDemoMode = false;
