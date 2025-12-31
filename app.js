@@ -10,10 +10,18 @@ class FarmManagementApp {
         const hasLogoutParam = urlParams.has('logout');
         
         if (hasLogoutParam) {
-            console.log('🚫 Logout parameter detected - staying on auth screen');
-            // Clear the parameter from URL
+            console.log('🚫 Logout parameter detected - clearing it');
+            // IMMEDIATELY clear the parameter from URL
             window.history.replaceState({}, '', window.location.pathname);
-            // DO NOT initialize the app
+            // Show auth screen but ALLOW login
+            this.showAuthScreen();
+            
+            // BUT STILL initialize the app so login can work!
+            this.currentUser = null;
+            this.currentSection = 'dashboard';
+            this.isDemoMode = false;
+            this.userPreferences = {};
+            this.init();
             return;
         }
         
@@ -24,9 +32,9 @@ class FarmManagementApp {
         this.userPreferences = {};
         this.init();
     }
-
-    // Add this helper method
+    
     showAuthScreen() {
+        // Show auth, hide app (but app can still initialize)
         const authContainer = document.getElementById('auth-container');
         const appContainer = document.getElementById('app-container');
         
@@ -38,8 +46,8 @@ class FarmManagementApp {
             appContainer.style.display = 'none';
             appContainer.classList.add('hidden');
         }
-    } // <-- Close showAuthScreen() here
-
+    }
+    
     // ADD showApp() as a SEPARATE method
     showApp() {
         console.log('🏠 showApp() called');
