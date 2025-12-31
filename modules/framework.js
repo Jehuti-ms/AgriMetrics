@@ -5,73 +5,46 @@ class FarmModules {
     static modules = new Map();
     
     static registerModule(name, module) {
-        // Normalize module name - remove .js extension and any path
-        const baseName = this.normalizeModuleName(name);
+        // Log what's being registered
+        console.log(`📦 Registering module: ${name}`, module);
         
-        // Check if already registered with any variation
-        if (this.isModuleRegistered(baseName)) {
-            console.log(`ℹ️ Module "${baseName}" already registered (as "${this.getRegisteredName(baseName)}"), skipping duplicate`);
+        // Check if this is a valid module object
+        if (!module || typeof module !== 'object') {
+            console.warn(`⚠️ Invalid module object for "${name}"`, module);
             return;
         }
         
-        // Store with normalized name
-        this.modules.set(baseName, {
-            name: baseName,
+        // Always store with the provided name
+        // This preserves backward compatibility
+        this.modules.set(name, {
+            name: name,
             module: module,
             initialized: false,
             element: null
         });
         
-        console.log(`📦 Registered module: ${baseName}`);
-        console.log(`📊 Total modules registered: ${this.modules.size}`);
-    }
-    
-    static normalizeModuleName(name) {
-        // Remove .js extension, path, and clean up
-        return name
-            .replace('.js', '')
-            .replace(/^.*\//, '') // Remove any path prefix
-            .trim();
-    }
-    
-    static isModuleRegistered(baseName) {
-        // Check if any variation exists
-        for (const [key] of this.modules) {
-            const normalizedKey = this.normalizeModuleName(key);
-            if (normalizedKey === baseName) {
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    static getRegisteredName(baseName) {
-        // Find the actual registered name
-        for (const [key] of this.modules) {
-            const normalizedKey = this.normalizeModuleName(key);
-            if (normalizedKey === baseName) {
-                return key;
-            }
-        }
-        return baseName;
+        console.log(`✅ Total modules registered: ${this.modules.size}`);
     }
     
     static getModule(name) {
-        const baseName = this.normalizeModuleName(name);
-        
         // Try exact match first
-        if (this.modules.has(baseName)) {
-            return this.modules.get(baseName);
+        if (this.modules.has(name)) {
+            return this.modules.get(name);
         }
         
-        // Try to find by normalized name
-        for (const [key, module] of this.modules) {
-            if (this.normalizeModuleName(key) === baseName) {
-                return module;
-            }
+        // Try without .js extension
+        const nameWithoutExt = name.replace(/\.js$/i, '');
+        if (this.modules.has(nameWithoutExt)) {
+            return this.modules.get(nameWithoutExt);
         }
         
-        console.warn(`⚠️ Module "${name}" not found`);
+        // Try with .js extension
+        const nameWithExt = name.endsWith('.js') ? name : name + '.js';
+        if (this.modules.has(nameWithExt)) {
+            return this.modules.get(nameWithExt);
+        }
+        
+        console.warn(`⚠️ Module "${name}" not found. Available modules:`, Array.from(this.modules.keys()));
         return null;
     }
     
@@ -83,8 +56,9 @@ class FarmModules {
             return false;
         }
         
+        // Check if already initialized (by any name)
         if (moduleInfo.initialized) {
-            console.log(`ℹ️ Module "${name}" already initialized`);
+            console.log(`ℹ️ Module "${moduleInfo.name}" already initialized`);
             return true;
         }
         
@@ -103,7 +77,7 @@ class FarmModules {
             return true;
             
         } catch (error) {
-            console.error(`❌ Failed to initialize module "${name}":`, error);
+            console.error(`❌ Failed to initialize module "${moduleInfo.name}":`, error);
             return false;
         }
     }
@@ -113,6 +87,23 @@ class FarmModules {
         
         if (!moduleInfo) {
             console.error(`❌ Cannot render module "${name}" - not found`);
+            
+            // Show error message
+            container.innerHTML = `
+                <div class="error-message">
+                    <h2>Module Not Found</h2>
+                    <p>The module "${name}" could not be loaded.</p>
+                    <p>Available modules: ${Array.from(this.modules.keys()).join(', ')}</p>
+                    <button onclick="app.showSection('dashboard')" style="
+                        padding: 10px 20px;
+                        background: #4CAF50;
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                    ">Return to Dashboard</button>
+                </div>
+            `;
             return false;
         }
         
@@ -132,28 +123,22 @@ class FarmModules {
                 // Handle ES6 default export style
                 moduleInfo.module.default(container);
             } else {
-                console.warn(`⚠️ Module "${name}" has no render method`);
+                console.warn(`⚠️ Module "${moduleInfo.name}" has no render method`);
                 container.innerHTML = `<div class="module-error">
                     <h3>Module Error</h3>
-                    <p>Module "${name}" cannot be rendered.</p>
+                    <p>Module "${moduleInfo.name}" cannot be rendered.</p>
                 </div>`;
                 return false;
-            }
-            
-            // Initialize if not already
-            if (!moduleInfo.initialized && moduleInfo.module.initialize) {
-                moduleInfo.module.initialize();
-                moduleInfo.initialized = true;
             }
             
             console.log(`✅ ${moduleInfo.name}: Rendered`);
             return true;
             
         } catch (error) {
-            console.error(`❌ Failed to render module "${name}":`, error);
+            console.error(`❌ Failed to render module "${moduleInfo.name}":`, error);
             container.innerHTML = `<div class="module-error">
                 <h3>Render Error</h3>
-                <p>Failed to render module "${name}": ${error.message}</p>
+                <p>Failed to render module "${moduleInfo.name}": ${error.message}</p>
             </div>`;
             return false;
         }
@@ -164,12 +149,25 @@ class FarmModules {
         
         let initializedCount = 0;
         
+        // Create a set to track which modules we've initialized (by base name)
+        const initializedBaseNames = new Set();
+        
         for (const [name, moduleInfo] of this.modules) {
+            // Get base name without .js
+            const baseName = name.replace(/\.js$/i, '');
+            
+            // Skip if we've already initialized a module with this base name
+            if (initializedBaseNames.has(baseName)) {
+                console.log(`⏭️ Skipping duplicate initialization for "${name}" (already initialized "${baseName}")`);
+                continue;
+            }
+            
             if (!moduleInfo.initialized && moduleInfo.module.initialize) {
                 try {
                     console.log(`🔄 Initializing: ${name}`);
                     moduleInfo.module.initialize();
                     moduleInfo.initialized = true;
+                    initializedBaseNames.add(baseName);
                     initializedCount++;
                     console.log(`✅ ${name}: Initialized`);
                 } catch (error) {
@@ -177,26 +175,34 @@ class FarmModules {
                 }
             } else if (moduleInfo.initialized) {
                 console.log(`ℹ️ ${name}: Already initialized`);
+                initializedBaseNames.add(baseName);
             }
         }
         
-        console.log(`✅ ${initializedCount} modules initialized successfully`);
+        console.log(`✅ ${initializedCount} unique modules initialized successfully`);
         return initializedCount;
     }
     
     static listModules() {
         console.log('📋 Registered Modules:');
+        const baseNames = new Set();
+        
         for (const [name, moduleInfo] of this.modules) {
-            console.log(`  - ${name} (initialized: ${moduleInfo.initialized})`);
+            const baseName = name.replace(/\.js$/i, '');
+            const isDuplicate = baseNames.has(baseName);
+            baseNames.add(baseName);
+            
+            console.log(`  - ${name} (initialized: ${moduleInfo.initialized})${isDuplicate ? ' [DUPLICATE]' : ''}`);
         }
-        console.log(`Total: ${this.modules.size} modules`);
+        console.log(`Total: ${this.modules.size} modules, ${baseNames.size} unique`);
         return Array.from(this.modules.keys());
     }
     
     static debug() {
         console.group('🔧 FarmModules Debug');
-        console.log('📊 Total modules:', this.modules.size);
-        console.log('📋 Module list:', this.listModules());
+        console.log('📊 Total module registrations:', this.modules.size);
+        console.log('📋 Module registrations:');
+        this.listModules();
         console.groupEnd();
         return this;
     }
