@@ -106,6 +106,65 @@ class FarmModules {
     }
 }
 
+// Add this method to your FarmModules class in framework.js
+static renderModule(name, container) {
+    console.log(`🎨 [renderModule] Rendering: ${name}`);
+    
+    // Get the module
+    const module = this.modules.get(name);
+    if (!module) {
+        console.error(`❌ Module "${name}" not found`);
+        if (container) {
+            container.innerHTML = `
+                <div style="padding: 40px; text-align: center;">
+                    <h3>Module Not Found</h3>
+                    <p>The "${name}" module is not available.</p>
+                </div>
+            `;
+        }
+        return false;
+    }
+    
+    // Use existing initializeModule logic
+    this.currentModule = name;
+    
+    // If a container is provided, use it
+    if (container) {
+        if (module.template) {
+            container.innerHTML = module.template;
+        } else if (module.render && typeof module.render === 'function') {
+            // If module has its own render method
+            container.innerHTML = '';
+            module.render(container);
+        } else {
+            container.innerHTML = `
+                <div style="padding: 40px; text-align: center;">
+                    <h2>${this.formatModuleName(name)}</h2>
+                    <p>Module loaded but no template available.</p>
+                </div>
+            `;
+        }
+    } else {
+        // Fallback to default content area
+        const contentArea = document.getElementById('content-area');
+        if (contentArea && module.template) {
+            contentArea.innerHTML = module.template;
+        }
+    }
+    
+    // Initialize the module if it has an initialize method
+    if (module.initialize && typeof module.initialize === 'function') {
+        try {
+            module.initialize();
+            console.log(`✅ Module "${name}" initialized`);
+        } catch (error) {
+            console.error(`❌ Error initializing module "${name}":`, error);
+        }
+    }
+    
+    return true;
+}
+
 // Initialize with default data
 FarmModules.appData = {
     transactions: [],
