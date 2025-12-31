@@ -1,35 +1,14 @@
-// modules/auth.js - FIXED WITH AUTO-SHOW APP AND LOGOUT
+// modules/auth.js
 console.log('Loading auth module...');
 
 class AuthModule {
     constructor() {
         this.init();
     }
-    
+
     init() {
         console.log('✅ Auth module initialized');
         this.setupAuthForms();
-        this.setupAuthStateListener();
-        
-        // Register with FarmModules if available
-        this.registerWithFarmModules();
-    }
-    
-    registerWithFarmModules() {
-        if (typeof FarmModules !== 'undefined') {
-            FarmModules.registerModule('auth', {
-                logout: async () => {
-                    return await this.logout();
-                },
-                isAuthenticated: () => {
-                    return window.authManager?.isAuthenticated() || false;
-                },
-                getCurrentUser: () => {
-                    return window.authManager?.getCurrentUser();
-                }
-            });
-            console.log('🔧 Auth module registered with FarmModules');
-        }
     }
 
     setupAuthForms() {
@@ -117,51 +96,6 @@ class AuthModule {
         }
     }
 
-    setupAuthStateListener() {
-    if (!window.authManager) {
-        console.log('⚠️ Auth manager not available for state listener');
-        return;
-    }
-    
-    // Check if onAuthStateChanged method exists
-    if (typeof window.authManager.onAuthStateChanged !== 'function') {
-        console.warn('⚠️ authManager.onAuthStateChanged not available, using fallback');
-        
-        // Fallback: Check auth state directly
-        if (typeof firebase !== 'undefined' && firebase.auth) {
-            firebase.auth().onAuthStateChanged((user) => {
-                console.log('🔍 Direct Firebase auth state:', user ? user.email : 'No user');
-                this.handleAuthStateChange(user);
-            });
-        }
-        return;
-    }
-    
-    // Use the authManager method
-    window.authManager.onAuthStateChanged((user) => {
-        console.log('🔍 Auth state changed in auth module:', user ? user.email : 'No user');
-        this.handleAuthStateChange(user);
-    });
-}
-
-// Add this helper method
-handleAuthStateChange(user) {
-    // Check logout flags
-    const stayLoggedOut = sessionStorage.getItem('stayLoggedOut') === 'true';
-    const forceLogout = sessionStorage.getItem('forceLogout') === 'true';
-    
-    if (user && !stayLoggedOut && !forceLogout) {
-        console.log('👤 User authenticated, showing app...');
-        
-        // Wait for app to be ready
-        setTimeout(() => {
-            this.showAppAfterLogin();
-        }, 500);
-    } else if (!user && !stayLoggedOut) {
-        console.log('👤 No user, showing auth forms...');
-        this.ensureAuthFormsVisible();
-    }
-}
     async handleSignUp() {
         const form = document.getElementById('signup-form-element');
         if (!form) return;
@@ -197,14 +131,6 @@ handleAuthStateChange(user) {
 
             if (result?.success) {
                 this.showNotification('Account created successfully!', 'success');
-                
-                // Clear logout flags
-                sessionStorage.removeItem('stayLoggedOut');
-                sessionStorage.removeItem('forceLogout');
-                
-                // Show app
-                this.showAppAfterLogin();
-                
             } else {
                 this.showNotification(result?.error || 'Error creating account', 'error');
             }
@@ -236,14 +162,6 @@ handleAuthStateChange(user) {
 
             if (result?.success) {
                 this.showNotification('Welcome back!', 'success');
-                
-                // Clear logout flags
-                sessionStorage.removeItem('stayLoggedOut');
-                sessionStorage.removeItem('forceLogout');
-                
-                // Show app
-                this.showAppAfterLogin();
-                
             } else {
                 this.showNotification(result?.error || 'Error signing in', 'error');
             }
@@ -270,14 +188,6 @@ handleAuthStateChange(user) {
 
             if (result?.success) {
                 this.showNotification('Signed in with Google!', 'success');
-                
-                // Clear logout flags
-                sessionStorage.removeItem('stayLoggedOut');
-                sessionStorage.removeItem('forceLogout');
-                
-                // Show app
-                this.showAppAfterLogin();
-                
             } else {
                 this.showNotification(result?.error || 'Error signing in with Google', 'error');
             }
@@ -320,81 +230,6 @@ handleAuthStateChange(user) {
         }
     }
 
-    // NEW: LOGOUT METHOD - ADD THIS INSIDE THE CLASS
-    async logout() {
-        console.log('🚪 Auth module: Starting logout...');
-        
-        try {
-            // 1. Set logout flags (PREVENTS AUTO-LOGIN)
-            sessionStorage.setItem('forceLogout', 'true');
-            sessionStorage.setItem('stayLoggedOut', 'true');
-            
-            // 2. Clear Firebase auth
-            if (window.authManager?.signOut) {
-                await window.authManager.signOut();
-            }
-            
-            // 3. Clear app storage (keep only preferences)
-            this.clearAuthStorage();
-            
-            // 4. Show auth screen
-            this.showAuthScreen();
-            
-            // 5. Reset login forms
-            this.showAuthForm('signin');
-            
-            console.log('✅ Auth module: Logout successful');
-            return { success: true };
-            
-        } catch (error) {
-            console.error('❌ Auth module: Logout failed:', error);
-            return { success: false, error: error.message };
-        }
-    }
-
-    // NEW: HELPER METHOD
-    clearAuthStorage() {
-        console.log('🧹 Clearing auth storage...');
-        
-        // Keep these preferences
-        const keepKeys = ['theme', 'language', 'farm-user-preferences'];
-        
-        // Clear localStorage except preferences
-        Object.keys(localStorage).forEach(key => {
-            if (!keepKeys.includes(key) && 
-                (key.includes('firebase') || 
-                 key.includes('auth') || 
-                 key === 'userData')) {
-                localStorage.removeItem(key);
-            }
-        });
-        
-        // Clear sessionStorage (keep logout flags)
-        Object.keys(sessionStorage).forEach(key => {
-            if (key !== 'forceLogout' && key !== 'stayLoggedOut') {
-                sessionStorage.removeItem(key);
-            }
-        });
-    }
-
-    // NEW: SHOW AUTH SCREEN METHOD
-    showAuthScreen() {
-        console.log('🔄 Showing auth screen...');
-        
-        const authContainer = document.getElementById('auth-container');
-        const appContainer = document.getElementById('app-container');
-        
-        if (authContainer) {
-            authContainer.style.display = 'block';
-            authContainer.classList.remove('hidden');
-        }
-        
-        if (appContainer) {
-            appContainer.style.display = 'none';
-            appContainer.classList.add('hidden');
-        }
-    }
-
     showAuthForm(formName) {
         document.querySelectorAll('.auth-form').forEach(form => {
             form.classList.remove('active');
@@ -406,78 +241,6 @@ handleAuthStateChange(user) {
         }
     }
 
-    ensureAuthFormsVisible() {
-        const authContainer = document.getElementById('auth-container');
-        if (authContainer) {
-            authContainer.style.display = 'block';
-            authContainer.classList.remove('hidden');
-        }
-        
-        const appContainer = document.getElementById('app-container');
-        if (appContainer) {
-            appContainer.style.display = 'none';
-            appContainer.classList.add('hidden');
-        }
-        
-        this.showAuthForm('signin');
-    }
-
-   showAppAfterLogin() {
-    console.log('🔄 Showing app after successful login...');
-    
-    // Clear logout flags
-    sessionStorage.removeItem('stayLoggedOut');
-    sessionStorage.removeItem('forceLogout');
-    
-    // Try multiple approaches
-    let success = false;
-    
-    // Approach 1: Global function
-    if (typeof window.showApp === 'function') {
-        console.log('🚀 Using window.showApp()');
-        success = window.showApp();
-    }
-    
-    // Approach 2: App instance method
-    if (!success && window.app && typeof window.app.showApp === 'function') {
-        console.log('🚀 Using window.app.showApp()');
-        window.app.showApp();
-        success = true;
-    }
-    
-    // Approach 3: Direct DOM (fallback)
-    if (!success) {
-        console.log('⚠️ Using direct DOM fallback');
-        const authContainer = document.getElementById('auth-container');
-        const appContainer = document.getElementById('app-container');
-        
-        if (authContainer) {
-            authContainer.style.display = 'none';
-            authContainer.classList.add('hidden');
-        }
-        
-        if (appContainer) {
-            appContainer.style.display = 'block';
-            appContainer.classList.remove('hidden');
-        }
-        
-        success = true;
-    }
-    
-    // Load dashboard after showing app
-    if (success) {
-        setTimeout(() => {
-            if (typeof window.showSection === 'function') {
-                window.showSection('dashboard');
-            } else if (window.app && window.app.showSection) {
-                window.app.showSection('dashboard');
-            }
-        }, 200);
-    }
-    
-    return success;
-}
-    
     showNotification(message, type) {
         if (window.coreModule && window.coreModule.showNotification) {
             window.coreModule.showNotification(message, type);
@@ -488,16 +251,3 @@ handleAuthStateChange(user) {
 }
 
 window.authModule = new AuthModule();
-
-// Global logout function for easy access
-window.logoutUser = async function() {
-    if (window.authModule?.logout) {
-        return await window.authModule.logout();
-    }
-    return { success: false, error: 'Auth module not available' };
-};
-
-// Export for module system (outside class)
-if (typeof FarmModules !== 'undefined' && !FarmModules.getModule('auth')) {
-    FarmModules.registerModule('auth', window.authModule);
-}
