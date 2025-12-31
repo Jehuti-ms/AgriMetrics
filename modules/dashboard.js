@@ -710,7 +710,7 @@ if (window.FarmModules) {
     
     // Use the module object defined in THIS file
     const moduleName = 'dashboard';
-    const moduleObject = DashboardModule; // NOT SalesRecordModule!
+    const moduleObject = Dashboard; // NOT SalesRecordModule!
     
     if (window.FarmModules) {
         FarmModules.registerModule(moduleName, moduleObject);
