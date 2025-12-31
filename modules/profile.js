@@ -1078,19 +1078,47 @@ const ProfileModule = {
     
     if (confirm('Are you sure you want to logout?' + (rememberUser ? '\n\nYou have "Remember Me" enabled. Your data will be saved for next login.' : ''))) {
         try {
-            // Sign out from Firebase
+            // 1. First, show logout notification
+            this.showNotification('Logging out...', 'info');
+            
+            // 2. Clear Firebase auth persistence BEFORE sign out
             if (typeof firebase !== 'undefined' && firebase.auth) {
+                // IMPORTANT: Clear persistence first
+                await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.NONE);
+                
+                // Then sign out
                 await firebase.auth().signOut();
+                
+                console.log('✅ Firebase auth cleared');
             }
             
-            // Only clear local data if "Remember Me" is disabled
+            // 3. Clear ALL auth-related localStorage
+            const authKeys = [
+                'firebase:authUser:', // Firebase auth keys
+                'firebase:host:', 
+                'firebase:',
+                'auth_',
+                'user_'
+            ];
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                // Remove any auth-related items
+                if (authKeys.some(authKey => key.includes(authKey))) {
+                    localStorage.removeItem(key);
+                }
+            }
+            
+            // 4. Handle "Remember Me" logic
             if (!rememberUser) {
+                // Clear all app data
                 localStorage.removeItem('farm-user');
                 localStorage.removeItem('farm-orders');
                 localStorage.removeItem('farm-inventory');
                 localStorage.removeItem('farm-customers');
                 localStorage.removeItem('farm-products');
                 localStorage.removeItem('farm-profile');
+                
                 // Clear current input values
                 this.currentInputValues = {};
                 
@@ -1114,20 +1142,29 @@ const ProfileModule = {
                 };
             }
             
+            // 5. Force redirect IMMEDIATELY (no setTimeout)
             this.showNotification('Logged out successfully', 'success');
             
-            // ALWAYS redirect to login page (index.html)
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 1000);
+            // Use replace() to prevent going back
+            window.location.replace('index.html');
+            
+            // Force stop any further execution
+            throw new Error('Logout complete - redirecting');
             
         } catch (error) {
+            if (error.message.includes('Logout complete')) {
+                // This is expected - we're redirecting
+                return;
+            }
             console.error('Logout error:', error);
             this.showNotification('Error during logout', 'error');
+            
+            // Still try to redirect even on error
+            window.location.replace('index.html');
         }
     }
 },
-
+    
     // DISPLAY METHODS
     updateAllDisplays() {
         this.updateStatsFromModules();
