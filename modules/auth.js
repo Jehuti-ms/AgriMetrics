@@ -142,7 +142,7 @@ class AuthModule {
         console.log('🔍 Auth state changed in auth module:', user ? user.email : 'No user');
         this.handleAuthStateChange(user);
     });
-},
+}
 
 // Add this helper method
 handleAuthStateChange(user) {
