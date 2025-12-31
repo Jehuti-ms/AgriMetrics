@@ -423,43 +423,65 @@ handleAuthStateChange(user) {
     }
 
     showAppAfterLogin() {
-        console.log('🔄 Showing app after successful login...');
+    console.log('🔄 Showing app after successful login...');
+    
+    // Clear logout flags FIRST
+    sessionStorage.removeItem('stayLoggedOut');
+    sessionStorage.removeItem('forceLogout');
+    
+    // Method 1: Use app instance if available
+    if (window.app && typeof window.app.showApp === 'function') {
+        console.log('🚀 Using app.showApp() method');
         
-        // Method 1: Use app instance if available
-        if (window.app && typeof window.app.showApp === 'function') {
-            setTimeout(() => {
-                window.app.showApp();
-                
-                // Load dashboard
-                if (typeof window.app.showSection === 'function') {
-                    window.app.showSection('dashboard');
-                }
-            }, 300);
-        }
-        // Method 2: Direct DOM manipulation
-        else {
-            const authContainer = document.getElementById('auth-container');
-            const appContainer = document.getElementById('app-container');
+        // Small delay to ensure Firebase state is updated
+        setTimeout(() => {
+            window.app.showApp();
             
-            if (authContainer) {
-                authContainer.classList.add('hidden');
-                authContainer.style.display = 'none';
+            // Load dashboard
+            if (typeof window.app.showSection === 'function') {
+                console.log('📊 Loading dashboard section...');
+                window.app.showSection('dashboard');
+            } else {
+                console.error('❌ app.showSection not available');
+                // Force reload as fallback
+                window.location.reload();
             }
-            
-            if (appContainer) {
-                appContainer.classList.remove('hidden');
-                appContainer.style.display = 'block';
-            }
-            
-            // Reload to ensure proper initialization
-            setTimeout(() => {
-                if (!window.app) {
-                    window.location.reload();
-                }
-            }, 1000);
-        }
+        }, 300);
     }
-
+    // Method 2: Direct DOM manipulation (emergency)
+    else {
+        console.log('⚠️ App instance not found, using direct DOM');
+        
+        const authContainer = document.getElementById('auth-container');
+        const appContainer = document.getElementById('app-container');
+        
+        console.log('🔍 Auth container:', authContainer);
+        console.log('🔍 App container:', appContainer);
+        
+        if (authContainer) {
+            authContainer.style.display = 'none';
+            authContainer.classList.add('hidden');
+            console.log('👁️ Auth hidden');
+        }
+        
+        if (appContainer) {
+            appContainer.style.display = 'block';
+            appContainer.classList.remove('hidden');
+            console.log('👁️ App shown');
+            
+            // Also need to trigger dashboard load
+            const event = new CustomEvent('app-shown');
+            window.dispatchEvent(event);
+        }
+        
+        // Reload to ensure proper initialization
+        setTimeout(() => {
+            console.log('🔄 Reloading for proper initialization...');
+            window.location.reload();
+        }, 1000);
+    }
+}
+    
     showNotification(message, type) {
         if (window.coreModule && window.coreModule.showNotification) {
             window.coreModule.showNotification(message, type);
