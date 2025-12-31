@@ -457,6 +457,15 @@ const ProfileModule = {
         });
     },
 
+    // In modules/profile.js logout handler
+    async handleLogout() {
+        const confirmed = confirm('Are you sure you want to logout?');
+        if (!confirmed) return;
+        
+        // ONE LINE - calls the centralized logout
+        await logoutUser();
+    }
+    
     // FORM VALIDATION
     validateProfileForm() {
         const farmName = this.getValue('farm-name');
