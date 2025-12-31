@@ -118,33 +118,50 @@ class AuthModule {
     }
 
     setupAuthStateListener() {
-        if (!window.authManager) {
-            console.log('⚠️ Auth manager not available for state listener');
-            return;
-        }
-        
-        // Listen for auth state changes
-        window.authManager.onAuthStateChanged((user) => {
-            console.log('🔍 Auth state changed in auth module:', user ? user.email : 'No user');
-            
-            // Check logout flags
-            const stayLoggedOut = sessionStorage.getItem('stayLoggedOut') === 'true';
-            const forceLogout = sessionStorage.getItem('forceLogout') === 'true';
-            
-            if (user && !stayLoggedOut && !forceLogout) {
-                console.log('👤 User authenticated, showing app...');
-                
-                // Wait for app to be ready
-                setTimeout(() => {
-                    this.showAppAfterLogin();
-                }, 500);
-            } else if (!user && !stayLoggedOut) {
-                console.log('👤 No user, showing auth forms...');
-                this.ensureAuthFormsVisible();
-            }
-        });
+    if (!window.authManager) {
+        console.log('⚠️ Auth manager not available for state listener');
+        return;
     }
+    
+    // Check if onAuthStateChanged method exists
+    if (typeof window.authManager.onAuthStateChanged !== 'function') {
+        console.warn('⚠️ authManager.onAuthStateChanged not available, using fallback');
+        
+        // Fallback: Check auth state directly
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            firebase.auth().onAuthStateChanged((user) => {
+                console.log('🔍 Direct Firebase auth state:', user ? user.email : 'No user');
+                this.handleAuthStateChange(user);
+            });
+        }
+        return;
+    }
+    
+    // Use the authManager method
+    window.authManager.onAuthStateChanged((user) => {
+        console.log('🔍 Auth state changed in auth module:', user ? user.email : 'No user');
+        this.handleAuthStateChange(user);
+    });
+},
 
+// Add this helper method
+handleAuthStateChange(user) {
+    // Check logout flags
+    const stayLoggedOut = sessionStorage.getItem('stayLoggedOut') === 'true';
+    const forceLogout = sessionStorage.getItem('forceLogout') === 'true';
+    
+    if (user && !stayLoggedOut && !forceLogout) {
+        console.log('👤 User authenticated, showing app...');
+        
+        // Wait for app to be ready
+        setTimeout(() => {
+            this.showAppAfterLogin();
+        }, 500);
+    } else if (!user && !stayLoggedOut) {
+        console.log('👤 No user, showing auth forms...');
+        this.ensureAuthFormsVisible();
+    }
+}
     async handleSignUp() {
         const form = document.getElementById('signup-form-element');
         if (!form) return;
