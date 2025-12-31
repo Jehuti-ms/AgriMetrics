@@ -1074,6 +1074,15 @@ const ProfileModule = {
     },
 
    async handleLogout() {
+       // Add at the BEGINNING of handleLogout()
+console.log('=== LOGOUT DEBUG ===');
+console.log('1. Current URL:', window.location.href);
+console.log('2. Firebase user:', firebase?.auth()?.currentUser);
+console.log('3. Has farm-profile:', localStorage.getItem('farm-profile') ? 'Yes' : 'No');
+console.log('4. All localStorage keys:', Array.from({length: localStorage.length}, (_, i) => localStorage.key(i)));
+
+// Check if there are any auth state listeners
+console.log('5. Checking for auth state listeners...');
     const rememberUser = window.FarmModules.appData.profile?.rememberUser;
     
     if (confirm('Are you sure you want to logout?' + (rememberUser ? '\n\nYou have "Remember Me" enabled. Your data will be saved for next login.' : ''))) {
