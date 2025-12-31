@@ -11,6 +11,23 @@ class FarmManagementApp {
         this.setupInit();
     }
 
+     setupInit() {
+        // Wait for DOM and Firebase to be ready
+        const checkReady = () => {
+            if (typeof firebase !== 'undefined' && firebase.auth) {
+                this.initializeApp();
+            } else {
+                setTimeout(checkReady, 100);
+            }
+        };
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', checkReady);
+        } else {
+            checkReady();
+        }
+    }
+    
     async initializeApp() {
     console.log('✅ Initializing app...');
     
