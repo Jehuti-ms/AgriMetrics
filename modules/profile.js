@@ -1087,6 +1087,10 @@ const ProfileModule = {
         
         if (confirm('Are you sure you want to logout?' + (rememberUser ? '\n\nYou have "Remember Me" enabled. You will stay logged in on this device unless you clear browser data.' : ''))) {
             try {
+
+                 sessionStorage.setItem('forceLogout', 'true');
+                 sessionStorage.setItem('stayLoggedOut', 'true');
+                
                 // Sign out from Firebase
                 if (typeof firebase !== 'undefined' && firebase.auth) {
                     await firebase.auth().signOut();
@@ -1128,11 +1132,16 @@ const ProfileModule = {
                 this.showNotification(rememberUser ? 
                     'Logged out (data saved for next login)' : 
                     'Logged out successfully', 'success');
+
+                // Redirect to login page WITH logout parameter (instead of reload)
+                setTimeout(() => {
+                    window.location.href = window.location.pathname + '?logout=true&t=' + Date.now();
+                }, 500);
                 
                 // Redirect to login page or reload
-                setTimeout(() => {
+               /* setTimeout(() => {
                     window.location.reload();
-                }, 1500);
+                }, 1500);*/
                 
             } catch (error) {
                 console.error('Logout error:', error);
