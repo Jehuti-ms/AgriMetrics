@@ -145,59 +145,113 @@ class AuthModule {
     }
 
     async handleSignIn() {
-        const form = document.getElementById('signin-form-element');
-        if (!form) return;
+    const form = document.getElementById('signin-form-element');
+    if (!form) return;
 
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const email = document.getElementById('signin-email')?.value || '';
-        const password = document.getElementById('signin-password')?.value || '';
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const email = document.getElementById('signin-email')?.value || '';
+    const password = document.getElementById('signin-password')?.value || '';
 
+    if (submitBtn) {
+        submitBtn.innerHTML = 'Signing In...';
+        submitBtn.disabled = true;
+    }
+
+    try {
+        const result = await window.authManager?.signIn(email, password);
+
+        if (result?.success) {
+            this.showNotification('Welcome back!', 'success');
+            
+            // CRITICAL FIX: Show the app after successful login
+            this.showAppAfterLogin();
+            
+            // Clear logout flags
+            sessionStorage.removeItem('stayLoggedOut');
+            sessionStorage.removeItem('forceLogout');
+            
+        } else {
+            this.showNotification(result?.error || 'Error signing in', 'error');
+        }
+    } catch (error) {
+        this.showNotification('Error signing in', 'error');
+    } finally {
         if (submitBtn) {
-            submitBtn.innerHTML = 'Signing In...';
-            submitBtn.disabled = true;
-        }
-
-        try {
-            const result = await window.authManager?.signIn(email, password);
-
-            if (result?.success) {
-                this.showNotification('Welcome back!', 'success');
-            } else {
-                this.showNotification(result?.error || 'Error signing in', 'error');
-            }
-        } catch (error) {
-            this.showNotification('Error signing in', 'error');
-        } finally {
-            if (submitBtn) {
-                submitBtn.innerHTML = 'Sign In';
-                submitBtn.disabled = false;
-            }
+            submitBtn.innerHTML = 'Sign In';
+            submitBtn.disabled = false;
         }
     }
+}
 
-    async handleGoogleSignIn() {
-        const button = document.getElementById('google-signin');
-        if (!button) return;
+async handleGoogleSignIn() {
+    const button = document.getElementById('google-signin');
+    if (!button) return;
 
-        const originalText = button.innerHTML;
-        button.innerHTML = 'Signing in with Google...';
-        button.disabled = true;
+    const originalText = button.innerHTML;
+    button.innerHTML = 'Signing in with Google...';
+    button.disabled = true;
 
-        try {
-            const result = await window.authManager?.signInWithGoogle();
+    try {
+        const result = await window.authManager?.signInWithGoogle();
 
-            if (result?.success) {
-                this.showNotification('Signed in with Google!', 'success');
-            } else {
-                this.showNotification(result?.error || 'Error signing in with Google', 'error');
-            }
-        } catch (error) {
-            this.showNotification('Error signing in with Google', 'error');
-        } finally {
-            button.innerHTML = originalText;
-            button.disabled = false;
+        if (result?.success) {
+            this.showNotification('Signed in with Google!', 'success');
+            
+            // CRITICAL FIX: Show the app after successful login
+            this.showAppAfterLogin();
+            
+            // Clear logout flags
+            sessionStorage.removeItem('stayLoggedOut');
+            sessionStorage.removeItem('forceLogout');
+            
+        } else {
+            this.showNotification(result?.error || 'Error signing in with Google', 'error');
         }
+    } catch (error) {
+        this.showNotification('Error signing in with Google', 'error');
+    } finally {
+        button.innerHTML = originalText;
+        button.disabled = false;
     }
+}
+
+// ADD THIS NEW METHOD
+showAppAfterLogin() {
+    console.log('🔄 Showing app after successful login...');
+    
+    // Method 1: If app instance exists, call showApp()
+    if (window.app && typeof window.app.showApp === 'function') {
+        // Wait a moment for Firebase state to update
+        setTimeout(() => {
+            window.app.showApp();
+            
+            // Also trigger dashboard load
+            if (typeof window.app.showSection === 'function') {
+                window.app.showSection('dashboard');
+            }
+        }, 500);
+    }
+    // Method 2: Direct DOM manipulation
+    else {
+        const authContainer = document.getElementById('auth-container');
+        const appContainer = document.getElementById('app-container');
+        
+        if (authContainer) {
+            authContainer.classList.add('hidden');
+            authContainer.style.display = 'none';
+        }
+        
+        if (appContainer) {
+            appContainer.classList.remove('hidden');
+            appContainer.style.display = 'block';
+        }
+        
+        // Reload to ensure proper app initialization
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+    }
+}
 
     async handleForgotPassword() {
         const form = document.getElementById('forgot-password-form-element');
