@@ -1,4 +1,4 @@
-// modules/auth.js
+// modules/auth.js - FIXED WITH AUTO-SHOW APP
 console.log('Loading auth module...');
 
 class AuthModule {
@@ -9,6 +9,7 @@ class AuthModule {
     init() {
         console.log('✅ Auth module initialized');
         this.setupAuthForms();
+        this.setupAuthStateListener(); // ADD THIS
     }
 
     setupAuthForms() {
@@ -96,6 +97,34 @@ class AuthModule {
         }
     }
 
+    setupAuthStateListener() {
+        if (!window.authManager) {
+            console.log('⚠️ Auth manager not available for state listener');
+            return;
+        }
+        
+        // Listen for auth state changes
+        window.authManager.onAuthStateChanged((user) => {
+            console.log('🔍 Auth state changed in auth module:', user ? user.email : 'No user');
+            
+            // Check logout flags
+            const stayLoggedOut = sessionStorage.getItem('stayLoggedOut') === 'true';
+            const forceLogout = sessionStorage.getItem('forceLogout') === 'true';
+            
+            if (user && !stayLoggedOut && !forceLogout) {
+                console.log('👤 User authenticated, showing app...');
+                
+                // Wait for app to be ready
+                setTimeout(() => {
+                    this.showAppAfterLogin();
+                }, 500);
+            } else if (!user && !stayLoggedOut) {
+                console.log('👤 No user, showing auth forms...');
+                this.ensureAuthFormsVisible();
+            }
+        });
+    }
+
     async handleSignUp() {
         const form = document.getElementById('signup-form-element');
         if (!form) return;
@@ -131,6 +160,14 @@ class AuthModule {
 
             if (result?.success) {
                 this.showNotification('Account created successfully!', 'success');
+                
+                // Clear logout flags
+                sessionStorage.removeItem('stayLoggedOut');
+                sessionStorage.removeItem('forceLogout');
+                
+                // Show app
+                this.showAppAfterLogin();
+                
             } else {
                 this.showNotification(result?.error || 'Error creating account', 'error');
             }
@@ -145,113 +182,75 @@ class AuthModule {
     }
 
     async handleSignIn() {
-    const form = document.getElementById('signin-form-element');
-    if (!form) return;
+        const form = document.getElementById('signin-form-element');
+        if (!form) return;
 
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const email = document.getElementById('signin-email')?.value || '';
-    const password = document.getElementById('signin-password')?.value || '';
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const email = document.getElementById('signin-email')?.value || '';
+        const password = document.getElementById('signin-password')?.value || '';
 
-    if (submitBtn) {
-        submitBtn.innerHTML = 'Signing In...';
-        submitBtn.disabled = true;
-    }
-
-    try {
-        const result = await window.authManager?.signIn(email, password);
-
-        if (result?.success) {
-            this.showNotification('Welcome back!', 'success');
-            
-            // CRITICAL FIX: Show the app after successful login
-            this.showAppAfterLogin();
-            
-            // Clear logout flags
-            sessionStorage.removeItem('stayLoggedOut');
-            sessionStorage.removeItem('forceLogout');
-            
-        } else {
-            this.showNotification(result?.error || 'Error signing in', 'error');
-        }
-    } catch (error) {
-        this.showNotification('Error signing in', 'error');
-    } finally {
         if (submitBtn) {
-            submitBtn.innerHTML = 'Sign In';
-            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Signing In...';
+            submitBtn.disabled = true;
         }
-    }
-}
 
-async handleGoogleSignIn() {
-    const button = document.getElementById('google-signin');
-    if (!button) return;
+        try {
+            const result = await window.authManager?.signIn(email, password);
 
-    const originalText = button.innerHTML;
-    button.innerHTML = 'Signing in with Google...';
-    button.disabled = true;
-
-    try {
-        const result = await window.authManager?.signInWithGoogle();
-
-        if (result?.success) {
-            this.showNotification('Signed in with Google!', 'success');
-            
-            // CRITICAL FIX: Show the app after successful login
-            this.showAppAfterLogin();
-            
-            // Clear logout flags
-            sessionStorage.removeItem('stayLoggedOut');
-            sessionStorage.removeItem('forceLogout');
-            
-        } else {
-            this.showNotification(result?.error || 'Error signing in with Google', 'error');
-        }
-    } catch (error) {
-        this.showNotification('Error signing in with Google', 'error');
-    } finally {
-        button.innerHTML = originalText;
-        button.disabled = false;
-    }
-}
-
-// ADD THIS NEW METHOD
-showAppAfterLogin() {
-    console.log('🔄 Showing app after successful login...');
-    
-    // Method 1: If app instance exists, call showApp()
-    if (window.app && typeof window.app.showApp === 'function') {
-        // Wait a moment for Firebase state to update
-        setTimeout(() => {
-            window.app.showApp();
-            
-            // Also trigger dashboard load
-            if (typeof window.app.showSection === 'function') {
-                window.app.showSection('dashboard');
+            if (result?.success) {
+                this.showNotification('Welcome back!', 'success');
+                
+                // Clear logout flags
+                sessionStorage.removeItem('stayLoggedOut');
+                sessionStorage.removeItem('forceLogout');
+                
+                // Show app
+                this.showAppAfterLogin();
+                
+            } else {
+                this.showNotification(result?.error || 'Error signing in', 'error');
             }
-        }, 500);
-    }
-    // Method 2: Direct DOM manipulation
-    else {
-        const authContainer = document.getElementById('auth-container');
-        const appContainer = document.getElementById('app-container');
-        
-        if (authContainer) {
-            authContainer.classList.add('hidden');
-            authContainer.style.display = 'none';
+        } catch (error) {
+            this.showNotification('Error signing in', 'error');
+        } finally {
+            if (submitBtn) {
+                submitBtn.innerHTML = 'Sign In';
+                submitBtn.disabled = false;
+            }
         }
-        
-        if (appContainer) {
-            appContainer.classList.remove('hidden');
-            appContainer.style.display = 'block';
-        }
-        
-        // Reload to ensure proper app initialization
-        setTimeout(() => {
-            window.location.reload();
-        }, 1000);
     }
-}
+
+    async handleGoogleSignIn() {
+        const button = document.getElementById('google-signin');
+        if (!button) return;
+
+        const originalText = button.innerHTML;
+        button.innerHTML = 'Signing in with Google...';
+        button.disabled = true;
+
+        try {
+            const result = await window.authManager?.signInWithGoogle();
+
+            if (result?.success) {
+                this.showNotification('Signed in with Google!', 'success');
+                
+                // Clear logout flags
+                sessionStorage.removeItem('stayLoggedOut');
+                sessionStorage.removeItem('forceLogout');
+                
+                // Show app
+                this.showAppAfterLogin();
+                
+            } else {
+                this.showNotification(result?.error || 'Error signing in with Google', 'error');
+            }
+        } catch (error) {
+            this.showNotification('Error signing in with Google', 'error');
+        } finally {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    }
 
     async handleForgotPassword() {
         const form = document.getElementById('forgot-password-form-element');
@@ -295,6 +294,60 @@ showAppAfterLogin() {
         }
     }
 
+    ensureAuthFormsVisible() {
+        const authContainer = document.getElementById('auth-container');
+        if (authContainer) {
+            authContainer.style.display = 'block';
+            authContainer.classList.remove('hidden');
+        }
+        
+        const appContainer = document.getElementById('app-container');
+        if (appContainer) {
+            appContainer.style.display = 'none';
+            appContainer.classList.add('hidden');
+        }
+        
+        this.showAuthForm('signin');
+    }
+
+    showAppAfterLogin() {
+        console.log('🔄 Showing app after successful login...');
+        
+        // Method 1: Use app instance if available
+        if (window.app && typeof window.app.showApp === 'function') {
+            setTimeout(() => {
+                window.app.showApp();
+                
+                // Load dashboard
+                if (typeof window.app.showSection === 'function') {
+                    window.app.showSection('dashboard');
+                }
+            }, 300);
+        }
+        // Method 2: Direct DOM manipulation
+        else {
+            const authContainer = document.getElementById('auth-container');
+            const appContainer = document.getElementById('app-container');
+            
+            if (authContainer) {
+                authContainer.classList.add('hidden');
+                authContainer.style.display = 'none';
+            }
+            
+            if (appContainer) {
+                appContainer.classList.remove('hidden');
+                appContainer.style.display = 'block';
+            }
+            
+            // Reload to ensure proper initialization
+            setTimeout(() => {
+                if (!window.app) {
+                    window.location.reload();
+                }
+            }, 1000);
+        }
+    }
+
     showNotification(message, type) {
         if (window.coreModule && window.coreModule.showNotification) {
             window.coreModule.showNotification(message, type);
@@ -305,3 +358,8 @@ showAppAfterLogin() {
 }
 
 window.authModule = new AuthModule();
+
+// Export for module system
+if (typeof FarmModules !== 'undefined') {
+    FarmModules.registerModule('auth', window.authModule);
+}
