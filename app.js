@@ -3,71 +3,13 @@ console.log('Loading main app...');
 
 class FarmManagementApp {
     constructor() {
-        console.log('🏗️ FarmManagementApp constructor');
-        
-        // SIMPLE CHECK: Did user just logout?
-        const urlParams = new URLSearchParams(window.location.search);
-        const hasLogoutParam = urlParams.has('logout');
-        
-        if (hasLogoutParam) {
-            console.log('🚫 Logout parameter detected - clearing it');
-            // IMMEDIATELY clear the parameter from URL
-            window.history.replaceState({}, '', window.location.pathname);
-            // Show auth screen but ALLOW login
-            this.showAuthScreen();
-            
-            // BUT STILL initialize the app so login can work!
-            this.currentUser = null;
-            this.currentSection = 'dashboard';
-            this.isDemoMode = false;
-            this.userPreferences = {};
-            this.init();
-            return;
-        }
-        
-        // Normal initialization
         this.currentUser = null;
         this.currentSection = 'dashboard';
         this.isDemoMode = false;
         this.userPreferences = {};
         this.init();
     }
-    
-    showAuthScreen() {
-        // Show auth, hide app (but app can still initialize)
-        const authContainer = document.getElementById('auth-container');
-        const appContainer = document.getElementById('app-container');
-        
-        if (authContainer) {
-            authContainer.style.display = 'block';
-            authContainer.classList.remove('hidden');
-        }
-        if (appContainer) {
-            appContainer.style.display = 'none';
-            appContainer.classList.add('hidden');
-        }
-    }
-    
-    // ADD showApp() as a SEPARATE method
-    showApp() {
-        console.log('🏠 showApp() called');
-        
-        const authContainer = document.getElementById('auth-container');
-        const appContainer = document.getElementById('app-container');
-        
-        if (authContainer) {
-            authContainer.classList.add('hidden');
-            authContainer.style.display = 'none';
-        }
-        
-        if (appContainer) {
-            appContainer.classList.remove('hidden');
-            appContainer.style.display = 'block';
-        }
-        
-        console.log('✅ App shown successfully');
-    }
-    
+
     async init() {
         console.log('🚀 Starting Farm Management App...');
         
@@ -533,70 +475,39 @@ class FarmManagementApp {
         console.log('✅ Side menu events setup');
     }
     
-// In app.js - update showSection method
-showSection(sectionId) {
-    console.log(`🔄 Switching to section: ${sectionId}`);
-    
-    // Try to find the module with or without .js
-    let moduleFound = false;
-    let actualModuleName = sectionId;
-    
-    // Check available modules
-    const availableModules = Array.from(FarmModules.modules.keys());
-    console.log('🔍 Available modules:', availableModules);
-    
-    // Try without .js first (most common)
-    const nameWithoutExt = sectionId.replace(/\.js$/i, '');
-    if (availableModules.includes(nameWithoutExt)) {
-        actualModuleName = nameWithoutExt;
-        moduleFound = true;
-    }
-    // Try with .js
-    else if (availableModules.includes(sectionId)) {
-        actualModuleName = sectionId;
-        moduleFound = true;
-    }
-    // Try with .js added
-    else if (availableModules.includes(sectionId + '.js')) {
-        actualModuleName = sectionId + '.js';
-        moduleFound = true;
-    }
-    
-    if (!moduleFound) {
-        console.error(`❌ Module "${sectionId}" not found in registered modules`);
-        this.appContainer.innerHTML = `
-            <div class="error-message">
-                <h2>Module Not Found</h2>
-                <p>The module "${sectionId}" is not available.</p>
-                <p>Available modules: ${availableModules.join(', ')}</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // Hide all sections
-    this.hideAllSections();
-    
-    // Initialize and render the module
-    if (FarmModules.renderModule(actualModuleName, this.appContainer)) {
-        // Update active menu item (use base name for menu highlighting)
-        this.setActiveMenuItem(nameWithoutExt);
+    showSection(sectionId) {
+        console.log(`🔄 Switching to section: ${sectionId}`);
         
-        // Store current section
-        this.currentSection = nameWithoutExt;
-        console.log(`✅ Switched to section: ${nameWithoutExt} (module: ${actualModuleName})`);
-    } else {
-        console.error(`❌ Failed to load section: ${sectionId}`);
-        this.appContainer.innerHTML = `
-            <div class="error-message">
-                <h2>Module Load Error</h2>
-                <p>The module "${sectionId}" could not be loaded.</p>
-                <button onclick="app.showSection('dashboard')">Return to Dashboard</button>
-            </div>
-        `;
+        // Update active nav state for top navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        const activeNavItem = document.querySelector(`.nav-item[data-view="${sectionId}"]`);
+        if (activeNavItem) {
+            activeNavItem.classList.add('active');
+        }
+
+        // Update active state for sidebar items
+        document.querySelectorAll('.side-menu-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        const activeSideItem = document.querySelector(`.side-menu-item[data-section="${sectionId}"]`);
+        if (activeSideItem) {
+            activeSideItem.classList.add('active');
+        }
+
+        this.currentSection = sectionId;
+        
+        // Load the module content
+        if (window.FarmModules && typeof window.FarmModules.initializeModule === 'function') {
+            window.FarmModules.initializeModule(sectionId);
+        } else {
+            this.loadFallbackContent(sectionId);
+        }
     }
-}
-    
+
     loadFallbackContent(sectionId) {
         const contentArea = document.getElementById('content-area');
         if (!contentArea) return;
