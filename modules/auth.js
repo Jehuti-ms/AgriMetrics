@@ -422,64 +422,60 @@ handleAuthStateChange(user) {
         this.showAuthForm('signin');
     }
 
-    showAppAfterLogin() {
+   showAppAfterLogin() {
     console.log('🔄 Showing app after successful login...');
     
-    // Clear logout flags FIRST
+    // Clear logout flags
     sessionStorage.removeItem('stayLoggedOut');
     sessionStorage.removeItem('forceLogout');
     
-    // Method 1: Use app instance if available
-    if (window.app && typeof window.app.showApp === 'function') {
-        console.log('🚀 Using app.showApp() method');
-        
-        // Small delay to ensure Firebase state is updated
-        setTimeout(() => {
-            window.app.showApp();
-            
-            // Load dashboard
-            if (typeof window.app.showSection === 'function') {
-                console.log('📊 Loading dashboard section...');
-                window.app.showSection('dashboard');
-            } else {
-                console.error('❌ app.showSection not available');
-                // Force reload as fallback
-                window.location.reload();
-            }
-        }, 300);
+    // Try multiple approaches
+    let success = false;
+    
+    // Approach 1: Global function
+    if (typeof window.showApp === 'function') {
+        console.log('🚀 Using window.showApp()');
+        success = window.showApp();
     }
-    // Method 2: Direct DOM manipulation (emergency)
-    else {
-        console.log('⚠️ App instance not found, using direct DOM');
-        
+    
+    // Approach 2: App instance method
+    if (!success && window.app && typeof window.app.showApp === 'function') {
+        console.log('🚀 Using window.app.showApp()');
+        window.app.showApp();
+        success = true;
+    }
+    
+    // Approach 3: Direct DOM (fallback)
+    if (!success) {
+        console.log('⚠️ Using direct DOM fallback');
         const authContainer = document.getElementById('auth-container');
         const appContainer = document.getElementById('app-container');
-        
-        console.log('🔍 Auth container:', authContainer);
-        console.log('🔍 App container:', appContainer);
         
         if (authContainer) {
             authContainer.style.display = 'none';
             authContainer.classList.add('hidden');
-            console.log('👁️ Auth hidden');
         }
         
         if (appContainer) {
             appContainer.style.display = 'block';
             appContainer.classList.remove('hidden');
-            console.log('👁️ App shown');
-            
-            // Also need to trigger dashboard load
-            const event = new CustomEvent('app-shown');
-            window.dispatchEvent(event);
         }
         
-        // Reload to ensure proper initialization
-        setTimeout(() => {
-            console.log('🔄 Reloading for proper initialization...');
-            window.location.reload();
-        }, 1000);
+        success = true;
     }
+    
+    // Load dashboard after showing app
+    if (success) {
+        setTimeout(() => {
+            if (typeof window.showSection === 'function') {
+                window.showSection('dashboard');
+            } else if (window.app && window.app.showSection) {
+                window.app.showSection('dashboard');
+            }
+        }, 200);
+    }
+    
+    return success;
 }
     
     showNotification(message, type) {
