@@ -464,7 +464,7 @@ const ProfileModule = {
         
         // ONE LINE - calls the centralized logout
         await logoutUser();
-    }
+    },
     
     // FORM VALIDATION
     validateProfileForm() {
