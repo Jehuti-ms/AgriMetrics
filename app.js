@@ -3,7 +3,6 @@ console.log('Loading main app...');
 
 class FarmManagementApp {
     constructor() {
-
         // ========== ADD THIS CHECK ==========
         // Check for logout flags BEFORE initializing
         const forceLogout = sessionStorage.getItem('forceLogout') === 'true';
@@ -36,6 +35,26 @@ class FarmManagementApp {
             appContainer.style.display = 'none';
             appContainer.classList.add('hidden');
         }
+    } // <-- Close showAuthScreen() here
+
+    // ADD showApp() as a SEPARATE method
+    showApp() {
+        console.log('🏠 showApp() called');
+        
+        const authContainer = document.getElementById('auth-container');
+        const appContainer = document.getElementById('app-container');
+        
+        if (authContainer) {
+            authContainer.classList.add('hidden');
+            authContainer.style.display = 'none';
+        }
+        
+        if (appContainer) {
+            appContainer.classList.remove('hidden');
+            appContainer.style.display = 'block';
+        }
+        
+        console.log('✅ App shown successfully');
     }
     
     async init() {
