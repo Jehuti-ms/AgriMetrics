@@ -8,6 +8,7 @@ class FarmManagementApp {
         this.isDemoMode = false;
         this.userPreferences = {};
        /* this.init(); */
+        this.setupInit();
     }
 
     async initializeApp() {
