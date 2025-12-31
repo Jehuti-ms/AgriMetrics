@@ -709,7 +709,7 @@ if (window.FarmModules) {
     console.log('📦 Registering dashboard module...');
     
     // Use the module object defined in THIS file
-    const moduleName = 'dashboard';
+    const moduleName = 'dashboard.js';
     const moduleObject = DashboardModule; // NOT SalesRecordModule!
     
     if (window.FarmModules) {
