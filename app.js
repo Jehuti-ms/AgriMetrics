@@ -23,6 +23,21 @@ class FarmManagementApp {
         this.init();
     }
 
+    // Add this helper method
+    showAuthScreen() {
+        const authContainer = document.getElementById('auth-container');
+        const appContainer = document.getElementById('app-container');
+        
+        if (authContainer) {
+            authContainer.style.display = 'block';
+            authContainer.classList.remove('hidden');
+        }
+        if (appContainer) {
+            appContainer.style.display = 'none';
+            appContainer.classList.add('hidden');
+        }
+    }
+    
     async init() {
         console.log('🚀 Starting Farm Management App...');
         
