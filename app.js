@@ -533,39 +533,70 @@ class FarmManagementApp {
         console.log('✅ Side menu events setup');
     }
     
-    showSection(sectionId) {
-        console.log(`🔄 Switching to section: ${sectionId}`);
-        
-        // Update active nav state for top navigation
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        
-        const activeNavItem = document.querySelector(`.nav-item[data-view="${sectionId}"]`);
-        if (activeNavItem) {
-            activeNavItem.classList.add('active');
-        }
-
-        // Update active state for sidebar items
-        document.querySelectorAll('.side-menu-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        
-        const activeSideItem = document.querySelector(`.side-menu-item[data-section="${sectionId}"]`);
-        if (activeSideItem) {
-            activeSideItem.classList.add('active');
-        }
-
-        this.currentSection = sectionId;
-        
-        // Load the module content
-        if (window.FarmModules && typeof window.FarmModules.initializeModule === 'function') {
-            window.FarmModules.initializeModule(sectionId);
-        } else {
-            this.loadFallbackContent(sectionId);
-        }
+// In app.js - update showSection method
+showSection(sectionId) {
+    console.log(`🔄 Switching to section: ${sectionId}`);
+    
+    // Try to find the module with or without .js
+    let moduleFound = false;
+    let actualModuleName = sectionId;
+    
+    // Check available modules
+    const availableModules = Array.from(FarmModules.modules.keys());
+    console.log('🔍 Available modules:', availableModules);
+    
+    // Try without .js first (most common)
+    const nameWithoutExt = sectionId.replace(/\.js$/i, '');
+    if (availableModules.includes(nameWithoutExt)) {
+        actualModuleName = nameWithoutExt;
+        moduleFound = true;
     }
-
+    // Try with .js
+    else if (availableModules.includes(sectionId)) {
+        actualModuleName = sectionId;
+        moduleFound = true;
+    }
+    // Try with .js added
+    else if (availableModules.includes(sectionId + '.js')) {
+        actualModuleName = sectionId + '.js';
+        moduleFound = true;
+    }
+    
+    if (!moduleFound) {
+        console.error(`❌ Module "${sectionId}" not found in registered modules`);
+        this.appContainer.innerHTML = `
+            <div class="error-message">
+                <h2>Module Not Found</h2>
+                <p>The module "${sectionId}" is not available.</p>
+                <p>Available modules: ${availableModules.join(', ')}</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Hide all sections
+    this.hideAllSections();
+    
+    // Initialize and render the module
+    if (FarmModules.renderModule(actualModuleName, this.appContainer)) {
+        // Update active menu item (use base name for menu highlighting)
+        this.setActiveMenuItem(nameWithoutExt);
+        
+        // Store current section
+        this.currentSection = nameWithoutExt;
+        console.log(`✅ Switched to section: ${nameWithoutExt} (module: ${actualModuleName})`);
+    } else {
+        console.error(`❌ Failed to load section: ${sectionId}`);
+        this.appContainer.innerHTML = `
+            <div class="error-message">
+                <h2>Module Load Error</h2>
+                <p>The module "${sectionId}" could not be loaded.</p>
+                <button onclick="app.showSection('dashboard')">Return to Dashboard</button>
+            </div>
+        `;
+    }
+}
+    
     loadFallbackContent(sectionId) {
         const contentArea = document.getElementById('content-area');
         if (!contentArea) return;
