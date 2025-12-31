@@ -7,7 +7,7 @@ class FarmManagementApp {
         this.currentSection = 'dashboard';
         this.isDemoMode = false;
         this.userPreferences = {};
-        this.init();
+       /* this.init(); */
     }
 
     async initializeApp() {
