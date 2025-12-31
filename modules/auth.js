@@ -1,15 +1,35 @@
-// modules/auth.js - FIXED WITH AUTO-SHOW APP
+// modules/auth.js - FIXED WITH AUTO-SHOW APP AND LOGOUT
 console.log('Loading auth module...');
 
 class AuthModule {
     constructor() {
         this.init();
     }
-
+    
     init() {
         console.log('✅ Auth module initialized');
         this.setupAuthForms();
-        this.setupAuthStateListener(); // ADD THIS
+        this.setupAuthStateListener();
+        
+        // Register with FarmModules if available
+        this.registerWithFarmModules();
+    }
+    
+    registerWithFarmModules() {
+        if (typeof FarmModules !== 'undefined') {
+            FarmModules.registerModule('auth', {
+                logout: async () => {
+                    return await this.logout();
+                },
+                isAuthenticated: () => {
+                    return window.authManager?.isAuthenticated() || false;
+                },
+                getCurrentUser: () => {
+                    return window.authManager?.getCurrentUser();
+                }
+            });
+            console.log('🔧 Auth module registered with FarmModules');
+        }
     }
 
     setupAuthForms() {
@@ -283,6 +303,81 @@ class AuthModule {
         }
     }
 
+    // NEW: LOGOUT METHOD - ADD THIS INSIDE THE CLASS
+    async logout() {
+        console.log('🚪 Auth module: Starting logout...');
+        
+        try {
+            // 1. Set logout flags (PREVENTS AUTO-LOGIN)
+            sessionStorage.setItem('forceLogout', 'true');
+            sessionStorage.setItem('stayLoggedOut', 'true');
+            
+            // 2. Clear Firebase auth
+            if (window.authManager?.signOut) {
+                await window.authManager.signOut();
+            }
+            
+            // 3. Clear app storage (keep only preferences)
+            this.clearAuthStorage();
+            
+            // 4. Show auth screen
+            this.showAuthScreen();
+            
+            // 5. Reset login forms
+            this.showAuthForm('signin');
+            
+            console.log('✅ Auth module: Logout successful');
+            return { success: true };
+            
+        } catch (error) {
+            console.error('❌ Auth module: Logout failed:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    // NEW: HELPER METHOD
+    clearAuthStorage() {
+        console.log('🧹 Clearing auth storage...');
+        
+        // Keep these preferences
+        const keepKeys = ['theme', 'language', 'farm-user-preferences'];
+        
+        // Clear localStorage except preferences
+        Object.keys(localStorage).forEach(key => {
+            if (!keepKeys.includes(key) && 
+                (key.includes('firebase') || 
+                 key.includes('auth') || 
+                 key === 'userData')) {
+                localStorage.removeItem(key);
+            }
+        });
+        
+        // Clear sessionStorage (keep logout flags)
+        Object.keys(sessionStorage).forEach(key => {
+            if (key !== 'forceLogout' && key !== 'stayLoggedOut') {
+                sessionStorage.removeItem(key);
+            }
+        });
+    }
+
+    // NEW: SHOW AUTH SCREEN METHOD
+    showAuthScreen() {
+        console.log('🔄 Showing auth screen...');
+        
+        const authContainer = document.getElementById('auth-container');
+        const appContainer = document.getElementById('app-container');
+        
+        if (authContainer) {
+            authContainer.style.display = 'block';
+            authContainer.classList.remove('hidden');
+        }
+        
+        if (appContainer) {
+            appContainer.style.display = 'none';
+            appContainer.classList.add('hidden');
+        }
+    }
+
     showAuthForm(formName) {
         document.querySelectorAll('.auth-form').forEach(form => {
             form.classList.remove('active');
@@ -359,83 +454,15 @@ class AuthModule {
 
 window.authModule = new AuthModule();
 
-// Export for module system
-if (typeof FarmModules !== 'undefined') {
-    FarmModules.registerModule('auth', window.authModule);
-}
-
-// Add to your existing auth.js class
-async logout() {
-    console.log('🚪 Auth module: Starting logout...');
-    
-    try {
-        // 1. Set logout flags (PREVENTS AUTO-LOGIN)
-        sessionStorage.setItem('forceLogout', 'true');
-        
-        // 2. Clear Firebase auth
-        if (window.authManager?.signOut) {
-            await window.authManager.signOut();
-        }
-        
-        // 3. Clear app storage (keep only preferences)
-        this.clearAuthStorage();
-        
-        // 4. Show auth screen
-        this.showAuthScreen();
-        
-        // 5. Reset login forms
-        this.showAuthForm('signin');
-        
-        console.log('✅ Auth module: Logout successful');
-        return { success: true };
-        
-    } catch (error) {
-        console.error('❌ Auth module: Logout failed:', error);
-        return { success: false, error: error.message };
-    }
-}
-
-clearAuthStorage() {
-    // Keep these preferences
-    const keepKeys = ['theme', 'language', 'farm-user-preferences'];
-    
-    // Clear localStorage except preferences
-    Object.keys(localStorage).forEach(key => {
-        if (!keepKeys.includes(key) && 
-            (key.includes('firebase') || 
-             key.includes('auth') || 
-             key === 'userData')) {
-            localStorage.removeItem(key);
-        }
-    });
-    
-    // Clear sessionStorage (keep forceLogout)
-    Object.keys(sessionStorage).forEach(key => {
-        if (key !== 'forceLogout') {
-            sessionStorage.removeItem(key);
-        }
-    });
-}
-
-showAuthScreen() {
-    const authContainer = document.getElementById('auth-container');
-    const appContainer = document.getElementById('app-container');
-    
-    if (authContainer) {
-        authContainer.style.display = 'block';
-        authContainer.classList.remove('hidden');
-    }
-    
-    if (appContainer) {
-        appContainer.style.display = 'none';
-        appContainer.classList.add('hidden');
-    }
-}
-
-// Add to end of auth.js
+// Global logout function for easy access
 window.logoutUser = async function() {
     if (window.authModule?.logout) {
         return await window.authModule.logout();
     }
     return { success: false, error: 'Auth module not available' };
 };
+
+// Export for module system (outside class)
+if (typeof FarmModules !== 'undefined' && !FarmModules.getModule('auth')) {
+    FarmModules.registerModule('auth', window.authModule);
+}
