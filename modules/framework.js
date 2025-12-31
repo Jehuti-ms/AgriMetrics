@@ -1,21 +1,11 @@
-// modules/framework.js - UPDATED WITH ENHANCED MODULE HANDLING
-console.log('Loading FarmModules framework...');
-
+// framework.js - SIMPLIFIED WORKING VERSION
 class FarmModules {
     static modules = new Map();
     
     static registerModule(name, module) {
-        // Log what's being registered
-        console.log(`📦 Registering module: ${name}`, module);
+        console.log(`📦 Registering module: ${name}`);
         
-        // Check if this is a valid module object
-        if (!module || typeof module !== 'object') {
-            console.warn(`⚠️ Invalid module object for "${name}"`, module);
-            return;
-        }
-        
-        // Always store with the provided name
-        // This preserves backward compatibility
+        // Store the module
         this.modules.set(name, {
             name: name,
             module: module,
@@ -23,28 +13,30 @@ class FarmModules {
             element: null
         });
         
-        console.log(`✅ Total modules registered: ${this.modules.size}`);
+        console.log(`✅ Total modules: ${this.modules.size}`);
     }
     
     static getModule(name) {
-        // Try exact match first
+        // Try exact match
         if (this.modules.has(name)) {
             return this.modules.get(name);
         }
         
-        // Try without .js extension
-        const nameWithoutExt = name.replace(/\.js$/i, '');
-        if (this.modules.has(nameWithoutExt)) {
-            return this.modules.get(nameWithoutExt);
+        // Try without .js
+        const nameWithoutJS = name.replace(/\.js$/, '');
+        if (this.modules.has(nameWithoutJS)) {
+            return this.modules.get(nameWithoutJS);
         }
         
-        // Try with .js extension
-        const nameWithExt = name.endsWith('.js') ? name : name + '.js';
-        if (this.modules.has(nameWithExt)) {
-            return this.modules.get(nameWithExt);
+        // Try all possible variations
+        for (const [key, value] of this.modules) {
+            const keyWithoutJS = key.replace(/\.js$/, '');
+            if (keyWithoutJS === name || keyWithoutJS === nameWithoutJS) {
+                return value;
+            }
         }
         
-        console.warn(`⚠️ Module "${name}" not found. Available modules:`, Array.from(this.modules.keys()));
+        console.warn(`⚠️ Module "${name}" not found. Available:`, Array.from(this.modules.keys()));
         return null;
     }
     
@@ -52,32 +44,25 @@ class FarmModules {
         const moduleInfo = this.getModule(name);
         
         if (!moduleInfo) {
-            console.error(`❌ Cannot initialize module "${name}" - not found`);
+            console.error(`❌ Cannot initialize "${name}" - not found`);
             return false;
         }
         
-        // Check if already initialized (by any name)
         if (moduleInfo.initialized) {
-            console.log(`ℹ️ Module "${moduleInfo.name}" already initialized`);
+            console.log(`ℹ️ "${name}" already initialized`);
             return true;
         }
         
         try {
-            console.log(`🔄 Initializing module: ${moduleInfo.name}`);
-            
-            // Initialize the module
+            console.log(`🔄 Initializing: ${name}`);
             if (moduleInfo.module.initialize) {
                 moduleInfo.module.initialize();
             }
-            
-            // Mark as initialized
             moduleInfo.initialized = true;
-            
-            console.log(`✅ ${moduleInfo.name}: Initialized`);
+            console.log(`✅ ${name} initialized`);
             return true;
-            
         } catch (error) {
-            console.error(`❌ Failed to initialize module "${moduleInfo.name}":`, error);
+            console.error(`❌ Failed to initialize "${name}":`, error);
             return false;
         }
     }
@@ -86,139 +71,78 @@ class FarmModules {
         const moduleInfo = this.getModule(name);
         
         if (!moduleInfo) {
-            console.error(`❌ Cannot render module "${name}" - not found`);
-            
-            // Show error message
+            console.error(`❌ Cannot render "${name}" - not found`);
             container.innerHTML = `
-                <div class="error-message">
+                <div style="padding: 20px; text-align: center;">
                     <h2>Module Not Found</h2>
-                    <p>The module "${name}" could not be loaded.</p>
-                    <p>Available modules: ${Array.from(this.modules.keys()).join(', ')}</p>
-                    <button onclick="app.showSection('dashboard')" style="
-                        padding: 10px 20px;
-                        background: #4CAF50;
-                        color: white;
-                        border: none;
-                        border-radius: 5px;
-                        cursor: pointer;
-                    ">Return to Dashboard</button>
+                    <p>Module "${name}" is not available.</p>
+                    <button onclick="location.reload()">Reload App</button>
                 </div>
             `;
             return false;
         }
         
         try {
-            console.log(`🎨 Rendering module: ${moduleInfo.name}`);
-            
-            // Clear container
+            console.log(`🎨 Rendering: ${moduleInfo.name}`);
             container.innerHTML = '';
             
-            // Store reference to container
-            moduleInfo.element = container;
-            
-            // Render the module
             if (moduleInfo.module.render) {
                 moduleInfo.module.render(container);
-            } else if (moduleInfo.module.default) {
-                // Handle ES6 default export style
-                moduleInfo.module.default(container);
             } else {
-                console.warn(`⚠️ Module "${moduleInfo.name}" has no render method`);
-                container.innerHTML = `<div class="module-error">
-                    <h3>Module Error</h3>
-                    <p>Module "${moduleInfo.name}" cannot be rendered.</p>
-                </div>`;
-                return false;
+                container.innerHTML = `<p>Module "${moduleInfo.name}" loaded but has no render method.</p>`;
             }
             
-            console.log(`✅ ${moduleInfo.name}: Rendered`);
-            return true;
+            // Initialize if not already
+            if (!moduleInfo.initialized && moduleInfo.module.initialize) {
+                moduleInfo.module.initialize();
+                moduleInfo.initialized = true;
+            }
             
+            console.log(`✅ ${moduleInfo.name} rendered`);
+            return true;
         } catch (error) {
-            console.error(`❌ Failed to render module "${moduleInfo.name}":`, error);
-            container.innerHTML = `<div class="module-error">
-                <h3>Render Error</h3>
-                <p>Failed to render module "${moduleInfo.name}": ${error.message}</p>
-            </div>`;
+            console.error(`❌ Failed to render "${moduleInfo.name}":`, error);
+            container.innerHTML = `
+                <div style="padding: 20px; color: red;">
+                    <h3>Render Error</h3>
+                    <p>${error.message}</p>
+                </div>
+            `;
             return false;
         }
     }
     
     static initializeAllModules() {
-        console.log(`🚀 Initializing all registered modules (${this.modules.size})...`);
-        
-        let initializedCount = 0;
-        
-        // Create a set to track which modules we've initialized (by base name)
-        const initializedBaseNames = new Set();
+        console.log('🚀 Initializing all modules...');
+        let count = 0;
         
         for (const [name, moduleInfo] of this.modules) {
-            // Get base name without .js
-            const baseName = name.replace(/\.js$/i, '');
-            
-            // Skip if we've already initialized a module with this base name
-            if (initializedBaseNames.has(baseName)) {
-                console.log(`⏭️ Skipping duplicate initialization for "${name}" (already initialized "${baseName}")`);
-                continue;
-            }
-            
             if (!moduleInfo.initialized && moduleInfo.module.initialize) {
                 try {
-                    console.log(`🔄 Initializing: ${name}`);
                     moduleInfo.module.initialize();
                     moduleInfo.initialized = true;
-                    initializedBaseNames.add(baseName);
-                    initializedCount++;
-                    console.log(`✅ ${name}: Initialized`);
+                    count++;
+                    console.log(`✅ ${name} initialized`);
                 } catch (error) {
-                    console.error(`❌ Failed to initialize "${name}":`, error);
+                    console.error(`❌ ${name} failed:`, error);
                 }
-            } else if (moduleInfo.initialized) {
-                console.log(`ℹ️ ${name}: Already initialized`);
-                initializedBaseNames.add(baseName);
             }
         }
         
-        console.log(`✅ ${initializedCount} unique modules initialized successfully`);
-        return initializedCount;
-    }
-    
-    static listModules() {
-        console.log('📋 Registered Modules:');
-        const baseNames = new Set();
-        
-        for (const [name, moduleInfo] of this.modules) {
-            const baseName = name.replace(/\.js$/i, '');
-            const isDuplicate = baseNames.has(baseName);
-            baseNames.add(baseName);
-            
-            console.log(`  - ${name} (initialized: ${moduleInfo.initialized})${isDuplicate ? ' [DUPLICATE]' : ''}`);
-        }
-        console.log(`Total: ${this.modules.size} modules, ${baseNames.size} unique`);
-        return Array.from(this.modules.keys());
+        console.log(`✅ ${count} modules initialized`);
+        return count;
     }
     
     static debug() {
         console.group('🔧 FarmModules Debug');
-        console.log('📊 Total module registrations:', this.modules.size);
-        console.log('📋 Module registrations:');
-        this.listModules();
+        console.log('Total:', this.modules.size);
+        console.log('Modules:', Array.from(this.modules.keys()));
         console.groupEnd();
-        return this;
     }
 }
 
-// Create global helper function
-window.debugFarmModules = function() {
-    return FarmModules.debug();
-};
+// Global helper
+window.debugFarmModules = FarmModules.debug.bind(FarmModules);
+window.FarmModules = FarmModules;
 
-// Initialize on window load
-window.addEventListener('DOMContentLoaded', () => {
-    console.log('🌱 FarmModules framework loaded');
-});
-
-// Export if using modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = FarmModules;
-}
+console.log('✅ FarmModules framework loaded');
