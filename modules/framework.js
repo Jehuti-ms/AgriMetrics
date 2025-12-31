@@ -1,148 +1,121 @@
-// framework.js - SIMPLIFIED WORKING VERSION
+// modules/framework.js
+console.log('Loading FarmModules framework...');
+
 class FarmModules {
     static modules = new Map();
-    
-    static registerModule(name, module) {
-        console.log(`📦 Registering module: ${name}`);
+    static appData = {};
+    static currentModule = null;
+
+    static registerModule(name, moduleConfig) {
+        console.log(`Registering module: ${name}`);
+        this.modules.set(name, moduleConfig);
+    }
+
+    static initializeModule(name) {
+        const module = this.modules.get(name);
+        if (!module) {
+            console.error(`Module ${name} not found`);
+            this.showFallbackContent(name);
+            return;
+        }
+
+        console.log(`Initializing module: ${name}`);
+        this.currentModule = name;
+
+        const contentArea = document.getElementById('content-area');
+        if (contentArea && module.template) {
+            contentArea.innerHTML = module.template;
+        }
+
+        if (module.initialize && typeof module.initialize === 'function') {
+            try {
+                module.initialize();
+            } catch (error) {
+                console.error(`Error initializing module ${name}:`, error);
+                this.showErrorContent(name, error);
+            }
+        }
+    }
+
+    static navigateTo(moduleName) {
+        console.log(`Navigating to: ${moduleName}`);
         
-        // Store the module
-        this.modules.set(name, {
-            name: name,
-            module: module,
-            initialized: false,
-            element: null
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
         });
         
-        console.log(`✅ Total modules: ${this.modules.size}`);
+        const targetLink = document.querySelector(`[data-section="${moduleName}"]`);
+        if (targetLink) {
+            targetLink.classList.add('active');
+        }
+
+        this.initializeModule(moduleName);
     }
-    
+
+    static showFallbackContent(moduleName) {
+        const contentArea = document.getElementById('content-area');
+        if (contentArea) {
+            contentArea.innerHTML = `
+                <div class="section active">
+                    <div class="module-header">
+                        <h1>${this.formatModuleName(moduleName)}</h1>
+                        <p>Module is being developed</p>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    static showErrorContent(moduleName, error) {
+        const contentArea = document.getElementById('content-area');
+        if (contentArea) {
+            contentArea.innerHTML = `
+                <div class="section active">
+                    <div class="module-header">
+                        <h1>${this.formatModuleName(moduleName)}</h1>
+                        <p>Error loading module</p>
+                    </div>
+                    <div class="error-content">
+                        <p>Failed to load module: ${error.message}</p>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    static formatModuleName(name) {
+        return name.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+    }
+
     static getModule(name) {
-        // Try exact match
-        if (this.modules.has(name)) {
-            return this.modules.get(name);
-        }
-        
-        // Try without .js
-        const nameWithoutJS = name.replace(/\.js$/, '');
-        if (this.modules.has(nameWithoutJS)) {
-            return this.modules.get(nameWithoutJS);
-        }
-        
-        // Try all possible variations
-        for (const [key, value] of this.modules) {
-            const keyWithoutJS = key.replace(/\.js$/, '');
-            if (keyWithoutJS === name || keyWithoutJS === nameWithoutJS) {
-                return value;
-            }
-        }
-        
-        console.warn(`⚠️ Module "${name}" not found. Available:`, Array.from(this.modules.keys()));
-        return null;
+        return this.modules.get(name);
     }
-    
-    static initializeModule(name) {
-        const moduleInfo = this.getModule(name);
-        
-        if (!moduleInfo) {
-            console.error(`❌ Cannot initialize "${name}" - not found`);
-            return false;
-        }
-        
-        if (moduleInfo.initialized) {
-            console.log(`ℹ️ "${name}" already initialized`);
-            return true;
-        }
-        
-        try {
-            console.log(`🔄 Initializing: ${name}`);
-            if (moduleInfo.module.initialize) {
-                moduleInfo.module.initialize();
-            }
-            moduleInfo.initialized = true;
-            console.log(`✅ ${name} initialized`);
-            return true;
-        } catch (error) {
-            console.error(`❌ Failed to initialize "${name}":`, error);
-            return false;
-        }
+
+    static setAppData(key, value) {
+        this.appData[key] = value;
     }
-    
-    static renderModule(name, container) {
-        const moduleInfo = this.getModule(name);
-        
-        if (!moduleInfo) {
-            console.error(`❌ Cannot render "${name}" - not found`);
-            container.innerHTML = `
-                <div style="padding: 20px; text-align: center;">
-                    <h2>Module Not Found</h2>
-                    <p>Module "${name}" is not available.</p>
-                    <button onclick="location.reload()">Reload App</button>
-                </div>
-            `;
-            return false;
-        }
-        
-        try {
-            console.log(`🎨 Rendering: ${moduleInfo.name}`);
-            container.innerHTML = '';
-            
-            if (moduleInfo.module.render) {
-                moduleInfo.module.render(container);
-            } else {
-                container.innerHTML = `<p>Module "${moduleInfo.name}" loaded but has no render method.</p>`;
-            }
-            
-            // Initialize if not already
-            if (!moduleInfo.initialized && moduleInfo.module.initialize) {
-                moduleInfo.module.initialize();
-                moduleInfo.initialized = true;
-            }
-            
-            console.log(`✅ ${moduleInfo.name} rendered`);
-            return true;
-        } catch (error) {
-            console.error(`❌ Failed to render "${moduleInfo.name}":`, error);
-            container.innerHTML = `
-                <div style="padding: 20px; color: red;">
-                    <h3>Render Error</h3>
-                    <p>${error.message}</p>
-                </div>
-            `;
-            return false;
-        }
+
+    static getAppData(key) {
+        return this.appData[key];
     }
-    
-    static initializeAllModules() {
-        console.log('🚀 Initializing all modules...');
-        let count = 0;
-        
-        for (const [name, moduleInfo] of this.modules) {
-            if (!moduleInfo.initialized && moduleInfo.module.initialize) {
-                try {
-                    moduleInfo.module.initialize();
-                    moduleInfo.initialized = true;
-                    count++;
-                    console.log(`✅ ${name} initialized`);
-                } catch (error) {
-                    console.error(`❌ ${name} failed:`, error);
-                }
-            }
-        }
-        
-        console.log(`✅ ${count} modules initialized`);
-        return count;
-    }
-    
-    static debug() {
-        console.group('🔧 FarmModules Debug');
-        console.log('Total:', this.modules.size);
-        console.log('Modules:', Array.from(this.modules.keys()));
-        console.groupEnd();
+
+    static updateAppData(updates) {
+        Object.assign(this.appData, updates);
     }
 }
 
-// Global helper
-window.debugFarmModules = FarmModules.debug.bind(FarmModules);
-window.FarmModules = FarmModules;
+// Initialize with default data
+FarmModules.appData = {
+    transactions: [],
+    inventory: [],
+    sales: [],
+    production: [],
+    feedTransactions: [],
+    user: { name: 'Demo Farmer', farmName: 'Green Valley Farm' },
+    farmName: 'Green Valley Farm'
+};
 
-console.log('✅ FarmModules framework loaded');
+window.FarmModules = FarmModules;
+console.log('✅ FarmModules framework initialized');
