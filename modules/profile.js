@@ -1073,64 +1073,60 @@ const ProfileModule = {
         }
     },
 
-    async handleLogout() {
-        const rememberUser = window.FarmModules.appData.profile?.rememberUser;
-        
-        if (confirm('Are you sure you want to logout?' + (rememberUser ? '\n\nYou have "Remember Me" enabled. You will stay logged in on this device unless you clear browser data.' : ''))) {
-            try {
-                // Sign out from Firebase
-                if (typeof firebase !== 'undefined' && firebase.auth) {
-                    await firebase.auth().signOut();
-                }
-                
-                // Only clear local data if "Remember Me" is disabled
-                if (!rememberUser) {
-                    localStorage.removeItem('farm-user');
-                    localStorage.removeItem('farm-orders');
-                    localStorage.removeItem('farm-inventory');
-                    localStorage.removeItem('farm-customers');
-                    localStorage.removeItem('farm-products');
-                    localStorage.removeItem('farm-profile');
-                    // Clear current input values
-                    this.currentInputValues = {};
-                }
-                
-                // Reset app data (but keep profile settings if remembering user)
-                if (!rememberUser) {
-                    window.FarmModules.appData = {
-                        profile: {
-                            farmName: 'My Farm',
-                            farmerName: 'Farm Manager',
-                            farmType: 'poultry',
-                            currency: 'USD',
-                            lowStockThreshold: 10,
-                            autoSync: true,
-                            rememberUser: true,
-                            localStorageEnabled: true,
-                            memberSince: new Date().toISOString()
-                        },
-                        orders: [],
-                        inventory: [],
-                        customers: [],
-                        products: []
-                    };
-                }
-                
-                this.showNotification(rememberUser ? 
-                    'Logged out (data saved for next login)' : 
-                    'Logged out successfully', 'success');
-                
-                // Redirect to login page or reload
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-                
-            } catch (error) {
-                console.error('Logout error:', error);
-                this.showNotification('Error during logout', 'error');
+   async handleLogout() {
+    const rememberUser = window.FarmModules.appData.profile?.rememberUser;
+    
+    if (confirm('Are you sure you want to logout?' + (rememberUser ? '\n\nYou have "Remember Me" enabled. Your data will be saved for next login.' : ''))) {
+        try {
+            // Sign out from Firebase
+            if (typeof firebase !== 'undefined' && firebase.auth) {
+                await firebase.auth().signOut();
             }
+            
+            // Only clear local data if "Remember Me" is disabled
+            if (!rememberUser) {
+                localStorage.removeItem('farm-user');
+                localStorage.removeItem('farm-orders');
+                localStorage.removeItem('farm-inventory');
+                localStorage.removeItem('farm-customers');
+                localStorage.removeItem('farm-products');
+                localStorage.removeItem('farm-profile');
+                // Clear current input values
+                this.currentInputValues = {};
+                
+                // Reset app data
+                window.FarmModules.appData = {
+                    profile: {
+                        farmName: 'My Farm',
+                        farmerName: 'Farm Manager',
+                        farmType: 'poultry',
+                        currency: 'USD',
+                        lowStockThreshold: 10,
+                        autoSync: true,
+                        rememberUser: true,
+                        localStorageEnabled: true,
+                        memberSince: new Date().toISOString()
+                    },
+                    orders: [],
+                    inventory: [],
+                    customers: [],
+                    products: []
+                };
+            }
+            
+            this.showNotification('Logged out successfully', 'success');
+            
+            // ALWAYS redirect to login page (index.html)
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Logout error:', error);
+            this.showNotification('Error during logout', 'error');
         }
-    },
+    }
+},
 
     // DISPLAY METHODS
     updateAllDisplays() {
