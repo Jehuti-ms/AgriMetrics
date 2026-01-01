@@ -1,6 +1,12 @@
 // modules/income-expenses.js - COMPLETE REWRITTEN VERSION
 console.log('💰 Loading Income & Expenses module (Complete)...');
 
+const Broadcaster = window.DataBroadcaster || {
+    recordCreated: () => {},
+    recordUpdated: () => {},
+    recordDeleted: () => {}
+};
+
 const IncomeExpensesModule = {
     name: 'income-expenses',
     initialized: false,
@@ -1012,6 +1018,16 @@ async deleteReceipt(receiptId, deleteFromStorage = true) {
                     const storageRef = window.storage.ref();
                     await storageRef.child(receipt.fileName).delete();
                     this.showNotification('Receipt deleted from storage', 'success');
+                    
+                    // Broadcast storage deletion
+                    Broadcaster.recordDeleted('income-expenses', {
+                        id: receiptId,
+                        data: receipt,
+                        timestamp: new Date().toISOString(),
+                        module: 'income-expenses',
+                        action: 'receipt_deleted_from_storage',
+                        storageType: 'firebase'
+                    });
                 } catch (storageError) {
                     console.error('Storage delete error:', storageError);
                     deleteSuccessful = false;
@@ -1040,6 +1056,16 @@ async deleteReceipt(receiptId, deleteFromStorage = true) {
         // Remove from local queue
         this.receiptQueue = this.receiptQueue.filter(r => r.id !== receiptId);
         
+        // Broadcast queue removal
+        Broadcaster.recordDeleted('income-expenses', {
+            id: receiptId,
+            data: receipt,
+            timestamp: new Date().toISOString(),
+            module: 'income-expenses',
+            action: deleteFromStorage ? 'receipt_deleted_completely' : 'receipt_removed_from_queue',
+            deletedFromStorage: deleteFromStorage
+        });
+        
         // Update UI
         this.updateReceiptQueueUI();
         
@@ -1052,7 +1078,7 @@ async deleteReceipt(receiptId, deleteFromStorage = true) {
         this.showNotification('Failed to delete receipt', 'error');
     }
 },
-
+    
     // Add these methods IMMEDIATELY AFTER deleteReceipt method:
 showDeleteOptions(receiptId) {
     const receipt = this.receiptQueue.find(r => r.id === receiptId);
@@ -1523,6 +1549,15 @@ async uploadToFirebase(file, onProgress = null) {
                         // Add to local queue
                         this.receiptQueue.push(receiptData);
                         
+                        // Broadcast receipt upload
+                        Broadcaster.recordCreated('income-expenses', {
+                            ...receiptData,
+                            timestamp: new Date().toISOString(),
+                            module: 'income-expenses',
+                            action: 'receipt_uploaded',
+                            storageType: 'firebase'
+                        });
+                        
                         this.currentUploadTask = null;
                         resolve(receiptData);
                     } catch (error) {
@@ -1538,7 +1573,7 @@ async uploadToFirebase(file, onProgress = null) {
         throw new Error(`Firebase upload failed: ${error.message}`);
     }
 },
-
+    
 storeReceiptLocally(file) {
     const timestamp = Date.now();
     const receiptId = `local_${timestamp}`;
@@ -1570,6 +1605,15 @@ storeReceiptLocally(file) {
             const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
             localReceipts.push(receiptData);
             localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
+            
+            // Broadcast local receipt creation
+            Broadcaster.recordCreated('income-expenses', {
+                ...receiptData,
+                timestamp: new Date().toISOString(),
+                module: 'income-expenses',
+                action: 'receipt_uploaded',
+                storageType: 'local'
+            });
             
             resolve(receiptData);
         };
@@ -1983,99 +2027,129 @@ storeReceiptLocally(file) {
         }
     },
 
-    saveTransaction() {
-        console.log('Saving transaction...');
+   saveTransaction() {
+    console.log('Saving transaction...');
+    
+    // Get form values
+    const id = document.getElementById('transaction-id')?.value || Date.now();
+    const date = document.getElementById('transaction-date')?.value;
+    const type = document.getElementById('transaction-type')?.value;
+    const category = document.getElementById('transaction-category')?.value;
+    const amount = parseFloat(document.getElementById('transaction-amount')?.value || 0);
+    const description = document.getElementById('transaction-description')?.value || '';
+    const paymentMethod = document.getElementById('transaction-payment')?.value || 'cash';
+    const reference = document.getElementById('transaction-reference')?.value || '';
+    const notes = document.getElementById('transaction-notes')?.value || '';
+    
+    // Validate
+    if (!date || !type || !category || !amount || !description) {
+        this.showNotification('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    if (amount <= 0) {
+        this.showNotification('Amount must be greater than 0', 'error');
+        return;
+    }
+    
+    const transactionData = {
+        id: parseInt(id),
+        date,
+        type,
+        category,
+        amount,
+        description,
+        paymentMethod,
+        reference,
+        notes,
+        receipt: this.receiptPreview || null
+    };
+    
+    // Check if editing existing transaction
+    const existingIndex = this.transactions.findIndex(t => t.id == id);
+    if (existingIndex > -1) {
+        // Update existing
+        const oldTransaction = this.transactions[existingIndex];
+        this.transactions[existingIndex] = transactionData;
         
-        // Get form values
-        const id = document.getElementById('transaction-id')?.value || Date.now();
-        const date = document.getElementById('transaction-date')?.value;
-        const type = document.getElementById('transaction-type')?.value;
-        const category = document.getElementById('transaction-category')?.value;
-        const amount = parseFloat(document.getElementById('transaction-amount')?.value || 0);
-        const description = document.getElementById('transaction-description')?.value || '';
-        const paymentMethod = document.getElementById('transaction-payment')?.value || 'cash';
-        const reference = document.getElementById('transaction-reference')?.value || '';
-        const notes = document.getElementById('transaction-notes')?.value || '';
+        // Broadcast update
+        Broadcaster.recordUpdated('income-expenses', {
+            id: transactionData.id,
+            oldData: oldTransaction,
+            newData: transactionData,
+            timestamp: new Date().toISOString()
+        });
         
-        // Validate
-        if (!date || !type || !category || !amount || !description) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
+        this.showNotification('Transaction updated successfully!', 'success');
+        
+        // If this was from a pending receipt, mark it as processed
+        if (this.receiptPreview?.id) {
+            this.markReceiptAsProcessed(this.receiptPreview.id);
+        }
+    } else {
+        // Add new
+        transactionData.id = transactionData.id || Date.now();
+        this.transactions.unshift(transactionData);
+        
+        // Broadcast creation
+        Broadcaster.recordCreated('income-expenses', {
+            ...transactionData,
+            timestamp: new Date().toISOString(),
+            module: 'income-expenses',
+            action: 'transaction_created'
+        });
+        
+        this.showNotification('Transaction saved successfully!', 'success');
+        
+        // If this was from a pending receipt, mark it as processed
+        if (this.receiptPreview?.id) {
+            this.markReceiptAsProcessed(this.receiptPreview.id);
+        }
+    }
+    
+    // Save to localStorage
+    this.saveData();
+    
+    // Update UI
+    this.updateStats();
+    this.updateTransactionsList();
+    this.updateCategoryBreakdown();
+    
+    // Close modal
+    this.hideTransactionModal();
+},
+
+markReceiptAsProcessed(receiptId) {
+    const receiptIndex = this.receiptQueue.findIndex(r => r.id === receiptId);
+    if (receiptIndex > -1) {
+        // Update status locally
+        const oldReceipt = this.receiptQueue[receiptIndex];
+        this.receiptQueue[receiptIndex].status = 'processed';
+        
+        // Update in Firebase if available
+        if (this.isFirebaseAvailable && window.db) {
+            window.db.collection('receipts').doc(receiptId).update({
+                status: 'processed',
+                processedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
         }
         
-        if (amount <= 0) {
-            this.showNotification('Amount must be greater than 0', 'error');
-            return;
-        }
-        
-        const transactionData = {
-            id: parseInt(id),
-            date,
-            type,
-            category,
-            amount,
-            description,
-            paymentMethod,
-            reference,
-            notes,
-            receipt: this.receiptPreview || null
-        };
-        
-        // Check if editing existing transaction
-        const existingIndex = this.transactions.findIndex(t => t.id == id);
-        if (existingIndex > -1) {
-            // Update existing
-            this.transactions[existingIndex] = transactionData;
-            this.showNotification('Transaction updated successfully!', 'success');
-            
-            // If this was from a pending receipt, mark it as processed
-            if (this.receiptPreview?.id) {
-                this.markReceiptAsProcessed(this.receiptPreview.id);
-            }
-        } else {
-            // Add new
-            transactionData.id = transactionData.id || Date.now();
-            this.transactions.unshift(transactionData);
-            this.showNotification('Transaction saved successfully!', 'success');
-            
-            // If this was from a pending receipt, mark it as processed
-            if (this.receiptPreview?.id) {
-                this.markReceiptAsProcessed(this.receiptPreview.id);
-            }
-        }
-        
-        // Save to localStorage
-        this.saveData();
+        // Broadcast receipt processed
+        Broadcaster.recordUpdated('income-expenses', {
+            id: receiptId,
+            oldData: oldReceipt,
+            newData: this.receiptQueue[receiptIndex],
+            timestamp: new Date().toISOString(),
+            module: 'income-expenses',
+            action: 'receipt_processed'
+        });
         
         // Update UI
-        this.updateStats();
-        this.updateTransactionsList();
-        this.updateCategoryBreakdown();
+        this.updateReceiptQueueUI();
         
-        // Close modal
-        this.hideTransactionModal();
-    },
-
-    markReceiptAsProcessed(receiptId) {
-        const receiptIndex = this.receiptQueue.findIndex(r => r.id === receiptId);
-        if (receiptIndex > -1) {
-            // Update status locally
-            this.receiptQueue[receiptIndex].status = 'processed';
-            
-            // Update in Firebase if available
-            if (this.isFirebaseAvailable && window.db) {
-                window.db.collection('receipts').doc(receiptId).update({
-                    status: 'processed',
-                    processedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            }
-            
-            // Update UI
-            this.updateReceiptQueueUI();
-            
-            this.showNotification('Receipt marked as processed', 'success');
-        }
-    },
+        this.showNotification('Receipt marked as processed', 'success');
+    }
+},
 
     deleteTransaction() {
         const transactionId = document.getElementById('transaction-id')?.value;
@@ -2085,16 +2159,36 @@ storeReceiptLocally(file) {
             this.deleteTransactionRecord(transactionId);
             this.hideTransactionModal();
         }
+        
+        Broadcaster.recordDeleted('income-expenses', transactionData);
     },
 
     deleteTransactionRecord(transactionId) {
-        this.transactions = this.transactions.filter(t => t.id != transactionId);
-        this.saveData();
-        this.updateStats();
-        this.updateTransactionsList();
-        this.updateCategoryBreakdown();
-        this.showNotification('Transaction deleted successfully', 'success');
-    },
+    const transaction = this.transactions.find(t => t.id == transactionId);
+    if (!transaction) return;
+    
+    // Remove from array
+    this.transactions = this.transactions.filter(t => t.id != transactionId);
+    
+    // Broadcast deletion
+    Broadcaster.recordDeleted('income-expenses', {
+        id: transactionId,
+        data: transaction,
+        timestamp: new Date().toISOString(),
+        module: 'income-expenses',
+        action: 'transaction_deleted'
+    });
+    
+    // Save to localStorage
+    this.saveData();
+    
+    // Update UI
+    this.updateStats();
+    this.updateTransactionsList();
+    this.updateCategoryBreakdown();
+    
+    this.showNotification('Transaction deleted successfully', 'success');
+},
 
     filterTransactions(filter) {
         let filtered = this.transactions;
@@ -2354,59 +2448,91 @@ storeReceiptLocally(file) {
     },
 
     setupBatchDeleteHandlers() {
-        // Select all checkbox
-        document.getElementById('select-all-receipts')?.addEventListener('change', (e) => {
-            const isChecked = e.target.checked;
-            document.querySelectorAll('.receipt-select').forEach(checkbox => {
-                checkbox.checked = isChecked;
-            });
+    // Select all checkbox
+    document.getElementById('select-all-receipts')?.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        document.querySelectorAll('.receipt-select').forEach(checkbox => {
+            checkbox.checked = isChecked;
+        });
+        this.updateSelectedCount();
+    });
+    
+    // Individual receipt checkboxes
+    document.querySelectorAll('.receipt-select').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
             this.updateSelectedCount();
         });
+    });
+    
+    // Batch process
+    document.getElementById('batch-process-btn')?.addEventListener('click', async () => {
+        const selectedIds = this.getSelectedReceiptIds();
+        if (selectedIds.length === 0) {
+            this.showNotification('No receipts selected', 'warning');
+            return;
+        }
         
-        // Individual receipt checkboxes
-        document.querySelectorAll('.receipt-select').forEach(checkbox => {
-            checkbox.addEventListener('change', () => {
-                this.updateSelectedCount();
+        // Broadcast batch process start
+        Broadcaster.recordCreated('income-expenses', {
+            ids: selectedIds,
+            count: selectedIds.length,
+            timestamp: new Date().toISOString(),
+            module: 'income-expenses',
+            action: 'batch_receipt_process_started'
+        });
+        
+        if (selectedIds.length === 1) {
+            await this.processSingleReceipt(selectedIds[0]);
+        } else {
+            this.showNotification(`Processing ${selectedIds.length} receipts...`, 'info');
+            for (const id of selectedIds) {
+                await this.processSingleReceipt(id);
+            }
+            
+            // Broadcast batch process completion
+            Broadcaster.recordUpdated('income-expenses', {
+                ids: selectedIds,
+                count: selectedIds.length,
+                timestamp: new Date().toISOString(),
+                module: 'income-expenses',
+                action: 'batch_receipt_process_completed'
             });
-        });
+        }
         
-        // Batch process
-        document.getElementById('batch-process-btn')?.addEventListener('click', () => {
-            const selectedIds = this.getSelectedReceiptIds();
-            if (selectedIds.length === 0) {
-                this.showNotification('No receipts selected', 'warning');
-                return;
-            }
+        this.hideBatchControls();
+    });
+    
+    // Batch delete
+    document.getElementById('batch-delete-btn')?.addEventListener('click', async () => {
+        const selectedIds = this.getSelectedReceiptIds();
+        if (selectedIds.length === 0) {
+            this.showNotification('No receipts selected', 'warning');
+            return;
+        }
+        
+        if (confirm(`Delete ${selectedIds.length} selected receipt(s)? This will permanently remove them from storage.`)) {
+            // Broadcast batch delete
+            Broadcaster.recordDeleted('income-expenses', {
+                ids: selectedIds,
+                count: selectedIds.length,
+                timestamp: new Date().toISOString(),
+                module: 'income-expenses',
+                action: 'batch_receipts_deleted',
+                deletedFromStorage: true
+            });
             
-            if (selectedIds.length === 1) {
-                this.processSingleReceipt(selectedIds[0]);
-            } else {
-                this.showNotification(`Processing ${selectedIds.length} receipts...`, 'info');
-                selectedIds.forEach(id => this.processSingleReceipt(id));
+            for (const id of selectedIds) {
+                await this.deleteReceipt(id, true);
             }
-            
             this.hideBatchControls();
-        });
-        
-        // Batch delete
-        document.getElementById('batch-delete-btn')?.addEventListener('click', () => {
-            const selectedIds = this.getSelectedReceiptIds();
-            if (selectedIds.length === 0) {
-                this.showNotification('No receipts selected', 'warning');
-                return;
-            }
-            
-            if (confirm(`Delete ${selectedIds.length} selected receipt(s)?`)) {
-                selectedIds.forEach(id => this.deleteReceipt(id, true));
-                this.hideBatchControls();
-            }
-        });
-        
-        // Cancel batch
-        document.getElementById('cancel-batch-btn')?.addEventListener('click', () => {
-            this.hideBatchControls();
-        });
-    },
+        }
+    });
+    
+    // Cancel batch
+    document.getElementById('cancel-batch-btn')?.addEventListener('click', () => {
+        this.hideBatchControls();
+    });
+},
 
     getSelectedReceiptIds() {
         const selectedIds = [];
