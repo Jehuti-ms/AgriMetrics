@@ -444,52 +444,64 @@ const BroilerMortalityModule = {
     },
 
     renderCauseSummary() {
-        const causeData = {};
-        const causes = ['natural', 'disease', 'predator', 'heat-stress', 'cold-stress', 'nutritional', 'other'];
-        
-        causes.forEach(cause => {
-            const causeRecords = this.mortalityData.filter(record => record.cause === cause);
-            causeData[cause] = {
-                count: causeRecords.length,
-                totalQuantity: causeRecords.reduce((sum, record) => sum + record.quantity, 0),
-                avgAge: causeRecords.length > 0 ? 
-                    Math.round(causeRecords.reduce((sum, record) => sum + (record.age || 0), 0) / causeRecords.length) : 0
-            };
-        });
+    const causeData = {};
+    const causes = ['natural', 'disease', 'predator', 'heat-stress', 'cold-stress', 'nutritional', 'other'];
+    
+    causes.forEach(cause => {
+        const causeRecords = this.mortalityData.filter(record => record.cause === cause);
+        causeData[cause] = {
+            count: causeRecords.length,
+            totalQuantity: causeRecords.reduce((sum, record) => sum + record.quantity, 0),
+            avgAge: causeRecords.length > 0 ? 
+                Math.round(causeRecords.reduce((sum, record) => sum + (record.age || 0), 0) / causeRecords.length) : 0,
+            // Store record IDs for delete functionality
+            recordIds: causeRecords.map(record => record.id)
+        };
+    });
 
-        const totalLosses = this.mortalityData.reduce((sum, record) => sum + record.quantity, 0);
+    const totalLosses = this.mortalityData.reduce((sum, record) => sum + record.quantity, 0);
 
-        return `
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                ${causes.filter(cause => causeData[cause].totalQuantity > 0).map(cause => {
-                    const data = causeData[cause];
-                    const percentage = totalLosses > 0 ? Math.round((data.totalQuantity / totalLosses) * 100) : 0;
-                    const causeColor = this.getCauseColor(cause);
-                    
-                    return `
-                        <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                                <div style="font-size: 20px;">${this.getCauseIcon(cause)}</div>
-                                <div style="font-weight: 600; color: ${causeColor};">${this.formatCause(cause)}</div>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="color: var(--text-secondary);">Losses:</span>
-                                <span style="font-weight: 600; color: var(--text-primary);">${data.totalQuantity} birds</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="color: var(--text-secondary);">Records:</span>
-                                <span style="font-weight: 600; color: var(--text-primary);">${data.count}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span style="color: var(--text-secondary);">Share:</span>
-                                <span style="font-weight: 600; color: ${causeColor};">${percentage}%</span>
-                            </div>
+    return `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+            ${causes.filter(cause => causeData[cause].totalQuantity > 0).map(cause => {
+                const data = causeData[cause];
+                const percentage = totalLosses > 0 ? Math.round((data.totalQuantity / totalLosses) * 100) : 0;
+                const causeColor = this.getCauseColor(cause);
+                
+                return `
+                    <div class="cause-item" data-cause="${cause}" style="position: relative; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                            <div style="font-size: 20px;">${this.getCauseIcon(cause)}</div>
+                            <div style="font-weight: 600; color: ${causeColor};">${this.formatCause(cause)}</div>
                         </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
-    },
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="color: var(--text-secondary);">Losses:</span>
+                            <span style="font-weight: 600; color: var(--text-primary);">${data.totalQuantity} birds</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="color: var(--text-secondary);">Records:</span>
+                            <span style="font-weight: 600; color: var(--text-primary);">${data.count}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: var(--text-secondary);">Share:</span>
+                            <span style="font-weight: 600; color: ${causeColor};">${percentage}%</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <button class="delete-cause-records" data-cause="${cause}" style="background: none; border: 1px solid #ef4444; color: #ef4444; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: all 0.2s;" 
+                                    title="Delete all ${this.formatCause(cause)} records">
+                                Delete All
+                            </button>
+                            <button class="view-cause-details" data-cause="${cause}" style="background: none; border: 1px solid ${causeColor}; color: ${causeColor}; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: all 0.2s;"
+                                    title="View ${this.formatCause(cause)} details">
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+},
 
     setupEventListeners() {
         console.log('🔧 Setting up broiler mortality event listeners...');
@@ -611,29 +623,103 @@ const BroilerMortalityModule = {
     },
 
     // NEW: Handle clicks on edit/delete buttons
-    handleTableClick(e) {
-        // Check for edit button
-        const editButton = e.target.closest('.edit-mortality');
-        if (editButton) {
-            e.preventDefault();
-            e.stopPropagation();
-            const recordId = editButton.dataset.id;
-            console.log('✅ Edit button clicked:', recordId);
-            this.editMortality(recordId);
-            return;
-        }
+    // Update the handleTableClick method to include cause summary button handling
+handleTableClick(e) {
+    // Check for edit button
+    const editButton = e.target.closest('.edit-mortality');
+    if (editButton) {
+        e.preventDefault();
+        e.stopPropagation();
+        const recordId = editButton.dataset.id;
+        console.log('✅ Edit button clicked:', recordId);
+        this.editMortality(recordId);
+        return;
+    }
+    
+    // Check for delete button
+    const deleteButton = e.target.closest('.delete-mortality');
+    if (deleteButton) {
+        e.preventDefault();
+        e.stopPropagation();
+        const recordId = deleteButton.dataset.id;
+        console.log('✅ Delete button clicked:', recordId);
+        this.deleteMortalityRecord(recordId);
+        return;
+    }
+    
+    // NEW: Check for delete all cause records button
+    const deleteCauseButton = e.target.closest('.delete-cause-records');
+    if (deleteCauseButton) {
+        e.preventDefault();
+        e.stopPropagation();
+        const cause = deleteCauseButton.dataset.cause;
+        console.log('🗑️ Delete all records for cause:', cause);
+        this.deleteAllCauseRecords(cause);
+        return;
+    }
+    
+    // NEW: Check for view cause details button
+    const viewCauseButton = e.target.closest('.view-cause-details');
+    if (viewCauseButton) {
+        e.preventDefault();
+        e.stopPropagation();
+        const cause = viewCauseButton.dataset.cause;
+        console.log('🔍 View details for cause:', cause);
+        this.viewCauseDetails(cause);
+        return;
+    }
+},
+
+    // NEW METHOD: Delete all records for a specific cause
+deleteAllCauseRecords(cause) {
+    const causeName = this.formatCause(cause);
+    const causeRecords = this.mortalityData.filter(record => record.cause === cause);
+    
+    if (causeRecords.length === 0) {
+        this.showNotification(`No ${causeName} records to delete`, 'info');
+        return;
+    }
+    
+    const confirmMessage = `Are you sure you want to delete ALL ${causeRecords.length} ${causeName} records? This will remove ${causeRecords.reduce((sum, record) => sum + record.quantity, 0)} birds from the records.`;
+    
+    if (confirm(confirmMessage)) {
+        // Keep records that are NOT from this cause
+        this.mortalityData = this.mortalityData.filter(record => record.cause !== cause);
         
-        // Check for delete button
-        const deleteButton = e.target.closest('.delete-mortality');
-        if (deleteButton) {
-            e.preventDefault();
-            e.stopPropagation();
-            const recordId = deleteButton.dataset.id;
-            console.log('✅ Delete button clicked:', recordId);
-            this.deleteMortalityRecord(recordId);
-            return;
-        }
-    },
+        this.saveData();
+        this.updateStats();
+        this.updateMortalityTable();
+        this.updateCauseSummary();
+        
+        this.showNotification(`All ${causeName} records (${causeRecords.length}) deleted successfully`, 'success');
+    }
+},
+
+// NEW METHOD: View details for a specific cause
+viewCauseDetails(cause) {
+    const causeRecords = this.mortalityData.filter(record => record.cause === cause);
+    
+    if (causeRecords.length === 0) {
+        this.showNotification(`No ${this.formatCause(cause)} records found`, 'info');
+        return;
+    }
+    
+    // Set filter to show only this cause
+    const filterSelect = document.getElementById('mortality-filter');
+    if (filterSelect) {
+        filterSelect.value = cause;
+        document.getElementById('mortality-table').innerHTML = this.renderMortalityTable(cause);
+        this.setupTableClickHandler();
+    }
+    
+    // Scroll to the mortality table
+    const mortalityTable = document.getElementById('mortality-table');
+    if (mortalityTable) {
+        mortalityTable.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    this.showNotification(`Showing ${causeRecords.length} ${this.formatCause(cause)} records`, 'info');
+},
 
     // MODAL CONTROL METHODS
     showMortalityModal() {
@@ -1335,9 +1421,12 @@ const BroilerMortalityModule = {
         this.setupTableClickHandler();
     },
 
-    updateCauseSummary() {
-        document.getElementById('cause-summary').innerHTML = this.renderCauseSummary();
-    },
+   updateCauseSummary() {
+    const causeSummaryElement = document.getElementById('cause-summary');
+    if (causeSummaryElement) {
+        causeSummaryElement.innerHTML = this.renderCauseSummary();
+    }
+},
 
     convertToCSV(mortality) {
         const headers = ['Date', 'Cause', 'Quantity', 'Age', 'Notes'];
