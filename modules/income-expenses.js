@@ -2445,6 +2445,124 @@ storeReceiptLocally(file) {
     // ==================== END OF BATCH OPERATIONS ====================
 };
 
+// ==================== PERMANENT EDIT BUTTON FIX ====================
+// This fix ensures edit buttons ALWAYS work
+
+// 1. Make sure the editTransaction method is robust
+const originalEditTransaction = IncomeExpensesModule.editTransaction;
+IncomeExpensesModule.editTransaction = function(transactionId) {
+    console.log('✏️ EDITING transaction:', transactionId);
+    
+    // Find transaction
+    const transaction = this.transactions.find(t => t.id == transactionId);
+    if (!transaction) {
+        this.showNotification('Transaction not found', 'error');
+        return;
+    }
+    
+    // Show modal
+    this.showTransactionModal(transactionId);
+    
+    // Wait for modal to render, then populate
+    setTimeout(() => {
+        // Get form elements
+        const form = document.getElementById('transaction-form');
+        if (!form) return;
+        
+        // Populate form
+        form.querySelector('#transaction-id').value = transaction.id;
+        form.querySelector('#transaction-date').value = transaction.date;
+        form.querySelector('#transaction-type').value = transaction.type;
+        form.querySelector('#transaction-category').value = transaction.category;
+        form.querySelector('#transaction-amount').value = transaction.amount;
+        form.querySelector('#transaction-description').value = transaction.description;
+        form.querySelector('#transaction-payment').value = transaction.paymentMethod || 'cash';
+        form.querySelector('#transaction-reference').value = transaction.reference || '';
+        form.querySelector('#transaction-notes').value = transaction.notes || '';
+        
+        // Show delete button
+        const deleteBtn = document.getElementById('delete-transaction');
+        if (deleteBtn) {
+            deleteBtn.style.display = 'block';
+        }
+        
+        // Update title
+        const title = document.getElementById('transaction-modal-title');
+        if (title) {
+            title.textContent = 'Edit Transaction';
+        }
+        
+        console.log('✅ Edit form populated');
+    }, 50);
+};
+
+// 2. Add direct click handlers that ALWAYS work
+document.addEventListener('click', function(e) {
+    const editBtn = e.target.closest('.edit-transaction');
+    if (editBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const transactionId = editBtn.dataset.id;
+        console.log('🎯 Edit button clicked for ID:', transactionId);
+        
+        // Get the module instance and call editTransaction
+        if (window.FarmModules && FarmModules.modules['income-expenses']) {
+            const module = FarmModules.modules['income-expenses'];
+            if (module.editTransaction) {
+                module.editTransaction(transactionId);
+            }
+        }
+        
+        return false;
+    }
+}, true); // Use capture phase to catch clicks early
+
+// 3. Style edit buttons to look clickable
+function styleEditButtons() {
+    const editButtons = document.querySelectorAll('.edit-transaction');
+    editButtons.forEach(btn => {
+        btn.style.cursor = 'pointer';
+        btn.style.transition = 'all 0.2s';
+        
+        // Hover effects
+        btn.addEventListener('mouseenter', () => {
+            btn.style.transform = 'scale(1.1)';
+            btn.style.color = '#4CAF50';
+        });
+        
+        btn.addEventListener('mouseleave', () => {
+            btn.style.transform = 'scale(1)';
+            btn.style.color = '';
+        });
+        
+        // Click feedback
+        btn.addEventListener('mousedown', () => {
+            btn.style.transform = 'scale(0.95)';
+        });
+        
+        btn.addEventListener('mouseup', () => {
+            btn.style.transform = 'scale(1.1)';
+        });
+    });
+}
+
+// Apply styles when page loads and when transactions update
+setTimeout(styleEditButtons, 1000);
+
+// Also apply after any DOM updates
+const observer = new MutationObserver(() => {
+    styleEditButtons();
+});
+
+observer.observe(document.body, {
+    childList: true,
+    subtree: true
+});
+
+console.log('✅ Permanent edit button fix loaded');
+
+
 // Register with FarmModules framework
 if (window.FarmModules) {
     window.FarmModules.registerModule('income-expenses', IncomeExpensesModule);
