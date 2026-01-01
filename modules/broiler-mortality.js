@@ -1,4 +1,4 @@
-// modules/broiler-mortality.js - UPDATED WITH STYLE MANAGER INTEGRATION
+// modules/broiler-mortality.js - COMPLETE FIXED VERSION
 console.log('😔 Loading broiler mortality module...');
 
 const BroilerMortalityModule = {
@@ -492,153 +492,94 @@ const BroilerMortalityModule = {
     },
 
     setupEventListeners() {
-    console.log('🔧 Setting up broiler mortality event listeners...');
-    
-    // Quick form
-    const quickForm = document.getElementById('quick-mortality-form');
-    if (quickForm) {
-        quickForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleQuickMortality();
-        });
-    }
-
-    // Modal buttons
-    const recordBtn = document.getElementById('record-mortality-btn');
-    if (recordBtn) recordBtn.addEventListener('click', () => this.showMortalityModal());
-    
-    const healthBtn = document.getElementById('health-report-btn');
-    if (healthBtn) healthBtn.addEventListener('click', () => this.generateHealthReport());
-    
-    const trendBtn = document.getElementById('trend-analysis-btn');
-    if (trendBtn) trendBtn.addEventListener('click', () => this.generateTrendAnalysis());
-    
-    const causeBtn = document.getElementById('cause-analysis-btn');
-    if (causeBtn) causeBtn.addEventListener('click', () => this.generateCauseAnalysis());
-    
-    const exportBtn = document.getElementById('export-mortality-btn');
-    if (exportBtn) exportBtn.addEventListener('click', () => this.exportMortality());
-    
-    // Mortality modal handlers
-    const saveBtn = document.getElementById('save-mortality');
-    if (saveBtn) saveBtn.addEventListener('click', () => this.saveMortality());
-    
-    const deleteBtn = document.getElementById('delete-mortality');
-    if (deleteBtn) deleteBtn.addEventListener('click', () => this.deleteMortality());
-    
-    const cancelBtn = document.getElementById('cancel-mortality');
-    if (cancelBtn) cancelBtn.addEventListener('click', () => this.hideMortalityModal());
-    
-    const closeModalBtn = document.getElementById('close-mortality-modal');
-    if (closeModalBtn) closeModalBtn.addEventListener('click', () => this.hideMortalityModal());
-    
-    // Report modal handlers
-    const closeHealthBtn = document.getElementById('close-health-report');
-    if (closeHealthBtn) closeHealthBtn.addEventListener('click', () => this.hideHealthReportModal());
-    
-    const closeHealthBtn2 = document.getElementById('close-health-report-btn');
-    if (closeHealthBtn2) closeHealthBtn2.addEventListener('click', () => this.hideHealthReportModal());
-    
-    const printHealthBtn = document.getElementById('print-health-report');
-    if (printHealthBtn) printHealthBtn.addEventListener('click', () => this.printHealthReport());
-    
-    // Trend analysis modal handlers
-    const closeTrendBtn = document.getElementById('close-trend-analysis');
-    if (closeTrendBtn) closeTrendBtn.addEventListener('click', () => this.hideTrendAnalysisModal());
-    
-    const closeTrendBtn2 = document.getElementById('close-trend-analysis-btn');
-    if (closeTrendBtn2) closeTrendBtn2.addEventListener('click', () => this.hideTrendAnalysisModal());
-    
-    const printTrendBtn = document.getElementById('print-trend-analysis');
-    if (printTrendBtn) printTrendBtn.addEventListener('click', () => this.printTrendAnalysis());
-    
-    // Cause analysis modal handlers
-    const closeCauseBtn = document.getElementById('close-cause-analysis');
-    if (closeCauseBtn) closeCauseBtn.addEventListener('click', () => this.hideCauseAnalysisModal());
-    
-    const closeCauseBtn2 = document.getElementById('close-cause-analysis-btn');
-    if (closeCauseBtn2) closeCauseBtn2.addEventListener('click', () => this.hideCauseAnalysisModal());
-    
-    const printCauseBtn = document.getElementById('print-cause-analysis');
-    if (printCauseBtn) printCauseBtn.addEventListener('click', () => this.printCauseAnalysis());
-    
-    // Filter - IMPORTANT: This needs to properly handle table re-rendering
-    const filterSelect = document.getElementById('mortality-filter');
-    if (filterSelect) {
-        filterSelect.addEventListener('change', (e) => {
-            const filterValue = e.target.value;
-            console.log('🔍 Filter changed to:', filterValue);
-            document.getElementById('mortality-table').innerHTML = this.renderMortalityTable(filterValue);
-            // Re-attach event listeners after table re-render
-            this.attachTableEventListeners();
-        });
-    }
-
-    // Close modals when clicking outside
-    document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('popout-modal')) {
-            this.hideAllModals();
-        }
-    });
-
-    // Hover effects for quick action buttons
-    const quickActionButtons = document.querySelectorAll('.quick-action-btn');
-    quickActionButtons.forEach(button => {
-        button.addEventListener('mouseenter', (e) => {
-            e.currentTarget.style.transform = 'translateY(-4px)';
-        });
-        button.addEventListener('mouseleave', (e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-        });
-    });
-
-    // Initial attachment of table event listeners
-    this.attachTableEventListeners();
-},
-
-// NEW METHOD: Attach event listeners to mortality table
-attachTableEventListeners() {
-    console.log('🔧 Attaching table event listeners...');
-    
-    // Use event delegation for the entire table container
-    const mortalityTable = document.getElementById('mortality-table');
-    if (!mortalityTable) return;
-    
-    // Remove any existing listeners to avoid duplicates
-    mortalityTable.removeEventListener('click', this.handleTableClick);
-    
-    // Add new listener
-    mortalityTable.addEventListener('click', this.handleTableClick.bind(this));
-},
-
-// NEW METHOD: Handle clicks on mortality table
-handleTableClick(e) {
-    // Check for edit button click
-    const editBtn = e.target.closest('.edit-mortality');
-    if (editBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        const recordId = editBtn.dataset.id;
-        console.log('✏️ Edit clicked for record:', recordId);
-        this.editMortality(recordId);
-        return;
-    }
-    
-    // Check for delete button click
-    const deleteBtn = e.target.closest('.delete-mortality');
-    if (deleteBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        const recordId = deleteBtn.dataset.id;
-        console.log('🗑️ Delete clicked for record:', recordId);
+        console.log('🔧 Setting up broiler mortality event listeners...');
         
-        // Show confirmation dialog
-        if (confirm('Are you sure you want to delete this mortality record?')) {
-            this.deleteMortalityRecord(recordId);
+        // Quick form
+        const quickForm = document.getElementById('quick-mortality-form');
+        if (quickForm) {
+            quickForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleQuickMortality();
+            });
         }
-        return;
-    }
-},
+
+        // Modal buttons
+        const recordBtn = document.getElementById('record-mortality-btn');
+        if (recordBtn) recordBtn.addEventListener('click', () => this.showMortalityModal());
+        
+        const healthBtn = document.getElementById('health-report-btn');
+        if (healthBtn) healthBtn.addEventListener('click', () => this.generateHealthReport());
+        
+        const trendBtn = document.getElementById('trend-analysis-btn');
+        if (trendBtn) trendBtn.addEventListener('click', () => this.generateTrendAnalysis());
+        
+        const causeBtn = document.getElementById('cause-analysis-btn');
+        if (causeBtn) causeBtn.addEventListener('click', () => this.generateCauseAnalysis());
+        
+        const exportBtn = document.getElementById('export-mortality-btn');
+        if (exportBtn) exportBtn.addEventListener('click', () => this.exportMortality());
+        
+        // Mortality modal handlers
+        const saveBtn = document.getElementById('save-mortality');
+        if (saveBtn) saveBtn.addEventListener('click', () => this.saveMortality());
+        
+        const deleteBtn = document.getElementById('delete-mortality');
+        if (deleteBtn) deleteBtn.addEventListener('click', () => this.deleteMortality());
+        
+        const cancelBtn = document.getElementById('cancel-mortality');
+        if (cancelBtn) cancelBtn.addEventListener('click', () => this.hideMortalityModal());
+        
+        const closeModalBtn = document.getElementById('close-mortality-modal');
+        if (closeModalBtn) closeModalBtn.addEventListener('click', () => this.hideMortalityModal());
+        
+        // Report modal handlers
+        const closeHealthBtn = document.getElementById('close-health-report');
+        if (closeHealthBtn) closeHealthBtn.addEventListener('click', () => this.hideHealthReportModal());
+        
+        const closeHealthBtn2 = document.getElementById('close-health-report-btn');
+        if (closeHealthBtn2) closeHealthBtn2.addEventListener('click', () => this.hideHealthReportModal());
+        
+        const printHealthBtn = document.getElementById('print-health-report');
+        if (printHealthBtn) printHealthBtn.addEventListener('click', () => this.printHealthReport());
+        
+        // Trend analysis modal handlers
+        const closeTrendBtn = document.getElementById('close-trend-analysis');
+        if (closeTrendBtn) closeTrendBtn.addEventListener('click', () => this.hideTrendAnalysisModal());
+        
+        const closeTrendBtn2 = document.getElementById('close-trend-analysis-btn');
+        if (closeTrendBtn2) closeTrendBtn2.addEventListener('click', () => this.hideTrendAnalysisModal());
+        
+        const printTrendBtn = document.getElementById('print-trend-analysis');
+        if (printTrendBtn) printTrendBtn.addEventListener('click', () => this.printTrendAnalysis());
+        
+        // Cause analysis modal handlers
+        const closeCauseBtn = document.getElementById('close-cause-analysis');
+        if (closeCauseBtn) closeCauseBtn.addEventListener('click', () => this.hideCauseAnalysisModal());
+        
+        const closeCauseBtn2 = document.getElementById('close-cause-analysis-btn');
+        if (closeCauseBtn2) closeCauseBtn2.addEventListener('click', () => this.hideCauseAnalysisModal());
+        
+        const printCauseBtn = document.getElementById('print-cause-analysis');
+        if (printCauseBtn) printCauseBtn.addEventListener('click', () => this.printCauseAnalysis());
+        
+        // Filter
+        const filterSelect = document.getElementById('mortality-filter');
+        if (filterSelect) {
+            filterSelect.addEventListener('change', (e) => {
+                const filterValue = e.target.value;
+                console.log('🔍 Filter changed to:', filterValue);
+                document.getElementById('mortality-table').innerHTML = this.renderMortalityTable(filterValue);
+                // Setup event listeners after table re-render
+                this.setupTableClickHandler();
+            });
+        }
+
+        // Close modals when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('popout-modal')) {
+                this.hideAllModals();
+            }
+        });
 
         // Hover effects
         const buttons = document.querySelectorAll('.quick-action-btn');
@@ -651,17 +592,47 @@ handleTableClick(e) {
             });
         });
 
-        // Edit/delete mortality buttons (delegated)
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.edit-mortality')) {
-                const recordId = e.target.closest('.edit-mortality').dataset.id;
-                this.editMortality(recordId);
-            }
-            if (e.target.closest('.delete-mortality')) {
-                const recordId = e.target.closest('.delete-mortality').dataset.id;
-                this.deleteMortalityRecord(recordId);
-            }
-        });
+        // Setup table click handler
+        this.setupTableClickHandler();
+    },
+
+    // NEW: Universal table click handler
+    setupTableClickHandler() {
+        console.log('🔧 Setting up table click handler...');
+        
+        // Remove existing handler to avoid duplicates
+        document.removeEventListener('click', this.handleTableClickBound);
+        
+        // Create bound version for removal
+        this.handleTableClickBound = this.handleTableClick.bind(this);
+        
+        // Add new handler
+        document.addEventListener('click', this.handleTableClickBound);
+    },
+
+    // NEW: Handle clicks on edit/delete buttons
+    handleTableClick(e) {
+        // Check for edit button
+        const editButton = e.target.closest('.edit-mortality');
+        if (editButton) {
+            e.preventDefault();
+            e.stopPropagation();
+            const recordId = editButton.dataset.id;
+            console.log('✅ Edit button clicked:', recordId);
+            this.editMortality(recordId);
+            return;
+        }
+        
+        // Check for delete button
+        const deleteButton = e.target.closest('.delete-mortality');
+        if (deleteButton) {
+            e.preventDefault();
+            e.stopPropagation();
+            const recordId = deleteButton.dataset.id;
+            console.log('✅ Delete button clicked:', recordId);
+            this.deleteMortalityRecord(recordId);
+            return;
+        }
     },
 
     // MODAL CONTROL METHODS
@@ -1353,19 +1324,20 @@ handleTableClick(e) {
     },
 
     updateMortalityTable() {
-    const periodFilter = document.getElementById('mortality-filter');
-    const filter = periodFilter ? periodFilter.value : 'all';
-    console.log('🔄 Updating mortality table with filter:', filter);
-    
-    // Update the table HTML
-    document.getElementById('mortality-table').innerHTML = this.renderMortalityTable(filter);
-    
-    // Re-attach event listeners after table is updated
-    this.attachTableEventListeners();
-},
+        const periodFilter = document.getElementById('mortality-filter');
+        const filter = periodFilter ? periodFilter.value : 'all';
+        console.log('🔄 Updating mortality table with filter:', filter);
+        
+        // Update the table HTML
+        document.getElementById('mortality-table').innerHTML = this.renderMortalityTable(filter);
+        
+        // Re-attach event listeners after table is updated
+        this.setupTableClickHandler();
+    },
 
     updateCauseSummary() {
-    document.getElementById('cause-summary').innerHTML = this.renderCauseSummary();
+        document.getElementById('cause-summary').innerHTML = this.renderCauseSummary();
+    },
 
     convertToCSV(mortality) {
         const headers = ['Date', 'Cause', 'Quantity', 'Age', 'Notes'];
@@ -1445,11 +1417,6 @@ handleTableClick(e) {
         }
     }
 };
-
-if (window.FarmModules) {
-    window.FarmModules.registerModule('broiler-mortality', BroilerMortalityModule);
-    console.log('✅ Broiler Health & Mortality module registered with StyleManager integration');
-}
 
 // ==================== UNIVERSAL REGISTRATION ====================
 
