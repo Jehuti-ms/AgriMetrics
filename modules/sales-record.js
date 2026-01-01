@@ -2245,138 +2245,161 @@ setupFormFieldListeners() {
     },
     
     // ✅ MODIFIED: Enhanced generateMeatSalesReport to include real-time data
-    generateMeatSalesReport() {
-        const sales = window.FarmModules.appData.sales || [];
-        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
-        
-        const meatSales = sales.filter(sale => meatProducts.includes(sale.product));
-        
-        const totalWeight = meatSales.reduce((sum, sale) => {
-            if (sale.weightUnit === 'lbs') {
-                return sum + (sale.weight || 0) * 0.453592; // Convert lbs to kg
-            }
-            return sum + (sale.weight || 0);
-        }, 0);
-        
-        const totalAnimals = meatSales.reduce((sum, sale) => sum + (sale.animalCount || sale.quantity || 0), 0);
-        const totalRevenue = meatSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
-        
-        // ✅ Broadcast meat report generation
-        if (this.broadcaster) {
-            this.broadcaster.broadcast('meat-report-generated', {
-                module: 'sales-record',
-                timestamp: new Date().toISOString(),
-                totalAnimals: totalAnimals,
-                totalWeight: totalWeight,
-                totalRevenue: totalRevenue,
-                meatSalesCount: meatSales.length
-            });
+   generateMeatSalesReport() {
+    const sales = window.FarmModules.appData.sales || [];
+    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+    
+    const meatSales = sales.filter(sale => meatProducts.includes(sale.product));
+    
+    const totalWeight = meatSales.reduce((sum, sale) => {
+        if (sale.weightUnit === 'lbs') {
+            return sum + (sale.weight || 0) * 0.453592; // Convert lbs to kg
+        }
+        return sum + (sale.weight || 0);
+    }, 0);
+    
+    const totalAnimals = meatSales.reduce((sum, sale) => sum + (sale.animalCount || sale.quantity || 0), 0);
+    const totalRevenue = meatSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+    
+    // ✅ FIXED: Properly initialize productBreakdown object
+    const productBreakdown = {};
+    
+    meatSales.forEach(sale => {
+        const productName = this.formatProductName(sale.product);
+        if (!productBreakdown[productName]) {
+            productBreakdown[productName] = {
+                weight: 0,
+                animals: 0,
+                revenue: 0
+            };
         }
         
-        let content = `
-            <div style="background: white; padding: 24px; border-radius: 12px;">
-                <div style="text-align: center; margin-bottom: 24px;">
-                    <h2 style="color: var(--text-primary); margin-bottom: 8px;">🍗 Meat Sales Report</h2>
-                    <p style="color: var(--text-secondary); font-size: 16px;">Weight-based meat sales analysis</p>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
-                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #fef3f3 0%, #fed7d7 100%); border-radius: 8px;">
-                        <div style="font-size: 32px; margin-bottom: 8px;">🍖</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${totalAnimals}</div>
-                        <div style="color: var(--text-secondary); font-size: 14px;">Total Animals</div>
-                    </div>
-                    
-                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #fef9c3 0%, #fde047 100%); border-radius: 8px;">
-                        <div style="font-size: 32px; margin-bottom: 8px;">⚖️</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${totalWeight.toFixed(2)} kg</div>
-                        <div style="color: var(--text-secondary); font-size: 14px;">Total Weight</div>
-                    </div>
-                    
-                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-radius: 8px;">
-                        <div style="font-size: 32px; margin-bottom: 8px;">💰</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(totalRevenue)}</div>
-                        <div style="color: var(--text-secondary); font-size: 14px;">Total Revenue</div>
-                    </div>
-                    
-                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); border-radius: 8px;">
-                        <div style="font-size: 32px; margin-bottom: 8px;">📊</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${meatSales.length}</div>
-                        <div style="color: var(--text-secondary); font-size: 14px;">Transactions</div>
-                    </div>
-                </div>
-                
-                <div style="margin-bottom: 32px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--glass-border); padding-bottom: 8px;">📋 Product Breakdown</h3>
-                    <div style="overflow-x: auto;">
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr style="border-bottom: 2px solid #e5e7eb;">
-                                    <th style="padding: 12px; text-align: left; color: #374151;">Product</th>
-                                    <th style="padding: 12px; text-align: left; color: #374151;">Animals</th>
-                                    <th style="padding: 12px; text-align: left; color: #374151;">Weight (kg)</th>
-                                    <th style="padding: 12px; text-align: left; color: #374151;">Avg Weight</th>
-                                    <th style="padding: 12px; text-align: left; color: #374151;">Revenue</th>
-                                    <th style="padding: 12px; text-align: left; color: #374151;">Avg Price/kg</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-        `;
+        let weight = sale.weight || 0;
+        if (sale.weightUnit === 'lbs') {
+            weight = weight * 0.453592; // Convert to kg for consistent reporting
+        }
         
-        Object.entries(productBreakdown).forEach(([product, data]) => {
-            const avgWeight = data.animals > 0 ? (data.weight / data.animals).toFixed(2) : 0;
-            const avgPricePerKg = data.weight > 0 ? (data.revenue / data.weight).toFixed(2) : 0;
-            
-            content += `
-                <tr style="border-bottom: 1px solid #e5e7eb;">
-                    <td style="padding: 12px; color: var(--text-primary); font-weight: 600;">${product}</td>
-                    <td style="padding: 12px; color: var(--text-primary);">${data.animals}</td>
-                    <td style="padding: 12px; color: var(--text-primary);">${data.weight.toFixed(2)} kg</td>
-                    <td style="padding: 12px; color: var(--text-primary);">${avgWeight} kg/animal</td>
-                    <td style="padding: 12px; color: var(--text-primary); font-weight: 600;">${this.formatCurrency(data.revenue)}</td>
-                    <td style="padding: 12px; color: var(--text-primary);">${this.formatCurrency(parseFloat(avgPricePerKg))}/kg</td>
-                </tr>
-            `;
+        productBreakdown[productName].weight += weight;
+        productBreakdown[productName].animals += sale.animalCount || sale.quantity || 0;
+        productBreakdown[productName].revenue += sale.totalAmount;
+    });
+    
+    // ✅ Broadcast meat report generation
+    if (this.broadcaster) {
+        this.broadcaster.broadcast('meat-report-generated', {
+            module: 'sales-record',
+            timestamp: new Date().toISOString(),
+            totalAnimals: totalAnimals,
+            totalWeight: totalWeight,
+            totalRevenue: totalRevenue,
+            meatSalesCount: meatSales.length
         });
+    }
+    
+    let content = `
+        <div style="background: white; padding: 24px; border-radius: 12px;">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <h2 style="color: var(--text-primary); margin-bottom: 8px;">🍗 Meat Sales Report</h2>
+                <p style="color: var(--text-secondary); font-size: 16px;">Weight-based meat sales analysis</p>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
+                <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #fef3f3 0%, #fed7d7 100%); border-radius: 8px;">
+                    <div style="font-size: 32px; margin-bottom: 8px;">🍖</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${totalAnimals}</div>
+                    <div style="color: var(--text-secondary); font-size: 14px;">Total Animals</div>
+                </div>
+                
+                <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #fef9c3 0%, #fde047 100%); border-radius: 8px;">
+                    <div style="font-size: 32px; margin-bottom: 8px;">⚖️</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${totalWeight.toFixed(2)} kg</div>
+                    <div style="color: var(--text-secondary); font-size: 14px;">Total Weight</div>
+                </div>
+                
+                <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-radius: 8px;">
+                    <div style="font-size: 32px; margin-bottom: 8px;">💰</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(totalRevenue)}</div>
+                    <div style="color: var(--text-secondary); font-size: 14px;">Total Revenue</div>
+                </div>
+                
+                <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); border-radius: 8px;">
+                    <div style="font-size: 32px; margin-bottom: 8px;">📊</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${meatSales.length}</div>
+                    <div style="color: var(--text-secondary); font-size: 14px;">Transactions</div>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 32px;">
+                <h3 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--glass-border); padding-bottom: 8px;">📋 Product Breakdown</h3>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #e5e7eb;">
+                                <th style="padding: 12px; text-align: left; color: #374151;">Product</th>
+                                <th style="padding: 12px; text-align: left; color: #374151;">Animals</th>
+                                <th style="padding: 12px; text-align: left; color: #374151;">Weight (kg)</th>
+                                <th style="padding: 12px; text-align: left; color: #374151;">Avg Weight</th>
+                                <th style="padding: 12px; text-align: left; color: #374151;">Revenue</th>
+                                <th style="padding: 12px; text-align: left; color: #374151;">Avg Price/kg</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+    `;
+    
+    Object.entries(productBreakdown).forEach(([product, data]) => {
+        const avgWeight = data.animals > 0 ? (data.weight / data.animals).toFixed(2) : 0;
+        const avgPricePerKg = data.weight > 0 ? (data.revenue / data.weight).toFixed(2) : 0;
         
         content += `
-                            </tbody>
-                        </table>
-                    </div>
+            <tr style="border-bottom: 1px solid #e5e7eb;">
+                <td style="padding: 12px; color: var(--text-primary); font-weight: 600;">${product}</td>
+                <td style="padding: 12px; color: var(--text-primary);">${data.animals}</td>
+                <td style="padding: 12px; color: var(--text-primary);">${data.weight.toFixed(2)} kg</td>
+                <td style="padding: 12px; color: var(--text-primary);">${avgWeight} kg/animal</td>
+                <td style="padding: 12px; color: var(--text-primary); font-weight: 600;">${this.formatCurrency(data.revenue)}</td>
+                <td style="padding: 12px; color: var(--text-primary);">${this.formatCurrency(parseFloat(avgPricePerKg))}/kg</td>
+            </tr>
+        `;
+    });
+    
+    content += `
+                        </tbody>
+                    </table>
                 </div>
-                
-                ${totalWeight > 0 ? `
-                    <div style="margin-top: 32px; padding: 20px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
-                        <h4 style="color: var(--text-primary); margin-bottom: 12px;">📊 Key Metrics</h4>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                            <div style="text-align: center;">
-                                <div style="font-size: 14px; color: var(--text-secondary);">Average Weight per Animal</div>
-                                <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${(totalWeight / totalAnimals).toFixed(2)} kg</div>
-                            </div>
-                            <div style="text-align: center;">
-                                <div style="font-size: 14px; color: var(--text-secondary);">Average Price per kg</div>
-                                <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(totalRevenue / totalWeight)}/kg</div>
-                            </div>
-                            <div style="text-align: center;">
-                                <div style="font-size: 14px; color: var(--text-secondary);">Average Sale Value</div>
-                                <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(totalRevenue / meatSales.length)}</div>
-                            </div>
+            </div>
+            
+            ${totalWeight > 0 ? `
+                <div style="margin-top: 32px; padding: 20px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+                    <h4 style="color: var(--text-primary); margin-bottom: 12px;">📊 Key Metrics</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 14px; color: var(--text-secondary);">Average Weight per Animal</div>
+                            <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${(totalWeight / totalAnimals).toFixed(2)} kg</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 14px; color: var(--text-secondary);">Average Price per kg</div>
+                            <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(totalRevenue / totalWeight)}/kg</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 14px; color: var(--text-secondary);">Average Sale Value</div>
+                            <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(totalRevenue / meatSales.length)}</div>
                         </div>
                     </div>
-                ` : ''}
-            </div>
-        `;
-
-        const contentElement = document.getElementById('meat-sales-content');
-        if (contentElement) {
-            contentElement.innerHTML = content;
-        }
-        
-        const modal = document.getElementById('meat-sales-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-        }
-    },
+                </div>
+            ` : ''}
+        </div>
+    `;
+    
+    const contentElement = document.getElementById('meat-sales-content');
+    if (contentElement) {
+        contentElement.innerHTML = content;
+    }
+    
+    const modal = document.getElementById('meat-sales-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+    }
+},
 
      printDailyReport() {
         const printContent = document.getElementById('daily-report-content').innerHTML;
