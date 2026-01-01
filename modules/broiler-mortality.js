@@ -137,10 +137,10 @@ const BroilerMortalityModule = {
                 font-size: 24px;
             }
             
-            .cause-title {
+           .cause-title {
                 font-weight: 600;
                 font-size: 16px;
-                color: var(--text-primary);
+                /* color will be set inline by renderCauseSummary() */
             }
             
             .cause-stats {
@@ -603,10 +603,11 @@ const BroilerMortalityModule = {
         `;
     },
 
-   renderCauseSummary() {
+  renderCauseSummary() {
     const causeData = {};
     const causes = ['natural', 'disease', 'predator', 'heat-stress', 'cold-stress', 'nutritional', 'other'];
     
+    // Calculate data for each cause
     causes.forEach(cause => {
         const causeRecords = this.mortalityData.filter(record => record.cause === cause);
         causeData[cause] = {
@@ -620,9 +621,24 @@ const BroilerMortalityModule = {
 
     const totalLosses = this.mortalityData.reduce((sum, record) => sum + record.quantity, 0);
 
+    // Filter to only show causes that have data
+    const causesWithData = causes.filter(cause => causeData[cause].totalQuantity > 0);
+    
+    if (causesWithData.length === 0) {
+        return `
+            <div class="cause-summary-grid">
+                <div class="cause-item" style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">😊</div>
+                    <div style="font-size: 16px; color: var(--text-primary); margin-bottom: 8px;">No mortality by cause data</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Record some mortality data to see cause analysis</div>
+                </div>
+            </div>
+        `;
+    }
+
     return `
         <div class="cause-summary-grid">
-            ${causes.filter(cause => causeData[cause].totalQuantity > 0).map(cause => {
+            ${causesWithData.map(cause => {
                 const data = causeData[cause];
                 const percentage = totalLosses > 0 ? Math.round((data.totalQuantity / totalLosses) * 100) : 0;
                 const causeColor = this.getCauseColor(cause);
@@ -631,7 +647,7 @@ const BroilerMortalityModule = {
                     <div class="cause-item" data-cause="${cause}">
                         <div class="cause-header">
                             <div class="cause-icon">${this.getCauseIcon(cause)}</div>
-                            <div class="cause-title">${this.formatCause(cause)}</div>
+                            <div class="cause-title" style="color: ${causeColor};">${this.formatCause(cause)}</div>
                         </div>
                         <div class="cause-stats">
                             <div class="cause-stat">
@@ -644,7 +660,7 @@ const BroilerMortalityModule = {
                             </div>
                             <div class="cause-stat">
                                 <span class="cause-stat-label">Share:</span>
-                                <span class="cause-stat-percentage">${percentage}%</span>
+                                <span class="cause-stat-percentage" style="color: ${causeColor};">${percentage}%</span>
                             </div>
                         </div>
                         <div class="cause-actions">
@@ -661,7 +677,7 @@ const BroilerMortalityModule = {
         </div>
     `;
 },
-
+    
     setupEventListeners() {
         console.log('🔧 Setting up broiler mortality event listeners...');
         
