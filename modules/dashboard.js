@@ -113,25 +113,25 @@ const DashboardModule = {
 
                 .time-filter-btn {
                     padding: 6px 12px;
-                    border: 1px solid var(--glass-border);
-                    background: var(--glass-bg);
+                    border: 1px solid var(--border-color, #e0e0e0);
+                    background: var(--card-bg, rgba(255, 255, 255, 0.9));
                     border-radius: 20px;
                     font-size: 13px;
                     font-weight: 500;
-                    color: var(--text-secondary);
+                    color: var(--text-secondary, #666);
                     cursor: pointer;
                     transition: all 0.2s ease;
                 }
 
                 .time-filter-btn:hover {
-                    background: var(--hover-bg);
-                    border-color: var(--primary-color);
+                    background: var(--hover-bg, rgba(0, 0, 0, 0.05));
+                    border-color: var(--primary-color, #3b82f6);
                 }
 
                 .time-filter-btn.active {
-                    background: var(--primary-color);
+                    background: var(--primary-color, #3b82f6);
                     color: white;
-                    border-color: var(--primary-color);
+                    border-color: var(--primary-color, #3b82f6);
                 }
 
                 .real-time-toggle {
@@ -139,7 +139,7 @@ const DashboardModule = {
                     align-items: center;
                     gap: 8px;
                     font-size: 13px;
-                    color: var(--text-secondary);
+                    color: var(--text-secondary, #666);
                 }
 
                 .toggle-switch {
@@ -180,7 +180,7 @@ const DashboardModule = {
                 }
 
                 input:checked + .toggle-slider {
-                    background-color: var(--primary-color);
+                    background-color: var(--primary-color, #3b82f6);
                 }
 
                 input:checked + .toggle-slider:before {
@@ -192,23 +192,24 @@ const DashboardModule = {
                     align-items: flex-start;
                     gap: 12px;
                     padding: 16px;
-                    background: var(--card-bg);
+                    background: var(--card-bg, rgba(255, 255, 255, 0.9));
                     border-radius: 12px;
-                    border: 1px solid var(--glass-border);
+                    border: 1px solid var(--border-color, #e0e0e0);
                     transition: all 0.2s ease;
                     margin-bottom: 8px;
+                    cursor: pointer;
                 }
 
                 .activity-item:hover {
                     transform: translateY(-2px);
                     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-                    border-color: var(--primary-color);
+                    border-color: var(--primary-color, #3b82f6);
                 }
 
                 .activity-icon {
                     font-size: 20px;
                     padding: 8px;
-                    background: var(--glass-bg);
+                    background: var(--glass-bg, rgba(255, 255, 255, 0.8));
                     border-radius: 10px;
                     min-width: 40px;
                     text-align: center;
@@ -220,7 +221,7 @@ const DashboardModule = {
 
                 .activity-title {
                     font-weight: 600;
-                    color: var(--text-primary);
+                    color: var(--text-primary, #1a1a1a);
                     font-size: 14px;
                     margin-bottom: 4px;
                 }
@@ -230,7 +231,7 @@ const DashboardModule = {
                     justify-content: space-between;
                     align-items: center;
                     font-size: 12px;
-                    color: var(--text-secondary);
+                    color: var(--text-secondary, #666);
                 }
 
                 .activity-time {
@@ -240,37 +241,23 @@ const DashboardModule = {
                 }
 
                 .activity-module {
-                    background: var(--tag-bg);
+                    background: var(--tag-bg, rgba(59, 130, 246, 0.1));
                     padding: 2px 8px;
                     border-radius: 12px;
                     font-size: 11px;
+                    color: var(--primary-color, #3b82f6);
                 }
 
                 .no-activity {
                     text-align: center;
                     padding: 40px 20px;
-                    color: var(--text-secondary);
+                    color: var(--text-secondary, #666);
                 }
 
                 .loading-activity {
                     text-align: center;
                     padding: 30px;
-                    color: var(--text-secondary);
-                }
-
-                .activity-stats {
-                    display: flex;
-                    gap: 8px;
-                    margin-top: 4px;
-                }
-
-                .stat-badge {
-                    padding: 2px 8px;
-                    border-radius: 10px;
-                    font-size: 11px;
-                    font-weight: 500;
-                    background: var(--glass-bg);
-                    border: 1px solid var(--glass-border);
+                    color: var(--text-secondary, #666);
                 }
 
                 @keyframes fadeIn {
@@ -280,7 +267,7 @@ const DashboardModule = {
 
                 .activity-item.new {
                     animation: fadeIn 0.5s ease;
-                    border-left: 3px solid var(--primary-color);
+                    border-left: 3px solid var(--primary-color, #3b82f6);
                 }
 
                 /* Refresh indicator */
@@ -310,13 +297,13 @@ const DashboardModule = {
             <div class="dashboard-container" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
                 <!-- Welcome Section -->
                 <div class="welcome-section" style="margin-bottom: 30px;">
-                    <h1 style="color: var(--text-primary); font-size: 28px; margin-bottom: 8px;">Welcome to Farm Management</h1>
-                    <p style="color: var(--text-secondary); font-size: 16px;">Manage your farm operations efficiently</p>
+                    <h1 style="color: var(--text-primary, #1a1a1a); font-size: 28px; margin-bottom: 8px;">Welcome to Farm Management</h1>
+                    <p style="color: var(--text-secondary, #666); font-size: 16px;">Manage your farm operations efficiently</p>
                 </div>
 
                 <!-- Quick Actions Grid -->
                 <div class="quick-action-grid" style="margin-bottom: 40px;">
-                    <h2 style="color: var(--text-primary); font-size: 20px; margin-bottom: 20px;">Quick Actions</h2>
+                    <h2 style="color: var(--text-primary, #1a1a1a); font-size: 20px; margin-bottom: 20px;">Quick Actions</h2>
                     <div class="actions-grid" style="
                         display: grid;
                         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -329,7 +316,7 @@ const DashboardModule = {
 
                 <!-- Stats Overview -->
                 <div class="stats-overview" style="margin-bottom: 40px;">
-                    <h2 style="color: var(--text-primary); font-size: 20px; margin-bottom: 20px;">Overview</h2>
+                    <h2 style="color: var(--text-primary, #1a1a1a); font-size: 20px; margin-bottom: 20px;">Overview</h2>
                     <div class="stats-grid" style="
                         display: grid;
                         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -342,7 +329,7 @@ const DashboardModule = {
                 <!-- Recent Activity with Filters -->
                 <div class="recent-activity">
                     <div class="activity-filter-container">
-                        <h2 style="color: var(--text-primary); font-size: 20px; margin: 0;">Recent Activity</h2>
+                        <h2 style="color: var(--text-primary, #1a1a1a); font-size: 20px; margin: 0;">Recent Activity</h2>
                         
                         <div class="filter-controls">
                             <div class="time-filter-buttons">
@@ -371,14 +358,14 @@ const DashboardModule = {
                     </div>
                     
                     <div class="activity-list" style="
-                        background: var(--card-bg);
-                        border: 1px solid var(--glass-border);
+                        background: var(--card-bg, rgba(255, 255, 255, 0.9));
+                        border: 1px solid var(--border-color, #e0e0e0);
                         border-radius: 16px;
                         padding: 20px;
                         min-height: 300px;
                     ">
                         <div id="activity-content" class="loading-activity">
-                            <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                            <div style="text-align: center; color: var(--text-secondary, #666); padding: 40px 20px;">
                                 <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
                                 <div style="font-size: 16px; margin-bottom: 8px;">Loading activities...</div>
                             </div>
@@ -389,13 +376,13 @@ const DashboardModule = {
                 <!-- Refresh Button -->
                 <div style="text-align: center; margin-top: 30px;">
                     <button id="refresh-stats-btn" class="btn-outline ${this.autoRefresh ? 'refreshing' : ''}" style="
-                        background: var(--card-bg);
-                        border: 1px solid var(--glass-border);
+                        background: var(--card-bg, rgba(255, 255, 255, 0.9));
+                        border: 1px solid var(--border-color, #e0e0e0);
                         border-radius: 12px;
                         padding: 12px 24px;
                         cursor: pointer;
                         font-size: 14px;
-                        color: var(--text-secondary);
+                        color: var(--text-secondary, #666);
                         transition: all 0.3s ease;
                         display: inline-flex;
                         align-items: center;
@@ -403,7 +390,7 @@ const DashboardModule = {
                     ">
                         🔄 Refresh Now
                     </button>
-                    ${this.autoRefresh ? '<div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">Auto-refresh enabled (every 30s)</div>' : ''}
+                    ${this.autoRefresh ? '<div style="font-size: 12px; color: var(--text-secondary, #666); margin-top: 8px;">Auto-refresh enabled (every 30s)</div>' : ''}
                 </div>
             </div>
         `;
@@ -508,10 +495,10 @@ const DashboardModule = {
                         const recentItems = data.slice(-5).reverse();
                         
                         recentItems.forEach(item => {
-                            if (item.date || item.createdAt) {
+                            if (item.date || item.createdAt || item.timestamp) {
                                 activities.push({
                                     id: item.id || Date.now(),
-                                    timestamp: item.date || item.createdAt || new Date().toISOString(),
+                                    timestamp: item.date || item.createdAt || item.timestamp || new Date().toISOString(),
                                     icon: this.getModuleIcon(moduleName),
                                     title: this.getActivityTitle(moduleName, item),
                                     description: this.getActivityDescription(moduleName, item),
@@ -585,7 +572,7 @@ const DashboardModule = {
         const now = new Date();
         
         return activities.filter(activity => {
-            const activityDate = new Date(activity.timestamp || activity.date || activity.time);
+            const activityDate = new Date(activity.timestamp || activity.date || activity.time || now);
             
             switch(this.activityFilter) {
                 case '24h':
@@ -601,7 +588,7 @@ const DashboardModule = {
         });
     },
 
-    // UPDATED: Update recent activity section
+    // FIXED: Update recent activity section (removed unused stats parameter)
     updateRecentActivity() {
         const activityContent = document.getElementById('activity-content');
         if (!activityContent) return;
@@ -612,8 +599,8 @@ const DashboardModule = {
             activityContent.innerHTML = `
                 <div class="no-activity">
                     <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                    <div style="font-size: 16px; color: var(--text-primary); margin-bottom: 8px;">No activity found</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">No activities for the selected time period</div>
+                    <div style="font-size: 16px; color: var(--text-primary, #1a1a1a); margin-bottom: 8px;">No activity found</div>
+                    <div style="font-size: 14px; color: var(--text-secondary, #666);">No activities for the selected time period</div>
                 </div>
             `;
             return;
@@ -628,7 +615,7 @@ const DashboardModule = {
                         </div>
                         <div class="activity-content">
                             <div class="activity-title">${activity.title}</div>
-                            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
+                            <div style="font-size: 13px; color: var(--text-secondary, #666); margin-bottom: 8px;">
                                 ${activity.description}
                             </div>
                             <div class="activity-meta">
@@ -766,8 +753,8 @@ const DashboardModule = {
 
         return actions.map(action => `
             <button class="quick-action-btn" data-action="${action.action}" style="
-                background: var(--card-bg);
-                border: 1px solid var(--glass-border);
+                background: var(--card-bg, rgba(255, 255, 255, 0.9));
+                border: 1px solid var(--border-color, #e0e0e0);
                 border-radius: 16px;
                 padding: 24px 16px;
                 cursor: pointer;
@@ -779,8 +766,8 @@ const DashboardModule = {
                 min-height: 120px;
             ">
                 <div style="font-size: 32px;">${action.icon}</div>
-                <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${action.label}</span>
-                <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">${action.desc}</span>
+                <span style="font-size: 14px; font-weight: 600; color: var(--text-primary, #1a1a1a);">${action.label}</span>
+                <span style="font-size: 12px; color: var(--text-secondary, #666); text-align: center;">${action.desc}</span>
             </button>
         `).join('');
     },
@@ -799,16 +786,16 @@ const DashboardModule = {
 
         return stats.map(stat => `
             <div class="stat-card" id="${stat.id}-card" style="
-                background: var(--card-bg);
-                border: 1px solid var(--glass-border);
+                background: var(--card-bg, rgba(255, 255, 255, 0.9));
+                border: 1px solid var(--border-color, #e0e0e0);
                 border-radius: 16px;
                 padding: 20px;
                 text-align: center;
                 transition: all 0.3s ease;
             ">
                 <div style="font-size: 24px; margin-bottom: 8px;">${stat.icon}</div>
-                <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="${stat.id}">${stat.value}</div>
-                <div style="font-size: 14px; color: var(--text-secondary);">${stat.label}</div>
+                <div style="font-size: 24px; font-weight: bold; color: var(--text-primary, #1a1a1a); margin-bottom: 4px;" id="${stat.id}">${stat.value}</div>
+                <div style="font-size: 14px; color: var(--text-secondary, #666);">${stat.label}</div>
             </div>
         `).join('');
     },
@@ -867,7 +854,7 @@ const DashboardModule = {
         this.updateDashboardStats(profileStats);
         
         // Update recent activity
-        this.updateRecentActivity(profileStats);
+        this.updateRecentActivity();
     },
 
     // UPDATED METHOD: Get stats from shared data (no ProfileModule dependency)
@@ -923,37 +910,6 @@ const DashboardModule = {
         this.updateDashboardDisplay(newStats);
     },
 
-    // NEW METHOD: Add recent activity (for other modules to call)
-    addRecentActivity(activity) {
-        if (!window.FarmModules || !window.FarmModules.appData) return;
-
-        if (!window.FarmModules.appData.profile) {
-            window.FarmModules.appData.profile = {};
-        }
-        if (!window.FarmModules.appData.profile.dashboardStats) {
-            window.FarmModules.appData.profile.dashboardStats = {};
-        }
-        if (!window.FarmModules.appData.profile.dashboardStats.recentActivities) {
-            window.FarmModules.appData.profile.dashboardStats.recentActivities = [];
-        }
-
-        // Add new activity to beginning of array
-        window.FarmModules.appData.profile.dashboardStats.recentActivities.unshift({
-            id: Date.now(),
-            timestamp: new Date().toISOString(),
-            ...activity
-        });
-
-        // Keep only last 10 activities
-        if (window.FarmModules.appData.profile.dashboardStats.recentActivities.length > 10) {
-            window.FarmModules.appData.profile.dashboardStats.recentActivities = 
-                window.FarmModules.appData.profile.dashboardStats.recentActivities.slice(0, 10);
-        }
-
-        // Update UI
-        this.updateRecentActivity(this.getProfileStats());
-    },
-
     // UPDATED METHOD: Update dashboard display with current stats
     updateDashboardDisplay(stats) {
         // Update main stats cards
@@ -999,97 +955,10 @@ const DashboardModule = {
         }
     },
 
-    // UPDATED METHOD: Update recent activity section
-    updateRecentActivity(stats) {
-        const activityContent = document.getElementById('activity-content');
-        if (!activityContent) return;
-
-        // Get activities from shared data
-        const activities = [];
-        const recentActivities = window.FarmModules?.appData?.profile?.dashboardStats?.recentActivities || [];
-
-        if (recentActivities.length > 0) {
-            // Use activities from shared data
-            recentActivities.forEach(activity => {
-                activities.push({
-                    icon: activity.icon || '📊',
-                    text: activity.message || activity.text || 'Activity',
-                    time: this.formatTimeAgo(activity.timestamp)
-                });
-            });
-        } else {
-            // Generate activity items based on stats as fallback
-            if (stats.totalOrders > 0) {
-                activities.push({
-                    icon: '📋',
-                    text: `${stats.completedOrders || 0} orders completed`,
-                    time: 'Recently'
-                });
-            }
-
-            if (stats.totalRevenue > 0) {
-                activities.push({
-                    icon: '💰',
-                    text: `${this.formatCurrency(stats.totalRevenue)} total revenue`,
-                    time: 'Updated'
-                });
-            }
-
-            if (stats.totalInventoryItems > 0) {
-                activities.push({
-                    icon: '📦',
-                    text: `${stats.totalInventoryItems} inventory items managed`,
-                    time: 'Current'
-                });
-            }
-
-            if (stats.totalBirds > 0) {
-                activities.push({
-                    icon: '🐔',
-                    text: `${stats.totalBirds} birds in stock`,
-                    time: 'Active'
-                });
-            }
-
-            if (stats.totalCustomers > 0) {
-                activities.push({
-                    icon: '👥',
-                    text: `${stats.totalCustomers} customers registered`,
-                    time: 'Total'
-                });
-            }
-        }
-
-        if (activities.length === 0) {
-            // Show default message if no activities
-            activityContent.innerHTML = `
-                <div style="text-align: center; color: #666; padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No recent activity</div>
-                    <div style="font-size: 14px; color: #999;">Start by adding your first record</div>
-                </div>
-            `;
-            return;
-        }
-
-        // Show activity items
-        activityContent.innerHTML = `
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${activities.map(activity => `
-                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(0,0,0,0.03); border-radius: 8px;">
-                        <div style="font-size: 20px;">${activity.icon}</div>
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; color: #1a1a1a; font-size: 14px;">${activity.text}</div>
-                            <div style="font-size: 12px; color: #666;">${activity.time}</div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-    },
-
     // NEW METHOD: Format time ago for activity timestamps
     formatTimeAgo(timestamp) {
+        if (!timestamp) return 'Recently';
+        
         const now = new Date();
         const time = new Date(timestamp);
         const diffInSeconds = Math.floor((now - time) / 1000);
@@ -1159,27 +1028,23 @@ const DashboardModule = {
     }
 };
 
+// ==================== SINGLE REGISTRATION ====================
+// Add this to enable real-time updates from other modules
+window.DashboardModule = DashboardModule;
+
 // Register the module
 if (window.FarmModules) {
     window.FarmModules.registerModule('dashboard', DashboardModule);
     console.log('✅ Dashboard module registered');
 }
-// Add this to enable real-time updates from other modules
-window.DashboardModule = DashboardModule;
 
-// ==================== CORRECT REGISTRATION ====================
-// Add at the BOTTOM of dashboard.js
-
+// Registration wrapper
 (function() {
-    console.log('📦 Registering dashboard module...');
-    
-    // Use the module object defined in THIS file
-    const moduleName = 'dashboard.js';
-    const moduleObject = DashboardModule; // NOT SalesRecordModule!
+    console.log('📦 Registering dashboard.js module...');
     
     if (window.FarmModules) {
-        FarmModules.registerModule(moduleName, moduleObject);
-        console.log(`✅ ${moduleName} module registered successfully!`);
+        FarmModules.registerModule('dashboard.js', DashboardModule);
+        console.log(`✅ dashboard.js module registered successfully!`);
     } else {
         console.error('❌ FarmModules framework not found');
     }
