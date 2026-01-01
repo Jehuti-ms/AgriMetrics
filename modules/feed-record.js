@@ -1,6 +1,13 @@
 // modules/feed-record.js - COMPLETE WITH EDIT FUNCTIONALITY
 console.log('Loading feed-record module...');
 
+// At the TOP of feed-record.js (after console.log)
+const Broadcaster = window.DataBroadcaster || {
+    recordCreated: () => {},
+    recordUpdated: () => {},
+    recordDeleted: () => {}
+};
+
 const FeedRecordModule = {
     name: 'feed-record',
     initialized: false,
@@ -309,6 +316,16 @@ const FeedRecordModule = {
             birdsFed: this.birdsStock
         };
 
+         this.feedRecords.unshift(formData);
+         this.saveData();
+         this.renderModule();
+        
+        // 🔥 ONE LINE - does everything!
+         Broadcaster.recordCreated('feed-record', formData);
+        
+         this.showNotification('Feed recorded!', 'success');
+     }
+
         // Update inventory
         inventoryItem.currentStock -= quantity;
         
@@ -396,6 +413,15 @@ const FeedRecordModule = {
             
             this.showNotification(`Feed record updated!`, 'success');
         }
+
+            const updatedRecord = { /* updated data */ };
+    
+            // 🔥 ONE LINE
+            Broadcaster.recordUpdated('feed-record', updatedRecord);
+            
+            this.showNotification('Record updated!', 'success');
+        }
+
     },
 
     cancelFeedEdit() {
@@ -430,6 +456,15 @@ const FeedRecordModule = {
             
             this.showNotification('Feed record deleted!', 'success');
         }
+
+        // 🔥 ONE LINE (call BEFORE deleting so we have the data)
+            Broadcaster.recordDeleted('feed-record', record);
+            
+            // Then delete
+            this.feedRecords = this.feedRecords.filter(r => r.id !== recordId);
+            this.saveData();
+            
+            this.showNotification('Record deleted!', 'success');
     },
 
     showFeedForm() {
