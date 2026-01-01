@@ -198,28 +198,7 @@ const FeedRecordModule = {
         }).join('');
     },
 
-    renderFeedRecordsList() {
-        if (this.feedRecords.length === 0) {
-            return `<div style="text-align: center; color: var(--text-secondary); padding: 20px;">No feed records yet</div>`;
-        }
-
-        return this.feedRecords.slice(0, 5).map(record => `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; margin-bottom: 8px;">
-                <div>
-                    <div style="font-weight: 600; color: var(--text-primary); text-transform: capitalize;">
-                        ${record.feedType} Feed
-                    </div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">
-                        ${record.date} • ${record.quantity}kg • ${record.birdsFed} birds
-                    </div>
-                    ${record.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${record.notes}</div>` : ''}
-                </div>
-                <div style="color: var(--text-primary); font-weight: bold;">
-                    ${this.formatCurrency(record.cost)}
-                </div>
-            </div>
-        `).join('');
-    },
+   renderFeedRecordsList()
 
     setupEventListeners() {
         document.getElementById('feed-record-form')?.addEventListener('submit', (e) => this.handleFeedRecordSubmit(e));
