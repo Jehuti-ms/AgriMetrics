@@ -260,6 +260,91 @@ const BroilerMortalityModule = {
                 background: rgba(239, 68, 68, 0.1);
                 color: #ef4444;
             }
+
+            /* Modern Mortality Cause Buttons */
+            .mortality-cause-buttons {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+              gap: 12px;
+              margin: 20px 0;
+            }
+            
+            .mortality-cause-btn {
+              background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+              border: 2px solid #dee2e6;
+              border-radius: 12px;
+              padding: 16px 12px;
+              cursor: pointer;
+              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+              position: relative;
+              overflow: hidden;
+            }
+            
+            .mortality-cause-btn:hover {
+              transform: translateY(-2px);
+              border-color: #6c757d;
+              box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            }
+            
+            .mortality-cause-btn.active {
+              background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+              border-color: #2196f3;
+              box-shadow: 0 4px 8px rgba(33, 150, 243, 0.2);
+            }
+            
+            .mortality-cause-btn.critical {
+              background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+              border-color: #f44336;
+            }
+            
+            .mortality-cause-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 8px;
+            }
+            
+            .mortality-cause-label {
+              font-weight: 600;
+              color: #2d3436;
+              font-size: 0.95rem;
+            }
+            
+            .mortality-cause-percentage {
+              font-weight: 700;
+              font-size: 1rem;
+              color: #2196f3;
+            }
+            
+            .mortality-cause-btn.critical .mortality-cause-percentage {
+              color: #f44336;
+            }
+            
+            .mortality-cause-count {
+              color: #6c757d;
+              font-size: 0.85rem;
+              margin-top: 4px;
+            }
+            
+            .mortality-cause-btn::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              height: 3px;
+              background: linear-gradient(90deg, #2196f3, #4fc3f7);
+              transform: scaleX(0);
+              transition: transform 0.3s ease;
+            }
+            
+            .mortality-cause-btn:hover::before {
+              transform: scaleX(1);
+            }
+            
+            .mortality-cause-btn.active::before {
+              transform: scaleX(1);
+            }
         </style>
 
         <div class="module-container">
