@@ -564,7 +564,7 @@ const FeedRecordModule = {
             module: 'income-expenses'
         });
     }
-}
+},
 
 if (window.FarmModules) {
     window.FarmModules.registerModule('feed-record', FeedRecordModule);
