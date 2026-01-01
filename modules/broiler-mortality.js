@@ -1089,7 +1089,7 @@ viewCauseDetails(cause) {
     }, 300);
     
     console.log('✅=== VIEW DETAILS FUNCTION END ===');
-}
+},
     
     // MODAL CONTROL METHODS
     showMortalityModal() {
