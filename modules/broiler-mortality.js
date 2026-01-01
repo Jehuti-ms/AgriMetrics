@@ -499,7 +499,7 @@ const BroilerMortalityModule = {
 
     this.updateStats();
     this.setupEventListeners();
-}  // <-- No extra comma here!
+}, 
     
     updateStats() {
         const totalLosses = this.mortalityData.reduce((sum, record) => sum + record.quantity, 0);
@@ -663,8 +663,7 @@ const BroilerMortalityModule = {
                                 <span class="cause-stat-percentage" style="color: ${causeColor};">${percentage}%</span>
                             </div>
                         </div>
-                        <div class="cause-actions">
-                            <button class="btn-delete-cause" data-cause="${cause}" title="Delete all ${this.formatCause(cause)} records">
+                        <button class="btn-delete-cause" data-cause="${cause}" title="Delete all ${this.formatCause(cause)} records">
                                 Delete All
                             </button>
                             <button class="btn-view-cause" data-cause="${cause}" title="View ${this.formatCause(cause)} details">
