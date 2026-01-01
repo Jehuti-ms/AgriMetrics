@@ -301,124 +301,137 @@ const DashboardModule = {
                     <p style="color: var(--text-secondary, #666); font-size: 16px;">Manage your farm operations efficiently</p>
                 </div>
 
-                <!-- Quick Actions Grid -->
-            <div class="quick-action-grid" style="margin-bottom: 40px;">
-                <h2 style="color: var(--text-primary, #1a1a1a); font-size: 20px; margin-bottom: 20px;">Quick Actions</h2>
-                <div class="actions-grid" style="
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                    gap: 16px;
-                    margin-bottom: 30px;
-                ">
-                    <button class="quick-action-btn" data-action="add-income" style="
-                        background: var(--card-bg, rgba(255, 255, 255, 0.9));
-                        border: 1px solid var(--border-color, #e0e0e0);
-                        border-radius: 16px;
-                        padding: 24px 16px;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        gap: 12px;
-                        min-height: 120px;
+               <!-- Quick Actions Grid -->
+                <div class="quick-actions" style="margin-bottom: 40px;">
+                    <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 20px;">Quick Actions</h2>
+                    <div class="actions-grid" style="
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                        gap: 16px;
+                        margin-bottom: 30px;
                     ">
-                        <div style="font-size: 32px;">💰</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary, #1a1a1a);">Add Income</span>
-                        <span style="font-size: 12px; color: var(--text-secondary, #666); text-align: center;">Record new income</span>
-                    </button>
-            
-                    <button class="quick-action-btn" data-action="add-expense" style="
-                        background: var(--card-bg, rgba(255, 255, 255, 0.9));
-                        border: 1px solid var(--border-color, #e0e0e0);
-                        border-radius: 16px;
-                        padding: 24px 16px;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        gap: 12px;
-                        min-height: 120px;
-                    ">
-                        <div style="font-size: 32px;">💸</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary, #1a1a1a);">Add Expense</span>
-                        <span style="font-size: 12px; color: var(--text-secondary, #666); text-align: center;">Record new expense</span>
-                    </button>
-            
-                    <button class="quick-action-btn" data-action="check-inventory" style="
-                        background: var(--card-bg, rgba(255, 255, 255, 0.9));
-                        border: 1px solid var(--border-color, #e0e0e0);
-                        border-radius: 16px;
-                        padding: 24px 16px;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        gap: 12px;
-                        min-height: 120px;
-                    ">
-                        <div style="font-size: 32px;">📦</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary, #1a1a1a);">Check Inventory</span>
-                        <span style="font-size: 12px; color: var(--text-secondary, #666); text-align: center;">View stock levels</span>
-                    </button>
-            
-                    <button class="quick-action-btn" data-action="record-feed" style="
-                        background: var(--card-bg, rgba(255, 255, 255, 0.9));
-                        border: 1px solid var(--border-color, #e0e0e0);
-                        border-radius: 16px;
-                        padding: 24px 16px;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        gap: 12px;
-                        min-height: 120px;
-                    ">
-                        <div style="font-size: 32px;">🌾</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary, #1a1a1a);">Record Feed</span>
-                        <span style="font-size: 12px; color: var(--text-secondary, #666); text-align: center;">Log feed usage</span>
-                    </button>
-            
-                    <button class="quick-action-btn" data-action="add-production" style="
-                        background: var(--card-bg, rgba(255, 255, 255, 0.9));
-                        border: 1px solid var(--border-color, #e0e0e0);
-                        border-radius: 16px;
-                        padding: 24px 16px;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        gap: 12px;
-                        min-height: 120px;
-                    ">
-                        <div style="font-size: 32px;">🚜</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary, #1a1a1a);">Production</span>
-                        <span style="font-size: 12px; color: var(--text-secondary, #666); text-align: center;">Record production</span>
-                    </button>
-            
-                    <button class="quick-action-btn" data-action="view-reports" style="
-                        background: var(--card-bg, rgba(255, 255, 255, 0.9));
-                        border: 1px solid var(--border-color, #e0e0e0);
-                        border-radius: 16px;
-                        padding: 24px 16px;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        gap: 12px;
-                        min-height: 120px;
-                    ">
-                        <div style="font-size: 32px;">📈</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary, #1a1a1a);">View Reports</span>
-                        <span style="font-size: 12px; color: var(--text-secondary, #666); text-align: center;">Analytics & insights</span>
-                    </button>
+                        <button class="quick-action-btn" data-action="add-income" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 16px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 12px;
+                            min-height: 120px;
+                        ">
+                            <div style="font-size: 32px;">💰</div>
+                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Add Income</span>
+                            <span style="font-size: 12px; color: #666; text-align: center;">Record new income</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="add-expense" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 16px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 12px;
+                            min-height: 120px;
+                        ">
+                            <div style="font-size: 32px;">💸</div>
+                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Add Expense</span>
+                            <span style="font-size: 12px; color: #666; text-align: center;">Record new expense</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="check-inventory" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 16px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 12px;
+                            min-height: 120px;
+                        ">
+                            <div style="font-size: 32px;">📦</div>
+                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Check Inventory</span>
+                            <span style="font-size: 12px; color: #666; text-align: center;">View stock levels</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="record-feed" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 16px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 12px;
+                            min-height: 120px;
+                        ">
+                            <div style="font-size: 32px;">🌾</div>
+                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Record Feed</span>
+                            <span style="font-size: 12px; color: #666; text-align: center;">Log feed usage</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="add-production" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 16px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 12px;
+                            min-height: 120px;
+                        ">
+                            <div style="font-size: 32px;">🚜</div>
+                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">Production</span>
+                            <span style="font-size: 12px; color: #666; text-align: center;">Record production</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="view-reports" style="
+                            background: rgba(255, 255, 255, 0.9);
+                            backdrop-filter: blur(20px);
+                            -webkit-backup-filter: blur(20px);
+                            border: 1px solid rgba(0, 0, 0, 0.1);
+                            border-radius: 16px;
+                            padding: 24px 16px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 12px;
+                            min-height: 120px;
+                        ">
+                            <div style="font-size: 32px;">📈</div>
+                            <span style="font-size: 14px; font-weight: 600; color: #1a1a1a;">View Reports</span>
+                            <span style="font-size: 12px; color: #666; text-align: center;">Analytics & insights</span>
+                        </button>
+                    </div>
                 </div>
-            </div>
+                
                 <!-- Stats Overview -->
                 <div class="stats-overview" style="margin-bottom: 40px;">
                     <h2 style="color: var(--text-primary, #1a1a1a); font-size: 20px; margin-bottom: 20px;">Overview</h2>
