@@ -308,6 +308,72 @@ const InventoryCheckModule = {
         return stats;
     },
 
+     // ✅ ADD THIS METHOD BEFORE loadData() if it's missing
+    getDemoData() {
+        return [
+            { 
+                id: 1, 
+                name: 'Chicken Feed - Starter', 
+                category: 'feed', 
+                currentStock: 50, 
+                unit: 'kg', 
+                minStock: 20, 
+                cost: 2.5,
+                supplier: 'FeedCo',
+                lastRestocked: '2024-03-10',
+                notes: 'For chicks 0-3 weeks'
+            },
+            { 
+                id: 2, 
+                name: 'Egg Cartons - Large', 
+                category: 'packaging', 
+                currentStock: 200, 
+                unit: 'pcs', 
+                minStock: 50, 
+                cost: 0.5,
+                supplier: 'Packaging Inc',
+                lastRestocked: '2024-03-12',
+                notes: '30-dozen capacity'
+            },
+            { 
+                id: 3, 
+                name: 'Poultry Vaccines', 
+                category: 'medical', 
+                currentStock: 5, 
+                unit: 'bottles', 
+                minStock: 10, 
+                cost: 15,
+                supplier: 'VetSupply',
+                lastRestocked: '2024-03-05',
+                notes: 'Keep refrigerated'
+            },
+            { 
+                id: 4, 
+                name: 'Water Troughs', 
+                category: 'equipment', 
+                currentStock: 8, 
+                unit: 'pcs', 
+                minStock: 5, 
+                cost: 25,
+                supplier: 'FarmGear',
+                lastRestocked: '2024-02-28',
+                notes: '10L capacity'
+            },
+            { 
+                id: 5, 
+                name: 'Disinfectant Spray', 
+                category: 'cleaning', 
+                currentStock: 3, 
+                unit: 'bottles', 
+                minStock: 5, 
+                cost: 8,
+                supplier: 'CleanCo',
+                lastRestocked: '2024-03-08',
+                notes: 'For equipment cleaning'
+            }
+        ];
+    },
+    
     // ✅ MODIFIED: Enhanced loadData with broadcasting
     loadData() {
         const saved = localStorage.getItem('farm-inventory');
