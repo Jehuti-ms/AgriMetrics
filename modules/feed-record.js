@@ -198,7 +198,250 @@ const FeedRecordModule = {
         }).join('');
     },
 
-   renderFeedRecordsList()
+  // Replace the renderFeedRecordsList() method (around line 179) with this:
+renderFeedRecordsList() {
+    if (this.feedRecords.length === 0) {
+        return `
+            <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">🌾</div>
+                <div style="font-size: 16px; margin-bottom: 8px;">No feed records yet</div>
+                <div style="font-size: 14px; color: var(--text-secondary);">Record your first feed usage</div>
+            </div>
+        `;
+    }
+
+    return this.feedRecords.slice(0, 5).map(record => `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border); margin-bottom: 12px;">
+            <div style="flex: 1;">
+                <div style="font-weight: 600; color: var(--text-primary); text-transform: capitalize;">
+                    ${record.feedType} Feed
+                </div>
+                <div style="font-size: 14px; color: var(--text-secondary);">
+                    ${record.date} • ${record.quantity}kg • ${record.birdsFed} birds
+                </div>
+                ${record.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${record.notes}</div>` : ''}
+            </div>
+            <div style="text-align: right; display: flex; align-items: center; gap: 16px;">
+                <div>
+                    <div style="font-weight: bold; color: var(--text-primary); font-size: 18px;">
+                        ${this.formatCurrency(record.cost)}
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        ${(record.cost / record.quantity).toFixed(2)}/kg
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-icon edit-feed-record" data-id="${record.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Edit Record">
+                        ✏️
+                    </button>
+                    <button class="btn-icon delete-feed-record" data-id="${record.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Delete Record">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+},
+
+// Add this method after the renderFeedRecordsList() method:
+editFeedRecord(recordId) {
+    console.log('🌾 EDITING FEED RECORD:', recordId);
+    
+    const record = this.feedRecords.find(r => r.id === recordId);
+    if (!record) {
+        this.showNotification('Feed record not found', 'error');
+        return;
+    }
+    
+    // Scroll to form
+    this.showFeedForm();
+    
+    // Wait for form to render, then populate
+    setTimeout(() => {
+        const form = document.getElementById('feed-record-form');
+        if (!form) return;
+        
+        // Change title
+        const formCard = form.closest('.glass-card');
+        const title = formCard.querySelector('h3');
+        if (title) title.textContent = 'Edit Feed Record';
+        
+        // Populate form
+        form.querySelector('#feed-type').value = record.feedType;
+        form.querySelector('#feed-quantity').value = record.quantity;
+        form.querySelector('#feed-notes').value = record.notes || '';
+        
+        // Change submit button
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.textContent = 'Update Record';
+            
+            // Remove old submit handler
+            const newSubmitBtn = submitBtn.cloneNode(true);
+            submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+            
+            newSubmitBtn.onclick = (e) => {
+                e.preventDefault();
+                this.updateFeedRecord(recordId);
+            };
+        }
+        
+        // Add cancel edit button
+        const formContainer = form.parentElement;
+        const cancelEditBtn = document.createElement('button');
+        cancelEditBtn.type = 'button';
+        cancelEditBtn.className = 'btn-outline';
+        cancelEditBtn.textContent = 'Cancel Edit';
+        cancelEditBtn.style.marginLeft = '8px';
+        cancelEditBtn.onclick = () => {
+            this.cancelFeedEdit();
+        };
+        
+        submitBtn.parentNode.appendChild(cancelEditBtn);
+        
+        console.log('✅ Feed record form populated for editing');
+        
+    }, 100);
+},
+
+// Add this method after editFeedRecord():
+updateFeedRecord(recordId) {
+    console.log('💾 UPDATING FEED RECORD:', recordId);
+    
+    const form = document.getElementById('feed-record-form');
+    if (!form) return;
+    
+    const feedType = form.querySelector('#feed-type').value;
+    const quantity = parseFloat(form.querySelector('#feed-quantity').value);
+    const notes = form.querySelector('#feed-notes').value;
+    
+    // Check if feed type has sufficient stock (considering we're editing, not adding new)
+    const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
+    if (!inventoryItem) {
+        this.showNotification('Invalid feed type selected!', 'error');
+        return;
+    }
+    
+    // Find the original record to check stock adjustments
+    const originalRecord = this.feedRecords.find(r => r.id === recordId);
+    if (!originalRecord) return;
+    
+    // Calculate stock adjustment
+    const stockAdjustment = originalRecord.quantity - quantity;
+    const newStock = inventoryItem.currentStock + stockAdjustment;
+    
+    if (newStock < 0) {
+        this.showNotification(`Cannot adjust stock below zero!`, 'error');
+        return;
+    }
+    
+    // Update inventory
+    inventoryItem.currentStock = newStock;
+    
+    // Update record
+    const recordIndex = this.feedRecords.findIndex(r => r.id === recordId);
+    if (recordIndex !== -1) {
+        this.feedRecords[recordIndex] = {
+            ...this.feedRecords[recordIndex],
+            feedType,
+            quantity,
+            cost: this.calculateCost(feedType, quantity),
+            notes
+        };
+        
+        this.saveData();
+        this.renderModule();
+        this.cancelFeedEdit();
+        
+        if (window.coreModule) {
+            window.coreModule.showNotification(`Feed record updated!`, 'success');
+        }
+    }
+},
+
+// Add this method after updateFeedRecord():
+cancelFeedEdit() {
+    const form = document.getElementById('feed-record-form');
+    if (!form) return;
+    
+    // Reset form
+    form.reset();
+    
+    // Reset title
+    const formCard = form.closest('.glass-card');
+    const title = formCard.querySelector('h3');
+    if (title) title.textContent = 'Record Feed Usage';
+    
+    // Reset submit button
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.textContent = 'Save Record';
+        
+        // Remove any custom event listeners
+        const newSubmitBtn = submitBtn.cloneNode(true);
+        submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+        
+        newSubmitBtn.onclick = null;
+        form.onsubmit = (e) => this.handleFeedRecordSubmit(e);
+    }
+    
+    // Remove cancel edit button
+    const cancelBtn = form.querySelector('.btn-outline[type="button"]');
+    if (cancelBtn) cancelBtn.remove();
+},
+
+// Add this method after cancelFeedEdit():
+deleteFeedRecord(recordId) {
+    const record = this.feedRecords.find(r => r.id === recordId);
+    if (!record) return;
+    
+    if (confirm(`Delete feed record for ${record.quantity}kg of ${record.feedType} feed?`)) {
+        // Return stock to inventory when deleting
+        const inventoryItem = this.feedInventory.find(item => item.feedType === record.feedType);
+        if (inventoryItem) {
+            inventoryItem.currentStock += record.quantity;
+        }
+        
+        // Remove record
+        this.feedRecords = this.feedRecords.filter(r => r.id !== recordId);
+        this.saveData();
+        this.renderModule();
+        
+        if (window.coreModule) {
+            window.coreModule.showNotification('Feed record deleted!', 'success');
+        }
+    }
+},
+
+// Add this method after deleteFeedRecord():
+showNotification(message, type = 'info') {
+    if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
+        window.coreModule.showNotification(message, type);
+    } else {
+        console.log(`${type.toUpperCase()}: ${message}`);
+        alert(`${type.toUpperCase()}: ${message}`);
+    }
+},
+
+// Update the setupEventListeners() method to include edit/delete handlers:
+setupEventListeners() {
+    document.getElementById('feed-record-form')?.addEventListener('submit', (e) => this.handleFeedRecordSubmit(e));
+    document.getElementById('record-feed-btn')?.addEventListener('click', () => this.showFeedForm());
+    document.getElementById('add-stock-btn')?.addEventListener('click', () => this.showAddStockForm());
+    document.getElementById('adjust-birds-btn')?.addEventListener('click', () => this.showAdjustBirdsForm());
+    
+    // Add event delegation for edit/delete buttons
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.edit-feed-record')) {
+            const id = parseInt(e.target.closest('.edit-feed-record').dataset.id);
+            this.editFeedRecord(id);
+        }
+        else if (e.target.closest('.delete-feed-record')) {
+            const id = parseInt(e.target.closest('.delete-feed-record').dataset.id);
+            this.deleteFeedRecord(id);
+        }
+    });
+},
 
     setupEventListeners() {
         document.getElementById('feed-record-form')?.addEventListener('submit', (e) => this.handleFeedRecordSubmit(e));
@@ -361,6 +604,58 @@ if (window.FarmModules) {
     window.FarmModules.registerModule('feed-record', FeedRecordModule);
     console.log('✅ Feed Records module registered');
 }
+
+// Add hover effects for edit/delete buttons
+function enhanceFeedEditButtons() {
+    const editButtons = document.querySelectorAll('.edit-feed-record');
+    const deleteButtons = document.querySelectorAll('.delete-feed-record');
+    
+    editButtons.forEach(btn => {
+        btn.style.cursor = 'pointer';
+        btn.style.transition = 'all 0.2s';
+        
+        btn.addEventListener('mouseenter', () => {
+            btn.style.transform = 'scale(1.2)';
+            btn.style.color = '#3b82f6';
+            btn.style.background = 'rgba(59, 130, 246, 0.1)';
+        });
+        
+        btn.addEventListener('mouseleave', () => {
+            btn.style.transform = 'scale(1)';
+            btn.style.color = '';
+            btn.style.background = '';
+        });
+    });
+    
+    deleteButtons.forEach(btn => {
+        btn.style.cursor = 'pointer';
+        btn.style.transition = 'all 0.2s';
+        
+        btn.addEventListener('mouseenter', () => {
+            btn.style.transform = 'scale(1.2)';
+            btn.style.color = '#ef4444';
+            btn.style.background = 'rgba(239, 68, 68, 0.1)';
+        });
+        
+        btn.addEventListener('mouseleave', () => {
+            btn.style.transform = 'scale(1)';
+            btn.style.color = '';
+            btn.style.background = '';
+        });
+    });
+}
+
+// Apply when module loads
+setTimeout(() => {
+    enhanceFeedEditButtons();
+    
+    // Re-apply when switching to feed-record
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('[href*="#feed-record"], [onclick*="feed-record"]')) {
+            setTimeout(enhanceFeedEditButtons, 500);
+        }
+    });
+}, 1000);
 
 // ==================== UNIVERSAL REGISTRATION ====================
 
