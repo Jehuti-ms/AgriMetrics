@@ -98,249 +98,409 @@ const BroilerMortalityModule = {
         ];
     },
 
-    renderModule() {
-        if (!this.element) return;
+   renderModule() {
+    if (!this.element) return;
 
-        this.element.innerHTML = `
-            <div class="module-container">
-                <!-- Module Header -->
-                <div class="module-header">
-                    <h1 class="module-title">Broiler Health & Mortality</h1>
-                    <p class="module-subtitle">Monitor flock health and track losses</p>
+    this.element.innerHTML = `
+        <style>
+            /* Cause Summary Styles */
+            .cause-summary-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 20px;
+            }
+            
+            .cause-item {
+                padding: 20px;
+                background: var(--glass-bg);
+                border-radius: 12px;
+                border: 1px solid var(--glass-border);
+                transition: all 0.3s ease;
+            }
+            
+            .cause-item:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+                border-color: var(--primary-color);
+            }
+            
+            .cause-header {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 16px;
+                padding-bottom: 12px;
+                border-bottom: 1px solid var(--glass-border);
+            }
+            
+            .cause-icon {
+                font-size: 24px;
+            }
+            
+            .cause-title {
+                font-weight: 600;
+                font-size: 16px;
+                color: var(--text-primary);
+            }
+            
+            .cause-stats {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                margin-bottom: 16px;
+            }
+            
+            .cause-stat {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .cause-stat-label {
+                font-size: 14px;
+                color: var(--text-secondary);
+            }
+            
+            .cause-stat-value {
+                font-weight: 600;
+                font-size: 14px;
+                color: var(--text-primary);
+            }
+            
+            .cause-stat-percentage {
+                font-weight: 600;
+                font-size: 14px;
+                color: var(--primary-color);
+            }
+            
+            .cause-actions {
+                display: flex;
+                gap: 8px;
+                margin-top: 8px;
+            }
+            
+            .btn-delete-cause {
+                flex: 1;
+                background: rgba(239, 68, 68, 0.1);
+                border: 1px solid #ef4444;
+                color: #ef4444;
+                padding: 8px 12px;
+                border-radius: 6px;
+                font-size: 13px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+            }
+            
+            .btn-delete-cause:hover {
+                background: #ef4444;
+                color: white;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+            }
+            
+            .btn-delete-cause:before {
+                content: "🗑️";
+                font-size: 14px;
+            }
+            
+            .btn-view-cause {
+                flex: 1;
+                background: rgba(59, 130, 246, 0.1);
+                border: 1px solid #3b82f6;
+                color: #3b82f6;
+                padding: 8px 12px;
+                border-radius: 6px;
+                font-size: 13px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+            }
+            
+            .btn-view-cause:hover {
+                background: #3b82f6;
+                color: white;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            }
+            
+            .btn-view-cause:before {
+                content: "🔍";
+                font-size: 14px;
+            }
+            
+            /* Also update the table button styles */
+            .btn-icon {
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: none;
+                border: none;
+                cursor: pointer;
+                border-radius: 6px;
+                transition: all 0.2s;
+            }
+            
+            .edit-mortality:hover {
+                background: rgba(59, 130, 246, 0.1);
+                color: #3b82f6;
+            }
+            
+            .delete-mortality:hover {
+                background: rgba(239, 68, 68, 0.1);
+                color: #ef4444;
+            }
+        </style>
+
+        <div class="module-container">
+            <!-- Module Header -->
+            <div class="module-header">
+                <h1 class="module-title">Broiler Health & Mortality</h1>
+                <p class="module-subtitle">Monitor flock health and track losses</p>
+            </div>
+
+            <!-- Mortality Overview Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div style="font-size: 24px; margin-bottom: 8px;">😔</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-losses">0</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Total Losses</div>
                 </div>
+                <div class="stat-card">
+                    <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="mortality-rate">0%</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Mortality Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div style="font-size: 24px; margin-bottom: 8px;">🐔</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="current-birds">0</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Current Birds</div>
+                </div>
+                <div class="stat-card">
+                    <div style="font-size: 24px; margin-bottom: 8px;">📈</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="records-count">0</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Records</div>
+                </div>
+            </div>
 
-                <!-- Mortality Overview Stats -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">😔</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-losses">0</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Total Losses</div>
+            <!-- Quick Actions -->
+            <div class="quick-action-grid">
+                <button class="quick-action-btn" id="record-mortality-btn">
+                    <div style="font-size: 32px;">📝</div>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Record Loss</span>
+                    <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Log bird losses and causes</span>
+                </button>
+                <button class="quick-action-btn" id="trend-analysis-btn">
+                    <div style="font-size: 32px;">📊</div>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Trend Analysis</span>
+                    <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View mortality patterns</span>
+                </button>
+                <button class="quick-action-btn" id="cause-analysis-btn">
+                    <div style="font-size: 32px;">🔍</div>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Cause Analysis</span>
+                    <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Analyze death causes</span>
+                </button>
+                <button class="quick-action-btn" id="health-report-btn">
+                    <div style="font-size: 32px;">💡</div>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Health Report</span>
+                    <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Detailed health analysis</span>
+                </button>
+            </div>
+
+            <!-- Quick Mortality Form -->
+            <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                <h3 style="color: var(--text-primary); margin-bottom: 16px;">📝 Quick Mortality Entry</h3>
+                <form id="quick-mortality-form">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end;">
+                        <div>
+                            <label class="form-label">Qty *</label>
+                            <input type="number" id="quick-quantity" placeholder="0" required class="form-input" min="1">
+                        </div>
+                        <div>
+                            <label class="form-label">Cause *</label>
+                            <select id="quick-cause" required class="form-input">
+                                <option value="">Select Cause</option>
+                                <option value="natural">🌿 Natural</option>
+                                <option value="disease">🤒 Disease</option>
+                                <option value="predator">🦊 Predator</option>
+                                <option value="heat-stress">🔥 Heat Stress</option>
+                                <option value="cold-stress">❄️ Cold Stress</option>
+                                <option value="nutritional">🍽️ Nutritional</option>
+                                <option value="other">❓ Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Age (days)</label>
+                            <input type="number" id="quick-age" placeholder="Optional" class="form-input" min="1" max="70">
+                        </div>
+                        <div>
+                            <button type="submit" class="btn-primary" style="height: 42px;">Record Loss</button>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="mortality-rate">0%</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Mortality Rate</div>
-                    </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">🐔</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="current-birds">0</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Current Birds</div>
-                    </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">📈</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="records-count">0</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Records</div>
+                </form>
+            </div>
+
+            <!-- Recent Mortality Records -->
+            <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="color: var(--text-primary); font-size: 20px;">📊 Recent Mortality Records</h3>
+                    <div style="display: flex; gap: 12px;">
+                        <select id="mortality-filter" class="form-input" style="width: auto;">
+                            <option value="all">All Causes</option>
+                            <option value="disease">Disease</option>
+                            <option value="predator">Predator</option>
+                            <option value="natural">Natural</option>
+                            <option value="stress">Stress</option>
+                            <option value="nutritional">Nutritional</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <button class="btn-outline" id="export-mortality-btn">Export</button>
                     </div>
                 </div>
-
-                <!-- Quick Actions -->
-                <div class="quick-action-grid">
-                    <button class="quick-action-btn" id="record-mortality-btn">
-                        <div style="font-size: 32px;">📝</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Record Loss</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Log bird losses and causes</span>
-                    </button>
-                    <button class="quick-action-btn" id="trend-analysis-btn">
-                        <div style="font-size: 32px;">📊</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Trend Analysis</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View mortality patterns</span>
-                    </button>
-                    <button class="quick-action-btn" id="cause-analysis-btn">
-                        <div style="font-size: 32px;">🔍</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Cause Analysis</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Analyze death causes</span>
-                    </button>
-                    <button class="quick-action-btn" id="health-report-btn">
-                        <div style="font-size: 32px;">💡</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Health Report</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Detailed health analysis</span>
-                    </button>
+                <div id="mortality-table">
+                    ${this.renderMortalityTable('all')}
                 </div>
+            </div>
 
-                <!-- Quick Mortality Form -->
-                <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 16px;">📝 Quick Mortality Entry</h3>
-                    <form id="quick-mortality-form">
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end;">
+            <!-- Cause Distribution -->
+            <div class="glass-card" style="padding: 24px;">
+                <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">🔍 Mortality by Cause</h3>
+                <div id="cause-summary">
+                    ${this.renderCauseSummary()}
+                </div>
+            </div>
+        </div>
+
+        <!-- POPOUT MODALS - Added at the end to overlay content -->
+        <!-- Mortality Record Modal -->
+        <div id="mortality-modal" class="popout-modal hidden">
+            <div class="popout-modal-content" style="max-width: 600px;">
+                <div class="popout-modal-header">
+                    <h3 class="popout-modal-title" id="mortality-modal-title">Record Mortality</h3>
+                    <button class="popout-modal-close" id="close-mortality-modal">&times;</button>
+                </div>
+                <div class="popout-modal-body">
+                    <form id="mortality-form">
+                        <input type="hidden" id="mortality-id" value="">
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                             <div>
-                                <label class="form-label">Qty *</label>
-                                <input type="number" id="quick-quantity" placeholder="0" required class="form-input" min="1">
+                                <label class="form-label">Date *</label>
+                                <input type="date" id="mortality-date" class="form-input" required>
                             </div>
                             <div>
-                                <label class="form-label">Cause *</label>
-                                <select id="quick-cause" required class="form-input">
+                                <label class="form-label">Number of Birds *</label>
+                                <input type="number" id="mortality-quantity" class="form-input" min="1" required placeholder="0">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <label class="form-label">Cause of Death *</label>
+                                <select id="mortality-cause" class="form-input" required>
                                     <option value="">Select Cause</option>
-                                    <option value="natural">🌿 Natural</option>
+                                    <option value="natural">🌿 Natural Causes</option>
                                     <option value="disease">🤒 Disease</option>
                                     <option value="predator">🦊 Predator</option>
+                                    <option value="accident">⚠️ Accident</option>
                                     <option value="heat-stress">🔥 Heat Stress</option>
                                     <option value="cold-stress">❄️ Cold Stress</option>
-                                    <option value="nutritional">🍽️ Nutritional</option>
+                                    <option value="nutritional">🍽️ Nutritional Issues</option>
                                     <option value="other">❓ Other</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="form-label">Age (days)</label>
-                                <input type="number" id="quick-age" placeholder="Optional" class="form-input" min="1" max="70">
+                                <label class="form-label">Bird Age (days)</label>
+                                <input type="number" id="mortality-age" class="form-input" min="1" max="70" placeholder="Optional">
                             </div>
-                            <div>
-                                <button type="submit" class="btn-primary" style="height: 42px;">Record Loss</button>
-                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 16px;">
+                            <label class="form-label">Observations & Notes</label>
+                            <textarea id="mortality-notes" class="form-input" placeholder="Symptoms, location, time of discovery, environmental conditions..." rows="3"></textarea>
                         </div>
                     </form>
                 </div>
-
-                <!-- Recent Mortality Records -->
-                <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="color: var(--text-primary); font-size: 20px;">📊 Recent Mortality Records</h3>
-                        <div style="display: flex; gap: 12px;">
-                            <select id="mortality-filter" class="form-input" style="width: auto;">
-                                <option value="all">All Causes</option>
-                                <option value="disease">Disease</option>
-                                <option value="predator">Predator</option>
-                                <option value="natural">Natural</option>
-                                <option value="stress">Stress</option>
-                                <option value="nutritional">Nutritional</option>
-                                <option value="other">Other</option>
-                            </select>
-                            <button class="btn-outline" id="export-mortality-btn">Export</button>
-                        </div>
-                    </div>
-                    <div id="mortality-table">
-                        ${this.renderMortalityTable('all')}
-                    </div>
-                </div>
-
-                <!-- Cause Distribution -->
-                <div class="glass-card" style="padding: 24px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">🔍 Mortality by Cause</h3>
-                    <div id="cause-summary">
-                        ${this.renderCauseSummary()}
-                    </div>
+                <div class="popout-modal-footer">
+                    <button type="button" class="btn-outline" id="cancel-mortality">Cancel</button>
+                    <button type="button" class="btn-danger" id="delete-mortality" style="display: none;">Delete</button>
+                    <button type="button" class="btn-primary" id="save-mortality">Save Record</button>
                 </div>
             </div>
+        </div>
 
-            <!-- POPOUT MODALS - Added at the end to overlay content -->
-            <!-- Mortality Record Modal -->
-            <div id="mortality-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 600px;">
-                    <div class="popout-modal-header">
-                        <h3 class="popout-modal-title" id="mortality-modal-title">Record Mortality</h3>
-                        <button class="popout-modal-close" id="close-mortality-modal">&times;</button>
-                    </div>
-                    <div class="popout-modal-body">
-                        <form id="mortality-form">
-                            <input type="hidden" id="mortality-id" value="">
-                            
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Date *</label>
-                                    <input type="date" id="mortality-date" class="form-input" required>
-                                </div>
-                                <div>
-                                    <label class="form-label">Number of Birds *</label>
-                                    <input type="number" id="mortality-quantity" class="form-input" min="1" required placeholder="0">
-                                </div>
-                            </div>
-
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Cause of Death *</label>
-                                    <select id="mortality-cause" class="form-input" required>
-                                        <option value="">Select Cause</option>
-                                        <option value="natural">🌿 Natural Causes</option>
-                                        <option value="disease">🤒 Disease</option>
-                                        <option value="predator">🦊 Predator</option>
-                                        <option value="accident">⚠️ Accident</option>
-                                        <option value="heat-stress">🔥 Heat Stress</option>
-                                        <option value="cold-stress">❄️ Cold Stress</option>
-                                        <option value="nutritional">🍽️ Nutritional Issues</option>
-                                        <option value="other">❓ Other</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="form-label">Bird Age (days)</label>
-                                    <input type="number" id="mortality-age" class="form-input" min="1" max="70" placeholder="Optional">
-                                </div>
-                            </div>
-
-                            <div style="margin-bottom: 16px;">
-                                <label class="form-label">Observations & Notes</label>
-                                <textarea id="mortality-notes" class="form-input" placeholder="Symptoms, location, time of discovery, environmental conditions..." rows="3"></textarea>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="popout-modal-footer">
-                        <button type="button" class="btn-outline" id="cancel-mortality">Cancel</button>
-                        <button type="button" class="btn-danger" id="delete-mortality" style="display: none;">Delete</button>
-                        <button type="button" class="btn-primary" id="save-mortality">Save Record</button>
+        <!-- Health Report Modal -->
+        <div id="health-report-modal" class="popout-modal hidden">
+            <div class="popout-modal-content" style="max-width: 800px;">
+                <div class="popout-modal-header">
+                    <h3 class="popout-modal-title" id="health-report-title">Health Report</h3>
+                    <button class="popout-modal-close" id="close-health-report">&times;</button>
+                </div>
+                <div class="popout-modal-body">
+                    <div id="health-report-content">
+                        <!-- Report content will be inserted here -->
                     </div>
                 </div>
-            </div>
-
-            <!-- Health Report Modal -->
-            <div id="health-report-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 800px;">
-                    <div class="popout-modal-header">
-                        <h3 class="popout-modal-title" id="health-report-title">Health Report</h3>
-                        <button class="popout-modal-close" id="close-health-report">&times;</button>
-                    </div>
-                    <div class="popout-modal-body">
-                        <div id="health-report-content">
-                            <!-- Report content will be inserted here -->
-                        </div>
-                    </div>
-                    <div class="popout-modal-footer">
-                        <button class="btn-outline" id="print-health-report">🖨️ Print</button>
-                        <button class="btn-primary" id="close-health-report-btn">Close</button>
-                    </div>
+                <div class="popout-modal-footer">
+                    <button class="btn-outline" id="print-health-report">🖨️ Print</button>
+                    <button class="btn-primary" id="close-health-report-btn">Close</button>
                 </div>
             </div>
+        </div>
 
-            <!-- Trend Analysis Modal -->
-            <div id="trend-analysis-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 800px;">
-                    <div class="popout-modal-header">
-                        <h3 class="popout-modal-title" id="trend-analysis-title">Mortality Trend Analysis</h3>
-                        <button class="popout-modal-close" id="close-trend-analysis">&times;</button>
-                    </div>
-                    <div class="popout-modal-body">
-                        <div id="trend-analysis-content">
-                            <!-- Trend analysis content will be inserted here -->
-                        </div>
-                    </div>
-                    <div class="popout-modal-footer">
-                        <button class="btn-outline" id="print-trend-analysis">🖨️ Print</button>
-                        <button class="btn-primary" id="close-trend-analysis-btn">Close</button>
+        <!-- Trend Analysis Modal -->
+        <div id="trend-analysis-modal" class="popout-modal hidden">
+            <div class="popout-modal-content" style="max-width: 800px;">
+                <div class="popout-modal-header">
+                    <h3 class="popout-modal-title" id="trend-analysis-title">Mortality Trend Analysis</h3>
+                    <button class="popout-modal-close" id="close-trend-analysis">&times;</button>
+                </div>
+                <div class="popout-modal-body">
+                    <div id="trend-analysis-content">
+                        <!-- Trend analysis content will be inserted here -->
                     </div>
                 </div>
-            </div>
-
-            <!-- Cause Analysis Modal -->
-            <div id="cause-analysis-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 800px;">
-                    <div class="popout-modal-header">
-                        <h3 class="popout-modal-title" id="cause-analysis-title">Cause Analysis Report</h3>
-                        <button class="popout-modal-close" id="close-cause-analysis">&times;</button>
-                    </div>
-                    <div class="popout-modal-body">
-                        <div id="cause-analysis-content">
-                            <!-- Cause analysis content will be inserted here -->
-                        </div>
-                    </div>
-                    <div class="popout-modal-footer">
-                        <button class="btn-outline" id="print-cause-analysis">🖨️ Print</button>
-                        <button class="btn-primary" id="close-cause-analysis-btn">Close</button>
-                    </div>
+                <div class="popout-modal-footer">
+                    <button class="btn-outline" id="print-trend-analysis">🖨️ Print</button>
+                    <button class="btn-primary" id="close-trend-analysis-btn">Close</button>
                 </div>
             </div>
-        `;
+        </div>
 
-        this.updateStats();
-        this.setupEventListeners();
-    },
+        <!-- Cause Analysis Modal -->
+        <div id="cause-analysis-modal" class="popout-modal hidden">
+            <div class="popout-modal-content" style="max-width: 800px;">
+                <div class="popout-modal-header">
+                    <h3 class="popout-modal-title" id="cause-analysis-title">Cause Analysis Report</h3>
+                    <button class="popout-modal-close" id="close-cause-analysis">&times;</button>
+                </div>
+                <div class="popout-modal-body">
+                    <div id="cause-analysis-content">
+                        <!-- Cause analysis content will be inserted here -->
+                    </div>
+                </div>
+                <div class="popout-modal-footer">
+                    <button class="btn-outline" id="print-cause-analysis">🖨️ Print</button>
+                    <button class="btn-primary" id="close-cause-analysis-btn">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
 
+    this.updateStats();
+    this.setupEventListeners();
+}  // <-- No extra comma here!
+    
     updateStats() {
         const totalLosses = this.mortalityData.reduce((sum, record) => sum + record.quantity, 0);
         const currentStock = this.getCurrentStock();
@@ -443,7 +603,7 @@ const BroilerMortalityModule = {
         `;
     },
 
-    renderCauseSummary() {
+   renderCauseSummary() {
     const causeData = {};
     const causes = ['natural', 'disease', 'predator', 'heat-stress', 'cold-stress', 'nutritional', 'other'];
     
@@ -454,7 +614,6 @@ const BroilerMortalityModule = {
             totalQuantity: causeRecords.reduce((sum, record) => sum + record.quantity, 0),
             avgAge: causeRecords.length > 0 ? 
                 Math.round(causeRecords.reduce((sum, record) => sum + (record.age || 0), 0) / causeRecords.length) : 0,
-            // Store record IDs for delete functionality
             recordIds: causeRecords.map(record => record.id)
         };
     });
@@ -462,37 +621,37 @@ const BroilerMortalityModule = {
     const totalLosses = this.mortalityData.reduce((sum, record) => sum + record.quantity, 0);
 
     return `
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+        <div class="cause-summary-grid">
             ${causes.filter(cause => causeData[cause].totalQuantity > 0).map(cause => {
                 const data = causeData[cause];
                 const percentage = totalLosses > 0 ? Math.round((data.totalQuantity / totalLosses) * 100) : 0;
                 const causeColor = this.getCauseColor(cause);
                 
                 return `
-                    <div class="cause-item" data-cause="${cause}" style="position: relative; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                            <div style="font-size: 20px;">${this.getCauseIcon(cause)}</div>
-                            <div style="font-weight: 600; color: ${causeColor};">${this.formatCause(cause)}</div>
+                    <div class="cause-item" data-cause="${cause}">
+                        <div class="cause-header">
+                            <div class="cause-icon">${this.getCauseIcon(cause)}</div>
+                            <div class="cause-title">${this.formatCause(cause)}</div>
                         </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                            <span style="color: var(--text-secondary);">Losses:</span>
-                            <span style="font-weight: 600; color: var(--text-primary);">${data.totalQuantity} birds</span>
+                        <div class="cause-stats">
+                            <div class="cause-stat">
+                                <span class="cause-stat-label">Losses:</span>
+                                <span class="cause-stat-value">${data.totalQuantity} birds</span>
+                            </div>
+                            <div class="cause-stat">
+                                <span class="cause-stat-label">Records:</span>
+                                <span class="cause-stat-value">${data.count}</span>
+                            </div>
+                            <div class="cause-stat">
+                                <span class="cause-stat-label">Share:</span>
+                                <span class="cause-stat-percentage">${percentage}%</span>
+                            </div>
                         </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                            <span style="color: var(--text-secondary);">Records:</span>
-                            <span style="font-weight: 600; color: var(--text-primary);">${data.count}</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                            <span style="color: var(--text-secondary);">Share:</span>
-                            <span style="font-weight: 600; color: ${causeColor};">${percentage}%</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <button class="delete-cause-records" data-cause="${cause}" style="background: none; border: 1px solid #ef4444; color: #ef4444; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: all 0.2s;" 
-                                    title="Delete all ${this.formatCause(cause)} records">
+                        <div class="cause-actions">
+                            <button class="btn-delete-cause" data-cause="${cause}" title="Delete all ${this.formatCause(cause)} records">
                                 Delete All
                             </button>
-                            <button class="view-cause-details" data-cause="${cause}" style="background: none; border: 1px solid ${causeColor}; color: ${causeColor}; padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: all 0.2s;"
-                                    title="View ${this.formatCause(cause)} details">
+                            <button class="btn-view-cause" data-cause="${cause}" title="View ${this.formatCause(cause)} details">
                                 View Details
                             </button>
                         </div>
