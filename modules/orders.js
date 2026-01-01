@@ -813,17 +813,17 @@ if (window.FarmModules) {
     }
 })();
 
-// ==================== SIMPLE ORDERS EDIT FIX ====================
+// ==================== COMPLETE ORDERS & CUSTOMERS EDIT FIX ====================
 (function() {
     'use strict';
     
-    console.log('📦 LOADING SIMPLE ORDERS EDIT FIX...');
+    console.log('📦 LOADING COMPLETE EDIT FIX (Orders & Customers)...');
     
     // Store original methods
     const originalEditOrder = OrdersModule.editOrder;
-    const originalAddOrderItem = OrdersModule.addOrderItem;
+    const originalEditCustomer = OrdersModule.editCustomer;
     
-    // New editOrder method
+    // ==================== ORDER EDITING ====================
     OrdersModule.editOrder = function(orderId) {
         console.log('📝 EDITING ORDER:', orderId);
         
@@ -856,9 +856,8 @@ if (window.FarmModules) {
             const itemsContainer = document.getElementById('order-items');
             itemsContainer.innerHTML = '';
             
-            // Add order items using original method but with data
+            // Add order items
             order.items.forEach((item) => {
-                // Create item element
                 const newItem = document.createElement('div');
                 newItem.className = 'order-item';
                 newItem.innerHTML = `
@@ -902,6 +901,9 @@ if (window.FarmModules) {
                 });
             });
             
+            // Recalculate total
+            this.calculateTotal();
+            
             // Change submit button
             const submitBtn = form.querySelector('button[type="submit"]');
             if (submitBtn) {
@@ -919,7 +921,7 @@ if (window.FarmModules) {
                 };
             }
             
-            // Add cancel edit button (only if not already there)
+            // Add cancel edit button
             const cancelBtn = form.querySelector('#cancel-order-form');
             if (cancelBtn && !cancelBtn.nextElementSibling?.classList?.contains('cancel-edit-btn')) {
                 const cancelEditBtn = document.createElement('button');
@@ -928,7 +930,7 @@ if (window.FarmModules) {
                 cancelEditBtn.textContent = 'Cancel Edit';
                 cancelEditBtn.style.marginLeft = '8px';
                 cancelEditBtn.onclick = () => {
-                    this.cancelEditMode();
+                    this.cancelOrderEdit();
                 };
                 cancelBtn.parentNode.appendChild(cancelEditBtn);
             }
@@ -938,7 +940,7 @@ if (window.FarmModules) {
         }, 100);
     };
     
-    // New method to update edited order
+    // Update edited order
     OrdersModule.updateEditedOrder = function(orderId) {
         console.log('💾 UPDATING ORDER:', orderId);
         
@@ -991,9 +993,7 @@ if (window.FarmModules) {
             this.saveData();
             this.renderModule();
             this.hideOrderForm();
-            
-            // Clean up
-            this.cancelEditMode();
+            this.cancelOrderEdit();
             
             if (window.coreModule) {
                 window.coreModule.showNotification(`Order #${orderId} updated!`, 'success');
@@ -1001,15 +1001,13 @@ if (window.FarmModules) {
         }
     };
     
-    // Cancel edit mode
-    OrdersModule.cancelEditMode = function() {
+    // Cancel order edit
+    OrdersModule.cancelOrderEdit = function() {
         // Remove cancel edit button
         const cancelEditBtn = document.querySelector('.cancel-edit-btn');
-        if (cancelEditBtn) {
-            cancelEditBtn.remove();
-        }
+        if (cancelEditBtn) cancelEditBtn.remove();
         
-        // Reset form for next use
+        // Reset form
         setTimeout(() => {
             const form = document.getElementById('order-form');
             if (form) {
@@ -1046,10 +1044,139 @@ if (window.FarmModules) {
         }, 100);
     };
     
-    // Make edit buttons look clickable
+    // ==================== CUSTOMER EDITING ====================
+    OrdersModule.editCustomer = function(customerId) {
+        console.log('👤 EDITING CUSTOMER:', customerId);
+        
+        const customer = this.customers.find(c => c.id === customerId);
+        if (!customer) {
+            this.showNotification('Customer not found', 'error');
+            return;
+        }
+        
+        // Show customer form
+        this.showCustomerForm();
+        
+        // Wait for form to render
+        setTimeout(() => {
+            const form = document.getElementById('customer-form');
+            if (!form) return;
+            
+            // Change title
+            const title = document.querySelector('#customer-form-container h3');
+            if (title) title.textContent = 'Edit Customer';
+            
+            // Populate fields
+            form.querySelector('#customer-name').value = customer.name;
+            form.querySelector('#customer-phone').value = customer.contact;
+            form.querySelector('#customer-email').value = customer.email || '';
+            form.querySelector('#customer-address').value = customer.address || '';
+            
+            // Change submit button
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                // Remove old submit handler
+                form.onsubmit = null;
+                
+                // Create new submit button
+                const newSubmitBtn = submitBtn.cloneNode(true);
+                submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+                newSubmitBtn.textContent = 'Update Customer';
+                
+                newSubmitBtn.onclick = (e) => {
+                    e.preventDefault();
+                    this.updateEditedCustomer(customerId);
+                };
+            }
+            
+            // Add cancel edit button
+            const cancelBtn = form.querySelector('#cancel-customer-form');
+            if (cancelBtn && !cancelBtn.nextElementSibling?.classList?.contains('cancel-edit-btn')) {
+                const cancelEditBtn = document.createElement('button');
+                cancelEditBtn.type = 'button';
+                cancelEditBtn.className = 'btn-outline cancel-edit-btn';
+                cancelEditBtn.textContent = 'Cancel Edit';
+                cancelEditBtn.style.marginLeft = '8px';
+                cancelEditBtn.onclick = () => {
+                    this.cancelCustomerEdit();
+                };
+                cancelBtn.parentNode.appendChild(cancelEditBtn);
+            }
+            
+            console.log('✅ Customer form ready for editing');
+            
+        }, 100);
+    };
+    
+    // Update edited customer
+    OrdersModule.updateEditedCustomer = function(customerId) {
+        console.log('💾 UPDATING CUSTOMER:', customerId);
+        
+        const form = document.getElementById('customer-form');
+        if (!form) return;
+        
+        // Get form values
+        const customerData = {
+            name: form.querySelector('#customer-name').value,
+            contact: form.querySelector('#customer-phone').value,
+            email: form.querySelector('#customer-email').value,
+            address: form.querySelector('#customer-address').value
+        };
+        
+        // Validate
+        if (!customerData.name || !customerData.contact) {
+            alert('Please fill in customer name and contact information.');
+            return;
+        }
+        
+        // Find and update customer
+        const customerIndex = this.customers.findIndex(c => c.id === customerId);
+        if (customerIndex !== -1) {
+            this.customers[customerIndex] = {
+                id: customerId,
+                ...customerData
+            };
+            
+            this.saveData();
+            this.renderModule();
+            this.hideCustomerForm();
+            this.cancelCustomerEdit();
+            
+            if (window.coreModule) {
+                window.coreModule.showNotification(`Customer "${customerData.name}" updated!`, 'success');
+            }
+        }
+    };
+    
+    // Cancel customer edit
+    OrdersModule.cancelCustomerEdit = function() {
+        // Remove cancel edit button
+        const cancelEditBtn = document.querySelectorAll('.cancel-edit-btn');
+        cancelEditBtn.forEach(btn => btn.remove());
+        
+        // Reset form
+        setTimeout(() => {
+            const form = document.getElementById('customer-form');
+            if (form) {
+                form.reset();
+                const title = document.querySelector('#customer-form-container h3');
+                if (title) title.textContent = 'Add New Customer';
+                
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.textContent = 'Add Customer';
+                    submitBtn.onclick = null;
+                    form.onsubmit = (e) => this.handleCustomerSubmit(e);
+                }
+            }
+        }, 100);
+    };
+    
+    // ==================== ENHANCE EDIT BUTTONS ====================
     function enhanceEditButtons() {
-        const editButtons = document.querySelectorAll('.edit-order');
-        editButtons.forEach(btn => {
+        // Order edit buttons
+        const orderEditButtons = document.querySelectorAll('.edit-order');
+        orderEditButtons.forEach(btn => {
             btn.style.cursor = 'pointer';
             btn.style.transition = 'all 0.2s';
             
@@ -1057,6 +1184,25 @@ if (window.FarmModules) {
                 btn.style.transform = 'scale(1.2)';
                 btn.style.color = '#3b82f6';
                 btn.style.background = 'rgba(59, 130, 246, 0.1)';
+            });
+            
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = 'scale(1)';
+                btn.style.color = '';
+                btn.style.background = '';
+            });
+        });
+        
+        // Customer edit buttons
+        const customerEditButtons = document.querySelectorAll('.edit-customer');
+        customerEditButtons.forEach(btn => {
+            btn.style.cursor = 'pointer';
+            btn.style.transition = 'all 0.2s';
+            
+            btn.addEventListener('mouseenter', () => {
+                btn.style.transform = 'scale(1.2)';
+                btn.style.color = '#22c55e';
+                btn.style.background = 'rgba(34, 197, 94, 0.1)';
             });
             
             btn.addEventListener('mouseleave', () => {
@@ -1077,6 +1223,6 @@ if (window.FarmModules) {
         }
     });
     
-    console.log('✅ Simple orders edit fix loaded');
+    console.log('✅ Complete orders & customers edit fix loaded');
     
 })();
