@@ -2467,33 +2467,21 @@ if (window.FarmModules) {
     }
 })();
 
-// ==================== SIMPLE EDIT BUTTON FIX ====================
-// Add this after ALL other code in income-expenses.js
-
+// ==================== GUARANTEED EDIT BUTTON FIX ====================
 (function() {
     'use strict';
     
-    console.log('🔧 Loading SIMPLE edit button fix...');
+    console.log('🔧 LOADING GUARANTEED EDIT BUTTON FIX...');
     
-    // Wait for page to load
-    setTimeout(() => {
-        makeEditButtonsWork();
-    }, 1000);
-    
-    function makeEditButtonsWork() {
-        console.log('🎯 Making all edit buttons work...');
-        
-        // Find ALL edit buttons on the page
+    // Function to make ALL edit buttons work
+    function fixAllEditButtons() {
         const editButtons = document.querySelectorAll('.edit-transaction');
-        console.log(`Found ${editButtons.length} edit buttons`);
+        console.log(`Found ${editButtons.length} edit buttons to fix`);
         
-        editButtons.forEach(btn => {
-            // Remove any old event listeners by cloning
+        editButtons.forEach((btn, index) => {
+            // Clone button to remove old listeners
             const newBtn = btn.cloneNode(true);
             btn.parentNode.replaceChild(newBtn, btn);
-            
-            // Get transaction ID
-            const transactionId = newBtn.dataset.id;
             
             // Add DIRECT click handler that ALWAYS works
             newBtn.addEventListener('click', function(e) {
@@ -2501,19 +2489,10 @@ if (window.FarmModules) {
                 e.stopPropagation();
                 e.stopImmediatePropagation();
                 
-                console.log('🎯 EDIT BUTTON CLICKED (SIMPLE FIX):', transactionId);
+                const transactionId = this.dataset.id;
+                console.log('🎯 EDIT BUTTON CLICKED:', transactionId);
                 
-                // Show the transaction modal FIRST
-                const modal = document.getElementById('transaction-modal');
-                if (modal) {
-                    modal.classList.remove('hidden');
-                    console.log('✅ Modal shown');
-                } else {
-                    console.error('❌ Modal not found!');
-                    return;
-                }
-                
-                // Find the transaction data
+                // GET TRANSACTION DATA
                 const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
                 const transaction = transactions.find(t => t.id == transactionId);
                 
@@ -2522,73 +2501,144 @@ if (window.FarmModules) {
                     return;
                 }
                 
-                // Fill the form SIMPLY
+                // SHOW MODAL - FORCE IT TO BE VISIBLE
+                const modal = document.getElementById('transaction-modal');
+                if (modal) {
+                    // Remove ALL hidden classes and force display
+                    modal.classList.remove('hidden');
+                    modal.style.display = 'flex';
+                    modal.style.alignItems = 'center';
+                    modal.style.justifyContent = 'center';
+                    modal.style.zIndex = '10000';
+                    modal.style.opacity = '1';
+                    modal.style.visibility = 'visible';
+                    
+                    console.log('✅ Modal forced to show');
+                } else {
+                    console.error('❌ Modal not found!');
+                    return;
+                }
+                
+                // FILL FORM - Wait a tiny bit for modal to render
                 setTimeout(() => {
                     const form = document.getElementById('transaction-form');
                     if (!form) {
-                        console.error('Form not found');
+                        console.error('❌ Form not found!');
                         return;
                     }
                     
-                    // Fill each field directly
-                    const fields = {
-                        'transaction-id': transaction.id,
-                        'transaction-date': transaction.date,
-                        'transaction-type': transaction.type,
-                        'transaction-category': transaction.category,
-                        'transaction-amount': transaction.amount,
-                        'transaction-description': transaction.description,
-                        'transaction-payment': transaction.paymentMethod || 'cash',
-                        'transaction-reference': transaction.reference || '',
-                        'transaction-notes': transaction.notes || ''
-                    };
+                    // Fill ALL fields
+                    const fieldsToFill = [
+                        { id: 'transaction-id', value: transaction.id },
+                        { id: 'transaction-date', value: transaction.date },
+                        { id: 'transaction-type', value: transaction.type },
+                        { id: 'transaction-category', value: transaction.category },
+                        { id: 'transaction-amount', value: transaction.amount },
+                        { id: 'transaction-description', value: transaction.description },
+                        { id: 'transaction-payment', value: transaction.paymentMethod || 'cash' },
+                        { id: 'transaction-reference', value: transaction.reference || '' },
+                        { id: 'transaction-notes', value: transaction.notes || '' }
+                    ];
                     
-                    for (const [id, value] of Object.entries(fields)) {
-                        const element = document.getElementById(id);
-                        if (element) element.value = value;
-                    }
+                    fieldsToFill.forEach(field => {
+                        const element = document.getElementById(field.id);
+                        if (element) {
+                            element.value = field.value;
+                        } else {
+                            console.warn(`Field not found: ${field.id}`);
+                        }
+                    });
                     
                     // Show delete button
                     const deleteBtn = document.getElementById('delete-transaction');
-                    if (deleteBtn) deleteBtn.style.display = 'block';
+                    if (deleteBtn) {
+                        deleteBtn.style.display = 'block';
+                        // Make delete button work
+                        deleteBtn.onclick = function() {
+                            if (confirm('Delete this transaction?')) {
+                                const updatedTransactions = transactions.filter(t => t.id != transactionId);
+                                localStorage.setItem('farm-transactions', JSON.stringify(updatedTransactions));
+                                alert('Transaction deleted!');
+                                modal.classList.add('hidden');
+                                location.reload();
+                            }
+                        };
+                    }
                     
                     // Change title
                     const title = document.getElementById('transaction-modal-title');
                     if (title) title.textContent = 'Edit Transaction';
                     
-                    console.log('✅ Form filled with transaction data');
+                    console.log('✅ Form filled successfully');
                     
                     // Make save button work
                     const saveBtn = document.getElementById('save-transaction');
                     if (saveBtn) {
-                        // Remove old listeners
                         const newSaveBtn = saveBtn.cloneNode(true);
                         saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
                         
-                        // Add new listener
-                        newSaveBtn.addEventListener('click', function() {
-                            saveEditedTransaction(transactionId);
-                        });
+                        newSaveBtn.onclick = function() {
+                            // Get updated values
+                            const updatedTransaction = {
+                                id: parseInt(document.getElementById('transaction-id').value),
+                                date: document.getElementById('transaction-date').value,
+                                type: document.getElementById('transaction-type').value,
+                                category: document.getElementById('transaction-category').value,
+                                amount: parseFloat(document.getElementById('transaction-amount').value),
+                                description: document.getElementById('transaction-description').value,
+                                paymentMethod: document.getElementById('transaction-payment').value || 'cash',
+                                reference: document.getElementById('transaction-reference').value || '',
+                                notes: document.getElementById('transaction-notes').value || ''
+                            };
+                            
+                            // Validate
+                            if (!updatedTransaction.date || !updatedTransaction.type || 
+                                !updatedTransaction.category || !updatedTransaction.amount || 
+                                !updatedTransaction.description) {
+                                alert('Please fill all required fields!');
+                                return;
+                            }
+                            
+                            // Update in array
+                            const updatedTransactions = transactions.map(t => 
+                                t.id == transactionId ? updatedTransaction : t
+                            );
+                            
+                            // Save
+                            localStorage.setItem('farm-transactions', JSON.stringify(updatedTransactions));
+                            
+                            // Close modal
+                            modal.classList.add('hidden');
+                            
+                            // Show success and refresh
+                            alert('Transaction updated successfully!');
+                            setTimeout(() => location.reload(), 500);
+                        };
                     }
                     
-                }, 100); // Small delay to ensure form is ready
+                    // Make close button work
+                    const closeBtn = document.getElementById('close-transaction-modal');
+                    if (closeBtn) {
+                        closeBtn.onclick = () => modal.classList.add('hidden');
+                    }
+                    
+                }, 100); // Wait 100ms for modal to fully render
                 
-            }, true); // Capture phase
+            }, true); // Use capture phase
             
-            // Make button look clickable
-            newBtn.style.cursor = 'pointer';
-            newBtn.style.opacity = '1';
+            // Style the button to show it's fixed
+            newBtn.style.border = '2px solid #4CAF50';
+            newBtn.style.boxShadow = '0 0 0 2px rgba(76, 175, 80, 0.3)';
+            newBtn.style.transition = 'all 0.2s';
             
-            // Add hover effect
+            // Hover effects
             newBtn.addEventListener('mouseenter', () => {
                 newBtn.style.transform = 'scale(1.2)';
-                newBtn.style.color = '#4CAF50';
                 newBtn.style.background = 'rgba(76, 175, 80, 0.1)';
             });
             
             newBtn.addEventListener('mouseleave', () => {
                 newBtn.style.transform = 'scale(1)';
-                newBtn.style.color = '';
                 newBtn.style.background = '';
             });
         });
@@ -2596,92 +2646,36 @@ if (window.FarmModules) {
         console.log('✅ All edit buttons fixed');
     }
     
-    function saveEditedTransaction(originalId) {
-        console.log('💾 Saving edited transaction:', originalId);
-        
-        // Get form values
-        const form = document.getElementById('transaction-form');
-        if (!form) return;
-        
-        const transactionData = {
-            id: parseInt(document.getElementById('transaction-id').value),
-            date: document.getElementById('transaction-date').value,
-            type: document.getElementById('transaction-type').value,
-            category: document.getElementById('transaction-category').value,
-            amount: parseFloat(document.getElementById('transaction-amount').value),
-            description: document.getElementById('transaction-description').value,
-            paymentMethod: document.getElementById('transaction-payment').value || 'cash',
-            reference: document.getElementById('transaction-reference').value || '',
-            notes: document.getElementById('transaction-notes').value || ''
-        };
-        
-        // Validate
-        if (!transactionData.date || !transactionData.type || 
-            !transactionData.category || !transactionData.amount || 
-            !transactionData.description) {
-            alert('Please fill in all required fields!');
-            return;
-        }
-        
-        // Load existing transactions
-        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
-        
-        // Find and update the transaction
-        const index = transactions.findIndex(t => t.id == originalId);
-        if (index !== -1) {
-            transactions[index] = transactionData;
-            
-            // Save back to localStorage
-            localStorage.setItem('farm-transactions', JSON.stringify(transactions));
-            
-            // Show success
-            alert('Transaction updated successfully!');
-            
-            // Close modal
-            const modal = document.getElementById('transaction-modal');
-            if (modal) modal.classList.add('hidden');
-            
-            // Refresh the page to show changes
-            setTimeout(() => location.reload(), 500);
-        } else {
-            alert('Error: Transaction not found!');
-        }
-    }
+    // Run immediately
+    setTimeout(fixAllEditButtons, 1000);
     
-    // Also fix delete button
-    function fixDeleteButton() {
-        const deleteBtn = document.getElementById('delete-transaction');
-        if (deleteBtn) {
-            deleteBtn.addEventListener('click', function() {
-                const transactionId = document.getElementById('transaction-id').value;
-                if (confirm('Are you sure you want to delete this transaction?')) {
-                    // Load transactions
-                    const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
-                    
-                    // Filter out the deleted transaction
-                    const updatedTransactions = transactions.filter(t => t.id != transactionId);
-                    
-                    // Save back
-                    localStorage.setItem('farm-transactions', JSON.stringify(updatedTransactions));
-                    
-                    // Close modal and refresh
-                    const modal = document.getElementById('transaction-modal');
-                    if (modal) modal.classList.add('hidden');
-                    
-                    alert('Transaction deleted!');
-                    setTimeout(() => location.reload(), 500);
-                }
-            });
-        }
-    }
-    
-    // Run again when switching to income-expenses
+    // Run again when clicking on income-expenses menu
     document.addEventListener('click', function(e) {
-        if (e.target.closest('[href*="#income-expenses"], [onclick*="income-expenses"]')) {
-            setTimeout(makeEditButtonsWork, 500);
+        if (e.target.closest('[href*="#income-expenses"]') || 
+            e.target.closest('[onclick*="income-expenses"]')) {
+            setTimeout(fixAllEditButtons, 500);
         }
     });
     
-    console.log('✅ Simple edit button fix loaded');
+    // Also fix any new buttons that get added
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length > 0) {
+                const hasEditButtons = Array.from(mutation.addedNodes).some(node => 
+                    node.querySelector && node.querySelector('.edit-transaction')
+                );
+                if (hasEditButtons) {
+                    setTimeout(fixAllEditButtons, 100);
+                }
+            }
+        });
+    });
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+    
+    console.log('✅ Guaranteed edit button fix loaded');
     
 })();
