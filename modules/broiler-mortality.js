@@ -1421,7 +1421,7 @@ const BroilerMortalityModule = {
 // ==================== UNIVERSAL REGISTRATION ====================
 
 (function() {
-    const MODULE_NAME = 'broiler-mortality.js'; // e.g., 'dashboard'
+    const MODULE_NAME = 'broiler-mortality'; // e.g., 'dashboard'
     const MODULE_OBJECT = BroilerMortalityModule; // e.g., DashboardModule
     
     console.log(`📦 Registering ${MODULE_NAME} module...`);
