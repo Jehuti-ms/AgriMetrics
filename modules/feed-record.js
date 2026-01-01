@@ -316,16 +316,6 @@ const FeedRecordModule = {
             birdsFed: this.birdsStock
         };
 
-         this.feedRecords.unshift(formData);
-         this.saveData();
-         this.renderModule();
-        
-        // 🔥 ONE LINE - does everything!
-         Broadcaster.recordCreated('feed-record', formData);
-        
-         this.showNotification('Feed recorded!', 'success');
-     }
-
         // Update inventory
         inventoryItem.currentStock -= quantity;
         
@@ -333,6 +323,19 @@ const FeedRecordModule = {
         this.saveData();
         this.renderModule();
         this.syncStatsWithSharedData();
+        
+        // Broadcast creation
+        Broadcaster.recordCreated('feed-record', {
+            ...formData,
+            timestamp: new Date().toISOString(),
+            module: 'feed-record',
+            action: 'feed_record_created',
+            inventoryImpact: {
+                feedType: feedType,
+                stockChange: -quantity,
+                newStock: inventoryItem.currentStock
+            }
+        });
         
         this.showNotification(`Recorded ${formData.quantity}kg ${feedType} feed usage!`, 'success');
     },
@@ -399,29 +402,37 @@ const FeedRecordModule = {
         // Update record
         const recordIndex = this.feedRecords.findIndex(r => r.id === recordId);
         if (recordIndex !== -1) {
-            this.feedRecords[recordIndex] = {
-                ...this.feedRecords[recordIndex],
+            const oldRecord = this.feedRecords[recordIndex];
+            const updatedRecord = {
+                ...oldRecord,
                 feedType,
                 quantity,
                 cost: this.calculateCost(feedType, quantity),
                 notes
             };
             
+            this.feedRecords[recordIndex] = updatedRecord;
             this.saveData();
             this.renderModule();
             this.cancelFeedEdit();
             
+            // Broadcast update
+            Broadcaster.recordUpdated('feed-record', {
+                id: recordId,
+                oldData: oldRecord,
+                newData: updatedRecord,
+                timestamp: new Date().toISOString(),
+                module: 'feed-record',
+                action: 'feed_record_updated',
+                inventoryImpact: {
+                    feedType: feedType,
+                    stockChange: stockAdjustment,
+                    newStock: newStock
+                }
+            });
+            
             this.showNotification(`Feed record updated!`, 'success');
         }
-
-            const updatedRecord = { /* updated data */ };
-    
-            // 🔥 ONE LINE
-            Broadcaster.recordUpdated('feed-record', updatedRecord);
-            
-            this.showNotification('Record updated!', 'success');
-        }
-
     },
 
     cancelFeedEdit() {
@@ -445,8 +456,13 @@ const FeedRecordModule = {
         if (confirm(`Delete feed record for ${record.quantity}kg of ${record.feedType} feed?`)) {
             // Return stock to inventory when deleting
             const inventoryItem = this.feedInventory.find(item => item.feedType === record.feedType);
+            let stockReturned = 0;
+            let newStock = 0;
+            
             if (inventoryItem) {
+                stockReturned = record.quantity;
                 inventoryItem.currentStock += record.quantity;
+                newStock = inventoryItem.currentStock;
             }
             
             // Remove record
@@ -454,17 +470,22 @@ const FeedRecordModule = {
             this.saveData();
             this.renderModule();
             
+            // Broadcast deletion
+            Broadcaster.recordDeleted('feed-record', {
+                id: recordId,
+                data: record,
+                timestamp: new Date().toISOString(),
+                module: 'feed-record',
+                action: 'feed_record_deleted',
+                inventoryImpact: {
+                    feedType: record.feedType,
+                    stockReturned: stockReturned,
+                    newStock: newStock
+                }
+            });
+            
             this.showNotification('Feed record deleted!', 'success');
         }
-
-        // 🔥 ONE LINE (call BEFORE deleting so we have the data)
-            Broadcaster.recordDeleted('feed-record', record);
-            
-            // Then delete
-            this.feedRecords = this.feedRecords.filter(r => r.id !== recordId);
-            this.saveData();
-            
-            this.showNotification('Record deleted!', 'success');
     },
 
     showFeedForm() {
@@ -497,10 +518,24 @@ const FeedRecordModule = {
     addToInventory(feedType, quantity) {
         const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
         if (inventoryItem) {
+            const oldStock = inventoryItem.currentStock;
             inventoryItem.currentStock += quantity;
             this.saveData();
             this.renderModule();
             this.syncStatsWithSharedData();
+            
+            // Broadcast inventory addition
+            Broadcaster.recordCreated('feed-record', {
+                id: `inventory_${Date.now()}`,
+                feedType: feedType,
+                quantity: quantity,
+                oldStock: oldStock,
+                newStock: inventoryItem.currentStock,
+                timestamp: new Date().toISOString(),
+                module: 'feed-record',
+                action: 'inventory_stock_added'
+            });
+            
             this.showNotification(`Added ${quantity}kg to ${feedType} inventory!`, 'success');
         } else {
             // Create new inventory item
@@ -516,15 +551,40 @@ const FeedRecordModule = {
             this.saveData();
             this.renderModule();
             this.syncStatsWithSharedData();
+            
+            // Broadcast new inventory creation
+            Broadcaster.recordCreated('feed-record', {
+                id: newItem.id,
+                feedType: feedType,
+                quantity: quantity,
+                oldStock: 0,
+                newStock: quantity,
+                timestamp: new Date().toISOString(),
+                module: 'feed-record',
+                action: 'inventory_item_created'
+            });
+            
             this.showNotification(`Created new ${feedType} inventory with ${quantity}kg!`, 'success');
         }
     },
 
     adjustBirdCount(newCount) {
+        const oldCount = this.birdsStock;
         this.birdsStock = newCount;
         this.saveData();
         this.renderModule();
         this.syncStatsWithSharedData();
+        
+        // Broadcast bird count adjustment
+        Broadcaster.recordUpdated('feed-record', {
+            id: 'birds_count',
+            oldCount: oldCount,
+            newCount: newCount,
+            timestamp: new Date().toISOString(),
+            module: 'feed-record',
+            action: 'birds_count_adjusted'
+        });
+        
         this.showNotification(`Adjusted bird count to ${newCount}!`, 'success');
     },
 
@@ -540,6 +600,14 @@ const FeedRecordModule = {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+        
+        // Broadcast export
+        Broadcaster.recordCreated('feed-record', {
+            action: 'export_feed_records',
+            count: this.feedRecords.length,
+            timestamp: new Date().toISOString(),
+            module: 'feed-record'
+        });
         
         this.showNotification('Feed records exported successfully!', 'success');
     },
