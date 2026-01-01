@@ -753,7 +753,7 @@ renderCauseSummary() {
             }).join('')}
         </div>
     `;
-}
+},
     
     setupEventListeners() {
         console.log('🔧 Setting up broiler mortality event listeners...');
