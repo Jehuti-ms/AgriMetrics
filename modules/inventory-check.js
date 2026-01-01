@@ -1,12 +1,19 @@
 // modules/inventory-check.js - UPDATED WITH STYLE MANAGER INTEGRATION
 console.log('Loading inventory-check module...');
 
-// ✅ ADDED: DataBroadcaster integration
-const Broadcaster = window.DataBroadcaster || {
-    recordCreated: () => {},
-    recordUpdated: () => {},
-    recordDeleted: () => {}
-};
+// ✅ FIXED: DataBroadcaster integration - Don't redeclare Broadcaster
+// Check if Broadcaster exists globally (from data-broadcaster.js)
+if (typeof Broadcaster === 'undefined') {
+    // If not, create a minimal fallback
+    var Broadcaster = {
+        broadcast: () => console.warn('Broadcaster not available'),
+        on: () => console.warn('Broadcaster not available'),
+        recordCreated: () => {},
+        recordUpdated: () => {},
+        recordDeleted: () => {}
+    };
+    console.log('⚠️ Using fallback Broadcaster for inventory-check');
+}
 
 const InventoryCheckModule = {
     name: 'inventory-check',
@@ -14,105 +21,321 @@ const InventoryCheckModule = {
     inventory: [],
     categories: ['feed', 'medical', 'packaging', 'equipment', 'cleaning', 'other'],
     element: null,
+    broadcaster: null, // ✅ ADDED: Store broadcaster reference
 
     initialize() {
         console.log('📦 Initializing Inventory Check...');
         
-        // ✅ ADDED: Get the content area element
+        // ✅ Get the content area element
         this.element = document.getElementById('content-area');
         if (!this.element) return false;
 
-        // ✅ ADDED: Register with StyleManager
+        // ✅ Store broadcaster reference
+        this.broadcaster = window.Broadcaster || Broadcaster;
+        console.log('📡 Inventory module connected to Data Broadcaster');
+
+        // ✅ Register with StyleManager
         if (window.StyleManager) {
-            StyleManager.registerModule(this.id, this.element, this);
+            StyleManager.registerModule(this.name, this.element, this);
         }
 
         this.loadData();
         this.renderModule();
         this.setupEventListeners();
+        this.setupBroadcasterListeners(); // ✅ NEW: Setup broadcaster listeners
         this.initialized = true;
+        
+        // ✅ Broadcast inventory loaded
+        this.broadcastInventoryLoaded();
         
         // Sync initial stats with profile
         this.syncStatsWithProfile();
         
-        console.log('✅ Inventory Check initialized with StyleManager');
+        console.log('✅ Inventory Check initialized with StyleManager & Data Broadcaster');
         return true;
     },
 
-    // ✅ ADDED: Theme change handler (optional)
-    onThemeChange(theme) {
-        console.log(`Inventory Check updating for theme: ${theme}`);
-        // You can add theme-specific logic here if needed
+    // ✅ NEW: Setup broadcaster listeners
+    setupBroadcasterListeners() {
+        if (!this.broadcaster) return;
+        
+        // Listen for production updates that might consume inventory
+        this.broadcaster.on('production-updated', (data) => {
+            console.log('📡 Inventory received production update:', data);
+            this.checkInventoryForProduction(data);
+        });
+        
+        // Listen for sales updates
+        this.broadcaster.on('sale-recorded', (data) => {
+            console.log('📡 Inventory received sale record:', data);
+            this.checkInventoryForSales(data);
+        });
+        
+        // Listen for feed records
+        this.broadcaster.on('feed-recorded', (data) => {
+            console.log('📡 Inventory received feed record:', data);
+            this.updateFeedInventory(data);
+        });
+        
+        // Listen for orders
+        this.broadcaster.on('order-created', (data) => {
+            console.log('📡 Inventory received order created:', data);
+            this.checkInventoryForOrders(data);
+        });
     },
 
+    // ✅ NEW: Broadcast inventory loaded
+    broadcastInventoryLoaded() {
+        if (!this.broadcaster) return;
+        
+        const stats = this.calculateStats();
+        
+        this.broadcaster.broadcast('inventory-loaded', {
+            module: 'inventory-check',
+            timestamp: new Date().toISOString(),
+            totalItems: this.inventory.length,
+            lowStockItems: stats.lowStockCount,
+            outOfStockItems: stats.outOfStockCount,
+            totalInventoryValue: stats.totalValue
+        });
+    },
+
+    // ✅ NEW: Broadcast when inventory item is added
+    broadcastItemAdded(item) {
+        if (!this.broadcaster) return;
+        
+        this.broadcaster.broadcast('inventory-item-added', {
+            module: 'inventory-check',
+            timestamp: new Date().toISOString(),
+            itemId: item.id,
+            itemName: item.name,
+            category: item.category,
+            quantity: item.currentStock,
+            unit: item.unit,
+            minStock: item.minStock,
+            cost: item.cost
+        });
+        
+        // Also broadcast inventory updated
+        this.broadcastInventoryUpdated();
+    },
+
+    // ✅ NEW: Broadcast when inventory item is updated
+    broadcastItemUpdated(item) {
+        if (!this.broadcaster) return;
+        
+        this.broadcaster.broadcast('inventory-item-updated', {
+            module: 'inventory-check',
+            timestamp: new Date().toISOString(),
+            itemId: item.id,
+            itemName: item.name,
+            category: item.category,
+            quantity: item.currentStock,
+            unit: item.unit
+        });
+        
+        // Also broadcast inventory updated
+        this.broadcastInventoryUpdated();
+    },
+
+    // ✅ NEW: Broadcast when inventory item is deleted
+    broadcastItemDeleted(itemId, itemName) {
+        if (!this.broadcaster) return;
+        
+        this.broadcaster.broadcast('inventory-item-deleted', {
+            module: 'inventory-check',
+            timestamp: new Date().toISOString(),
+            itemId: itemId,
+            itemName: itemName
+        });
+        
+        // Also broadcast inventory updated
+        this.broadcastInventoryUpdated();
+    },
+
+    // ✅ NEW: Broadcast when inventory is updated (general)
+    broadcastInventoryUpdated() {
+        if (!this.broadcaster) return;
+        
+        const stats = this.calculateStats();
+        
+        this.broadcaster.broadcast('inventory-updated', {
+            module: 'inventory-check',
+            timestamp: new Date().toISOString(),
+            totalItems: this.inventory.length,
+            lowStockItems: stats.lowStockCount,
+            outOfStockItems: stats.outOfStockCount,
+            totalInventoryValue: stats.totalValue,
+            items: this.inventory.map(item => ({
+                id: item.id,
+                name: item.name,
+                category: item.category,
+                quantity: item.currentStock,
+                unit: item.unit,
+                minStock: item.minStock
+            }))
+        });
+    },
+
+    // ✅ NEW: Check inventory for production needs
+    checkInventoryForProduction(productionData) {
+        if (!productionData) return;
+        
+        console.log('🔄 Checking inventory for production:', productionData.type);
+        
+        // Logic to check if we have enough inventory for production
+        // This is a placeholder - you can expand based on your needs
+        if (productionData.type?.toLowerCase().includes('feed')) {
+            const feedItems = this.inventory.filter(item => 
+                item.category === 'feed' && 
+                item.currentStock < item.minStock * 1.5
+            );
+            
+            if (feedItems.length > 0 && this.broadcaster) {
+                this.broadcaster.broadcast('low-feed-inventory', {
+                    module: 'inventory-check',
+                    timestamp: new Date().toISOString(),
+                    items: feedItems.map(item => ({
+                        name: item.name,
+                        current: item.currentStock,
+                        min: item.minStock,
+                        unit: item.unit
+                    }))
+                });
+            }
+        }
+    },
+
+    // ✅ NEW: Check inventory for sales
+    checkInventoryForSales(saleData) {
+        if (!saleData) return;
+        
+        console.log('🔄 Checking inventory for sale:', saleData.productName);
+        
+        // Logic to check if sales affect inventory levels
+        // This is a placeholder - you can expand based on your needs
+        if (saleData.product.includes('eggs')) {
+            const packagingItems = this.inventory.filter(item => 
+                item.category === 'packaging' && 
+                item.name.toLowerCase().includes('carton')
+            );
+            
+            if (packagingItems.length > 0) {
+                const cartonItem = packagingItems[0];
+                if (cartonItem.currentStock < cartonItem.minStock && this.broadcaster) {
+                    this.broadcaster.broadcast('low-packaging-inventory', {
+                        module: 'inventory-check',
+                        timestamp: new Date().toISOString(),
+                        item: cartonItem.name,
+                        current: cartonItem.currentStock,
+                        min: cartonItem.minStock,
+                        unit: cartonItem.unit
+                    });
+                }
+            }
+        }
+    },
+
+    // ✅ NEW: Update feed inventory based on feed records
+    updateFeedInventory(feedData) {
+        if (!feedData) return;
+        
+        console.log('🔄 Updating feed inventory from feed record:', feedData);
+        
+        // Find feed items that match the feed type
+        const feedItems = this.inventory.filter(item => 
+            item.category === 'feed' && 
+            item.name.toLowerCase().includes(feedData.feedType?.toLowerCase() || 'feed')
+        );
+        
+        if (feedItems.length > 0) {
+            const feedItem = feedItems[0];
+            const quantityUsed = feedData.quantity || 0;
+            
+            // Update stock
+            feedItem.currentStock = Math.max(0, feedItem.currentStock - quantityUsed);
+            this.saveData();
+            
+            // Broadcast update
+            this.broadcastItemUpdated(feedItem);
+            
+            console.log(`📉 Updated feed inventory: ${feedItem.name} reduced by ${quantityUsed} ${feedItem.unit}`);
+        }
+    },
+
+    // ✅ NEW: Check inventory for orders
+    checkInventoryForOrders(orderData) {
+        if (!orderData || !orderData.items) return;
+        
+        console.log('🔄 Checking inventory for order:', orderData.orderId);
+        
+        // Check if we have enough packaging for orders
+        const packagingItems = this.inventory.filter(item => 
+            item.category === 'packaging'
+        );
+        
+        if (packagingItems.length > 0 && this.broadcaster) {
+            const lowPackaging = packagingItems.filter(item => 
+                item.currentStock < item.minStock
+            );
+            
+            if (lowPackaging.length > 0) {
+                this.broadcaster.broadcast('low-packaging-for-orders', {
+                    module: 'inventory-check',
+                    timestamp: new Date().toISOString(),
+                    orderId: orderData.orderId,
+                    lowItems: lowPackaging.map(item => ({
+                        name: item.name,
+                        current: item.currentStock,
+                        min: item.minStock
+                    }))
+                });
+            }
+        }
+    },
+
+    // ✅ NEW: Get inventory stats for dashboard
+    getLiveStats() {
+        const stats = this.calculateStats();
+        
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('inventory-stats', {
+                module: 'inventory-check',
+                timestamp: new Date().toISOString(),
+                stats: stats
+            });
+        }
+        
+        return stats;
+    },
+
+    // ✅ MODIFIED: Enhanced loadData with broadcasting
     loadData() {
         const saved = localStorage.getItem('farm-inventory');
         this.inventory = saved ? JSON.parse(saved) : this.getDemoData();
+        
+        // Broadcast data loaded
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('inventory-data-loaded', {
+                module: 'inventory-check',
+                timestamp: new Date().toISOString(),
+                itemCount: this.inventory.length
+            });
+        }
     },
 
-    getDemoData() {
-        return [
-            { 
-                id: 1, 
-                name: 'Chicken Feed - Starter', 
-                category: 'feed', 
-                currentStock: 50, 
-                unit: 'kg', 
-                minStock: 20, 
-                cost: 2.5,
-                supplier: 'FeedCo',
-                lastRestocked: '2024-03-10',
-                notes: 'For chicks 0-3 weeks'
-            },
-            { 
-                id: 2, 
-                name: 'Egg Cartons - Large', 
-                category: 'packaging', 
-                currentStock: 200, 
-                unit: 'pcs', 
-                minStock: 50, 
-                cost: 0.5,
-                supplier: 'Packaging Inc',
-                lastRestocked: '2024-03-12',
-                notes: '30-dozen capacity'
-            },
-            { 
-                id: 3, 
-                name: 'Poultry Vaccines', 
-                category: 'medical', 
-                currentStock: 5, 
-                unit: 'bottles', 
-                minStock: 10, 
-                cost: 15,
-                supplier: 'VetSupply',
-                lastRestocked: '2024-03-05',
-                notes: 'Keep refrigerated'
-            },
-            { 
-                id: 4, 
-                name: 'Water Troughs', 
-                category: 'equipment', 
-                currentStock: 8, 
-                unit: 'pcs', 
-                minStock: 5, 
-                cost: 25,
-                supplier: 'FarmGear',
-                lastRestocked: '2024-02-28',
-                notes: '10L capacity'
-            },
-            { 
-                id: 5, 
-                name: 'Disinfectant Spray', 
-                category: 'cleaning', 
-                currentStock: 3, 
-                unit: 'bottles', 
-                minStock: 5, 
-                cost: 8,
-                supplier: 'CleanCo',
-                lastRestocked: '2024-03-08',
-                notes: 'For equipment cleaning'
-            }
-        ];
+    // ✅ MODIFIED: Enhanced saveData with broadcasting
+    saveData() {
+        localStorage.setItem('farm-inventory', JSON.stringify(this.inventory));
+        
+        // Broadcast data saved
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('inventory-data-saved', {
+                module: 'inventory-check',
+                timestamp: new Date().toISOString(),
+                itemCount: this.inventory.length
+            });
+        }
     },
 
     renderModule() {
@@ -541,6 +764,12 @@ const InventoryCheckModule = {
         return categories[category] || category;
     },
 
+     // ✅ ADDED: Theme change handler
+    onThemeChange(theme) {
+        console.log(`Inventory Check updating for theme: ${theme}`);
+        // You can add theme-specific logic here if needed
+    },
+    
     setupEventListeners() {
         // Form buttons
         document.getElementById('show-add-form')?.addEventListener('click', () => this.showInventoryForm());
@@ -668,154 +897,164 @@ const InventoryCheckModule = {
     },
 
     handleInventorySubmit(e) {
-        e.preventDefault();
-        
-        const formData = {
-            id: Date.now(),
-            name: document.getElementById('item-name').value,
-            category: document.getElementById('item-category').value,
-            currentStock: parseInt(document.getElementById('current-stock').value),
-            unit: document.getElementById('item-unit').value,
-            minStock: parseInt(document.getElementById('min-stock').value),
-            cost: parseFloat(document.getElementById('item-cost').value),
-            supplier: document.getElementById('item-supplier').value || '',
-            lastRestocked: new Date().toISOString().split('T')[0],
-            notes: document.getElementById('item-notes').value || ''
-        };
+    e.preventDefault();
+    
+    const formData = {
+        id: Date.now(),
+        name: document.getElementById('item-name').value,
+        category: document.getElementById('item-category').value,
+        currentStock: parseInt(document.getElementById('current-stock').value),
+        unit: document.getElementById('item-unit').value,
+        minStock: parseInt(document.getElementById('min-stock').value),
+        cost: parseFloat(document.getElementById('item-cost').value),
+        supplier: document.getElementById('item-supplier').value || '',
+        lastRestocked: new Date().toISOString().split('T')[0],
+        notes: document.getElementById('item-notes').value || ''
+    };
 
-        this.inventory.unshift(formData);
-        this.saveData();
-        this.renderModule();
-        
-        // Broadcast inventory item creation
-        Broadcaster.recordCreated('inventory-check', {
-            ...formData,
-            timestamp: new Date().toISOString(),
+    this.inventory.unshift(formData);
+    this.saveData();
+    this.renderModule();
+    
+    // ✅ FIXED: Use this.broadcaster.broadcast() instead of Broadcaster.recordCreated()
+    if (this.broadcaster) {
+        this.broadcastItemAdded(formData);
+        // Also broadcast specific event for this action
+        this.broadcaster.broadcast('inventory-action', {
             module: 'inventory-check',
-            action: 'inventory_item_created',
-            totalValue: formData.currentStock * formData.cost
+            timestamp: new Date().toISOString(),
+            action: 'item_added',
+            item: formData
         });
-        
-        // SYNC WITH PROFILE - Update inventory stats
-        this.syncStatsWithProfile();
-        
-        if (window.coreModule) {
-            window.coreModule.showNotification('Inventory item added successfully!', 'success');
-        }
-    },
+    }
+    
+    // SYNC WITH PROFILE - Update inventory stats
+    this.syncStatsWithProfile();
+    
+    if (window.coreModule) {
+        window.coreModule.showNotification('Inventory item added successfully!', 'success');
+    }
+},
 
-    handleStockUpdate(e) {
-        e.preventDefault();
-        
-        const id = parseInt(document.getElementById('update-item-id').value);
-        const newStock = parseInt(document.getElementById('new-stock-level').value);
-        const reason = document.getElementById('stock-update-reason').value;
+handleStockUpdate(e) {
+    e.preventDefault();
+    
+    const id = parseInt(document.getElementById('update-item-id').value);
+    const newStock = parseInt(document.getElementById('new-stock-level').value);
+    const reason = document.getElementById('stock-update-reason').value;
 
-        const item = this.inventory.find(item => item.id === id);
-        if (!item) return;
+    const item = this.inventory.find(item => item.id === id);
+    if (!item) return;
 
-        const oldStock = item.currentStock;
-        item.currentStock = newStock;
-        
-        if (reason === 'restock') {
-            item.lastRestocked = new Date().toISOString().split('T')[0];
-        }
+    const oldStock = item.currentStock;
+    item.currentStock = newStock;
+    
+    if (reason === 'restock') {
+        item.lastRestocked = new Date().toISOString().split('T')[0];
+    }
 
-        this.saveData();
-        this.renderModule();
-        
-        // Broadcast stock update
-        Broadcaster.recordUpdated('inventory-check', {
-            id: id,
-            oldData: { currentStock: oldStock },
-            newData: { currentStock: newStock },
-            timestamp: new Date().toISOString(),
+    this.saveData();
+    this.renderModule();
+    
+    // ✅ FIXED: Use this.broadcaster.broadcast() instead of Broadcaster.recordUpdated()
+    if (this.broadcaster) {
+        this.broadcastItemUpdated(item);
+        // Also broadcast specific event for this action
+        this.broadcaster.broadcast('inventory-action', {
             module: 'inventory-check',
-            action: 'inventory_stock_updated',
+            timestamp: new Date().toISOString(),
+            action: 'stock_updated',
+            itemId: id,
+            oldStock: oldStock,
+            newStock: newStock,
             reason: reason,
-            itemName: item.name,
-            stockChange: newStock - oldStock,
-            oldValue: oldStock * item.cost,
-            newValue: newStock * item.cost
+            itemName: item.name
         });
-        
-        // SYNC WITH PROFILE - Update stats after stock change
-        this.syncStatsWithProfile();
-        
-        if (window.coreModule) {
-            const change = newStock - oldStock;
-            const changeText = change > 0 ? `+${change}` : change;
-            window.coreModule.showNotification(`Stock updated: ${changeText} ${item.unit} (${reason})`, 'success');
-        }
-    },
+    }
+    
+    // SYNC WITH PROFILE - Update stats after stock change
+    this.syncStatsWithProfile();
+    
+    if (window.coreModule) {
+        const change = newStock - oldStock;
+        const changeText = change > 0 ? `+${change}` : change;
+        window.coreModule.showNotification(`Stock updated: ${changeText} ${item.unit} (${reason})`, 'success');
+    }
+},
 
-    deleteItem(id) {
-        const item = this.inventory.find(item => item.id === id);
-        if (!item) return;
+deleteItem(id) {
+    const item = this.inventory.find(item => item.id === id);
+    if (!item) return;
 
-        if (confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`)) {
-            // Broadcast deletion before removing
-            Broadcaster.recordDeleted('inventory-check', {
-                id: id,
-                data: item,
-                timestamp: new Date().toISOString(),
+    if (confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`)) {
+        // ✅ FIXED: Use this.broadcaster.broadcast() instead of Broadcaster.recordDeleted()
+        if (this.broadcaster) {
+            this.broadcastItemDeleted(id, item.name);
+            // Also broadcast specific event for this action
+            this.broadcaster.broadcast('inventory-action', {
                 module: 'inventory-check',
-                action: 'inventory_item_deleted',
-                totalValue: item.currentStock * item.cost,
+                timestamp: new Date().toISOString(),
+                action: 'item_deleted',
+                itemId: id,
+                itemName: item.name,
                 category: item.category
             });
-            
-            this.inventory = this.inventory.filter(item => item.id !== id);
-            this.saveData();
-            this.renderModule();
-            
-            // SYNC WITH PROFILE - Update stats after deletion
-            this.syncStatsWithProfile();
-            
-            if (window.coreModule) {
-                window.coreModule.showNotification('Item deleted successfully!', 'success');
-            }
         }
-    },
-
-    quickRestock(id) {
-        const item = this.inventory.find(item => item.id === id);
-        if (!item) return;
-
-        const suggestedRestock = Math.max(item.minStock * 2, item.currentStock + 10);
-        const restockAmount = prompt(`Restock "${item.name}"\nCurrent: ${item.currentStock} ${item.unit}\nMin: ${item.minStock} ${item.unit}\nEnter amount to add:`, suggestedRestock.toString());
         
-        if (restockAmount !== null && !isNaN(restockAmount)) {
-            const amount = parseInt(restockAmount);
-            const oldStock = item.currentStock;
-            item.currentStock += amount;
-            item.lastRestocked = new Date().toISOString().split('T')[0];
-            
-            this.saveData();
-            this.renderModule();
-            
-            // Broadcast quick restock
-            Broadcaster.recordUpdated('inventory-check', {
-                id: id,
-                oldData: { currentStock: oldStock },
-                newData: { currentStock: item.currentStock },
-                timestamp: new Date().toISOString(),
+        this.inventory = this.inventory.filter(item => item.id !== id);
+        this.saveData();
+        this.renderModule();
+        
+        // SYNC WITH PROFILE - Update stats after deletion
+        this.syncStatsWithProfile();
+        
+        if (window.coreModule) {
+            window.coreModule.showNotification('Item deleted successfully!', 'success');
+        }
+    }
+},
+
+quickRestock(id) {
+    const item = this.inventory.find(item => item.id === id);
+    if (!item) return;
+
+    const suggestedRestock = Math.max(item.minStock * 2, item.currentStock + 10);
+    const restockAmount = prompt(`Restock "${item.name}"\nCurrent: ${item.currentStock} ${item.unit}\nMin: ${item.minStock} ${item.unit}\nEnter amount to add:`, suggestedRestock.toString());
+    
+    if (restockAmount !== null && !isNaN(restockAmount)) {
+        const amount = parseInt(restockAmount);
+        const oldStock = item.currentStock;
+        item.currentStock += amount;
+        item.lastRestocked = new Date().toISOString().split('T')[0];
+        
+        this.saveData();
+        this.renderModule();
+        
+        // ✅ FIXED: Use this.broadcaster.broadcast() instead of Broadcaster.recordUpdated()
+        if (this.broadcaster) {
+            this.broadcastItemUpdated(item);
+            // Also broadcast specific event for this action
+            this.broadcaster.broadcast('inventory-action', {
                 module: 'inventory-check',
-                action: 'inventory_quick_restock',
+                timestamp: new Date().toISOString(),
+                action: 'quick_restock',
+                itemId: id,
                 restockAmount: amount,
                 itemName: item.name,
-                totalValue: item.currentStock * item.cost
+                oldStock: oldStock,
+                newStock: item.currentStock
             });
-            
-            // SYNC WITH PROFILE - Update stats after restock
-            this.syncStatsWithProfile();
-            
-            if (window.coreModule) {
-                window.coreModule.showNotification(`Restocked ${amount} ${item.unit} of ${item.name}`, 'success');
-            }
         }
-    },
-
+        
+        // SYNC WITH PROFILE - Update stats after restock
+        this.syncStatsWithProfile();
+        
+        if (window.coreModule) {
+            window.coreModule.showNotification(`Restocked ${amount} ${item.unit} of ${item.name}`, 'success');
+        }
+    }
+},
+    
     // REPORT METHODS WITH DATABROADCASTER INTEGRATION
     showStockCheck() {
         const lowStock = this.getLowStockItems();
@@ -875,8 +1114,9 @@ const InventoryCheckModule = {
         document.getElementById('stock-check-title').textContent = 'Stock Check Report';
         this.showStockCheckModal();
         
-        // Broadcast stock check report generation
-        Broadcaster.recordCreated('inventory-check', {
+        // ✅ FIXED: Use this.broadcaster.broadcast() instead of Broadcaster.recordCreated()
+    if (this.broadcaster) {
+        this.broadcaster.broadcast('inventory-action', {
             action: 'stock_check_report_generated',
             timestamp: new Date().toISOString(),
             module: 'inventory-check',
@@ -887,7 +1127,8 @@ const InventoryCheckModule = {
                 totalValue: stats.totalValue
             }
         });
-    },
+    }
+},
 
     generateLowStockReport() {
         const lowStock = this.getLowStockItems();
@@ -944,19 +1185,22 @@ const InventoryCheckModule = {
         document.getElementById('low-stock-report-title').textContent = 'Low Stock Report';
         this.showLowStockReportModal();
         
-        // Broadcast low stock report generation
-        Broadcaster.recordCreated('inventory-check', {
-            action: 'low_stock_report_generated',
+        // ✅ FIXED: Use this.broadcaster.broadcast() instead of Broadcaster.recordCreated()
+    if (this.broadcaster) {
+        this.broadcaster.broadcast('inventory-action', {
+            action: 'stock_check_report_generated',
             timestamp: new Date().toISOString(),
             module: 'inventory-check',
             stats: {
-                outOfStock: outOfStock.length,
-                lowStock: lowStock.length,
-                totalItemsNeedingReorder: outOfStock.length + lowStock.length
+                totalItems: stats.totalItems,
+                lowStockItems: lowStock.length,
+                outOfStockItems: outOfStock.length,
+                totalValue: stats.totalValue
             }
         });
-    },
-
+    }
+},
+    
     generateInventoryReport() {
         const stats = this.calculateStats();
         const categoryData = {};
@@ -1048,15 +1292,21 @@ const InventoryCheckModule = {
         document.getElementById('inventory-report-title').textContent = 'Complete Inventory Report';
         this.showInventoryReportModal();
         
-        // Broadcast full inventory report generation
-        Broadcaster.recordCreated('inventory-check', {
-            action: 'full_inventory_report_generated',
+        // ✅ FIXED: Use this.broadcaster.broadcast() instead of Broadcaster.recordCreated()
+    if (this.broadcaster) {
+        this.broadcaster.broadcast('inventory-action', {
+            action: 'stock_check_report_generated',
             timestamp: new Date().toISOString(),
             module: 'inventory-check',
-            stats: stats,
-            categories: categoryData
+            stats: {
+                totalItems: stats.totalItems,
+                lowStockItems: lowStock.length,
+                outOfStockItems: outOfStock.length,
+                totalValue: stats.totalValue
+            }
         });
-    },
+    }
+},
 
     // PRINT METHODS WITH DATABROADCASTER INTEGRATION
     printInventoryReport() {
@@ -1172,16 +1422,21 @@ const InventoryCheckModule = {
             }
         });
         
-        // Broadcast category filter
-        if (category) {
-            Broadcaster.recordCreated('inventory-check', {
-                action: 'inventory_category_filtered',
-                timestamp: new Date().toISOString(),
-                module: 'inventory-check',
-                category: category
-            });
-        }
-    },
+       // ✅ FIXED: Use this.broadcaster.broadcast() instead of Broadcaster.recordCreated()
+    if (this.broadcaster) {
+        this.broadcaster.broadcast('inventory-action', {
+            action: 'stock_check_report_generated',
+            timestamp: new Date().toISOString(),
+            module: 'inventory-check',
+            stats: {
+                totalItems: stats.totalItems,
+                lowStockItems: lowStock.length,
+                outOfStockItems: outOfStock.length,
+                totalValue: stats.totalValue
+            }
+        });
+    }
+},
 
     // KEEP THE EXISTING SYNC AND UTILITY METHODS:
     syncStatsWithProfile() {
