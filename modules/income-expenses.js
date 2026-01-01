@@ -2445,124 +2445,6 @@ storeReceiptLocally(file) {
     // ==================== END OF BATCH OPERATIONS ====================
 };
 
-// ==================== PERMANENT EDIT BUTTON FIX ====================
-// This fix ensures edit buttons ALWAYS work
-
-// 1. Make sure the editTransaction method is robust
-const originalEditTransaction = IncomeExpensesModule.editTransaction;
-IncomeExpensesModule.editTransaction = function(transactionId) {
-    console.log('✏️ EDITING transaction:', transactionId);
-    
-    // Find transaction
-    const transaction = this.transactions.find(t => t.id == transactionId);
-    if (!transaction) {
-        this.showNotification('Transaction not found', 'error');
-        return;
-    }
-    
-    // Show modal
-    this.showTransactionModal(transactionId);
-    
-    // Wait for modal to render, then populate
-    setTimeout(() => {
-        // Get form elements
-        const form = document.getElementById('transaction-form');
-        if (!form) return;
-        
-        // Populate form
-        form.querySelector('#transaction-id').value = transaction.id;
-        form.querySelector('#transaction-date').value = transaction.date;
-        form.querySelector('#transaction-type').value = transaction.type;
-        form.querySelector('#transaction-category').value = transaction.category;
-        form.querySelector('#transaction-amount').value = transaction.amount;
-        form.querySelector('#transaction-description').value = transaction.description;
-        form.querySelector('#transaction-payment').value = transaction.paymentMethod || 'cash';
-        form.querySelector('#transaction-reference').value = transaction.reference || '';
-        form.querySelector('#transaction-notes').value = transaction.notes || '';
-        
-        // Show delete button
-        const deleteBtn = document.getElementById('delete-transaction');
-        if (deleteBtn) {
-            deleteBtn.style.display = 'block';
-        }
-        
-        // Update title
-        const title = document.getElementById('transaction-modal-title');
-        if (title) {
-            title.textContent = 'Edit Transaction';
-        }
-        
-        console.log('✅ Edit form populated');
-    }, 50);
-};
-
-// 2. Add direct click handlers that ALWAYS work
-document.addEventListener('click', function(e) {
-    const editBtn = e.target.closest('.edit-transaction');
-    if (editBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const transactionId = editBtn.dataset.id;
-        console.log('🎯 Edit button clicked for ID:', transactionId);
-        
-        // Get the module instance and call editTransaction
-        if (window.FarmModules && FarmModules.modules['income-expenses']) {
-            const module = FarmModules.modules['income-expenses'];
-            if (module.editTransaction) {
-                module.editTransaction(transactionId);
-            }
-        }
-        
-        return false;
-    }
-}, true); // Use capture phase to catch clicks early
-
-// 3. Style edit buttons to look clickable
-function styleEditButtons() {
-    const editButtons = document.querySelectorAll('.edit-transaction');
-    editButtons.forEach(btn => {
-        btn.style.cursor = 'pointer';
-        btn.style.transition = 'all 0.2s';
-        
-        // Hover effects
-        btn.addEventListener('mouseenter', () => {
-            btn.style.transform = 'scale(1.1)';
-            btn.style.color = '#4CAF50';
-        });
-        
-        btn.addEventListener('mouseleave', () => {
-            btn.style.transform = 'scale(1)';
-            btn.style.color = '';
-        });
-        
-        // Click feedback
-        btn.addEventListener('mousedown', () => {
-            btn.style.transform = 'scale(0.95)';
-        });
-        
-        btn.addEventListener('mouseup', () => {
-            btn.style.transform = 'scale(1.1)';
-        });
-    });
-}
-
-// Apply styles when page loads and when transactions update
-setTimeout(styleEditButtons, 1000);
-
-// Also apply after any DOM updates
-const observer = new MutationObserver(() => {
-    styleEditButtons();
-});
-
-observer.observe(document.body, {
-    childList: true,
-    subtree: true
-});
-
-console.log('✅ Permanent edit button fix loaded');
-
-
 // Register with FarmModules framework
 if (window.FarmModules) {
     window.FarmModules.registerModule('income-expenses', IncomeExpensesModule);
@@ -2583,4 +2465,223 @@ if (window.FarmModules) {
     } else {
         console.error('❌ FarmModules framework not found');
     }
+})();
+
+// ==================== SIMPLE EDIT BUTTON FIX ====================
+// Add this after ALL other code in income-expenses.js
+
+(function() {
+    'use strict';
+    
+    console.log('🔧 Loading SIMPLE edit button fix...');
+    
+    // Wait for page to load
+    setTimeout(() => {
+        makeEditButtonsWork();
+    }, 1000);
+    
+    function makeEditButtonsWork() {
+        console.log('🎯 Making all edit buttons work...');
+        
+        // Find ALL edit buttons on the page
+        const editButtons = document.querySelectorAll('.edit-transaction');
+        console.log(`Found ${editButtons.length} edit buttons`);
+        
+        editButtons.forEach(btn => {
+            // Remove any old event listeners by cloning
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            
+            // Get transaction ID
+            const transactionId = newBtn.dataset.id;
+            
+            // Add DIRECT click handler that ALWAYS works
+            newBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                console.log('🎯 EDIT BUTTON CLICKED (SIMPLE FIX):', transactionId);
+                
+                // Show the transaction modal FIRST
+                const modal = document.getElementById('transaction-modal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    console.log('✅ Modal shown');
+                } else {
+                    console.error('❌ Modal not found!');
+                    return;
+                }
+                
+                // Find the transaction data
+                const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
+                const transaction = transactions.find(t => t.id == transactionId);
+                
+                if (!transaction) {
+                    alert('Transaction not found!');
+                    return;
+                }
+                
+                // Fill the form SIMPLY
+                setTimeout(() => {
+                    const form = document.getElementById('transaction-form');
+                    if (!form) {
+                        console.error('Form not found');
+                        return;
+                    }
+                    
+                    // Fill each field directly
+                    const fields = {
+                        'transaction-id': transaction.id,
+                        'transaction-date': transaction.date,
+                        'transaction-type': transaction.type,
+                        'transaction-category': transaction.category,
+                        'transaction-amount': transaction.amount,
+                        'transaction-description': transaction.description,
+                        'transaction-payment': transaction.paymentMethod || 'cash',
+                        'transaction-reference': transaction.reference || '',
+                        'transaction-notes': transaction.notes || ''
+                    };
+                    
+                    for (const [id, value] of Object.entries(fields)) {
+                        const element = document.getElementById(id);
+                        if (element) element.value = value;
+                    }
+                    
+                    // Show delete button
+                    const deleteBtn = document.getElementById('delete-transaction');
+                    if (deleteBtn) deleteBtn.style.display = 'block';
+                    
+                    // Change title
+                    const title = document.getElementById('transaction-modal-title');
+                    if (title) title.textContent = 'Edit Transaction';
+                    
+                    console.log('✅ Form filled with transaction data');
+                    
+                    // Make save button work
+                    const saveBtn = document.getElementById('save-transaction');
+                    if (saveBtn) {
+                        // Remove old listeners
+                        const newSaveBtn = saveBtn.cloneNode(true);
+                        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+                        
+                        // Add new listener
+                        newSaveBtn.addEventListener('click', function() {
+                            saveEditedTransaction(transactionId);
+                        });
+                    }
+                    
+                }, 100); // Small delay to ensure form is ready
+                
+            }, true); // Capture phase
+            
+            // Make button look clickable
+            newBtn.style.cursor = 'pointer';
+            newBtn.style.opacity = '1';
+            
+            // Add hover effect
+            newBtn.addEventListener('mouseenter', () => {
+                newBtn.style.transform = 'scale(1.2)';
+                newBtn.style.color = '#4CAF50';
+                newBtn.style.background = 'rgba(76, 175, 80, 0.1)';
+            });
+            
+            newBtn.addEventListener('mouseleave', () => {
+                newBtn.style.transform = 'scale(1)';
+                newBtn.style.color = '';
+                newBtn.style.background = '';
+            });
+        });
+        
+        console.log('✅ All edit buttons fixed');
+    }
+    
+    function saveEditedTransaction(originalId) {
+        console.log('💾 Saving edited transaction:', originalId);
+        
+        // Get form values
+        const form = document.getElementById('transaction-form');
+        if (!form) return;
+        
+        const transactionData = {
+            id: parseInt(document.getElementById('transaction-id').value),
+            date: document.getElementById('transaction-date').value,
+            type: document.getElementById('transaction-type').value,
+            category: document.getElementById('transaction-category').value,
+            amount: parseFloat(document.getElementById('transaction-amount').value),
+            description: document.getElementById('transaction-description').value,
+            paymentMethod: document.getElementById('transaction-payment').value || 'cash',
+            reference: document.getElementById('transaction-reference').value || '',
+            notes: document.getElementById('transaction-notes').value || ''
+        };
+        
+        // Validate
+        if (!transactionData.date || !transactionData.type || 
+            !transactionData.category || !transactionData.amount || 
+            !transactionData.description) {
+            alert('Please fill in all required fields!');
+            return;
+        }
+        
+        // Load existing transactions
+        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
+        
+        // Find and update the transaction
+        const index = transactions.findIndex(t => t.id == originalId);
+        if (index !== -1) {
+            transactions[index] = transactionData;
+            
+            // Save back to localStorage
+            localStorage.setItem('farm-transactions', JSON.stringify(transactions));
+            
+            // Show success
+            alert('Transaction updated successfully!');
+            
+            // Close modal
+            const modal = document.getElementById('transaction-modal');
+            if (modal) modal.classList.add('hidden');
+            
+            // Refresh the page to show changes
+            setTimeout(() => location.reload(), 500);
+        } else {
+            alert('Error: Transaction not found!');
+        }
+    }
+    
+    // Also fix delete button
+    function fixDeleteButton() {
+        const deleteBtn = document.getElementById('delete-transaction');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', function() {
+                const transactionId = document.getElementById('transaction-id').value;
+                if (confirm('Are you sure you want to delete this transaction?')) {
+                    // Load transactions
+                    const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
+                    
+                    // Filter out the deleted transaction
+                    const updatedTransactions = transactions.filter(t => t.id != transactionId);
+                    
+                    // Save back
+                    localStorage.setItem('farm-transactions', JSON.stringify(updatedTransactions));
+                    
+                    // Close modal and refresh
+                    const modal = document.getElementById('transaction-modal');
+                    if (modal) modal.classList.add('hidden');
+                    
+                    alert('Transaction deleted!');
+                    setTimeout(() => location.reload(), 500);
+                }
+            });
+        }
+    }
+    
+    // Run again when switching to income-expenses
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('[href*="#income-expenses"], [onclick*="income-expenses"]')) {
+            setTimeout(makeEditButtonsWork, 500);
+        }
+    });
+    
+    console.log('✅ Simple edit button fix loaded');
+    
 })();
