@@ -173,13 +173,14 @@ const BroilerMortalityModule = {
                 color: var(--primary-color);
             }
             
+         /* In the style section of renderModule(), update these classes: */
             .cause-actions {
                 display: flex;
                 gap: 8px;
-                margin-top: 8px;
+                margin-top: 12px;
             }
             
-            .btn-delete-cause {
+            .delete-cause-records {
                 flex: 1;
                 background: rgba(239, 68, 68, 0.1);
                 border: 1px solid #ef4444;
@@ -196,19 +197,14 @@ const BroilerMortalityModule = {
                 gap: 6px;
             }
             
-            .btn-delete-cause:hover {
+            .delete-cause-records:hover {
                 background: #ef4444;
                 color: white;
                 transform: translateY(-1px);
                 box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
             }
             
-            .btn-delete-cause:before {
-                content: "🗑️";
-                font-size: 14px;
-            }
-            
-            .btn-view-cause {
+            .view-cause-details {
                 flex: 1;
                 background: rgba(59, 130, 246, 0.1);
                 border: 1px solid #3b82f6;
@@ -225,7 +221,7 @@ const BroilerMortalityModule = {
                 gap: 6px;
             }
             
-            .btn-view-cause:hover {
+            .view-cause-details:hover {
                 background: #3b82f6;
                 color: white;
                 transform: translateY(-1px);
@@ -688,7 +684,7 @@ const BroilerMortalityModule = {
         `;
     },
 
-  renderCauseSummary() {
+renderCauseSummary() {
     const causeData = {};
     const causes = ['natural', 'disease', 'predator', 'heat-stress', 'cold-stress', 'nutritional', 'other'];
     
@@ -748,11 +744,13 @@ const BroilerMortalityModule = {
                                 <span class="cause-stat-percentage" style="color: ${causeColor};">${percentage}%</span>
                             </div>
                         </div>
-                        <button class="btn-delete-cause" data-cause="${cause}" title="Delete all ${this.formatCause(cause)} records">
-                                Delete All
+                        <!-- ✅ UPDATED: Using the correct class names that match CSS and handleTableClick() -->
+                        <div class="cause-actions">
+                            <button class="delete-cause-records" data-cause="${cause}" title="Delete all ${this.formatCause(cause)} records">
+                                🗑️ Delete All
                             </button>
-                            <button class="btn-view-cause" data-cause="${cause}" title="View ${this.formatCause(cause)} details">
-                                View Details
+                            <button class="view-cause-details" data-cause="${cause}" title="View ${this.formatCause(cause)} details">
+                                🔍 View Details
                             </button>
                         </div>
                     </div>
@@ -760,7 +758,7 @@ const BroilerMortalityModule = {
             }).join('')}
         </div>
     `;
-},
+}
     
     setupEventListeners() {
         console.log('🔧 Setting up broiler mortality event listeners...');
