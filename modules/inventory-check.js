@@ -1411,29 +1411,24 @@ quickRestock(id) {
         printWindow.print();
     },
 
-    filterByCategory(category) {
-        const items = document.querySelectorAll('#inventory-list > div > div');
-        items.forEach(item => {
-            const itemCategory = item.querySelector('div > div:nth-child(2) > div:nth-child(2)')?.textContent;
-            if (!category || (itemCategory && itemCategory.includes(this.formatCategory(category)))) {
-                item.style.display = 'flex';
-            } else {
-                item.style.display = 'none';
-            }
-        });
-        
-       // ✅ FIXED: Use this.broadcaster.broadcast() instead of Broadcaster.recordCreated()
-    if (this.broadcaster) {
+   filterByCategory(category) {
+    const items = document.querySelectorAll('#inventory-list > div > div');
+    items.forEach(item => {
+        const itemCategory = item.querySelector('div > div:nth-child(2) > div:nth-child(2)')?.textContent;
+        if (!category || (itemCategory && itemCategory.includes(this.formatCategory(category)))) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    // ✅ FIXED: Use this.broadcaster.broadcast() instead of Broadcaster.recordCreated()
+    if (category && this.broadcaster) {
         this.broadcaster.broadcast('inventory-action', {
-            action: 'stock_check_report_generated',
+            action: 'inventory_category_filtered',
             timestamp: new Date().toISOString(),
             module: 'inventory-check',
-            stats: {
-                totalItems: stats.totalItems,
-                lowStockItems: lowStock.length,
-                outOfStockItems: outOfStock.length,
-                totalValue: stats.totalValue
-            }
+            category: category
         });
     }
 },
