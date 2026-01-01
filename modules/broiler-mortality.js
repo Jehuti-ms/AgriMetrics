@@ -1011,31 +1011,86 @@ deleteAllCauseRecords(cause) {
 },
 
 // NEW METHOD: View details for a specific cause
+// FIXED: View details for a specific cause
 viewCauseDetails(cause) {
+    console.log('🔍=== VIEW DETAILS FUNCTION START ===');
+    console.log('Cause parameter:', cause);
+    console.log('this context:', this);
+    
+    const causeName = this.formatCause(cause);
     const causeRecords = this.mortalityData.filter(record => record.cause === cause);
     
+    console.log(`Found ${causeRecords.length} records for "${causeName}"`);
+    
     if (causeRecords.length === 0) {
-        this.showNotification(`No ${this.formatCause(cause)} records found`, 'info');
+        this.showNotification(`No ${causeName} records found`, 'info');
+        console.log('⚠️ No records found, showing notification');
         return;
     }
     
-    // Set filter to show only this cause
+    // 1. Update the filter dropdown
     const filterSelect = document.getElementById('mortality-filter');
+    console.log('Filter select element:', filterSelect);
+    
     if (filterSelect) {
-        filterSelect.value = cause;
-        document.getElementById('mortality-table').innerHTML = this.renderMortalityTable(cause);
+        // Map the cause to the filter value
+        let filterValue = cause;
+        if (cause === 'heat-stress' || cause === 'cold-stress') {
+            filterValue = 'stress'; // The dropdown has "stress" for both heat and cold
+        }
+        
+        console.log('Setting filter to:', filterValue);
+        filterSelect.value = filterValue;
+    } else {
+        console.log('❌ Filter select not found!');
+    }
+    
+    // 2. Update the mortality table
+    const tableElement = document.getElementById('mortality-table');
+    console.log('Table element:', tableElement);
+    
+    if (tableElement) {
+        console.log('Updating table with filter:', cause);
+        // Filter the table to show only this cause
+        if (cause === 'heat-stress' || cause === 'cold-stress') {
+            // Show all stress records
+            tableElement.innerHTML = this.renderMortalityTable('stress');
+        } else {
+            // Show only this specific cause
+            tableElement.innerHTML = this.renderMortalityTable(cause);
+        }
+        
+        // Re-attach event listeners for edit/delete buttons
         this.setupTableClickHandler();
+        console.log('✅ Table updated successfully');
+    } else {
+        console.log('❌ Table element not found!');
     }
     
-    // Scroll to the mortality table
-    const mortalityTable = document.getElementById('mortality-table');
-    if (mortalityTable) {
-        mortalityTable.scrollIntoView({ behavior: 'smooth' });
-    }
+    // 3. Show notification
+    this.showNotification(`Showing ${causeRecords.length} ${causeName} records`, 'info');
     
-    this.showNotification(`Showing ${causeRecords.length} ${this.formatCause(cause)} records`, 'info');
-},
-
+    // 4. Scroll to the mortality table (optional, but nice UX)
+    setTimeout(() => {
+        const tableSection = document.querySelector('.glass-card:has(#mortality-table)');
+        console.log('Table section for scrolling:', tableSection);
+        
+        if (tableSection) {
+            tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            // Add visual highlight
+            tableSection.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.3)';
+            tableSection.style.transition = 'box-shadow 0.3s ease';
+            
+            setTimeout(() => {
+                tableSection.style.boxShadow = '';
+            }, 2000);
+        }
+    }, 300);
+    
+    console.log('✅=== VIEW DETAILS FUNCTION END ===');
+}
+    
     // MODAL CONTROL METHODS
     showMortalityModal() {
         this.hideAllModals();
