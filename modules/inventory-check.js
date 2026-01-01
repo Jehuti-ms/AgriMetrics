@@ -3,7 +3,7 @@ console.log('Loading inventory-check module...');
 
 // ✅ FIXED: DataBroadcaster integration - Don't redeclare Broadcaster
 // Check if Broadcaster exists globally (from data-broadcaster.js)
-if (typeof Broadcaster === 'undefined') {
+/*if (typeof Broadcaster === 'undefined') {
     // If not, create a minimal fallback
     var Broadcaster = {
         broadcast: () => console.warn('Broadcaster not available'),
@@ -13,7 +13,7 @@ if (typeof Broadcaster === 'undefined') {
         recordDeleted: () => {}
     };
     console.log('⚠️ Using fallback Broadcaster for inventory-check');
-}
+} */
 
 const InventoryCheckModule = {
     name: 'inventory-check',
