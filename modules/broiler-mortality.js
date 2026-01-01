@@ -396,7 +396,32 @@ const BroilerMortalityModule = {
                     padding: 16px;
                 }
             }
-        </style>
+
+            /* Add to your CSS section */
+                .glass-card.highlighted {
+                    animation: pulse-highlight 2s ease;
+                    border-color: #3b82f6 !important;
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3), 
+                                0 8px 32px rgba(59, 130, 246, 0.15) !important;
+                }
+                
+                @keyframes pulse-highlight {
+                    0%, 100% {
+                        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3), 
+                                    0 8px 32px rgba(59, 130, 246, 0.15);
+                    }
+                    50% {
+                        box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.4), 
+                                    0 12px 40px rgba(59, 130, 246, 0.25);
+                    }
+                }
+                
+                /* Smooth scrolling for the whole page */
+                html {
+                    scroll-behavior: smooth;
+                }
+                </style>
+                
         <div class="module-container">
             <!-- Module Header -->
             <div class="module-header">
@@ -1013,82 +1038,106 @@ deleteAllCauseRecords(cause) {
 // NEW METHOD: View details for a specific cause
 // FIXED: View details for a specific cause
 viewCauseDetails(cause) {
-    console.log('🔍=== VIEW DETAILS FUNCTION START ===');
-    console.log('Cause parameter:', cause);
-    console.log('this context:', this);
+    console.log('🔍 View details for cause:', cause);
     
     const causeName = this.formatCause(cause);
     const causeRecords = this.mortalityData.filter(record => record.cause === cause);
     
-    console.log(`Found ${causeRecords.length} records for "${causeName}"`);
-    
     if (causeRecords.length === 0) {
         this.showNotification(`No ${causeName} records found`, 'info');
-        console.log('⚠️ No records found, showing notification');
         return;
     }
     
     // 1. Update the filter dropdown
     const filterSelect = document.getElementById('mortality-filter');
-    console.log('Filter select element:', filterSelect);
-    
     if (filterSelect) {
-        // Map the cause to the filter value
         let filterValue = cause;
         if (cause === 'heat-stress' || cause === 'cold-stress') {
-            filterValue = 'stress'; // The dropdown has "stress" for both heat and cold
+            filterValue = 'stress';
         }
-        
-        console.log('Setting filter to:', filterValue);
         filterSelect.value = filterValue;
-    } else {
-        console.log('❌ Filter select not found!');
     }
     
     // 2. Update the mortality table
     const tableElement = document.getElementById('mortality-table');
-    console.log('Table element:', tableElement);
-    
     if (tableElement) {
-        console.log('Updating table with filter:', cause);
-        // Filter the table to show only this cause
         if (cause === 'heat-stress' || cause === 'cold-stress') {
-            // Show all stress records
             tableElement.innerHTML = this.renderMortalityTable('stress');
         } else {
-            // Show only this specific cause
             tableElement.innerHTML = this.renderMortalityTable(cause);
         }
         
-        // Re-attach event listeners for edit/delete buttons
         this.setupTableClickHandler();
-        console.log('✅ Table updated successfully');
-    } else {
-        console.log('❌ Table element not found!');
     }
     
     // 3. Show notification
     this.showNotification(`Showing ${causeRecords.length} ${causeName} records`, 'info');
     
-    // 4. Scroll to the mortality table (optional, but nice UX)
+    // 4. 🔥 IMPROVED SCROLLING - Scroll to the table section
     setTimeout(() => {
-        const tableSection = document.querySelector('.glass-card:has(#mortality-table)');
-        console.log('Table section for scrolling:', tableSection);
+        // Find the mortality records card (the one containing the table)
+        const mortalityCards = document.querySelectorAll('.glass-card');
+        let targetCard = null;
         
-        if (tableSection) {
-            tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Look for the card that contains the mortality table
+        mortalityCards.forEach(card => {
+            if (card.querySelector('#mortality-table')) {
+                targetCard = card;
+            }
+        });
+        
+        if (targetCard) {
+            console.log('📜 Found table card, scrolling...');
             
-            // Add visual highlight
-            tableSection.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.3)';
-            tableSection.style.transition = 'box-shadow 0.3s ease';
+            // Calculate position to scroll to (a bit above the card)
+            const cardPosition = targetCard.getBoundingClientRect().top + window.pageYOffset;
+            const headerOffset = 100; // Adjust this to account for fixed headers
+            
+            // Smooth scroll to position
+            window.scrollTo({
+                top: cardPosition - headerOffset,
+                behavior: 'smooth'
+            });
+            
+            // Add visual highlight effect
+            const originalBoxShadow = targetCard.style.boxShadow;
+            const originalBorder = targetCard.style.border;
+            
+            targetCard.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.4), 0 8px 32px rgba(59, 130, 246, 0.2)';
+            targetCard.style.border = '2px solid #3b82f6';
+            targetCard.style.transition = 'all 0.3s ease';
+            
+            // Remove highlight after 2 seconds
+            setTimeout(() => {
+                targetCard.style.boxShadow = originalBoxShadow;
+                targetCard.style.border = originalBorder;
+            }, 2000);
+        } else {
+            console.log('⚠️ Could not find table card to scroll to');
+            // Fallback: Scroll to top of content area
+            document.getElementById('content-area')?.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
+        }
+    }, 100); // Small delay to ensure table is rendered
+    
+    // 5. Highlight the cause card briefly
+    const causeCards = document.querySelectorAll('.cause-item');
+    causeCards.forEach(card => {
+        if (card.dataset.cause === cause) {
+            const originalBorder = card.style.border;
+            const originalShadow = card.style.boxShadow;
+            
+            card.style.border = '2px solid #3b82f6';
+            card.style.boxShadow = '0 8px 24px rgba(59, 130, 246, 0.3)';
             
             setTimeout(() => {
-                tableSection.style.boxShadow = '';
-            }, 2000);
+                card.style.border = originalBorder;
+                card.style.boxShadow = originalShadow;
+            }, 1500);
         }
-    }, 300);
-    
-    console.log('✅=== VIEW DETAILS FUNCTION END ===');
+    });
 },
     
     // MODAL CONTROL METHODS
