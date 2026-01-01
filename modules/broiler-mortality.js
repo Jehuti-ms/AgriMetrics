@@ -227,12 +227,7 @@ const BroilerMortalityModule = {
                 transform: translateY(-1px);
                 box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
             }
-            
-            .btn-view-cause:before {
-                content: "🔍";
-                font-size: 14px;
-            }
-            
+                       
             /* Also update the table button styles */
             .btn-icon {
                 width: 32px;
