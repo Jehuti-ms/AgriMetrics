@@ -1,19 +1,8 @@
 // modules/inventory-check.js - UPDATED WITH STYLE MANAGER INTEGRATION
 console.log('Loading inventory-check module...');
 
-// ✅ FIXED: DataBroadcaster integration - Don't redeclare Broadcaster
-// Check if Broadcaster exists globally (from data-broadcaster.js)
-/*if (typeof Broadcaster === 'undefined') {
-    // If not, create a minimal fallback
-    var Broadcaster = {
-        broadcast: () => console.warn('Broadcaster not available'),
-        on: () => console.warn('Broadcaster not available'),
-        recordCreated: () => {},
-        recordUpdated: () => {},
-        recordDeleted: () => {}
-    };
-    console.log('⚠️ Using fallback Broadcaster for inventory-check');
-} */
+// ✅ CORRECT: No Broadcaster declaration here at all
+// We'll reference it via window.Broadcaster inside our module
 
 const InventoryCheckModule = {
     name: 'inventory-check',
@@ -21,18 +10,26 @@ const InventoryCheckModule = {
     inventory: [],
     categories: ['feed', 'medical', 'packaging', 'equipment', 'cleaning', 'other'],
     element: null,
-    broadcaster: null, // ✅ ADDED: Store broadcaster reference
+    broadcaster: null,
 
     initialize() {
         console.log('📦 Initializing Inventory Check...');
         
-        // ✅ Get the content area element
         this.element = document.getElementById('content-area');
         if (!this.element) return false;
 
-        // ✅ Store broadcaster reference
-        this.broadcaster = window.Broadcaster || Broadcaster;
-        console.log('📡 Inventory module connected to Data Broadcaster');
+        // ✅ Get Broadcaster from global scope
+        this.broadcaster = window.Broadcaster || null;
+        
+        if (this.broadcaster) {
+            console.log('📡 Inventory module connected to Data Broadcaster');
+        } else {
+            console.log('⚠️ Broadcaster not available, using local methods');
+            // Create minimal fallback methods on the instance
+            this.broadcastItemAdded = this.broadcastItemAdded || (() => {});
+            this.broadcastItemUpdated = this.broadcastItemUpdated || (() => {});
+            this.broadcastItemDeleted = this.broadcastItemDeleted || (() => {});
+        }
 
         // ✅ Register with StyleManager
         if (window.StyleManager) {
@@ -42,19 +39,21 @@ const InventoryCheckModule = {
         this.loadData();
         this.renderModule();
         this.setupEventListeners();
-        this.setupBroadcasterListeners(); // ✅ NEW: Setup broadcaster listeners
-        this.initialized = true;
         
-        // ✅ Broadcast inventory loaded
-        this.broadcastInventoryLoaded();
+        if (this.broadcaster) {
+            this.setupBroadcasterListeners();
+            this.broadcastInventoryLoaded();
+        }
+        
+        this.initialized = true;
         
         // Sync initial stats with profile
         this.syncStatsWithProfile();
         
-        console.log('✅ Inventory Check initialized with StyleManager & Data Broadcaster');
+        console.log('✅ Inventory Check initialized with StyleManager');
         return true;
     },
-
+    
     // ✅ NEW: Setup broadcaster listeners
     setupBroadcasterListeners() {
         if (!this.broadcaster) return;
