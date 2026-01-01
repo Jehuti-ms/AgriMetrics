@@ -1,8 +1,5 @@
-// modules/inventory-check.js - UPDATED WITH STYLE MANAGER INTEGRATION
+// modules/inventory-check.js - COMPLETE UPDATED VERSION WITH DATA BROADCASTER
 console.log('Loading inventory-check module...');
-
-// ✅ CORRECT: No Broadcaster declaration here at all
-// We'll reference it via window.Broadcaster inside our module
 
 const InventoryCheckModule = {
     name: 'inventory-check',
@@ -25,10 +22,6 @@ const InventoryCheckModule = {
             console.log('📡 Inventory module connected to Data Broadcaster');
         } else {
             console.log('⚠️ Broadcaster not available, using local methods');
-            // Create minimal fallback methods on the instance
-            this.broadcastItemAdded = this.broadcastItemAdded || (() => {});
-            this.broadcastItemUpdated = this.broadcastItemUpdated || (() => {});
-            this.broadcastItemDeleted = this.broadcastItemDeleted || (() => {});
         }
 
         // ✅ Register with StyleManager
@@ -50,10 +43,10 @@ const InventoryCheckModule = {
         // Sync initial stats with profile
         this.syncStatsWithProfile();
         
-        console.log('✅ Inventory Check initialized with StyleManager');
+        console.log('✅ Inventory Check initialized with StyleManager & Data Broadcaster');
         return true;
     },
-    
+
     // ✅ NEW: Setup broadcaster listeners
     setupBroadcasterListeners() {
         if (!this.broadcaster) return;
@@ -308,7 +301,42 @@ const InventoryCheckModule = {
         return stats;
     },
 
-     // ✅ ADD THIS METHOD BEFORE loadData() if it's missing
+    // ✅ MODIFIED: Enhanced loadData with broadcasting
+    loadData() {
+        const saved = localStorage.getItem('farm-inventory');
+        this.inventory = saved ? JSON.parse(saved) : this.getDemoData();
+        
+        // Broadcast data loaded
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('inventory-data-loaded', {
+                module: 'inventory-check',
+                timestamp: new Date().toISOString(),
+                itemCount: this.inventory.length
+            });
+        }
+    },
+
+    // ✅ MODIFIED: Enhanced saveData with broadcasting
+    saveData() {
+        localStorage.setItem('farm-inventory', JSON.stringify(this.inventory));
+        
+        // Broadcast data saved
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('inventory-data-saved', {
+                module: 'inventory-check',
+                timestamp: new Date().toISOString(),
+                itemCount: this.inventory.length
+            });
+        }
+    },
+
+    // ✅ ADDED: Theme change handler (optional)
+    onThemeChange(theme) {
+        console.log(`Inventory Check updating for theme: ${theme}`);
+        // You can add theme-specific logic here if needed
+    },
+
+    // ✅ ADDED: getDemoData method
     getDemoData() {
         return [
             { 
@@ -372,35 +400,6 @@ const InventoryCheckModule = {
                 notes: 'For equipment cleaning'
             }
         ];
-    },
-    
-    // ✅ MODIFIED: Enhanced loadData with broadcasting
-    loadData() {
-        const saved = localStorage.getItem('farm-inventory');
-        this.inventory = saved ? JSON.parse(saved) : this.getDemoData();
-        
-        // Broadcast data loaded
-        if (this.broadcaster) {
-            this.broadcaster.broadcast('inventory-data-loaded', {
-                module: 'inventory-check',
-                timestamp: new Date().toISOString(),
-                itemCount: this.inventory.length
-            });
-        }
-    },
-
-    // ✅ MODIFIED: Enhanced saveData with broadcasting
-    saveData() {
-        localStorage.setItem('farm-inventory', JSON.stringify(this.inventory));
-        
-        // Broadcast data saved
-        if (this.broadcaster) {
-            this.broadcaster.broadcast('inventory-data-saved', {
-                module: 'inventory-check',
-                timestamp: new Date().toISOString(),
-                itemCount: this.inventory.length
-            });
-        }
     },
 
     renderModule() {
@@ -680,7 +679,15 @@ const InventoryCheckModule = {
         const lowStockItems = this.getLowStockItems().length;
         const outOfStockItems = this.getOutOfStockItems().length;
         
-        return { totalItems, inStock, totalValue, lowStockItems, outOfStockItems };
+        return { 
+            totalItems, 
+            inStock, 
+            totalValue, 
+            lowStockItems, 
+            outOfStockItems,
+            lowStockCount: lowStockItems,
+            outOfStockCount: outOfStockItems
+        };
     },
 
     getLowStockItems() {
@@ -829,12 +836,6 @@ const InventoryCheckModule = {
         return categories[category] || category;
     },
 
-     // ✅ ADDED: Theme change handler
-    onThemeChange(theme) {
-        console.log(`Inventory Check updating for theme: ${theme}`);
-        // You can add theme-specific logic here if needed
-    },
-    
     setupEventListeners() {
         // Form buttons
         document.getElementById('show-add-form')?.addEventListener('click', () => this.showInventoryForm());
@@ -931,7 +932,7 @@ const InventoryCheckModule = {
         this.hideStockCheckModal();
     },
 
-    // FORM METHODS WITH DATABROADCASTER INTEGRATION
+    // FORM METHODS WITH DATA BROADCASTER INTEGRATION
     showInventoryForm() {
         document.getElementById('inventory-form-container').classList.remove('hidden');
         document.getElementById('inventory-form').reset();
@@ -962,165 +963,122 @@ const InventoryCheckModule = {
     },
 
     handleInventorySubmit(e) {
-    e.preventDefault();
-    
-    const formData = {
-        id: Date.now(),
-        name: document.getElementById('item-name').value,
-        category: document.getElementById('item-category').value,
-        currentStock: parseInt(document.getElementById('current-stock').value),
-        unit: document.getElementById('item-unit').value,
-        minStock: parseInt(document.getElementById('min-stock').value),
-        cost: parseFloat(document.getElementById('item-cost').value),
-        supplier: document.getElementById('item-supplier').value || '',
-        lastRestocked: new Date().toISOString().split('T')[0],
-        notes: document.getElementById('item-notes').value || ''
-    };
+        e.preventDefault();
+        
+        const formData = {
+            id: Date.now(),
+            name: document.getElementById('item-name').value,
+            category: document.getElementById('item-category').value,
+            currentStock: parseInt(document.getElementById('current-stock').value),
+            unit: document.getElementById('item-unit').value,
+            minStock: parseInt(document.getElementById('min-stock').value),
+            cost: parseFloat(document.getElementById('item-cost').value),
+            supplier: document.getElementById('item-supplier').value || '',
+            lastRestocked: new Date().toISOString().split('T')[0],
+            notes: document.getElementById('item-notes').value || ''
+        };
 
-    this.inventory.unshift(formData);
-    this.saveData();
-    this.renderModule();
-    
-    // ✅ FIXED: Use this.broadcaster.broadcast() instead of Broadcaster.recordCreated()
-    if (this.broadcaster) {
+        this.inventory.unshift(formData);
+        this.saveData();
+        
+        // ✅ BROADCAST: Item added
         this.broadcastItemAdded(formData);
-        // Also broadcast specific event for this action
-        this.broadcaster.broadcast('inventory-action', {
-            module: 'inventory-check',
-            timestamp: new Date().toISOString(),
-            action: 'item_added',
-            item: formData
-        });
-    }
-    
-    // SYNC WITH PROFILE - Update inventory stats
-    this.syncStatsWithProfile();
-    
-    if (window.coreModule) {
-        window.coreModule.showNotification('Inventory item added successfully!', 'success');
-    }
-},
-
-handleStockUpdate(e) {
-    e.preventDefault();
-    
-    const id = parseInt(document.getElementById('update-item-id').value);
-    const newStock = parseInt(document.getElementById('new-stock-level').value);
-    const reason = document.getElementById('stock-update-reason').value;
-
-    const item = this.inventory.find(item => item.id === id);
-    if (!item) return;
-
-    const oldStock = item.currentStock;
-    item.currentStock = newStock;
-    
-    if (reason === 'restock') {
-        item.lastRestocked = new Date().toISOString().split('T')[0];
-    }
-
-    this.saveData();
-    this.renderModule();
-    
-    // ✅ FIXED: Use this.broadcaster.broadcast() instead of Broadcaster.recordUpdated()
-    if (this.broadcaster) {
-        this.broadcastItemUpdated(item);
-        // Also broadcast specific event for this action
-        this.broadcaster.broadcast('inventory-action', {
-            module: 'inventory-check',
-            timestamp: new Date().toISOString(),
-            action: 'stock_updated',
-            itemId: id,
-            oldStock: oldStock,
-            newStock: newStock,
-            reason: reason,
-            itemName: item.name
-        });
-    }
-    
-    // SYNC WITH PROFILE - Update stats after stock change
-    this.syncStatsWithProfile();
-    
-    if (window.coreModule) {
-        const change = newStock - oldStock;
-        const changeText = change > 0 ? `+${change}` : change;
-        window.coreModule.showNotification(`Stock updated: ${changeText} ${item.unit} (${reason})`, 'success');
-    }
-},
-
-deleteItem(id) {
-    const item = this.inventory.find(item => item.id === id);
-    if (!item) return;
-
-    if (confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`)) {
-        // ✅ FIXED: Use this.broadcaster.broadcast() instead of Broadcaster.recordDeleted()
-        if (this.broadcaster) {
-            this.broadcastItemDeleted(id, item.name);
-            // Also broadcast specific event for this action
-            this.broadcaster.broadcast('inventory-action', {
-                module: 'inventory-check',
-                timestamp: new Date().toISOString(),
-                action: 'item_deleted',
-                itemId: id,
-                itemName: item.name,
-                category: item.category
-            });
-        }
         
-        this.inventory = this.inventory.filter(item => item.id !== id);
-        this.saveData();
         this.renderModule();
         
-        // SYNC WITH PROFILE - Update stats after deletion
+        // SYNC WITH PROFILE - Update inventory stats
         this.syncStatsWithProfile();
         
         if (window.coreModule) {
-            window.coreModule.showNotification('Item deleted successfully!', 'success');
+            window.coreModule.showNotification('Inventory item added successfully!', 'success');
         }
-    }
-},
+    },
 
-quickRestock(id) {
-    const item = this.inventory.find(item => item.id === id);
-    if (!item) return;
+    handleStockUpdate(e) {
+        e.preventDefault();
+        
+        const id = parseInt(document.getElementById('update-item-id').value);
+        const newStock = parseInt(document.getElementById('new-stock-level').value);
+        const reason = document.getElementById('stock-update-reason').value;
 
-    const suggestedRestock = Math.max(item.minStock * 2, item.currentStock + 10);
-    const restockAmount = prompt(`Restock "${item.name}"\nCurrent: ${item.currentStock} ${item.unit}\nMin: ${item.minStock} ${item.unit}\nEnter amount to add:`, suggestedRestock.toString());
-    
-    if (restockAmount !== null && !isNaN(restockAmount)) {
-        const amount = parseInt(restockAmount);
+        const item = this.inventory.find(item => item.id === id);
+        if (!item) return;
+
         const oldStock = item.currentStock;
-        item.currentStock += amount;
-        item.lastRestocked = new Date().toISOString().split('T')[0];
+        item.currentStock = newStock;
         
+        if (reason === 'restock') {
+            item.lastRestocked = new Date().toISOString().split('T')[0];
+        }
+
         this.saveData();
+        
+        // ✅ BROADCAST: Item updated
+        this.broadcastItemUpdated(item);
+        
         this.renderModule();
         
-        // ✅ FIXED: Use this.broadcaster.broadcast() instead of Broadcaster.recordUpdated()
-        if (this.broadcaster) {
-            this.broadcastItemUpdated(item);
-            // Also broadcast specific event for this action
-            this.broadcaster.broadcast('inventory-action', {
-                module: 'inventory-check',
-                timestamp: new Date().toISOString(),
-                action: 'quick_restock',
-                itemId: id,
-                restockAmount: amount,
-                itemName: item.name,
-                oldStock: oldStock,
-                newStock: item.currentStock
-            });
-        }
-        
-        // SYNC WITH PROFILE - Update stats after restock
+        // SYNC WITH PROFILE - Update stats after stock change
         this.syncStatsWithProfile();
         
         if (window.coreModule) {
-            window.coreModule.showNotification(`Restocked ${amount} ${item.unit} of ${item.name}`, 'success');
+            const change = newStock - oldStock;
+            const changeText = change > 0 ? `+${change}` : change;
+            window.coreModule.showNotification(`Stock updated: ${changeText} ${item.unit} (${reason})`, 'success');
         }
-    }
-},
-    
-    // REPORT METHODS WITH DATABROADCASTER INTEGRATION
+    },
+
+    deleteItem(id) {
+        const item = this.inventory.find(item => item.id === id);
+        if (!item) return;
+
+        if (confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`)) {
+            // ✅ BROADCAST: Item deleted
+            this.broadcastItemDeleted(id, item.name);
+            
+            this.inventory = this.inventory.filter(item => item.id !== id);
+            this.saveData();
+            this.renderModule();
+            
+            // SYNC WITH PROFILE - Update stats after deletion
+            this.syncStatsWithProfile();
+            
+            if (window.coreModule) {
+                window.coreModule.showNotification('Item deleted successfully!', 'success');
+            }
+        }
+    },
+
+    quickRestock(id) {
+        const item = this.inventory.find(item => item.id === id);
+        if (!item) return;
+
+        const suggestedRestock = Math.max(item.minStock * 2, item.currentStock + 10);
+        const restockAmount = prompt(`Restock "${item.name}"\nCurrent: ${item.currentStock} ${item.unit}\nMin: ${item.minStock} ${item.unit}\nEnter amount to add:`, suggestedRestock.toString());
+        
+        if (restockAmount !== null && !isNaN(restockAmount)) {
+            const amount = parseInt(restockAmount);
+            const oldStock = item.currentStock;
+            item.currentStock += amount;
+            item.lastRestocked = new Date().toISOString().split('T')[0];
+            
+            this.saveData();
+            
+            // ✅ BROADCAST: Item updated
+            this.broadcastItemUpdated(item);
+            
+            this.renderModule();
+            
+            // SYNC WITH PROFILE - Update stats after restock
+            this.syncStatsWithProfile();
+            
+            if (window.coreModule) {
+                window.coreModule.showNotification(`Restocked ${amount} ${item.unit} of ${item.name}`, 'success');
+            }
+        }
+    },
+
+    // REPORT METHODS
     showStockCheck() {
         const lowStock = this.getLowStockItems();
         const outOfStock = this.getOutOfStockItems();
@@ -1178,22 +1136,7 @@ quickRestock(id) {
         document.getElementById('stock-check-content').innerHTML = report;
         document.getElementById('stock-check-title').textContent = 'Stock Check Report';
         this.showStockCheckModal();
-        
-        // ✅ FIXED: Use this.broadcaster.broadcast() instead of Broadcaster.recordCreated()
-    if (this.broadcaster) {
-        this.broadcaster.broadcast('inventory-action', {
-            action: 'stock_check_report_generated',
-            timestamp: new Date().toISOString(),
-            module: 'inventory-check',
-            stats: {
-                totalItems: stats.totalItems,
-                lowStockItems: lowStock.length,
-                outOfStockItems: outOfStock.length,
-                totalValue: stats.totalValue
-            }
-        });
-    }
-},
+    },
 
     generateLowStockReport() {
         const lowStock = this.getLowStockItems();
@@ -1249,23 +1192,8 @@ quickRestock(id) {
         document.getElementById('low-stock-report-content').innerHTML = report;
         document.getElementById('low-stock-report-title').textContent = 'Low Stock Report';
         this.showLowStockReportModal();
-        
-        // ✅ FIXED: Use this.broadcaster.broadcast() instead of Broadcaster.recordCreated()
-    if (this.broadcaster) {
-        this.broadcaster.broadcast('inventory-action', {
-            action: 'stock_check_report_generated',
-            timestamp: new Date().toISOString(),
-            module: 'inventory-check',
-            stats: {
-                totalItems: stats.totalItems,
-                lowStockItems: lowStock.length,
-                outOfStockItems: outOfStock.length,
-                totalValue: stats.totalValue
-            }
-        });
-    }
-},
-    
+    },
+
     generateInventoryReport() {
         const stats = this.calculateStats();
         const categoryData = {};
@@ -1356,55 +1284,19 @@ quickRestock(id) {
         document.getElementById('inventory-report-content').innerHTML = report;
         document.getElementById('inventory-report-title').textContent = 'Complete Inventory Report';
         this.showInventoryReportModal();
-        
-        // ✅ FIXED: Use this.broadcaster.broadcast() instead of Broadcaster.recordCreated()
-    if (this.broadcaster) {
-        this.broadcaster.broadcast('inventory-action', {
-            action: 'stock_check_report_generated',
-            timestamp: new Date().toISOString(),
-            module: 'inventory-check',
-            stats: {
-                totalItems: stats.totalItems,
-                lowStockItems: lowStock.length,
-                outOfStockItems: outOfStock.length,
-                totalValue: stats.totalValue
-            }
-        });
-    }
-},
+    },
 
-    // PRINT METHODS WITH DATABROADCASTER INTEGRATION
+    // PRINT METHODS
     printInventoryReport() {
         this.printReport('inventory-report-content', 'inventory-report-title');
-        
-        // Broadcast print event
-        Broadcaster.recordCreated('inventory-check', {
-            action: 'inventory_report_printed',
-            timestamp: new Date().toISOString(),
-            module: 'inventory-check'
-        });
     },
 
     printLowStockReport() {
         this.printReport('low-stock-report-content', 'low-stock-report-title');
-        
-        // Broadcast print event
-        Broadcaster.recordCreated('inventory-check', {
-            action: 'low_stock_report_printed',
-            timestamp: new Date().toISOString(),
-            module: 'inventory-check'
-        });
     },
 
     printStockCheck() {
         this.printReport('stock-check-content', 'stock-check-title');
-        
-        // Broadcast print event
-        Broadcaster.recordCreated('inventory-check', {
-            action: 'stock_check_report_printed',
-            timestamp: new Date().toISOString(),
-            module: 'inventory-check'
-        });
     },
 
     printReport(contentId, titleId) {
@@ -1476,29 +1368,19 @@ quickRestock(id) {
         printWindow.print();
     },
 
-   filterByCategory(category) {
-    const items = document.querySelectorAll('#inventory-list > div > div');
-    items.forEach(item => {
-        const itemCategory = item.querySelector('div > div:nth-child(2) > div:nth-child(2)')?.textContent;
-        if (!category || (itemCategory && itemCategory.includes(this.formatCategory(category)))) {
-            item.style.display = 'flex';
-        } else {
-            item.style.display = 'none';
-        }
-    });
-    
-    // ✅ FIXED: Use this.broadcaster.broadcast() instead of Broadcaster.recordCreated()
-    if (category && this.broadcaster) {
-        this.broadcaster.broadcast('inventory-action', {
-            action: 'inventory_category_filtered',
-            timestamp: new Date().toISOString(),
-            module: 'inventory-check',
-            category: category
+    filterByCategory(category) {
+        const items = document.querySelectorAll('#inventory-list > div > div');
+        items.forEach(item => {
+            const itemCategory = item.querySelector('div > div:nth-child(2) > div:nth-child(2)')?.textContent;
+            if (!category || (itemCategory && itemCategory.includes(this.formatCategory(category)))) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
         });
-    }
-},
+    },
 
-    // KEEP THE EXISTING SYNC AND UTILITY METHODS:
+    // SYNC AND UTILITY METHODS:
     syncStatsWithProfile() {
         const stats = this.calculateStats();
         
@@ -1518,10 +1400,6 @@ quickRestock(id) {
             style: 'currency',
             currency: 'USD'
         }).format(amount);
-    },
-
-    saveData() {
-        localStorage.setItem('farm-inventory', JSON.stringify(this.inventory));
     }
 };
 
@@ -1533,8 +1411,8 @@ if (window.FarmModules) {
 // ==================== UNIVERSAL REGISTRATION ====================
 
 (function() {
-    const MODULE_NAME = 'inventory-check.js'; // e.g., 'dashboard'
-    const MODULE_OBJECT = InventoryCheckModule; // e.g., DashboardModule
+    const MODULE_NAME = 'inventory-check.js';
+    const MODULE_OBJECT = InventoryCheckModule;
     
     console.log(`📦 Registering ${MODULE_NAME} module...`);
     
