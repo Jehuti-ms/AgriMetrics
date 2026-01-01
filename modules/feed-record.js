@@ -550,6 +550,22 @@ const FeedRecordModule = {
     }
 };
 
+// After saving, broadcast the change
+    if (window.DashboardModule && window.DashboardModule.broadcastDataChange) {
+        window.DashboardModule.broadcastDataChange('income-expenses', newRecord);
+    }
+    
+    // Also add to recent activity
+    if (window.DashboardModule && window.DashboardModule.addRecentActivity) {
+        window.DashboardModule.addRecentActivity({
+            icon: newRecord.type === 'income' ? '💰' : '💸',
+            title: newRecord.type === 'income' ? 'Income Recorded' : 'Expense Recorded',
+            description: `${newRecord.description || 'Transaction'} - $${parseFloat(newRecord.amount).toFixed(2)}`,
+            module: 'income-expenses'
+        });
+    }
+}
+
 if (window.FarmModules) {
     window.FarmModules.registerModule('feed-record', FeedRecordModule);
     console.log('✅ Feed Records module registered');
