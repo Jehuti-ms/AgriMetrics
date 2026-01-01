@@ -103,24 +103,27 @@ const BroilerMortalityModule = {
 
     this.element.innerHTML = `
         <style>
-            /* Cause Summary Styles */
+            /* ===== CAUSE SUMMARY STYLES ===== */
             .cause-summary-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
                 gap: 20px;
+                margin-top: 20px;
             }
             
             .cause-item {
                 padding: 20px;
                 background: var(--glass-bg);
-                border-radius: 12px;
+                border-radius: 16px;
                 border: 1px solid var(--glass-border);
                 transition: all 0.3s ease;
+                display: flex;
+                flex-direction: column;
             }
             
             .cause-item:hover {
                 transform: translateY(-4px);
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+                box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
                 border-color: var(--primary-color);
             }
             
@@ -135,25 +138,29 @@ const BroilerMortalityModule = {
             
             .cause-icon {
                 font-size: 24px;
+                flex-shrink: 0;
             }
             
-           .cause-title {
+            .cause-title {
                 font-weight: 600;
                 font-size: 16px;
-                /* color will be set inline by renderCauseSummary() */
+                color: var(--text-primary);
+                flex-grow: 1;
             }
             
             .cause-stats {
                 display: flex;
                 flex-direction: column;
-                gap: 8px;
-                margin-bottom: 16px;
+                gap: 10px;
+                margin-bottom: 20px;
+                flex-grow: 1;
             }
             
             .cause-stat {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                padding: 4px 0;
             }
             
             .cause-stat-label {
@@ -168,16 +175,18 @@ const BroilerMortalityModule = {
             }
             
             .cause-stat-percentage {
-                font-weight: 600;
-                font-size: 14px;
+                font-weight: 700;
+                font-size: 16px;
                 color: var(--primary-color);
             }
             
-         /* In the style section of renderModule(), update these classes: */
+            /* ===== CAUSE ACTIONS (BUTTONS) ===== */
             .cause-actions {
                 display: flex;
-                gap: 8px;
-                margin-top: 12px;
+                gap: 10px;
+                margin-top: auto; /* Pushes buttons to bottom */
+                padding-top: 16px;
+                border-top: 1px solid var(--glass-border);
             }
             
             .delete-cause-records {
@@ -185,8 +194,8 @@ const BroilerMortalityModule = {
                 background: rgba(239, 68, 68, 0.1);
                 border: 1px solid #ef4444;
                 color: #ef4444;
-                padding: 8px 12px;
-                border-radius: 6px;
+                padding: 10px 12px;
+                border-radius: 8px;
                 font-size: 13px;
                 font-weight: 500;
                 cursor: pointer;
@@ -195,12 +204,13 @@ const BroilerMortalityModule = {
                 align-items: center;
                 justify-content: center;
                 gap: 6px;
+                min-height: 40px;
             }
             
             .delete-cause-records:hover {
                 background: #ef4444;
                 color: white;
-                transform: translateY(-1px);
+                transform: translateY(-2px);
                 box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
             }
             
@@ -209,8 +219,8 @@ const BroilerMortalityModule = {
                 background: rgba(59, 130, 246, 0.1);
                 border: 1px solid #3b82f6;
                 color: #3b82f6;
-                padding: 8px 12px;
-                border-radius: 6px;
+                padding: 10px 12px;
+                border-radius: 8px;
                 font-size: 13px;
                 font-weight: 500;
                 cursor: pointer;
@@ -219,16 +229,17 @@ const BroilerMortalityModule = {
                 align-items: center;
                 justify-content: center;
                 gap: 6px;
+                min-height: 40px;
             }
             
             .view-cause-details:hover {
                 background: #3b82f6;
                 color: white;
-                transform: translateY(-1px);
+                transform: translateY(-2px);
                 box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
             }
-                       
-            /* Also update the table button styles */
+            
+            /* ===== MORTALITY TABLE BUTTONS ===== */
             .btn-icon {
                 width: 32px;
                 height: 32px;
@@ -251,93 +262,141 @@ const BroilerMortalityModule = {
                 background: rgba(239, 68, 68, 0.1);
                 color: #ef4444;
             }
-
-            /* Modern Mortality Cause Buttons */
+            
+            /* ===== QUICK ACTIONS ===== */
+            .quick-action-btn {
+                background: var(--card-bg);
+                border: 2px solid var(--border-color);
+                border-radius: 16px;
+                padding: 20px 16px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .quick-action-btn:hover {
+                border-color: var(--primary-color);
+                transform: translateY(-4px);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            }
+            
+            /* ===== MODERN MORTALITY CAUSE BUTTONS ===== */
             .mortality-cause-buttons {
-              display: grid;
-              grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-              gap: 12px;
-              margin: 20px 0;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 12px;
+                margin: 20px 0;
             }
             
             .mortality-cause-btn {
-              background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-              border: 2px solid #dee2e6;
-              border-radius: 12px;
-              padding: 16px 12px;
-              cursor: pointer;
-              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-              position: relative;
-              overflow: hidden;
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                border: 2px solid #dee2e6;
+                border-radius: 12px;
+                padding: 16px 12px;
+                cursor: pointer;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                position: relative;
+                overflow: hidden;
             }
             
             .mortality-cause-btn:hover {
-              transform: translateY(-2px);
-              border-color: #6c757d;
-              box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+                transform: translateY(-2px);
+                border-color: #6c757d;
+                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
             }
             
             .mortality-cause-btn.active {
-              background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-              border-color: #2196f3;
-              box-shadow: 0 4px 8px rgba(33, 150, 243, 0.2);
+                background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+                border-color: #2196f3;
+                box-shadow: 0 4px 8px rgba(33, 150, 243, 0.2);
             }
             
             .mortality-cause-btn.critical {
-              background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-              border-color: #f44336;
+                background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+                border-color: #f44336;
             }
             
             .mortality-cause-header {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-bottom: 8px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 8px;
             }
             
             .mortality-cause-label {
-              font-weight: 600;
-              color: #2d3436;
-              font-size: 0.95rem;
+                font-weight: 600;
+                color: #2d3436;
+                font-size: 0.95rem;
             }
             
             .mortality-cause-percentage {
-              font-weight: 700;
-              font-size: 1rem;
-              color: #2196f3;
+                font-weight: 700;
+                font-size: 1rem;
+                color: #2196f3;
             }
             
             .mortality-cause-btn.critical .mortality-cause-percentage {
-              color: #f44336;
+                color: #f44336;
             }
             
             .mortality-cause-count {
-              color: #6c757d;
-              font-size: 0.85rem;
-              margin-top: 4px;
+                color: #6c757d;
+                font-size: 0.85rem;
+                margin-top: 4px;
             }
             
             .mortality-cause-btn::before {
-              content: '';
-              position: absolute;
-              top: 0;
-              left: 0;
-              right: 0;
-              height: 3px;
-              background: linear-gradient(90deg, #2196f3, #4fc3f7);
-              transform: scaleX(0);
-              transition: transform 0.3s ease;
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #2196f3, #4fc3f7);
+                transform: scaleX(0);
+                transition: transform 0.3s ease;
             }
             
             .mortality-cause-btn:hover::before {
-              transform: scaleX(1);
+                transform: scaleX(1);
             }
             
             .mortality-cause-btn.active::before {
-              transform: scaleX(1);
+                transform: scaleX(1);
+            }
+            
+            /* ===== RESPONSIVE DESIGN ===== */
+            @media (max-width: 768px) {
+                .cause-summary-grid {
+                    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                    gap: 16px;
+                }
+                
+                .cause-actions {
+                    flex-direction: column;
+                    gap: 8px;
+                }
+                
+                .delete-cause-records,
+                .view-cause-details {
+                    width: 100%;
+                }
+            }
+            
+            @media (max-width: 480px) {
+                .cause-summary-grid {
+                    grid-template-columns: 1fr;
+                }
+                
+                .cause-item {
+                    padding: 16px;
+                }
             }
         </style>
-
         <div class="module-container">
             <!-- Module Header -->
             <div class="module-header">
@@ -712,19 +771,20 @@ renderCauseSummary() {
         `;
     }
 
-    return `
+     return `
         <div class="cause-summary-grid">
             ${causesWithData.map(cause => {
                 const data = causeData[cause];
                 const percentage = totalLosses > 0 ? Math.round((data.totalQuantity / totalLosses) * 100) : 0;
                 const causeColor = this.getCauseColor(cause);
                 
-                return `
+                 return `
                     <div class="cause-item" data-cause="${cause}">
                         <div class="cause-header">
                             <div class="cause-icon">${this.getCauseIcon(cause)}</div>
                             <div class="cause-title" style="color: ${causeColor};">${this.formatCause(cause)}</div>
                         </div>
+                        
                         <div class="cause-stats">
                             <div class="cause-stat">
                                 <span class="cause-stat-label">Losses:</span>
@@ -739,13 +799,16 @@ renderCauseSummary() {
                                 <span class="cause-stat-percentage" style="color: ${causeColor};">${percentage}%</span>
                             </div>
                         </div>
-                        <!-- ✅ UPDATED: Using the correct class names that match CSS and handleTableClick() -->
+                        
+                        <!-- 🔥 FIXED BUTTON CONTAINER -->
                         <div class="cause-actions">
                             <button class="delete-cause-records" data-cause="${cause}" title="Delete all ${this.formatCause(cause)} records">
-                                🗑️ Delete All
+                                <span style="font-size: 14px;">🗑️</span>
+                                <span>Delete All</span>
                             </button>
                             <button class="view-cause-details" data-cause="${cause}" title="View ${this.formatCause(cause)} details">
-                                🔍 View Details
+                                <span style="font-size: 14px;">🔍</span>
+                                <span>View Details</span>
                             </button>
                         </div>
                     </div>
