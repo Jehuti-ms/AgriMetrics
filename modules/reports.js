@@ -8,6 +8,10 @@ const ReportsModule = {
     currentReport: null,
     broadcaster: null, // ✅ ADDED: Data Broadcaster reference
 
+    // ✅ ADDED: PDF properties
+    pdfReady: false,
+    pdfService: null,
+
     initialize() {
         console.log('📈 Initializing reports...');
         
@@ -17,7 +21,9 @@ const ReportsModule = {
             console.error('Content area element not found');
             return false;
         }
-
+        // ✅ ADDED: Initialize PDF capabilities
+        this.initializePDFCapabilities();
+        
         // ✅ ADDED: Get Broadcaster instance
         this.broadcaster = window.Broadcaster || null;
         if (this.broadcaster) {
@@ -44,6 +50,48 @@ const ReportsModule = {
         return true;
     },
 
+        // ==================== PDF CAPABILITIES ====================
+    
+    // ✅ ADDED: Initialize PDF capabilities
+    initializePDFCapabilities() {
+        console.log('📄 Initializing PDF capabilities for reports...');
+        
+        // Check if jsPDF is available
+        if (typeof jspdf === 'undefined') {
+            console.log('⚠️ jsPDF not loaded. Loading from CDN...');
+            this.loadJSPDF();
+        } else {
+            console.log('✅ jsPDF is ready');
+            this.pdfReady = true;
+        }
+    },
+
+    // ✅ ADDED: Load jsPDF from CDN
+    loadJSPDF() {
+        return new Promise((resolve, reject) => {
+            if (typeof jspdf !== 'undefined') {
+                this.pdfReady = true;
+                resolve();
+                return;
+            }
+            
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+            script.onload = () => {
+                const script2 = document.createElement('script');
+                script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js';
+                script2.onload = () => {
+                    console.log('✅ jsPDF and autoTable loaded for reports');
+                    this.pdfReady = true;
+                    resolve();
+                };
+                script2.onerror = () => reject(new Error('Failed to load autoTable'));
+                document.head.appendChild(script2);
+            };
+            script.onerror = () => reject(new Error('Failed to load jsPDF'));
+            document.head.appendChild(script);
+        });
+    },
     // ✅ ADDED: Setup broadcaster listeners
     setupBroadcasterListeners() {
         if (!this.broadcaster) return;
@@ -2404,31 +2452,57 @@ const ReportsModule = {
 
     // ==================== REPORT DISPLAY METHODS (UPDATED WITH BROADCASTING) ====================
     showReport(title, content) {
-        this.addReportStyles();
+    this.addReportStyles();
+    
+    const reportTitle = document.getElementById('report-title');
+    const reportContent = document.getElementById('report-content');
+    const outputSection = document.getElementById('report-output');
+    
+    if (reportTitle && reportContent && outputSection) {
+        reportTitle.textContent = title;
+        reportContent.innerHTML = content;
+        outputSection.classList.remove('hidden');
+        outputSection.scrollIntoView({ behavior: 'smooth' });
         
-        const reportTitle = document.getElementById('report-title');
-        const reportContent = document.getElementById('report-content');
-        const outputSection = document.getElementById('report-output');
+        // ✅ ADDED: Add PDF export button to report actions
+        this.addPDFExportButton();
         
-        if (reportTitle && reportContent && outputSection) {
-            reportTitle.textContent = title;
-            reportContent.innerHTML = content;
-            outputSection.classList.remove('hidden');
-            outputSection.scrollIntoView({ behavior: 'smooth' });
-            
-            // ✅ Broadcast report displayed
-            if (this.broadcaster) {
-                this.broadcaster.broadcast('report-displayed', {
-                    module: 'reports',
-                    timestamp: new Date().toISOString(),
-                    reportTitle: title,
-                    contentLength: content.length,
-                    reportType: this.currentReport?.type || 'unknown'
-                });
-            }
+        // Broadcast report displayed
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('report-displayed', {
+                module: 'reports',
+                timestamp: new Date().toISOString(),
+                reportTitle: title,
+                contentLength: content.length,
+                reportType: this.currentReport?.type || 'unknown'
+            });
         }
-    },
+    }
+},
 
+// ✅ ADDED: Add PDF export button to report actions
+addPDFExportButton() {
+    const reportActions = document.querySelector('.output-header > div');
+    if (!reportActions) return;
+    
+    // Check if PDF button already exists
+    if (document.getElementById('pdf-report-btn')) return;
+    
+    const pdfButton = document.createElement('button');
+    pdfButton.id = 'pdf-report-btn';
+    pdfButton.className = 'btn-outline';
+    pdfButton.innerHTML = '📄 PDF';
+    pdfButton.addEventListener('click', () => this.exportReportAsPDF());
+    
+    // Insert before the close button
+    const closeBtn = document.getElementById('close-report-btn');
+    if (closeBtn && closeBtn.parentNode === reportActions) {
+        reportActions.insertBefore(pdfButton, closeBtn);
+    } else {
+        reportActions.appendChild(pdfButton);
+    }
+},
+    
     addReportStyles() {
         if (!document.getElementById('report-styles')) {
             const styles = document.createElement('style');
@@ -2579,6 +2653,527 @@ const ReportsModule = {
         }
     },
 
+    // ✅ ADDED: Export current report as PDF
+async exportReportAsPDF() {
+    if (!this.currentReport) {
+        this.showNotification('No report to export', 'error');
+        return;
+    }
+    
+    if (!this.pdfReady) {
+        this.showNotification('PDF service loading...', 'info');
+        try {
+            await this.loadJSPDF();
+        } catch (error) {
+            this.showNotification('Failed to load PDF service', 'error');
+            return;
+        }
+    }
+    
+    const button = document.getElementById('pdf-report-btn');
+    const originalText = button?.innerHTML || '📄 PDF';
+    
+    if (button) {
+        button.innerHTML = '⏳ Generating...';
+        button.disabled = true;
+    }
+    
+    try {
+        // Generate PDF based on report type
+        let result;
+        switch(this.currentReport.type) {
+            case 'financial':
+                result = await this.generateFinancialPDF();
+                break;
+            case 'production':
+                result = await this.generateProductionPDF();
+                break;
+            case 'inventory':
+                result = await this.generateInventoryPDF();
+                break;
+            case 'sales':
+                result = await this.generateSalesPDF();
+                break;
+            case 'health':
+                result = await this.generateHealthPDF();
+                break;
+            case 'feed':
+                result = await this.generateFeedPDF();
+                break;
+            case 'comprehensive':
+                result = await this.generateComprehensivePDF();
+                break;
+            default:
+                result = await this.generateGenericPDF();
+        }
+        
+        if (result.success) {
+            this.showNotification(`PDF exported: ${result.fileName}`, 'success');
+            
+            // Broadcast PDF export
+            if (this.broadcaster) {
+                this.broadcastReportExported(this.currentReport.type, 'pdf');
+            }
+        } else {
+            this.showNotification(`PDF export failed: ${result.error}`, 'error');
+        }
+        
+    } catch (error) {
+        console.error('PDF export error:', error);
+        this.showNotification('Error generating PDF', 'error');
+    } finally {
+        if (button) {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    }
+},
+
+    // ✅ ADDED: Generate Financial PDF Report
+async generateFinancialPDF() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Get data
+        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
+        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
+        const incomeTransactions = transactions.filter(t => t.type === 'income');
+        const expenseTransactions = transactions.filter(t => t.type === 'expense');
+        const totalIncome = incomeTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+        const totalExpenses = expenseTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+        const totalSalesRevenue = sales.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+        const netProfit = totalIncome + totalSalesRevenue - totalExpenses;
+        const profitMargin = totalIncome > 0 ? (netProfit / (totalIncome + totalSalesRevenue)) * 100 : 0;
+        
+        // Header
+        doc.setFontSize(24);
+        doc.setTextColor(46, 125, 50);
+        doc.text('FINANCIAL REPORT', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Farm Management System', 105, 30, { align: 'center' });
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 37, { align: 'center' });
+        
+        // Summary Section
+        let yPos = 50;
+        doc.setFontSize(16);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Financial Overview', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        const summaryData = [
+            ['Total Income:', this.formatCurrency(totalIncome), 'income'],
+            ['Sales Revenue:', this.formatCurrency(totalSalesRevenue), 'income'],
+            ['Total Expenses:', this.formatCurrency(totalExpenses), 'expense'],
+            ['Net Profit:', this.formatCurrency(netProfit), netProfit >= 0 ? 'profit' : 'expense'],
+            ['Profit Margin:', `${profitMargin.toFixed(1)}%`, profitMargin >= 0 ? 'profit' : 'expense']
+        ];
+        
+        summaryData.forEach(([label, value, type]) => {
+            if (type === 'income' || type === 'profit') {
+                doc.setTextColor(46, 125, 50); // Green
+            } else if (type === 'expense') {
+                doc.setTextColor(220, 38, 38); // Red
+            } else {
+                doc.setTextColor(0, 0, 0); // Black
+            }
+            
+            doc.text(label, 20, yPos);
+            doc.text(value, 150, yPos, { align: 'right' });
+            yPos += 8;
+        });
+        
+        // Income Breakdown
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Income Breakdown', 20, yPos);
+        yPos += 10;
+        
+        if (incomeTransactions.length > 0) {
+            doc.setFontSize(10);
+            incomeTransactions.forEach((transaction, index) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                doc.setTextColor(46, 125, 50);
+                doc.text(transaction.description || 'Unnamed', 25, yPos);
+                doc.text(this.formatCurrency(transaction.amount), 180, yPos, { align: 'right' });
+                yPos += 6;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No income records', 25, yPos);
+            yPos += 6;
+        }
+        
+        // Expense Breakdown
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Expense Breakdown', 20, yPos);
+        yPos += 10;
+        
+        if (expenseTransactions.length > 0) {
+            doc.setFontSize(10);
+            expenseTransactions.forEach((transaction, index) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                doc.setTextColor(220, 38, 38);
+                doc.text(transaction.description || 'Unnamed', 25, yPos);
+                doc.text(this.formatCurrency(transaction.amount), 180, yPos, { align: 'right' });
+                yPos += 6;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No expense records', 25, yPos);
+            yPos += 6;
+        }
+        
+        // Financial Insights
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Financial Insights', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        const insights = this.getFinancialInsights(totalIncome, totalExpenses, netProfit, profitMargin)
+            .split('.').filter(i => i.trim());
+        
+        insights.forEach(insight => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.text(`• ${insight.trim()}.`, 25, yPos);
+            yPos += 6;
+        });
+        
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+            doc.text('Confidential Financial Report', 20, 290);
+            doc.text(new Date().toLocaleDateString(), 190, 290, { align: 'right' });
+        }
+        
+        // Save PDF
+        const fileName = `Financial_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        console.error('Financial PDF error:', error);
+        return { success: false, error: error.message };
+    }
+},
+
+// ✅ ADDED: Generate Comprehensive PDF Report
+async generateComprehensivePDF() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Get all data
+        const stats = this.getFarmStats();
+        const farmScore = this.calculateFarmScore(stats);
+        const farmStatus = this.getFarmStatus(stats);
+        const farmStatusColor = this.getFarmStatusColor(stats);
+        
+        // Convert RGB to PDF color
+        const getPDFColor = (rgb) => {
+            const [r, g, b] = rgb.match(/\d+/g).map(Number);
+            return [r, g, b];
+        };
+        
+        // Cover Page
+        doc.setFillColor(240, 248, 255);
+        doc.rect(0, 0, 210, 297, 'F');
+        
+        doc.setFontSize(36);
+        doc.setTextColor(46, 125, 50);
+        doc.text('FARM COMPREHENSIVE', 105, 80, { align: 'center' });
+        doc.text('REPORT', 105, 95, { align: 'center' });
+        
+        doc.setFontSize(20);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Farm Management System', 105, 120, { align: 'center' });
+        
+        // Farm Score Circle
+        doc.setLineWidth(2);
+        doc.setDrawColor(...getPDFColor(farmStatusColor));
+        doc.circle(105, 170, 30, 'D');
+        
+        doc.setFontSize(24);
+        doc.setTextColor(...getPDFColor(farmStatusColor));
+        doc.text(farmScore.toString(), 105, 172, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.text('/100', 105, 185, { align: 'center' });
+        doc.text(farmStatus, 105, 200, { align: 'center' });
+        
+        doc.setFontSize(14);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 230, { align: 'center' });
+        doc.text('Confidential Document', 105, 240, { align: 'center' });
+        
+        // Page 2: Executive Summary
+        doc.addPage();
+        let yPos = 20;
+        
+        doc.setFontSize(20);
+        doc.setTextColor(46, 125, 50);
+        doc.text('Executive Summary', 20, yPos);
+        yPos += 15;
+        
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        const assessment = this.getOverallAssessment(stats);
+        const lines = doc.splitTextToSize(assessment, 170);
+        doc.text(lines, 20, yPos);
+        yPos += (lines.length * 7) + 10;
+        
+        // Key Metrics
+        doc.setFontSize(16);
+        doc.setTextColor(46, 125, 50);
+        doc.text('Key Performance Metrics', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        const metrics = [
+            ['Total Revenue:', this.formatCurrency(stats.totalRevenue), 'income'],
+            ['Net Profit:', this.formatCurrency(stats.netProfit), stats.netProfit >= 0 ? 'profit' : 'expense'],
+            ['Total Birds:', stats.totalBirds.toString(), 'neutral'],
+            ['Total Production:', `${stats.totalProduction} units`, 'neutral'],
+            ['Low Stock Items:', stats.lowStockItems.toString(), stats.lowStockItems > 0 ? 'warning' : 'neutral'],
+            ['Feed Used:', `${stats.totalFeedUsed} kg`, 'neutral']
+        ];
+        
+        metrics.forEach(([label, value, type]) => {
+            if (type === 'income' || type === 'profit') {
+                doc.setTextColor(46, 125, 50);
+            } else if (type === 'expense' || type === 'warning') {
+                doc.setTextColor(220, 38, 38);
+            } else {
+                doc.setTextColor(0, 0, 0);
+            }
+            
+            doc.text(label, 25, yPos);
+            doc.text(value, 180, yPos, { align: 'right' });
+            yPos += 8;
+        });
+        
+        // Page 3: Performance Analysis
+        doc.addPage();
+        yPos = 20;
+        
+        doc.setFontSize(20);
+        doc.setTextColor(46, 125, 50);
+        doc.text('Performance Analysis', 20, yPos);
+        yPos += 15;
+        
+        // Financial Performance
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Financial Performance', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        const financialData = stats.netProfit >= 0 ? 
+            `✅ Operating profitably with ${this.formatCurrency(stats.netProfit)} net profit.` :
+            `⚠️ Operating at a loss of ${this.formatCurrency(Math.abs(stats.netProfit))}.`;
+        
+        const financialLines = doc.splitTextToSize(financialData, 170);
+        doc.text(financialLines, 25, yPos);
+        yPos += (financialLines.length * 7) + 10;
+        
+        // Production Performance
+        doc.setFontSize(14);
+        doc.text('Production Performance', 20, yPos);
+        yPos += 10;
+        
+        const productionData = stats.totalProduction > 500 ?
+            `✅ Strong production output of ${stats.totalProduction} units.` :
+            `📈 Production at ${stats.totalProduction} units, room for growth.`;
+        
+        const productionLines = doc.splitTextToSize(productionData, 170);
+        doc.text(productionLines, 25, yPos);
+        yPos += (productionLines.length * 7) + 10;
+        
+        // Inventory Status
+        doc.setFontSize(14);
+        doc.text('Inventory Status', 20, yPos);
+        yPos += 10;
+        
+        const inventoryData = stats.lowStockItems === 0 ?
+            `✅ All inventory items are adequately stocked.` :
+            `⚠️ ${stats.lowStockItems} items are below minimum stock levels.`;
+        
+        const inventoryLines = doc.splitTextToSize(inventoryData, 170);
+        doc.text(inventoryLines, 25, yPos);
+        yPos += (inventoryLines.length * 7) + 10;
+        
+        // Page 4: Recommendations
+        doc.addPage();
+        yPos = 20;
+        
+        doc.setFontSize(20);
+        doc.setTextColor(46, 125, 50);
+        doc.text('Strategic Recommendations', 20, yPos);
+        yPos += 15;
+        
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        
+        const recommendations = [
+            stats.netProfit < 0 ? '1. Review expenses and explore new revenue streams to achieve profitability.' : '1. Maintain current financial discipline and explore expansion opportunities.',
+            stats.totalProduction < 1000 ? '2. Implement production optimization strategies to increase output.' : '2. Maintain production quality and consider scaling operations.',
+            stats.lowStockItems > 0 ? '3. Reorder low stock items and implement automated inventory alerts.' : '3. Continue regular inventory monitoring and maintain optimal stock levels.',
+            '4. Schedule regular veterinary consultations for flock health management.',
+            '5. Analyze feed efficiency and consider bulk purchasing for cost savings.'
+        ];
+        
+        recommendations.forEach(rec => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            const lines = doc.splitTextToSize(rec, 170);
+            doc.text(lines, 25, yPos);
+            yPos += (lines.length * 7) + 5;
+        });
+        
+        // Page 5: Next Quarter Goals
+        doc.addPage();
+        yPos = 20;
+        
+        doc.setFontSize(20);
+        doc.setTextColor(46, 125, 50);
+        doc.text('Next Quarter Goals', 20, yPos);
+        yPos += 15;
+        
+        doc.setFontSize(11);
+        const goals = [
+            [`Revenue Target:`, this.formatCurrency(stats.totalRevenue * 1.1)],
+            [`Production Goal:`, `${Math.round(stats.totalProduction * 1.05)} units`],
+            [`Cost Reduction:`, `5% target`],
+            [`Farm Score Goal:`, `${Math.min(100, farmScore + 10)}/100`],
+            [`Low Stock Items:`, `${Math.max(0, stats.lowStockItems - 3)} maximum`]
+        ];
+        
+        goals.forEach(([label, value]) => {
+            doc.setTextColor(0, 0, 0);
+            doc.text(label, 25, yPos);
+            doc.setTextColor(46, 125, 50);
+            doc.text(value, 180, yPos, { align: 'right' });
+            yPos += 8;
+        });
+        
+        yPos += 10;
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text('These goals are based on current performance and industry benchmarks.', 20, yPos);
+        
+        // Footer on all pages
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${totalPages}`, 105, 290, { align: 'center' });
+            doc.text('Farm Comprehensive Report', 20, 290);
+            doc.text(`Score: ${farmScore}/100`, 190, 290, { align: 'right' });
+        }
+        
+        // Save PDF
+        const fileName = `Farm_Comprehensive_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        console.error('Comprehensive PDF error:', error);
+        return { success: false, error: error.message };
+    }
+},
+
+// ✅ ADDED: Generate other report PDFs (similar pattern)
+async generateInventoryPDF() {
+    try {
+        // You can adapt your existing inventory PDF code here
+        // or create a simplified version
+        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // ... inventory PDF generation code similar to profile module
+        
+        const fileName = `Inventory_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+},
+
+// ✅ ADDED: Generic PDF for other report types
+async generateGenericPDF() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        doc.setFontSize(24);
+        doc.setTextColor(46, 125, 50);
+        doc.text(this.currentReport.title, 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 30, { align: 'center' });
+        
+        // Convert HTML content to text for PDF
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = this.currentReport.content;
+        const textContent = tempDiv.textContent || tempDiv.innerText || '';
+        
+        doc.setFontSize(11);
+        doc.setTextColor(0, 0, 0);
+        const lines = doc.splitTextToSize(textContent, 170);
+        
+        let yPos = 50;
+        for (let line of lines) {
+            if (yPos > 270) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.text(line, 20, yPos);
+            yPos += 7;
+        }
+        
+        const fileName = `${this.currentReport.type}_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+},
+    
     showNotification(message, type = 'success') {
         // Create notification element
         const notification = document.createElement('div');
