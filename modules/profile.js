@@ -25,6 +25,9 @@ const ProfileModule = {
         
         // Setup broadcaster (safe)
         this.safeSetupBroadcaster();
+
+         // Initialize PDF service
+        this.initializePDFService();
         
         this.renderModule();
         this.initialized = true;
@@ -2040,6 +2043,690 @@ downloadQuickGuide() {
     this.showNotification('Quick guide downloaded', 'success');
 }
 };
+
+// Add these methods to your ProfileModule object (after line ~2100, before the auto-registration section):
+
+// ==================== PDF FUNCTIONALITY ====================
+
+initializePDFService() {
+    console.log('📄 Initializing PDF service...');
+    
+    // Check if jsPDF is available
+    if (typeof jspdf === 'undefined') {
+        console.log('⚠️ jsPDF not loaded. Loading from CDN...');
+        this.loadJSPDF();
+        return false;
+    }
+    
+    // Get user and farm data
+    const userData = this.getUserDataForPDF();
+    const farmData = this.getFarmDataForPDF();
+    
+    // Create PDF service if not exists
+    if (!window.pdfService) {
+        window.pdfService = new PDFService();
+    }
+    
+    window.pdfService.initialize(userData, farmData);
+    console.log('✅ PDF Service initialized');
+    
+    // Add PDF button to UI
+    this.addPDFButtons();
+    
+    return true;
+},
+
+loadJSPDF() {
+    // Load jsPDF from CDN
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    script.onload = () => {
+        const script2 = document.createElement('script');
+        script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js';
+        script2.onload = () => {
+            console.log('✅ jsPDF and autoTable loaded');
+            this.initializePDFService();
+        };
+        document.head.appendChild(script2);
+    };
+    document.head.appendChild(script);
+},
+
+getUserDataForPDF() {
+    const currentUser = this.getCurrentUser();
+    const profile = window.FarmModules.appData.profile;
+    
+    return {
+        name: profile.farmerName || currentUser?.displayName || 'Farm Manager',
+        email: profile.email || currentUser?.email || 'Not specified',
+        role: 'Farmer/Owner',
+        createdAt: profile.memberSince || new Date().toISOString(),
+        lastLogin: profile.lastSync || new Date().toISOString(),
+        phone: profile.phone || 'Not specified',
+        address: profile.farmLocation || 'Not specified'
+    };
+},
+
+getFarmDataForPDF() {
+    const profile = window.FarmModules.appData.profile;
+    
+    return {
+        farmName: profile.farmName || 'My Farm',
+        farmId: `FARM-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+        location: profile.farmLocation || 'Not specified',
+        size: profile.farmSize || 'Not specified',
+        farmType: profile.farmType || 'Mixed Farming',
+        primaryCrop: profile.primaryCrop || 'Various',
+        livestockType: profile.livestockType || 'Poultry/Livestock',
+        establishedDate: profile.establishedDate || 'Not specified'
+    };
+},
+
+addPDFButtons() {
+    // Add PDF export button to profile UI
+    setTimeout(() => {
+        const profileContainer = document.querySelector('.profile-content');
+        if (!profileContainer) return;
+        
+        // Check if button already exists
+        if (document.getElementById('export-pdf-btn')) return;
+        
+        // Create PDF export section
+        const pdfSection = document.createElement('div');
+        pdfSection.className = 'pdf-export-section glass-card';
+        pdfSection.innerHTML = `
+            <h3 style="margin-bottom: 16px; color: var(--text-primary);">📄 Export Reports</h3>
+            <div class="pdf-buttons-container">
+                <button class="pdf-btn profile" id="export-profile-pdf">
+                    <span style="font-size: 20px;">📋</span>
+                    <span>Export Profile</span>
+                </button>
+                <button class="pdf-btn report" id="export-inventory-pdf">
+                    <span style="font-size: 20px;">📦</span>
+                    <span>Inventory Report</span>
+                </button>
+                <button class="pdf-btn receipt" id="export-sales-pdf">
+                    <span style="font-size: 20px;">💰</span>
+                    <span>Sales Report</span>
+                </button>
+                <button class="pdf-btn" id="export-custom-pdf">
+                    <span style="font-size: 20px;">⚙️</span>
+                    <span>Custom Report</span>
+                </button>
+            </div>
+            <div id="pdf-status" style="margin-top: 16px; font-size: 14px; color: var(--text-secondary); text-align: center;"></div>
+        `;
+        
+        // Insert after stats overview
+        const statsSection = profileContainer.querySelector('.stats-overview');
+        if (statsSection) {
+            statsSection.parentNode.insertBefore(pdfSection, statsSection.nextSibling);
+        } else {
+            profileContainer.insertBefore(pdfSection, profileContainer.firstChild);
+        }
+        
+        // Add event listeners
+        document.getElementById('export-profile-pdf')?.addEventListener('click', () => this.exportProfilePDF());
+        document.getElementById('export-inventory-pdf')?.addEventListener('click', () => this.exportInventoryPDF());
+        document.getElementById('export-sales-pdf')?.addEventListener('click', () => this.exportSalesPDF());
+        document.getElementById('export-custom-pdf')?.addEventListener('click', () => this.exportCustomPDF());
+        
+        console.log('✅ PDF export buttons added to profile');
+        
+    }, 1000);
+},
+
+updatePDFStatus(status, type = 'info') {
+    const statusElement = document.getElementById('pdf-status');
+    if (statusElement) {
+        statusElement.textContent = status;
+        statusElement.style.color = type === 'error' ? '#ef4444' : 
+                                   type === 'success' ? '#10b981' : 
+                                   'var(--text-secondary)';
+    }
+},
+
+async exportProfilePDF() {
+    if (!window.pdfService) {
+        this.showNotification('PDF service not available. Please reload the page.', 'error');
+        return;
+    }
+    
+    const button = document.getElementById('export-profile-pdf');
+    const originalText = button?.innerHTML || 'Export Profile';
+    
+    if (button) {
+        button.innerHTML = '<span class="pdf-loading">⏳ Generating</span>';
+        button.disabled = true;
+    }
+    
+    this.updatePDFStatus('Generating profile PDF...');
+    
+    try {
+        const result = window.pdfService.generateProfilePDF();
+        
+        if (result.success) {
+            this.updatePDFStatus(`✅ PDF generated: ${result.fileName}`, 'success');
+            this.showNotification(`Profile PDF exported: ${result.fileName}`, 'success');
+        } else {
+            this.updatePDFStatus(`❌ Failed: ${result.error}`, 'error');
+            this.showNotification(`PDF generation failed: ${result.error}`, 'error');
+        }
+    } catch (error) {
+        console.error('PDF export error:', error);
+        this.updatePDFStatus('❌ Export failed', 'error');
+        this.showNotification('Error generating PDF', 'error');
+    } finally {
+        if (button) {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    }
+},
+
+async exportInventoryPDF() {
+    if (!window.pdfService) {
+        this.showNotification('PDF service not available', 'error');
+        return;
+    }
+    
+    const button = document.getElementById('export-inventory-pdf');
+    const originalText = button?.innerHTML || 'Inventory Report';
+    
+    if (button) {
+        button.innerHTML = '<span class="pdf-loading">⏳ Generating</span>';
+        button.disabled = true;
+    }
+    
+    this.updatePDFStatus('Generating inventory report...');
+    
+    try {
+        const inventoryData = window.FarmModules.appData.inventory || [];
+        const result = this.generateInventoryPDF(inventoryData);
+        
+        if (result.success) {
+            this.updatePDFStatus(`✅ Inventory report exported`, 'success');
+            this.showNotification('Inventory PDF generated', 'success');
+        } else {
+            this.updatePDFStatus(`❌ Failed: ${result.error}`, 'error');
+        }
+    } catch (error) {
+        console.error('Inventory PDF error:', error);
+        this.updatePDFStatus('❌ Export failed', 'error');
+    } finally {
+        if (button) {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    }
+},
+
+generateInventoryPDF(inventoryItems) {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Header
+        doc.setFontSize(24);
+        doc.setTextColor(46, 125, 50);
+        doc.text('Inventory Report', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Farm: ${window.FarmModules.appData.profile.farmName}`, 105, 30, { align: 'center' });
+        doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, 37, { align: 'center' });
+        
+        // Summary stats
+        let yPos = 50;
+        doc.setFontSize(14);
+        doc.setTextColor(46, 125, 50);
+        doc.text('Summary', 20, yPos);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        yPos += 10;
+        doc.text(`Total Items: ${inventoryItems.length}`, 20, yPos);
+        
+        const lowStock = inventoryItems.filter(item => (item.quantity || 0) <= (item.lowStockThreshold || 10)).length;
+        doc.text(`Low Stock Items: ${lowStock}`, 20, yPos + 7);
+        
+        const totalValue = inventoryItems.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 0)), 0);
+        doc.text(`Total Value: $${totalValue.toFixed(2)}`, 20, yPos + 14);
+        
+        // Inventory table
+        yPos += 30;
+        const tableData = inventoryItems.map(item => [
+            item.name || 'Unnamed',
+            item.category || 'General',
+            item.quantity || 0,
+            `$${parseFloat(item.price || 0).toFixed(2)}`,
+            `$${((item.quantity || 0) * parseFloat(item.price || 0)).toFixed(2)}`,
+            item.location || 'Main'
+        ]);
+        
+        doc.autoTable({
+            startY: yPos,
+            head: [['Item', 'Category', 'Qty', 'Unit Price', 'Total', 'Location']],
+            body: tableData,
+            theme: 'grid',
+            headStyles: { fillColor: [46, 125, 50], textColor: [255, 255, 255], fontStyle: 'bold' },
+            alternateRowStyles: { fillColor: [245, 245, 245] },
+            styles: { fontSize: 9, cellPadding: 3 },
+            columnStyles: {
+                0: { cellWidth: 40 },
+                1: { cellWidth: 30 },
+                2: { cellWidth: 20 },
+                3: { cellWidth: 25 },
+                4: { cellWidth: 25 },
+                5: { cellWidth: 30 }
+            }
+        });
+        
+        // Save PDF
+        const fileName = `Inventory_Report_${window.FarmModules.appData.profile.farmName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        console.error('Inventory PDF generation error:', error);
+        return { success: false, error: error.message };
+    }
+},
+
+async exportSalesPDF() {
+    if (!window.pdfService) {
+        this.showNotification('PDF service not available', 'error');
+        return;
+    }
+    
+    const button = document.getElementById('export-sales-pdf');
+    const originalText = button?.innerHTML || 'Sales Report';
+    
+    if (button) {
+        button.innerHTML = '<span class="pdf-loading">⏳ Generating</span>';
+        button.disabled = true;
+    }
+    
+    this.updatePDFStatus('Generating sales report...');
+    
+    try {
+        const salesData = window.FarmModules.appData.orders || [];
+        const result = this.generateSalesPDF(salesData);
+        
+        if (result.success) {
+            this.updatePDFStatus(`✅ Sales report exported`, 'success');
+            this.showNotification('Sales PDF generated', 'success');
+        } else {
+            this.updatePDFStatus(`❌ Failed: ${result.error}`, 'error');
+        }
+    } catch (error) {
+        console.error('Sales PDF error:', error);
+        this.updatePDFStatus('❌ Export failed', 'error');
+    } finally {
+        if (button) {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    }
+},
+
+generateSalesPDF(salesData) {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Header
+        doc.setFontSize(24);
+        doc.setTextColor(46, 125, 50);
+        doc.text('Sales Report', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Farm: ${window.FarmModules.appData.profile.farmName}`, 105, 30, { align: 'center' });
+        doc.text(`Period: ${new Date().getFullYear()}`, 105, 37, { align: 'center' });
+        
+        // Summary stats
+        let yPos = 50;
+        doc.setFontSize(14);
+        doc.setTextColor(46, 125, 50);
+        doc.text('Sales Summary', 20, yPos);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        yPos += 10;
+        
+        const totalSales = salesData.length;
+        const totalRevenue = salesData.reduce((sum, sale) => sum + (parseFloat(sale.totalAmount) || 0), 0);
+        const avgSale = totalSales > 0 ? totalRevenue / totalSales : 0;
+        
+        doc.text(`Total Sales: ${totalSales}`, 20, yPos);
+        doc.text(`Total Revenue: $${totalRevenue.toFixed(2)}`, 20, yPos + 7);
+        doc.text(`Average Sale: $${avgSale.toFixed(2)}`, 20, yPos + 14);
+        
+        // Monthly breakdown
+        yPos += 30;
+        const monthlySales = this.calculateMonthlySales(salesData);
+        
+        doc.setFontSize(14);
+        doc.setTextColor(46, 125, 50);
+        doc.text('Monthly Breakdown', 20, yPos);
+        
+        yPos += 10;
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        
+        monthlySales.forEach((month, index) => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.text(`${month.name}: $${month.amount.toFixed(2)} (${month.count} sales)`, 20, yPos);
+            yPos += 7;
+        });
+        
+        // Top customers
+        yPos += 10;
+        const topCustomers = this.getTopCustomers(salesData);
+        
+        if (topCustomers.length > 0) {
+            doc.setFontSize(14);
+            doc.setTextColor(46, 125, 50);
+            doc.text('Top Customers', 20, yPos);
+            yPos += 10;
+            
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            
+            topCustomers.slice(0, 5).forEach((customer, index) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                doc.text(`${index + 1}. ${customer.name}: $${customer.total.toFixed(2)}`, 20, yPos);
+                yPos += 7;
+            });
+        }
+        
+        // Save PDF
+        const fileName = `Sales_Report_${window.FarmModules.appData.profile.farmName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        console.error('Sales PDF generation error:', error);
+        return { success: false, error: error.message };
+    }
+},
+
+calculateMonthlySales(salesData) {
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    const monthlyData = months.map((name, index) => ({
+        name,
+        amount: 0,
+        count: 0
+    }));
+    
+    salesData.forEach(sale => {
+        const saleDate = new Date(sale.date || sale.createdAt || Date.now());
+        const monthIndex = saleDate.getMonth();
+        
+        if (monthlyData[monthIndex]) {
+            monthlyData[monthIndex].amount += parseFloat(sale.totalAmount) || 0;
+            monthlyData[monthIndex].count += 1;
+        }
+    });
+    
+    return monthlyData;
+},
+
+getTopCustomers(salesData) {
+    const customerMap = {};
+    
+    salesData.forEach(sale => {
+        const customerName = sale.customerName || 'Walk-in Customer';
+        if (!customerMap[customerName]) {
+            customerMap[customerName] = {
+                name: customerName,
+                total: 0,
+                count: 0
+            };
+        }
+        customerMap[customerName].total += parseFloat(sale.totalAmount) || 0;
+        customerMap[customerName].count += 1;
+    });
+    
+    return Object.values(customerMap)
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 10);
+},
+
+exportCustomPDF() {
+    const modal = document.createElement('div');
+    modal.className = 'popout-modal';
+    modal.innerHTML = `
+        <div class="popout-modal-content" style="max-width: 500px;">
+            <div class="popout-modal-header">
+                <h3>⚙️ Custom Report</h3>
+                <button class="popout-modal-close" id="close-custom-modal">&times;</button>
+            </div>
+            <div class="popout-modal-body">
+                <div style="padding: 20px;">
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label class="form-label">Report Type</label>
+                        <select id="report-type" class="form-input">
+                            <option value="summary">Farm Summary</option>
+                            <option value="financial">Financial Overview</option>
+                            <option value="production">Production Report</option>
+                            <option value="inventory">Inventory Analysis</option>
+                            <option value="customer">Customer Report</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label class="form-label">Date Range</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <input type="date" id="start-date" class="form-input" value="${new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0]}">
+                            <input type="date" id="end-date" class="form-input" value="${new Date().toISOString().split('T')[0]}">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label class="form-label">Include Sections</label>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="include-summary" checked>
+                                <span>Summary</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="include-charts" checked>
+                                <span>Charts</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="include-tables" checked>
+                                <span>Data Tables</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="include-recommendations" checked>
+                                <span>Recommendations</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label class="form-label">Report Title</label>
+                        <input type="text" id="report-title" class="form-input" value="${window.FarmModules.appData.profile.farmName} Report">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Include Executive Summary</h4>
+                                <p>Add a summary page for management</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="executive-summary" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="popout-modal-footer">
+                <button type="button" class="btn-outline" id="cancel-custom">Cancel</button>
+                <button type="button" class="btn-primary" id="generate-custom">Generate Report</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Event listeners
+    document.getElementById('close-custom-modal')?.addEventListener('click', () => modal.remove());
+    document.getElementById('cancel-custom')?.addEventListener('click', () => modal.remove());
+    
+    document.getElementById('generate-custom')?.addEventListener('click', () => {
+        this.generateCustomReport();
+        modal.remove();
+    });
+    
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+},
+
+generateCustomReport() {
+    this.showNotification('Custom report generation coming soon!', 'info');
+},
+
+// ==================== PDF SERVICE CLASS ====================
+
+class PDFService {
+    constructor() {
+        if (typeof jspdf === 'undefined') {
+            console.error('jsPDF not loaded');
+            return;
+        }
+        this.jsPDF = window.jspdf.jsPDF;
+        this.userData = null;
+        this.farmData = null;
+    }
+
+    initialize(userData, farmData) {
+        this.userData = userData;
+        this.farmData = farmData;
+        console.log('✅ PDF Service initialized');
+    }
+
+    generateProfilePDF() {
+        try {
+            const doc = new this.jsPDF();
+            
+            // Header
+            doc.setFontSize(24);
+            doc.setTextColor(46, 125, 50);
+            doc.text('Farm Profile Report', 105, 20, { align: 'center' });
+            
+            doc.setFontSize(12);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, 30, { align: 'center' });
+            
+            // Farm Information
+            let yPos = 50;
+            doc.setFontSize(16);
+            doc.setTextColor(46, 125, 50);
+            doc.text('Farm Information', 20, yPos);
+            
+            yPos += 10;
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            
+            const farmInfo = [
+                ['Farm Name:', this.farmData.farmName],
+                ['Location:', this.farmData.location],
+                ['Type:', this.farmData.farmType],
+                ['Established:', this.farmData.establishedDate],
+                ['Primary Focus:', this.farmData.primaryCrop || this.farmData.livestockType]
+            ];
+            
+            farmInfo.forEach(([label, value]) => {
+                doc.text(`${label} ${value}`, 20, yPos);
+                yPos += 8;
+            });
+            
+            // User Information
+            yPos += 10;
+            doc.setFontSize(16);
+            doc.setTextColor(46, 125, 50);
+            doc.text('Farm Manager', 20, yPos);
+            
+            yPos += 10;
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            
+            const userInfo = [
+                ['Name:', this.userData.name],
+                ['Email:', this.userData.email],
+                ['Role:', this.userData.role],
+                ['Member Since:', new Date(this.userData.createdAt).toLocaleDateString()],
+                ['Last Login:', new Date(this.userData.lastLogin).toLocaleDateString()]
+            ];
+            
+            userInfo.forEach(([label, value]) => {
+                doc.text(`${label} ${value}`, 20, yPos);
+                yPos += 8;
+            });
+            
+            // Stats Summary
+            yPos += 10;
+            doc.setFontSize(16);
+            doc.setTextColor(46, 125, 50);
+            doc.text('Farm Statistics', 20, yPos);
+            
+            yPos += 10;
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            
+            const stats = window.FarmModules.appData.profile.dashboardStats || {};
+            const farmStats = [
+                ['Total Orders:', stats.totalOrders || 0],
+                ['Total Inventory:', stats.totalInventoryItems || 0],
+                ['Total Customers:', stats.totalCustomers || 0],
+                ['Total Revenue:', `$${stats.totalRevenue || 0}`]
+            ];
+            
+            farmStats.forEach(([label, value]) => {
+                doc.text(`${label} ${value}`, 20, yPos);
+                yPos += 8;
+            });
+            
+            // Footer
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(10);
+                doc.setTextColor(150, 150, 150);
+                doc.text(`Page ${i} of ${pageCount}`, 105, 285, { align: 'center' });
+                doc.text('AgriMetrics Farm Management System', 105, 290, { align: 'center' });
+            }
+            
+            const fileName = `Farm_Profile_${this.farmData.farmName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(fileName);
+            
+            return { success: true, fileName: fileName };
+            
+        } catch (error) {
+            console.error('PDF generation error:', error);
+            return { success: false, error: error.message };
+        }
+    }
+}
 
 // ==================== AUTO-REGISTRATION WITH BOTH NAMES ====================
 if (typeof ProfileModule !== 'undefined') {
