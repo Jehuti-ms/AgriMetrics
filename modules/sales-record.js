@@ -383,50 +383,161 @@ loadProductionModule() {
 },
 
 // Add this method for navigation
+// Replace JUST this method (keep the other two new methods as-is)
 navigateToProduction() {
+    console.log('🔄 Navigating to Production module...');
     this.hideProductionItemsModal();
     
-    // Try different methods to show Production module
-    if (window.FarmModules && window.FarmModules.Production) {
-        // Method 1: Use showModule if available
-        if (typeof window.FarmModules.Production.showModule === 'function') {
-            window.FarmModules.Production.showModule();
-            return;
-        }
-        
-        // Method 2: Use initialize if available
-        if (typeof window.FarmModules.Production.initialize === 'function') {
-            const contentArea = document.getElementById('content-area');
-            if (contentArea) {
-                contentArea.innerHTML = '';
-                window.FarmModules.Production.initialize();
-            }
-            return;
-        }
-    }
-    
-    // Method 3: Try the FarmModules navigation system
-    if (window.FarmModules && typeof window.FarmModules.navigateToModule === 'function') {
-        window.FarmModules.navigateToModule('production');
+    // Clear the content area
+    const contentArea = document.getElementById('content-area');
+    if (!contentArea) {
+        this.showNotification('Content area not found', 'error');
         return;
     }
     
-    // Method 4: Fallback - Show notification and try to trigger sidebar
-    this.showNotification('Please select Production module from the sidebar', 'info');
+    // First, let's check what modules are available
+    console.log('🔍 Available FarmModules:', Object.keys(window.FarmModules || {}));
     
-    // Try to trigger sidebar click
-    setTimeout(() => {
-        const productionNavItem = document.querySelector('[data-module="production"], .nav-item[href*="production"]');
-        if (productionNavItem) {
-            productionNavItem.click();
+    // Try multiple approaches in order:
+    
+    // APPROACH 1: If there's a main navigation system, try to trigger it
+    if (window.FarmModules && window.FarmModules.showModule) {
+        console.log('🚀 Using FarmModules.showModule("production")');
+        window.FarmModules.showModule('production');
+        return;
+    }
+    
+    // APPROACH 2: Check if Production module exists directly
+    if (window.FarmModules && window.FarmModules.Production) {
+        console.log('📦 Found Production module directly');
+        
+        // Clear content area and initialize Production module
+        contentArea.innerHTML = '';
+        
+        if (typeof window.FarmModules.Production.initialize === 'function') {
+            window.FarmModules.Production.initialize();
+        } else if (typeof window.FarmModules.Production.renderModule === 'function') {
+            window.FarmModules.Production.renderModule();
         } else {
-            // Last resort: Use URL hash
-            window.location.hash = '#production';
+            // Try to call it as a function
+            window.FarmModules.Production();
+        }
+        return;
+    }
+    
+    // APPROACH 3: Check modules Map
+    if (window.FarmModules && window.FarmModules.modules) {
+        console.log('🗺️ Checking modules Map');
+        
+        // Try different module names
+        const moduleNames = ['production', 'Production', 'prod', 'PRODUCTION'];
+        for (const name of moduleNames) {
+            if (window.FarmModules.modules.has(name)) {
+                console.log(`✅ Found module: ${name}`);
+                const ProductionModule = window.FarmModules.modules.get(name);
+                contentArea.innerHTML = '';
+                
+                if (typeof ProductionModule.initialize === 'function') {
+                    ProductionModule.initialize();
+                } else if (typeof ProductionModule.renderModule === 'function') {
+                    ProductionModule.renderModule();
+                }
+                return;
+            }
+        }
+    }
+    
+    // APPROACH 4: Try to trigger sidebar click for production
+    console.log('🔄 Trying to trigger sidebar navigation...');
+    
+    // First try: Look for production in the sidebar
+    const productionLinks = [
+        '[data-module="production"]',
+        '[href*="production"]',
+        '[onclick*="production"]',
+        '.nav-item:contains("Production")',
+        'a:contains("Production")',
+        'button:contains("Production")'
+    ];
+    
+    for (const selector of productionLinks) {
+        try {
+            const element = document.querySelector(selector);
+            if (element) {
+                console.log(`✅ Found element with selector: ${selector}`);
+                element.click();
+                return;
+            }
+        } catch (e) {
+            // Ignore selector errors
+        }
+    }
+    
+    // APPROACH 5: Try URL hash navigation (if your app uses it)
+    console.log('🌐 Trying URL hash navigation');
+    window.location.hash = '#production';
+    
+    // Give it a moment, then check if it worked
+    setTimeout(() => {
+        if (window.location.hash === '#production') {
+            console.log('✅ URL hash set successfully');
+            // Force a reload if needed
             setTimeout(() => {
                 location.reload();
             }, 100);
+        } else {
+            // Final fallback: Show clear instructions
+            this.showNotification(
+                'Please select "Production" from the left sidebar menu', 
+                'info'
+            );
+            console.log('❌ Could not navigate to Production module');
+            console.log('💡 Available modules:', 
+                window.FarmModules ? Object.keys(window.FarmModules).filter(k => !k.startsWith('_')) : 'none');
         }
-    }, 500);
+    }, 300);
+},
+
+    // Add this debug method to help identify the issue
+debugModules() {
+    console.log('🔍 DEBUG: FarmModules System Analysis');
+    console.log('======================================');
+    
+    if (!window.FarmModules) {
+        console.log('❌ window.FarmModules is undefined');
+        return;
+    }
+    
+    console.log('📦 FarmModules object keys:', Object.keys(window.FarmModules));
+    
+    // Check for modules Map
+    if (window.FarmModules.modules) {
+        console.log('🗺️ modules Map size:', window.FarmModules.modules.size);
+        console.log('🗺️ modules Map entries:');
+        for (const [key, value] of window.FarmModules.modules.entries()) {
+            console.log(`  - ${key}:`, typeof value);
+        }
+    }
+    
+    // Check specifically for Production
+    console.log('🔍 Looking for Production module:');
+    console.log('  - window.FarmModules.Production:', !!window.FarmModules.Production);
+    console.log('  - window.FarmModules.production:', !!window.FarmModules.production);
+    console.log('  - window.FarmModules.Prod:', !!window.FarmModules.Prod);
+    
+    // Check for showModule function
+    console.log('🎯 Navigation methods:');
+    console.log('  - FarmModules.showModule:', typeof (window.FarmModules.showModule || window.FarmModules.showModule));
+    console.log('  - FarmModules.navigateToModule:', typeof (window.FarmModules.navigateToModule || window.FarmModules.navigateToModule));
+    
+    // Check sidebar
+    console.log('📋 Sidebar analysis:');
+    const sidebarItems = document.querySelectorAll('.nav-item, [data-module], [href*="#"]');
+    console.log('  - Found sidebar items:', sidebarItems.length);
+    sidebarItems.forEach((item, i) => {
+        console.log(`  ${i + 1}. ${item.textContent?.trim()}`, 
+                   item.getAttribute('data-module') || item.getAttribute('href'));
+    });
 },
 
     checkDependencies() {
@@ -1989,11 +2100,18 @@ setupFormFieldListeners() {
                 <h4 style="color: #374151; margin-bottom: 8px;">No production items available for sale</h4>
                 <p style="color: var(--text-secondary);">All production items have been sold or no production records exist.</p>
                 <div style="margin-top: 20px;">
-                    <button class="btn-primary" 
-                            onclick="window.FarmModules.SalesRecord.navigateToProduction()"
-                            style="background: #0ea5e9; border: none; padding: 10px 20px; border-radius: 8px; color: white; font-weight: 500; cursor: pointer;">
-                        ➕ Go to Production Module
-                    </button>
+                    <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                        <button class="btn-primary" 
+                                onclick="window.FarmModules.SalesRecord.navigateToProduction()"
+                                style="background: #0ea5e9; border: none; padding: 10px 20px; border-radius: 8px; color: white; font-weight: 500; cursor: pointer;">
+                            ➕ Go to Production Module
+                        </button>
+                        <button class="btn-outline" 
+                                onclick="window.FarmModules.SalesRecord.debugModules()"
+                                style="background: white; color: #64748b; border: 1px solid #cbd5e1; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                            🐛 Debug
+                        </button>
+                    </div>
                 </div>
                 <p style="color: var(--text-secondary); font-size: 13px; margin-top: 12px;">
                     Add new production records to sell them here
