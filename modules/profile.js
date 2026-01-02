@@ -1735,7 +1735,7 @@ if (typeof ProfileModule !== 'undefined') {
 
 // ==================== UNIVERSAL REGISTRATION ====================
 (function() {
-    const MODULE_NAME = 'profile.js';
+    const MODULE_NAME = 'profile';
     const MODULE_OBJECT = ProfileModule;
     
     console.log(`📦 Registering ${MODULE_NAME} module with Data Broadcaster...`);
