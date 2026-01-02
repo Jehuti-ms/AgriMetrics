@@ -2601,6 +2601,7 @@ exportCustomPDF() {
 generateCustomReport() {
     this.showNotification('Custom report generation coming soon!', 'info');
 }
+};
 
 // ==================== PDF SERVICE CLASS ====================
 
