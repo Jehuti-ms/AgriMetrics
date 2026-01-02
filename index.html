@@ -30,100 +30,90 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-    <!-- Auth Container -->
-        <div id="auth-container">
-            <div class="auth-forms">
-                <!-- Social Login Section - MOVED TO TOP -->
-                <div class="social-login-section" id="social-login-container">
-                    <!-- Buttons will be automatically rendered here by FirebaseAuth.js -->
-                </div>
-                
-                <div class="auth-divider">
-                    <span>or</span>
-                </div>
-                
-                <!-- Sign In Form -->
-                <div id="signin-form" class="auth-form active">
-                    <h2>Sign In</h2>
-                    <form id="signin-form-element">
-                        <div class="form-group">
-                            <label>Email:</label>
-                            <input type="email" id="signin-email" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Password:</label>
-                            <input type="password" id="signin-password" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Sign In</button>
-                        <div class="auth-links">
-                            <a href="#" id="show-forgot-password">Forgot Password?</a>
-                            <a href="#" id="show-signup">Sign Up</a>
-                        </div>
-                        
-                        <!-- Social Buttons ALSO at bottom of Sign In Form -->
-                        <div class="social-buttons-bottom" style="margin-top: 25px; padding-top: 25px; border-top: 1px solid #eee;">
-                            <div id="social-login-bottom-signin"></div>
-                        </div>
-                    </form>
-                </div>
-        
-                <!-- Sign Up Form -->
-                <div id="signup-form" class="auth-form">
-                    <h2>Sign Up</h2>
-                    <form id="signup-form-element">
-                        <div class="form-group">
-                            <label>Full Name:</label>
-                            <input type="text" id="signup-name" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Email:</label>
-                            <input type="email" id="signup-email" required>
-                        </div>
-                        
-                        <!-- PASSWORD FIELD WITH STRENGTH INDICATOR -->
-                        <div class="form-group">
-                            <label>Password:</label>
-                            <input type="password" id="signup-password" required>
-                            
-                            <!-- ADD PASSWORD STRENGTH INDICATOR HERE -->
-                            <div class="password-strength-container" style="margin-top: 8px;">
-                                <div class="password-strength-bar" style="width: 100%; height: 6px; background-color: #eee; border-radius: 3px; overflow: hidden;">
-                                    <div class="strength-progress" style="width: 0%; height: 100%; border-radius: 3px; transition: width 0.3s ease, background-color 0.3s ease;"></div>
-                                </div>
-                                <div class="strength-text" style="font-size: 12px; margin-top: 4px; color: #666;"></div>
+            <!-- Auth Container -->
+            <div id="auth-container">
+                <div class="auth-forms">
+                    <!-- Social Login Section - AT THE TOP (Standard Practice) -->
+                    <div class="social-login-section" id="social-login-container">
+                        <!-- Buttons will be automatically rendered here by FirebaseAuth.js -->
+                    </div>
+                    
+                    <div class="auth-divider">
+                        <span>or</span>
+                    </div>
+                    
+                    <!-- Sign In Form -->
+                    <div id="signin-form" class="auth-form active">
+                        <h2>Sign In</h2>
+                        <form id="signin-form-element">
+                            <div class="form-group">
+                                <label>Email:</label>
+                                <input type="email" id="signin-email" required>
                             </div>
-                            <!-- END OF PASSWORD STRENGTH INDICATOR -->
-                        </div>
-                        
-                        <!-- CONFIRM PASSWORD FIELD WITH MATCH INDICATOR -->
-                        <div class="form-group">
-                            <label>Confirm Password:</label>
-                            <input type="password" id="signup-confirm-password" required>
+                            <div class="form-group">
+                                <label>Password:</label>
+                                <input type="password" id="signin-password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Sign In</button>
+                            <div class="auth-links">
+                                <a href="#" id="show-forgot-password">Forgot Password?</a>
+                                <a href="#" id="show-signup">Sign Up</a>
+                            </div>
+                        </form>
+                    </div>
+            
+                    <!-- Sign Up Form -->
+                    <div id="signup-form" class="auth-form">
+                        <h2>Sign Up</h2>
+                        <form id="signup-form-element">
+                            <div class="form-group">
+                                <label>Full Name:</label>
+                                <input type="text" id="signup-name" required>
+                            </div>
                             
-                            <!-- ADD PASSWORD MATCH INDICATOR HERE -->
-                            <div class="password-match-indicator" style="font-size: 12px; margin-top: 4px;"></div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Farm Name:</label>
-                            <input type="text" id="farm-name" required>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary">Create Account</button>
-                        
-                        <div class="auth-links">
-                            <a href="#" id="show-signin">Already have an account?</a>
-                        </div>
-                        
-                        <!-- Social Buttons ALSO at bottom of Sign Up Form -->
-                        <div class="social-buttons-bottom" style="margin-top: 25px; padding-top: 25px; border-top: 1px solid #eee;">
-                            <div id="social-login-bottom-signup"></div>
-                        </div>
-                    </form>
+                            <div class="form-group">
+                                <label>Email:</label>
+                                <input type="email" id="signup-email" required>
+                            </div>
+                            
+                            <!-- PASSWORD FIELD WITH STRENGTH INDICATOR -->
+                            <div class="form-group">
+                                <label>Password:</label>
+                                <input type="password" id="signup-password" required>
+                                
+                                <!-- ADD PASSWORD STRENGTH INDICATOR HERE -->
+                                <div class="password-strength-container" style="margin-top: 8px;">
+                                    <div class="password-strength-bar" style="width: 100%; height: 6px; background-color: #eee; border-radius: 3px; overflow: hidden;">
+                                        <div class="strength-progress" style="width: 0%; height: 100%; border-radius: 3px; transition: width 0.3s ease, background-color 0.3s ease;"></div>
+                                    </div>
+                                    <div class="strength-text" style="font-size: 12px; margin-top: 4px; color: #666;"></div>
+                                </div>
+                                <!-- END OF PASSWORD STRENGTH INDICATOR -->
+                            </div>
+                            
+                            <!-- CONFIRM PASSWORD FIELD WITH MATCH INDICATOR -->
+                            <div class="form-group">
+                                <label>Confirm Password:</label>
+                                <input type="password" id="signup-confirm-password" required>
+                                
+                                <!-- ADD PASSWORD MATCH INDICATOR HERE -->
+                                <div class="password-match-indicator" style="font-size: 12px; margin-top: 4px;"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Farm Name:</label>
+                                <input type="text" id="farm-name" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">Create Account</button>
+                            
+                            <div class="auth-links">
+                                <a href="#" id="show-signin">Already have an account?</a>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
 
             <!-- Forgot Password Form -->
             <div id="forgot-password-form" class="auth-form">
