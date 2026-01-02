@@ -7394,37 +7394,60 @@ header, .top-nav {
     justify-content: center;
     gap: 12px;
     width: 100%;
-    padding: 12px 16px;
+    padding: 14px 20px;
     margin-bottom: 12px;
-    border: 1px solid var(--glass-border);
     border-radius: 8px;
-    background: white;
-    color: #333;
+    font-size: 15px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
+    border: none;
+    outline: none;
 }
 
+/* Google Button - Solid Green */
 .btn-social.google {
-    border-color: #4285F4;
-    color: #4285F4;
-}
-
-.btn-social.apple {
-    border-color: #000;
-    color: #000;
-    background: #000;
+    background-color: #34A853; /* Google Green */
     color: white;
+    border: none;
 }
 
-.btn-social:hover {
+.btn-social.google:hover {
+    background-color: #2E8B47; /* Darker Green */
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-social.google:active {
+    background-color: #287C3F;
+    transform: translateY(0);
+}
+
+/* Apple Button - Solid Dark */
+.btn-social.apple {
+    background-color: #2C3E50; /* Dark Blue-Gray */
+    color: white;
+    border: none;
+}
+
+.btn-social.apple:hover {
+    background-color: #1A252F; /* Darker */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-social.apple:active {
+    background-color: #0D1B2A;
+    transform: translateY(0);
 }
 
 .social-icon {
     font-weight: bold;
     font-size: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
 }
 
 .auth-divider {
@@ -7444,6 +7467,11 @@ header, .top-nav {
 
 .auth-divider span {
     padding: 0 16px;
+}
+
+/* Optional: If you want to keep glass effect on hover */
+.btn-social:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
 
 /* =========== Password Strength Indicator ========== */
