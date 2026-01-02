@@ -2038,7 +2038,7 @@ downloadQuickGuide() {
     URL.revokeObjectURL(link.href);
     
     this.showNotification('Quick guide downloaded', 'success');
-}
+},
 
 // ==================== AUTO-REGISTRATION WITH BOTH NAMES ====================
 if (typeof ProfileModule !== 'undefined') {
