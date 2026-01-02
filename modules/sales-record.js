@@ -324,6 +324,111 @@ const SalesRecordModule = {
         // You can add logic here to warn about low inventory for popular products
     },
 
+    // ==================== NEW NAVIGATION METHODS ====================
+
+showProductionModule() {
+    console.log('🚜 Navigating to Production module...');
+    
+    // Hide current module
+    this.hideAllModals();
+    
+    // Check if Production module exists
+    if (window.FarmModules && window.FarmModules.Production) {
+        // If Production module has a showModule method, use it
+        if (typeof window.FarmModules.Production.showModule === 'function') {
+            window.FarmModules.Production.showModule();
+        } 
+        // If Production module has an initialize method
+        else if (typeof window.FarmModules.Production.initialize === 'function') {
+            // Clear content area and show Production module
+            const contentArea = document.getElementById('content-area');
+            if (contentArea) {
+                contentArea.innerHTML = '';
+                window.FarmModules.Production.initialize();
+            }
+        } else {
+            this.showNotification('Production module not properly loaded', 'error');
+        }
+    } else {
+        // Try to load Production module if not available
+        this.loadProductionModule();
+    }
+},
+
+// Add this method to load Production module dynamically
+loadProductionModule() {
+    console.log('📦 Attempting to load Production module...');
+    
+    // Check if module exists in the FarmModules system
+    if (window.FarmModules && window.FarmModules.modules && window.FarmModules.modules.has('production')) {
+        const ProductionModule = window.FarmModules.modules.get('production');
+        if (typeof ProductionModule.initialize === 'function') {
+            const contentArea = document.getElementById('content-area');
+            if (contentArea) {
+                contentArea.innerHTML = '';
+                ProductionModule.initialize();
+            }
+        }
+    } else {
+        this.showNotification('Production module not found. Please ensure it is loaded.', 'error');
+        
+        // Provide alternative instructions
+        setTimeout(() => {
+            this.showNotification(
+                'Production module is typically at /modules/production.js', 
+                'info'
+            );
+        }, 2000);
+    }
+},
+
+// Add this method for navigation
+navigateToProduction() {
+    this.hideProductionItemsModal();
+    
+    // Try different methods to show Production module
+    if (window.FarmModules && window.FarmModules.Production) {
+        // Method 1: Use showModule if available
+        if (typeof window.FarmModules.Production.showModule === 'function') {
+            window.FarmModules.Production.showModule();
+            return;
+        }
+        
+        // Method 2: Use initialize if available
+        if (typeof window.FarmModules.Production.initialize === 'function') {
+            const contentArea = document.getElementById('content-area');
+            if (contentArea) {
+                contentArea.innerHTML = '';
+                window.FarmModules.Production.initialize();
+            }
+            return;
+        }
+    }
+    
+    // Method 3: Try the FarmModules navigation system
+    if (window.FarmModules && typeof window.FarmModules.navigateToModule === 'function') {
+        window.FarmModules.navigateToModule('production');
+        return;
+    }
+    
+    // Method 4: Fallback - Show notification and try to trigger sidebar
+    this.showNotification('Please select Production module from the sidebar', 'info');
+    
+    // Try to trigger sidebar click
+    setTimeout(() => {
+        const productionNavItem = document.querySelector('[data-module="production"], .nav-item[href*="production"]');
+        if (productionNavItem) {
+            productionNavItem.click();
+        } else {
+            // Last resort: Use URL hash
+            window.location.hash = '#production';
+            setTimeout(() => {
+                location.reload();
+            }, 100);
+        }
+    }, 500);
+},
+
     checkDependencies() {
         if (!window.FarmModules || !window.FarmModules.appData) {
             console.error('❌ App data not available');
@@ -557,7 +662,7 @@ const SalesRecordModule = {
         }
     },
 
-   renderProductionItems() {
+  renderProductionItems() {
     // Get production data
     const productionRecords = JSON.parse(localStorage.getItem('farm-production') || '[]');
     const sales = window.FarmModules.appData.sales || [];
@@ -569,9 +674,10 @@ const SalesRecordModule = {
                     <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
                     <h3 style="color: #475569; margin-bottom: 8px;">No Production Items</h3>
                     <p style="color: #64748b; margin-bottom: 16px;">Add production records to sell them here</p>
-                    <button class="btn-outline" onclick="window.FarmModules.Production?.showModule()" 
-                            style="background: white; color: #475569; border-color: #cbd5e1;">
-                        Go to Production Module
+                    <button class="btn-primary" 
+                            onclick="window.FarmModules.SalesRecord.navigateToProduction()" 
+                            style="background: #0ea5e9; border: none; padding: 10px 20px; border-radius: 8px; color: white; font-weight: 500; cursor: pointer;">
+                        ➕ Go to Production Module
                     </button>
                 </div>
             </div>
@@ -592,7 +698,9 @@ const SalesRecordModule = {
                     <h3 style="color: #0369a1; margin: 0; font-size: 18px;">🔄 Available Production Items</h3>
                     <p style="color: #0c4a6e; margin: 4px 0 0 0; font-size: 14px;">Sell directly from production records</p>
                 </div>
-                <button class="btn-primary" id="from-production-btn-2" style="background: #0ea5e9;">
+                <button class="btn-primary" id="from-production-btn-2" 
+                        onclick="window.FarmModules.SalesRecord.showProductionItems()"
+                        style="background: #0ea5e9;">
                     Sell from Production
                 </button>
             </div>
@@ -621,11 +729,18 @@ const SalesRecordModule = {
                            style="color: #0ea5e9; text-decoration: none; font-weight: 500;">Browse available items →</a>
                     </div>
                 </div>
+                <div style="margin-top: 8px; display: flex; justify-content: flex-end;">
+                    <button class="btn-outline" 
+                            onclick="window.FarmModules.SalesRecord.navigateToProduction()"
+                            style="background: white; color: #0ea5e9; border: 1px solid #0ea5e9; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                        ➕ Add New Production
+                    </button>
+                </div>
             </div>
         </div>
     `;
 },
-
+    
     selectProductionItem(itemId) {
     console.log('🔄 Selecting production item:', itemId);
     
@@ -1873,11 +1988,15 @@ setupFormFieldListeners() {
                 <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
                 <h4 style="color: #374151; margin-bottom: 8px;">No production items available for sale</h4>
                 <p style="color: var(--text-secondary);">All production items have been sold or no production records exist.</p>
-                <p style="color: var(--text-secondary); margin-top: 8px;">
-                    <a href="#" style="color: #3b82f6; text-decoration: none;" 
-                       onclick="window.FarmModules.Production?.showModule(); return false;">
-                        ➕ Go to Production Module to add new items
-                    </a>
+                <div style="margin-top: 20px;">
+                    <button class="btn-primary" 
+                            onclick="window.FarmModules.SalesRecord.navigateToProduction()"
+                            style="background: #0ea5e9; border: none; padding: 10px 20px; border-radius: 8px; color: white; font-weight: 500; cursor: pointer;">
+                        ➕ Go to Production Module
+                    </button>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 13px; margin-top: 12px;">
+                    Add new production records to sell them here
                 </p>
             </div>
         `;
@@ -1941,15 +2060,18 @@ setupFormFieldListeners() {
         content += `
             </div>
             
-            <div style="margin-top: 24px; padding: 12px; background: #fef3f3; border-radius: 8px; border: 1px solid #fed7d7;">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                    <span style="color: #dc2626; font-size: 16px;">⚠️</span>
-                    <div style="font-weight: 600; color: #7c2d12;">Important</div>
+            <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border-radius: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: #0ea5e9; font-size: 16px;">💡</span>
+                    <div style="font-size: 13px; color: #475569;">
+                        Need more products? Add new production records.
+                    </div>
                 </div>
-                <p style="color: #991b1b; font-size: 13px; margin: 0;">
-                    Selling from production will automatically update inventory and track the source of the sale.
-                    The production record will be marked as sold and won't appear here again.
-                </p>
+                <button class="btn-outline" 
+                        onclick="window.FarmModules.SalesRecord.navigateToProduction()"
+                        style="background: white; color: #0ea5e9; border: 1px solid #0ea5e9; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                    ➕ Add Production
+                </button>
             </div>
         `;
     }
