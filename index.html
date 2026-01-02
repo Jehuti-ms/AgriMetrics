@@ -71,23 +71,43 @@
                         <label>Full Name:</label>
                         <input type="text" id="signup-name" required>
                     </div>
+                    
                     <div class="form-group">
                         <label>Email:</label>
                         <input type="email" id="signup-email" required>
                     </div>
+                    
+                    <!-- PASSWORD FIELD WITH STRENGTH INDICATOR -->
                     <div class="form-group">
                         <label>Password:</label>
                         <input type="password" id="signup-password" required>
+                        
+                        <!-- ADD PASSWORD STRENGTH INDICATOR HERE -->
+                        <div class="password-strength-container" style="margin-top: 8px;">
+                            <div class="password-strength-bar" style="width: 100%; height: 6px; background-color: #eee; border-radius: 3px; overflow: hidden;">
+                                <div class="strength-progress" style="width: 0%; height: 100%; border-radius: 3px; transition: width 0.3s ease, background-color 0.3s ease;"></div>
+                            </div>
+                            <div class="strength-text" style="font-size: 12px; margin-top: 4px; color: #666;"></div>
+                        </div>
+                        <!-- END OF PASSWORD STRENGTH INDICATOR -->
                     </div>
+                    
+                    <!-- CONFIRM PASSWORD FIELD WITH MATCH INDICATOR -->
                     <div class="form-group">
                         <label>Confirm Password:</label>
                         <input type="password" id="signup-confirm-password" required>
+                        
+                        <!-- ADD PASSWORD MATCH INDICATOR HERE -->
+                        <div class="password-match-indicator" style="font-size: 12px; margin-top: 4px;"></div>
                     </div>
+                    
                     <div class="form-group">
                         <label>Farm Name:</label>
                         <input type="text" id="farm-name" required>
                     </div>
+                    
                     <button type="submit" class="btn btn-primary">Create Account</button>
+                    
                     <div class="auth-links">
                         <a href="#" id="show-signin">Already have an account?</a>
                     </div>
