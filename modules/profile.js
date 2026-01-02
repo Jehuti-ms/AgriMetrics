@@ -1,14 +1,6 @@
 // modules/profile.js - COMPLETE WITH ALL IMPLEMENTATIONS + DATA BROADCASTER
 console.log('👤 Loading profile module with Data Broadcaster...');
 
-// SAFE DATA BROADCASTER INTEGRATION
-/*const Broadcaster = window.DataBroadcaster || {
-    recordCreated: () => console.log('Broadcaster: recordCreated'),
-    recordUpdated: () => console.log('Broadcaster: recordUpdated'),
-    recordDeleted: () => console.log('Broadcaster: recordDeleted'),
-    subscribe: () => console.log('Broadcaster: subscribe called')
-};*/
-
 const ProfileModule = {
     name: 'profile',
     initialized: false,
