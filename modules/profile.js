@@ -1927,6 +1927,75 @@ exportUserList() {
     this.showNotification('User list exported', 'success');
 }
 
+// ==================== SUPPORT METHODS ====================
+  
+copyToClipboard(text) {
+    navigator.clipboard.writeText(text)
+        .then(() => this.showNotification('Copied to clipboard!', 'success'))
+        .catch(() => {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            this.showNotification('Copied to clipboard!', 'success');
+        });
+},
+
+openQuickGuide() {
+    const guideWindow = window.open('', '_blank');
+    guideWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Farm Manager Quick Guide</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+                h1 { color: #2E7D32; }
+                .section { margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px; }
+                .step { margin: 10px 0; }
+            </style>
+        </head>
+        <body>
+            <h1>Farm Manager Quick Guide</h1>
+            <div class="section">
+                <h2>📱 Installation</h2>
+                <div class="step">1. Open ${window.location.origin} on mobile</div>
+                <div class="step">2. Tap Share → Add to Home Screen</div>
+                <div class="step">3. Launch like a regular app</div>
+            </div>
+            <div class="section">
+                <h2>🔑 Login</h2>
+                <div class="step">• Email: Provided in welcome email</div>
+                <div class="step">• Password: Temporary password (change on first login)</div>
+            </div>
+            <div class="section">
+                <h2>📞 Support</h2>
+                <div class="step">• Email: farm-support@yourcompany.com</div>
+                <div class="step">• Slack: #farm-management</div>
+                <div class="step">• Hours: Mon-Fri, 8AM-6PM</div>
+            </div>
+        </body>
+        </html>
+    `);
+    guideWindow.document.close();
+},
+
+downloadQuickGuide() {
+    // This would generate a PDF using a library like jsPDF
+    // For now, provide a downloadable HTML file
+    const guideContent = `...quick guide HTML content...`;
+    const blob = new Blob([guideContent], { type: 'text/html' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'Farm-Manager-Quick-Guide.html';
+    link.click();
+    URL.revokeObjectURL(link.href);
+    
+    this.showNotification('Quick guide downloaded', 'success');
+}
+
 // ==================== AUTO-REGISTRATION WITH BOTH NAMES ====================
 if (typeof ProfileModule !== 'undefined') {
     (function() {
