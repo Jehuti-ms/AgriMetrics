@@ -595,7 +595,7 @@ const ProfileModule = {
             document.getElementById('bulk-invite-btn')?.addEventListener('click', () => {
                 this.bulkImportUsers();
             });
-        },
+       
 
         // TRACK INPUT CHANGES
         document.getElementById('farm-name')?.addEventListener('input', (e) => {
