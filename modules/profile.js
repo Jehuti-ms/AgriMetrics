@@ -1730,6 +1730,8 @@ const ProfileModule = {
         console.error('❌ FarmModules framework not found');
     }
 
+})();
+
     // At the BOTTOM of your profile.js file, add this:
 if (window.FarmModules) {
     // Register as 'profile' (what the app expects)
@@ -1740,4 +1742,3 @@ if (window.FarmModules) {
     FarmModules.registerModule('profile.js', ProfileModule);
     console.log('✅ Profile module also registered as "profile.js"');
 }
-})();
