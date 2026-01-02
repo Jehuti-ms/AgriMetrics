@@ -557,67 +557,138 @@ const SalesRecordModule = {
         }
     },
 
-    renderProductionItems() {
-        const productionModule = window.FarmModules.Production;
-        if (!productionModule || !productionModule.getAvailableProducts) {
-            return '';
-        }
-
-        const availableProducts = productionModule.getAvailableProducts();
-        if (availableProducts.length === 0) {
-            return '';
-        }
-
+   renderProductionItems() {
+    // Get production data
+    const productionRecords = JSON.parse(localStorage.getItem('farm-production') || '[]');
+    const sales = window.FarmModules.appData.sales || [];
+    
+    if (productionRecords.length === 0) {
         return `
-            <div class="glass-card" style="padding: 24px; margin-bottom: 24px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #bae6fd;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <div>
-                        <h3 style="color: #0369a1; margin: 0; font-size: 18px;">🔄 Available Production Items</h3>
-                        <p style="color: #0c4a6e; margin: 4px 0 0 0; font-size: 14px;">Ready to sell from production</p>
-                    </div>
-                    <button class="btn-primary" id="view-production-items" style="background: #0ea5e9;">
-                        View All Items
+            <div class="glass-card" style="padding: 24px; margin-bottom: 24px; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border: 2px solid #cbd5e1;">
+                <div style="text-align: center; padding: 16px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
+                    <h3 style="color: #475569; margin-bottom: 8px;">No Production Items</h3>
+                    <p style="color: #64748b; margin-bottom: 16px;">Add production records to sell them here</p>
+                    <button class="btn-outline" onclick="window.FarmModules.Production?.showModule()" 
+                            style="background: white; color: #475569; border-color: #cbd5e1;">
+                        Go to Production Module
                     </button>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;">
-                    ${availableProducts.slice(0, 3).map(item => `
-                        <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #bae6fd; cursor: pointer;" 
-                             onclick="window.FarmModules.SalesRecord.selectProductionItem('${item.id}')"
-                             class="production-item">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                <span style="font-size: 20px;">${this.getProductIcon(item.type || item.product)}</span>
-                                <div style="font-weight: 600; color: #1e293b;">${item.type || item.product}</div>
-                            </div>
-                            <div style="font-size: 12px; color: #475569;">
-                                Quantity: ${item.quantity || item.count || 0}
-                                ${item.totalWeight ? ` | Weight: ${item.totalWeight} kg` : ''}
-                            </div>
-                            <div style="font-size: 11px; color: #64748b; margin-top: 4px;">
-                                Produced: ${this.formatDate(item.date || item.productionDate)}
-                            </div>
-                        </div>
-                    `).join('')}
                 </div>
             </div>
         `;
-    },
+    }
+    
+    // Calculate available items
+    const productCount = new Set(productionRecords.map(r => r.product)).size;
+    const totalProduced = productionRecords.reduce((sum, r) => sum + (r.quantity || 0), 0);
+    
+    // Calculate sold from production
+    const soldFromProduction = sales.filter(s => s.productionSource).length;
+    
+    return `
+        <div class="glass-card" style="padding: 24px; margin-bottom: 24px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #bae6fd;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div>
+                    <h3 style="color: #0369a1; margin: 0; font-size: 18px;">🔄 Available Production Items</h3>
+                    <p style="color: #0c4a6e; margin: 4px 0 0 0; font-size: 14px;">Sell directly from production records</p>
+                </div>
+                <button class="btn-primary" id="from-production-btn-2" style="background: #0ea5e9;">
+                    Sell from Production
+                </button>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 16px;">
+                <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #bae6fd; text-align: center;">
+                    <div style="font-size: 24px; color: #0c4a6e;">${productCount}</div>
+                    <div style="font-size: 12px; color: #475569;">Product Types</div>
+                </div>
+                <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #bae6fd; text-align: center;">
+                    <div style="font-size: 24px; color: #0c4a6e;">${totalProduced}</div>
+                    <div style="font-size: 12px; color: #475569;">Total Produced</div>
+                </div>
+                <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #bae6fd; text-align: center;">
+                    <div style="font-size: 24px; color: #0c4a6e;">${soldFromProduction}</div>
+                    <div style="font-size: 12px; color: #475569;">Sold from Production</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 16px; padding: 12px; background: #f0f9ff; border-radius: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: #0ea5e9;">💡</span>
+                    <div style="font-size: 13px; color: #0369a1;">
+                        Selling from production helps track inventory and source of goods. 
+                        <a href="#" onclick="window.FarmModules.SalesRecord.showProductionItems(); return false;" 
+                           style="color: #0ea5e9; text-decoration: none; font-weight: 500;">Browse available items →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+},
 
     selectProductionItem(itemId) {
-        const productionModule = window.FarmModules.Production;
-        if (!productionModule || !productionModule.getProductionItem) {
-            this.showNotification('Production module not available', 'error');
-            return;
+    console.log('🔄 Selecting production item:', itemId);
+    
+    // Parse the itemId to get product and date
+    const [product, date] = itemId.split('-').slice(0, 2);
+    
+    if (!product || !date) {
+        this.showNotification('Could not parse production item data', 'error');
+        return;
+    }
+    
+    // Get production records
+    const productionRecords = JSON.parse(localStorage.getItem('farm-production') || '[]');
+    
+    // Find matching production records
+    const matchingRecords = productionRecords.filter(record => 
+        record.product === product && record.date === date
+    );
+    
+    if (matchingRecords.length === 0) {
+        this.showNotification('Production item not found', 'error');
+        return;
+    }
+    
+    // Calculate total quantity
+    const totalQuantity = matchingRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
+    
+    // Get existing sales to calculate sold quantity
+    const existingSales = window.FarmModules.appData.sales || [];
+    let soldQuantity = 0;
+    
+    existingSales.forEach(sale => {
+        if (sale.productionSourceId === itemId || 
+            (sale.product === product && sale.date === date && sale.productionSource)) {
+            soldQuantity += sale.quantity || sale.animalCount || 0;
         }
-
-        const productionItem = productionModule.getProductionItem(itemId);
-        if (!productionItem) {
-            this.showNotification('Production item not found', 'error');
-            return;
-        }
-
-        this.startSaleFromProduction(productionItem);
-    },
+    });
+    
+    const availableQuantity = totalQuantity - soldQuantity;
+    
+    if (availableQuantity <= 0) {
+        this.showNotification('This production item is already sold out', 'error');
+        return;
+    }
+    
+    // Create production data object
+    const productionData = {
+        id: itemId,
+        product: product,
+        date: date,
+        totalQuantity: totalQuantity,
+        availableQuantity: availableQuantity,
+        unit: matchingRecords[0].unit || 'units',
+        notes: matchingRecords[0].notes || '',
+        type: product
+    };
+    
+    // Start sale from production
+    this.startSaleFromProduction(productionData);
+    
+    // Close production items modal
+    this.hideProductionItemsModal();
+},
 
     // FIXED: Changed button class names in renderSalesTable
     renderSalesTable(period = 'today') {
@@ -1164,27 +1235,28 @@ const SalesRecordModule = {
     // === FIXED EVENT LISTENERS AND DELETE METHODS ===
 
     setupEventListeners() {
-        console.log('🔧 Setting up event listeners...');
-        
-        // Remove any existing event listeners first
-        this.removeEventListeners();
-        
-        // Quick sale form
-        const quickSaleForm = document.getElementById('quick-sale-form');
-        if (quickSaleForm) {
-            quickSaleForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.handleQuickSale();
-            });
-        }
+    console.log('🔧 Setting up event listeners...');
+    
+    // Remove any existing event listeners first
+    this.removeEventListeners();
+    
+    // Quick sale form
+    const quickSaleForm = document.getElementById('quick-sale-form');
+    if (quickSaleForm) {
+        quickSaleForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleQuickSale();
+        });
+    }
 
-        // Modal buttons
-        document.getElementById('add-sale')?.addEventListener('click', () => this.showSaleModal());
-        document.getElementById('add-sale-btn')?.addEventListener('click', () => this.showSaleModal());
-        document.getElementById('from-production-btn')?.addEventListener('click', () => this.showProductionItems());
-        document.getElementById('meat-sales-btn')?.addEventListener('click', () => this.generateMeatSalesReport());
-        document.getElementById('daily-report-btn')?.addEventListener('click', () => this.generateDailyReport());
-        document.getElementById('view-production-items')?.addEventListener('click', () => this.showProductionItems());
+    // Modal buttons
+    document.getElementById('add-sale')?.addEventListener('click', () => this.showSaleModal());
+    document.getElementById('add-sale-btn')?.addEventListener('click', () => this.showSaleModal());
+    document.getElementById('from-production-btn')?.addEventListener('click', () => this.showProductionItems());
+    document.getElementById('from-production-btn-2')?.addEventListener('click', () => this.showProductionItems()); // ADD THIS LINE
+    document.getElementById('meat-sales-btn')?.addEventListener('click', () => this.generateMeatSalesReport());
+    document.getElementById('daily-report-btn')?.addEventListener('click', () => this.generateDailyReport());
+    document.getElementById('view-production-items')?.addEventListener('click', () => this.showProductionItems());
         
         // Sale modal handlers
         document.getElementById('save-sale')?.addEventListener('click', () => this.saveSale());
@@ -1725,84 +1797,178 @@ setupFormFieldListeners() {
         }
     },
 
-    showProductionItems() {
-        this.hideAllModals();
+   showProductionItems() {
+    console.log('🔄 Showing production items for sale...');
+    this.hideAllModals();
+    
+    // Get production records from localStorage
+    const productionRecords = JSON.parse(localStorage.getItem('farm-production') || '[]');
+    
+    // Get current sales to check what's already been sold
+    const existingSales = window.FarmModules.appData.sales || [];
+    
+    // Filter available production items (not yet sold)
+    const availableProducts = [];
+    
+    // Group by product and date
+    const productMap = {};
+    
+    productionRecords.forEach(record => {
+        const product = record.product || 'Unspecified';
+        const date = record.date;
+        const key = `${product}-${date}`;
         
-        const productionModule = window.FarmModules.Production;
-        if (!productionModule || !productionModule.getAvailableProducts) {
-            this.showNotification('Production module not available', 'error');
-            return;
+        if (!productMap[key]) {
+            productMap[key] = {
+                product: product,
+                date: date,
+                totalQuantity: 0,
+                unit: record.unit || 'units',
+                notes: record.notes || '',
+                soldQuantity: 0,
+                availableQuantity: 0
+            };
         }
         
-        const productionItems = productionModule.getAvailableProducts();
-        
-        let content = '<div class="production-items-list">';
-        
-        if (productionItems.length === 0) {
-            content += `
-                <div style="text-align: center; padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
-                    <h4 style="color: #374151; margin-bottom: 8px;">No production items available</h4>
-                    <p style="color: var(--text-secondary);">Add production items in the Production module first</p>
-                </div>
-            `;
-        } else {
-            content += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px;">';
+        productMap[key].totalQuantity += record.quantity || 0;
+    });
+    
+    // Calculate sold quantities from existing sales
+    existingSales.forEach(sale => {
+        if (sale.productionSourceId || sale.productionSource) {
+            const product = sale.product;
+            const date = sale.date;
+            const key = `${product}-${date}`;
             
-            productionItems.forEach(item => {
-                content += `
-                    <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border); cursor: pointer;" 
-                         onclick="window.FarmModules.SalesRecord.selectProductionItem('${item.id}')"
-                         class="production-item-select">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                            <span style="font-size: 24px;">${this.getProductIcon(item.type || item.product)}</span>
-                            <div>
-                                <div style="font-weight: 600; color: var(--text-primary);">${item.type || item.product}</div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">ID: ${item.id}</div>
-                            </div>
+            if (productMap[key]) {
+                productMap[key].soldQuantity += sale.quantity || sale.animalCount || 0;
+            }
+        }
+    });
+    
+    // Calculate available quantities
+    Object.keys(productMap).forEach(key => {
+        const item = productMap[key];
+        item.availableQuantity = item.totalQuantity - item.soldQuantity;
+        
+        if (item.availableQuantity > 0) {
+            availableProducts.push({
+                id: key,
+                product: item.product,
+                date: item.date,
+                totalQuantity: item.totalQuantity,
+                availableQuantity: item.availableQuantity,
+                unit: item.unit,
+                notes: item.notes
+            });
+        }
+    });
+    
+    // Create modal content
+    let content = '<div class="production-items-list">';
+    
+    if (availableProducts.length === 0) {
+        content += `
+            <div style="text-align: center; padding: 40px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
+                <h4 style="color: #374151; margin-bottom: 8px;">No production items available for sale</h4>
+                <p style="color: var(--text-secondary);">All production items have been sold or no production records exist.</p>
+                <p style="color: var(--text-secondary); margin-top: 8px;">
+                    <a href="#" style="color: #3b82f6; text-decoration: none;" 
+                       onclick="window.FarmModules.Production?.showModule(); return false;">
+                        ➕ Go to Production Module to add new items
+                    </a>
+                </p>
+            </div>
+        `;
+    } else {
+        content += `
+            <div style="margin-bottom: 16px;">
+                <p style="color: var(--text-secondary); font-size: 14px; margin: 0;">
+                    Select a production item to create a sale from:
+                </p>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
+        `;
+        
+        availableProducts.forEach((item, index) => {
+            const icon = this.getProductIcon(item.product);
+            const formattedDate = this.formatDate(item.date);
+            const productName = this.formatProductName(item.product);
+            
+            content += `
+                <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                        <div style="font-size: 24px; background: #e0f2fe; padding: 8px; border-radius: 8px;">
+                            ${icon}
                         </div>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
-                            <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 6px;">
-                                <div style="font-size: 11px; color: #6b7280;">Quantity</div>
-                                <div style="font-weight: 600; color: var(--text-primary);">${item.quantity || item.count || 0}</div>
-                            </div>
-                            ${item.totalWeight ? `
-                                <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 6px;">
-                                    <div style="font-size: 11px; color: #6b7280;">Total Weight</div>
-                                    <div style="font-weight: 600; color: var(--text-primary);">${item.totalWeight} kg</div>
-                                </div>
-                            ` : ''}
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: var(--text-primary);">${productName}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">Produced: ${formattedDate}</div>
                         </div>
-                        
-                        <div style="font-size: 12px; color: var(--text-secondary);">
-                            <div>Produced: ${this.formatDate(item.date || item.productionDate)}</div>
-                            ${item.notes ? `<div style="margin-top: 4px;">Notes: ${item.notes.substring(0, 50)}${item.notes.length > 50 ? '...' : ''}</div>` : ''}
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;">
+                        <div style="padding: 8px; background: #f0f9ff; border-radius: 6px; text-align: center;">
+                            <div style="font-size: 11px; color: #0c4a6e; margin-bottom: 4px;">Total Produced</div>
+                            <div style="font-weight: 600; color: #0369a1;">${item.totalQuantity} ${item.unit}</div>
                         </div>
-                        
-                        <button style="width: 100%; margin-top: 12px; padding: 8px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                        <div style="padding: 8px; background: #f0fdf4; border-radius: 6px; text-align: center;">
+                            <div style="font-size: 11px; color: #166534; margin-bottom: 4px;">Available</div>
+                            <div style="font-weight: 600; color: #16a34a;">${item.availableQuantity} ${item.unit}</div>
+                        </div>
+                    </div>
+                    
+                    ${item.notes ? `
+                        <div style="margin-bottom: 12px; padding: 8px; background: #f8fafc; border-radius: 6px;">
+                            <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">Notes</div>
+                            <div style="font-size: 12px; color: #475569;">${item.notes}</div>
+                        </div>
+                    ` : ''}
+                    
+                    <div style="display: flex; gap: 8px;">
+                        <button style="flex: 1; padding: 8px 12px; background: var(--primary-color); color: white; 
+                                border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px;"
+                                onclick="window.FarmModules.SalesRecord.selectProductionItem('${item.id}')">
                             Sell This Item
                         </button>
                     </div>
-                `;
-            });
+                </div>
+            `;
+        });
+        
+        content += `
+            </div>
             
-            content += '</div>';
-        }
-        
-        content += '</div>';
-        
-        const contentElement = document.getElementById('production-items-content');
-        if (contentElement) {
-            contentElement.innerHTML = content;
-        }
-        
-        const modal = document.getElementById('production-items-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-        }
-    },
-
+            <div style="margin-top: 24px; padding: 12px; background: #fef3f3; border-radius: 8px; border: 1px solid #fed7d7;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="color: #dc2626; font-size: 16px;">⚠️</span>
+                    <div style="font-weight: 600; color: #7c2d12;">Important</div>
+                </div>
+                <p style="color: #991b1b; font-size: 13px; margin: 0;">
+                    Selling from production will automatically update inventory and track the source of the sale.
+                    The production record will be marked as sold and won't appear here again.
+                </p>
+            </div>
+        `;
+    }
+    
+    content += '</div>';
+    
+    // Update modal content
+    const contentElement = document.getElementById('production-items-content');
+    if (contentElement) {
+        contentElement.innerHTML = content;
+    }
+    
+    // Show modal
+    const modal = document.getElementById('production-items-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+    }
+},
+    
     hideSaleModal() {
         const modal = document.getElementById('sale-modal');
         if (modal) {
