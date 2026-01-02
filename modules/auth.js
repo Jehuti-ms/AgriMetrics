@@ -13,10 +13,13 @@ class AuthModule {
 
     // ======== ADD THE SOCIAL LOGIN METHODS  ========
     renderSocialLoginButtons() {
+        console.log('🔄 Rendering social login buttons...');
         const socialContainer = document.getElementById('social-login-container');
         if (socialContainer && window.authManager) {
+            console.log('✅ Social container found, rendering buttons...');
             // Use the method from your FirebaseAuth class
             socialContainer.innerHTML = window.authManager.renderAuthButtons();
+            console.log('✅ Social buttons rendered');
             
             // Add click handlers for social buttons
             const googleBtn = socialContainer.querySelector('.btn-social.google');
@@ -35,9 +38,13 @@ class AuthModule {
                     await this.handleSocialSignIn('apple');
                 };
             }
+            } else {
+                console.log('⚠️ Social container or authManager not found');
+                console.log('- socialContainer:', !!socialContainer);
+                console.log('- authManager:', !!window.authManager);
+            }
         }
-    }
-    
+        
     // Add this new method for social sign-in
     async handleSocialSignIn(provider) {
         let result;
