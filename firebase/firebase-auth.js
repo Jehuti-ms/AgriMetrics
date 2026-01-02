@@ -41,20 +41,6 @@ class FirebaseAuth {
         }
     }
 
-    async signInWithGoogle() {
-        if (!this.auth) {
-            return { success: false, error: 'Firebase Auth not available' };
-        }
-        
-        try {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            const userCredential = await this.auth.signInWithPopup(provider);
-            return { success: true, user: userCredential.user };
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
-    }
-
     async resetPassword(email) {
         if (!this.auth) {
             return { success: false, error: 'Firebase Auth not available' };
@@ -94,11 +80,11 @@ class FirebaseAuth {
             
             const result = await firebase.auth().signInWithPopup(provider);
             this.showNotification(`Welcome ${result.user.displayName}!`, 'success');
-            return result.user;
+            return { success: true, user: result.user };
         } catch (error) {
             console.error('Google sign-in error:', error);
             this.showNotification(`Google sign-in failed: ${error.message}`, 'error');
-            return null;
+            return { success: false, error: error.message };
         }
     }
     
@@ -111,22 +97,22 @@ class FirebaseAuth {
             
             const result = await firebase.auth().signInWithPopup(provider);
             this.showNotification(`Welcome!`, 'success');
-            return result.user;
+            return { success: true, user: result.user };
         } catch (error) {
             console.error('Apple sign-in error:', error);
             this.showNotification(`Apple sign-in failed: ${error.message}`, 'error');
-            return null;
+            return { success: false, error: error.message };
         }
-    },
+    }
     
     // Add to auth UI
     renderAuthButtons() {
         return `
-            <button class="btn-social google" onclick="authModule.signInWithGoogle()">
+            <button class="btn-social google" onclick="authManager.signInWithGoogle()">
                 <span class="social-icon">G</span>
                 Continue with Google
             </button>
-            <button class="btn-social apple" onclick="authModule.signInWithApple()">
+            <button class="btn-social apple" onclick="authManager.signInWithApple()">
                 <span class="social-icon"></span>
                 Continue with Apple
             </button>
@@ -134,6 +120,24 @@ class FirebaseAuth {
                 <span>or</span>
             </div>
         `;
+    }
+
+    showNotification(message, type = 'info') {
+        if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
+            window.coreModule.showNotification(message, type);
+        } else if (type === 'error') {
+            console.error('❌ ' + message);
+            alert('❌ ' + message);
+        } else if (type === 'success') {
+            console.log('✅ ' + message);
+            alert('✅ ' + message);
+        } else if (type === 'warning') {
+            console.warn('⚠️ ' + message);
+            alert('⚠️ ' + message);
+        } else {
+            console.log('ℹ️ ' + message);
+            alert('ℹ️ ' + message);
+        }
     }
 }
 
