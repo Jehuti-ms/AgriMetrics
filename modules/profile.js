@@ -2041,10 +2041,7 @@ downloadQuickGuide() {
     URL.revokeObjectURL(link.href);
     
     this.showNotification('Quick guide downloaded', 'success');
-}
-};
-
-// Add these methods to your ProfileModule object (after line ~2100, before the auto-registration section):
+},
 
 // ==================== PDF FUNCTIONALITY ====================
 
@@ -2726,7 +2723,7 @@ class PDFService {
             return { success: false, error: error.message };
         }
     }
-}
+};
 
 // ==================== AUTO-REGISTRATION WITH BOTH NAMES ====================
 if (typeof ProfileModule !== 'undefined') {
