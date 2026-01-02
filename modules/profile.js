@@ -379,6 +379,7 @@ const ProfileModule = {
                             <!-- Backup list will be populated here -->
                         </div>
                     </div>
+                    
                     <!-- ADD THIS INSTALLATION GUIDE SECTION RIGHT HERE -->
                     <div class="installation-guide glass-card" style="margin-top: 24px;">
                         <h3>📱 Install on Mobile</h3>
@@ -414,6 +415,7 @@ const ProfileModule = {
                             </button>
                         </div>
                     </div>
+                    
                     <!-- USER MANAGEMENT SECTION (ADMIN ONLY) -->
                     <div class="user-management glass-card" style="margin-top: 24px; ${this.isAdmin() ? '' : 'display: none;'}">
                         <h3>👥 Department User Management</h3>
@@ -451,6 +453,49 @@ const ProfileModule = {
                             <h4 style="margin-bottom: 16px;">Department Users</h4>
                             <div id="users-list" style="max-height: 300px; overflow-y: auto;">
                                 <!-- Users will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- SUPPORT SECTION -->
+                    <div class="support-section glass-card" style="margin-top: 24px;">
+                        <h3>🆘 Support & Help</h3>
+                        <div class="support-channels">
+                            <div class="support-channel" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--glass-bg); border-radius: 8px; margin-bottom: 12px;">
+                                <div style="font-size: 24px;">📧</div>
+                                <div>
+                                    <h4 style="margin: 0 0 4px 0; color: var(--text-primary);">Email Support</h4>
+                                    <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">farm-support@yourcompany.com</p>
+                                </div>
+                                <button class="btn-outline" onclick="ProfileModule.copyToClipboard('farm-support@yourcompany.com')" style="margin-left: auto;">📋 Copy</button>
+                            </div>
+                            
+                            <div class="support-channel" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--glass-bg); border-radius: 8px; margin-bottom: 12px;">
+                                <div style="font-size: 24px;">💬</div>
+                                <div>
+                                    <h4 style="margin: 0 0 4px 0; color: var(--text-primary);">Team Channel</h4>
+                                    <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">#farm-management</p>
+                                </div>
+                                <button class="btn-outline" onclick="window.open('slack://channel?team=YOUR_TEAM&id=YOUR_CHANNEL')" style="margin-left: auto;">↗️ Open</button>
+                            </div>
+                            
+                            <div class="support-channel" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--glass-bg); border-radius: 8px; margin-bottom: 12px;">
+                                <div style="font-size: 24px;">📖</div>
+                                <div>
+                                    <h4 style="margin: 0 0 4px 0; color: var(--text-primary);">Quick Guide</h4>
+                                    <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">One-page reference</p>
+                                </div>
+                                <button class="btn-outline" onclick="ProfileModule.openQuickGuide()" style="margin-left: auto;">📄 Open</button>
+                                <button class="btn-outline" onclick="ProfileModule.downloadQuickGuide()">📥 PDF</button>
+                            </div>
+                            
+                            <div class="support-channel" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+                                <div style="font-size: 24px;">🎥</div>
+                                <div>
+                                    <h4 style="margin: 0 0 4px 0; color: var(--text-primary);">Video Tutorials</h4>
+                                    <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">Step-by-step guides</p>
+                                </div>
+                                <button class="btn-outline" onclick="window.open('https://youtube.com/playlist?list=YOUR_PLAYLIST')" style="margin-left: auto;">▶️ Watch</button>
                             </div>
                         </div>
                     </div>
