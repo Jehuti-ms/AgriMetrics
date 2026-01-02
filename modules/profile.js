@@ -2,12 +2,12 @@
 console.log('👤 Loading profile module with Data Broadcaster...');
 
 // DATA BROADCASTER INTEGRATION
-const Broadcaster = window.DataBroadcaster || {
+/*const Broadcaster = window.DataBroadcaster || {
     recordCreated: () => {},
     recordUpdated: () => {},
     recordDeleted: () => {},
     subscribe: () => {}
-};
+}; */
 
 const ProfileModule = {
     name: 'profile',
