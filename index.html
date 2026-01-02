@@ -50,6 +50,10 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <!-- Add this in your <head> or before your profile.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
 </head>
 <body>
             <!-- Auth Container -->
@@ -235,5 +239,9 @@
 <script src="modules/profile.js"></script>
    
 <script src="app.js"></script>
+    <script>
+  // Make it globally available
+  window.jspdf = window.jspdf;
+</script>
 </body>
 </html>
