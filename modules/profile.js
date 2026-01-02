@@ -1969,7 +1969,7 @@ exportUserList() {
     URL.revokeObjectURL(link.href);
     
     this.showNotification('User list exported', 'success');
-}
+},
 
 // ==================== SUPPORT METHODS ====================
   
