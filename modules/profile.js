@@ -1,14 +1,24 @@
-// modules/profile.js - COMPLETE WITH ALL IMPLEMENTATIONS
-console.log('Loading profile module...');
+// modules/profile.js - COMPLETE WITH ALL IMPLEMENTATIONS + DATA BROADCASTER
+console.log('👤 Loading profile module with Data Broadcaster...');
+
+// DATA BROADCASTER INTEGRATION
+const Broadcaster = window.DataBroadcaster || {
+    recordCreated: () => {},
+    recordUpdated: () => {},
+    recordDeleted: () => {},
+    subscribe: () => {}
+};
 
 const ProfileModule = {
     name: 'profile',
     initialized: false,
     element: null,
     currentInputValues: {},
+    broadcastSubscriptions: [],
 
+    // ==================== INITIALIZATION ====================
     initialize() {
-        console.log('👤 Initializing profile...');
+        console.log('👤 Initializing profile with Data Broadcaster...');
         
         this.element = document.getElementById('content-area');
         if (!this.element) {
@@ -21,8 +31,19 @@ const ProfileModule = {
             this.registerWithStyleManager();
         }
         
+        // SETUP BROADCASTER SUBSCRIPTIONS
+        this.setupBroadcasterSubscriptions();
+        
         this.renderModule();
         this.initialized = true;
+        
+        // Broadcast profile load
+        Broadcaster.recordCreated('profile', {
+            action: 'profile_loaded',
+            userId: this.getCurrentUserId(),
+            timestamp: new Date().toISOString(),
+            module: 'profile'
+        });
         
         // Sync with other modules for stats
         this.syncWithOtherModules();
@@ -37,7 +58,151 @@ const ProfileModule = {
         }
     },
 
-    // STYLEMANAGER INTEGRATION
+    // ==================== DATA BROADCASTER METHODS ====================
+    setupBroadcasterSubscriptions() {
+        // Listen for profile-related broadcasts
+        Broadcaster.subscribe('profile', (event) => {
+            this.handleBroadcastEvent(event);
+        });
+        
+        // Listen for broadcasts from other modules
+        Broadcaster.subscribe('all', (event) => {
+            this.handleExternalBroadcast(event);
+        });
+    },
+
+    handleBroadcastEvent(event) {
+        console.log('📡 Profile received broadcast:', event);
+        
+        switch(event.action) {
+            case 'profile_updated':
+                this.refreshProfileData(event.data);
+                break;
+                
+            case 'theme_changed':
+                this.updateThemeDisplay(event.theme);
+                break;
+                
+            case 'currency_changed':
+                this.updateCurrencyDisplay(event.currency);
+                break;
+                
+            case 'user_status_changed':
+                this.updateUserStatus(event.status);
+                break;
+                
+            case 'data_synced':
+                this.updateSyncStatus('✅ Synced');
+                break;
+                
+            case 'data_sync_failed':
+                this.updateSyncStatus('❌ Sync failed');
+                break;
+                
+            case 'settings_changed':
+                this.updateSettingsFromBroadcast(event.settings);
+                break;
+        }
+    },
+
+    handleExternalBroadcast(event) {
+        // Handle broadcasts from other modules
+        switch(event.module) {
+            case 'income-expenses':
+                if (event.action === 'transaction_created' || 
+                    event.action === 'transaction_updated' ||
+                    event.action === 'transaction_deleted') {
+                    this.updateStatsFromModules();
+                }
+                break;
+                
+            case 'inventory':
+                if (event.action.includes('inventory')) {
+                    this.updateStatsFromModules();
+                }
+                break;
+                
+            case 'orders':
+                if (event.action.includes('order')) {
+                    this.updateStatsFromModules();
+                }
+                break;
+                
+            case 'customers':
+                if (event.action.includes('customer')) {
+                    this.updateStatsFromModules();
+                }
+                break;
+        }
+    },
+
+    broadcastProfileUpdate(oldData, newData, changedFields = []) {
+        Broadcaster.recordUpdated('profile', {
+            id: 'user_profile',
+            oldData: oldData,
+            newData: newData,
+            timestamp: new Date().toISOString(),
+            action: 'profile_updated',
+            module: 'profile',
+            changedFields: changedFields,
+            userId: this.getCurrentUserId()
+        });
+    },
+
+    broadcastSettingChange(setting, oldValue, newValue) {
+        Broadcaster.recordUpdated('profile', {
+            action: 'setting_changed',
+            setting: setting,
+            oldValue: oldValue,
+            newValue: newValue,
+            timestamp: new Date().toISOString(),
+            module: 'profile',
+            userId: this.getCurrentUserId()
+        });
+        
+        // Special broadcasts for important settings
+        if (setting === 'theme') {
+            Broadcaster.recordCreated('profile', {
+                action: 'theme_changed',
+                theme: newValue,
+                timestamp: new Date().toISOString(),
+                module: 'profile',
+                userId: this.getCurrentUserId()
+            });
+        }
+        
+        if (setting === 'currency') {
+            Broadcaster.recordCreated('profile', {
+                action: 'currency_changed',
+                currency: newValue,
+                timestamp: new Date().toISOString(),
+                module: 'profile',
+                userId: this.getCurrentUserId()
+            });
+        }
+    },
+
+    broadcastDataAction(action, data = {}) {
+        Broadcaster.recordCreated('profile', {
+            action: action,
+            timestamp: new Date().toISOString(),
+            module: 'profile',
+            userId: this.getCurrentUserId(),
+            ...data
+        });
+    },
+
+    broadcastDataDeleted(action, data = {}) {
+        Broadcaster.recordDeleted('profile', {
+            action: action,
+            timestamp: new Date().toISOString(),
+            module: 'profile',
+            userId: this.getCurrentUserId(),
+            ...data
+        });
+    },
+
+    // ==================== STYLEMANAGER INTEGRATION ====================
     registerWithStyleManager() {
         if (window.StyleManager && window.StyleManager.registerModule) {
             window.StyleManager.registerModule(this.name, this.element, {
@@ -58,7 +223,7 @@ const ProfileModule = {
         });
     },
 
-    // SYNC WITH OTHER MODULES FOR REAL-TIME STATS
+    // ==================== SYNC WITH OTHER MODULES ====================
     syncWithOtherModules() {
         if (window.FarmModules) {
             window.addEventListener('farm-data-updated', () => {
@@ -74,7 +239,6 @@ const ProfileModule = {
         }
     },
 
-    // ENHANCED INVENTORY STATS SYNC
     syncInventoryStats() {
         if (window.InventoryCheckModule && typeof window.InventoryCheckModule.calculateStats === 'function') {
             const stats = window.InventoryCheckModule.calculateStats();
@@ -99,16 +263,16 @@ const ProfileModule = {
         }
     },
 
-    // UPDATE STATS FROM OTHER MODULES
     updateStatsFromModules() {
         const stats = window.FarmModules.appData.profile.dashboardStats || {};
-        
-        // Get inventory stats
         this.syncInventoryStats();
-        
         window.FarmModules.appData.profile.dashboardStats = stats;
+        
+        // Broadcast stats update
+        this.broadcastDataAction('stats_updated', { stats: stats });
     },
 
+    // ==================== MAIN RENDER ====================
     renderModule() {
         if (!this.element) return;
 
@@ -117,6 +281,10 @@ const ProfileModule = {
                 <div class="module-header">
                     <h1 class="module-title">Farm Profile</h1>
                     <p class="module-subtitle">Manage your farm information and settings</p>
+                    <div class="broadcast-status" style="display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 14px; color: var(--text-secondary);">
+                        <span id="broadcast-indicator">📡</span>
+                        <span id="broadcast-status">Connected to Data Broadcaster</span>
+                    </div>
                 </div>
 
                 <div class="profile-content">
@@ -127,6 +295,7 @@ const ProfileModule = {
                             <div class="stat-content">
                                 <h3>Total Revenue</h3>
                                 <div class="stat-value" id="total-revenue">$0</div>
+                                <div class="stat-update" id="revenue-update" style="font-size: 12px; color: var(--text-secondary);">Live updates</div>
                             </div>
                         </div>
                         <div class="stat-card glass-card">
@@ -134,6 +303,7 @@ const ProfileModule = {
                             <div class="stat-content">
                                 <h3>Inventory Items</h3>
                                 <div class="stat-value" id="total-inventory">0</div>
+                                <div class="stat-update" id="inventory-update" style="font-size: 12px; color: var(--text-secondary);">Live updates</div>
                             </div>
                         </div>
                         <div class="stat-card glass-card">
@@ -141,6 +311,7 @@ const ProfileModule = {
                             <div class="stat-content">
                                 <h3>Total Orders</h3>
                                 <div class="stat-value" id="total-orders">0</div>
+                                <div class="stat-update" id="orders-update" style="font-size: 12px; color: var(--text-secondary);">Live updates</div>
                             </div>
                         </div>
                         <div class="stat-card glass-card">
@@ -148,6 +319,7 @@ const ProfileModule = {
                             <div class="stat-content">
                                 <h3>Customers</h3>
                                 <div class="stat-value" id="total-customers">0</div>
+                                <div class="stat-update" id="customers-update" style="font-size: 12px; color: var(--text-secondary);">Live updates</div>
                             </div>
                         </div>
                     </div>
@@ -165,66 +337,67 @@ const ProfileModule = {
                                     <span class="stat-badge" id="member-since">Member since: Today</span>
                                     <span class="stat-badge" id="data-entries">Data entries: 0</span>
                                     <span class="stat-badge" id="sync-status">🔄 Syncing...</span>
+                                    <span class="stat-badge" id="broadcast-badge" style="background: var(--primary-color); color: white;">📡 Live</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                                    <div class="profile-details glass-card">
-                    <h3>Farm Information</h3>
-                    <form id="profile-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="farm-name" class="form-label">Farm Name</label>
-                                <input type="text" id="farm-name" class="form-input" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="farmer-name" class="form-label">Farmer Name</label>
-                                <input type="text" id="farmer-name" class="form-input" required>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="farm-type" class="form-label">Farm Type</label>
-                                <select id="farm-type" class="form-input">
-                                    <option value="">Select farm type</option>
-                                    <option value="crop">Crop Farm</option>
-                                    <option value="livestock">Livestock Farm</option>
-                                    <option value="dairy">Dairy Farm</option>
-                                    <option value="poultry">Poultry Farm</option>
-                                    <option value="mixed">Mixed Farming</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="farm-location" class="form-label">Farm Location</label>
-                                <input type="text" id="farm-location" class="form-input" placeholder="e.g., City, State">
-                            </div>
-                        </div>
-                        
-                        <!-- REMEMBER USER SETTING -->
-                        <div class="form-group">
-                            <div class="setting-item">
-                                <div class="setting-info">
-                                    <h4>Remember Me</h4>
-                                    <p>Keep me logged in on this device</p>
+                    <div class="profile-details glass-card">
+                        <h3>Farm Information</h3>
+                        <form id="profile-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="farm-name" class="form-label">Farm Name</label>
+                                    <input type="text" id="farm-name" class="form-input" required>
                                 </div>
-                                <label class="switch">
-                                    <input type="checkbox" id="remember-user" checked>
-                                    <span class="slider"></span>
-                                </label>
+                                <div class="form-group">
+                                    <label for="farmer-name" class="form-label">Farmer Name</label>
+                                    <input type="text" id="farmer-name" class="form-input" required>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="form-actions">
-                            <button type="submit" class="btn-primary">💾 Save Profile</button>
-                            <button type="button" class="btn-secondary" id="sync-now-btn">🔄 Sync Now</button>
-                            <button type="button" class="btn-outline" id="reset-profile">Reset to Current</button>
-                        </div>
-                    </form>
-                </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="farm-type" class="form-label">Farm Type</label>
+                                    <select id="farm-type" class="form-input">
+                                        <option value="">Select farm type</option>
+                                        <option value="crop">Crop Farm</option>
+                                        <option value="livestock">Livestock Farm</option>
+                                        <option value="dairy">Dairy Farm</option>
+                                        <option value="poultry">Poultry Farm</option>
+                                        <option value="mixed">Mixed Farming</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="farm-location" class="form-label">Farm Location</label>
+                                    <input type="text" id="farm-location" class="form-input" placeholder="e.g., City, State">
+                                </div>
+                            </div>
+                            
+                            <!-- REMEMBER USER SETTING -->
+                            <div class="form-group">
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <h4>Remember Me</h4>
+                                        <p>Keep me logged in on this device</p>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" id="remember-user" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">💾 Save Profile</button>
+                                <button type="button" class="btn-secondary" id="sync-now-btn">🔄 Sync Now</button>
+                                <button type="button" class="btn-outline" id="reset-profile">Reset to Current</button>
+                            </div>
+                        </form>
+                    </div>
 
-                   <div class="settings-section glass-card">
+                    <div class="settings-section glass-card">
                         <h3>Application Settings</h3>
                         <div class="settings-list">
                             <div class="setting-item">
@@ -293,6 +466,7 @@ const ProfileModule = {
                             </div>
                         </div>
                     </div>
+                    
                     <div class="data-management glass-card">
                         <h3>Data Management</h3>
                         <div class="data-stats">
@@ -333,6 +507,17 @@ const ProfileModule = {
                             <!-- Backup list will be populated here -->
                         </div>
                     </div>
+
+                    <!-- BROADCAST LOG SECTION (DEBUG) -->
+                    <div class="broadcast-log glass-card" style="margin-top: 24px; display: none;" id="broadcast-log-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h3>📡 Data Broadcaster Log</h3>
+                            <button class="btn-outline" id="toggle-broadcast-log">Show/Hide</button>
+                        </div>
+                        <div id="broadcast-log-content" style="max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px; background: var(--glass-bg); padding: 12px; border-radius: 8px;">
+                            <!-- Broadcast log will appear here -->
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -347,9 +532,12 @@ const ProfileModule = {
         
         // Ensure form styles are applied
         this.ensureFormStyles();
+        
+        // Start broadcast log (for debugging)
+        this.startBroadcastLog();
     },
 
-    // TRACK USER INPUT IN REAL-TIME
+    // ==================== EVENT LISTENERS ====================
     setupEventListeners() {
         // Profile form
         document.getElementById('profile-form')?.addEventListener('submit', (e) => {
@@ -455,9 +643,59 @@ const ProfileModule = {
         document.getElementById('logout-btn')?.addEventListener('click', () => {
             this.handleLogout();
         });
+
+        // Broadcast log toggle
+        document.getElementById('toggle-broadcast-log')?.addEventListener('click', () => {
+            this.toggleBroadcastLog();
+        });
     },
 
-    // FORM VALIDATION
+    // ==================== BROADCAST LOG METHODS ====================
+    startBroadcastLog() {
+        // Log broadcasts for debugging
+        const logContent = document.getElementById('broadcast-log-content');
+        if (!logContent) return;
+
+        // Add existing broadcast handler to also log
+        const originalHandleBroadcast = this.handleBroadcastEvent;
+        this.handleBroadcastEvent = (event) => {
+            this.logBroadcast(event);
+            return originalHandleBroadcast.call(this, event);
+        };
+    },
+
+    logBroadcast(event) {
+        const logContent = document.getElementById('broadcast-log-content');
+        if (!logContent) return;
+
+        const time = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.innerHTML = `
+            <div style="padding: 4px 0; border-bottom: 1px solid var(--glass-border);">
+                <span style="color: #666;">[${time}]</span>
+                <span style="color: var(--primary-color); margin: 0 8px;">${event.module || 'unknown'}</span>
+                <span style="color: var(--text-primary);">${event.action || 'unknown'}</span>
+                ${event.changedFields ? `<span style="color: #888; margin-left: 8px;">(${event.changedFields.join(', ')})</span>` : ''}
+            </div>
+        `;
+        
+        logContent.prepend(logEntry);
+        
+        // Keep only last 20 entries
+        const entries = logContent.children;
+        if (entries.length > 20) {
+            logContent.removeChild(entries[entries.length - 1]);
+        }
+    },
+
+    toggleBroadcastLog() {
+        const logSection = document.getElementById('broadcast-log-section');
+        if (logSection) {
+            logSection.style.display = logSection.style.display === 'none' ? 'block' : 'none';
+        }
+    },
+
+    // ==================== FORM VALIDATION ====================
     validateProfileForm() {
         const farmName = this.getValue('farm-name');
         const farmerName = this.getValue('farmer-name');
@@ -489,12 +727,11 @@ const ProfileModule = {
         return true;
     },
 
-    // SAVE USER INPUT TO PREVENT LOSS
+    // ==================== USER INPUT MANAGEMENT ====================
     saveUserInput(elementId, value) {
         this.currentInputValues[elementId] = value;
     },
 
-    // RESTORE USER INPUT AFTER RENDER
     restoreUserInput() {
         Object.keys(this.currentInputValues).forEach(elementId => {
             const element = document.getElementById(elementId);
@@ -508,6 +745,7 @@ const ProfileModule = {
         });
     },
 
+    // ==================== USER DATA MANAGEMENT ====================
     async loadUserData() {
         try {
             const currentUser = this.getCurrentUser();
@@ -527,7 +765,8 @@ const ProfileModule = {
                     localStorageEnabled: true,
                     theme: 'auto',
                     memberSince: new Date().toISOString(),
-                    lastSync: null
+                    lastSync: null,
+                    userId: currentUser?.uid
                 };
             }
 
@@ -542,13 +781,19 @@ const ProfileModule = {
             // Update user persistence
             this.updateUserPersistence();
             
+            // Broadcast profile loaded
+            this.broadcastDataAction('profile_data_loaded', {
+                farmName: window.FarmModules.appData.profile.farmName,
+                hasFirebase: !!this.getCurrentUser()
+            });
+            
         } catch (error) {
             console.error('Error loading user data:', error);
             this.handleFirebaseError(error);
         }
     },
 
-    // USER PERSISTENCE METHODS
+    // ==================== USER PERSISTENCE ====================
     updateUserPersistence() {
         const rememberUser = window.FarmModules.appData.profile?.rememberUser !== false;
         
@@ -560,6 +805,7 @@ const ProfileModule = {
             firebase.auth().setPersistence(persistence)
                 .then(() => {
                     console.log('User persistence set to:', rememberUser ? 'LOCAL' : 'SESSION');
+                    this.broadcastDataAction('user_persistence_updated', { persistence: rememberUser ? 'local' : 'session' });
                 })
                 .catch((error) => {
                     console.error('Error setting auth persistence:', error);
@@ -568,7 +814,7 @@ const ProfileModule = {
         }
     },
 
-    // THEME MANAGEMENT
+    // ==================== THEME MANAGEMENT ====================
     changeTheme(theme) {
         if (window.StyleManager) {
             window.StyleManager.applyTheme(theme);
@@ -577,7 +823,171 @@ const ProfileModule = {
         }
     },
 
-    // BACKUP & RESTORE FUNCTIONALITY
+    updateThemeDisplay(theme) {
+        const themeSelector = document.getElementById('theme-selector');
+        if (themeSelector && themeSelector.value !== theme) {
+            themeSelector.value = theme;
+            this.saveUserInput('theme-selector', theme);
+        }
+    },
+
+    updateCurrencyDisplay(currency) {
+        const currencySelector = document.getElementById('default-currency');
+        if (currencySelector && currencySelector.value !== currency) {
+            currencySelector.value = currency;
+            this.saveUserInput('default-currency', currency);
+        }
+    },
+
+    // ==================== PROFILE MANAGEMENT ====================
+    async saveProfile() {
+        try {
+            const oldProfile = JSON.parse(JSON.stringify(window.FarmModules.appData.profile));
+            const profile = window.FarmModules.appData.profile;
+            
+            // Use current input values or fall back to saved values
+            profile.farmName = this.currentInputValues['farm-name'] || this.getValue('farm-name') || profile.farmName;
+            profile.farmerName = this.currentInputValues['farmer-name'] || this.getValue('farmer-name') || profile.farmerName;
+            profile.farmType = this.currentInputValues['farm-type'] || this.getValue('farm-type') || profile.farmType;
+            profile.farmLocation = this.currentInputValues['farm-location'] || this.getValue('farm-location') || profile.farmLocation;
+            profile.rememberUser = this.currentInputValues['remember-user'] !== undefined ? this.currentInputValues['remember-user'] : this.getChecked('remember-user');
+            profile.localStorageEnabled = this.currentInputValues['local-storage'] !== undefined ? this.currentInputValues['local-storage'] : this.getChecked('local-storage');
+
+            window.FarmModules.appData.farmName = profile.farmName;
+
+            // Update user persistence settings
+            this.updateUserPersistence();
+
+            // Auto-save to Firebase if enabled
+            if (profile.autoSync) {
+                await this.saveToFirebase();
+            }
+
+            // Save to local storage if enabled
+            if (profile.localStorageEnabled) {
+                this.saveToLocalStorage();
+            }
+
+            // BROADCAST PROFILE UPDATE
+            const changedFields = this.getChangedFields(oldProfile, profile);
+            this.broadcastProfileUpdate(oldProfile, profile, changedFields);
+            
+            this.updateAllDisplays();
+            this.showNotification('Profile saved successfully!', 'success');
+            
+            // Clear current input values after successful save
+            this.currentInputValues = {};
+            
+        } catch (error) {
+            console.error('Error saving profile:', error);
+            this.showNotification('Error saving profile', 'error');
+        }
+    },
+
+    getChangedFields(oldData, newData) {
+        const changedFields = [];
+        for (const key in oldData) {
+            if (JSON.stringify(oldData[key]) !== JSON.stringify(newData[key])) {
+                changedFields.push(key);
+            }
+        }
+        return changedFields;
+    },
+
+    refreshProfileData(data) {
+        // Called when profile is updated via broadcast
+        if (data && data.farmName) {
+            window.FarmModules.appData.profile = {
+                ...window.FarmModules.appData.profile,
+                ...data
+            };
+            this.updateAllDisplays();
+            this.showNotification('Profile updated from another tab', 'info');
+        }
+    },
+
+    // ==================== SETTINGS MANAGEMENT ====================
+    async saveSetting(setting, value) {
+        try {
+            const oldValue = window.FarmModules.appData.profile[setting];
+            window.FarmModules.appData.profile[setting] = value;
+            
+            // BROADCAST SETTING CHANGE
+            this.broadcastSettingChange(setting, oldValue, value);
+            
+            // Auto-save to Firebase if enabled
+            if (window.FarmModules.appData.profile.autoSync) {
+                await this.saveToFirebase();
+            }
+            
+            // Save to local storage
+            this.saveToLocalStorage();
+            
+            this.showNotification('Setting updated', 'info');
+        } catch (error) {
+            console.error('Error saving setting:', error);
+            this.showNotification('Error saving setting', 'error');
+        }
+    },
+
+    updateSettingsFromBroadcast(settings) {
+        // Update settings from broadcast
+        if (settings) {
+            window.FarmModules.appData.profile = {
+                ...window.FarmModules.appData.profile,
+                ...settings
+            };
+            this.updateSettings();
+        }
+    },
+
+    // ==================== SYNC METHODS ====================
+    async syncNow() {
+        this.updateSyncStatus('🔄 Syncing...');
+        
+        // BROADCAST SYNC START
+        this.broadcastDataAction('sync_started');
+        
+        try {
+            const profile = window.FarmModules.appData.profile;
+            let cloudSuccess = false;
+            let localSuccess = false;
+
+            // Sync to Firebase if auto-sync enabled
+            if (profile.autoSync) {
+                cloudSuccess = await this.saveToFirebase();
+            }
+
+            // Sync to local storage if enabled
+            if (profile.localStorageEnabled) {
+                this.saveToLocalStorage();
+                localSuccess = true;
+            }
+
+            if (cloudSuccess) {
+                // BROADCAST SYNC SUCCESS
+                this.broadcastDataAction('data_synced', { destination: 'firebase' });
+                this.showNotification('Data synced with cloud and local storage!', 'success');
+                this.updateSyncStatus('✅ Synced');
+            } else if (localSuccess) {
+                this.showNotification('Data saved to local storage!', 'success');
+                this.updateSyncStatus('💾 Local');
+            } else {
+                // BROADCAST SYNC FAILURE
+                this.broadcastDataAction('data_sync_failed', { error: 'Unknown error' });
+                this.showNotification('Sync failed. Data not saved.', 'error');
+                this.updateSyncStatus('❌ Failed');
+            }
+        } catch (error) {
+            // BROADCAST SYNC FAILURE
+            this.broadcastDataAction('data_sync_failed', { error: error.message });
+            console.error('Sync error:', error);
+            this.showNotification('Sync failed', 'error');
+            this.updateSyncStatus('❌ Failed');
+        }
+    },
+
+    // ==================== BACKUP & RESTORE ====================
     createBackup() {
         try {
             const backupData = {
@@ -596,6 +1006,13 @@ const ProfileModule = {
             link.click();
             
             URL.revokeObjectURL(link.href);
+            
+            // BROADCAST BACKUP CREATED
+            this.broadcastDataAction('backup_created', {
+                timestamp: backupData.timestamp,
+                size: backupStr.length
+            });
+            
             this.showNotification('Backup created successfully!', 'success');
         } catch (error) {
             console.error('Backup creation error:', error);
@@ -623,7 +1040,20 @@ const ProfileModule = {
                     }
                     
                     if (confirm('Are you sure you want to restore this backup? This will replace all current data.')) {
+                        // BROADCAST BACKUP RESTORE START
+                        this.broadcastDataAction('backup_restore_started', {
+                            timestamp: backupData.timestamp
+                        });
+                        
+                        const oldData = JSON.parse(JSON.stringify(window.FarmModules.appData));
                         window.FarmModules.appData = backupData.appData;
+                        
+                        // BROADCAST DATA REPLACED
+                        this.broadcastDataDeleted('all_data_replaced', {
+                            oldData: oldData,
+                            newData: window.FarmModules.appData
+                        });
+                        
                         this.showNotification('Backup restored successfully!', 'success');
                         this.updateAllDisplays();
                         
@@ -651,7 +1081,6 @@ const ProfileModule = {
         try {
             const backupList = document.getElementById('backup-list');
             if (backupList) {
-                // Check localStorage for backups
                 const backups = [];
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
@@ -696,6 +1125,12 @@ const ProfileModule = {
         try {
             const backupData = JSON.parse(localStorage.getItem(backupKey));
             if (backupData && confirm('Restore this backup? Current data will be replaced.')) {
+                // BROADCAST LOCAL BACKUP RESTORE
+                this.broadcastDataAction('local_backup_restored', {
+                    backupKey: backupKey,
+                    timestamp: backupData.timestamp
+                });
+                
                 window.FarmModules.appData = backupData.appData;
                 this.showNotification('Backup restored successfully!', 'success');
                 this.updateAllDisplays();
@@ -712,7 +1147,7 @@ const ProfileModule = {
         this.showNotification('Backup list refreshed', 'info');
     },
 
-    // IMPORT DATA FUNCTIONALITY
+    // ==================== DATA MANAGEMENT ====================
     importData() {
         const input = document.createElement('input');
         input.type = 'file';
@@ -739,6 +1174,9 @@ const ProfileModule = {
 
     mergeImportedData(importData) {
         try {
+            // BROADCAST IMPORT START
+            this.broadcastDataAction('data_import_started');
+            
             let importedCount = 0;
             
             if (importData.orders && Array.isArray(importData.orders)) {
@@ -761,6 +1199,9 @@ const ProfileModule = {
                 importedCount += importData.products.length;
             }
             
+            // BROADCAST IMPORT COMPLETE
+            this.broadcastDataAction('data_imported', { itemsImported: importedCount });
+            
             this.showNotification(`Successfully imported ${importedCount} items!`, 'success');
             this.updateAllDisplays();
             window.dispatchEvent(new CustomEvent('farm-data-updated'));
@@ -777,7 +1218,87 @@ const ProfileModule = {
         }
     },
 
-    // FIREBASE METHODS
+    exportData() {
+        try {
+            const exportData = {
+                appData: window.FarmModules.appData,
+                timestamp: new Date().toISOString(),
+                version: '1.0',
+                exportDate: new Date().toLocaleString(),
+                summary: {
+                    orders: window.FarmModules.appData.orders?.length || 0,
+                    inventory: window.FarmModules.appData.inventory?.length || 0,
+                    customers: window.FarmModules.appData.customers?.length || 0,
+                    products: window.FarmModules.appData.products?.length || 0
+                }
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `farm-data-export-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(link.href);
+            
+            // BROADCAST DATA EXPORT
+            this.broadcastDataAction('data_exported', { 
+                summary: exportData.summary,
+                size: dataStr.length 
+            });
+            
+            this.showNotification('All farm data exported successfully!', 'success');
+        } catch (error) {
+            console.error('Export error:', error);
+            this.showNotification('Error exporting data', 'error');
+        }
+    },
+
+    clearAllData() {
+        if (confirm('ARE YOU SURE? This will delete ALL your farm data including orders, inventory, and customers. This cannot be undone!')) {
+            if (confirm('THIS IS YOUR LAST WARNING! All data will be permanently deleted!')) {
+                try {
+                    // BROADCAST DATA CLEARANCE START
+                    this.broadcastDataAction('data_clearance_started');
+                    
+                    const oldData = JSON.parse(JSON.stringify(window.FarmModules.appData));
+                    
+                    window.FarmModules.appData.orders = [];
+                    window.FarmModules.appData.inventory = [];
+                    window.FarmModules.appData.customers = [];
+                    window.FarmModules.appData.products = [];
+                    
+                    // Clear dashboard stats
+                    if (window.FarmModules.appData.profile.dashboardStats) {
+                        window.FarmModules.appData.profile.dashboardStats = {};
+                    }
+                    
+                    // Clear current input values
+                    this.currentInputValues = {};
+                    
+                    // BROADCAST DATA CLEARED
+                    this.broadcastDataDeleted('all_data_cleared', { oldData: oldData });
+                    
+                    // Save empty state
+                    this.saveToLocalStorage();
+                    if (window.FarmModules.appData.profile.autoSync) {
+                        this.saveToFirebase();
+                    }
+                    
+                    this.showNotification('All data cleared successfully', 'success');
+                    this.updateAllDisplays();
+                    window.dispatchEvent(new CustomEvent('farm-data-updated'));
+                } catch (error) {
+                    console.error('Error clearing data:', error);
+                    this.showNotification('Error clearing data', 'error');
+                }
+            }
+        }
+    },
+
+    // ==================== FIREBASE METHODS ====================
     async loadFromFirebase() {
         try {
             const currentUser = this.getCurrentUser();
@@ -804,6 +1325,9 @@ const ProfileModule = {
                     };
                     console.log('✅ Profile data loaded from Firebase');
                     this.updateSyncStatus('✅ Synced');
+                    
+                    // BROADCAST FIREBASE LOAD
+                    this.broadcastDataAction('firebase_data_loaded');
                 } else {
                     // Create user document in Firebase
                     await this.saveToFirebase();
@@ -832,7 +1356,8 @@ const ProfileModule = {
                     lastSync: new Date().toISOString(),
                     uid: currentUser.uid,
                     email: currentUser.email,
-                    displayName: currentUser.displayName
+                    displayName: currentUser.displayName,
+                    userId: currentUser.uid
                 };
 
                 await firebase.firestore()
@@ -842,6 +1367,9 @@ const ProfileModule = {
 
                 console.log('✅ Profile data saved to Firebase');
                 this.updateSyncStatus('✅ Synced');
+                
+                // BROADCAST FIREBASE SAVE
+                this.broadcastDataAction('firebase_data_saved');
                 return true;
             }
         } catch (error) {
@@ -852,7 +1380,6 @@ const ProfileModule = {
         }
     },
 
-    // FIREBASE ERROR HANDLING
     handleFirebaseError(error) {
         console.error('Firebase error:', error);
         let message = 'Sync failed';
@@ -870,7 +1397,7 @@ const ProfileModule = {
         this.showNotification(message, 'error');
     },
 
-    // LOCAL STORAGE METHODS
+    // ==================== LOCAL STORAGE METHODS ====================
     saveToLocalStorage() {
         try {
             localStorage.setItem('farm-profile', JSON.stringify(window.FarmModules.appData.profile));
@@ -879,6 +1406,9 @@ const ProfileModule = {
             localStorage.setItem('farm-customers', JSON.stringify(window.FarmModules.appData.customers || []));
             localStorage.setItem('farm-products', JSON.stringify(window.FarmModules.appData.products || []));
             console.log('✅ Data saved to local storage');
+            
+            // BROADCAST LOCAL SAVE
+            this.broadcastDataAction('local_data_saved');
         } catch (error) {
             console.error('Error saving to local storage:', error);
             this.showNotification('Error saving to local storage', 'error');
@@ -905,6 +1435,9 @@ const ProfileModule = {
             if (savedProducts) window.FarmModules.appData.products = JSON.parse(savedProducts);
 
             console.log('✅ Data loaded from local storage');
+            
+            // BROADCAST LOCAL LOAD
+            this.broadcastDataAction('local_data_loaded');
             return true;
         } catch (error) {
             console.error('Error loading from local storage:', error);
@@ -913,257 +1446,100 @@ const ProfileModule = {
         }
     },
 
-    // DATA MANAGEMENT METHODS
-    async saveProfile() {
-        try {
-            const profile = window.FarmModules.appData.profile;
-            
-            // Use current input values or fall back to saved values
-            profile.farmName = this.currentInputValues['farm-name'] || this.getValue('farm-name') || profile.farmName;
-            profile.farmerName = this.currentInputValues['farmer-name'] || this.getValue('farmer-name') || profile.farmerName;
-            profile.farmType = this.currentInputValues['farm-type'] || this.getValue('farm-type') || profile.farmType;
-            profile.farmLocation = this.currentInputValues['farm-location'] || this.getValue('farm-location') || profile.farmLocation;
-            profile.rememberUser = this.currentInputValues['remember-user'] !== undefined ? this.currentInputValues['remember-user'] : this.getChecked('remember-user');
-            profile.localStorageEnabled = this.currentInputValues['local-storage'] !== undefined ? this.currentInputValues['local-storage'] : this.getChecked('local-storage');
-
-            window.FarmModules.appData.farmName = profile.farmName;
-
-            // Update user persistence settings
-            this.updateUserPersistence();
-
-            // Auto-save to Firebase if enabled
-            if (profile.autoSync) {
-                await this.saveToFirebase();
-            }
-
-            // Save to local storage if enabled
-            if (profile.localStorageEnabled) {
-                this.saveToLocalStorage();
-            }
-
-            this.updateAllDisplays();
-            this.showNotification('Profile saved successfully!', 'success');
-            
-            // Clear current input values after successful save
-            this.currentInputValues = {};
-            
-        } catch (error) {
-            console.error('Error saving profile:', error);
-            this.showNotification('Error saving profile', 'error');
-        }
-    },
-
-    async saveSetting(setting, value) {
-        try {
-            window.FarmModules.appData.profile[setting] = value;
-            
-            // Auto-save to Firebase if enabled
-            if (window.FarmModules.appData.profile.autoSync) {
-                await this.saveToFirebase();
-            }
-            
-            // Save to local storage
-            this.saveToLocalStorage();
-            
-            this.showNotification('Setting updated', 'info');
-        } catch (error) {
-            console.error('Error saving setting:', error);
-            this.showNotification('Error saving setting', 'error');
-        }
-    },
-
-    async syncNow() {
-        this.updateSyncStatus('🔄 Syncing...');
+    // ==================== LOGOUT HANDLER ====================
+    async handleLogout() {
+        console.log('=== LOGOUT DEBUG ===');
+        console.log('1. Current URL:', window.location.href);
+        console.log('2. Firebase user:', firebase?.auth()?.currentUser);
         
-        try {
-            const profile = window.FarmModules.appData.profile;
-            let cloudSuccess = false;
-            let localSuccess = false;
-
-            // Sync to Firebase if auto-sync enabled
-            if (profile.autoSync) {
-                cloudSuccess = await this.saveToFirebase();
-            }
-
-            // Sync to local storage if enabled
-            if (profile.localStorageEnabled) {
-                this.saveToLocalStorage();
-                localSuccess = true;
-            }
-
-            if (cloudSuccess) {
-                this.showNotification('Data synced with cloud and local storage!', 'success');
-                this.updateSyncStatus('✅ Synced');
-            } else if (localSuccess) {
-                this.showNotification('Data saved to local storage!', 'success');
-                this.updateSyncStatus('💾 Local');
-            } else {
-                this.showNotification('Sync failed. Data not saved.', 'error');
-                this.updateSyncStatus('❌ Failed');
-            }
-        } catch (error) {
-            console.error('Sync error:', error);
-            this.showNotification('Sync failed', 'error');
-            this.updateSyncStatus('❌ Failed');
-        }
-    },
-
-    exportData() {
-        try {
-            const exportData = {
-                appData: window.FarmModules.appData,
-                timestamp: new Date().toISOString(),
-                version: '1.0',
-                exportDate: new Date().toLocaleString(),
-                summary: {
-                    orders: window.FarmModules.appData.orders?.length || 0,
-                    inventory: window.FarmModules.appData.inventory?.length || 0,
-                    customers: window.FarmModules.appData.customers?.length || 0,
-                    products: window.FarmModules.appData.products?.length || 0
+        const rememberUser = window.FarmModules.appData.profile?.rememberUser;
+        
+        if (confirm('Are you sure you want to logout?' + (rememberUser ? '\n\nYou have "Remember Me" enabled. Your data will be saved for next login.' : ''))) {
+            try {
+                // BROADCAST LOGOUT START
+                this.broadcastDataAction('logout_started', { rememberUser: rememberUser });
+                
+                // 1. Switch UI to auth IMMEDIATELY
+                console.log('🔄 Switching UI to auth screen...');
+                document.getElementById('app-container').classList.add('hidden');
+                document.getElementById('auth-container').classList.remove('hidden');
+                
+                // 2. Clear Firebase
+                if (typeof firebase !== 'undefined' && firebase.auth) {
+                    console.log('🔥 Signing out from Firebase...');
+                    await firebase.auth().signOut();
+                    console.log('✅ Firebase signed out');
                 }
-            };
-            
-            const dataStr = JSON.stringify(exportData, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(dataBlob);
-            link.download = `farm-data-export-${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
-            
-            URL.revokeObjectURL(link.href);
-            this.showNotification('All farm data exported successfully!', 'success');
-        } catch (error) {
-            console.error('Export error:', error);
-            this.showNotification('Error exporting data', 'error');
-        }
-    },
-
-    clearAllData() {
-        if (confirm('ARE YOU SURE? This will delete ALL your farm data including orders, inventory, and customers. This cannot be undone!')) {
-            if (confirm('THIS IS YOUR LAST WARNING! All data will be permanently deleted!')) {
-                try {
-                    window.FarmModules.appData.orders = [];
-                    window.FarmModules.appData.inventory = [];
-                    window.FarmModules.appData.customers = [];
-                    window.FarmModules.appData.products = [];
-                    
-                    // Clear dashboard stats
-                    if (window.FarmModules.appData.profile.dashboardStats) {
-                        window.FarmModules.appData.profile.dashboardStats = {};
-                    }
-                    
-                    // Clear current input values
-                    this.currentInputValues = {};
-                    
-                    // Save empty state
-                    this.saveToLocalStorage();
-                    if (window.FarmModules.appData.profile.autoSync) {
-                        this.saveToFirebase();
-                    }
-                    
-                    this.showNotification('All data cleared successfully', 'success');
-                    this.updateAllDisplays();
-                    window.dispatchEvent(new CustomEvent('farm-data-updated'));
-                } catch (error) {
-                    console.error('Error clearing data:', error);
-                    this.showNotification('Error clearing data', 'error');
-                }
-            }
-        }
-    },
-
-  async handleLogout() {
-    // Add at the BEGINNING of handleLogout()
-    console.log('=== LOGOUT DEBUG ===');
-    console.log('1. Current URL:', window.location.href);
-    console.log('2. Firebase user:', firebase?.auth()?.currentUser);
-    console.log('3. Has farm-profile:', localStorage.getItem('farm-profile') ? 'Yes' : 'No');
-    console.log('4. All localStorage keys:', Array.from({length: localStorage.length}, (_, i) => localStorage.key(i)));
-
-    const rememberUser = window.FarmModules.appData.profile?.rememberUser;
-    
-    if (confirm('Are you sure you want to logout?' + (rememberUser ? '\n\nYou have "Remember Me" enabled. Your data will be saved for next login.' : ''))) {
-        try {
-            // 1. FIRST AND MOST IMPORTANT: Switch UI to auth IMMEDIATELY
-            console.log('🔄 Switching UI to auth screen...');
-            document.getElementById('app-container').classList.add('hidden');
-            document.getElementById('auth-container').classList.remove('hidden');
-            
-            // 2. Clear Firebase
-            if (typeof firebase !== 'undefined' && firebase.auth) {
-                console.log('🔥 Signing out from Firebase...');
-                await firebase.auth().signOut();
-                console.log('✅ Firebase signed out');
-            }
-            
-            // 3. Clear auth localStorage
-            const authKeys = ['firebase:', 'auth_', 'user_'];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (authKeys.some(authKey => key.includes(authKey))) {
-                    localStorage.removeItem(key);
-                    console.log(`🗑️ Removed auth key: ${key}`);
-                }
-            }
-            
-            // 4. Handle "Remember Me" - only clear data if disabled
-            if (!rememberUser) {
-                console.log('🧹 Clearing app data (Remember Me disabled)');
-                const appKeys = ['farm-', 'profileData', 'transactions', 'sales', 'inventory'];
+                
+                // 3. Clear auth localStorage
+                const authKeys = ['firebase:', 'auth_', 'user_'];
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
-                    if (appKeys.some(appKey => key.includes(appKey))) {
+                    if (authKeys.some(authKey => key.includes(authKey))) {
                         localStorage.removeItem(key);
-                        console.log(`🗑️ Removed app key: ${key}`);
+                        console.log(`🗑️ Removed auth key: ${key}`);
                     }
                 }
                 
-                // Reset app data
-                window.FarmModules.appData = {
-                    profile: {
-                        farmName: 'My Farm',
-                        farmerName: 'Farm Manager',
-                        farmType: 'poultry',
-                        currency: 'USD',
-                        lowStockThreshold: 10,
-                        autoSync: true,
-                        rememberUser: true,
-                        localStorageEnabled: true,
-                        memberSince: new Date().toISOString()
-                    },
-                    orders: [],
-                    inventory: [],
-                    customers: [],
-                    products: []
-                };
+                // 4. Handle "Remember Me" - only clear data if disabled
+                if (!rememberUser) {
+                    console.log('🧹 Clearing app data (Remember Me disabled)');
+                    const appKeys = ['farm-', 'profileData', 'transactions', 'sales', 'inventory'];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (appKeys.some(appKey => key.includes(appKey))) {
+                            localStorage.removeItem(key);
+                            console.log(`🗑️ Removed app key: ${key}`);
+                        }
+                    }
+                    
+                    // Reset app data
+                    window.FarmModules.appData = {
+                        profile: {
+                            farmName: 'My Farm',
+                            farmerName: 'Farm Manager',
+                            farmType: 'poultry',
+                            currency: 'USD',
+                            lowStockThreshold: 10,
+                            autoSync: true,
+                            rememberUser: true,
+                            localStorageEnabled: true,
+                            memberSince: new Date().toISOString()
+                        },
+                        orders: [],
+                        inventory: [],
+                        customers: [],
+                        products: []
+                    };
+                }
+                
+                // BROADCAST LOGOUT COMPLETE
+                this.broadcastDataAction('logout_completed', { 
+                    rememberUser: rememberUser,
+                    dataCleared: !rememberUser 
+                });
+                
+                this.showNotification('Logged out successfully', 'success');
+                
+                console.log('✅ Logout complete - showing login screen');
+                
+                // Optional: Clear any URL parameters
+                if (window.history.replaceState) {
+                    window.history.replaceState(null, '', window.location.pathname);
+                }
+                
+            } catch (error) {
+                console.error('Logout error:', error);
+                this.showNotification('Error during logout', 'error');
+                
+                // Still ensure we show auth screen on error
+                document.getElementById('app-container')?.classList.add('hidden');
+                document.getElementById('auth-container')?.classList.remove('hidden');
             }
-            
-            // 5. Show success message
-            this.showNotification('Logged out successfully', 'success');
-            
-            // 6. IMPORTANT: DO NOT REDIRECT - we're already on index.html!
-            // Just stay on the auth page we already switched to
-            
-            console.log('✅ Logout complete - showing login screen');
-            
-            // Optional: Clear any URL parameters
-            if (window.history.replaceState) {
-                window.history.replaceState(null, '', window.location.pathname);
-            }
-            
-        } catch (error) {
-            console.error('Logout error:', error);
-            this.showNotification('Error during logout', 'error');
-            
-            // Still ensure we show auth screen on error
-            document.getElementById('app-container')?.classList.add('hidden');
-            document.getElementById('auth-container')?.classList.remove('hidden');
         }
-    }
-},
-    
-    // DISPLAY METHODS
+    },
+
+    // ==================== DISPLAY METHODS ====================
     updateAllDisplays() {
         this.updateStatsFromModules();
         this.updateProfileInfo();
@@ -1251,7 +1627,21 @@ const ProfileModule = {
         }
     },
 
-    // NOTIFICATION SYSTEM
+    updateUserStatus(status) {
+        // Update UI based on user status
+        const badge = document.getElementById('broadcast-badge');
+        if (badge) {
+            if (status === 'online') {
+                badge.textContent = '📡 Online';
+                badge.style.background = 'var(--success-color)';
+            } else if (status === 'offline') {
+                badge.textContent = '📡 Offline';
+                badge.style.background = 'var(--danger-color)';
+            }
+        }
+    },
+
+    // ==================== UTILITY METHODS ====================
     showNotification(message, type = 'info') {
         // Try core module first
         if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
@@ -1273,7 +1663,6 @@ const ProfileModule = {
         }
     },
 
-    // UTILITY METHODS
     getValue(id) {
         const element = document.getElementById(id);
         return element ? element.value : '';
@@ -1314,6 +1703,11 @@ const ProfileModule = {
         return null;
     },
 
+    getCurrentUserId() {
+        const user = this.getCurrentUser();
+        return user ? user.uid : 'anonymous';
+    },
+
     updateSyncStatus(status) {
         const syncElement = document.getElementById('sync-status');
         if (syncElement) {
@@ -1322,23 +1716,16 @@ const ProfileModule = {
     }
 };
 
-if (window.FarmModules) {
-    window.FarmModules.registerModule('profile', ProfileModule);
-}
-
-console.log('✅ Profile module registered with ALL implementations');
-
 // ==================== UNIVERSAL REGISTRATION ====================
-
 (function() {
-    const MODULE_NAME = 'profile.js'; // e.g., 'dashboard'
-    const MODULE_OBJECT = ProfileModule; // e.g., DashboardModule
+    const MODULE_NAME = 'profile.js';
+    const MODULE_OBJECT = ProfileModule;
     
-    console.log(`📦 Registering ${MODULE_NAME} module...`);
+    console.log(`📦 Registering ${MODULE_NAME} module with Data Broadcaster...`);
     
     if (window.FarmModules) {
         FarmModules.registerModule(MODULE_NAME, MODULE_OBJECT);
-        console.log(`✅ ${MODULE_NAME} module registered successfully!`);
+        console.log(`✅ ${MODULE_NAME} module registered successfully with Data Broadcaster!`);
     } else {
         console.error('❌ FarmModules framework not found');
     }
