@@ -11,6 +11,78 @@ class AuthModule {
         this.setupAuthForms();
     }
 
+    // ======== ADD THE SOCIAL LOGIN METHODS  ========
+    renderSocialLoginButtons() {
+        const socialContainer = document.getElementById('social-login-container');
+        if (socialContainer && window.authManager) {
+            // Use the method from your FirebaseAuth class
+            socialContainer.innerHTML = window.authManager.renderAuthButtons();
+            
+            // Add click handlers for social buttons
+            const googleBtn = socialContainer.querySelector('.btn-social.google');
+            const appleBtn = socialContainer.querySelector('.btn-social.apple');
+            
+            if (googleBtn) {
+                googleBtn.onclick = async (e) => {
+                    e.preventDefault();
+                    await this.handleSocialSignIn('google');
+                };
+            }
+            
+            if (appleBtn) {
+                appleBtn.onclick = async (e) => {
+                    e.preventDefault();
+                    await this.handleSocialSignIn('apple');
+                };
+            }
+        }
+    }
+    
+    // Add this new method for social sign-in
+    async handleSocialSignIn(provider) {
+        let result;
+        const socialContainer = document.getElementById('social-login-container');
+        
+        if (!socialContainer) return;
+        
+        // Disable all social buttons
+        const buttons = socialContainer.querySelectorAll('.btn-social');
+        buttons.forEach(btn => {
+            btn.disabled = true;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `Signing in with ${provider === 'google' ? 'Google' : 'Apple'}...`;
+            btn.dataset.originalText = originalText;
+        });
+        
+        try {
+            if (provider === 'google') {
+                result = await window.authManager?.signInWithGoogle();
+            } else if (provider === 'apple') {
+                result = await window.authManager?.signInWithApple();
+            }
+            
+            if (result?.success) {
+                this.showNotification(`Signed in with ${provider === 'google' ? 'Google' : 'Apple'}!`, 'success');
+                // Redirect to dashboard
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
+            } else {
+                this.showNotification(result?.error || `Error signing in with ${provider === 'google' ? 'Google' : 'Apple'}`, 'error');
+            }
+        } catch (error) {
+            this.showNotification(`Error signing in with ${provider === 'google' ? 'Google' : 'Apple'}`, 'error');
+        } finally {
+            // Re-enable buttons
+            buttons.forEach(btn => {
+                btn.disabled = false;
+                if (btn.dataset.originalText) {
+                    btn.innerHTML = btn.dataset.originalText;
+                }
+            });
+        }
+    }
+    
     setupAuthForms() {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
@@ -20,45 +92,39 @@ class AuthModule {
             this.attachFormHandlers();
         }
     }
+    
+   attachFormHandlers() {
+    // RENDER SOCIAL BUTTONS HERE
+    this.renderSocialLoginButtons();
+    
+    // Sign up form
+    const signupForm = document.getElementById('signup-form-element');
+    if (signupForm) {
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.handleSignUp();
+        });
+    }
 
-    attachFormHandlers() {
-        // Sign up form
-        const signupForm = document.getElementById('signup-form-element');
-        if (signupForm) {
-            signupForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                await this.handleSignUp();
-            });
-        }
+    // Sign in form
+    const signinForm = document.getElementById('signin-form-element');
+    if (signinForm) {
+        signinForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.handleSignIn();
+        });
+    }
 
-        // Sign in form
-        const signinForm = document.getElementById('signin-form-element');
-        if (signinForm) {
-            signinForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                await this.handleSignIn();
-            });
-        }
+    // Forgot password form
+    const forgotForm = document.getElementById('forgot-password-form-element');
+    if (forgotForm) {
+        forgotForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.handleForgotPassword();
+        });
+    }
 
-        // Forgot password form
-        const forgotForm = document.getElementById('forgot-password-form-element');
-        if (forgotForm) {
-            forgotForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                await this.handleForgotPassword();
-            });
-        }
-
-        // Google sign in
-        const googleBtn = document.getElementById('google-signin');
-        if (googleBtn) {
-            googleBtn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                await this.handleGoogleSignIn();
-            });
-        }
-
-        this.setupAuthListeners();
+    this.setupAuthListeners();
     }
 
     setupAuthListeners() {
@@ -96,41 +162,45 @@ class AuthModule {
         }
     }
 
-    async handleSignUp() {
+        async handleSignUp() {
         const form = document.getElementById('signup-form-element');
         if (!form) return;
-
+    
         const submitBtn = form.querySelector('button[type="submit"]');
         const name = document.getElementById('signup-name')?.value || '';
         const email = document.getElementById('signup-email')?.value || '';
         const password = document.getElementById('signup-password')?.value || '';
         const confirmPassword = document.getElementById('signup-confirm-password')?.value || '';
         const farmName = document.getElementById('farm-name')?.value || '';
-
+    
         if (password !== confirmPassword) {
             this.showNotification('Passwords do not match', 'error');
             return;
         }
-
+    
         if (password.length < 6) {
             this.showNotification('Password must be at least 6 characters', 'error');
             return;
         }
-
+    
         if (submitBtn) {
             submitBtn.innerHTML = 'Creating Account...';
             submitBtn.disabled = true;
         }
-
+    
         try {
             const result = await window.authManager?.signUp(email, password, {
                 name: name,
                 email: email,
                 farmName: farmName
             });
-
+    
             if (result?.success) {
                 this.showNotification('Account created successfully!', 'success');
+                // ADD REDIRECTION
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
             } else {
                 this.showNotification(result?.error || 'Error creating account', 'error');
             }
@@ -143,25 +213,29 @@ class AuthModule {
             }
         }
     }
-
+    
     async handleSignIn() {
         const form = document.getElementById('signin-form-element');
         if (!form) return;
-
+    
         const submitBtn = form.querySelector('button[type="submit"]');
         const email = document.getElementById('signin-email')?.value || '';
         const password = document.getElementById('signin-password')?.value || '';
-
+    
         if (submitBtn) {
             submitBtn.innerHTML = 'Signing In...';
             submitBtn.disabled = true;
         }
-
+    
         try {
             const result = await window.authManager?.signIn(email, password);
-
+    
             if (result?.success) {
                 this.showNotification('Welcome back!', 'success');
+                // ADD REDIRECTION
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
             } else {
                 this.showNotification(result?.error || 'Error signing in', 'error');
             }
@@ -174,31 +248,7 @@ class AuthModule {
             }
         }
     }
-
-    async handleGoogleSignIn() {
-        const button = document.getElementById('google-signin');
-        if (!button) return;
-
-        const originalText = button.innerHTML;
-        button.innerHTML = 'Signing in with Google...';
-        button.disabled = true;
-
-        try {
-            const result = await window.authManager?.signInWithGoogle();
-
-            if (result?.success) {
-                this.showNotification('Signed in with Google!', 'success');
-            } else {
-                this.showNotification(result?.error || 'Error signing in with Google', 'error');
-            }
-        } catch (error) {
-            this.showNotification('Error signing in with Google', 'error');
-        } finally {
-            button.innerHTML = originalText;
-            button.disabled = false;
-        }
-    }
-
+    
     async handleForgotPassword() {
         const form = document.getElementById('forgot-password-form-element');
         if (!form) return;
