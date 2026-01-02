@@ -116,9 +116,6 @@ class FirebaseAuth {
                 <span class="social-icon"></span>
                 Continue with Apple
             </button>
-            <div class="auth-divider">
-                <span>or</span>
-            </div>
         `;
     }
 
