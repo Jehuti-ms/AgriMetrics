@@ -12,36 +12,34 @@ class AuthModule {
     }
 
     // ======== ADD THE SOCIAL LOGIN METHODS  ========
-    renderSocialLoginButtons() {
-        console.log('🔄 Rendering social login buttons...');
-        const socialContainer = document.getElementById('social-login-container');
-        if (socialContainer && window.authManager) {
-            console.log('✅ Social container found, rendering buttons...');
-            // Use the method from your FirebaseAuth class
-            socialContainer.innerHTML = window.authManager.renderAuthButtons();
-            console.log('✅ Social buttons rendered');
+        renderSocialLoginButtons() {
+            console.log('🔄 Rendering social login buttons...');
+            const socialContainer = document.getElementById('social-login-container');
             
-            // Add click handlers for social buttons
-            const googleBtn = socialContainer.querySelector('.btn-social.google');
-            const appleBtn = socialContainer.querySelector('.btn-social.apple');
-            
-            if (googleBtn) {
-                googleBtn.onclick = async (e) => {
-                    e.preventDefault();
-                    await this.handleSocialSignIn('google');
-                };
-            }
-            
-            if (appleBtn) {
-                appleBtn.onclick = async (e) => {
-                    e.preventDefault();
-                    await this.handleSocialSignIn('apple');
-                };
-            }
+            if (socialContainer && window.authManager) {
+                console.log('✅ Social container found, rendering buttons...');
+                socialContainer.innerHTML = window.authManager.renderAuthButtons();
+                console.log('✅ Social buttons rendered');
+                
+                // Add click handlers
+                const googleBtn = socialContainer.querySelector('.btn-social.google');
+                const appleBtn = socialContainer.querySelector('.btn-social.apple');
+                
+                if (googleBtn) {
+                    googleBtn.onclick = async (e) => {
+                        e.preventDefault();
+                        await this.handleSocialSignIn('google');
+                    };
+                }
+                
+                if (appleBtn) {
+                    appleBtn.onclick = async (e) => {
+                        e.preventDefault();
+                        await this.handleSocialSignIn('apple');
+                    };
+                }
             } else {
                 console.log('⚠️ Social container or authManager not found');
-                console.log('- socialContainer:', !!socialContainer);
-                console.log('- authManager:', !!window.authManager);
             }
         }
 
