@@ -2106,11 +2106,6 @@ setupFormFieldListeners() {
                                 style="background: #0ea5e9; border: none; padding: 10px 20px; border-radius: 8px; color: white; font-weight: 500; cursor: pointer;">
                             ➕ Go to Production Module
                         </button>
-                        <button class="btn-outline" 
-                                onclick="window.FarmModules.SalesRecord.debugModules()"
-                                style="background: white; color: #64748b; border: 1px solid #cbd5e1; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 500;">
-                            🐛 Debug
-                        </button>
                     </div>
                 </div>
                 <p style="color: var(--text-secondary); font-size: 13px; margin-top: 12px;">
