@@ -3165,7 +3165,7 @@ class PDFService {
             );
         }
     }
-},
+}
 
 // ==================== AUTO-REGISTRATION WITH BOTH NAMES ====================
 if (typeof ProfileModule !== 'undefined') {
