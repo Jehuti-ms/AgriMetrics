@@ -16,22 +16,6 @@ const ProfileModule = {
     currentInputValues: {},
     broadcastSubscriptions: [],
 
-    // AUTO-REGISTER WITH BOTH NAMES
-if (typeof ProfileModule !== 'undefined') {
-    // Self-executing registration
-    (function() {
-        if (window.FarmModules) {
-            // Register as 'profile' (main name)
-            window.FarmModules.registerModule('profile', ProfileModule);
-            
-            // Also register as 'profile.js' for compatibility
-            window.FarmModules.registerModule('profile.js', ProfileModule);
-            
-            console.log('✅ Profile module registered with both names: "profile" and "profile.js"');
-        }
-    })();
-}
-
     // ==================== INITIALIZATION ====================
     initialize() {
         console.log('👤 Initializing profile with Data Broadcaster...');
@@ -1731,6 +1715,23 @@ if (typeof ProfileModule !== 'undefined') {
         }
     }
 };
+
+// ==================== AUTO-REGISTRATION WITH BOTH NAMES ====================
+// THIS MUST BE OUTSIDE THE ProfileModule OBJECT
+if (typeof ProfileModule !== 'undefined') {
+    // Self-executing registration
+    (function() {
+        if (window.FarmModules) {
+            // Register as 'profile' (main name)
+            window.FarmModules.registerModule('profile', ProfileModule);
+            
+            // Also register as 'profile.js' for compatibility
+            window.FarmModules.registerModule('profile.js', ProfileModule);
+            
+            console.log('✅ Profile module registered with both names: "profile" and "profile.js"');
+        }
+    })();
+}
 
 // ==================== UNIVERSAL REGISTRATION ====================
 (function() {
