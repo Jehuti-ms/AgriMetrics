@@ -254,12 +254,21 @@ async signInWithGoogleRedirect() {
         this.showNotification('Redirecting to Google for sign-in...', 'info');
         
         return { success: true, redirecting: true };
+
+        // Mark that we're attempting a redirect
+        sessionStorage.setItem('googleRedirectAttempt', 'true');
+        sessionStorage.setItem('redirectStartTime', Date.now().toString());
         
-    } catch (error) {
+        console.log('🔀 Starting redirect to Google...');
+        await firebase.auth().signInWithRedirect(provider);
+        
+        return { success: true, redirecting: true };
+        
+    }catch (error) {
         console.error('❌ Redirect sign-in error:', error);
         this.showNotification(`Redirect failed: ${error.message}`, 'error');
         return { success: false, error: error.message };
-    }
+    }  
 }
 
 // Add this method to handle redirect results
