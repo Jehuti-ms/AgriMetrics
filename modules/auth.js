@@ -44,7 +44,134 @@ class AuthModule {
                 console.log('- authManager:', !!window.authManager);
             }
         }
-        
+
+        // ======== PASSWORD STRENGTH METHODS ========
+
+            setupPasswordValidation() {
+                const passwordInput = document.getElementById('signup-password');
+                const confirmInput = document.getElementById('signup-confirm-password');
+                
+                if (passwordInput) {
+                    passwordInput.addEventListener('input', () => {
+                        this.checkPasswordStrength(passwordInput.value);
+                    });
+                }
+                
+                if (confirmInput) {
+                    confirmInput.addEventListener('input', () => {
+                        this.checkPasswordMatch(
+                            document.getElementById('signup-password')?.value,
+                            confirmInput.value
+                        );
+                    });
+                }
+            }
+            
+            checkPasswordStrength(password) {
+                const strengthBar = document.querySelector('.strength-progress');
+                const strengthText = document.querySelector('.strength-text');
+                
+                if (!strengthBar || !strengthText) return;
+                
+                // Calculate strength
+                let strength = 0;
+                let feedback = '';
+                
+                // Length check
+                if (password.length >= 8) strength++;
+                
+                // Contains lowercase
+                if (/[a-z]/.test(password)) strength++;
+                
+                // Contains uppercase
+                if (/[A-Z]/.test(password)) strength++;
+                
+                // Contains numbers
+                if (/\d/.test(password)) strength++;
+                
+                // Contains special characters
+                if (/[^A-Za-z0-9]/.test(password)) strength++;
+                
+                // Set visual feedback
+                const width = (strength / 5) * 100;
+                strengthBar.style.width = width + '%';
+                strengthBar.style.transition = 'width 0.3s ease';
+                
+                // Set color and text based on strength
+                if (password.length === 0) {
+                    strengthBar.style.backgroundColor = '#ddd';
+                    strengthText.textContent = '';
+                } else if (strength < 2) {
+                    strengthBar.style.backgroundColor = '#ff4757'; // Red
+                    strengthText.textContent = 'Weak';
+                    strengthText.style.color = '#ff4757';
+                } else if (strength < 4) {
+                    strengthBar.style.backgroundColor = '#ffa502'; // Orange
+                    strengthText.textContent = 'Medium';
+                    strengthText.style.color = '#ffa502';
+                } else {
+                    strengthBar.style.backgroundColor = '#2ed573'; // Green
+                    strengthText.textContent = 'Strong';
+                    strengthText.style.color = '#2ed573';
+                }
+                
+                // Show requirements feedback
+                this.showPasswordRequirements(password);
+            }
+            
+            checkPasswordMatch(password, confirmPassword) {
+                const matchIndicator = document.querySelector('.password-match-indicator');
+                if (!matchIndicator) return;
+                
+                if (confirmPassword.length === 0) {
+                    matchIndicator.textContent = '';
+                    matchIndicator.style.color = '';
+                } else if (password === confirmPassword) {
+                    matchIndicator.textContent = '✓ Passwords match';
+                    matchIndicator.style.color = '#2ed573'; // Green
+                } else {
+                    matchIndicator.textContent = '✗ Passwords do not match';
+                    matchIndicator.style.color = '#ff4757'; // Red
+                }
+            }
+            
+            showPasswordRequirements(password) {
+                // Optional: Show detailed requirements
+                const requirements = document.getElementById('password-requirements');
+                if (!requirements) return;
+                
+                const checks = {
+                    length: password.length >= 8,
+                    lowercase: /[a-z]/.test(password),
+                    uppercase: /[A-Z]/.test(password),
+                    number: /\d/.test(password),
+                    special: /[^A-Za-z0-9]/.test(password)
+                };
+                
+                const fulfilled = Object.values(checks).filter(Boolean).length;
+                const total = Object.keys(checks).length;
+                
+                requirements.innerHTML = `
+                    <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                        ${fulfilled}/${total} requirements met
+                    </div>
+                `;
+            }
+            
+            // Optional: Add password requirements list HTML
+            /*
+            <div id="password-requirements" style="font-size: 12px; color: #666; margin-top: 8px;">
+                <div>Password must contain:</div>
+                <ul style="margin: 4px 0 0 15px; padding: 0;">
+                    <li>At least 8 characters</li>
+                    <li>One uppercase letter</li>
+                    <li>One lowercase letter</li>
+                    <li>One number</li>
+                    <li>One special character</li>
+                </ul>
+            </div>
+            */
+    
     // Add this new method for social sign-in
     async handleSocialSignIn(provider) {
         let result;
@@ -104,15 +231,9 @@ class AuthModule {
     // RENDER SOCIAL BUTTONS HERE
     this.renderSocialLoginButtons();
     
-    // Sign up form
-    const signupForm = document.getElementById('signup-form-element');
-    if (signupForm) {
-        signupForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await this.handleSignUp();
-        });
-    }
-
+    // ADD THIS LINE: Setup password validation
+    this.setupPasswordValidation();
+    
     // Sign in form
     const signinForm = document.getElementById('signin-form-element');
     if (signinForm) {
