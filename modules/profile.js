@@ -1593,8 +1593,7 @@ Farm Management Team`;
                     });
             }
         }, 1000);
-    }
-};
+    },
 
 // ==================== ADMIN & USER MANAGEMENT ====================
 isAdmin() {
