@@ -1,4 +1,4 @@
-// modules/production.js - UPDATED: Weight tracking moved to Sales module
+// modules/production.js - UPDATED WITH DATA BROADCASTER
 console.log('🚜 Loading production module...');
 
 const ProductionModule = {
@@ -7,6 +7,7 @@ const ProductionModule = {
     element: null,
     productionData: [],
     currentRecordId: null,
+    broadcaster: null, // ✅ ADDED: Data Broadcaster reference
 
     initialize() {
         console.log('🚜 Initializing Production Records...');
@@ -17,6 +18,14 @@ const ProductionModule = {
             return false;
         }
 
+        // ✅ ADDED: Get Broadcaster instance
+        this.broadcaster = window.Broadcaster || null;
+        if (this.broadcaster) {
+            console.log('📡 Production module connected to Data Broadcaster');
+        } else {
+            console.log('⚠️ Broadcaster not available, using local methods');
+        }
+
         if (window.StyleManager) {
             window.StyleManager.registerComponent(this.name);
         }
@@ -24,19 +33,305 @@ const ProductionModule = {
         this.loadData();
         this.renderModule();
         this.setupEventListeners();
+        
+        if (this.broadcaster) {
+            this.setupBroadcasterListeners();
+            this.broadcastProductionLoaded();
+        }
+        
         this.initialized = true;
         
         console.log('✅ Production Records initialized');
         return true;
     },
 
-    onThemeChange(theme) {
-        console.log(`Production Records updating for theme: ${theme}`);
-        if (this.initialized) {
-            this.renderModule();
+    // ✅ ADDED: Setup broadcaster listeners
+    setupBroadcasterListeners() {
+        if (!this.broadcaster) return;
+        
+        // Listen for sales updates
+        this.broadcaster.on('sale-recorded', (data) => {
+            console.log('📡 Production received sale record:', data);
+            this.checkProductionForSale(data);
+        });
+        
+        // Listen for inventory updates
+        this.broadcaster.on('inventory-updated', (data) => {
+            console.log('📡 Production received inventory update:', data);
+            this.checkInventoryForProduction(data);
+        });
+        
+        // Listen for order updates (to see if orders affect production planning)
+        this.broadcaster.on('order-created', (data) => {
+            console.log('📡 Production received new order:', data);
+            this.checkOrdersForProduction(data);
+        });
+        
+        // Listen for theme changes
+        this.broadcaster.on('theme-changed', (data) => {
+            console.log('📡 Production theme changed:', data);
+            if (this.initialized && data.theme) {
+                this.onThemeChange(data.theme);
+            }
+        });
+    },
+
+    // ✅ ADDED: Broadcast production loaded
+    broadcastProductionLoaded() {
+        if (!this.broadcaster) return;
+        
+        const stats = this.calculateDetailedStats();
+        
+        this.broadcaster.broadcast('production-loaded', {
+            module: 'production',
+            timestamp: new Date().toISOString(),
+            stats: stats,
+            totalRecords: this.productionData.length,
+            totalProduction: stats.totalItems,
+            estimatedWeight: stats.totalWeight
+        });
+    },
+
+    // ✅ ADDED: Broadcast when production is created
+    broadcastProductionCreated(record) {
+        if (!this.broadcaster) return;
+        
+        this.broadcaster.broadcast('production-created', {
+            module: 'production',
+            timestamp: new Date().toISOString(),
+            recordId: record.id,
+            product: record.product,
+            quantity: record.quantity,
+            unit: record.unit,
+            quality: record.quality,
+            date: record.date,
+            forSale: record.forSale || false
+        });
+        
+        // If marked for sale, broadcast separately
+        if (record.forSale) {
+            this.broadcaster.broadcast('production-for-sale', {
+                module: 'production',
+                timestamp: new Date().toISOString(),
+                recordId: record.id,
+                product: record.product,
+                quantity: record.quantity,
+                estimatedWeight: record.weight ? record.weight * record.quantity : null
+            });
         }
     },
 
+    // ✅ ADDED: Broadcast when production is updated
+    broadcastProductionUpdated(record) {
+        if (!this.broadcaster) return;
+        
+        this.broadcaster.broadcast('production-updated', {
+            module: 'production',
+            timestamp: new Date().toISOString(),
+            recordId: record.id,
+            product: record.product,
+            quantity: record.quantity,
+            quality: record.quality,
+            date: record.date
+        });
+    },
+
+    // ✅ ADDED: Broadcast when production is deleted
+    broadcastProductionDeleted(recordId) {
+        if (!this.broadcaster) return;
+        
+        this.broadcaster.broadcast('production-deleted', {
+            module: 'production',
+            timestamp: new Date().toISOString(),
+            recordId: recordId
+        });
+    },
+
+    // ✅ ADDED: Broadcast monthly production stats
+    broadcastMonthlyStats() {
+        if (!this.broadcaster) return;
+        
+        const monthlyStats = this.calculateMonthlyStats();
+        
+        this.broadcaster.broadcast('production-monthly-stats', {
+            module: 'production',
+            timestamp: new Date().toISOString(),
+            month: new Date().getMonth() + 1,
+            year: new Date().getFullYear(),
+            stats: monthlyStats
+        });
+    },
+
+    // ✅ ADDED: Check inventory for production planning
+    checkInventoryForProduction(inventoryData) {
+        if (!inventoryData || !inventoryData.items) return;
+        
+        // Check if we need to produce more based on inventory levels
+        const lowInventoryItems = inventoryData.items.filter(item => 
+            item.quantity <= item.minimumLevel
+        );
+        
+        if (lowInventoryItems.length > 0 && this.broadcaster) {
+            this.broadcaster.broadcast('production-needed', {
+                module: 'production',
+                timestamp: new Date().toISOString(),
+                lowInventoryItems: lowInventoryItems.map(item => ({
+                    product: item.productId,
+                    current: item.quantity,
+                    minimum: item.minimumLevel,
+                    needed: item.minimumLevel - item.quantity
+                }))
+            });
+        }
+    },
+
+    // ✅ ADDED: Check sales to adjust production
+    checkProductionForSale(saleData) {
+        if (!saleData) return;
+        
+        // Calculate if we need to increase production based on sales
+        const productSales = this.productionData.filter(record => 
+            record.product === saleData.product && 
+            new Date(record.date) >= new Date(new Date().setDate(new Date().getDate() - 30))
+        );
+        
+        const totalSold = saleData.quantity || 0;
+        const totalProduced = productSales.reduce((sum, record) => sum + record.quantity, 0);
+        
+        const ratio = totalSold / totalProduced;
+        
+        if (ratio > 0.8 && this.broadcaster) { // If we sold more than 80% of what we produced
+            this.broadcaster.broadcast('production-high-demand', {
+                module: 'production',
+                timestamp: new Date().toISOString(),
+                product: saleData.product,
+                sold: totalSold,
+                produced: totalProduced,
+                ratio: ratio
+            });
+        }
+    },
+
+    // ✅ ADDED: Check orders for production planning
+    checkOrdersForProduction(orderData) {
+        if (!orderData || !orderData.items) return;
+        
+        // Analyze order to see if we need to produce more
+        orderData.items.forEach(item => {
+            const recentProduction = this.productionData.filter(record => 
+                record.product === item.productId && 
+                new Date(record.date) >= new Date(new Date().setDate(new Date().getDate() - 7))
+            );
+            
+            const totalRecentProduction = recentProduction.reduce((sum, record) => sum + record.quantity, 0);
+            
+            if (item.quantity > totalRecentProduction && this.broadcaster) {
+                this.broadcaster.broadcast('production-order-trigger', {
+                    module: 'production',
+                    timestamp: new Date().toISOString(),
+                    product: item.productId,
+                    orderQuantity: item.quantity,
+                    recentProduction: totalRecentProduction,
+                    shortage: item.quantity - totalRecentProduction
+                });
+            }
+        });
+    },
+
+    // ✅ ADDED: Calculate detailed stats
+    calculateDetailedStats() {
+        const today = new Date().toISOString().split('T')[0];
+        const last7DaysDate = new Date();
+        last7DaysDate.setDate(last7DaysDate.getDate() - 7);
+        const last7DaysString = last7DaysDate.toISOString().split('T')[0];
+        
+        // Categories
+        const poultry = ['eggs', 'broilers', 'layers'];
+        const livestock = ['pork', 'beef', 'goat', 'lamb', 'milk'];
+        const vegetables = ['tomatoes', 'lettuce', 'carrots', 'potatoes', 'onions', 'cabbage', 'peppers', 'cucumbers', 'spinach', 'beans', 'corn'];
+        const fruits = ['apples', 'oranges', 'bananas', 'berries', 'mangoes'];
+        
+        const todayProduction = this.productionData.filter(record => 
+            record.date === today
+        );
+        
+        const weekProduction = this.productionData.filter(record => 
+            record.date >= last7DaysString
+        );
+        
+        const poultryProduction = this.productionData.filter(record => 
+            poultry.includes(record.product)
+        );
+        
+        const livestockProduction = this.productionData.filter(record => 
+            livestock.includes(record.product)
+        );
+        
+        const vegetableProduction = this.productionData.filter(record => 
+            vegetables.includes(record.product)
+        );
+        
+        const fruitProduction = this.productionData.filter(record => 
+            fruits.includes(record.product)
+        );
+        
+        return {
+            totalItems: this.productionData.reduce((sum, record) => sum + record.quantity, 0),
+            totalWeight: this.productionData.reduce((sum, record) => sum + (record.weight ? record.weight * record.quantity : 0), 0),
+            todayItems: todayProduction.reduce((sum, record) => sum + record.quantity, 0),
+            weekItems: weekProduction.reduce((sum, record) => sum + record.quantity, 0),
+            poultryCount: poultryProduction.reduce((sum, record) => sum + record.quantity, 0),
+            livestockCount: livestockProduction.reduce((sum, record) => sum + record.quantity, 0),
+            vegetableCount: vegetableProduction.reduce((sum, record) => sum + record.quantity, 0),
+            fruitCount: fruitProduction.reduce((sum, record) => sum + record.quantity, 0),
+            recordCount: this.productionData.length
+        };
+    },
+
+    // ✅ ADDED: Calculate monthly stats
+    calculateMonthlyStats() {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        const monthlyData = this.productionData.filter(record => {
+            const recordDate = new Date(record.date);
+            return recordDate.getMonth() === currentMonth && 
+                   recordDate.getFullYear() === currentYear;
+        });
+        
+        const categories = {
+            'Poultry': ['eggs', 'broilers', 'layers'],
+            'Livestock': ['pork', 'beef', 'goat', 'lamb', 'milk'],
+            'Vegetables': ['tomatoes', 'lettuce', 'carrots', 'potatoes', 'onions', 'cabbage', 'peppers', 'cucumbers', 'spinach', 'beans', 'corn'],
+            'Fruits': ['apples', 'oranges', 'bananas', 'berries', 'mangoes'],
+            'Other': ['honey', 'other']
+        };
+        
+        const stats = {};
+        
+        Object.entries(categories).forEach(([category, products]) => {
+            const categoryRecords = monthlyData.filter(record => 
+                products.includes(record.product)
+            );
+            
+            stats[category] = {
+                count: categoryRecords.length,
+                quantity: categoryRecords.reduce((sum, record) => sum + record.quantity, 0),
+                weight: categoryRecords.reduce((sum, record) => sum + (record.weight ? record.weight * record.quantity : 0), 0)
+            };
+        });
+        
+        return {
+            month: currentMonth + 1,
+            year: currentYear,
+            totalRecords: monthlyData.length,
+            totalQuantity: monthlyData.reduce((sum, record) => sum + record.quantity, 0),
+            categories: stats
+        };
+    },
+
+    // ✅ MODIFIED: Enhanced loadData with broadcasting
     loadData() {
         const savedData = localStorage.getItem('farm-production-data');
         if (savedData) {
@@ -46,10 +341,238 @@ const ProductionModule = {
             this.saveData();
         }
         console.log('📊 Loaded production data:', this.productionData.length, 'records');
+        
+        // Broadcast data loaded
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('production-data-loaded', {
+                module: 'production',
+                timestamp: new Date().toISOString(),
+                recordsCount: this.productionData.length
+            });
+        }
     },
 
+    // ✅ MODIFIED: Enhanced saveData with broadcasting
     saveData() {
         localStorage.setItem('farm-production-data', JSON.stringify(this.productionData));
+        
+        // Broadcast data saved
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('production-data-saved', {
+                module: 'production',
+                timestamp: new Date().toISOString(),
+                recordsCount: this.productionData.length
+            });
+        }
+    },
+
+    // ✅ MODIFIED: Enhanced saveProduction with broadcasting
+    saveProduction() {
+        const form = document.getElementById('production-form');
+        if (!form) {
+            console.error('❌ Production form not found');
+            return;
+        }
+
+        const productionId = document.getElementById('production-id').value;
+        const dateInput = document.getElementById('production-date').value;
+        const productSelect = document.getElementById('production-product').value;
+        const customProductName = document.getElementById('custom-product-name').value.trim();
+        const quantity = parseInt(document.getElementById('production-quantity').value) || 0;
+        const unit = document.getElementById('production-unit').value;
+        const quality = document.getElementById('production-quality').value;
+        const batch = document.getElementById('production-batch').value.trim();
+        const notes = document.getElementById('production-notes').value.trim();
+        const forSale = document.getElementById('production-for-sale').checked;
+        const salePrice = parseFloat(document.getElementById('sale-price').value) || 0;
+        const salePriceUnit = document.getElementById('sale-price-unit').value;
+        const customer = document.getElementById('customer-name').value.trim();
+        const avgWeight = parseFloat(document.getElementById('animal-weight').value) || 0;
+        const weightUnit = document.getElementById('animal-weight-unit').value;
+
+        // Validate required fields
+        if (!dateInput || !productSelect || !quantity || !unit || !quality) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+
+        // For "Other" product, require custom name
+        if (productSelect === 'other' && !customProductName) {
+            this.showNotification('Please specify the product name for "Other" category', 'error');
+            return;
+        }
+
+        // Determine product name
+        const product = productSelect === 'other' ? customProductName.toLowerCase().replace(/\s+/g, '-') : productSelect;
+
+        const productionData = {
+            id: productionId ? parseInt(productionId) : Date.now(),
+            date: dateInput,
+            product: product,
+            productCategory: productSelect,
+            quantity: quantity,
+            unit: unit,
+            quality: quality,
+            batch: batch || '',
+            notes: notes || '',
+            forSale: forSale
+        };
+
+        // Add optional weight data for animals
+        if (avgWeight > 0) {
+            productionData.weight = avgWeight;
+            productionData.weightUnit = weightUnit;
+        }
+
+        if (productionId) {
+            // Update existing record
+            const index = this.productionData.findIndex(record => record.id === parseInt(productionId));
+            if (index !== -1) {
+                this.productionData[index] = productionData;
+                this.showNotification('Production record updated!', 'success');
+                
+                // ✅ Broadcast production updated
+                this.broadcastProductionUpdated(productionData);
+            }
+        } else {
+            // Add new record
+            this.productionData.unshift(productionData);
+            this.showNotification('Production record added!', 'success');
+            
+            // ✅ Broadcast production created
+            this.broadcastProductionCreated(productionData);
+            
+            // Handle sale if marked for sale
+            if (forSale && salePrice > 0) {
+                this.createSaleRecord(productionData, salePrice, salePriceUnit, customer);
+            }
+        }
+
+        this.saveData();
+        this.updateStats();
+        this.hideProductionModal();
+        this.renderModule();
+        
+        // Broadcast monthly stats update
+        this.broadcastMonthlyStats();
+    },
+
+    // ✅ MODIFIED: Enhanced deleteProductionRecord with broadcasting
+    deleteProductionRecord(recordId) {
+        const index = this.productionData.findIndex(r => r.id === parseInt(recordId));
+        if (index !== -1) {
+            const deletedRecord = this.productionData[index];
+            this.productionData.splice(index, 1);
+            this.saveData();
+            this.updateStats();
+            this.renderModule();
+            this.showNotification('Production record deleted', 'success');
+            
+            // ✅ Broadcast production deleted
+            this.broadcastProductionDeleted(recordId);
+            
+            // Broadcast monthly stats update
+            this.broadcastMonthlyStats();
+        }
+    },
+
+    // ✅ ADDED: Export production data with broadcasting
+    exportProduction() {
+        const dataStr = JSON.stringify(this.productionData, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        
+        const exportFileName = `farm-production-${new Date().toISOString().split('T')[0]}.json`;
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileName);
+        linkElement.click();
+        
+        this.showNotification('Production data exported successfully!', 'success');
+        
+        // Broadcast export event
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('production-exported', {
+                module: 'production',
+                timestamp: new Date().toISOString(),
+                filename: exportFileName,
+                recordsCount: this.productionData.length
+            });
+        }
+    },
+
+    // ✅ ADDED: Get live production stats for dashboard
+    getLiveProductionStats() {
+        const stats = this.calculateDetailedStats();
+        
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('production-live-stats', {
+                module: 'production',
+                timestamp: new Date().toISOString(),
+                stats: stats
+            });
+        }
+        
+        return stats;
+    },
+
+    // ✅ MODIFIED: Enhanced updateStats to broadcast
+    updateStats() {
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Today's eggs
+        const todayEggs = this.productionData
+            .filter(record => {
+                const recordDate = record.date ? record.date.split('T')[0] : '';
+                return recordDate === today && record.product === 'eggs';
+            })
+            .reduce((sum, record) => sum + record.quantity, 0);
+
+        // Birds this week
+        const last7DaysDate = new Date();
+        last7DaysDate.setDate(last7DaysDate.getDate() - 7);
+        const last7DaysString = last7DaysDate.toISOString().split('T')[0];
+        
+        const weekBirds = this.productionData
+            .filter(record => {
+                const recordDate = record.date ? record.date.split('T')[0] : '';
+                return recordDate >= last7DaysString && 
+                       (record.product === 'broilers' || record.product === 'layers');
+            })
+            .reduce((sum, record) => sum + record.quantity, 0);
+
+        // Vegetables this week
+        const vegetables = ['tomatoes', 'lettuce', 'carrots', 'potatoes', 'onions', 'cabbage', 'peppers', 'cucumbers', 'spinach', 'beans', 'corn'];
+        const weekVegetables = this.productionData
+            .filter(record => {
+                const recordDate = record.date ? record.date.split('T')[0] : '';
+                return recordDate >= last7DaysString && vegetables.includes(record.product);
+            })
+            .reduce((sum, record) => sum + record.quantity, 0);
+
+        this.updateElement('today-eggs', todayEggs.toLocaleString());
+        this.updateElement('week-birds', weekBirds.toLocaleString());
+        this.updateElement('week-vegetables', weekVegetables.toLocaleString());
+        this.updateElement('total-records', this.productionData.length.toLocaleString());
+        
+        // Broadcast stats update
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('production-stats-updated', {
+                module: 'production',
+                timestamp: new Date().toISOString(),
+                todayEggs: todayEggs,
+                weekBirds: weekBirds,
+                weekVegetables: weekVegetables,
+                totalRecords: this.productionData.length
+            });
+        }
+    },
+
+    onThemeChange(theme) {
+        console.log(`Production Records updating for theme: ${theme}`);
+        if (this.initialized) {
+            this.renderModule();
+        }
     },
 
     getDemoData() {
@@ -475,45 +998,6 @@ const ProductionModule = {
         this.setupEventListeners();
     },
 
-    updateStats() {
-        const today = new Date().toISOString().split('T')[0];
-        
-        // Today's eggs
-        const todayEggs = this.productionData
-            .filter(record => {
-                const recordDate = record.date ? record.date.split('T')[0] : '';
-                return recordDate === today && record.product === 'eggs';
-            })
-            .reduce((sum, record) => sum + record.quantity, 0);
-
-        // Birds this week
-        const last7DaysDate = new Date();
-        last7DaysDate.setDate(last7DaysDate.getDate() - 7);
-        const last7DaysString = last7DaysDate.toISOString().split('T')[0];
-        
-        const weekBirds = this.productionData
-            .filter(record => {
-                const recordDate = record.date ? record.date.split('T')[0] : '';
-                return recordDate >= last7DaysString && 
-                       (record.product === 'broilers' || record.product === 'layers');
-            })
-            .reduce((sum, record) => sum + record.quantity, 0);
-
-        // Vegetables this week
-        const vegetables = ['tomatoes', 'lettuce', 'carrots', 'potatoes', 'onions', 'cabbage', 'peppers', 'cucumbers', 'spinach', 'beans', 'corn'];
-        const weekVegetables = this.productionData
-            .filter(record => {
-                const recordDate = record.date ? record.date.split('T')[0] : '';
-                return recordDate >= last7DaysString && vegetables.includes(record.product);
-            })
-            .reduce((sum, record) => sum + record.quantity, 0);
-
-        this.updateElement('today-eggs', todayEggs.toLocaleString());
-        this.updateElement('week-birds', weekBirds.toLocaleString());
-        this.updateElement('week-vegetables', weekVegetables.toLocaleString());
-        this.updateElement('total-records', this.productionData.length.toLocaleString());
-    },
-
     renderProductionTable(filter = 'all') {
         let filteredProduction = this.productionData;
         
@@ -901,142 +1385,11 @@ const ProductionModule = {
         this.showNotification('Production recorded successfully!', 'success');
     },
 
-    saveProduction() {
-        const form = document.getElementById('production-form');
-        if (!form) {
-            console.error('❌ Production form not found');
-            return;
-        }
-
-        const productionId = document.getElementById('production-id').value;
-        const dateInput = document.getElementById('production-date').value;
-        const productSelect = document.getElementById('production-product').value;
-        const customProductName = document.getElementById('custom-product-name').value.trim();
-        const quantity = parseInt(document.getElementById('production-quantity').value) || 0;
-        const unit = document.getElementById('production-unit').value;
-        const quality = document.getElementById('production-quality').value;
-        const batch = document.getElementById('production-batch').value.trim();
-        const notes = document.getElementById('production-notes').value.trim();
-        const forSale = document.getElementById('production-for-sale').checked;
-        const salePrice = parseFloat(document.getElementById('sale-price').value) || 0;
-        const salePriceUnit = document.getElementById('sale-price-unit').value;
-        const customer = document.getElementById('customer-name').value.trim();
-        const avgWeight = parseFloat(document.getElementById('animal-weight').value) || 0;
-        const weightUnit = document.getElementById('animal-weight-unit').value;
-
-        console.log('📅 Save - Raw date input:', dateInput);
-
-        // Validate required fields
-        if (!dateInput || !productSelect || !quantity || !unit || !quality) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
-        }
-
-        // For "Other" product, require custom name
-        if (productSelect === 'other' && !customProductName) {
-            this.showNotification('Please specify the product name for "Other" category', 'error');
-            return;
-        }
-
-        // Determine product name
-        const product = productSelect === 'other' ? customProductName.toLowerCase().replace(/\s+/g, '-') : productSelect;
-
-        const productionData = {
-            id: productionId ? parseInt(productionId) : Date.now(),
-            date: dateInput,
-            product: product,
-            productCategory: productSelect,
-            quantity: quantity,
-            unit: unit,
-            quality: quality,
-            batch: batch || '',
-            notes: notes || ''
-        };
-
-        // Add optional weight data for animals
-        if (avgWeight > 0) {
-            productionData.weight = avgWeight;
-            productionData.weightUnit = weightUnit;
-        }
-
-        if (productionId) {
-            // Update existing record
-            const index = this.productionData.findIndex(record => record.id === parseInt(productionId));
-            if (index !== -1) {
-                this.productionData[index] = productionData;
-                this.showNotification('Production record updated!', 'success');
-            }
-        } else {
-            // Add new record
-            this.productionData.unshift(productionData);
-            this.showNotification('Production record added!', 'success');
-            
-            // Handle sale if marked for sale
-            if (forSale && salePrice > 0) {
-                this.createSaleRecord(productionData, salePrice, salePriceUnit, customer);
-            }
-        }
-
+    addProduction(productionData) {
+        this.productionData.unshift(productionData);
         this.saveData();
         this.updateStats();
-        this.hideProductionModal();
         this.renderModule();
-    },
-
-    createSaleRecord(productionData, price, priceUnit = 'per-unit', customer = '') {
-        console.log('💵 Creating sale record for production:', productionData);
-        
-        // Get today's date for sale
-        const saleDate = new Date().toISOString().split('T')[0];
-        
-        // Calculate total price based on price unit
-        let totalPrice = 0;
-        let priceNote = '';
-        
-        if (priceUnit === 'per-unit') {
-            totalPrice = productionData.quantity * price;
-            priceNote = `$${price.toFixed(2)} per ${productionData.unit}`;
-        } else if (priceUnit === 'total') {
-            totalPrice = price;
-            priceNote = `Total: $${price.toFixed(2)}`;
-        } else {
-            // For per-kg or per-lb, need weight which should be added in Sales module
-            totalPrice = 0;
-            priceNote = `$${price.toFixed(2)} ${priceUnit} - Add weight in Sales module`;
-        }
-        
-        const saleRecord = {
-            id: Date.now(),
-            productionId: productionData.id,
-            date: saleDate,
-            product: productionData.product,
-            quantity: productionData.quantity,
-            unit: productionData.unit,
-            pricePerUnit: priceUnit === 'per-unit' ? price : 0,
-            priceUnit: priceUnit,
-            totalPrice: totalPrice,
-            customer: customer || '',
-            status: 'pending', // Mark as pending to add weight details
-            notes: `Auto-generated from production record #${productionData.id}. ${priceNote}`
-        };
-
-        // Add weight data if available
-        if (productionData.weight && productionData.weightUnit) {
-            saleRecord.weight = productionData.weight * productionData.quantity;
-            saleRecord.weightUnit = productionData.weightUnit;
-        }
-
-        // Save to sales module if available
-        if (window.SalesModule && window.SalesModule.addSale) {
-            window.SalesModule.addSale(saleRecord);
-            this.showNotification(`Sale record created! ${priceNote}`, 'success');
-        } else {
-            // Store in local storage for later use
-            const salesData = JSON.parse(localStorage.getItem('farm-sales-data') || '[]');
-            salesData.push(saleRecord);
-            localStorage.setItem('farm-sales-data', JSON.stringify(salesData));
-            this.showNotification(`Sale record saved for later import! ${priceNote}`, 'info');
-        }
     },
 
     editProduction(recordId) {
@@ -1101,24 +1454,6 @@ const ProductionModule = {
             this.deleteProductionRecord(this.currentRecordId);
             this.hideProductionModal();
         }
-    },
-
-    deleteProductionRecord(recordId) {
-        const index = this.productionData.findIndex(r => r.id === parseInt(recordId));
-        if (index !== -1) {
-            this.productionData.splice(index, 1);
-            this.saveData();
-            this.updateStats();
-            this.renderModule();
-            this.showNotification('Production record deleted', 'success');
-        }
-    },
-
-    addProduction(productionData) {
-        this.productionData.unshift(productionData);
-        this.saveData();
-        this.updateStats();
-        this.renderModule();
     },
 
     // REPORT GENERATION METHODS
@@ -1250,22 +1585,94 @@ const ProductionModule = {
         `;
     },
 
-    // EXPORT FUNCTIONALITY
-    exportProduction() {
-        const dataStr = JSON.stringify(this.productionData, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    // ✅ ADDED: Missing method implementations
+    createSaleRecord(productionData, price, priceUnit = 'per-unit', customer = '') {
+        console.log('💵 Creating sale record for production:', productionData);
         
-        const exportFileName = `farm-production-${new Date().toISOString().split('T')[0]}.json`;
+        // Get today's date for sale
+        const saleDate = new Date().toISOString().split('T')[0];
         
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileName);
-        linkElement.click();
+        // Calculate total price based on price unit
+        let totalPrice = 0;
+        let priceNote = '';
         
-        this.showNotification('Production data exported successfully!', 'success');
+        if (priceUnit === 'per-unit') {
+            totalPrice = productionData.quantity * price;
+            priceNote = `$${price.toFixed(2)} per ${productionData.unit}`;
+        } else if (priceUnit === 'total') {
+            totalPrice = price;
+            priceNote = `Total: $${price.toFixed(2)}`;
+        } else {
+            // For per-kg or per-lb, need weight which should be added in Sales module
+            totalPrice = 0;
+            priceNote = `$${price.toFixed(2)} ${priceUnit} - Add weight in Sales module`;
+        }
+        
+        const saleRecord = {
+            id: Date.now(),
+            productionId: productionData.id,
+            date: saleDate,
+            product: productionData.product,
+            quantity: productionData.quantity,
+            unit: productionData.unit,
+            pricePerUnit: priceUnit === 'per-unit' ? price : 0,
+            priceUnit: priceUnit,
+            totalPrice: totalPrice,
+            customer: customer || '',
+            status: 'pending', // Mark as pending to add weight details
+            notes: `Auto-generated from production record #${productionData.id}. ${priceNote}`
+        };
+
+        // Add weight data if available
+        if (productionData.weight && productionData.weightUnit) {
+            saleRecord.weight = productionData.weight * productionData.quantity;
+            saleRecord.weightUnit = productionData.weightUnit;
+        }
+
+        // Save to sales module if available
+        if (window.SalesModule && window.SalesModule.addSale) {
+            window.SalesModule.addSale(saleRecord);
+            this.showNotification(`Sale record created! ${priceNote}`, 'success');
+        } else {
+            // Store in local storage for later use
+            const salesData = JSON.parse(localStorage.getItem('farm-sales-data') || '[]');
+            salesData.push(saleRecord);
+            localStorage.setItem('farm-sales-data', JSON.stringify(salesData));
+            this.showNotification(`Sale record saved for later import! ${priceNote}`, 'info');
+        }
     },
 
-    // UTILITY METHODS (keeping these the same as before)
+    generateTrendAnalysis() {
+        // Placeholder for trend analysis
+        const trendContent = `
+            <div style="padding: 20px; text-align: center;">
+                <h3 style="color: var(--text-primary); margin-bottom: 16px;">📈 Production Trend Analysis</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    This feature is coming soon! It will provide insights into production trends over time.
+                </p>
+                <div style="font-size: 64px; margin: 40px 0;">📊</div>
+                <p style="color: var(--text-secondary);">
+                    Planned features include:<br>
+                    • Monthly production trends<br>
+                    • Year-over-year comparisons<br>
+                    • Seasonal patterns<br>
+                    • Predictive analytics
+                </p>
+            </div>
+        `;
+        document.getElementById('trend-analysis-content').innerHTML = trendContent;
+        this.showTrendAnalysisModal();
+    },
+
+    printProductionReport() {
+        window.print();
+    },
+
+    printTrendAnalysis() {
+        window.print();
+    },
+
+    // UTILITY METHODS
     getProductDisplayName(record) {
         if (record.productCategory === 'other' || !['eggs', 'broilers', 'layers', 'milk', 'pork', 'beef', 
             'tomatoes', 'lettuce', 'carrots', 'potatoes', 'onions', 'cabbage', 'peppers', 'cucumbers', 
@@ -1445,13 +1852,12 @@ if (window.FarmModules) {
 
 // Also make it globally available
 window.ProductionModule = ProductionModule;
-console.log('✅ Production module loaded and ready');
+console.log('✅ Production module loaded and ready with Data Broadcaster');
 
 // ==================== UNIVERSAL REGISTRATION ====================
-
 (function() {
-    const MODULE_NAME = 'production.js'; // e.g., 'dashboard'
-    const MODULE_OBJECT = ProductionModule; // e.g., DashboardModule
+    const MODULE_NAME = 'production.js';
+    const MODULE_OBJECT = ProductionModule;
     
     console.log(`📦 Registering ${MODULE_NAME} module...`);
     
