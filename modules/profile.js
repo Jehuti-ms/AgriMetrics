@@ -1718,7 +1718,7 @@ const ProfileModule = {
 
 // ==================== UNIVERSAL REGISTRATION ====================
 (function() {
-    const MODULE_NAME = 'profile.js';
+    const MODULE_NAME = 'profile';
     const MODULE_OBJECT = ProfileModule;
     
     console.log(`📦 Registering ${MODULE_NAME} module with Data Broadcaster...`);
@@ -1732,13 +1732,4 @@ const ProfileModule = {
 
 })();
 
-    // At the BOTTOM of your profile.js file, add this:
-if (window.FarmModules) {
-    // Register as 'profile' (what the app expects)
-    FarmModules.registerModule('profile', ProfileModule);
-    console.log('✅ Profile module registered as "profile"');
-    
-    // Also keep as 'profile.js' for backward compatibility
-    FarmModules.registerModule('profile.js', ProfileModule);
-    console.log('✅ Profile module also registered as "profile.js"');
-}
+  
