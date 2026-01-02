@@ -2598,8 +2598,156 @@ exportCustomPDF() {
     });
 },
 
-generateCustomReport() {
-    this.showNotification('Custom report generation coming soon!', 'info');
+// Custom Reports
+
+generateCustomReport(reportType = 'profile') {
+    try {
+        this.showNotification(`Generating ${reportType} report...`, 'info');
+        
+        // Get data based on report type
+        let pdfBlob;
+        const pdfService = new PDFService();
+        
+        switch(reportType) {
+            case 'profile':
+                const userData = this.getCurrentUserData();
+                const activityLog = this.getUserActivityLog();
+                pdfBlob = pdfService.generateUserProfileReport(userData, activityLog);
+                break;
+                
+            case 'team':
+                const teamMembers = this.getTeamMembers();
+                pdfBlob = pdfService.generateTeamReport(teamMembers);
+                break;
+                
+            case 'activity':
+                const activities = this.getRecentActivities();
+                const filters = this.getReportFilters();
+                pdfBlob = pdfService.generateActivityReport(activities, filters);
+                break;
+                
+            default:
+                throw new Error('Unknown report type');
+        }
+        
+        // Generate filename
+        const filename = this.generateReportFilename(reportType);
+        
+        // Download
+        this.downloadPDF(pdfBlob, filename);
+        
+        this.showNotification(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} report generated successfully!`, 'success');
+        
+    } catch (error) {
+        console.error('Report generation failed:', error);
+        this.showNotification(`Failed to generate report: ${error.message}`, 'error');
+    }
+},
+
+// Helper methods
+getCurrentUserData() {
+    // Replace with actual data fetching
+    return {
+        id: this.userProfile?.id,
+        name: this.userProfile?.fullName || this.userProfile?.name,
+        email: this.userProfile?.email,
+        phone: this.userProfile?.phone,
+        role: this.userProfile?.role,
+        department: this.userProfile?.department,
+        position: this.userProfile?.position,
+        status: this.userProfile?.status || 'Active',
+        createdAt: this.userProfile?.createdAt,
+        lastLogin: this.userProfile?.lastLogin,
+        loginCount: this.userProfile?.stats?.loginCount,
+        documentsCount: this.userProfile?.stats?.documentsCreated,
+        // Add more fields as needed
+    };
+},
+
+getUserActivityLog() {
+    // Replace with actual activity data
+    return this.userActivities || [
+        {
+            date: new Date(),
+            time: new Date().toLocaleTimeString(),
+            type: 'Login',
+            description: 'User logged into the system',
+            ip: '192.168.1.1'
+        },
+        // Add more activities
+    ];
+},
+
+getTeamMembers() {
+    // Replace with actual team data
+    return this.teamData || [
+        {
+            name: 'John Doe',
+            role: 'Manager',
+            department: 'Engineering',
+            status: 'Active',
+            lastActive: new Date(),
+            performance: 'Excellent'
+        },
+        // Add more team members
+    ];
+},
+
+getRecentActivities() {
+    // Replace with actual activities
+    return this.recentActivities || [];
+},
+
+getReportFilters() {
+    return {
+        dateRange: 'Last 30 days',
+        user: this.userProfile?.name
+    };
+},
+
+generateReportFilename(reportType) {
+    const timestamp = new Date().toISOString().split('T')[0];
+    const username = this.userProfile?.name?.replace(/\s+/g, '_') || 'user';
+    
+    const prefixes = {
+        profile: 'User_Profile_Report',
+        team: 'Team_Report',
+        activity: 'Activity_Report'
+    };
+    
+    return `${prefixes[reportType]}_${username}_${timestamp}.pdf`;
+},
+
+downloadPDF(pdfBlob, filename) {
+    const url = URL.createObjectURL(pdfBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+},
+
+// Add UI methods for report selection
+showReportOptions() {
+    // You can implement a modal or dropdown for report type selection
+    const reportTypes = [
+        { id: 'profile', label: 'Personal Profile Report', icon: '👤' },
+        { id: 'team', label: 'Team Report', icon: '👥' },
+        { id: 'activity', label: 'Activity Report', icon: '📊' }
+    ];
+    
+    // Show selection UI (simplified example)
+    const selected = prompt(
+        'Select report type:\n1. Profile Report\n2. Team Report\n3. Activity Report\n\nEnter 1, 2, or 3:'
+    );
+    
+    const typeMap = { '1': 'profile', '2': 'team', '3': 'activity' };
+    if (typeMap[selected]) {
+        this.generateCustomReport(typeMap[selected]);
+    }
 }
 };
 
