@@ -100,7 +100,7 @@ class FirebaseAuth {
             this.showNotification(`Google sign-in failed: ${error.message}`, 'error');
             return null;
         }
-    },
+    }
     
     // Apple Sign-in (requires proper setup in Firebase console)
     async signInWithApple() {
