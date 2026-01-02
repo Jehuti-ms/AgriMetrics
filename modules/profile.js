@@ -8,6 +8,15 @@ const ProfileModule = {
     currentInputValues: {},
     broadcastSubscriptions: [],
 
+   // ADD PDF CACHE:
+    pdfDataCache: {
+        inventory: null,
+        orders: null,
+        customers: null,
+        products: null,
+        lastUpdated: {}
+    }, 
+
     // ==================== INITIALIZATION ====================
     initialize() {
         console.log('👤 Initializing profile...');
@@ -2258,75 +2267,126 @@ async exportInventoryPDF() {
     }
 },
 
+    generateInventoryPDF() {
+    // Use cached data or fall back to appData
+    const inventoryData = this.pdfDataCache.inventory || 
+                         window.FarmModules.appData.inventory || [];
+    
+    if (inventoryData.length === 0) {
+        this.showNotification('No inventory data to export', 'warning');
+        return;
+    }
+    
+    // Add broadcaster info to PDF
+    const lastUpdated = this.pdfDataCache.lastUpdated.inventory || 
+                       'Never updated';
+    
+    // Your existing PDF generation code, but with broadcaster info
+    const result = this._generateInventoryPDFWithBroadcasterInfo(
+        inventoryData, 
+        lastUpdated
+    );
+    
+    // Broadcast that we generated a PDF
+    if (result.success) {
+        DataBroadcaster.recordCreated('profile', {
+            action: 'pdf_export',
+            reportType: 'inventory',
+            fileName: result.fileName,
+            itemCount: inventoryData.length
+        });
+    }
+},
+    
 generateInventoryPDF(inventoryItems) {
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
+        const farmName = window.FarmModules.appData.profile?.farmName || 'My Farm';
+        const now = new Date();
         
-        // Header
+        // ===== HEADER WITH BROADCASTER INFO =====
         doc.setFontSize(24);
         doc.setTextColor(46, 125, 50);
-        doc.text('Inventory Report', 105, 20, { align: 'center' });
+        doc.text('INVENTORY REPORT', 105, 20, { align: 'center' });
         
-        doc.setFontSize(12);
-        doc.setTextColor(100, 100, 100);
-        doc.text(`Farm: ${window.FarmModules.appData.profile.farmName}`, 105, 30, { align: 'center' });
-        doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, 37, { align: 'center' });
+        // Report metadata with Data Broadcaster info
+        doc.text(`Report ID: INV-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`, 20, 45);
         
-        // Summary stats
-        let yPos = 50;
-        doc.setFontSize(14);
-        doc.setTextColor(46, 125, 50);
-        doc.text('Summary', 20, yPos);
+        // Data source info (from broadcaster cache)
+        if (this.pdfDataCache?.lastUpdated?.inventory) {
+            doc.text(`Last Updated: ${new Date(this.pdfDataCache.lastUpdated.inventory).toLocaleString()}`, 20, 59);
+        }
         
-        doc.setFontSize(10);
-        doc.setTextColor(0, 0, 0);
-        yPos += 10;
-        doc.text(`Total Items: ${inventoryItems.length}`, 20, yPos);
+        // ===== ENHANCED SUMMARY STATISTICS =====
+        // Summary box with colored background
+        doc.setFillColor(240, 248, 255);
+        doc.rect(20, yPos - 10, 170, 40, 'F');
         
-        const lowStock = inventoryItems.filter(item => (item.quantity || 0) <= (item.lowStockThreshold || 10)).length;
-        doc.text(`Low Stock Items: ${lowStock}`, 20, yPos + 7);
+        // More detailed stats
+        const lowStockThreshold = window.FarmModules.appData.profile?.lowStockThreshold || 10;
+        const lowStockItems = inventoryItems.filter(item => (item.quantity || 0) <= lowStockThreshold).length;
+        const outOfStockItems = inventoryItems.filter(item => (item.quantity || 0) <= 0).length;
         
-        const totalValue = inventoryItems.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 0)), 0);
-        doc.text(`Total Value: $${totalValue.toFixed(2)}`, 20, yPos + 14);
+        // Color-coded status
+        doc.setTextColor(lowStockItems > 0 ? [220, 38, 38] : [34, 197, 94]);
+        doc.text(`Low Stock: ${lowStockItems} items`, col2X, yPos + 10);
         
-        // Inventory table
-        yPos += 30;
-        const tableData = inventoryItems.map(item => [
-            item.name || 'Unnamed',
-            item.category || 'General',
-            item.quantity || 0,
-            `$${parseFloat(item.price || 0).toFixed(2)}`,
-            `$${((item.quantity || 0) * parseFloat(item.price || 0)).toFixed(2)}`,
-            item.location || 'Main'
-        ]);
-        
-        doc.autoTable({
-            startY: yPos,
-            head: [['Item', 'Category', 'Qty', 'Unit Price', 'Total', 'Location']],
-            body: tableData,
-            theme: 'grid',
-            headStyles: { fillColor: [46, 125, 50], textColor: [255, 255, 255], fontStyle: 'bold' },
-            alternateRowStyles: { fillColor: [245, 245, 245] },
-            styles: { fontSize: 9, cellPadding: 3 },
-            columnStyles: {
-                0: { cellWidth: 40 },
-                1: { cellWidth: 30 },
-                2: { cellWidth: 20 },
-                3: { cellWidth: 25 },
-                4: { cellWidth: 25 },
-                5: { cellWidth: 30 }
+        // ===== GROUPED BY CATEGORY =====
+        // Items grouped by category instead of one big table
+        const itemsByCategory = {};
+        inventoryItems.forEach(item => {
+            const category = item.category || 'Uncategorized';
+            if (!itemsByCategory[category]) {
+                itemsByCategory[category] = [];
             }
+            itemsByCategory[category].push(item);
         });
         
-        // Save PDF
-        const fileName = `Inventory_Report_${window.FarmModules.appData.profile.farmName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-        doc.save(fileName);
+        // ===== PROFESSIONAL FOOTER =====
+        // Confidential notice and page numbers
+        doc.text('CONFIDENTIAL - For internal use only', 105, 285, { align: 'center' });
         
-        return { success: true, fileName: fileName };
+        // Page numbers for multi-page reports
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+        }
+        
+        // ===== BROADCASTER INTEGRATION =====
+        // Broadcast the PDF generation event
+        if (window.DataBroadcaster) {
+            window.DataBroadcaster.recordCreated('profile', {
+                action: 'pdf_export',
+                reportType: 'inventory',
+                fileName: fileName,
+                itemCount: totalItems,
+                totalValue: totalValue,
+                lowStockCount: lowStockItems,
+                timestamp: now.toISOString()
+            });
+        }
+        
+        // ===== BETTER ERROR HANDLING =====
+        // Update UI status
+        this.updatePDFStatus(`✅ Inventory report exported (${totalItems} items)`, 'success');
+        
+        return { 
+            success: true, 
+            fileName: fileName,
+            stats: {
+                totalItems,
+                totalValue,
+                lowStockItems,
+                outOfStockItems
+            }
+        };
         
     } catch (error) {
         console.error('Inventory PDF generation error:', error);
+        this.updatePDFStatus('❌ Failed to generate inventory report', 'error');
+        this.showNotification(`Error: ${error.message}`, 'error');
         return { success: false, error: error.message };
     }
 },
@@ -2664,6 +2724,115 @@ getCurrentUserData() {
     };
 },
 
+    generateFarmSummaryPDF() {
+    try {
+        this.showNotification('Generating farm summary report...', 'info');
+        
+        // Get all data from cache
+        const farmData = {
+            profile: window.FarmModules.appData.profile || {},
+            inventory: this.pdfDataCache.inventory || window.FarmModules.appData.inventory || [],
+            orders: this.pdfDataCache.orders || window.FarmModules.appData.orders || [],
+            customers: this.pdfDataCache.customers || window.FarmModules.appData.customers || [],
+            products: this.pdfDataCache.products || window.FarmModules.appData.products || [],
+            generatedAt: new Date().toISOString(),
+            dataSources: Object.entries(this.pdfDataCache.lastUpdated).map(([key, value]) => ({
+                module: key,
+                lastUpdated: value
+            }))
+        };
+        
+        // Generate comprehensive PDF
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Title with broadcaster badge
+        doc.setFontSize(24);
+        doc.setTextColor(46, 125, 50);
+        doc.text('FARM MANAGEMENT SYSTEM', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(16);
+        doc.text('COMPREHENSIVE REPORT', 105, 30, { align: 'center' });
+        
+        // Data source info
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Report combines data from ${farmData.dataSources.length} modules`, 105, 40, { align: 'center' });
+        
+        let yPos = 50;
+        
+        // Farm Profile
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('FARM PROFILE', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        doc.text(`Farm Name: ${farmData.profile.farmName || 'Not set'}`, 20, yPos);
+        yPos += 7;
+        doc.text(`Farmer: ${farmData.profile.farmerName || 'Not set'}`, 20, yPos);
+        yPos += 7;
+        doc.text(`Farm Type: ${farmData.profile.farmType || 'Not set'}`, 20, yPos);
+        yPos += 15;
+        
+        // Statistics Section
+        doc.setFontSize(14);
+        doc.text('SYSTEM STATISTICS', 20, yPos);
+        yPos += 10;
+        
+        const stats = [
+            [`Inventory Items:`, farmData.inventory.length],
+            [`Total Orders:`, farmData.orders.length],
+            [`Customers:`, farmData.customers.length],
+            [`Products:`, farmData.products.length],
+            [`Total Revenue:`, `$${farmData.orders.reduce((sum, order) => sum + (parseFloat(order.totalAmount) || 0), 0).toFixed(2)}`]
+        ];
+        
+        doc.setFontSize(11);
+        stats.forEach(([label, value]) => {
+            doc.text(label, 20, yPos);
+            doc.text(value.toString(), 100, yPos);
+            yPos += 7;
+        });
+        
+        yPos += 10;
+        
+        // Data Sources Section
+        doc.setFontSize(14);
+        doc.text('DATA SOURCES (via Data Broadcaster)', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        farmData.dataSources.forEach((source, index) => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.text(`• ${source.module}: ${new Date(source.lastUpdated).toLocaleString()}`, 25, yPos);
+            yPos += 6;
+        });
+        
+        // Save PDF
+        const fileName = `Farm_Summary_${farmData.profile.farmName?.replace(/\s+/g, '_') || 'Report'}_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        // Broadcast PDF generation
+        DataBroadcaster.recordCreated('profile', {
+            action: 'pdf_export',
+            reportType: 'farm_summary',
+            fileName: fileName,
+            modulesIncluded: farmData.dataSources.map(s => s.module),
+            timestamp: new Date().toISOString()
+        });
+        
+        this.showNotification('Farm summary report generated!', 'success');
+        
+    } catch (error) {
+        console.error('Farm summary PDF error:', error);
+        this.showNotification('Error generating farm summary', 'error');
+    }
+},
+    
 getUserActivityLog() {
     // Replace with actual activity data
     return this.userActivities || [
@@ -2748,6 +2917,71 @@ showReportOptions() {
     if (typeMap[selected]) {
         this.generateCustomReport(typeMap[selected]);
     }
+}
+
+    // Add this method to ProfileModule:
+setupPDFDataSync() {
+    console.log('📡 Setting up PDF data sync from broadcaster...');
+    
+    // Listen for data changes from all modules
+    document.addEventListener('farmDataChanged', (event) => {
+        const { module, action, data } = event.detail;
+        
+        // Update our cache when data changes
+        this.updatePDFDataCache(module, action, data);
+        
+        // Refresh PDF buttons if they exist
+        this.refreshPDFData();
+    });
+    
+    // Also listen for specific module updates
+    window.addEventListener('inventory-updated', () => {
+        this.updatePDFDataCache('inventory', 'update', window.FarmModules.appData.inventory);
+    });
+    
+    window.addEventListener('orders-updated', () => {
+        this.updatePDFDataCache('orders', 'update', window.FarmModules.appData.orders);
+    });
+    
+    window.addEventListener('sales-updated', () => {
+        this.updatePDFDataCache('sales', 'update', window.FarmModules.appData.orders); // sales are orders
+    });
+},
+
+updatePDFDataCache(moduleName, action, data) {
+    const now = new Date().toISOString();
+    
+    switch(moduleName) {
+        case 'inventory':
+        case 'inventory-check':
+            this.pdfDataCache.inventory = window.FarmModules.appData.inventory || [];
+            this.pdfDataCache.lastUpdated.inventory = now;
+            break;
+            
+        case 'orders':
+        case 'sales-record':
+            this.pdfDataCache.orders = window.FarmModules.appData.orders || [];
+            this.pdfDataCache.lastUpdated.orders = now;
+            break;
+            
+        case 'customers':
+            this.pdfDataCache.customers = window.FarmModules.appData.customers || [];
+            this.pdfDataCache.lastUpdated.customers = now;
+            break;
+            
+        case 'products':
+        case 'production':
+            this.pdfDataCache.products = window.FarmModules.appData.products || [];
+            this.pdfDataCache.lastUpdated.products = now;
+            break;
+    }
+    
+    console.log(`📡 PDF cache updated for ${moduleName} (${action})`);
+},
+
+refreshPDFData() {
+    // Update any PDF UI elements that show live data
+    this.updatePDFStatus(`Data updated at ${new Date().toLocaleTimeString()}`, 'info');
 }
 };
 
