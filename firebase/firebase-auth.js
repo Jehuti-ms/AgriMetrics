@@ -84,6 +84,57 @@ class FirebaseAuth {
             return { success: false, error: error.message };
         }
     }
+
+    // Google Sign-in
+    async signInWithGoogle() {
+        try {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('profile');
+            provider.addScope('email');
+            
+            const result = await firebase.auth().signInWithPopup(provider);
+            this.showNotification(`Welcome ${result.user.displayName}!`, 'success');
+            return result.user;
+        } catch (error) {
+            console.error('Google sign-in error:', error);
+            this.showNotification(`Google sign-in failed: ${error.message}`, 'error');
+            return null;
+        }
+    },
+    
+    // Apple Sign-in (requires proper setup in Firebase console)
+    async signInWithApple() {
+        try {
+            const provider = new firebase.auth.OAuthProvider('apple.com');
+            provider.addScope('email');
+            provider.addScope('name');
+            
+            const result = await firebase.auth().signInWithPopup(provider);
+            this.showNotification(`Welcome!`, 'success');
+            return result.user;
+        } catch (error) {
+            console.error('Apple sign-in error:', error);
+            this.showNotification(`Apple sign-in failed: ${error.message}`, 'error');
+            return null;
+        }
+    },
+    
+    // Add to auth UI
+    renderAuthButtons() {
+        return `
+            <button class="btn-social google" onclick="authModule.signInWithGoogle()">
+                <span class="social-icon">G</span>
+                Continue with Google
+            </button>
+            <button class="btn-social apple" onclick="authModule.signInWithApple()">
+                <span class="social-icon"></span>
+                Continue with Apple
+            </button>
+            <div class="auth-divider">
+                <span>or</span>
+            </div>
+        `;
+    }
 }
 
 window.authManager = new FirebaseAuth();
