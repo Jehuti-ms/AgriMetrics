@@ -414,6 +414,46 @@ const ProfileModule = {
                             </button>
                         </div>
                     </div>
+                    <!-- USER MANAGEMENT SECTION (ADMIN ONLY) -->
+                    <div class="user-management glass-card" style="margin-top: 24px; ${this.isAdmin() ? '' : 'display: none;'}">
+                        <h3>👥 Department User Management</h3>
+                        <div class="user-stats" style="display: flex; gap: 16px; margin-bottom: 20px;">
+                            <div style="flex: 1; padding: 12px; background: var(--glass-bg); border-radius: 8px;">
+                                <div style="font-size: 14px; color: var(--text-secondary);">Total Users</div>
+                                <div style="font-size: 24px; font-weight: bold;" id="total-users-count">0</div>
+                            </div>
+                            <div style="flex: 1; padding: 12px; background: var(--glass-bg); border-radius: 8px;">
+                                <div style="font-size: 14px; color: var(--text-secondary);">Active Today</div>
+                                <div style="font-size: 24px; font-weight: bold;" id="active-users-count">0</div>
+                            </div>
+                            <div style="flex: 1; padding: 12px; background: var(--glass-bg); border-radius: 8px;">
+                                <div style="font-size: 14px; color: var(--text-secondary);">Pending Invites</div>
+                                <div style="font-size: 24px; font-weight: bold;" id="pending-invites-count">0</div>
+                            </div>
+                        </div>
+                        
+                        <div class="user-actions" style="display: flex; gap: 12px; margin-bottom: 20px;">
+                            <button class="btn-primary" id="invite-user-btn">
+                                ✉️ Invite New User
+                            </button>
+                            <button class="btn-outline" id="bulk-invite-btn">
+                                📋 Bulk Import Users
+                            </button>
+                            <button class="btn-outline" id="export-users-btn">
+                                📥 Export User List
+                            </button>
+                            <button class="btn-outline" id="view-users-btn">
+                                👁️ View All Users
+                            </button>
+                        </div>
+                        
+                        <div id="users-list-container" style="display: none;">
+                            <h4 style="margin-bottom: 16px;">Department Users</h4>
+                            <div id="users-list" style="max-height: 300px; overflow-y: auto;">
+                                <!-- Users will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -493,6 +533,24 @@ const ProfileModule = {
                 this.showNotification('Local storage disabled. Data will only be saved to cloud.', 'warning');
             }
         });
+
+        // User management listeners
+            document.getElementById('invite-user-btn')?.addEventListener('click', () => {
+                this.inviteNewUser();
+            });
+            
+            document.getElementById('view-users-btn')?.addEventListener('click', () => {
+                this.toggleUsersList();
+            });
+            
+            document.getElementById('export-users-btn')?.addEventListener('click', () => {
+                this.exportUserList();
+            });
+            
+            document.getElementById('bulk-invite-btn')?.addEventListener('click', () => {
+                this.bulkImportUsers();
+            });
+        },
 
         // TRACK INPUT CHANGES
         document.getElementById('farm-name')?.addEventListener('input', (e) => {
@@ -1492,6 +1550,382 @@ Farm Management Team`;
         }, 1000);
     }
 };
+
+// ==================== ADMIN & USER MANAGEMENT ====================
+isAdmin() {
+    // Check if current user is admin
+    const currentUser = this.getCurrentUser();
+    const profile = window.FarmModules.appData.profile;
+    return currentUser && (
+        currentUser.email === profile.email || 
+        profile.role === 'admin' ||
+        currentUser.email.includes('admin') ||
+        currentUser.email.includes('manager')
+    );
+},
+
+async loadDepartmentUsers() {
+    if (!this.isAdmin()) return;
+    
+    try {
+        // Load from Firebase if available
+        if (typeof firebase !== 'undefined' && firebase.firestore) {
+            const usersSnapshot = await firebase.firestore()
+                .collection('department_users')
+                .get();
+            
+            const users = [];
+            usersSnapshot.forEach(doc => {
+                users.push({ id: doc.id, ...doc.data() });
+            });
+            
+            window.FarmModules.appData.departmentUsers = users;
+            this.updateUserStats(users);
+            this.renderUsersList(users);
+        }
+    } catch (error) {
+        console.error('Error loading users:', error);
+    }
+},
+
+updateUserStats(users) {
+    const totalUsers = users.length;
+    const activeUsers = users.filter(u => u.lastActive && 
+        new Date(u.lastActive) > new Date(Date.now() - 24*60*60*1000)).length;
+    const pendingInvites = users.filter(u => u.status === 'pending').length;
+    
+    this.updateElement('total-users-count', totalUsers);
+    this.updateElement('active-users-count', activeUsers);
+    this.updateElement('pending-invites-count', pendingInvites);
+},
+
+renderUsersList(users) {
+    const container = document.getElementById('users-list');
+    if (!container) return;
+    
+    if (users.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+                <div style="font-size: 48px; margin-bottom: 16px;">👥</div>
+                <div>No department users yet</div>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            ${users.map(user => `
+                <div class="user-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background: ${this.getUserColor(user.email)}; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                            ${user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; color: var(--text-primary);">${user.name || 'No name'}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">${user.email}</div>
+                            <div style="display: flex; gap: 8px; margin-top: 4px;">
+                                <span class="user-badge" style="background: ${user.status === 'active' ? '#10b981' : '#f59e0b'}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 10px;">
+                                    ${user.status || 'pending'}
+                                </span>
+                                <span style="font-size: 11px; color: var(--text-secondary);">
+                                    ${user.role || 'user'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        ${user.status === 'pending' ? `
+                            <button class="btn-outline" style="padding: 4px 8px; font-size: 12px;" onclick="ProfileModule.resendInvite('${user.email}')">
+                                🔄 Resend
+                            </button>
+                        ` : ''}
+                        <button class="btn-outline" style="padding: 4px 8px; font-size: 12px;" onclick="ProfileModule.viewUserDetails('${user.id}')">
+                            👁️ View
+                        </button>
+                        <button class="btn-outline" style="padding: 4px 8px; font-size: 12px; color: #ef4444;" onclick="ProfileModule.removeUser('${user.id}')">
+                            🗑️ Remove
+                        </button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+},
+
+getUserColor(email) {
+    // Generate consistent color from email
+    const colors = [
+        '#3b82f6', '#ef4444', '#10b981', '#f59e0b', 
+        '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'
+    ];
+    const hash = email.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return colors[hash % colors.length];
+},
+
+async inviteNewUser() {
+    if (!this.isAdmin()) {
+        this.showNotification('Admin access required', 'error');
+        return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'popout-modal';
+    modal.innerHTML = `
+        <div class="popout-modal-content" style="max-width: 500px;">
+            <div class="popout-modal-header">
+                <h3>✉️ Invite New User</h3>
+                <button class="popout-modal-close" id="close-invite-modal">&times;</button>
+            </div>
+            <div class="popout-modal-body">
+                <form id="invite-user-form">
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label class="form-label">Full Name *</label>
+                        <input type="text" id="user-name" class="form-input" required placeholder="Enter full name">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label class="form-label">Email Address *</label>
+                        <input type="email" id="user-email" class="form-input" required placeholder="user@department.com">
+                    </div>
+                    
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div class="form-group">
+                            <label class="form-label">Role</label>
+                            <select id="user-role" class="form-input">
+                                <option value="user">User</option>
+                                <option value="manager">Manager</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Department</label>
+                            <select id="user-department" class="form-input">
+                                <option value="operations">Operations</option>
+                                <option value="sales">Sales</option>
+                                <option value="inventory">Inventory</option>
+                                <option value="management">Management</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label class="form-label">Welcome Message</label>
+                        <textarea id="welcome-message" class="form-input" rows="4" placeholder="Personalized welcome message...">Welcome to the Farm Management System! Your account has been created. Please use the credentials below to log in.</textarea>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h4>Send Welcome Email</h4>
+                                <p>Send login credentials via email</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="send-welcome-email" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="password-section" style="display: none;">
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label class="form-label">Temporary Password</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="temp-password" class="form-input" value="${this.generatePassword()}" readonly>
+                                <button type="button" class="btn-outline" onclick="ProfileModule.generateNewPassword()">🔄 New</button>
+                                <button type="button" class="btn-outline" onclick="ProfileModule.copyPassword()">📋 Copy</button>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                User will be prompted to change password on first login
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="popout-modal-footer">
+                <button type="button" class="btn-outline" id="cancel-invite">Cancel</button>
+                <button type="button" class="btn-primary" id="send-invite">Send Invitation</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Event listeners
+    document.getElementById('close-invite-modal')?.addEventListener('click', () => modal.remove());
+    document.getElementById('cancel-invite')?.addEventListener('click', () => modal.remove());
+    
+    document.getElementById('send-invite')?.addEventListener('click', async () => {
+        await this.sendUserInvitation();
+        modal.remove();
+    });
+    
+    // Show/hide password section
+    document.getElementById('send-welcome-email')?.addEventListener('change', (e) => {
+        document.getElementById('password-section').style.display = e.target.checked ? 'block' : 'none';
+    });
+    
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+},
+
+generatePassword(length = 12) {
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < length; i++) {
+        password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    return password;
+},
+
+async sendUserInvitation() {
+    const userName = document.getElementById('user-name')?.value;
+    const userEmail = document.getElementById('user-email')?.value;
+    const userRole = document.getElementById('user-role')?.value;
+    const userDept = document.getElementById('user-department')?.value;
+    const welcomeMessage = document.getElementById('welcome-message')?.value;
+    const sendEmail = document.getElementById('send-welcome-email')?.checked;
+    const tempPassword = document.getElementById('temp-password')?.value;
+    
+    if (!userName || !userEmail) {
+        this.showNotification('Name and email are required', 'error');
+        return;
+    }
+    
+    try {
+        // Create user in Firebase Authentication
+        if (sendEmail && tempPassword) {
+            const userCredential = await firebase.auth().createUserWithEmailAndPassword(userEmail, tempPassword);
+            
+            // Send email verification
+            await userCredential.user.sendEmailVerification();
+        }
+        
+        // Save user data to Firestore
+        const userData = {
+            name: userName,
+            email: userEmail,
+            role: userRole,
+            department: userDept,
+            status: 'pending',
+            invitedBy: this.getCurrentUser().email,
+            invitedAt: new Date().toISOString(),
+            lastActive: null
+        };
+        
+        await firebase.firestore()
+            .collection('department_users')
+            .doc(userEmail.replace(/[^a-zA-Z0-9]/g, '_'))
+            .set(userData);
+        
+        // Send welcome email if requested
+        if (sendEmail) {
+            await this.sendWelcomeEmail(userEmail, userName, tempPassword, welcomeMessage);
+        }
+        
+        this.showNotification(`Invitation sent to ${userEmail}`, 'success');
+        this.loadDepartmentUsers();
+        
+    } catch (error) {
+        console.error('Error sending invitation:', error);
+        this.showNotification(`Invitation failed: ${error.message}`, 'error');
+    }
+},
+
+async sendWelcomeEmail(email, name, password, welcomeMessage) {
+    const subject = `Welcome to Farm Manager - Your Account Details`;
+    const body = `Dear ${name},
+
+${welcomeMessage || 'Welcome to the Farm Management System! Your account has been created.'}
+
+**Your Login Details:**
+• App URL: ${window.location.origin}
+• Email: ${email}
+• Temporary Password: ${password}
+
+**Important:**
+1. Use the temporary password above for your first login
+2. You will be prompted to create a new password
+3. Please verify your email address when prompted
+
+**Getting Started:**
+1. Install the app on your mobile device (see instructions below)
+2. Log in with the credentials above
+3. Explore the dashboard and modules
+4. Watch the tutorial videos in the Help section
+
+**Need Help?**
+• Quick Start Guide: [Attached PDF]
+• Support Channel: ${this.getSupportChannel()}
+• Admin Contact: ${this.getCurrentUser().email}
+
+Best regards,
+Farm Management Team
+
+---
+Installation Instructions:
+1. Open ${window.location.origin} on your mobile device
+2. Tap Share (📤) → "Add to Home Screen" (iOS)
+3. Tap Menu (⋮) → "Install app" (Android)
+4. Launch like a regular app!`;
+
+    // Send email
+    const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(mailtoLink, '_blank');
+    
+    // Also save a record of the email
+    await firebase.firestore()
+        .collection('email_logs')
+        .add({
+            to: email,
+            subject: subject,
+            sentAt: new Date().toISOString(),
+            type: 'welcome_email'
+        });
+},
+
+getSupportChannel() {
+    // This should be configurable in settings
+    return window.FarmModules.appData.profile.supportChannel || 
+           'slack://channel?team=YOUR_TEAM&id=YOUR_CHANNEL';
+}, 
+
+toggleUsersList() {
+    const container = document.getElementById('users-list-container');
+    if (container) {
+        container.style.display = container.style.display === 'none' ? 'block' : 'none';
+        if (container.style.display === 'block') {
+            this.loadDepartmentUsers();
+        }
+    }
+},
+
+exportUserList() {
+    const users = window.FarmModules.appData.departmentUsers || [];
+    const csvContent = [
+        ['Name', 'Email', 'Role', 'Department', 'Status', 'Last Active', 'Invited By'].join(','),
+        ...users.map(user => [
+            `"${user.name || ''}"`,
+            `"${user.email || ''}"`,
+            `"${user.role || ''}"`,
+            `"${user.department || ''}"`,
+            `"${user.status || ''}"`,
+            `"${user.lastActive || ''}"`,
+            `"${user.invitedBy || ''}"`
+        ].join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `farm-users-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    
+    this.showNotification('User list exported', 'success');
+}
 
 // ==================== AUTO-REGISTRATION WITH BOTH NAMES ====================
 if (typeof ProfileModule !== 'undefined') {
