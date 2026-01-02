@@ -379,6 +379,41 @@ const ProfileModule = {
                             <!-- Backup list will be populated here -->
                         </div>
                     </div>
+                    <!-- ADD THIS INSTALLATION GUIDE SECTION RIGHT HERE -->
+                    <div class="installation-guide glass-card" style="margin-top: 24px;">
+                        <h3>📱 Install on Mobile</h3>
+                        <div class="guide-steps">
+                            <div class="step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <h4>Open in Browser</h4>
+                                    <p>Visit this app in Safari (iOS) or Chrome (Android)</p>
+                                </div>
+                            </div>
+                            <div class="step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <h4>Tap Share Button</h4>
+                                    <p>Look for <strong>📤 Share</strong> or <strong>⋮ Menu</strong></p>
+                                </div>
+                            </div>
+                            <div class="step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <h4>Add to Home Screen</h4>
+                                    <p>Select <strong>"Add to Home Screen"</strong></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="guide-actions" style="display: flex; gap: 12px; margin-top: 20px;">
+                            <button class="btn-outline" id="send-install-link" style="flex: 1;">
+                                📧 Send Installation Link
+                            </button>
+                            <button class="btn-outline" id="show-qr-code" style="flex: 1;">
+                                📱 Show QR Code
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -441,6 +476,15 @@ const ProfileModule = {
             this.updateUserPersistence();
         });
 
+        // Installation guide buttons
+            document.getElementById('send-install-link')?.addEventListener('click', () => {
+            this.sendInstallationLink();
+        });
+        
+            document.getElementById('show-qr-code')?.addEventListener('click', () => {
+            this.showQRCode();
+        });
+        
         // Local storage setting
         document.getElementById('local-storage')?.addEventListener('change', (e) => {
             this.saveUserInput('local-storage', e.target.checked);
@@ -968,7 +1012,7 @@ const ProfileModule = {
             }
         }
     },
-
+    
     // ==================== FIREBASE METHODS ====================
     async loadFromFirebase() {
         try {
@@ -1318,6 +1362,134 @@ const ProfileModule = {
         if (syncElement) {
             syncElement.textContent = status;
         }
+    },
+
+    // ==================== MOBILE INSTALLATION METHODS ====================
+    
+    showQRCode() {
+        // Create modal
+        const modal = document.createElement('div');
+        modal.className = 'popout-modal';
+        modal.innerHTML = `
+            <div class="popout-modal-content" style="max-width: 400px; text-align: center;">
+                <div class="popout-modal-header">
+                    <h3>📱 Scan to Install</h3>
+                    <button class="popout-modal-close" id="close-qr-modal">&times;</button>
+                </div>
+                <div class="popout-modal-body">
+                    <div style="padding: 20px;">
+                        <!-- QR Code Placeholder -->
+                        <div id="qr-code-container" style="width: 256px; height: 256px; margin: 0 auto 20px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <div style="text-align: center;">
+                                <div style="font-size: 48px; margin-bottom: 16px;">📱</div>
+                                <div style="color: var(--text-secondary); font-size: 14px;">Scan with phone camera</div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin: 20px 0; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+                            <p style="margin: 0 0 8px 0; font-weight: 600; color: var(--text-primary);">Installation Steps:</p>
+                            <ol style="text-align: left; margin: 0; padding-left: 20px; color: var(--text-secondary); font-size: 14px;">
+                                <li>Open camera app on phone</li>
+                                <li>Point camera at this screen</li>
+                                <li>Tap the notification/link that appears</li>
+                                <li>Tap "Add to Home Screen" when prompted</li>
+                            </ol>
+                        </div>
+                        
+                        <div style="margin-top: 20px;">
+                            <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 8px;">Or copy this link:</p>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="app-url" value="${window.location.href}" readonly style="flex: 1; padding: 8px 12px; border: 1px solid var(--glass-border); border-radius: 6px; background: var(--glass-bg); color: var(--text-primary);">
+                                <button class="btn-outline" id="copy-url" style="white-space: nowrap;">📋 Copy</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Close button
+        document.getElementById('close-qr-modal')?.addEventListener('click', () => {
+            modal.remove();
+        });
+        
+        // Copy URL button
+        document.getElementById('copy-url')?.addEventListener('click', () => {
+            const urlInput = document.getElementById('app-url');
+            urlInput.select();
+            document.execCommand('copy');
+            this.showNotification('URL copied to clipboard!', 'success');
+        });
+        
+        // Close on background click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    },
+
+    sendInstallationLink() {
+        const email = prompt('Enter department member email address:');
+        if (!email) return;
+        
+        const subject = 'Farm Manager App - Installation Instructions';
+        const body = `Hello!
+
+You're invited to install the Farm Manager app on your mobile device.
+
+**App Features:**
+• Track farm inventory and sales
+• Manage orders and customers
+• Record production data
+• Generate reports
+• Sync data across devices
+
+**Installation Steps:**
+
+1. **Open this link on your mobile device:**
+${window.location.href}
+
+2. **Add to Home Screen:**
+- iOS (iPhone/iPad): Tap Share (📤) → "Add to Home Screen"
+- Android: Tap Menu (⋮) → "Install app" or "Add to Home Screen"
+
+3. **Log in using your credentials.**
+
+**Your login:**
+Email: ${email}
+(Your password was provided separately)
+
+**Support:**
+If you need assistance, please contact your department administrator.
+
+Best regards,
+Farm Management Team`;
+
+        const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        
+        // Try to open email client
+        window.location.href = mailtoLink;
+        
+        // Fallback: Show manual copy option
+        setTimeout(() => {
+            if (confirm('Email client opened? If not, would you like to copy the instructions to clipboard instead?')) {
+                navigator.clipboard.writeText(body)
+                    .then(() => this.showNotification('Instructions copied to clipboard!', 'success'))
+                    .catch(() => {
+                        // Fallback for older browsers
+                        const textarea = document.createElement('textarea');
+                        textarea.value = body;
+                        document.body.appendChild(textarea);
+                        textarea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textarea);
+                        this.showNotification('Instructions copied to clipboard!', 'success');
+                    });
+            }
+        }, 1000);
     }
 };
 
