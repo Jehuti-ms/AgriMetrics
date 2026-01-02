@@ -2603,128 +2603,421 @@ generateCustomReport() {
 }
 };
 
-// ==================== PDF SERVICE CLASS ====================
-
+// ==================== COMPLETE PDF SERVICE ====================
 class PDFService {
     constructor() {
         if (typeof jspdf === 'undefined') {
-            console.error('jsPDF not loaded');
-            return;
+            throw new Error('jsPDF library is not loaded. Please include jsPDF in your project.');
         }
-        this.jsPDF = window.jspdf.jsPDF;
-        this.userData = null;
-        this.farmData = null;
+        this.doc = new jspdf.jsPDF();
+        this.margin = 20;
+        this.pageWidth = this.doc.internal.pageSize.width;
+        this.pageHeight = this.doc.internal.pageSize.height;
+        this.currentY = this.margin;
+        this.pageNumber = 1;
     }
-
-    initialize(userData, farmData) {
-        this.userData = userData;
-        this.farmData = farmData;
-        console.log('✅ PDF Service initialized');
+    
+    // ===== MAIN REPORT METHODS =====
+    
+    generateUserProfileReport(userData, activityLog = []) {
+        this.doc = new jspdf.jsPDF();
+        this.currentY = this.margin;
+        this.pageNumber = 1;
+        
+        // Cover Page
+        this.addCoverPage(userData);
+        this.doc.addPage();
+        this.pageNumber++;
+        this.currentY = this.margin;
+        
+        // Table of Contents
+        this.addTableOfContents();
+        this.doc.addPage();
+        this.pageNumber++;
+        this.currentY = this.margin;
+        
+        // Personal Information
+        this.addPersonalInfoSection(userData);
+        this.addPageBreak();
+        
+        // Activity History
+        this.addActivitySection(activityLog);
+        this.addPageBreak();
+        
+        // Statistics
+        this.addStatisticsSection(userData);
+        
+        // Footer on all pages
+        this.addFooter();
+        
+        return this.doc.output('blob');
     }
-
-    generateProfilePDF() {
-        try {
-            const doc = new this.jsPDF();
-            
-            // Header
-            doc.setFontSize(24);
-            doc.setTextColor(46, 125, 50);
-            doc.text('Farm Profile Report', 105, 20, { align: 'center' });
-            
-            doc.setFontSize(12);
-            doc.setTextColor(100, 100, 100);
-            doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, 30, { align: 'center' });
-            
-            // Farm Information
-            let yPos = 50;
-            doc.setFontSize(16);
-            doc.setTextColor(46, 125, 50);
-            doc.text('Farm Information', 20, yPos);
-            
-            yPos += 10;
-            doc.setFontSize(12);
-            doc.setTextColor(0, 0, 0);
-            
-            const farmInfo = [
-                ['Farm Name:', this.farmData.farmName],
-                ['Location:', this.farmData.location],
-                ['Type:', this.farmData.farmType],
-                ['Established:', this.farmData.establishedDate],
-                ['Primary Focus:', this.farmData.primaryCrop || this.farmData.livestockType]
-            ];
-            
-            farmInfo.forEach(([label, value]) => {
-                doc.text(`${label} ${value}`, 20, yPos);
-                yPos += 8;
-            });
-            
-            // User Information
-            yPos += 10;
-            doc.setFontSize(16);
-            doc.setTextColor(46, 125, 50);
-            doc.text('Farm Manager', 20, yPos);
-            
-            yPos += 10;
-            doc.setFontSize(12);
-            doc.setTextColor(0, 0, 0);
-            
-            const userInfo = [
-                ['Name:', this.userData.name],
-                ['Email:', this.userData.email],
-                ['Role:', this.userData.role],
-                ['Member Since:', new Date(this.userData.createdAt).toLocaleDateString()],
-                ['Last Login:', new Date(this.userData.lastLogin).toLocaleDateString()]
-            ];
-            
-            userInfo.forEach(([label, value]) => {
-                doc.text(`${label} ${value}`, 20, yPos);
-                yPos += 8;
-            });
-            
-            // Stats Summary
-            yPos += 10;
-            doc.setFontSize(16);
-            doc.setTextColor(46, 125, 50);
-            doc.text('Farm Statistics', 20, yPos);
-            
-            yPos += 10;
-            doc.setFontSize(12);
-            doc.setTextColor(0, 0, 0);
-            
-            const stats = window.FarmModules.appData.profile.dashboardStats || {};
-            const farmStats = [
-                ['Total Orders:', stats.totalOrders || 0],
-                ['Total Inventory:', stats.totalInventoryItems || 0],
-                ['Total Customers:', stats.totalCustomers || 0],
-                ['Total Revenue:', `$${stats.totalRevenue || 0}`]
-            ];
-            
-            farmStats.forEach(([label, value]) => {
-                doc.text(`${label} ${value}`, 20, yPos);
-                yPos += 8;
-            });
-            
-            // Footer
-            const pageCount = doc.internal.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                doc.setFontSize(10);
-                doc.setTextColor(150, 150, 150);
-                doc.text(`Page ${i} of ${pageCount}`, 105, 285, { align: 'center' });
-                doc.text('AgriMetrics Farm Management System', 105, 290, { align: 'center' });
+    
+    generateTeamReport(teamMembers = []) {
+        this.doc = new jspdf.jsPDF('landscape');
+        this.currentY = this.margin;
+        
+        // Title
+        this.doc.setFontSize(24);
+        this.doc.setFont("helvetica", "bold");
+        this.doc.text('TEAM REPORT', this.pageWidth / 2, this.currentY, { align: 'center' });
+        this.currentY += 25;
+        
+        // Generation info
+        this.doc.setFontSize(10);
+        this.doc.setFont("helvetica", "normal");
+        this.doc.text(`Generated: ${new Date().toLocaleString()}`, this.pageWidth - this.margin, this.currentY, { align: 'right' });
+        this.currentY += 20;
+        
+        // Team Members Table
+        this.addTeamTable(teamMembers);
+        
+        this.addFooter();
+        return this.doc.output('blob');
+    }
+    
+    generateActivityReport(activities = [], filters = {}) {
+        this.doc = new jspdf.jsPDF();
+        this.currentY = this.margin;
+        
+        // Title with filters
+        this.doc.setFontSize(20);
+        this.doc.setFont("helvetica", "bold");
+        this.doc.text('ACTIVITY REPORT', this.pageWidth / 2, this.currentY, { align: 'center' });
+        this.currentY += 15;
+        
+        this.doc.setFontSize(11);
+        this.doc.setFont("helvetica", "normal");
+        
+        // Show filters if any
+        if (filters.dateRange) {
+            this.doc.text(`Date Range: ${filters.dateRange}`, this.margin, this.currentY);
+            this.currentY += 7;
+        }
+        if (filters.user) {
+            this.doc.text(`User: ${filters.user}`, this.margin, this.currentY);
+            this.currentY += 7;
+        }
+        
+        this.currentY += 10;
+        
+        // Activities List
+        this.addActivitiesList(activities);
+        
+        this.addFooter();
+        return this.doc.output('blob');
+    }
+    
+    // ===== SECTION BUILDERS =====
+    
+    addCoverPage(userData) {
+        this.doc.setFillColor(41, 128, 185);
+        this.doc.rect(0, 0, this.pageWidth, 100, 'F');
+        
+        this.doc.setTextColor(255, 255, 255);
+        this.doc.setFontSize(32);
+        this.doc.setFont("helvetica", "bold");
+        this.doc.text('PROFILE REPORT', this.pageWidth / 2, 60, { align: 'center' });
+        
+        this.doc.setFontSize(18);
+        this.doc.text(userData.name || 'User Profile', this.pageWidth / 2, 80, { align: 'center' });
+        
+        this.doc.setTextColor(0, 0, 0);
+        this.doc.setFontSize(14);
+        this.doc.text('Confidential Document', this.pageWidth / 2, 150, { align: 'center' });
+        
+        this.doc.setFontSize(12);
+        this.doc.text(`Generated on: ${new Date().toLocaleDateString()}`, this.pageWidth / 2, 170, { align: 'center' });
+    }
+    
+    addTableOfContents() {
+        this.doc.setFontSize(18);
+        this.doc.setFont("helvetica", "bold");
+        this.doc.text('TABLE OF CONTENTS', this.margin, this.currentY);
+        this.currentY += 20;
+        
+        const sections = [
+            '1. Personal Information',
+            '2. Activity History',
+            '3. Statistics & Analytics',
+            '4. Account Summary'
+        ];
+        
+        this.doc.setFontSize(12);
+        this.doc.setFont("helvetica", "normal");
+        
+        sections.forEach(section => {
+            this.doc.text(section, this.margin + 10, this.currentY);
+            this.doc.text(`.......... ${this.pageNumber}`, this.pageWidth - this.margin - 20, this.currentY, { align: 'right' });
+            this.currentY += 15;
+        });
+    }
+    
+    addPersonalInfoSection(userData) {
+        this.addSectionHeader('Personal Information');
+        
+        const infoGroups = [
+            {
+                title: 'Basic Information',
+                fields: [
+                    ['Full Name', userData.fullName || userData.name || 'N/A'],
+                    ['Email Address', userData.email || 'N/A'],
+                    ['Phone Number', userData.phone || 'N/A'],
+                    ['User ID', userData.id || userData.userId || 'N/A']
+                ]
+            },
+            {
+                title: 'Account Details',
+                fields: [
+                    ['Member Since', userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'N/A'],
+                    ['Account Status', userData.status || 'Active'],
+                    ['Last Login', userData.lastLogin ? new Date(userData.lastLogin).toLocaleString() : 'Never'],
+                    ['User Role', userData.role || 'Standard User']
+                ]
+            },
+            {
+                title: 'Profile Information',
+                fields: [
+                    ['Department', userData.department || 'N/A'],
+                    ['Position', userData.position || 'N/A'],
+                    ['Location', userData.location || 'N/A'],
+                    ['Employee ID', userData.employeeId || 'N/A']
+                ]
+            }
+        ];
+        
+        infoGroups.forEach(group => {
+            if (this.currentY > 250) {
+                this.doc.addPage();
+                this.pageNumber++;
+                this.currentY = this.margin;
             }
             
-            const fileName = `Farm_Profile_${this.farmData.farmName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-            doc.save(fileName);
+            this.doc.setFontSize(14);
+            this.doc.setFont("helvetica", "bold");
+            this.doc.text(group.title, this.margin, this.currentY);
+            this.currentY += 8;
             
-            return { success: true, fileName: fileName };
+            this.doc.setFontSize(11);
+            this.doc.setFont("helvetica", "normal");
             
-        } catch (error) {
-            console.error('PDF generation error:', error);
-            return { success: false, error: error.message };
+            group.fields.forEach(([label, value]) => {
+                this.doc.setFont("helvetica", "bold");
+                this.doc.text(`${label}:`, this.margin, this.currentY);
+                this.doc.setFont("helvetica", "normal");
+                this.doc.text(value, this.margin + 60, this.currentY);
+                this.currentY += 7;
+            });
+            
+            this.currentY += 10;
+        });
+    }
+    
+    addActivitySection(activities = []) {
+        this.addSectionHeader('Activity History');
+        
+        if (activities.length === 0) {
+            this.doc.setFontSize(11);
+            this.doc.text('No activity recorded', this.margin, this.currentY);
+            this.currentY += 15;
+            return;
+        }
+        
+        // Activity Table Headers
+        const headers = [['Date', 'Time', 'Activity Type', 'Description', 'IP Address']];
+        const rows = activities.slice(0, 50).map(activity => [
+            activity.date ? new Date(activity.date).toLocaleDateString() : 'N/A',
+            activity.time || 'N/A',
+            activity.type || 'Unknown',
+            activity.description || 'No description',
+            activity.ip || 'N/A'
+        ]);
+        
+        this.addTable(headers.concat(rows), [30, 25, 40, 80, 40]);
+    }
+    
+    addStatisticsSection(userData) {
+        this.addSectionHeader('Statistics & Analytics');
+        
+        const stats = [
+            ['Total Logins', userData.loginCount || '0'],
+            ['Documents Created', userData.documentsCount || '0'],
+            ['Tasks Completed', userData.tasksCompleted || '0'],
+            ['Team Members', userData.teamSize || '1'],
+            ['Avg. Session Time', userData.avgSessionTime || 'N/A'],
+            ['Last Active', userData.lastActive || 'N/A']
+        ];
+        
+        // Simple bar chart visualization
+        this.doc.setFontSize(11);
+        stats.forEach(([label, value], index) => {
+            const y = this.currentY + (index * 15);
+            this.doc.text(label, this.margin, y);
+            
+            // Draw a simple bar
+            const barWidth = Math.min(parseInt(value) * 2, 100);
+            this.doc.setFillColor(52, 152, 219);
+            this.doc.rect(this.margin + 60, y - 4, barWidth, 6, 'F');
+            
+            this.doc.setTextColor(255, 255, 255);
+            this.doc.text(value.toString(), this.margin + 65, y);
+            this.doc.setTextColor(0, 0, 0);
+        });
+        
+        this.currentY += (stats.length * 15) + 20;
+    }
+    
+    addTeamTable(teamMembers) {
+        const headers = [['Name', 'Role', 'Department', 'Status', 'Last Active', 'Performance']];
+        const rows = teamMembers.map(member => [
+            member.name,
+            member.role,
+            member.department,
+            member.status,
+            member.lastActive ? new Date(member.lastActive).toLocaleDateString() : 'Never',
+            member.performance || 'N/A'
+        ]);
+        
+        this.addTable(headers.concat(rows), [40, 35, 40, 30, 40, 35]);
+    }
+    
+    addActivitiesList(activities) {
+        this.doc.setFontSize(12);
+        
+        activities.forEach((activity, index) => {
+            if (this.currentY > 270) {
+                this.doc.addPage();
+                this.pageNumber++;
+                this.currentY = this.margin;
+                this.addFooter();
+            }
+            
+            // Activity item with icon
+            this.doc.setFont("helvetica", "bold");
+            this.doc.text('•', this.margin, this.currentY);
+            this.doc.text(activity.title || 'Activity', this.margin + 10, this.currentY);
+            
+            this.doc.setFont("helvetica", "normal");
+            this.doc.setFontSize(10);
+            this.doc.text(activity.timestamp ? new Date(activity.timestamp).toLocaleString() : 'N/A', 
+                         this.pageWidth - this.margin, this.currentY, { align: 'right' });
+            
+            this.currentY += 6;
+            
+            if (activity.description) {
+                this.doc.text(activity.description, this.margin + 10, this.currentY);
+                this.currentY += 6;
+            }
+            
+            this.currentY += 10;
+        });
+    }
+    
+    // ===== HELPER METHODS =====
+    
+    addSectionHeader(title) {
+        if (this.currentY > 250) {
+            this.doc.addPage();
+            this.pageNumber++;
+            this.currentY = this.margin;
+        }
+        
+        this.doc.setFontSize(16);
+        this.doc.setFont("helvetica", "bold");
+        this.doc.setTextColor(41, 128, 185);
+        this.doc.text(title, this.margin, this.currentY);
+        this.currentY += 12;
+        
+        // Underline
+        this.doc.setLineWidth(0.5);
+        this.doc.line(this.margin, this.currentY - 2, this.margin + 100, this.currentY - 2);
+        this.currentY += 8;
+        
+        this.doc.setTextColor(0, 0, 0);
+    }
+    
+    addTable(data, columnWidths) {
+        const startY = this.currentY;
+        const tableTop = startY + 10;
+        
+        // Draw headers
+        this.doc.setFillColor(41, 128, 185);
+        this.doc.setTextColor(255, 255, 255);
+        this.doc.setFontSize(11);
+        this.doc.setFont("helvetica", "bold");
+        
+        let xPos = this.margin;
+        data[0].forEach((header, i) => {
+            this.doc.rect(xPos, tableTop - 8, columnWidths[i], 10, 'F');
+            this.doc.text(header, xPos + 5, tableTop);
+            xPos += columnWidths[i];
+        });
+        
+        // Draw rows
+        this.doc.setTextColor(0, 0, 0);
+        this.doc.setFont("helvetica", "normal");
+        
+        data.slice(1).forEach((row, rowIndex) => {
+            xPos = this.margin;
+            const yPos = tableTop + 10 + (rowIndex * 10);
+            
+            // Alternate row colors
+            if (rowIndex % 2 === 0) {
+                this.doc.setFillColor(245, 245, 245);
+                this.doc.rect(this.margin, yPos - 4, columnWidths.reduce((a, b) => a + b, 0), 10, 'F');
+            }
+            
+            row.forEach((cell, cellIndex) => {
+                this.doc.text(cell.toString(), xPos + 5, yPos);
+                xPos += columnWidths[cellIndex];
+            });
+            
+            this.currentY = yPos + 10;
+        });
+        
+        this.currentY += 20;
+    }
+    
+    addPageBreak() {
+        this.doc.addPage();
+        this.pageNumber++;
+        this.currentY = this.margin;
+    }
+    
+    addFooter() {
+        const totalPages = this.doc.internal.getNumberOfPages();
+        
+        for (let i = 1; i <= totalPages; i++) {
+            this.doc.setPage(i);
+            
+            // Page number
+            this.doc.setFontSize(10);
+            this.doc.setTextColor(128, 128, 128);
+            this.doc.text(
+                `Page ${i} of ${totalPages}`,
+                this.pageWidth - this.margin,
+                this.pageHeight - 10,
+                { align: 'right' }
+            );
+            
+            // Confidential watermark
+            this.doc.setFontSize(8);
+            this.doc.text(
+                'CONFIDENTIAL',
+                this.pageWidth / 2,
+                this.pageHeight - 10,
+                { align: 'center' }
+            );
+            
+            // Generated date
+            this.doc.text(
+                `Generated: ${new Date().toLocaleDateString()}`,
+                this.margin,
+                this.pageHeight - 10
+            );
         }
     }
-};
+},
 
 // ==================== AUTO-REGISTRATION WITH BOTH NAMES ====================
 if (typeof ProfileModule !== 'undefined') {
