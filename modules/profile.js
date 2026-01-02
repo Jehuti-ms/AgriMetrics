@@ -16,6 +16,22 @@ const ProfileModule = {
     currentInputValues: {},
     broadcastSubscriptions: [],
 
+    // AUTO-REGISTER WITH BOTH NAMES
+if (typeof ProfileModule !== 'undefined') {
+    // Self-executing registration
+    (function() {
+        if (window.FarmModules) {
+            // Register as 'profile' (main name)
+            window.FarmModules.registerModule('profile', ProfileModule);
+            
+            // Also register as 'profile.js' for compatibility
+            window.FarmModules.registerModule('profile.js', ProfileModule);
+            
+            console.log('✅ Profile module registered with both names: "profile" and "profile.js"');
+        }
+    })();
+}
+
     // ==================== INITIALIZATION ====================
     initialize() {
         console.log('👤 Initializing profile with Data Broadcaster...');
@@ -1718,7 +1734,7 @@ const ProfileModule = {
 
 // ==================== UNIVERSAL REGISTRATION ====================
 (function() {
-    const MODULE_NAME = 'profile';
+    const MODULE_NAME = 'profile.js';
     const MODULE_OBJECT = ProfileModule;
     
     console.log(`📦 Registering ${MODULE_NAME} module with Data Broadcaster...`);
