@@ -7387,4 +7387,62 @@ header, .top-nav {
   }
 }
 
-/*=============NAVBAR FIX ==================*/
+/*============= SOCIAL MEDIA LOGIN ==================*/
+.btn-social {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    background: white;
+    color: #333;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-social.google {
+    border-color: #4285F4;
+    color: #4285F4;
+}
+
+.btn-social.apple {
+    border-color: #000;
+    color: #000;
+    background: #000;
+    color: white;
+}
+
+.btn-social:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.social-icon {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    margin: 24px 0;
+    color: var(--text-secondary);
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--glass-border);
+}
+
+.auth-divider span {
+    padding: 0 16px;
+}
+
