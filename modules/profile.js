@@ -2118,7 +2118,7 @@ openQuickGuide() {
                     <span style="font-size: 24px;">📖</span>
                     Farm Manager Quick Guide
                 </h3>
-                <button class="popout-modal-close" onclick="this.closest('.popout-modal').remove()">&times;</button>
+                <button class="popout-modal-close" data-action="close-quick-guide">&times;</button>
             </div>
             <div class="popout-modal-body" style="padding: 24px;">
                 <div style="margin-bottom: 24px;">
@@ -2209,16 +2209,45 @@ openQuickGuide() {
     
     document.body.appendChild(modal);
     
+    // Add event listener for the close button
+    const closeButton = modal.querySelector('.popout-modal-close');
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
+            modal.remove();
+            console.log('Quick guide closed via X button');
+        });
+    }
+    
     // Close modal when clicking outside
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
             modal.remove();
+            console.log('Quick guide closed via outside click');
         }
     });
     
+    // Close with Escape key
+    const escapeHandler = (e) => {
+        if (e.key === 'Escape' && document.body.contains(modal)) {
+            modal.remove();
+            document.removeEventListener('keydown', escapeHandler);
+            console.log('Quick guide closed via Escape key');
+        }
+    };
+    document.addEventListener('keydown', escapeHandler);
+    
+    // Clean up event listener when modal is removed
+    const observer = new MutationObserver(() => {
+        if (!document.body.contains(modal)) {
+            document.removeEventListener('keydown', escapeHandler);
+            observer.disconnect();
+        }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    
     this.showNotification('Quick guide opened', 'info');
 },
-
+    
 // ✅ ADD: Download Quick Guide method
 downloadQuickGuide() {
     console.log('📥 Downloading quick guide...');
