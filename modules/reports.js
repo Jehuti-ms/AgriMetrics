@@ -68,7 +68,7 @@ const ReportsModule = {
 
     // ✅ ADDED: Load jsPDF from CDN
 // In reports.js, update or remove loadJSPDF()
-loadJSPDF() {
+/* loadJSPDF() {
     return new Promise((resolve, reject) => {
         // jsPDF should already be loaded from HTML
         if (typeof jspdf !== 'undefined') {
@@ -79,7 +79,7 @@ loadJSPDF() {
             reject(new Error('jsPDF library not available'));
         }
     });
-},
+}, */
     
     // ✅ ADDED: Setup broadcaster listeners
     setupBroadcasterListeners() {
