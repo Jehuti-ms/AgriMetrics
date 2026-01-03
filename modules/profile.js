@@ -2057,10 +2057,10 @@ downloadQuickGuide() {
 initializePDFService() {
     console.log('📄 Initializing PDF service...');
     
-    // Check if jsPDF is available
+    // Simple check - jsPDF should be loaded from HTML
     if (typeof jspdf === 'undefined') {
-        console.log('⚠️ jsPDF not loaded. Loading from CDN...');
-        this.loadJSPDF();
+        console.error('❌ jsPDF not loaded. Please check index.html');
+        this.showNotification('PDF service not available', 'error');
         return false;
     }
     
@@ -2068,34 +2068,30 @@ initializePDFService() {
     const userData = this.getUserDataForPDF();
     const farmData = this.getFarmDataForPDF();
     
-    // Create PDF service if not exists
-    if (!window.pdfService) {
-        window.pdfService = new PDFService();
-    }
+    // Create PDF service instance
+    window.pdfService = window.pdfService || new PDFService();
     
-    window.pdfService.initialize(userData, farmData);
     console.log('✅ PDF Service initialized');
     
-    // Add PDF button to UI
-    this.addPDFButtons();
+    // Add PDF buttons to UI
+    setTimeout(() => {
+        this.addPDFButtons();
+    }, 500); // Small delay to ensure DOM is ready
     
     return true;
 },
 
 loadJSPDF() {
-    // Load jsPDF from CDN
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-    script.onload = () => {
-        const script2 = document.createElement('script');
-        script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js';
-        script2.onload = () => {
-            console.log('✅ jsPDF and autoTable loaded');
-            this.initializePDFService();
-        };
-        document.head.appendChild(script2);
-    };
-    document.head.appendChild(script);
+    // Just check if jsPDF is available (it should be from HTML)
+    return new Promise((resolve, reject) => {
+        if (typeof jspdf !== 'undefined') {
+            console.log('✅ jsPDF is ready (loaded from HTML)');
+            resolve();
+        } else {
+            console.error('❌ jsPDF not found. Make sure it\'s loaded in index.html');
+            reject(new Error('jsPDF library not loaded'));
+        }
+    });
 },
 
 getUserDataForPDF() {
