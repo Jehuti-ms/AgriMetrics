@@ -3132,44 +3132,1143 @@ async generateInventoryPDF() {
 },
 
 // ✅ ADDED: Generic PDF for other report types
+// ✅ ADDED: Generate Generic PDF for other report types
 async generateGenericPDF() {
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
+        // Header
         doc.setFontSize(24);
         doc.setTextColor(46, 125, 50);
-        doc.text(this.currentReport.title, 105, 20, { align: 'center' });
+        doc.text(this.currentReport.title.toUpperCase(), 105, 20, { align: 'center' });
         
         doc.setFontSize(12);
         doc.setTextColor(100, 100, 100);
-        doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 30, { align: 'center' });
+        doc.text('Farm Management System', 105, 30, { align: 'center' });
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 37, { align: 'center' });
         
         // Convert HTML content to text for PDF
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = this.currentReport.content;
+        
+        // Remove unnecessary elements
+        const unwantedElements = tempDiv.querySelectorAll('style, script, .btn, button');
+        unwantedElements.forEach(el => el.remove());
+        
+        // Get text content
         const textContent = tempDiv.textContent || tempDiv.innerText || '';
         
+        // Start content
+        let yPos = 50;
         doc.setFontSize(11);
         doc.setTextColor(0, 0, 0);
+        
+        // Split text into lines that fit PDF width
         const lines = doc.splitTextToSize(textContent, 170);
         
-        let yPos = 50;
         for (let line of lines) {
             if (yPos > 270) {
                 doc.addPage();
                 yPos = 20;
             }
-            doc.text(line, 20, yPos);
+            
+            // Handle bullet points and formatting
+            if (line.includes('•') || line.trim().match(/^\d+\./)) {
+                doc.setFont(undefined, 'bold');
+                doc.text(line, 20, yPos);
+                doc.setFont(undefined, 'normal');
+            } else if (line.includes(':')) {
+                const parts = line.split(':');
+                if (parts.length >= 2) {
+                    doc.setFont(undefined, 'bold');
+                    doc.text(parts[0] + ':', 20, yPos);
+                    doc.setFont(undefined, 'normal');
+                    doc.text(parts.slice(1).join(':'), 20 + doc.getTextWidth(parts[0] + ': ') + 5, yPos);
+                } else {
+                    doc.text(line, 20, yPos);
+                }
+            } else {
+                doc.text(line, 20, yPos);
+            }
+            
             yPos += 7;
         }
         
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+            doc.text('Confidential Farm Report', 20, 290);
+            doc.text(new Date().toLocaleDateString(), 190, 290, { align: 'right' });
+        }
+        
+        // Save PDF
         const fileName = `${this.currentReport.type}_Report_${new Date().toISOString().split('T')[0]}.pdf`;
         doc.save(fileName);
         
         return { success: true, fileName: fileName };
         
     } catch (error) {
+        console.error('Generic PDF error:', error);
+        return { success: false, error: error.message };
+    }
+},
+
+    // ==================== PDF GENERATION METHODS ====================
+
+// ✅ ADDED: Generate Production PDF Report
+async generateProductionPDF() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Get data
+        const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
+        const totalProduction = production.reduce((sum, record) => sum + (record.quantity || 0), 0);
+        
+        // Group by product
+        const productGroups = {};
+        production.forEach(record => {
+            const product = record.product || 'Unknown';
+            if (!productGroups[product]) {
+                productGroups[product] = {
+                    total: 0,
+                    records: []
+                };
+            }
+            productGroups[product].total += record.quantity || 0;
+            productGroups[product].records.push(record);
+        });
+        
+        // Quality distribution
+        const qualityDistribution = { excellent: 0, good: 0, poor: 0, unknown: 0 };
+        production.forEach(record => {
+            const quality = record.quality || 'unknown';
+            qualityDistribution[quality] = (qualityDistribution[quality] || 0) + 1;
+        });
+        
+        // Header
+        doc.setFontSize(24);
+        doc.setTextColor(46, 125, 50);
+        doc.text('PRODUCTION REPORT', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Farm Management System', 105, 30, { align: 'center' });
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 37, { align: 'center' });
+        
+        // Summary Section
+        let yPos = 50;
+        doc.setFontSize(16);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Production Overview', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        const summaryData = [
+            ['Total Production:', `${totalProduction} units`, 'neutral'],
+            ['Production Records:', production.length.toString(), 'neutral'],
+            ['Products Tracked:', Object.keys(productGroups).length.toString(), 'neutral'],
+            ['Average Daily:', `${production.length > 0 ? Math.round(totalProduction / production.length) : 0} units`, 'neutral']
+        ];
+        
+        summaryData.forEach(([label, value, type]) => {
+            doc.setTextColor(0, 0, 0);
+            doc.text(label, 20, yPos);
+            doc.text(value, 150, yPos, { align: 'right' });
+            yPos += 8;
+        });
+        
+        // Quality Distribution
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.text('Quality Distribution', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        Object.entries(qualityDistribution).forEach(([quality, count]) => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            
+            // Color code quality
+            if (quality === 'excellent') doc.setTextColor(34, 197, 94); // Green
+            else if (quality === 'good') doc.setTextColor(59, 130, 246); // Blue
+            else if (quality === 'poor') doc.setTextColor(239, 68, 68); // Red
+            else doc.setTextColor(100, 100, 100); // Gray
+            
+            const qualityLabel = quality.charAt(0).toUpperCase() + quality.slice(1);
+            doc.text(qualityLabel, 25, yPos);
+            doc.text(count.toString(), 180, yPos, { align: 'right' });
+            yPos += 8;
+        });
+        
+        // Product Breakdown
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Product Breakdown', 20, yPos);
+        yPos += 10;
+        
+        if (Object.keys(productGroups).length > 0) {
+            doc.setFontSize(11);
+            Object.entries(productGroups).forEach(([product, data]) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                doc.setTextColor(46, 125, 50);
+                doc.text(this.formatProductName(product), 25, yPos);
+                doc.setTextColor(0, 0, 0);
+                doc.text(`${data.total} units`, 180, yPos, { align: 'right' });
+                yPos += 8;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No product data available', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Recent Production
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Recent Production Records', 20, yPos);
+        yPos += 10;
+        
+        if (production.slice(-5).length > 0) {
+            doc.setFontSize(10);
+            production.slice(-5).reverse().forEach(record => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                const date = record.date ? new Date(record.date).toLocaleDateString() : 'Unknown date';
+                const productName = this.formatProductName(record.product);
+                const quantity = `${record.quantity || 0} ${record.unit || 'units'}`;
+                
+                doc.text(`${date}: ${productName}`, 25, yPos);
+                doc.text(quantity, 180, yPos, { align: 'right' });
+                yPos += 8;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No recent production records', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Production Insights
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Production Insights', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        const insights = this.getProductionInsights(totalProduction, 0, qualityDistribution)
+            .split('.').filter(i => i.trim());
+        
+        insights.forEach(insight => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.setTextColor(59, 130, 246);
+            doc.text(`• ${insight.trim()}.`, 25, yPos);
+            yPos += 6;
+        });
+        
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+            doc.text('Confidential Production Report', 20, 290);
+            doc.text(new Date().toLocaleDateString(), 190, 290, { align: 'right' });
+        }
+        
+        // Save PDF
+        const fileName = `Production_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        console.error('Production PDF error:', error);
+        return { success: false, error: error.message };
+    }
+},
+
+// ✅ ADDED: Generate Sales PDF Report
+async generateSalesPDF() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Get data
+        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
+        const totalSales = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
+        const averageSale = sales.length > 0 ? totalSales / sales.length : 0;
+        
+        // Group by month
+        const monthlySales = {};
+        sales.forEach(sale => {
+            const date = new Date(sale.date || sale.createdAt || Date.now());
+            const monthYear = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+            if (!monthlySales[monthYear]) {
+                monthlySales[monthYear] = {
+                    total: 0,
+                    count: 0,
+                    sales: []
+                };
+            }
+            monthlySales[monthYear].total += sale.totalAmount || 0;
+            monthlySales[monthYear].count += 1;
+            monthlySales[monthYear].sales.push(sale);
+        });
+        
+        // Header
+        doc.setFontSize(24);
+        doc.setTextColor(46, 125, 50);
+        doc.text('SALES REPORT', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Farm Management System', 105, 30, { align: 'center' });
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 37, { align: 'center' });
+        
+        // Summary Section
+        let yPos = 50;
+        doc.setFontSize(16);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Sales Overview', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        const summaryData = [
+            ['Total Revenue:', this.formatCurrency(totalSales), 'income'],
+            ['Number of Sales:', sales.length.toString(), 'neutral'],
+            ['Average Sale:', this.formatCurrency(averageSale), 'income'],
+            ['Months Tracked:', Object.keys(monthlySales).length.toString(), 'neutral']
+        ];
+        
+        summaryData.forEach(([label, value, type]) => {
+            if (type === 'income') {
+                doc.setTextColor(46, 125, 50);
+            } else {
+                doc.setTextColor(0, 0, 0);
+            }
+            doc.text(label, 20, yPos);
+            doc.text(value, 150, yPos, { align: 'right' });
+            yPos += 8;
+        });
+        
+        // Monthly Sales Trend
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Monthly Sales Trend', 20, yPos);
+        yPos += 10;
+        
+        if (Object.keys(monthlySales).length > 0) {
+            doc.setFontSize(11);
+            Object.entries(monthlySales).sort().forEach(([month, data]) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                const [year, monthNum] = month.split('-');
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const monthName = monthNames[parseInt(monthNum) - 1];
+                
+                doc.setTextColor(0, 0, 0);
+                doc.text(`${monthName} ${year}`, 25, yPos);
+                doc.setTextColor(46, 125, 50);
+                doc.text(this.formatCurrency(data.total), 180, yPos, { align: 'right' });
+                
+                doc.setFontSize(9);
+                doc.setTextColor(100, 100, 100);
+                doc.text(`(${data.count} sales)`, 180, yPos + 4, { align: 'right' });
+                doc.setFontSize(11);
+                
+                yPos += 12;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No monthly sales data', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Recent Sales
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Recent Sales', 20, yPos);
+        yPos += 10;
+        
+        if (sales.slice(-5).length > 0) {
+            doc.setFontSize(10);
+            sales.slice(-5).reverse().forEach(sale => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                const date = sale.date ? new Date(sale.date).toLocaleDateString() : 'Unknown date';
+                const customer = sale.customerName || 'Walk-in Customer';
+                const amount = this.formatCurrency(sale.totalAmount || 0);
+                
+                doc.text(`${date}: ${customer}`, 25, yPos);
+                doc.setTextColor(46, 125, 50);
+                doc.text(amount, 180, yPos, { align: 'right' });
+                doc.setTextColor(0, 0, 0);
+                
+                yPos += 8;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No recent sales', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Sales Insights
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Sales Insights', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        const insights = this.getSalesInsights(sales.length, totalSales)
+            .split('.').filter(i => i.trim());
+        
+        insights.forEach(insight => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.setTextColor(59, 130, 246);
+            doc.text(`• ${insight.trim()}.`, 25, yPos);
+            yPos += 6;
+        });
+        
+        // Recommendations
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Sales Strategies', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        const strategies = [
+            sales.length < 10 ? 'Focus on increasing sales volume through targeted marketing.' : 'Expand customer base and explore bulk sales opportunities.',
+            averageSale < 100 ? 'Bundle products to increase average sale value and customer spend.' : 'Maintain product quality and strengthen customer relationships.',
+            'Analyze monthly trends to plan for seasonal demand fluctuations.',
+            'Implement customer loyalty programs to encourage repeat business.'
+        ];
+        
+        strategies.forEach(strategy => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.setTextColor(46, 125, 50);
+            doc.text(`• ${strategy}`, 25, yPos);
+            yPos += 6;
+        });
+        
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+            doc.text('Confidential Sales Report', 20, 290);
+            doc.text(new Date().toLocaleDateString(), 190, 290, { align: 'right' });
+        }
+        
+        // Save PDF
+        const fileName = `Sales_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        console.error('Sales PDF error:', error);
+        return { success: false, error: error.message };
+    }
+},
+
+// ✅ ADDED: Generate Inventory PDF Report
+async generateInventoryPDF() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Get data
+        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+        const lowStockThreshold = 10; // Default threshold
+        const lowStockItems = inventory.filter(item => (item.quantity || 0) <= lowStockThreshold);
+        const outOfStockItems = inventory.filter(item => (item.quantity || 0) === 0);
+        
+        const totalValue = inventory.reduce((sum, item) => {
+            return sum + ((item.quantity || 0) * (parseFloat(item.price) || 0));
+        }, 0);
+        
+        // Group by category
+        const categoryGroups = {};
+        inventory.forEach(item => {
+            const category = item.category || 'Uncategorized';
+            if (!categoryGroups[category]) {
+                categoryGroups[category] = {
+                    items: [],
+                    totalValue: 0,
+                    totalQuantity: 0
+                };
+            }
+            categoryGroups[category].items.push(item);
+            categoryGroups[category].totalValue += (item.quantity || 0) * (parseFloat(item.price) || 0);
+            categoryGroups[category].totalQuantity += item.quantity || 0;
+        });
+        
+        // Header
+        doc.setFontSize(24);
+        doc.setTextColor(46, 125, 50);
+        doc.text('INVENTORY REPORT', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Farm Management System', 105, 30, { align: 'center' });
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 37, { align: 'center' });
+        
+        // Summary Section
+        let yPos = 50;
+        doc.setFontSize(16);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Inventory Overview', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        const summaryData = [
+            ['Total Items:', inventory.length.toString(), 'neutral'],
+            ['Total Value:', this.formatCurrency(totalValue), 'income'],
+            ['Low Stock Items:', lowStockItems.length.toString(), lowStockItems.length > 0 ? 'warning' : 'neutral'],
+            ['Out of Stock:', outOfStockItems.length.toString(), outOfStockItems.length > 0 ? 'warning' : 'neutral'],
+            ['Categories:', Object.keys(categoryGroups).length.toString(), 'neutral']
+        ];
+        
+        summaryData.forEach(([label, value, type]) => {
+            if (type === 'income') {
+                doc.setTextColor(46, 125, 50);
+            } else if (type === 'warning') {
+                doc.setTextColor(239, 68, 68);
+            } else {
+                doc.setTextColor(0, 0, 0);
+            }
+            doc.text(label, 20, yPos);
+            doc.text(value, 150, yPos, { align: 'right' });
+            yPos += 8;
+        });
+        
+        // Low Stock Warning
+        if (lowStockItems.length > 0) {
+            yPos += 10;
+            doc.setFontSize(14);
+            doc.setTextColor(239, 68, 68);
+            doc.text('⚠️ Low Stock Items', 20, yPos);
+            yPos += 10;
+            
+            doc.setFontSize(10);
+            lowStockItems.forEach(item => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                const currentStock = item.quantity || 0;
+                const minStock = item.minStock || lowStockThreshold;
+                
+                doc.setTextColor(239, 68, 68);
+                doc.text(item.name || 'Unnamed Item', 25, yPos);
+                doc.text(`${currentStock} / ${minStock}`, 180, yPos, { align: 'right' });
+                yPos += 8;
+            });
+        }
+        
+        // Category Breakdown
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Category Breakdown', 20, yPos);
+        yPos += 10;
+        
+        if (Object.keys(categoryGroups).length > 0) {
+            doc.setFontSize(11);
+            Object.entries(categoryGroups).forEach(([category, data]) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                doc.setTextColor(46, 125, 50);
+                doc.text(this.formatCategory(category), 25, yPos);
+                doc.setTextColor(0, 0, 0);
+                doc.text(`${data.items.length} items`, 120, yPos);
+                doc.text(this.formatCurrency(data.totalValue), 180, yPos, { align: 'right' });
+                yPos += 8;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No category data', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Complete Inventory List
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Complete Inventory List', 20, yPos);
+        yPos += 10;
+        
+        if (inventory.length > 0) {
+            // Create table headers
+            const startY = yPos;
+            const headers = [['Item', 'Category', 'Qty', 'Unit Price', 'Total Value', 'Status']];
+            
+            // Prepare table data
+            const tableData = inventory.map(item => {
+                const quantity = item.quantity || 0;
+                const unitPrice = parseFloat(item.price) || 0;
+                const totalValue = quantity * unitPrice;
+                
+                let status = 'Normal';
+                if (quantity === 0) status = 'Out of Stock';
+                else if (quantity <= lowStockThreshold) status = 'Low Stock';
+                
+                return [
+                    item.name || 'Unnamed',
+                    this.formatCategory(item.category || 'Uncategorized'),
+                    quantity.toString(),
+                    this.formatCurrency(unitPrice),
+                    this.formatCurrency(totalValue),
+                    status
+                ];
+            });
+            
+            // Use autoTable if available
+            if (typeof doc.autoTable !== 'undefined') {
+                doc.autoTable({
+                    startY: startY,
+                    head: headers,
+                    body: tableData,
+                    theme: 'grid',
+                    headStyles: { fillColor: [46, 125, 50], textColor: [255, 255, 255], fontStyle: 'bold' },
+                    alternateRowStyles: { fillColor: [245, 245, 245] },
+                    styles: { fontSize: 9, cellPadding: 3 },
+                    columnStyles: {
+                        0: { cellWidth: 40 },
+                        1: { cellWidth: 30 },
+                        2: { cellWidth: 20 },
+                        3: { cellWidth: 25 },
+                        4: { cellWidth: 25 },
+                        5: { cellWidth: 30 }
+                    }
+                });
+                
+                // Update yPos based on autoTable
+                yPos = doc.lastAutoTable.finalY + 10;
+            } else {
+                // Manual table if autoTable not available
+                doc.setFontSize(9);
+                tableData.forEach((row, index) => {
+                    if (yPos > 250) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+                    
+                    // Status color coding
+                    if (row[5] === 'Out of Stock') doc.setTextColor(239, 68, 68);
+                    else if (row[5] === 'Low Stock') doc.setTextColor(245, 158, 11);
+                    else doc.setTextColor(0, 0, 0);
+                    
+                    doc.text(row[0], 20, yPos);
+                    doc.text(row[1], 70, yPos);
+                    doc.text(row[2], 110, yPos);
+                    doc.text(row[3], 130, yPos);
+                    doc.text(row[4], 160, yPos);
+                    doc.text(row[5], 190, yPos, { align: 'right' });
+                    yPos += 6;
+                });
+            }
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No inventory items', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Inventory Insights
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Inventory Management Insights', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        const insights = lowStockItems.length > 0 
+            ? `⚠️ Attention needed for ${lowStockItems.length} low stock items. Consider reordering soon to avoid stockouts.`
+            : '✅ Inventory levels are healthy. Maintain current stock levels and continue regular monitoring.';
+        
+        const insightLines = doc.splitTextToSize(insights, 170);
+        doc.setTextColor(59, 130, 246);
+        doc.text(insightLines, 25, yPos);
+        yPos += (insightLines.length * 6) + 10;
+        
+        // Recommendations
+        doc.setFontSize(11);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Recommendations:', 20, yPos);
+        yPos += 8;
+        
+        const recommendations = [
+            lowStockItems.length > 0 ? '1. Place orders for low stock items immediately to prevent stockouts.' : '1. Continue regular inventory monitoring and maintain optimal stock levels.',
+            '2. Set up automatic reorder alerts for critical inventory items.',
+            '3. Review seasonal demand patterns for better inventory planning.',
+            '4. Consider just-in-time inventory for non-essential items to reduce holding costs.',
+            '5. Conduct regular inventory audits to ensure accuracy.'
+        ];
+        
+        doc.setFontSize(10);
+        recommendations.forEach(rec => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.setTextColor(46, 125, 50);
+            doc.text(`• ${rec}`, 25, yPos);
+            yPos += 6;
+        });
+        
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+            doc.text('Confidential Inventory Report', 20, 290);
+            doc.text(new Date().toLocaleDateString(), 190, 290, { align: 'right' });
+        }
+        
+        // Save PDF
+        const fileName = `Inventory_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        console.error('Inventory PDF error:', error);
+        return { success: false, error: error.message };
+    }
+},
+
+// ✅ ADDED: Generate Health PDF Report
+async generateHealthPDF() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Get data
+        const mortalityRecords = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
+        const totalMortality = mortalityRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
+        const totalBirds = parseInt(localStorage.getItem('farm-current-stock') || '1000');
+        const mortalityRate = totalBirds > 0 ? (totalMortality / totalBirds) * 100 : 0;
+        
+        // Group by cause
+        const causeBreakdown = {};
+        mortalityRecords.forEach(record => {
+            const cause = record.cause || 'unknown';
+            causeBreakdown[cause] = (causeBreakdown[cause] || 0) + (record.quantity || 0);
+        });
+        
+        // Header
+        doc.setFontSize(24);
+        doc.setTextColor(46, 125, 50);
+        doc.text('HEALTH & MORTALITY REPORT', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Farm Management System', 105, 30, { align: 'center' });
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 37, { align: 'center' });
+        
+        // Summary Section
+        let yPos = 50;
+        doc.setFontSize(16);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Health Overview', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        const summaryData = [
+            ['Total Mortality:', `${totalMortality} birds`, mortalityRate > 5 ? 'warning' : 'neutral'],
+            ['Mortality Rate:', `${mortalityRate.toFixed(2)}%`, mortalityRate > 5 ? 'warning' : 'neutral'],
+            ['Current Flock Size:', `${totalBirds} birds`, 'neutral'],
+            ['Health Records:', mortalityRecords.length.toString(), 'neutral']
+        ];
+        
+        summaryData.forEach(([label, value, type]) => {
+            if (type === 'warning') {
+                doc.setTextColor(239, 68, 68);
+            } else {
+                doc.setTextColor(0, 0, 0);
+            }
+            doc.text(label, 20, yPos);
+            doc.text(value, 150, yPos, { align: 'right' });
+            yPos += 8;
+        });
+        
+        // Cause Analysis
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Cause Analysis', 20, yPos);
+        yPos += 10;
+        
+        if (Object.keys(causeBreakdown).length > 0) {
+            doc.setFontSize(11);
+            Object.entries(causeBreakdown).forEach(([cause, count]) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                doc.setTextColor(0, 0, 0);
+                doc.text(this.formatCause(cause), 25, yPos);
+                doc.text(`${count} birds`, 180, yPos, { align: 'right' });
+                yPos += 8;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No cause data available', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Recent Health Records
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Recent Health Records', 20, yPos);
+        yPos += 10;
+        
+        if (mortalityRecords.slice(-5).length > 0) {
+            doc.setFontSize(10);
+            mortalityRecords.slice(-5).reverse().forEach(record => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                const date = record.date ? new Date(record.date).toLocaleDateString() : 'Unknown date';
+                const cause = this.formatCause(record.cause);
+                const quantity = `${record.quantity || 0} birds`;
+                
+                doc.text(`${date}: ${cause}`, 25, yPos);
+                doc.text(quantity, 180, yPos, { align: 'right' });
+                yPos += 8;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No recent health records', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Health Insights
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Health Insights', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        const insights = this.getHealthRecommendations(mortalityRate, causeBreakdown)
+            .split('.').filter(i => i.trim());
+        
+        insights.forEach(insight => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.setTextColor(59, 130, 246);
+            doc.text(`• ${insight.trim()}.`, 25, yPos);
+            yPos += 6;
+        });
+        
+        // Prevention Strategies
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Prevention Strategies', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        const strategies = [
+            mortalityRate > 5 ? 'Implement strict biosecurity measures and schedule regular veterinary health checks.' : 'Maintain current health monitoring protocols and biosecurity measures.',
+            Object.keys(causeBreakdown).includes('disease') ? 'Schedule immediate veterinary consultations and implement vaccination programs for common diseases.' : 'Focus on preventive care through proper nutrition and environmental management.',
+            'Monitor environmental conditions including temperature, ventilation, and cleanliness regularly.',
+            'Keep detailed health records for early detection of health issues and trend analysis.',
+            'Implement quarantine procedures for new birds and sick individuals.',
+            'Train staff on proper handling techniques and early symptom recognition.'
+        ];
+        
+        strategies.forEach(strategy => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.setTextColor(46, 125, 50);
+            doc.text(`• ${strategy}`, 25, yPos);
+            yPos += 6;
+        });
+        
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+            doc.text('Confidential Health Report', 20, 290);
+            doc.text(new Date().toLocaleDateString(), 190, 290, { align: 'right' });
+        }
+        
+        // Save PDF
+        const fileName = `Health_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        console.error('Health PDF error:', error);
+        return { success: false, error: error.message };
+    }
+},
+
+// ✅ ADDED: Generate Feed PDF Report
+async generateFeedPDF() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Get data
+        const feedRecords = JSON.parse(localStorage.getItem('farm-feed-records') || '[]');
+        const totalFeedUsed = feedRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
+        const totalFeedCost = feedRecords.reduce((sum, record) => sum + (record.cost || 0), 0);
+        const totalBirds = parseInt(localStorage.getItem('farm-current-stock') || '1000');
+        const averageCostPerKg = totalFeedUsed > 0 ? totalFeedCost / totalFeedUsed : 0;
+        
+        // Group by feed type
+        const feedTypeBreakdown = {};
+        feedRecords.forEach(record => {
+            const feedType = record.feedType || 'unknown';
+            if (!feedTypeBreakdown[feedType]) {
+                feedTypeBreakdown[feedType] = {
+                    quantity: 0,
+                    cost: 0,
+                    records: []
+                };
+            }
+            feedTypeBreakdown[feedType].quantity += record.quantity || 0;
+            feedTypeBreakdown[feedType].cost += record.cost || 0;
+            feedTypeBreakdown[feedType].records.push(record);
+        });
+        
+        // Header
+        doc.setFontSize(24);
+        doc.setTextColor(46, 125, 50);
+        doc.text('FEED CONSUMPTION REPORT', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Farm Management System', 105, 30, { align: 'center' });
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 37, { align: 'center' });
+        
+        // Summary Section
+        let yPos = 50;
+        doc.setFontSize(16);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Feed Consumption Overview', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        const summaryData = [
+            ['Total Feed Used:', `${totalFeedUsed} kg`, 'neutral'],
+            ['Total Feed Cost:', this.formatCurrency(totalFeedCost), 'expense'],
+            ['Average Cost per Kg:', this.formatCurrency(averageCostPerKg), 'neutral'],
+            ['Feed Records:', feedRecords.length.toString(), 'neutral'],
+            ['Feed per Bird:', `${totalBirds > 0 ? (totalFeedUsed / totalBirds).toFixed(2) : 0} kg`, 'neutral']
+        ];
+        
+        summaryData.forEach(([label, value, type]) => {
+            if (type === 'expense') {
+                doc.setTextColor(239, 68, 68);
+            } else {
+                doc.setTextColor(0, 0, 0);
+            }
+            doc.text(label, 20, yPos);
+            doc.text(value, 150, yPos, { align: 'right' });
+            yPos += 8;
+        });
+        
+        // Feed Type Analysis
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Feed Type Analysis', 20, yPos);
+        yPos += 10;
+        
+        if (Object.keys(feedTypeBreakdown).length > 0) {
+            doc.setFontSize(11);
+            Object.entries(feedTypeBreakdown).forEach(([feedType, data]) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                doc.setTextColor(0, 0, 0);
+                doc.text(this.formatFeedType(feedType), 25, yPos);
+                
+                doc.setFontSize(10);
+                doc.text(`${data.quantity} kg`, 120, yPos);
+                doc.text(this.formatCurrency(data.cost), 180, yPos, { align: 'right' });
+                
+                doc.setFontSize(9);
+                doc.setTextColor(100, 100, 100);
+                const avgCost = data.quantity > 0 ? this.formatCurrency(data.cost / data.quantity) : '$0.00';
+                doc.text(`(${avgCost}/kg)`, 180, yPos + 4, { align: 'right' });
+                
+                doc.setFontSize(11);
+                yPos += 12;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No feed type data available', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Recent Feed Records
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Recent Feed Records', 20, yPos);
+        yPos += 10;
+        
+        if (feedRecords.slice(-5).length > 0) {
+            doc.setFontSize(10);
+            feedRecords.slice(-5).reverse().forEach(record => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                const date = record.date ? new Date(record.date).toLocaleDateString() : 'Unknown date';
+                const feedType = this.formatFeedType(record.feedType);
+                const quantity = `${record.quantity || 0} kg`;
+                const cost = this.formatCurrency(record.cost || 0);
+                
+                doc.text(`${date}: ${feedType}`, 25, yPos);
+                doc.text(quantity, 120, yPos);
+                doc.text(cost, 180, yPos, { align: 'right' });
+                yPos += 8;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No recent feed records', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Feed Management Insights
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Feed Management Insights', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        const feedEfficiency = totalBirds > 0 ? totalFeedUsed / totalBirds : 0;
+        const insights = [
+            `Feed represents approximately ${totalFeedCost > 0 ? Math.round((totalFeedCost / (totalFeedCost + 1000)) * 100) : 0}% of operational costs.`,
+            feedEfficiency > 0.1 ? 'Feed efficiency is within normal range for poultry operations.' : 'Monitor feed consumption rates to ensure optimal efficiency.',
+            averageCostPerKg > 1.5 ? 'Feed costs are higher than industry average. Consider bulk purchasing or alternative suppliers.' : 'Feed costs are reasonable. Continue current purchasing strategy.',
+            'Regularly assess feed conversion ratios to track efficiency improvements.'
+        ];
+        
+        insights.forEach(insight => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.setTextColor(59, 130, 246);
+            doc.text(`• ${insight}`, 25, yPos);
+            yPos += 6;
+        });
+        
+        // Recommendations
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Optimization Strategies', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        const strategies = [
+            'Consider bulk purchasing for commonly used feed types to reduce per-unit costs.',
+            'Track feed-to-weight conversion ratios weekly to identify efficiency opportunities.',
+            'Implement feeding schedules based on bird age and production stage.',
+            'Monitor feed wastage and implement measures to reduce spillage.',
+            'Regularly compare feed prices from multiple suppliers.',
+            'Consider formulating custom feed mixes for specific nutritional requirements.',
+            'Implement feed storage best practices to prevent spoilage and contamination.'
+        ];
+        
+        strategies.forEach(strategy => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.setTextColor(46, 125, 50);
+            doc.text(`• ${strategy}`, 25, yPos);
+            yPos += 6;
+        });
+        
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+            doc.text('Confidential Feed Report', 20, 290);
+            doc.text(new Date().toLocaleDateString(), 190, 290, { align: 'right' });
+        }
+        
+        // Save PDF
+        const fileName = `Feed_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        console.error('Feed PDF error:', error);
         return { success: false, error: error.message };
     }
 },
