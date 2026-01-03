@@ -2543,8 +2543,46 @@ addPDFExportButton() {
                 .metric-value.warning {
                     color: #f59e0b;
                 }
+
+                // Add this to the end of addReportStyles():
+            const fixStyles = `
+                @media (max-width: 768px) {
+                    #report-output .output-header {
+                        flex-direction: column;
+                        gap: 16px;
+                    }
+                    
+                    #report-output .output-header > div:first-child {
+                        margin-bottom: 16px;
+                    }
+                    
+                    #report-output .output-header > div:last-child {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 8px;
+                        width: 100%;
+                    }
+                    
+                    #report-output .btn-outline {
+                        flex: 1;
+                        min-width: calc(50% - 4px);
+                        max-width: calc(50% - 4px);
+                    }
+                }
+                
+                @media (max-width: 480px) {
+                    #report-output .btn-outline {
+                        min-width: 100%;
+                        max-width: 100%;
+                    }
+                }
             `;
             document.head.appendChild(styles);
+            
+            // Add to existing styles
+            if (document.getElementById('report-styles')) {
+                const existingStyles = document.getElementById('report-styles');
+                existingStyles.textContent += fixStyles;
         }
     },
 
