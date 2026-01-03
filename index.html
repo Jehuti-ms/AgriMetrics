@@ -201,7 +201,7 @@
             </div>
         </div>
 
-       <!-- Main Content -->
+      <!-- Main Content -->
 <main id="content-area">
     <!-- Content will be loaded here by modules -->
 </main>
@@ -216,23 +216,28 @@
 <script src="firebase/firebase-config.js"></script>
 <script src="firebase/firebase-auth.js"></script>
 
-<!-- 2. Core Framework -->
+<!-- 2. Auth Redirect Handler (must come early) -->
+<script src="modules/auth-redirect-handler.js"></script>
+
+<!-- 3. Sign-in Fix (for login issues) -->
+<script src="signin-fix.js"></script>
+
+<!-- 4. Core Framework -->
 <script src="modules/framework.js"></script>
 <script src="modules/core.js"></script>
 
-<!-- 3. Style Manager (early for theming) -->
+<!-- 5. Style Manager (early for theming) -->
 <script src="style-manager.js"></script>
 
-<!-- 4. Auth System -->
-<script src="modules/auth-redirect-handler.js"></script>
+<!-- 6. Auth Components -->
 <script src="modules/ModalManager.js"></script>
 <script src="modules/auth.js"></script>
 
-<!-- 5. Data & Utilities -->
+<!-- 7. Data & Utilities -->
 <script src="modules/data-broadcaster.js"></script>
 <script src="date-utils.js"></script>
 
-<!-- 6. MODULES -->
+<!-- 8. MODULES -->
 <script src="modules/dashboard.js"></script>
 <script src="modules/income-expenses.js"></script>
 <script src="modules/inventory-check.js"></script>
@@ -244,7 +249,7 @@
 <script src="modules/reports.js"></script>
 <script src="modules/profile.js"></script>
 
-<!-- 7. Main App -->
+<!-- 9. Main App -->
 <script src="app.js"></script>
 </body>
 </html>
