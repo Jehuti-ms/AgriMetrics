@@ -2492,99 +2492,151 @@ addPDFExportButton() {
     }
 },
     
-    addReportStyles() {
-        if (!document.getElementById('report-styles')) {
-            const styles = document.createElement('style');
-            styles.id = 'report-styles';
-            styles.textContent = `
-                .report-section {
-                    margin-bottom: 32px;
-                    padding-bottom: 24px;
-                    border-bottom: 1px solid var(--glass-border);
-                }
-                .report-section:last-child {
-                    border-bottom: none;
-                    margin-bottom: 0;
-                    padding-bottom: 0;
-                }
-                .report-section h4 {
-                    color: var(--text-primary);
-                    margin-bottom: 16px;
-                    font-size: 18px;
-                    font-weight: 600;
-                }
-                .metric-row {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 12px 0;
-                    border-bottom: 1px solid rgba(0,0,0,0.05);
-                }
-                .metric-row:last-child {
-                    border-bottom: none;
-                }
-                .metric-label {
-                    color: var(--text-secondary);
-                    font-size: 14px;
-                }
-                .metric-value {
-                    font-weight: 600;
-                    font-size: 14px;
-                }
-                .metric-value.income {
-                    color: #22c55e;
-                }
-                .metric-value.expense {
-                    color: #ef4444;
-                }
-                .metric-value.profit {
-                    color: #22c55e;
-                }
-                .metric-value.warning {
-                    color: #f59e0b;
-                }
-
-                // Add this to the end of addReportStyles():
-            const fixStyles = `
-                @media (max-width: 768px) {
-                    #report-output .output-header {
-                        flex-direction: column;
-                        gap: 16px;
-                    }
-                    
-                    #report-output .output-header > div:first-child {
-                        margin-bottom: 16px;
-                    }
-                    
-                    #report-output .output-header > div:last-child {
-                        display: flex;
-                        flex-wrap: wrap;
-                        gap: 8px;
-                        width: 100%;
-                    }
-                    
-                    #report-output .btn-outline {
-                        flex: 1;
-                        min-width: calc(50% - 4px);
-                        max-width: calc(50% - 4px);
-                    }
+   addReportStyles() {
+    if (!document.getElementById('report-styles')) {
+        const styles = document.createElement('style');
+        styles.id = 'report-styles';
+        styles.textContent = `
+            .report-section {
+                margin-bottom: 32px;
+                padding-bottom: 24px;
+                border-bottom: 1px solid var(--glass-border);
+            }
+            .report-section:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }
+            .report-section h4 {
+                color: var(--text-primary);
+                margin-bottom: 16px;
+                font-size: 18px;
+                font-weight: 600;
+            }
+            .metric-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 0;
+                border-bottom: 1px solid rgba(0,0,0,0.05);
+            }
+            .metric-row:last-child {
+                border-bottom: none;
+            }
+            .metric-label {
+                color: var(--text-secondary);
+                font-size: 14px;
+            }
+            .metric-value {
+                font-weight: 600;
+                font-size: 14px;
+            }
+            .metric-value.income {
+                color: #22c55e;
+            }
+            .metric-value.expense {
+                color: #ef4444;
+            }
+            .metric-value.profit {
+                color: #22c55e;
+            }
+            .metric-value.warning {
+                color: #f59e0b;
+            }
+            
+            /* NEW: Responsive report output styles */
+            .output-header {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+                padding: 24px;
+                border-bottom: 1px solid var(--glass-border);
+            }
+            
+            .output-header > div:first-child {
+                flex: 1;
+                min-width: 0; /* Prevent text overflow */
+            }
+            
+            .output-header h3 {
+                color: var(--text-primary);
+                margin: 0 0 8px 0;
+                font-size: clamp(1.25rem, 4vw, 1.5rem);
+                line-height: 1.2;
+            }
+            
+            .output-header .report-date {
+                color: var(--text-secondary);
+                margin: 0;
+                font-size: 0.9rem;
+            }
+            
+            .report-actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                align-items: center;
+                justify-content: flex-start;
+                width: 100%;
+            }
+            
+            .report-actions button {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+                white-space: nowrap;
+                flex: 1;
+                min-width: 100px;
+                max-width: 120px;
+            }
+            
+            .report-actions #close-report-btn {
+                background: var(--danger-color, #ef4444);
+                color: white;
+                border-color: var(--danger-color, #ef4444);
+            }
+            
+            .report-actions #close-report-btn:hover {
+                background: #dc2626;
+                border-color: #dc2626;
+            }
+            
+            /* Responsive adjustments */
+            @media (max-width: 768px) {
+                .output-header {
+                    padding: 20px;
                 }
                 
-                @media (max-width: 480px) {
-                    #report-output .btn-outline {
-                        min-width: 100%;
-                        max-width: 100%;
-                    }
+                .report-actions {
+                    gap: 8px;
                 }
-            `;
-            document.head.appendChild(styles);
+                
+                .report-actions button {
+                    min-width: 90px;
+                    padding: 8px 12px;
+                    font-size: 0.85rem;
+                }
+            }
             
-            // Add to existing styles
-            if (document.getElementById('report-styles')) {
-                const existingStyles = document.getElementById('report-styles');
-                existingStyles.textContent += fixStyles;
-        }
-    },
+            @media (max-width: 480px) {
+                .output-header {
+                    padding: 16px;
+                }
+                
+                .report-actions {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+                
+                .report-actions button {
+                    min-width: 100%;
+                    max-width: 100%;
+                    width: 100%;
+                }
+            }
+        `;
+        document.head.appendChild(styles);
+    }
+},
 
     closeReport() {
         const outputSection = document.getElementById('report-output');
