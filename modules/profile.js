@@ -479,7 +479,7 @@ const ProfileModule = {
                                     <h4 style="margin: 0 0 4px 0; color: var(--text-primary);">Email Support</h4>
                                     <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">farm-support@yourcompany.com</p>
                                 </div>
-                                <button class="btn-outline" onclick="(window.ProfileModule || window).copyToClipboard?.('farm-support@yourcompany.com') || alert('Copied: farm-support@yourcompany.com')" style="margin-left: auto;">📋 Copy</button>
+                                <button class="btn-outline" data-action="copy-email" style="margin-left: auto;">📋 Copy</button>
                             </div>
                             
                             <div class="support-channel" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--glass-bg); border-radius: 8px; margin-bottom: 12px;">
@@ -488,7 +488,7 @@ const ProfileModule = {
                                     <h4 style="margin: 0 0 4px 0; color: var(--text-primary);">Team Channel</h4>
                                     <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">#farm-management</p>
                                 </div>
-                                <button class="btn-outline" onclick="(window.ProfileModule || window).openSlackChannel?.() || window.open('https://slack.com', '_blank')" style="margin-left: auto;">↗️ Open</button>
+                                <button class="btn-outline" data-action="open-slack" style="margin-left: auto;">↗️ Open</button>
                             </div>
                             
                             <div class="support-channel" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--glass-bg); border-radius: 8px; margin-bottom: 12px;">
@@ -497,8 +497,8 @@ const ProfileModule = {
                                     <h4 style="margin: 0 0 4px 0; color: var(--text-primary);">Quick Guide</h4>
                                     <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">One-page reference</p>
                                 </div>
-                                <button class="btn-outline" onclick="(window.ProfileModule || window).openQuickGuide?.() || alert('Quick Guide: Open ProfileModule for instructions')" style="margin-left: auto;">📄 Open</button>
-                                <button class="btn-outline" onclick="(window.ProfileModule || window).downloadQuickGuide?.() || alert('Downloading guide...')">📥 PDF</button>
+                                <button class="btn-outline" data-action="open-guide" style="margin-left: auto;">📄 Open</button>
+                                <button class="btn-outline" data-action="download-guide">📥 PDF</button>
                             </div>
                             
                             <div class="support-channel" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
@@ -507,7 +507,7 @@ const ProfileModule = {
                                     <h4 style="margin: 0 0 4px 0; color: var(--text-primary);">Video Tutorials</h4>
                                     <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">Step-by-step guides</p>
                                 </div>
-                                <button class="btn-outline" onclick="(window.ProfileModule || window).openYouTubeTutorials?.() || window.open('https://youtube.com', '_blank')" style="margin-left: auto;">▶️ Watch</button>
+                                <button class="btn-outline" data-action="watch-tutorials" style="margin-left: auto;">▶️ Watch</button>
                             </div>
                         </div>
                     </div>
@@ -657,26 +657,35 @@ const ProfileModule = {
             this.handleLogout();
         });
 
-        // Support section buttons
-        document.getElementById('copy-email-btn')?.addEventListener('click', () => {
-            this.copyToClipboard('farm-support@yourcompany.com');
-        });
+        // ✅ ADD: Support section event listeners
+    document.addEventListener('click', (e) => {
+        const button = e.target.closest('button[data-action]');
+        if (!button) return;
         
-        document.getElementById('open-slack-btn')?.addEventListener('click', () => {
-            this.openSlackChannel();
-        });
+        const action = button.getAttribute('data-action');
         
-        document.getElementById('open-guide-btn')?.addEventListener('click', () => {
-            this.openQuickGuide();
-        });
-        
-        document.getElementById('download-guide-btn')?.addEventListener('click', () => {
-            this.downloadQuickGuide();
-        });
-        
-        document.getElementById('watch-tutorials-btn')?.addEventListener('click', () => {
-            this.openYouTubeTutorials();
-        });
+        switch(action) {
+            case 'copy-email':
+                this.copyToClipboard('farm-support@yourcompany.com');
+                break;
+                
+            case 'open-slack':
+                this.openSlackChannel();
+                break;
+                
+            case 'open-guide':
+                this.openQuickGuide();
+                break;
+                
+            case 'download-guide':
+                this.downloadQuickGuide();
+                break;
+                
+            case 'watch-tutorials':
+                this.openYouTubeTutorials();
+                break;
+        }
+    });
     },
 
     // ==================== FORM VALIDATION ====================
