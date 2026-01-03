@@ -201,43 +201,49 @@
             </div>
         </div>
 
-      <!-- Main Content -->
-<main id="content-area">
-    <!-- Content will be loaded here by modules -->
-</main>
-</div>
+     Summary of Fixes:
+Remove onclick attributes from HTML - use data-action and event listeners
 
-<!-- Notifications Container -->
-<div class="notification-container" id="notification-container"></div>
+Ensure jsPDF loads from jsdelivr.net in HTML
 
-<!-- Load scripts in correct order -->
+Fix dynamic jsPDF loading in modules
 
-<!-- 1. Firebase -->
+Move inline scripts to external files
+
+Add the support methods to ProfileModule
+
+Try these changes and the CSP errors should disappear!
+
+<!-- Main Content -->
+        <main id="content-area">
+            <!-- Content will be loaded here by modules -->
+        </main>
+    </div>
+
+    <!-- Notifications Container -->
+    <div class="notification-container" id="notification-container"></div>
+
+    <!-- Load scripts in correct order -->
 <script src="firebase/firebase-config.js"></script>
 <script src="firebase/firebase-auth.js"></script>
 
-<!-- 2. Auth Redirect Handler (must come early) -->
+    <!-- Auth Redirect Handler (NEW - Add this) -->
 <script src="modules/auth-redirect-handler.js"></script>
 
-<!-- 3. Sign-in Fix (for login issues) -->
+    <!-- Add the fix script -->
 <script src="signin-fix.js"></script>
 
-<!-- 4. Core Framework -->
+    <!-- Data Broadcasting -->
+<script src="modules/data-broadcaster.js"></script>
+    
 <script src="modules/framework.js"></script>
 <script src="modules/core.js"></script>
-
-<!-- 5. Style Manager (early for theming) -->
-<script src="style-manager.js"></script>
-
-<!-- 6. Auth Components -->
+<script src="style-manager.js"></script>      <!-- StyleManager BEFORE modules -->
 <script src="modules/ModalManager.js"></script>
 <script src="modules/auth.js"></script>
-
-<!-- 7. Data & Utilities -->
-<script src="modules/data-broadcaster.js"></script>
 <script src="date-utils.js"></script>
 
-<!-- 8. MODULES -->
+<!-- MODULES - Loaded AFTER StyleManager -->
 <script src="modules/dashboard.js"></script>
 <script src="modules/income-expenses.js"></script>
 <script src="modules/inventory-check.js"></script>
@@ -248,8 +254,11 @@
 <script src="modules/production.js"></script>
 <script src="modules/reports.js"></script>
 <script src="modules/profile.js"></script>
-
-<!-- 9. Main App -->
+   
 <script src="app.js"></script>
+    <script>
+  // Make it globally available
+  window.jspdf = window.jspdf;
+</script>
 </body>
 </html>
