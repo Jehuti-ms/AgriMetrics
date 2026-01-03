@@ -1193,3 +1193,18 @@ const OrdersModule = {
 
 // Export the module
 window.OrdersModule = OrdersModule;
+
+// ==================== UNIVERSAL REGISTRATION ====================
+(function() {
+    console.log('📦 Registering orders module...');
+    
+    // Register with FarmModules framework if available
+    if (window.FarmModules) {
+        // Use the module name from the module itself
+        const moduleName = OrdersModule.name || 'orders';
+        FarmModules.registerModule(moduleName, OrdersModule);
+        console.log(`✅ ${moduleName} module registered successfully!`);
+    } else {
+        console.log('📦 Orders module loaded (standalone mode)');
+    }
+})();
