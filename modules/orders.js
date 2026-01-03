@@ -1,4 +1,4 @@
-// modules/orders.js - COMPLETE VERSION WITH DATA BROADCASTER (CSP COMPLIANT)
+// modules/orders.js - COMPLETE CSP COMPLIANT VERSION WITH ALL FUNCTIONALITY
 console.log('Loading orders module...');
 
 const OrdersModule = {
@@ -15,15 +15,16 @@ const OrdersModule = {
     ],
     element: null,
     broadcaster: null,
+    editingOrderId: null,
+    editingCustomerId: null,
 
+    // ==================== INITIALIZATION ====================
     initialize() {
         console.log('📋 Initializing Orders Management...');
         
-        // ✅ Get the content area element
         this.element = document.getElementById('content-area');
         if (!this.element) return false;
 
-        // ✅ Get Broadcaster instance
         this.broadcaster = window.Broadcaster || null;
         if (this.broadcaster) {
             console.log('📡 Orders module connected to Data Broadcaster');
@@ -31,7 +32,6 @@ const OrdersModule = {
             console.log('⚠️ Broadcaster not available, using local methods');
         }
 
-        // ✅ Register with StyleManager
         if (window.StyleManager) {
             StyleManager.registerModule('orders', this.element, this);
         }
@@ -39,28 +39,30 @@ const OrdersModule = {
         this.loadData();
         this.renderModule();
         
-        this.initialized = true;
+        if (this.broadcaster) {
+            this.setupBroadcasterListeners();
+            this.broadcastOrdersLoaded();
+        }
         
-        console.log('✅ Orders Management initialized with StyleManager & Data Broadcaster');
+        this.initialized = true;
+        console.log('✅ Orders Management initialized');
         return true;
     },
 
+    // ==================== BROADCASTER METHODS ====================
     setupBroadcasterListeners() {
         if (!this.broadcaster) return;
         
-        // Listen for inventory updates that might affect orders
         this.broadcaster.on('inventory-updated', (data) => {
             console.log('📡 Orders received inventory update:', data);
             this.checkInventoryForOrders(data);
         });
         
-        // Listen for production updates
         this.broadcaster.on('production-updated', (data) => {
             console.log('📡 Orders received production update:', data);
             this.checkProductionForOrders(data);
         });
         
-        // Listen for sales records
         this.broadcaster.on('sale-recorded', (data) => {
             console.log('📡 Orders received sale record:', data);
             this.syncWithSale(data);
@@ -100,7 +102,6 @@ const OrdersModule = {
             date: order.date
         });
         
-        // Also broadcast sales update if order is completed
         if (order.status === 'completed') {
             this.broadcaster.broadcast('sale-completed', {
                 module: 'orders',
@@ -124,7 +125,6 @@ const OrdersModule = {
             totalAmount: order.totalAmount
         });
         
-        // If status changed to completed, broadcast sale
         if (order.status === 'completed') {
             const customer = this.customers.find(c => c.id === order.customerId);
             this.broadcaster.broadcast('sale-completed', {
@@ -181,16 +181,15 @@ const OrdersModule = {
         });
     },
 
+    // ==================== CROSS-MODULE INTERACTIONS ====================
     checkInventoryForOrders(inventoryData) {
         if (!inventoryData || !inventoryData.items) return;
         
-        // Check if pending orders can be fulfilled with current inventory
         const pendingOrders = this.orders.filter(o => o.status === 'pending');
         let canFulfillOrders = false;
         
         pendingOrders.forEach(order => {
             order.items.forEach(item => {
-                // Check if we have enough inventory for this item
                 const inventoryItem = inventoryData.items.find(
                     inv => inv.productId === item.productId
                 );
@@ -213,7 +212,6 @@ const OrdersModule = {
 
     checkProductionForOrders(productionData) {
         if (!productionData) return;
-        
         console.log('Production data received for orders:', productionData);
     },
 
@@ -244,6 +242,7 @@ const OrdersModule = {
         return stats;
     },
 
+    // ==================== DATA MANAGEMENT ====================
     saveData() {
         localStorage.setItem('farm-orders', JSON.stringify(this.orders));
         localStorage.setItem('farm-customers', JSON.stringify(this.customers));
@@ -310,14 +309,13 @@ const OrdersModule = {
         ];
     },
 
-    onThemeChange(theme) {
-        console.log(`Orders Management updating for theme: ${theme}`);
-    },
-
+    // ==================== UI RENDERING ====================
     renderModule() {
         if (!this.element) return;
 
         const stats = this.calculateStats();
+        const isEditingOrder = this.editingOrderId !== null;
+        const isEditingCustomer = this.editingCustomerId !== null;
 
         this.element.innerHTML = `
             <div class="module-container">
@@ -328,22 +326,22 @@ const OrdersModule = {
 
                 <!-- Quick Actions -->
                 <div class="quick-action-grid">
-                    <button class="quick-action-btn" id="create-order-btn" data-action="create-order">
+                    <button class="quick-action-btn" data-action="create-order">
                         <div style="font-size: 32px;">➕</div>
                         <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">New Order</span>
                         <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Create new order</span>
                     </button>
-                    <button class="quick-action-btn" id="manage-customers-btn" data-action="manage-customers">
+                    <button class="quick-action-btn" data-action="manage-customers">
                         <div style="font-size: 32px;">👥</div>
                         <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Customers</span>
                         <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Manage customers</span>
                     </button>
-                    <button class="quick-action-btn" id="view-orders-btn" data-action="view-orders">
+                    <button class="quick-action-btn" data-action="view-orders">
                         <div style="font-size: 32px;">📋</div>
                         <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">All Orders</span>
                         <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View all orders</span>
                     </button>
-                    <button class="quick-action-btn" id="add-customer-btn" data-action="add-customer">
+                    <button class="quick-action-btn" data-action="add-customer">
                         <div style="font-size: 32px;">👤</div>
                         <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Customer</span>
                         <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Add new customer</span>
@@ -374,11 +372,14 @@ const OrdersModule = {
                     </div>
                 </div>
 
-                <!-- Create Order Form -->
-                <div id="order-form-container" class="hidden">
+                <!-- Create/Edit Order Form -->
+                <div id="order-form-container" class="${isEditingOrder ? '' : 'hidden'}">
                     <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
-                        <h3 style="color: var(--text-primary); margin-bottom: 20px;">Create New Order</h3>
-                        <form id="order-form">
+                        <h3 style="color: var(--text-primary); margin-bottom: 20px;" id="order-form-title">
+                            ${isEditingOrder ? `Edit Order #${this.editingOrderId}` : 'Create New Order'}
+                        </h3>
+                        <form id="order-form" data-form-type="${isEditingOrder ? 'edit' : 'create'}">
+                            ${isEditingOrder ? `<input type="hidden" id="order-edit-id" value="${this.editingOrderId}">` : ''}
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                                 <div>
                                     <label class="form-label">Customer</label>
@@ -398,19 +399,9 @@ const OrdersModule = {
                             <div style="margin-bottom: 16px;">
                                 <label class="form-label">Order Items</label>
                                 <div id="order-items">
-                                    <div class="order-item" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; margin-bottom: 12px;">
-                                        <select class="form-input product-select" required>
-                                            <option value="">Select Product</option>
-                                            ${this.products.map(product => `
-                                                <option value="${product.id}" data-price="${product.price}">${product.name} - ${this.formatCurrency(product.price)}</option>
-                                            `).join('')}
-                                        </select>
-                                        <input type="number" class="form-input quantity-input" placeholder="Qty" min="1" value="1" required>
-                                        <input type="number" class="form-input price-input" placeholder="Price" step="0.01" min="0" required>
-                                        <button type="button" class="btn-outline remove-item" data-action="remove-item" style="padding: 8px 12px;">✕</button>
-                                    </div>
+                                    <!-- Items will be added dynamically -->
                                 </div>
-                                <button type="button" class="btn-outline" id="add-item-btn" data-action="add-item">+ Add Item</button>
+                                <button type="button" class="btn-outline" data-action="add-order-item" style="margin-top: 8px;">+ Add Item</button>
                             </div>
                             
                             <div style="margin-bottom: 16px;">
@@ -435,18 +426,24 @@ const OrdersModule = {
                             </div>
                             
                             <div style="display: flex; gap: 12px;">
-                                <button type="submit" class="btn-primary" data-action="submit-order">Create Order</button>
+                                <button type="submit" class="btn-primary" data-action="submit-order">
+                                    ${isEditingOrder ? 'Update Order' : 'Create Order'}
+                                </button>
                                 <button type="button" class="btn-outline" data-action="cancel-order-form">Cancel</button>
+                                ${isEditingOrder ? '<button type="button" class="btn-outline" data-action="delete-order" style="margin-left: auto;">Delete Order</button>' : ''}
                             </div>
                         </form>
                     </div>
                 </div>
 
-                <!-- Add Customer Form -->
-                <div id="customer-form-container" class="hidden">
+                <!-- Add/Edit Customer Form -->
+                <div id="customer-form-container" class="${isEditingCustomer ? '' : 'hidden'}">
                     <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
-                        <h3 style="color: var(--text-primary); margin-bottom: 20px;">Add New Customer</h3>
-                        <form id="customer-form">
+                        <h3 style="color: var(--text-primary); margin-bottom: 20px;" id="customer-form-title">
+                            ${isEditingCustomer ? 'Edit Customer' : 'Add New Customer'}
+                        </h3>
+                        <form id="customer-form" data-form-type="${isEditingCustomer ? 'edit' : 'create'}">
+                            ${isEditingCustomer ? `<input type="hidden" id="customer-edit-id" value="${this.editingCustomerId}">` : ''}
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                                 <div>
                                     <label class="form-label">Customer Name</label>
@@ -466,8 +463,11 @@ const OrdersModule = {
                                 <textarea class="form-input" id="customer-address" rows="2" placeholder="Full address..."></textarea>
                             </div>
                             <div style="display: flex; gap: 12px;">
-                                <button type="submit" class="btn-primary" data-action="submit-customer">Add Customer</button>
+                                <button type="submit" class="btn-primary" data-action="submit-customer">
+                                    ${isEditingCustomer ? 'Update Customer' : 'Add Customer'}
+                                </button>
                                 <button type="button" class="btn-outline" data-action="cancel-customer-form">Cancel</button>
+                                ${isEditingCustomer ? '<button type="button" class="btn-outline" data-action="delete-customer" style="margin-left: auto;">Delete Customer</button>' : ''}
                             </div>
                         </form>
                     </div>
@@ -498,64 +498,71 @@ const OrdersModule = {
                     </div>
                 </div>
             </div>
+            
+            <style>
+                .hidden { display: none !important; }
+                .order-item { margin-bottom: 12px; }
+                .btn-icon { 
+                    background: none; 
+                    border: none; 
+                    cursor: pointer; 
+                    padding: 4px; 
+                    border-radius: 4px; 
+                    color: var(--text-secondary);
+                    transition: all 0.2s;
+                }
+                .btn-icon:hover { 
+                    transform: scale(1.2); 
+                    background: rgba(59, 130, 246, 0.1);
+                }
+                .quick-action-btn { transition: all 0.3s ease; }
+                .quick-action-btn:hover { transform: translateY(-4px); }
+            </style>
         `;
 
         this.setupEventListeners();
-        this.calculateTotal();
         
-        // Set today's date
-        const today = new Date().toISOString().split('T')[0];
-        const orderDate = document.getElementById('order-date');
-        if (orderDate) orderDate.value = today;
+        // Initialize forms
+        if (isEditingOrder) {
+            this.populateOrderForm();
+        } else if (isEditingCustomer) {
+            this.populateCustomerForm();
+        } else {
+            // Set default date for new orders
+            const today = new Date().toISOString().split('T')[0];
+            const orderDate = document.getElementById('order-date');
+            if (orderDate) orderDate.value = today;
+            
+            // Add initial item for new orders
+            this.addOrderItem();
+        }
+        
+        this.calculateTotal();
     },
 
+    // ==================== EVENT HANDLERS ====================
     setupEventListeners() {
-        // Remove any existing listeners to prevent duplicates
         this.removeEventListeners();
         
-        // Main click handler using event delegation
-        this.element.addEventListener('click', (event) => this.handleClickEvent(event));
-        
-        // Form submission handlers
-        const orderForm = document.getElementById('order-form');
-        if (orderForm) {
-            orderForm.addEventListener('submit', (event) => this.handleOrderSubmit(event));
-        }
-        
-        const customerForm = document.getElementById('customer-form');
-        if (customerForm) {
-            customerForm.addEventListener('submit', (event) => this.handleCustomerSubmit(event));
-        }
-        
-        // Input change handlers for order form
-        this.setupInputListeners();
-        
-        // Setup broadcaster if available
-        if (this.broadcaster) {
-            this.setupBroadcasterListeners();
-            this.broadcastOrdersLoaded();
-        }
+        // Main event delegation
+        this.element.addEventListener('click', this.handleElementClick.bind(this));
+        this.element.addEventListener('input', this.handleElementInput.bind(this));
+        this.element.addEventListener('change', this.handleElementChange.bind(this));
+        this.element.addEventListener('submit', this.handleFormSubmit.bind(this));
+        this.element.addEventListener('mouseenter', this.handleMouseEnter.bind(this), true);
+        this.element.addEventListener('mouseleave', this.handleMouseLeave.bind(this), true);
     },
 
     removeEventListeners() {
-        // Clean up any previous event listeners
-        const orderForm = document.getElementById('order-form');
-        if (orderForm) {
-            const newOrderForm = orderForm.cloneNode(true);
-            orderForm.parentNode.replaceChild(newOrderForm, orderForm);
+        // Clone element to remove all event listeners
+        if (this.element && this.element.parentNode) {
+            const newElement = this.element.cloneNode(true);
+            this.element.parentNode.replaceChild(newElement, this.element);
+            this.element = newElement;
         }
-        
-        const customerForm = document.getElementById('customer-form');
-        if (customerForm) {
-            const newCustomerForm = customerForm.cloneNode(true);
-            customerForm.parentNode.replaceChild(newCustomerForm, customerForm);
-        }
-        
-        // Note: We don't remove the main click listener as we'll replace it
-        // when the module is re-rendered
     },
 
-    handleClickEvent(event) {
+    handleElementClick(event) {
         const target = event.target;
         const button = target.closest('[data-action]');
         
@@ -567,7 +574,7 @@ const OrdersModule = {
         const action = button.getAttribute('data-action');
         const id = button.getAttribute('data-id');
         
-        console.log('Action clicked:', action, 'ID:', id);
+        console.log('Orders action:', action, 'ID:', id);
         
         switch(action) {
             case 'create-order':
@@ -590,11 +597,11 @@ const OrdersModule = {
             case 'cancel-customer-form':
                 this.hideCustomerForm();
                 break;
-            case 'add-item':
+            case 'add-order-item':
                 this.addOrderItem();
                 break;
-            case 'remove-item':
-                this.removeOrderItem(target);
+            case 'remove-order-item':
+                this.removeOrderItem(button);
                 break;
             case 'export-orders':
                 this.exportOrders();
@@ -612,132 +619,115 @@ const OrdersModule = {
                 this.deleteCustomer(parseInt(id));
                 break;
             case 'submit-order':
-                // Handled by form submit event
+                // Handled by form submit
                 break;
             case 'submit-customer':
-                // Handled by form submit event
+                // Handled by form submit
                 break;
         }
     },
 
-    setupInputListeners() {
-        // Use event delegation for dynamic inputs
-        this.element.addEventListener('input', (event) => {
-            if (event.target.classList.contains('quantity-input') || 
-                event.target.classList.contains('price-input') ||
-                event.target.classList.contains('product-select')) {
-                this.calculateTotal();
-            }
-        });
-        
-        // Handle product selection changes
-        this.element.addEventListener('change', (event) => {
-            if (event.target.classList.contains('product-select')) {
-                this.handleProductSelect(event.target);
-            }
-        });
-    },
-
-    handleProductSelect(selectElement) {
-        const selectedOption = selectElement.options[selectElement.selectedIndex];
-        const price = selectedOption.dataset.price;
-        if (price) {
-            const priceInput = selectElement.closest('.order-item').querySelector('.price-input');
-            if (priceInput && priceInput.value === '') {
-                priceInput.value = price;
-                this.calculateTotal();
-            }
-        }
-    },
-
-    addOrderItem() {
-        const itemsContainer = document.getElementById('order-items');
-        const newItem = document.createElement('div');
-        newItem.className = 'order-item';
-        newItem.innerHTML = `
-            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; margin-bottom: 12px;">
-                <select class="form-input product-select" required>
-                    <option value="">Select Product</option>
-                    ${this.products.map(product => `
-                        <option value="${product.id}" data-price="${product.price}">${product.name} - ${this.formatCurrency(product.price)}</option>
-                    `).join('')}
-                </select>
-                <input type="number" class="form-input quantity-input" placeholder="Qty" min="1" value="1" required>
-                <input type="number" class="form-input price-input" placeholder="Price" step="0.01" min="0" required>
-                <button type="button" class="btn-outline remove-item" data-action="remove-item" style="padding: 8px 12px;">✕</button>
-            </div>
-        `;
-        itemsContainer.appendChild(newItem);
-    },
-
-    removeOrderItem(button) {
-        const itemElement = button.closest('.order-item');
-        if (itemElement) {
-            itemElement.remove();
+    handleElementInput(event) {
+        if (event.target.classList.contains('quantity-input') || 
+            event.target.classList.contains('price-input')) {
             this.calculateTotal();
         }
     },
 
-    calculateTotal() {
-        let total = 0;
-        const items = this.element.querySelectorAll('.order-item');
-        
-        items.forEach(item => {
-            const quantityInput = item.querySelector('.quantity-input');
-            const priceInput = item.querySelector('.price-input');
-            
-            const quantity = parseFloat(quantityInput?.value) || 0;
-            const price = parseFloat(priceInput?.value) || 0;
-            total += quantity * price;
-        });
-        
-        const totalInput = document.getElementById('order-total');
-        if (totalInput) {
-            totalInput.value = total.toFixed(2);
-            totalInput.style.color = total > 0 ? '#22c55e' : '#6b7280';
+    handleElementChange(event) {
+        if (event.target.classList.contains('product-select')) {
+            this.updatePriceFromProduct(event.target);
         }
     },
 
+    handleFormSubmit(event) {
+        event.preventDefault();
+        
+        const form = event.target;
+        const formType = form.getAttribute('data-form-type');
+        
+        if (form.id === 'order-form') {
+            if (formType === 'edit') {
+                this.updateOrder();
+            } else {
+                this.createOrder();
+            }
+        } else if (form.id === 'customer-form') {
+            if (formType === 'edit') {
+                this.updateCustomer();
+            } else {
+                this.createCustomer();
+            }
+        }
+    },
+
+    handleMouseEnter(event) {
+        const button = event.target.closest('[data-action]');
+        if (button && button.classList.contains('quick-action-btn')) {
+            button.style.transform = 'translateY(-4px)';
+        }
+        
+        if (event.target.classList.contains('btn-icon')) {
+            event.target.style.transform = 'scale(1.2)';
+            event.target.style.color = '#3b82f6';
+            event.target.style.background = 'rgba(59, 130, 246, 0.1)';
+        }
+    },
+
+    handleMouseLeave(event) {
+        const button = event.target.closest('[data-action]');
+        if (button && button.classList.contains('quick-action-btn')) {
+            button.style.transform = 'translateY(0)';
+        }
+        
+        if (event.target.classList.contains('btn-icon')) {
+            event.target.style.transform = 'scale(1)';
+            event.target.style.color = '';
+            event.target.style.background = '';
+        }
+    },
+
+    // ==================== FORM MANAGEMENT ====================
     showOrderForm() {
-        document.getElementById('order-form-container').classList.remove('hidden');
-        document.getElementById('customer-form-container').classList.add('hidden');
-        document.getElementById('order-form').reset();
+        this.editingOrderId = null;
+        this.editingCustomerId = null;
+        this.renderModule();
         
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('order-date').value = today;
-        
-        document.getElementById('order-form-container').scrollIntoView({ behavior: 'smooth' });
+        const formContainer = document.getElementById('order-form-container');
+        if (formContainer) {
+            formContainer.scrollIntoView({ behavior: 'smooth' });
+        }
     },
 
     hideOrderForm() {
-        document.getElementById('order-form-container').classList.add('hidden');
+        this.editingOrderId = null;
+        this.renderModule();
     },
 
     showCustomerForm() {
-        document.getElementById('customer-form-container').classList.remove('hidden');
-        document.getElementById('order-form-container').classList.add('hidden');
-        document.getElementById('customer-form').reset();
+        this.editingOrderId = null;
+        this.editingCustomerId = null;
+        this.renderModule();
         
-        document.getElementById('customer-form-container').scrollIntoView({ behavior: 'smooth' });
+        const formContainer = document.getElementById('customer-form-container');
+        if (formContainer) {
+            formContainer.scrollIntoView({ behavior: 'smooth' });
+        }
     },
 
     hideCustomerForm() {
-        document.getElementById('customer-form-container').classList.add('hidden');
+        this.editingCustomerId = null;
+        this.renderModule();
     },
 
     showCustomersSection() {
-        const customersSection = document.getElementById('customers-section');
-        if (customersSection) {
-            customersSection.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'start'
-            });
-            
-            customersSection.style.transition = 'all 0.3s ease';
-            customersSection.style.boxShadow = '0 0 0 3px #3b82f6';
+        const section = document.getElementById('customers-section');
+        if (section) {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            section.style.boxShadow = '0 0 0 3px #3b82f6';
             
             setTimeout(() => {
-                customersSection.style.boxShadow = 'none';
+                section.style.boxShadow = 'none';
             }, 2000);
         }
         
@@ -761,17 +751,93 @@ const OrdersModule = {
         }
     },
 
-    handleOrderSubmit(event) {
-        event.preventDefault();
+    // ==================== ORDER ITEMS MANAGEMENT ====================
+    addOrderItem(itemData = null) {
+        const container = document.getElementById('order-items');
+        if (!container) return;
         
-        // Get form values
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'order-item';
+        itemDiv.innerHTML = `
+            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; margin-bottom: 12px;">
+                <select class="form-input product-select" required>
+                    <option value="">Select Product</option>
+                    ${this.products.map(product => `
+                        <option value="${product.id}" 
+                                data-price="${product.price}"
+                                ${itemData && itemData.productId === product.id ? 'selected' : ''}>
+                            ${product.name} - ${this.formatCurrency(product.price)}
+                        </option>
+                    `).join('')}
+                </select>
+                <input type="number" class="form-input quantity-input" 
+                       placeholder="Qty" min="1" 
+                       value="${itemData ? itemData.quantity : 1}" required>
+                <input type="number" class="form-input price-input" 
+                       placeholder="Price" step="0.01" min="0" 
+                       value="${itemData ? itemData.price : ''}" required>
+                <button type="button" class="btn-outline" 
+                        data-action="remove-order-item" 
+                        style="padding: 8px 12px;">✕</button>
+            </div>
+        `;
+        container.appendChild(itemDiv);
+        
+        if (itemData && itemData.productId) {
+            const select = itemDiv.querySelector('.product-select');
+            const priceInput = itemDiv.querySelector('.price-input');
+            const selectedOption = select.querySelector(`option[value="${itemData.productId}"]`);
+            if (selectedOption && !priceInput.value) {
+                priceInput.value = selectedOption.dataset.price;
+            }
+        }
+    },
+
+    removeOrderItem(button) {
+        const itemDiv = button.closest('.order-item');
+        if (itemDiv) {
+            itemDiv.remove();
+            this.calculateTotal();
+        }
+    },
+
+    updatePriceFromProduct(selectElement) {
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        const price = selectedOption.dataset.price;
+        if (price) {
+            const priceInput = selectElement.closest('.order-item').querySelector('.price-input');
+            if (priceInput && !priceInput.value) {
+                priceInput.value = price;
+                this.calculateTotal();
+            }
+        }
+    },
+
+    calculateTotal() {
+        let total = 0;
+        const items = this.element.querySelectorAll('.order-item');
+        
+        items.forEach(item => {
+            const quantity = parseFloat(item.querySelector('.quantity-input')?.value) || 0;
+            const price = parseFloat(item.querySelector('.price-input')?.value) || 0;
+            total += quantity * price;
+        });
+        
+        const totalInput = document.getElementById('order-total');
+        if (totalInput) {
+            totalInput.value = total.toFixed(2);
+            totalInput.style.color = total > 0 ? '#22c55e' : '#6b7280';
+        }
+    },
+
+    // ==================== ORDER CRUD OPERATIONS ====================
+    createOrder() {
         const customerId = parseInt(document.getElementById('order-customer').value);
         const date = document.getElementById('order-date').value;
         const status = document.getElementById('order-status').value;
         const notes = document.getElementById('order-notes').value;
         const totalAmount = parseFloat(document.getElementById('order-total').value) || 0;
         
-        // Validate
         if (!customerId) {
             alert('Please select a customer');
             return;
@@ -782,7 +848,6 @@ const OrdersModule = {
             return;
         }
         
-        // Get order items
         const items = [];
         document.querySelectorAll('.order-item').forEach(item => {
             const productSelect = item.querySelector('.product-select');
@@ -805,9 +870,9 @@ const OrdersModule = {
             return;
         }
         
-        // Create new order
-        const newOrder = {
-            id: this.generateOrderId(),
+        const orderId = this.generateOrderId();
+        const orderData = {
+            id: orderId,
             customerId: customerId,
             date: date,
             items: items,
@@ -816,124 +881,128 @@ const OrdersModule = {
             notes: notes
         };
         
-        this.orders.push(newOrder);
+        this.orders.push(orderData);
         this.saveData();
         
         if (this.broadcaster) {
-            this.broadcastOrderCreated(newOrder);
+            this.broadcastOrderCreated(orderData);
         }
         
-        // Show notification
         if (window.coreModule) {
-            window.coreModule.showNotification(`Order #${newOrder.id} created successfully!`, 'success');
+            window.coreModule.showNotification(`Order #${orderId} created successfully!`, 'success');
         }
         
-        // Reset form and update UI
         this.hideOrderForm();
         this.renderModule();
     },
 
-    handleCustomerSubmit(event) {
-        event.preventDefault();
-        
-        // Get form values
-        const name = document.getElementById('customer-name').value.trim();
-        const phone = document.getElementById('customer-phone').value.trim();
-        const email = document.getElementById('customer-email').value.trim();
-        const address = document.getElementById('customer-address').value.trim();
-        
-        // Validate
-        if (!name || !phone) {
-            alert('Please fill in required fields: Name and Phone');
-            return;
-        }
-        
-        // Create new customer
-        const newCustomer = {
-            id: this.generateCustomerId(),
-            name: name,
-            contact: phone,
-            email: email,
-            address: address
-        };
-        
-        this.customers.push(newCustomer);
-        this.saveData();
-        
-        if (this.broadcaster) {
-            this.broadcastCustomerAdded(newCustomer);
-        }
-        
-        // Show notification
-        if (window.coreModule) {
-            window.coreModule.showNotification(`Customer "${name}" added successfully!`, 'success');
-        }
-        
-        // Reset form and update UI
-        this.hideCustomerForm();
+    editOrder(orderId) {
+        this.editingOrderId = orderId;
+        this.editingCustomerId = null;
         this.renderModule();
     },
 
-    editOrder(orderId) {
-        const order = this.orders.find(o => o.id === orderId);
-        if (!order) return;
+    populateOrderForm() {
+        if (!this.editingOrderId) return;
         
-        // Show order form with existing data
-        this.showOrderForm();
+        const order = this.orders.find(o => o.id === this.editingOrderId);
+        if (!order) {
+            this.editingOrderId = null;
+            this.renderModule();
+            return;
+        }
         
-        // Fill form with order data
-        document.getElementById('order-customer').value = order.customerId;
-        document.getElementById('order-date').value = order.date;
-        document.getElementById('order-status').value = order.status;
-        document.getElementById('order-notes').value = order.notes || '';
-        
-        // Clear existing items and add order items
-        const itemsContainer = document.getElementById('order-items');
-        itemsContainer.innerHTML = '';
-        
-        order.items.forEach(item => {
-            const newItem = document.createElement('div');
-            newItem.className = 'order-item';
-            newItem.innerHTML = `
-                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; margin-bottom: 12px;">
-                    <select class="form-input product-select" required>
-                        <option value="">Select Product</option>
-                        ${this.products.map(product => `
-                            <option value="${product.id}" data-price="${product.price}" ${product.id === item.productId ? 'selected' : ''}>
-                                ${product.name} - ${this.formatCurrency(product.price)}
-                            </option>
-                        `).join('')}
-                    </select>
-                    <input type="number" class="form-input quantity-input" placeholder="Qty" min="1" value="${item.quantity}" required>
-                    <input type="number" class="form-input price-input" placeholder="Price" step="0.01" min="0" value="${item.price}" required>
-                    <button type="button" class="btn-outline remove-item" data-action="remove-item" style="padding: 8px 12px;">✕</button>
-                </div>
-            `;
-            itemsContainer.appendChild(newItem);
-        });
-        
-        // Update total
-        this.calculateTotal();
-        
-        // Change form title and button
-        const formTitle = document.querySelector('#order-form-container h3');
-        const submitButton = document.querySelector('#order-form [type="submit"]');
-        
-        if (formTitle) formTitle.textContent = `Edit Order #${orderId}`;
-        if (submitButton) submitButton.textContent = 'Update Order';
-        
-        // Store order ID for update
-        const form = document.getElementById('order-form');
-        form.dataset.editId = orderId;
+        setTimeout(() => {
+            document.getElementById('order-customer').value = order.customerId;
+            document.getElementById('order-date').value = order.date;
+            document.getElementById('order-status').value = order.status;
+            document.getElementById('order-notes').value = order.notes || '';
+            
+            const itemsContainer = document.getElementById('order-items');
+            if (itemsContainer) {
+                itemsContainer.innerHTML = '';
+                order.items.forEach(item => {
+                    this.addOrderItem(item);
+                });
+            }
+            
+            this.calculateTotal();
+        }, 100);
     },
 
-    deleteOrder(orderId) {
-        if (!confirm('Are you sure you want to delete this order?')) return;
+    updateOrder() {
+        const orderId = this.editingOrderId;
+        if (!orderId) return;
         
         const orderIndex = this.orders.findIndex(o => o.id === orderId);
         if (orderIndex === -1) return;
         
-        const deletedOrder = this.orders[orderIndex];
+        const customerId = parseInt(document.getElementById('order-customer').value);
+        const date = document.getElementById('order-date').value;
+        const status = document.getElementById('order-status').value;
+        const notes = document.getElementById('order-notes').value;
+        const totalAmount = parseFloat(document.getElementById('order-total').value) || 0;
+        
+        if (!customerId) {
+            alert('Please select a customer');
+            return;
+        }
+        
+        const items = [];
+        document.querySelectorAll('.order-item').forEach(item => {
+            const productSelect = item.querySelector('.product-select');
+            const quantityInput = item.querySelector('.quantity-input');
+            const priceInput = item.querySelector('.price-input');
+            
+            if (productSelect.value && quantityInput.value && priceInput.value) {
+                const product = this.products.find(p => p.id === productSelect.value);
+                items.push({
+                    productId: productSelect.value,
+                    productName: product?.name || 'Unknown',
+                    quantity: parseInt(quantityInput.value),
+                    price: parseFloat(priceInput.value)
+                });
+            }
+        });
+        
+        if (items.length === 0) {
+            alert('Please add at least one item to the order');
+            return;
+        }
+        
+        this.orders[orderIndex] = {
+            ...this.orders[orderIndex],
+            customerId,
+            date,
+            items,
+            totalAmount,
+            status,
+            notes
+        };
+        
+        this.saveData();
+        
+        if (this.broadcaster) {
+            this.broadcastOrderUpdated(this.orders[orderIndex]);
+        }
+        
+        if (window.coreModule) {
+            window.coreModule.showNotification(`Order #${orderId} updated successfully!`, 'success');
+        }
+        
+        this.editingOrderId = null;
+        this.renderModule();
+    },
+
+    deleteOrder(orderId) {
+        if (!orderId) orderId = this.editingOrderId;
+        if (!orderId) return;
+        
+        if (!confirm(`Are you sure you want to delete order #${orderId}?`)) return;
+        
+        const orderIndex = this.orders.findIndex(o => o.id === orderId);
+        if (orderIndex === -1) return;
+        
         this.orders.splice(orderIndex, 1);
         this.saveData();
         
@@ -941,79 +1010,145 @@ const OrdersModule = {
             this.broadcastOrderDeleted(orderId);
         }
         
-        // Show notification
         if (window.coreModule) {
             window.coreModule.showNotification(`Order #${orderId} deleted`, 'warning');
         }
         
-        // Update UI
+        this.editingOrderId = null;
+        this.renderModule();
+    },
+
+    // ==================== CUSTOMER CRUD OPERATIONS ====================
+    createCustomer() {
+        const name = document.getElementById('customer-name').value.trim();
+        const phone = document.getElementById('customer-phone').value.trim();
+        const email = document.getElementById('customer-email').value.trim();
+        const address = document.getElementById('customer-address').value.trim();
+        
+        if (!name || !phone) {
+            alert('Please fill in required fields: Name and Phone');
+            return;
+        }
+        
+        const customerId = this.generateCustomerId();
+        const customerData = {
+            id: customerId,
+            name: name,
+            contact: phone,
+            email: email,
+            address: address
+        };
+        
+        this.customers.push(customerData);
+        this.saveData();
+        
+        if (this.broadcaster) {
+            this.broadcastCustomerAdded(customerData);
+        }
+        
+        if (window.coreModule) {
+            window.coreModule.showNotification(`Customer "${name}" added successfully!`, 'success');
+        }
+        
+        this.hideCustomerForm();
         this.renderModule();
     },
 
     editCustomer(customerId) {
-        const customer = this.customers.find(c => c.id === customerId);
-        if (!customer) return;
-        
-        // Show customer form with existing data
-        this.showCustomerForm();
-        
-        // Fill form with customer data
-        document.getElementById('customer-name').value = customer.name;
-        document.getElementById('customer-phone').value = customer.contact;
-        document.getElementById('customer-email').value = customer.email || '';
-        document.getElementById('customer-address').value = customer.address || '';
-        
-        // Change form title and button
-        const formTitle = document.querySelector('#customer-form-container h3');
-        const submitButton = document.querySelector('#customer-form [type="submit"]');
-        
-        if (formTitle) formTitle.textContent = `Edit Customer: ${customer.name}`;
-        if (submitButton) submitButton.textContent = 'Update Customer';
-        
-        // Store customer ID for update
-        const form = document.getElementById('customer-form');
-        form.dataset.editId = customerId;
+        this.editingCustomerId = customerId;
+        this.editingOrderId = null;
+        this.renderModule();
     },
 
-    deleteCustomer(customerId) {
-        if (!confirm('Are you sure you want to delete this customer?')) return;
+    populateCustomerForm() {
+        if (!this.editingCustomerId) return;
+        
+        const customer = this.customers.find(c => c.id === this.editingCustomerId);
+        if (!customer) {
+            this.editingCustomerId = null;
+            this.renderModule();
+            return;
+        }
+        
+        setTimeout(() => {
+            document.getElementById('customer-name').value = customer.name;
+            document.getElementById('customer-phone').value = customer.contact;
+            document.getElementById('customer-email').value = customer.email || '';
+            document.getElementById('customer-address').value = customer.address || '';
+        }, 100);
+    },
+
+    updateCustomer() {
+        const customerId = this.editingCustomerId;
+        if (!customerId) return;
         
         const customerIndex = this.customers.findIndex(c => c.id === customerId);
         if (customerIndex === -1) return;
         
-        const customerName = this.customers[customerIndex].name;
+        const name = document.getElementById('customer-name').value.trim();
+        const phone = document.getElementById('customer-phone').value.trim();
+        const email = document.getElementById('customer-email').value.trim();
+        const address = document.getElementById('customer-address').value.trim();
+        
+        if (!name || !phone) {
+            alert('Please fill in required fields: Name and Phone');
+            return;
+        }
+        
+        this.customers[customerIndex] = {
+            id: customerId,
+            name: name,
+            contact: phone,
+            email: email,
+            address: address
+        };
+        
+        this.saveData();
+        
+        if (this.broadcaster) {
+            this.broadcastCustomerUpdated(this.customers[customerIndex]);
+        }
+        
+        if (window.coreModule) {
+            window.coreModule.showNotification(`Customer "${name}" updated successfully!`, 'success');
+        }
+        
+        this.editingCustomerId = null;
+        this.renderModule();
+    },
+
+    deleteCustomer(customerId) {
+        if (!customerId) customerId = this.editingCustomerId;
+        if (!customerId) return;
+        
+        const customer = this.customers.find(c => c.id === customerId);
+        if (!customer) return;
+        
+        const customerOrders = this.orders.filter(o => o.customerId === customerId);
+        if (customerOrders.length > 0) {
+            alert(`Cannot delete customer "${customer.name}" because they have ${customerOrders.length} order(s).`);
+            return;
+        }
+        
+        if (!confirm(`Are you sure you want to delete customer "${customer.name}"?`)) return;
+        
+        const customerIndex = this.customers.findIndex(c => c.id === customerId);
         this.customers.splice(customerIndex, 1);
         this.saveData();
         
         if (this.broadcaster) {
-            this.broadcastCustomerDeleted(customerId, customerName);
+            this.broadcastCustomerDeleted(customerId, customer.name);
         }
         
-        // Show notification
         if (window.coreModule) {
-            window.coreModule.showNotification(`Customer "${customerName}" deleted`, 'warning');
+            window.coreModule.showNotification(`Customer "${customer.name}" deleted`, 'warning');
         }
         
-        // Update UI
+        this.editingCustomerId = null;
         this.renderModule();
     },
 
-    exportOrders() {
-        const dataStr = JSON.stringify(this.orders, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-        
-        const exportFileDefaultName = `orders-export-${new Date().toISOString().split('T')[0]}.json`;
-        
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.click();
-        
-        if (window.coreModule) {
-            window.coreModule.showNotification('Orders exported successfully!', 'success');
-        }
-    },
-
+    // ==================== UTILITY METHODS ====================
     calculateStats() {
         const pendingOrders = this.orders.filter(order => order.status === 'pending').length;
         const completedOrders = this.orders.filter(order => order.status === 'completed').length;
@@ -1156,6 +1291,22 @@ const OrdersModule = {
         return statuses[status] || status;
     },
 
+    exportOrders() {
+        const dataStr = JSON.stringify(this.orders, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        
+        const exportFileDefaultName = `orders-export-${new Date().toISOString().split('T')[0]}.json`;
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+        
+        if (window.coreModule) {
+            window.coreModule.showNotification('Orders exported successfully!', 'success');
+        }
+    },
+
     formatCurrency(amount) {
         return '$' + amount.toFixed(2);
     },
@@ -1170,37 +1321,26 @@ const OrdersModule = {
         return maxId + 1;
     },
 
+    onThemeChange(theme) {
+        console.log(`Orders Management updating for theme: ${theme}`);
+    },
+
     cleanup() {
-        // Clean up any event listeners
-        this.element.removeEventListener('click', this.handleClickEvent);
-        this.element.removeEventListener('input', this.setupInputListeners);
-        this.element.removeEventListener('change', this.handleProductSelect);
-        
-        const orderForm = document.getElementById('order-form');
-        if (orderForm) {
-            orderForm.removeEventListener('submit', this.handleOrderSubmit);
-        }
-        
-        const customerForm = document.getElementById('customer-form');
-        if (customerForm) {
-            customerForm.removeEventListener('submit', this.handleCustomerSubmit);
-        }
-        
+        this.removeEventListeners();
+        this.editingOrderId = null;
+        this.editingCustomerId = null;
         this.initialized = false;
         console.log('🔄 Orders module cleaned up');
     }
 };
 
-// Export the module
+// ==================== REGISTRATION ====================
 window.OrdersModule = OrdersModule;
 
-// ==================== UNIVERSAL REGISTRATION ====================
 (function() {
     console.log('📦 Registering orders module...');
     
-    // Register with FarmModules framework if available
     if (window.FarmModules) {
-        // Use the module name from the module itself
         const moduleName = OrdersModule.name || 'orders';
         FarmModules.registerModule(moduleName, OrdersModule);
         console.log(`✅ ${moduleName} module registered successfully!`);
