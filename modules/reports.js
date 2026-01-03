@@ -53,18 +53,18 @@ const ReportsModule = {
         // ==================== PDF CAPABILITIES ====================
     
     // ✅ ADDED: Initialize PDF capabilities
-    initializePDFCapabilities() {
-        console.log('📄 Initializing PDF capabilities for reports...');
-        
-        // Check if jsPDF is available
-        if (typeof jspdf === 'undefined') {
-            console.log('⚠️ jsPDF not loaded. Loading from CDN...');
-            this.loadJSPDF();
-        } else {
-            console.log('✅ jsPDF is ready');
-            this.pdfReady = true;
-        }
-    },
+initializePDFCapabilities() {
+    console.log('📄 Initializing PDF capabilities for reports...');
+    
+    // Check if jsPDF is available
+    if (typeof jspdf === 'undefined') {
+        console.error('jsPDF not loaded. Check index.html');
+        this.pdfReady = false;
+    } else {
+        console.log('✅ jsPDF is ready');
+        this.pdfReady = true;
+    }
+},
 
     // ✅ ADDED: Load jsPDF from CDN
 // In reports.js, update or remove loadJSPDF()
