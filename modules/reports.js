@@ -2654,52 +2654,174 @@ addPDFExportButton() {
         }
     },
 
-    printReport() {
-        if (!this.currentReport) return;
-        
-        console.log('🖨️ Printing report...');
-        
-        const printWindow = window.open('', '_blank');
-        const printContent = `
-            <html>
-                <head>
-                    <title>${this.currentReport.title}</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; }
-                        h1 { color: #1e40af; border-bottom: 2px solid #1e40af; padding-bottom: 10px; }
-                        .section { margin-bottom: 30px; }
-                        .metric-row { display: flex; justify-content: space-between; padding: 5px 0; }
-                        .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ccc; font-size: 12px; color: #666; }
-                    </style>
-                </head>
-                <body>
-                    <h1>${this.currentReport.title}</h1>
-                    <div>Generated on: ${new Date().toLocaleString()}</div>
-                    <div>Report ID: FARM-${Date.now().toString().slice(-8)}</div>
-                    <hr>
+   printReport() {
+    if (!this.currentReport) return;
+    
+    console.log('🖨️ Printing report...');
+    
+    // First, create a hidden iframe for printing
+    const printFrame = document.createElement('iframe');
+    printFrame.style.position = 'absolute';
+    printFrame.style.width = '0';
+    printFrame.style.height = '0';
+    printFrame.style.border = 'none';
+    printFrame.style.display = 'none';
+    document.body.appendChild(printFrame);
+    
+    // Create print content
+    const printContent = `
+        <html>
+            <head>
+                <title>${this.currentReport.title}</title>
+                <style>
+                    body { 
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
+                        padding: 20px; 
+                        color: #333;
+                        line-height: 1.6;
+                    }
+                    .print-header { 
+                        text-align: center; 
+                        margin-bottom: 30px;
+                        padding-bottom: 20px;
+                        border-bottom: 2px solid #1e40af;
+                    }
+                    .print-title { 
+                        color: #1e40af; 
+                        font-size: 24px;
+                        margin: 0 0 10px 0;
+                    }
+                    .print-meta { 
+                        color: #666; 
+                        font-size: 14px;
+                        margin: 5px 0;
+                    }
+                    .section { 
+                        margin-bottom: 25px;
+                        page-break-inside: avoid;
+                    }
+                    .section-title { 
+                        color: #1e40af;
+                        font-size: 18px;
+                        margin: 0 0 15px 0;
+                        padding-bottom: 8px;
+                        border-bottom: 1px solid #e5e7eb;
+                    }
+                    .metric-row { 
+                        display: flex; 
+                        justify-content: space-between; 
+                        padding: 8px 0;
+                        border-bottom: 1px solid #f3f4f6;
+                    }
+                    .metric-label { 
+                        color: #4b5563;
+                        font-weight: 500;
+                    }
+                    .metric-value { 
+                        font-weight: 600;
+                    }
+                    .metric-value.income { color: #059669; }
+                    .metric-value.expense { color: #dc2626; }
+                    .metric-value.profit { color: #059669; }
+                    .metric-value.warning { color: #d97706; }
+                    .print-footer { 
+                        margin-top: 40px; 
+                        padding-top: 20px; 
+                        border-top: 1px solid #d1d5db; 
+                        font-size: 12px; 
+                        color: #6b7280;
+                        text-align: center;
+                    }
+                    @media print {
+                        body { padding: 0; }
+                        .print-header { border-bottom-color: #000; }
+                        .section { margin-bottom: 20px; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="print-header">
+                    <h1 class="print-title">${this.currentReport.title}</h1>
+                    <div class="print-meta">Farm Management System</div>
+                    <div class="print-meta">Generated: ${new Date().toLocaleString()}</div>
+                    <div class="print-meta">Report ID: FARM-${Date.now().toString().slice(-8)}</div>
+                </div>
+                
+                <div id="print-content">
                     ${this.currentReport.content}
-                    <div class="footer">
-                        <p>Confidential Farm Report - Generated by Farm Management System</p>
-                        <p>© ${new Date().getFullYear()} All rights reserved</p>
-                    </div>
-                </body>
-            </html>
-        `;
+                </div>
+                
+                <div class="print-footer">
+                    <p>Confidential Farm Report - Generated by Farm Management System</p>
+                    <p>© ${new Date().getFullYear()} All rights reserved</p>
+                </div>
+                
+                <script>
+                    // Clean up the HTML content for printing
+                    document.addEventListener('DOMContentLoaded', function() {
+                        // Clean up any unwanted elements
+                        const unwanted = document.querySelectorAll('.btn, button, .action-btn');
+                        unwanted.forEach(el => el.remove());
+                        
+                        // Convert color styles for printing
+                        const colorElements = document.querySelectorAll('[style*="color:"]');
+                        colorElements.forEach(el => {
+                            const style = el.getAttribute('style') || '';
+                            if (style.includes('var(--')) {
+                                // Replace CSS variables with actual colors for print
+                                el.style.color = '#000000';
+                            }
+                        });
+                    });
+                </script>
+            </body>
+        </html>
+    `;
+    
+    try {
+        // Write content to iframe
+        printFrame.contentDocument.open();
+        printFrame.contentDocument.write(printContent);
+        printFrame.contentDocument.close();
         
-        printWindow.document.write(printContent);
-        printWindow.document.close();
-        printWindow.focus();
+        // Wait for iframe to load
+        printFrame.onload = () => {
+            // Give it a moment for styles to apply
+            setTimeout(() => {
+                try {
+                    // Focus and print
+                    printFrame.contentWindow.focus();
+                    printFrame.contentWindow.print();
+                    
+                    // Clean up after printing
+                    setTimeout(() => {
+                        document.body.removeChild(printFrame);
+                    }, 1000);
+                    
+                    // Show success notification
+                    this.showNotification('Report sent to printer', 'success');
+                    
+                    // ✅ Broadcast report printed
+                    if (this.broadcaster) {
+                        this.broadcastReportExported(this.currentReport.type, 'print');
+                    }
+                    
+                } catch (printError) {
+                    console.error('Print error:', printError);
+                    this.showNotification('Failed to print. Please use browser print (Ctrl+P).', 'error');
+                    document.body.removeChild(printFrame);
+                }
+            }, 500);
+        };
         
-        setTimeout(() => {
-            printWindow.print();
-            printWindow.close();
-        }, 250);
-        
-        // ✅ Broadcast report printed
-        if (this.broadcaster) {
-            this.broadcastReportExported(this.currentReport.type, 'print');
+    } catch (error) {
+        console.error('Print setup error:', error);
+        this.showNotification('Print setup failed. Please try again.', 'error');
+        if (document.body.contains(printFrame)) {
+            document.body.removeChild(printFrame);
         }
-    },
+    }
+},
 
     exportReport() {
         if (!this.currentReport) return;
