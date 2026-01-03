@@ -2081,7 +2081,7 @@ initializePDFService() {
     return true;
 },
 
-loadJSPDF() {
+/* loadJSPDF() {
     // Just check if jsPDF is available (it should be from HTML)
     return new Promise((resolve, reject) => {
         if (typeof jspdf !== 'undefined') {
@@ -2092,7 +2092,7 @@ loadJSPDF() {
             reject(new Error('jsPDF library not loaded'));
         }
     });
-},
+}, */
 
 getUserDataForPDF() {
     const currentUser = this.getCurrentUser();
