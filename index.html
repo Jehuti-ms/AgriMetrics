@@ -201,36 +201,38 @@
             </div>
         </div>
 
-        <!-- Main Content -->
-        <main id="content-area">
-            <!-- Content will be loaded here by modules -->
-        </main>
-    </div>
+       <!-- Main Content -->
+<main id="content-area">
+    <!-- Content will be loaded here by modules -->
+</main>
+</div>
 
-    <!-- Notifications Container -->
-    <div class="notification-container" id="notification-container"></div>
+<!-- Notifications Container -->
+<div class="notification-container" id="notification-container"></div>
 
-    <!-- Load scripts in correct order -->
+<!-- Load scripts in correct order -->
+
+<!-- 1. Firebase -->
 <script src="firebase/firebase-config.js"></script>
 <script src="firebase/firebase-auth.js"></script>
 
-    <!-- Auth Redirect Handler (NEW - Add this) -->
-<script src="modules/auth-redirect-handler.js"></script>
-
-    <!-- Add the fix script -->
-<script src="signin-fix.js"></script>
-
-    <!-- Data Broadcasting -->
-<script src="modules/data-broadcaster.js"></script>
-    
+<!-- 2. Core Framework -->
 <script src="modules/framework.js"></script>
 <script src="modules/core.js"></script>
-<script src="style-manager.js"></script>      <!-- StyleManager BEFORE modules -->
+
+<!-- 3. Style Manager (early for theming) -->
+<script src="style-manager.js"></script>
+
+<!-- 4. Auth System -->
+<script src="modules/auth-redirect-handler.js"></script>
 <script src="modules/ModalManager.js"></script>
 <script src="modules/auth.js"></script>
+
+<!-- 5. Data & Utilities -->
+<script src="modules/data-broadcaster.js"></script>
 <script src="date-utils.js"></script>
 
-<!-- MODULES - Loaded AFTER StyleManager -->
+<!-- 6. MODULES -->
 <script src="modules/dashboard.js"></script>
 <script src="modules/income-expenses.js"></script>
 <script src="modules/inventory-check.js"></script>
@@ -241,11 +243,8 @@
 <script src="modules/production.js"></script>
 <script src="modules/reports.js"></script>
 <script src="modules/profile.js"></script>
-   
+
+<!-- 7. Main App -->
 <script src="app.js"></script>
-    <script>
-  // Make it globally available
-  window.jspdf = window.jspdf;
-</script>
 </body>
 </html>
