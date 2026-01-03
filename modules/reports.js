@@ -67,31 +67,20 @@ const ReportsModule = {
     },
 
     // ✅ ADDED: Load jsPDF from CDN
-    loadJSPDF() {
-        return new Promise((resolve, reject) => {
-            if (typeof jspdf !== 'undefined') {
-                this.pdfReady = true;
-                resolve();
-                return;
-            }
-            
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-            script.onload = () => {
-                const script2 = document.createElement('script');
-                script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js';
-                script2.onload = () => {
-                    console.log('✅ jsPDF and autoTable loaded for reports');
-                    this.pdfReady = true;
-                    resolve();
-                };
-                script2.onerror = () => reject(new Error('Failed to load autoTable'));
-                document.head.appendChild(script2);
-            };
-            script.onerror = () => reject(new Error('Failed to load jsPDF'));
-            document.head.appendChild(script);
-        });
-    },
+// In reports.js, update or remove loadJSPDF()
+loadJSPDF() {
+    return new Promise((resolve, reject) => {
+        // jsPDF should already be loaded from HTML
+        if (typeof jspdf !== 'undefined') {
+            this.pdfReady = true;
+            resolve();
+        } else {
+            console.error('jsPDF not loaded. Check index.html');
+            reject(new Error('jsPDF library not available'));
+        }
+    });
+},
+    
     // ✅ ADDED: Setup broadcaster listeners
     setupBroadcasterListeners() {
         if (!this.broadcaster) return;
