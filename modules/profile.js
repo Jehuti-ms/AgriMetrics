@@ -2917,7 +2917,7 @@ showReportOptions() {
     if (typeMap[selected]) {
         this.generateCustomReport(typeMap[selected]);
     }
-}
+},
 
     // Add this method to ProfileModule:
 setupPDFDataSync() {
