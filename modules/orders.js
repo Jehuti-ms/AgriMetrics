@@ -562,70 +562,72 @@ const OrdersModule = {
         }
     },
 
-    handleElementClick(event) {
-        const target = event.target;
-        const button = target.closest('[data-action]');
-        
-        if (!button) return;
-        
-        event.preventDefault();
-        event.stopPropagation();
-        
-        const action = button.getAttribute('data-action');
-        const id = button.getAttribute('data-id');
-        
-        console.log('Orders action:', action, 'ID:', id);
-        
-        switch(action) {
-            case 'create-order':
-            case 'show-order-form':
-                this.showOrderForm();
-                break;
-            case 'manage-customers':
-                this.showCustomersSection();
-                break;
-            case 'view-orders':
-                this.showAllOrders();
-                break;
-            case 'add-customer':
-            case 'show-customer-form':
-                this.showCustomerForm();
-                break;
-            case 'cancel-order-form':
-                this.hideOrderForm();
-                break;
-            case 'cancel-customer-form':
-                this.hideCustomerForm();
-                break;
-            case 'add-order-item':
-                this.addOrderItem();
-                break;
-            case 'remove-order-item':
-                this.removeOrderItem(button);
-                break;
-            case 'export-orders':
-                this.exportOrders();
-                break;
-            case 'edit-order':
-                this.editOrder(parseInt(id));
-                break;
-            case 'delete-order':
-                this.deleteOrder(parseInt(id));
-                break;
-            case 'edit-customer':
-                this.editCustomer(parseInt(id));
-                break;
-            case 'delete-customer':
-                this.deleteCustomer(parseInt(id));
-                break;
-            case 'submit-order':
-                // Handled by form submit
-                break;
-            case 'submit-customer':
-                // Handled by form submit
-                break;
-        }
-    },
+   handleElementClick(event) {
+    const target = event.target;
+    const button = target.closest('[data-action]');
+    
+    if (!button) return;
+    
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const action = button.getAttribute('data-action');
+    const id = button.getAttribute('data-id');
+    
+    console.log('Orders action:', action, 'ID:', id);
+    
+    switch(action) {
+        case 'create-order':
+        case 'show-order-form':
+            this.showOrderForm();
+            break;
+        case 'manage-customers':
+            this.showCustomersSection();
+            break;
+        case 'view-orders':
+            this.showAllOrders();
+            break;
+        case 'add-customer':
+        case 'show-customer-form':
+            this.showCustomerForm();
+            break;
+        case 'cancel-order-form':
+            this.hideOrderForm();
+            break;
+        case 'cancel-customer-form':
+            this.hideCustomerForm();
+            break;
+        case 'add-order-item':
+            this.addOrderItem();
+            break;
+        case 'remove-order-item':
+            this.removeOrderItem(button);
+            break;
+        case 'export-orders':
+            this.exportOrders();
+            break;
+        case 'edit-order':
+            if (id) this.editOrder(parseInt(id));
+            break;
+        case 'delete-order':
+            if (id) this.deleteOrder(parseInt(id));
+            break;
+        case 'edit-customer':
+            if (id) this.editCustomer(parseInt(id));
+            break;
+        case 'delete-customer':
+            if (id) this.deleteCustomer(parseInt(id));
+            break;
+        case 'submit-order':
+            // Handled by form submit
+            break;
+        case 'submit-customer':
+            // Handled by form submit
+            break;
+        default:
+            console.log('Unhandled action:', action);
+    }
+},
 
     handleElementInput(event) {
         if (event.target.classList.contains('quantity-input') || 
