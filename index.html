@@ -215,35 +215,43 @@ Add the support methods to ProfileModule
 Try these changes and the CSP errors should disappear!
 
 <!-- Main Content -->
-        <main id="content-area">
-            <!-- Content will be loaded here by modules -->
-        </main>
-    </div>
+<!-- Main Content -->
+<main id="content-area">
+    <!-- Content will be loaded here by modules -->
+</main>
+</div>
 
-    <!-- Notifications Container -->
-    <div class="notification-container" id="notification-container"></div>
+<!-- Notifications Container -->
+<div class="notification-container" id="notification-container"></div>
 
-    <!-- Load scripts in correct order -->
+<!-- Load scripts in correct order -->
+
+<!-- 1. Firebase -->
 <script src="firebase/firebase-config.js"></script>
 <script src="firebase/firebase-auth.js"></script>
 
-    <!-- Auth Redirect Handler (NEW - Add this) -->
+<!-- 2. Auth Redirect Handler (must come early) -->
 <script src="modules/auth-redirect-handler.js"></script>
 
-    <!-- Add the fix script -->
+<!-- 3. CRITICAL: signin-fix.js for login loop issue -->
 <script src="signin-fix.js"></script>
 
-    <!-- Data Broadcasting -->
-<script src="modules/data-broadcaster.js"></script>
-    
+<!-- 4. Core Framework -->
 <script src="modules/framework.js"></script>
 <script src="modules/core.js"></script>
-<script src="style-manager.js"></script>      <!-- StyleManager BEFORE modules -->
+
+<!-- 5. Style Manager (early for theming) -->
+<script src="style-manager.js"></script>
+
+<!-- 6. Auth Components -->
 <script src="modules/ModalManager.js"></script>
 <script src="modules/auth.js"></script>
+
+<!-- 7. Data & Utilities -->
+<script src="modules/data-broadcaster.js"></script>
 <script src="date-utils.js"></script>
 
-<!-- MODULES - Loaded AFTER StyleManager -->
+<!-- 8. MODULES -->
 <script src="modules/dashboard.js"></script>
 <script src="modules/income-expenses.js"></script>
 <script src="modules/inventory-check.js"></script>
@@ -254,11 +262,8 @@ Try these changes and the CSP errors should disappear!
 <script src="modules/production.js"></script>
 <script src="modules/reports.js"></script>
 <script src="modules/profile.js"></script>
-   
+
+<!-- 9. Main App -->
 <script src="app.js"></script>
-    <script>
-  // Make it globally available
-  window.jspdf = window.jspdf;
-</script>
 </body>
 </html>
