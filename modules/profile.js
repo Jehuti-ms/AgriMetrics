@@ -2059,28 +2059,21 @@ initializePDFService() {
     
     // Simple check - jsPDF should be loaded from HTML
     if (typeof jspdf === 'undefined') {
-        console.error('❌ jsPDF not loaded. Please check index.html');
+        console.error('❌ jsPDF not loaded');
         this.showNotification('PDF service not available', 'error');
         return false;
     }
     
-    // Get user and farm data
-    const userData = this.getUserDataForPDF();
-    const farmData = this.getFarmDataForPDF();
-    
-    // Create PDF service instance
-    window.pdfService = window.pdfService || new PDFService();
-    
-    console.log('✅ PDF Service initialized');
+    console.log('✅ PDF Service ready');
     
     // Add PDF buttons to UI
     setTimeout(() => {
         this.addPDFButtons();
-    }, 500); // Small delay to ensure DOM is ready
+    }, 500);
     
     return true;
 },
-
+    
 /* loadJSPDF() {
     // Just check if jsPDF is available (it should be from HTML)
     return new Promise((resolve, reject) => {
