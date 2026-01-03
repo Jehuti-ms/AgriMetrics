@@ -1,14 +1,16 @@
-// modules/dashboard.js - UPDATED WITH REAL-TIME FILTERS
+// modules/dashboard.js - COMPLETE CSP COMPLIANT VERSION
 console.log('📊 Loading dashboard module...');
 
 const DashboardModule = {
     name: 'dashboard',
     initialized: false,
     element: null,
-    activityFilter: '7d', // Default to last 7 days
+    activityFilter: '7d',
     realTimeInterval: null,
     autoRefresh: true,
+    lastUpdateTime: null,
 
+    // ==================== INITIALIZATION ====================
     initialize() {
         console.log('📊 Initializing Dashboard...');
         
@@ -32,19 +34,131 @@ const DashboardModule = {
 
     onThemeChange(theme) {
         console.log(`Dashboard updating for theme: ${theme}`);
+        // Update any theme-specific styles if needed
     },
 
+    // ==================== EVENT HANDLERS ====================
     setupEventListeners() {
-        this.setupQuickActions();
-        this.setupRefreshButton();
-        this.setupActivityFilter();
-        this.setupRealTimeToggle();
+        this.removeEventListeners();
         
-        // Listen for data changes from other modules
+        // Main event delegation
+        this.element.addEventListener('click', this.handleElementClick.bind(this));
+        this.element.addEventListener('change', this.handleElementChange.bind(this));
+        this.element.addEventListener('mouseenter', this.handleMouseEnter.bind(this), true);
+        this.element.addEventListener('mouseleave', this.handleMouseLeave.bind(this), true);
+        
+        // Data change listeners
         this.setupDataChangeListeners();
     },
 
-    // NEW: Setup data change listeners
+    removeEventListeners() {
+        // Clone element to remove all event listeners
+        if (this.element && this.element.parentNode) {
+            const newElement = this.element.cloneNode(true);
+            this.element.parentNode.replaceChild(newElement, this.element);
+            this.element = newElement;
+        }
+        
+        // Clear real-time interval
+        if (this.realTimeInterval) {
+            clearInterval(this.realTimeInterval);
+            this.realTimeInterval = null;
+        }
+    },
+
+    handleElementClick(event) {
+        const target = event.target;
+        const button = target.closest('[data-action]');
+        
+        if (!button) return;
+        
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const action = button.getAttribute('data-action');
+        const filter = button.getAttribute('data-filter');
+        const activityId = button.getAttribute('data-activity-id');
+        
+        console.log('Dashboard action:', action);
+        
+        switch(action) {
+            case 'add-income':
+            case 'add-expense':
+            case 'check-inventory':
+            case 'record-feed':
+            case 'add-production':
+            case 'view-reports':
+                this.handleQuickAction(action);
+                break;
+                
+            case 'refresh-stats':
+                this.handleRefreshStats();
+                break;
+                
+            case 'view-activity':
+                this.handleActivityClick(activityId);
+                break;
+        }
+        
+        // Handle filter buttons
+        if (filter) {
+            this.setActivityFilter(filter);
+        }
+    },
+
+    handleElementChange(event) {
+        const target = event.target;
+        
+        if (target.id === 'real-time-toggle') {
+            this.handleRealTimeToggle(target.checked);
+        }
+    },
+
+    handleMouseEnter(event) {
+        const button = event.target.closest('[data-action]');
+        if (button) {
+            if (button.classList.contains('quick-action-btn') || button.id === 'refresh-stats-btn') {
+                button.style.transform = 'translateY(-4px)';
+                button.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+            } else if (button.classList.contains('time-filter-btn')) {
+                if (!button.classList.contains('active')) {
+                    button.style.background = 'var(--hover-bg, rgba(0, 0, 0, 0.05))';
+                    button.style.borderColor = 'var(--primary-color, #3b82f6)';
+                }
+            } else if (button.classList.contains('activity-item') || button.closest('.activity-item')) {
+                const activityItem = button.closest('.activity-item');
+                if (activityItem) {
+                    activityItem.style.transform = 'translateY(-2px)';
+                    activityItem.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.08)';
+                    activityItem.style.borderColor = 'var(--primary-color, #3b82f6)';
+                }
+            }
+        }
+    },
+
+    handleMouseLeave(event) {
+        const button = event.target.closest('[data-action]');
+        if (button) {
+            if (button.classList.contains('quick-action-btn') || button.id === 'refresh-stats-btn') {
+                button.style.transform = 'translateY(0)';
+                button.style.boxShadow = 'none';
+            } else if (button.classList.contains('time-filter-btn')) {
+                if (!button.classList.contains('active')) {
+                    button.style.background = 'var(--card-bg, rgba(255, 255, 255, 0.9))';
+                    button.style.borderColor = 'var(--border-color, #e0e0e0)';
+                }
+            } else if (button.classList.contains('activity-item') || button.closest('.activity-item')) {
+                const activityItem = button.closest('.activity-item');
+                if (activityItem) {
+                    activityItem.style.transform = 'translateY(0)';
+                    activityItem.style.boxShadow = 'none';
+                    activityItem.style.borderColor = 'var(--border-color, #e0e0e0)';
+                }
+            }
+        }
+    },
+
+    // ==================== DATA CHANGE LISTENERS ====================
     setupDataChangeListeners() {
         // Listen for custom events when data changes
         document.addEventListener('farmDataChanged', (e) => {
@@ -65,7 +179,7 @@ const DashboardModule = {
         });
     },
 
-    // NEW: Start real-time updates
+    // ==================== REAL-TIME UPDATES ====================
     startRealTimeUpdates() {
         // Clear any existing interval
         if (this.realTimeInterval) {
@@ -83,217 +197,49 @@ const DashboardModule = {
         }
     },
 
-    // UPDATED renderDashboard() method with activity filter
+    handleRealTimeToggle(enabled) {
+        this.autoRefresh = enabled;
+        this.startRealTimeUpdates();
+        
+        // Update UI
+        const refreshBtn = this.element.querySelector('#refresh-stats-btn');
+        if (refreshBtn) {
+            if (this.autoRefresh) {
+                refreshBtn.classList.add('refreshing');
+            } else {
+                refreshBtn.classList.remove('refreshing');
+            }
+        }
+        
+        if (window.coreModule && window.coreModule.showNotification) {
+            window.coreModule.showNotification(
+                `Auto-refresh ${this.autoRefresh ? 'enabled' : 'disabled'}`,
+                this.autoRefresh ? 'success' : 'info'
+            );
+        }
+        
+        // Save preference
+        localStorage.setItem('dashboard-auto-refresh', this.autoRefresh.toString());
+    },
+
+    handleRefreshStats() {
+        this.loadAndDisplayStats();
+        if (window.coreModule && window.coreModule.showNotification) {
+            window.coreModule.showNotification('Stats refreshed!', 'success');
+        }
+    },
+
+    // ==================== DASHBOARD RENDERING ====================
     renderDashboard() {
         if (!this.element) return;
 
+        // Load auto-refresh preference
+        const savedAutoRefresh = localStorage.getItem('dashboard-auto-refresh');
+        if (savedAutoRefresh !== null) {
+            this.autoRefresh = savedAutoRefresh === 'true';
+        }
+
         this.element.innerHTML = `
-            <style>
-                /* Activity Filter Styles */
-                .activity-filter-container {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 20px;
-                    flex-wrap: wrap;
-                    gap: 16px;
-                }
-
-                .filter-controls {
-                    display: flex;
-                    gap: 12px;
-                    align-items: center;
-                }
-
-                .time-filter-buttons {
-                    display: flex;
-                    gap: 8px;
-                    flex-wrap: wrap;
-                }
-
-                .time-filter-btn {
-                    padding: 6px 12px;
-                    border: 1px solid var(--border-color, #e0e0e0);
-                    background: var(--card-bg, rgba(255, 255, 255, 0.9));
-                    border-radius: 20px;
-                    font-size: 13px;
-                    font-weight: 500;
-                    color: var(--text-secondary, #666);
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                }
-
-                .time-filter-btn:hover {
-                    background: var(--hover-bg, rgba(0, 0, 0, 0.05));
-                    border-color: var(--primary-color, #3b82f6);
-                }
-
-                .time-filter-btn.active {
-                    background: var(--primary-color, #3b82f6);
-                    color: white;
-                    border-color: var(--primary-color, #3b82f6);
-                }
-
-                .real-time-toggle {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    font-size: 13px;
-                    color: var(--text-secondary, #666);
-                }
-
-                .toggle-switch {
-                    position: relative;
-                    display: inline-block;
-                    width: 40px;
-                    height: 20px;
-                }
-
-                .toggle-switch input {
-                    opacity: 0;
-                    width: 0;
-                    height: 0;
-                }
-
-                .toggle-slider {
-                    position: absolute;
-                    cursor: pointer;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background-color: #ccc;
-                    transition: .3s;
-                    border-radius: 20px;
-                }
-
-                .toggle-slider:before {
-                    position: absolute;
-                    content: "";
-                    height: 16px;
-                    width: 16px;
-                    left: 2px;
-                    bottom: 2px;
-                    background-color: white;
-                    transition: .3s;
-                    border-radius: 50%;
-                }
-
-                input:checked + .toggle-slider {
-                    background-color: var(--primary-color, #3b82f6);
-                }
-
-                input:checked + .toggle-slider:before {
-                    transform: translateX(20px);
-                }
-
-                .activity-item {
-                    display: flex;
-                    align-items: flex-start;
-                    gap: 12px;
-                    padding: 16px;
-                    background: var(--card-bg, rgba(255, 255, 255, 0.9));
-                    border-radius: 12px;
-                    border: 1px solid var(--border-color, #e0e0e0);
-                    transition: all 0.2s ease;
-                    margin-bottom: 8px;
-                    cursor: pointer;
-                }
-
-                .activity-item:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-                    border-color: var(--primary-color, #3b82f6);
-                }
-
-                .activity-icon {
-                    font-size: 20px;
-                    padding: 8px;
-                    background: var(--glass-bg, rgba(255, 255, 255, 0.8));
-                    border-radius: 10px;
-                    min-width: 40px;
-                    text-align: center;
-                }
-
-                .activity-content {
-                    flex: 1;
-                }
-
-                .activity-title {
-                    font-weight: 600;
-                    color: var(--text-primary, #1a1a1a);
-                    font-size: 14px;
-                    margin-bottom: 4px;
-                }
-
-                .activity-meta {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    font-size: 12px;
-                    color: var(--text-secondary, #666);
-                }
-
-                .activity-time {
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-                }
-
-                .activity-module {
-                    background: var(--tag-bg, rgba(59, 130, 246, 0.1));
-                    padding: 2px 8px;
-                    border-radius: 12px;
-                    font-size: 11px;
-                    color: var(--primary-color, #3b82f6);
-                }
-
-                .no-activity {
-                    text-align: center;
-                    padding: 40px 20px;
-                    color: var(--text-secondary, #666);
-                }
-
-                .loading-activity {
-                    text-align: center;
-                    padding: 30px;
-                    color: var(--text-secondary, #666);
-                }
-
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(10px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-
-                .activity-item.new {
-                    animation: fadeIn 0.5s ease;
-                    border-left: 3px solid var(--primary-color, #3b82f6);
-                }
-
-                /* Refresh indicator */
-                .refreshing {
-                    position: relative;
-                }
-
-                .refreshing::after {
-                    content: '';
-                    position: absolute;
-                    top: -2px;
-                    right: -2px;
-                    width: 8px;
-                    height: 8px;
-                    background: #22c55e;
-                    border-radius: 50%;
-                    animation: pulse 2s infinite;
-                }
-
-                @keyframes pulse {
-                    0% { transform: scale(0.8); opacity: 0.5; }
-                    50% { transform: scale(1.2); opacity: 1; }
-                    100% { transform: scale(0.8); opacity: 0.5; }
-                }
-            </style>
-
             <div class="dashboard-container" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
                 <!-- Welcome Section -->
                 <div class="welcome-section" style="margin-bottom: 30px;">
@@ -313,7 +259,6 @@ const DashboardModule = {
                         <button class="quick-action-btn" data-action="add-income" style="
                             background: rgba(255, 255, 255, 0.9);
                             backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
                             border: 1px solid rgba(0, 0, 0, 0.1);
                             border-radius: 16px;
                             padding: 24px 16px;
@@ -333,7 +278,6 @@ const DashboardModule = {
                         <button class="quick-action-btn" data-action="add-expense" style="
                             background: rgba(255, 255, 255, 0.9);
                             backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
                             border: 1px solid rgba(0, 0, 0, 0.1);
                             border-radius: 16px;
                             padding: 24px 16px;
@@ -353,7 +297,6 @@ const DashboardModule = {
                         <button class="quick-action-btn" data-action="check-inventory" style="
                             background: rgba(255, 255, 255, 0.9);
                             backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
                             border: 1px solid rgba(0, 0, 0, 0.1);
                             border-radius: 16px;
                             padding: 24px 16px;
@@ -373,7 +316,6 @@ const DashboardModule = {
                         <button class="quick-action-btn" data-action="record-feed" style="
                             background: rgba(255, 255, 255, 0.9);
                             backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
                             border: 1px solid rgba(0, 0, 0, 0.1);
                             border-radius: 16px;
                             padding: 24px 16px;
@@ -393,7 +335,6 @@ const DashboardModule = {
                         <button class="quick-action-btn" data-action="add-production" style="
                             background: rgba(255, 255, 255, 0.9);
                             backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
                             border: 1px solid rgba(0, 0, 0, 0.1);
                             border-radius: 16px;
                             padding: 24px 16px;
@@ -413,7 +354,6 @@ const DashboardModule = {
                         <button class="quick-action-btn" data-action="view-reports" style="
                             background: rgba(255, 255, 255, 0.9);
                             backdrop-filter: blur(20px);
-                            -webkit-backup-filter: blur(20px);
                             border: 1px solid rgba(0, 0, 0, 0.1);
                             border-radius: 16px;
                             padding: 24px 16px;
@@ -446,30 +386,138 @@ const DashboardModule = {
 
                 <!-- Recent Activity with Filters -->
                 <div class="recent-activity">
-                    <div class="activity-filter-container">
+                    <div class="activity-filter-container" style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 20px;
+                        flex-wrap: wrap;
+                        gap: 16px;
+                    ">
                         <h2 style="color: var(--text-primary, #1a1a1a); font-size: 20px; margin: 0;">Recent Activity</h2>
                         
-                        <div class="filter-controls">
-                            <div class="time-filter-buttons">
-                                <button class="time-filter-btn ${this.activityFilter === '24h' ? 'active' : ''}" data-filter="24h">
+                        <div class="filter-controls" style="
+                            display: flex;
+                            gap: 12px;
+                            align-items: center;
+                        ">
+                            <div class="time-filter-buttons" style="
+                                display: flex;
+                                gap: 8px;
+                                flex-wrap: wrap;
+                            ">
+                                <button class="time-filter-btn ${this.activityFilter === '24h' ? 'active' : ''}" 
+                                        data-filter="24h"
+                                        data-action="filter-activity"
+                                        style="
+                                            padding: 6px 12px;
+                                            border: 1px solid var(--border-color, #e0e0e0);
+                                            background: ${this.activityFilter === '24h' ? 'var(--primary-color, #3b82f6)' : 'var(--card-bg, rgba(255, 255, 255, 0.9))'};
+                                            border-radius: 20px;
+                                            font-size: 13px;
+                                            font-weight: 500;
+                                            color: ${this.activityFilter === '24h' ? 'white' : 'var(--text-secondary, #666)'};
+                                            cursor: pointer;
+                                            transition: all 0.2s ease;
+                                            border-color: ${this.activityFilter === '24h' ? 'var(--primary-color, #3b82f6)' : 'var(--border-color, #e0e0e0)'};
+                                        ">
                                     24H
                                 </button>
-                                <button class="time-filter-btn ${this.activityFilter === '7d' ? 'active' : ''}" data-filter="7d">
+                                <button class="time-filter-btn ${this.activityFilter === '7d' ? 'active' : ''}" 
+                                        data-filter="7d"
+                                        data-action="filter-activity"
+                                        style="
+                                            padding: 6px 12px;
+                                            border: 1px solid var(--border-color, #e0e0e0);
+                                            background: ${this.activityFilter === '7d' ? 'var(--primary-color, #3b82f6)' : 'var(--card-bg, rgba(255, 255, 255, 0.9))'};
+                                            border-radius: 20px;
+                                            font-size: 13px;
+                                            font-weight: 500;
+                                            color: ${this.activityFilter === '7d' ? 'white' : 'var(--text-secondary, #666)'};
+                                            cursor: pointer;
+                                            transition: all 0.2s ease;
+                                            border-color: ${this.activityFilter === '7d' ? 'var(--primary-color, #3b82f6)' : 'var(--border-color, #e0e0e0)'};
+                                        ">
                                     7 Days
                                 </button>
-                                <button class="time-filter-btn ${this.activityFilter === '30d' ? 'active' : ''}" data-filter="30d">
+                                <button class="time-filter-btn ${this.activityFilter === '30d' ? 'active' : ''}" 
+                                        data-filter="30d"
+                                        data-action="filter-activity"
+                                        style="
+                                            padding: 6px 12px;
+                                            border: 1px solid var(--border-color, #e0e0e0);
+                                            background: ${this.activityFilter === '30d' ? 'var(--primary-color, #3b82f6)' : 'var(--card-bg, rgba(255, 255, 255, 0.9))'};
+                                            border-radius: 20px;
+                                            font-size: 13px;
+                                            font-weight: 500;
+                                            color: ${this.activityFilter === '30d' ? 'white' : 'var(--text-secondary, #666)'};
+                                            cursor: pointer;
+                                            transition: all 0.2s ease;
+                                            border-color: ${this.activityFilter === '30d' ? 'var(--primary-color, #3b82f6)' : 'var(--border-color, #e0e0e0)'};
+                                        ">
                                     30 Days
                                 </button>
-                                <button class="time-filter-btn ${this.activityFilter === 'all' ? 'active' : ''}" data-filter="all">
+                                <button class="time-filter-btn ${this.activityFilter === 'all' ? 'active' : ''}" 
+                                        data-filter="all"
+                                        data-action="filter-activity"
+                                        style="
+                                            padding: 6px 12px;
+                                            border: 1px solid var(--border-color, #e0e0e0);
+                                            background: ${this.activityFilter === 'all' ? 'var(--primary-color, #3b82f6)' : 'var(--card-bg, rgba(255, 255, 255, 0.9))'};
+                                            border-radius: 20px;
+                                            font-size: 13px;
+                                            font-weight: 500;
+                                            color: ${this.activityFilter === 'all' ? 'white' : 'var(--text-secondary, #666)'};
+                                            cursor: pointer;
+                                            transition: all 0.2s ease;
+                                            border-color: ${this.activityFilter === 'all' ? 'var(--primary-color, #3b82f6)' : 'var(--border-color, #e0e0e0)'};
+                                        ">
                                     All Time
                                 </button>
                             </div>
                             
-                            <div class="real-time-toggle">
+                            <div class="real-time-toggle" style="
+                                display: flex;
+                                align-items: center;
+                                gap: 8px;
+                                font-size: 13px;
+                                color: var(--text-secondary, #666);
+                            ">
                                 <span>Auto-refresh:</span>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" ${this.autoRefresh ? 'checked' : ''} id="real-time-toggle">
-                                    <span class="toggle-slider"></span>
+                                <label class="toggle-switch" style="
+                                    position: relative;
+                                    display: inline-block;
+                                    width: 40px;
+                                    height: 20px;
+                                ">
+                                    <input type="checkbox" ${this.autoRefresh ? 'checked' : ''} 
+                                           id="real-time-toggle"
+                                           style="opacity: 0; width: 0; height: 0;">
+                                    <span class="toggle-slider" style="
+                                        position: absolute;
+                                        cursor: pointer;
+                                        top: 0;
+                                        left: 0;
+                                        right: 0;
+                                        bottom: 0;
+                                        background-color: #ccc;
+                                        transition: .3s;
+                                        border-radius: 20px;
+                                        ${this.autoRefresh ? 'background-color: var(--primary-color, #3b82f6);' : ''}
+                                    ">
+                                        <span style="
+                                            position: absolute;
+                                            content: '';
+                                            height: 16px;
+                                            width: 16px;
+                                            left: 2px;
+                                            bottom: 2px;
+                                            background-color: white;
+                                            transition: .3s;
+                                            border-radius: 50%;
+                                            ${this.autoRefresh ? 'transform: translateX(20px);' : ''}
+                                        "></span>
+                                    </span>
                                 </label>
                             </div>
                         </div>
@@ -482,7 +530,7 @@ const DashboardModule = {
                         padding: 20px;
                         min-height: 300px;
                     ">
-                        <div id="activity-content" class="loading-activity">
+                        <div id="activity-content">
                             <div style="text-align: center; color: var(--text-secondary, #666); padding: 40px 20px;">
                                 <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
                                 <div style="font-size: 16px; margin-bottom: 8px;">Loading activities...</div>
@@ -493,78 +541,107 @@ const DashboardModule = {
 
                 <!-- Refresh Button -->
                 <div style="text-align: center; margin-top: 30px;">
-                    <button id="refresh-stats-btn" class="btn-outline ${this.autoRefresh ? 'refreshing' : ''}" style="
-                        background: var(--card-bg, rgba(255, 255, 255, 0.9));
-                        border: 1px solid var(--border-color, #e0e0e0);
-                        border-radius: 12px;
-                        padding: 12px 24px;
-                        cursor: pointer;
-                        font-size: 14px;
-                        color: var(--text-secondary, #666);
-                        transition: all 0.3s ease;
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 8px;
-                    ">
+                    <button id="refresh-stats-btn" class="${this.autoRefresh ? 'refreshing' : ''}" 
+                            data-action="refresh-stats"
+                            style="
+                                background: var(--card-bg, rgba(255, 255, 255, 0.9));
+                                border: 1px solid var(--border-color, #e0e0e0);
+                                border-radius: 12px;
+                                padding: 12px 24px;
+                                cursor: pointer;
+                                font-size: 14px;
+                                color: var(--text-secondary, #666);
+                                transition: all 0.3s ease;
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 8px;
+                                position: relative;
+                            ">
                         🔄 Refresh Now
                     </button>
                     ${this.autoRefresh ? '<div style="font-size: 12px; color: var(--text-secondary, #666); margin-top: 8px;">Auto-refresh enabled (every 30s)</div>' : ''}
+                    ${this.lastUpdateTime ? `<div style="font-size: 11px; color: var(--text-secondary, #666); margin-top: 4px;">Last updated: ${this.formatTimeAgo(this.lastUpdateTime)}</div>` : ''}
                 </div>
             </div>
+            
+            <style>
+                @keyframes pulse {
+                    0% { transform: scale(0.8); opacity: 0.5; }
+                    50% { transform: scale(1.2); opacity: 1; }
+                    100% { transform: scale(0.8); opacity: 0.5; }
+                }
+                
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                
+                .refreshing::after {
+                    content: '';
+                    position: absolute;
+                    top: -2px;
+                    right: -2px;
+                    width: 8px;
+                    height: 8px;
+                    background: #22c55e;
+                    border-radius: 50%;
+                    animation: pulse 2s infinite;
+                }
+                
+                .time-filter-btn:hover {
+                    background: var(--hover-bg, rgba(0, 0, 0, 0.05)) !important;
+                    border-color: var(--primary-color, #3b82f6) !important;
+                }
+                
+                .activity-item {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 12px;
+                    padding: 16px;
+                    background: var(--card-bg, rgba(255, 255, 255, 0.9));
+                    border-radius: 12px;
+                    border: 1px solid var(--border-color, #e0e0e0);
+                    transition: all 0.2s ease;
+                    margin-bottom: 8px;
+                    cursor: pointer;
+                }
+                
+                .activity-item:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+                    border-color: var(--primary-color, #3b82f6);
+                }
+                
+                .activity-item.new {
+                    animation: fadeIn 0.5s ease;
+                    border-left: 3px solid var(--primary-color, #3b82f6);
+                }
+                
+                .stat-card {
+                    transition: all 0.3s ease;
+                }
+                
+                .stat-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                }
+            </style>
         `;
 
-        this.setupQuickActions();
-        this.setupRefreshButton();
-        this.setupActivityFilter();
-        this.setupRealTimeToggle();
+        this.setupEventListeners();
     },
 
-    // NEW: Setup activity filter
-    setupActivityFilter() {
-        const filterButtons = document.querySelectorAll('.time-filter-btn');
-        filterButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                const filter = e.currentTarget.dataset.filter;
-                this.setActivityFilter(filter);
-            });
-        });
-    },
-
-    // NEW: Setup real-time toggle
-    setupRealTimeToggle() {
-        const toggle = document.getElementById('real-time-toggle');
-        if (toggle) {
-            toggle.addEventListener('change', (e) => {
-                this.autoRefresh = e.target.checked;
-                this.startRealTimeUpdates();
-                
-                // Update UI
-                const refreshBtn = document.getElementById('refresh-stats-btn');
-                if (refreshBtn) {
-                    if (this.autoRefresh) {
-                        refreshBtn.classList.add('refreshing');
-                    } else {
-                        refreshBtn.classList.remove('refreshing');
-                    }
-                }
-                
-                if (window.coreModule && window.coreModule.showNotification) {
-                    window.coreModule.showNotification(
-                        `Auto-refresh ${this.autoRefresh ? 'enabled' : 'disabled'}`,
-                        this.autoRefresh ? 'success' : 'info'
-                    );
-                }
-            });
-        }
-    },
-
-    // NEW: Set activity filter
+    // ==================== ACTIVITY FILTER ====================
     setActivityFilter(filter) {
         this.activityFilter = filter;
         
         // Update active button
-        document.querySelectorAll('.time-filter-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.filter === filter);
+        const buttons = this.element.querySelectorAll('.time-filter-btn');
+        buttons.forEach(btn => {
+            const isActive = btn.getAttribute('data-filter') === filter;
+            btn.style.background = isActive ? 'var(--primary-color, #3b82f6)' : 'var(--card-bg, rgba(255, 255, 255, 0.9))';
+            btn.style.color = isActive ? 'white' : 'var(--text-secondary, #666)';
+            btn.style.borderColor = isActive ? 'var(--primary-color, #3b82f6)' : 'var(--border-color, #e0e0e0)';
         });
         
         // Reload activities with new filter
@@ -573,7 +650,77 @@ const DashboardModule = {
         console.log(`Activity filter set to: ${filter}`);
     },
 
-    // UPDATED: Get activities with time filter
+    // ==================== QUICK ACTIONS ====================
+    handleQuickAction(action) {
+        console.log(`Quick action: ${action}`);
+        
+        const actionMap = {
+            'add-income': 'income-expenses',
+            'add-expense': 'income-expenses', 
+            'check-inventory': 'inventory-check',
+            'record-feed': 'feed-record',
+            'add-production': 'production',
+            'view-reports': 'reports'
+        };
+
+        const targetModule = actionMap[action];
+        if (targetModule) {
+            // Try to navigate to the module
+            if (window.FarmManagementApp) {
+                window.FarmManagementApp.showSection(targetModule);
+            } else if (window.app && window.app.showSection) {
+                window.app.showSection(targetModule);
+            } else if (window.FarmModules && window.FarmModules.renderModule) {
+                window.FarmModules.renderModule(targetModule);
+            } else {
+                // Fallback: manually trigger navigation
+                const event = new CustomEvent('sectionChange', { 
+                    detail: { section: targetModule } 
+                });
+                document.dispatchEvent(event);
+            }
+            
+            // Show notification
+            if (window.coreModule && window.coreModule.showNotification) {
+                window.coreModule.showNotification(`Opening ${this.getActionName(action)}...`, 'info');
+            }
+        }
+    },
+
+    getActionName(action) {
+        const names = {
+            'add-income': 'Income & Expenses',
+            'add-expense': 'Income & Expenses', 
+            'check-inventory': 'Inventory Check',
+            'record-feed': 'Feed Records',
+            'add-production': 'Production',
+            'view-reports': 'Reports'
+        };
+        return names[action] || action;
+    },
+
+    // ==================== ACTIVITY MANAGEMENT ====================
+    handleActivityClick(activityId) {
+        const activities = this.getActivities();
+        const activity = activities.find(a => a.id == activityId);
+        
+        if (activity && activity.module) {
+            // Navigate to the module
+            if (window.FarmManagementApp) {
+                window.FarmManagementApp.showSection(activity.module);
+            } else if (window.app && window.app.showSection) {
+                window.app.showSection(activity.module);
+            } else if (window.FarmModules && window.FarmModules.renderModule) {
+                window.FarmModules.renderModule(activity.module);
+            }
+            
+            // Show notification
+            if (window.coreModule && window.coreModule.showNotification) {
+                window.coreModule.showNotification(`Navigating to ${this.formatModuleName(activity.module)}`, 'info');
+            }
+        }
+    },
+
     getActivities() {
         let activities = [];
         const now = new Date();
@@ -594,7 +741,6 @@ const DashboardModule = {
         return activities;
     },
 
-    // NEW: Get activities from all modules
     getActivitiesFromModules() {
         const activities = [];
         
@@ -635,7 +781,6 @@ const DashboardModule = {
         return activities;
     },
 
-    // NEW: Get module icon
     getModuleIcon(moduleName) {
         const icons = {
             'income-expenses': '💰',
@@ -649,7 +794,6 @@ const DashboardModule = {
         return icons[moduleName] || '📊';
     },
 
-    // NEW: Get activity title
     getActivityTitle(moduleName, item) {
         const titles = {
             'income-expenses': item.type === 'income' ? 'Income Recorded' : 'Expense Recorded',
@@ -663,7 +807,6 @@ const DashboardModule = {
         return titles[moduleName] || 'Activity';
     },
 
-    // NEW: Get activity description
     getActivityDescription(moduleName, item) {
         switch(moduleName) {
             case 'income-expenses':
@@ -685,7 +828,6 @@ const DashboardModule = {
         }
     },
 
-    // NEW: Filter activities by time
     filterActivitiesByTime(activities) {
         const now = new Date();
         
@@ -706,7 +848,6 @@ const DashboardModule = {
         });
     },
 
-    // FIXED: Update recent activity section (removed unused stats parameter)
     updateRecentActivity() {
         const activityContent = document.getElementById('activity-content');
         if (!activityContent) return;
@@ -727,21 +868,62 @@ const DashboardModule = {
         activityContent.innerHTML = `
             <div style="display: flex; flex-direction: column; gap: 12px;">
                 ${activities.map((activity, index) => `
-                    <div class="activity-item ${index < 3 ? 'new' : ''}" data-activity-id="${activity.id}">
-                        <div class="activity-icon">
+                    <div class="activity-item ${index < 3 ? 'new' : ''}" 
+                         data-action="view-activity" 
+                         data-activity-id="${activity.id}"
+                         style="
+                            display: flex;
+                            align-items: flex-start;
+                            gap: 12px;
+                            padding: 16px;
+                            background: var(--card-bg, rgba(255, 255, 255, 0.9));
+                            border-radius: 12px;
+                            border: 1px solid var(--border-color, #e0e0e0);
+                            transition: all 0.2s ease;
+                            margin-bottom: 8px;
+                            cursor: pointer;
+                            ${index < 3 ? 'animation: fadeIn 0.5s ease; border-left: 3px solid var(--primary-color, #3b82f6);' : ''}
+                         ">
+                        <div class="activity-icon" style="
+                            font-size: 20px;
+                            padding: 8px;
+                            background: var(--glass-bg, rgba(255, 255, 255, 0.8));
+                            border-radius: 10px;
+                            min-width: 40px;
+                            text-align: center;
+                        ">
                             ${activity.icon}
                         </div>
-                        <div class="activity-content">
-                            <div class="activity-title">${activity.title}</div>
+                        <div class="activity-content" style="flex: 1;">
+                            <div class="activity-title" style="
+                                font-weight: 600;
+                                color: var(--text-primary, #1a1a1a);
+                                font-size: 14px;
+                                margin-bottom: 4px;
+                            ">
+                                ${activity.title}
+                            </div>
                             <div style="font-size: 13px; color: var(--text-secondary, #666); margin-bottom: 8px;">
                                 ${activity.description}
                             </div>
-                            <div class="activity-meta">
-                                <div class="activity-time">
+                            <div class="activity-meta" style="
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                font-size: 12px;
+                                color: var(--text-secondary, #666);
+                            ">
+                                <div class="activity-time" style="display: flex; align-items: center; gap: 4px;">
                                     <span>🕒</span>
                                     <span>${this.formatTimeAgo(activity.timestamp)}</span>
                                 </div>
-                                <div class="activity-module">
+                                <div class="activity-module" style="
+                                    background: var(--tag-bg, rgba(59, 130, 246, 0.1));
+                                    padding: 2px 8px;
+                                    border-radius: 12px;
+                                    font-size: 11px;
+                                    color: var(--primary-color, #3b82f6);
+                                ">
                                     ${this.formatModuleName(activity.module)}
                                 </div>
                             </div>
@@ -750,44 +932,8 @@ const DashboardModule = {
                 `).join('')}
             </div>
         `;
-
-        // Add click handlers to activity items
-        this.setupActivityClickHandlers();
     },
 
-    // NEW: Setup activity click handlers
-    setupActivityClickHandlers() {
-        const activityItems = document.querySelectorAll('.activity-item');
-        activityItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                const activityId = item.dataset.activityId;
-                this.handleActivityClick(activityId);
-            });
-        });
-    },
-
-    // NEW: Handle activity click
-    handleActivityClick(activityId) {
-        // Find the activity
-        const activities = this.getActivities();
-        const activity = activities.find(a => a.id == activityId);
-        
-        if (activity && activity.module) {
-            // Navigate to the module
-            if (window.FarmManagementApp) {
-                window.FarmManagementApp.showSection(activity.module);
-            } else if (window.app && window.app.showSection) {
-                window.app.showSection(activity.module);
-            }
-            
-            // Show notification
-            if (window.coreModule && window.coreModule.showNotification) {
-                window.coreModule.showNotification(`Navigating to ${this.formatModuleName(activity.module)}`, 'info');
-            }
-        }
-    },
-
-    // NEW: Format module name
     formatModuleName(moduleName) {
         const names = {
             'income-expenses': 'Finance',
@@ -801,7 +947,148 @@ const DashboardModule = {
         return names[moduleName] || moduleName;
     },
 
-    // NEW: Broadcast data change (call this from other modules when data changes)
+    // ==================== STATS MANAGEMENT ====================
+    renderStatCards() {
+        const stats = [
+            { id: 'total-revenue', icon: '💰', label: 'Total Revenue', value: '$0.00' },
+            { id: 'total-expenses', icon: '💸', label: 'Total Expenses', value: '$0.00' },
+            { id: 'inventory-items', icon: '📦', label: 'Inventory Items', value: '0' },
+            { id: 'active-birds', icon: '🐔', label: 'Active Birds', value: '0' },
+            { id: 'total-orders', icon: '📋', label: 'Total Orders', value: '0' },
+            { id: 'net-profit', icon: '📊', label: 'Net Profit', value: '$0.00' },
+            { id: 'total-customers', icon: '👥', label: 'Customers', value: '0' },
+            { id: 'total-products', icon: '🛒', label: 'Products', value: '0' }
+        ];
+
+        return stats.map(stat => `
+            <div class="stat-card" id="${stat.id}-card" style="
+                background: var(--card-bg, rgba(255, 255, 255, 0.9));
+                border: 1px solid var(--border-color, #e0e0e0);
+                border-radius: 16px;
+                padding: 20px;
+                text-align: center;
+                transition: all 0.3s ease;
+            ">
+                <div style="font-size: 24px; margin-bottom: 8px;">${stat.icon}</div>
+                <div style="font-size: 24px; font-weight: bold; color: var(--text-primary, #1a1a1a); margin-bottom: 4px;" id="${stat.id}">${stat.value}</div>
+                <div style="font-size: 14px; color: var(--text-secondary, #666);">${stat.label}</div>
+            </div>
+        `).join('');
+    },
+
+    loadAndDisplayStats() {
+        const profileStats = this.getProfileStats();
+        this.updateDashboardStats(profileStats);
+        this.updateRecentActivity();
+        this.lastUpdateTime = new Date().toISOString();
+        
+        // Update last updated time in UI
+        const lastUpdatedEl = this.element.querySelector('#refresh-stats-btn')?.nextElementSibling?.nextElementSibling;
+        if (lastUpdatedEl && this.lastUpdateTime) {
+            lastUpdatedEl.textContent = `Last updated: ${this.formatTimeAgo(this.lastUpdateTime)}`;
+        }
+    },
+
+    getProfileStats() {
+        let stats = {
+            totalIncome: 0,
+            totalExpenses: 0,
+            netProfit: 0,
+            totalInventoryItems: 0,
+            totalBirds: 0,
+            totalOrders: 0,
+            totalRevenue: 0,
+            totalCustomers: 0,
+            totalProducts: 0,
+            monthlyRevenue: 0,
+            completedOrders: 0
+        };
+
+        // Try to get stats from shared FarmModules data
+        if (window.FarmModules && window.FarmModules.appData) {
+            const sharedStats = window.FarmModules.appData.profile?.dashboardStats;
+            if (sharedStats) {
+                stats = { ...stats, ...sharedStats };
+            }
+        }
+
+        // Fallback to localStorage if shared data not available
+        if (stats.totalIncome === 0) {
+            const savedStats = localStorage.getItem('farm-dashboard-stats');
+            if (savedStats) {
+                stats = { ...stats, ...JSON.parse(savedStats) };
+            }
+        }
+
+        return stats;
+    },
+
+    updateDashboardStats(newStats) {
+        // Update shared data structure
+        if (window.FarmModules && window.FarmModules.appData) {
+            if (!window.FarmModules.appData.profile) {
+                window.FarmModules.appData.profile = {};
+            }
+            if (!window.FarmModules.appData.profile.dashboardStats) {
+                window.FarmModules.appData.profile.dashboardStats = {};
+            }
+            
+            Object.assign(window.FarmModules.appData.profile.dashboardStats, newStats);
+        }
+
+        // Update the UI
+        this.updateDashboardDisplay(newStats);
+    },
+
+    updateDashboardDisplay(stats) {
+        // Update main stats cards
+        this.updateStatCard('total-revenue', this.formatCurrency(stats.totalRevenue || stats.totalIncome || 0));
+        this.updateStatCard('total-expenses', this.formatCurrency(stats.totalExpenses || 0));
+        this.updateStatCard('inventory-items', stats.totalInventoryItems || 0);
+        this.updateStatCard('active-birds', stats.totalBirds || 0);
+        this.updateStatCard('total-orders', stats.totalOrders || 0);
+        this.updateStatCard('net-profit', this.formatCurrency(stats.netProfit || (stats.totalIncome - stats.totalExpenses) || 0));
+        this.updateStatCard('total-customers', stats.totalCustomers || 0);
+        this.updateStatCard('total-products', stats.totalProducts || 0);
+
+        // Update profit card color based on value
+        const profitCard = document.getElementById('net-profit-card');
+        if (profitCard) {
+            const netProfit = stats.netProfit || (stats.totalIncome - stats.totalExpenses) || 0;
+            const profitColor = netProfit >= 0 ? '#22c55e' : '#ef4444';
+            profitCard.style.borderLeft = `4px solid ${profitColor}`;
+        }
+
+        // Update revenue card with monthly indicator
+        const revenueCard = document.getElementById('total-revenue-card');
+        if (revenueCard && stats.monthlyRevenue > 0) {
+            // Remove existing indicator if any
+            const existingIndicator = revenueCard.querySelector('.monthly-indicator');
+            if (existingIndicator) existingIndicator.remove();
+            
+            const monthlyIndicator = document.createElement('div');
+            monthlyIndicator.className = 'monthly-indicator';
+            monthlyIndicator.style.fontSize = '12px';
+            monthlyIndicator.style.color = '#22c55e';
+            monthlyIndicator.style.marginTop = '4px';
+            monthlyIndicator.textContent = `+${this.formatCurrency(stats.monthlyRevenue)} this month`;
+            revenueCard.appendChild(monthlyIndicator);
+        }
+    },
+
+    updateStatCard(elementId, value) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            // Add animation
+            element.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                element.style.transform = 'scale(1)';
+                element.textContent = value;
+            }, 150);
+        }
+    },
+
+    // ==================== BROADCAST METHODS ====================
     broadcastDataChange(moduleName, data) {
         const event = new CustomEvent('farmDataChanged', {
             detail: { 
@@ -814,13 +1101,6 @@ const DashboardModule = {
         
         // Also update localStorage for cross-tab sync
         localStorage.setItem('farm-last-update', new Date().toISOString());
-    },
-
-    // Keep existing methods but update them to use new features
-    loadAndDisplayStats() {
-        const profileStats = this.getProfileStats();
-        this.updateDashboardStats(profileStats);
-        this.updateRecentActivity(); // Now uses the time filter
     },
 
     addRecentActivity(activity) {
@@ -858,222 +1138,11 @@ const DashboardModule = {
         this.broadcastDataChange('dashboard', newActivity);
     },
 
-    // Helper methods for rendering
-    renderQuickActions() {
-        const actions = [
-            { icon: '💰', label: 'Add Income', action: 'add-income', desc: 'Record new income' },
-            { icon: '💸', label: 'Add Expense', action: 'add-expense', desc: 'Record new expense' },
-            { icon: '📦', label: 'Check Inventory', action: 'check-inventory', desc: 'View stock levels' },
-            { icon: '🌾', label: 'Record Feed', action: 'record-feed', desc: 'Log feed usage' },
-            { icon: '🚜', label: 'Production', action: 'add-production', desc: 'Record production' },
-            { icon: '📈', label: 'View Reports', action: 'view-reports', desc: 'Analytics & insights' }
-        ];
-
-        return actions.map(action => `
-            <button class="quick-action-btn" data-action="${action.action}" style="
-                background: var(--card-bg, rgba(255, 255, 255, 0.9));
-                border: 1px solid var(--border-color, #e0e0e0);
-                border-radius: 16px;
-                padding: 24px 16px;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 12px;
-                min-height: 120px;
-            ">
-                <div style="font-size: 32px;">${action.icon}</div>
-                <span style="font-size: 14px; font-weight: 600; color: var(--text-primary, #1a1a1a);">${action.label}</span>
-                <span style="font-size: 12px; color: var(--text-secondary, #666); text-align: center;">${action.desc}</span>
-            </button>
-        `).join('');
+    refreshStats() {
+        this.loadAndDisplayStats();
     },
 
-    renderStatCards() {
-        const stats = [
-            { id: 'total-revenue', icon: '💰', label: 'Total Revenue', value: '$0.00' },
-            { id: 'total-expenses', icon: '💸', label: 'Total Expenses', value: '$0.00' },
-            { id: 'inventory-items', icon: '📦', label: 'Inventory Items', value: '0' },
-            { id: 'active-birds', icon: '🐔', label: 'Active Birds', value: '0' },
-            { id: 'total-orders', icon: '📋', label: 'Total Orders', value: '0' },
-            { id: 'net-profit', icon: '📊', label: 'Net Profit', value: '$0.00' },
-            { id: 'total-customers', icon: '👥', label: 'Customers', value: '0' },
-            { id: 'total-products', icon: '🛒', label: 'Products', value: '0' }
-        ];
-
-        return stats.map(stat => `
-            <div class="stat-card" id="${stat.id}-card" style="
-                background: var(--card-bg, rgba(255, 255, 255, 0.9));
-                border: 1px solid var(--border-color, #e0e0e0);
-                border-radius: 16px;
-                padding: 20px;
-                text-align: center;
-                transition: all 0.3s ease;
-            ">
-                <div style="font-size: 24px; margin-bottom: 8px;">${stat.icon}</div>
-                <div style="font-size: 24px; font-weight: bold; color: var(--text-primary, #1a1a1a); margin-bottom: 4px;" id="${stat.id}">${stat.value}</div>
-                <div style="font-size: 14px; color: var(--text-secondary, #666);">${stat.label}</div>
-            </div>
-        `).join('');
-    },
-
-    setupQuickActions() {
-        const quickActionButtons = document.querySelectorAll('.quick-action-btn');
-        
-        quickActionButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                const action = e.currentTarget.getAttribute('data-action');
-                this.handleQuickAction(action);
-            });
-
-            // Add hover effects
-            button.addEventListener('mouseenter', (e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-            });
-
-            button.addEventListener('mouseleave', (e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-            });
-        });
-    },
-
-    setupRefreshButton() {
-        const refreshBtn = document.getElementById('refresh-stats-btn');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => {
-                this.loadAndDisplayStats();
-                if (window.coreModule && window.coreModule.showNotification) {
-                    window.coreModule.showNotification('Stats refreshed!', 'success');
-                }
-            });
-
-            // Add hover effect
-            refreshBtn.addEventListener('mouseenter', (e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-            });
-
-            refreshBtn.addEventListener('mouseleave', (e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-            });
-        }
-    },
-
-    // UPDATED METHOD: Load and display stats from shared data
-    loadAndDisplayStats() {
-        // Get stats from shared data
-        const profileStats = this.getProfileStats();
-        
-        // Update dashboard stats
-        this.updateDashboardStats(profileStats);
-        
-        // Update recent activity
-        this.updateRecentActivity();
-    },
-
-    // UPDATED METHOD: Get stats from shared data (no ProfileModule dependency)
-    getProfileStats() {
-        let stats = {
-            totalIncome: 0,
-            totalExpenses: 0,
-            netProfit: 0,
-            totalInventoryItems: 0,
-            totalBirds: 0,
-            totalOrders: 0,
-            totalRevenue: 0,
-            totalCustomers: 0,
-            totalProducts: 0,
-            monthlyRevenue: 0,
-            completedOrders: 0
-        };
-
-        // Try to get stats from shared FarmModules data
-        if (window.FarmModules && window.FarmModules.appData) {
-            const sharedStats = window.FarmModules.appData.profile?.dashboardStats;
-            if (sharedStats) {
-                stats = { ...stats, ...sharedStats };
-            }
-        }
-
-        // Fallback to localStorage if shared data not available
-        if (stats.totalIncome === 0) {
-            const savedStats = localStorage.getItem('farm-dashboard-stats');
-            if (savedStats) {
-                stats = { ...stats, ...JSON.parse(savedStats) };
-            }
-        }
-
-        return stats;
-    },
-
-    // NEW METHOD: Update shared data (for other modules to call)
-    updateDashboardStats(newStats) {
-        // Update shared data structure
-        if (window.FarmModules && window.FarmModules.appData) {
-            if (!window.FarmModules.appData.profile) {
-                window.FarmModules.appData.profile = {};
-            }
-            if (!window.FarmModules.appData.profile.dashboardStats) {
-                window.FarmModules.appData.profile.dashboardStats = {};
-            }
-            
-            Object.assign(window.FarmModules.appData.profile.dashboardStats, newStats);
-        }
-
-        // Update the UI
-        this.updateDashboardDisplay(newStats);
-    },
-
-    // UPDATED METHOD: Update dashboard display with current stats
-    updateDashboardDisplay(stats) {
-        // Update main stats cards
-        this.updateStatCard('total-revenue', this.formatCurrency(stats.totalRevenue || stats.totalIncome || 0));
-        this.updateStatCard('total-expenses', this.formatCurrency(stats.totalExpenses || 0));
-        this.updateStatCard('inventory-items', stats.totalInventoryItems || 0);
-        this.updateStatCard('active-birds', stats.totalBirds || 0);
-        this.updateStatCard('total-orders', stats.totalOrders || 0);
-        this.updateStatCard('net-profit', this.formatCurrency(stats.netProfit || (stats.totalIncome - stats.totalExpenses) || 0));
-        this.updateStatCard('total-customers', stats.totalCustomers || 0);
-        this.updateStatCard('total-products', stats.totalProducts || 0);
-
-        // Update profit card color based on value
-        const profitCard = document.getElementById('profit-card');
-        if (profitCard) {
-            const netProfit = stats.netProfit || (stats.totalIncome - stats.totalExpenses) || 0;
-            const profitColor = netProfit >= 0 ? '#22c55e' : '#ef4444';
-            profitCard.style.borderLeft = `4px solid ${profitColor}`;
-        }
-
-        // Update revenue card with monthly indicator
-        const revenueCard = document.getElementById('revenue-card');
-        if (revenueCard && stats.monthlyRevenue > 0) {
-            const monthlyIndicator = document.createElement('div');
-            monthlyIndicator.style.fontSize = '12px';
-            monthlyIndicator.style.color = '#22c55e';
-            monthlyIndicator.style.marginTop = '4px';
-            monthlyIndicator.textContent = `+${this.formatCurrency(stats.monthlyRevenue)} this month`;
-            revenueCard.appendChild(monthlyIndicator);
-        }
-    },
-
-    // UPDATED METHOD: Update individual stat card
-    updateStatCard(elementId, value) {
-        const element = document.getElementById(elementId);
-        if (element) {
-            // Add animation
-            element.style.transform = 'scale(1.1)';
-            setTimeout(() => {
-                element.style.transform = 'scale(1)';
-                element.textContent = value;
-            }, 150);
-        }
-    },
-
-    // NEW METHOD: Format time ago for activity timestamps
+    // ==================== UTILITY METHODS ====================
     formatTimeAgo(timestamp) {
         if (!timestamp) return 'Recently';
         
@@ -1087,83 +1156,43 @@ const DashboardModule = {
         return `${Math.floor(diffInSeconds / 86400)}d ago`;
     },
 
-    // UPDATED METHOD: Force refresh stats (can be called from other modules)
-    refreshStats() {
-        this.loadAndDisplayStats();
-    },
-
-    handleQuickAction(action) {
-        console.log(`Quick action: ${action}`);
-        
-        const actionMap = {
-            'add-income': 'income-expenses',
-            'add-expense': 'income-expenses', 
-            'check-inventory': 'inventory-check',
-            'record-feed': 'feed-record',
-            'add-production': 'production',
-            'view-reports': 'reports'
-        };
-
-        const targetModule = actionMap[action];
-        if (targetModule) {
-            // FIX: Use the correct method to switch sections
-            if (window.FarmManagementApp) {
-                window.FarmManagementApp.showSection(targetModule);
-            } else if (window.app && window.app.showSection) {
-                window.app.showSection(targetModule);
-            } else {
-                // Fallback: manually trigger navigation
-                const event = new CustomEvent('sectionChange', { 
-                    detail: { section: targetModule } 
-                });
-                document.dispatchEvent(event);
-            }
-            
-            // Show notification
-            if (window.coreModule && window.coreModule.showNotification) {
-                window.coreModule.showNotification(`Opening ${this.getActionName(action)}...`, 'info');
-            }
-        }
-    },
-
-    getActionName(action) {
-        const names = {
-            'add-income': 'Income & Expenses',
-            'add-expense': 'Income & Expenses', 
-            'check-inventory': 'Inventory Check',
-            'record-feed': 'Feed Records',
-            'add-production': 'Production',
-            'view-reports': 'Reports'
-        };
-        return names[action] || action;
-    },
-
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD'
         }).format(amount);
+    },
+
+    cleanup() {
+        // Stop real-time updates
+        if (this.realTimeInterval) {
+            clearInterval(this.realTimeInterval);
+            this.realTimeInterval = null;
+        }
+        
+        // Remove event listeners
+        this.removeEventListeners();
+        
+        // Remove data change listeners
+        document.removeEventListener('farmDataChanged', this.setupDataChangeListeners);
+        window.removeEventListener('storage', this.setupDataChangeListeners);
+        
+        this.initialized = false;
+        console.log('🔄 Dashboard module cleaned up');
     }
 };
 
-// ==================== SINGLE REGISTRATION ====================
-// Add this to enable real-time updates from other modules
+// ==================== REGISTRATION ====================
 window.DashboardModule = DashboardModule;
 
-// Register the module
-if (window.FarmModules) {
-    window.FarmModules.registerModule('dashboard', DashboardModule);
-    console.log('✅ Dashboard module registered');
-}
-
-// Registration wrapper
 (function() {
-    console.log('📦 Registering dashboard.js module...');
+    console.log('📦 Registering dashboard module...');
     
     if (window.FarmModules) {
-        FarmModules.registerModule('dashboard.js', DashboardModule);
-        console.log(`✅ dashboard.js module registered successfully!`);
+        const moduleName = DashboardModule.name || 'dashboard';
+        FarmModules.registerModule(moduleName, DashboardModule);
+        console.log(`✅ ${moduleName} module registered successfully!`);
     } else {
-        console.error('❌ FarmModules framework not found');
+        console.log('📦 Dashboard module loaded (standalone mode)');
     }
 })();
