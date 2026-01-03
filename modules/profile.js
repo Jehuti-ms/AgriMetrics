@@ -479,7 +479,7 @@ const ProfileModule = {
                                     <h4 style="margin: 0 0 4px 0; color: var(--text-primary);">Email Support</h4>
                                     <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">farm-support@yourcompany.com</p>
                                 </div>
-                                <button class="btn-outline" onclick="ProfileModule.copyToClipboard('farm-support@yourcompany.com')" style="margin-left: auto;">📋 Copy</button>
+                                <button class="btn-outline" onclick="(window.ProfileModule || window).copyToClipboard?.('farm-support@yourcompany.com') || alert('Copied: farm-support@yourcompany.com')" style="margin-left: auto;">📋 Copy</button>
                             </div>
                             
                             <div class="support-channel" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--glass-bg); border-radius: 8px; margin-bottom: 12px;">
@@ -488,7 +488,7 @@ const ProfileModule = {
                                     <h4 style="margin: 0 0 4px 0; color: var(--text-primary);">Team Channel</h4>
                                     <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">#farm-management</p>
                                 </div>
-                                <button class="btn-outline" onclick="window.open('slack://channel?team=YOUR_TEAM&id=YOUR_CHANNEL')" style="margin-left: auto;">↗️ Open</button>
+                                <button class="btn-outline" onclick="(window.ProfileModule || window).openSlackChannel?.() || window.open('https://slack.com', '_blank')" style="margin-left: auto;">↗️ Open</button>
                             </div>
                             
                             <div class="support-channel" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--glass-bg); border-radius: 8px; margin-bottom: 12px;">
@@ -497,8 +497,8 @@ const ProfileModule = {
                                     <h4 style="margin: 0 0 4px 0; color: var(--text-primary);">Quick Guide</h4>
                                     <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">One-page reference</p>
                                 </div>
-                                <button class="btn-outline" onclick="ProfileModule.openQuickGuide()" style="margin-left: auto;">📄 Open</button>
-                                <button class="btn-outline" onclick="ProfileModule.downloadQuickGuide()">📥 PDF</button>
+                                <button class="btn-outline" onclick="(window.ProfileModule || window).openQuickGuide?.() || alert('Quick Guide: Open ProfileModule for instructions')" style="margin-left: auto;">📄 Open</button>
+                                <button class="btn-outline" onclick="(window.ProfileModule || window).downloadQuickGuide?.() || alert('Downloading guide...')">📥 PDF</button>
                             </div>
                             
                             <div class="support-channel" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
@@ -507,7 +507,7 @@ const ProfileModule = {
                                     <h4 style="margin: 0 0 4px 0; color: var(--text-primary);">Video Tutorials</h4>
                                     <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">Step-by-step guides</p>
                                 </div>
-                                <button class="btn-outline" onclick="window.open('https://youtube.com/playlist?list=YOUR_PLAYLIST')" style="margin-left: auto;">▶️ Watch</button>
+                                <button class="btn-outline" onclick="(window.ProfileModule || window).openYouTubeTutorials?.() || window.open('https://youtube.com', '_blank')" style="margin-left: auto;">▶️ Watch</button>
                             </div>
                         </div>
                     </div>
@@ -655,6 +655,27 @@ const ProfileModule = {
         // Logout button
         document.getElementById('logout-btn')?.addEventListener('click', () => {
             this.handleLogout();
+        });
+
+        // Support section buttons
+        document.getElementById('copy-email-btn')?.addEventListener('click', () => {
+            this.copyToClipboard('farm-support@yourcompany.com');
+        });
+        
+        document.getElementById('open-slack-btn')?.addEventListener('click', () => {
+            this.openSlackChannel();
+        });
+        
+        document.getElementById('open-guide-btn')?.addEventListener('click', () => {
+            this.openQuickGuide();
+        });
+        
+        document.getElementById('download-guide-btn')?.addEventListener('click', () => {
+            this.downloadQuickGuide();
+        });
+        
+        document.getElementById('watch-tutorials-btn')?.addEventListener('click', () => {
+            this.openYouTubeTutorials();
         });
     },
 
@@ -2052,6 +2073,331 @@ downloadQuickGuide() {
     this.showNotification('Quick guide downloaded', 'success');
 },
 
+    // ==================== SUPPORT & HELP METHODS ====================
+
+// ✅ ADD: Copy to clipboard method
+copyToClipboard(text) {
+    navigator.clipboard.writeText(text)
+        .then(() => {
+            this.showNotification('Copied to clipboard!', 'success');
+            console.log('✅ Text copied:', text);
+        })
+        .catch(err => {
+            console.error('Failed to copy:', err);
+            // Fallback for older browsers
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            this.showNotification('Copied to clipboard!', 'success');
+        });
+},
+
+// ✅ ADD: Open Quick Guide method
+openQuickGuide() {
+    console.log('📖 Opening quick guide...');
+    
+    // Create a simple modal with quick guide content
+    const modal = document.createElement('div');
+    modal.className = 'popout-modal';
+    modal.innerHTML = `
+        <div class="popout-modal-content" style="max-width: 800px; max-height: 80vh; overflow-y: auto;">
+            <div class="popout-modal-header">
+                <h3 style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 24px;">📖</span>
+                    Farm Manager Quick Guide
+                </h3>
+                <button class="popout-modal-close" onclick="this.closest('.popout-modal').remove()">&times;</button>
+            </div>
+            <div class="popout-modal-body" style="padding: 24px;">
+                <div style="margin-bottom: 24px;">
+                    <h4 style="color: var(--text-primary); margin-bottom: 12px;">📱 Installation</h4>
+                    <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+                        <p style="margin: 0 0 8px 0; color: var(--text-primary);">
+                            <strong>Step 1:</strong> Open ${window.location.origin} on your mobile device
+                        </p>
+                        <p style="margin: 0 0 8px 0; color: var(--text-secondary); font-size: 14px;">
+                            • iOS: Use Safari browser<br>
+                            • Android: Use Chrome browser
+                        </p>
+                    </div>
+                    <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+                        <p style="margin: 0 0 8px 0; color: var(--text-primary);">
+                            <strong>Step 2:</strong> Tap the Share button
+                        </p>
+                        <p style="margin: 0 0 8px 0; color: var(--text-secondary); font-size: 14px;">
+                            • iOS: Tap the <strong>📤 Share</strong> icon in Safari<br>
+                            • Android: Tap the <strong>⋮ Menu</strong> button in Chrome
+                        </p>
+                    </div>
+                    <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px;">
+                        <p style="margin: 0 0 8px 0; color: var(--text-primary);">
+                            <strong>Step 3:</strong> Select "Add to Home Screen"
+                        </p>
+                        <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">
+                            Follow the prompts to install the app on your home screen
+                        </p>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <h4 style="color: var(--text-primary); margin-bottom: 12px;">🔑 Login & Setup</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px;">
+                            <h5 style="margin: 0 0 8px 0; color: var(--text-primary); font-size: 14px;">First Time Login</h5>
+                            <p style="margin: 0; color: var(--text-secondary); font-size: 13px;">
+                                • Use the email and temporary password provided<br>
+                                • You'll be prompted to create a new password<br>
+                                • Verify your email address
+                            </p>
+                        </div>
+                        <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px;">
+                            <h5 style="margin: 0 0 8px 0; color: var(--text-primary); font-size: 14px;">Profile Setup</h5>
+                            <p style="margin: 0; color: var(--text-secondary); font-size: 13px;">
+                                • Complete your farm profile information<br>
+                                • Set your preferred currency<br>
+                                • Configure notification preferences
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <h4 style="color: var(--text-primary); margin-bottom: 12px;">🚜 Key Features</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                        <div style="background: var(--glass-bg); padding: 12px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                            <div style="font-size: 13px; color: var(--text-primary);">Income & Expenses</div>
+                        </div>
+                        <div style="background: var(--glass-bg); padding: 12px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
+                            <div style="font-size: 13px; color: var(--text-primary);">Inventory Tracking</div>
+                        </div>
+                        <div style="background: var(--glass-bg); padding: 12px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 24px; margin-bottom: 8px;">🐔</div>
+                            <div style="font-size: 13px; color: var(--text-primary);">Production Records</div>
+                        </div>
+                        <div style="background: var(--glass-bg); padding: 12px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                            <div style="font-size: 13px; color: var(--text-primary);">Reports & Analytics</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(34, 197, 94, 0.1)); padding: 20px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                    <h4 style="color: var(--text-primary); margin-bottom: 8px;">📞 Need Help?</h4>
+                    <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">
+                        • Email: farm-support@yourcompany.com<br>
+                        • Team Channel: #farm-management<br>
+                        • Hours: Monday-Friday, 8AM-6PM
+                    </p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+    
+    this.showNotification('Quick guide opened', 'info');
+},
+
+// ✅ ADD: Download Quick Guide method
+downloadQuickGuide() {
+    console.log('📥 Downloading quick guide...');
+    
+    // Create HTML content for the guide
+    const guideContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Farm Manager Quick Guide</title>
+            <style>
+                body { 
+                    font-family: Arial, sans-serif; 
+                    padding: 20px; 
+                    max-width: 800px; 
+                    margin: 0 auto;
+                    line-height: 1.6;
+                }
+                h1 { 
+                    color: #2E7D32; 
+                    border-bottom: 3px solid #2E7D32;
+                    padding-bottom: 10px;
+                }
+                h2 { color: #1B5E20; margin-top: 30px; }
+                .section { 
+                    margin: 20px 0; 
+                    padding: 15px; 
+                    background: #f8f9fa; 
+                    border-radius: 8px;
+                    border-left: 4px solid #4CAF50;
+                }
+                .step { 
+                    margin: 15px 0; 
+                    padding: 10px;
+                    background: white;
+                    border-radius: 6px;
+                    border: 1px solid #e0e0e0;
+                }
+                .step-number {
+                    display: inline-block;
+                    background: #4CAF50;
+                    color: white;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    text-align: center;
+                    line-height: 24px;
+                    margin-right: 10px;
+                }
+                .feature-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 15px;
+                    margin: 20px 0;
+                }
+                .feature {
+                    padding: 15px;
+                    background: white;
+                    border-radius: 8px;
+                    border: 1px solid #e0e0e0;
+                    text-align: center;
+                }
+                .contact-info {
+                    background: #e8f5e9;
+                    padding: 20px;
+                    border-radius: 8px;
+                    margin: 20px 0;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Farm Manager Quick Guide</h1>
+            
+            <div class="section">
+                <h2>📱 Installation Instructions</h2>
+                
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Open in Browser</strong>
+                    <p>Visit ${window.location.origin} on your mobile device's browser (Safari for iOS, Chrome for Android).</p>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Tap Share Button</strong>
+                    <p>Look for the share icon (📤 on iOS) or menu button (⋮ on Android) in your browser.</p>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Add to Home Screen</strong>
+                    <p>Select "Add to Home Screen" from the menu and follow the prompts.</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🔑 Login & Account Setup</h2>
+                <ul>
+                    <li><strong>First Login:</strong> Use the credentials provided in your welcome email</li>
+                    <li><strong>Password Reset:</strong> You'll be prompted to create a new password on first login</li>
+                    <li><strong>Profile Setup:</strong> Complete your farm information in the Profile section</li>
+                    <li><strong>Remember Me:</strong> Enable "Remember Me" to stay logged in on your device</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>🚜 Key Features Overview</h2>
+                <div class="feature-grid">
+                    <div class="feature">
+                        <div style="font-size: 24px; margin-bottom: 10px;">💰</div>
+                        <div><strong>Income & Expenses</strong></div>
+                        <div style="font-size: 12px; color: #666;">Track all farm transactions</div>
+                    </div>
+                    <div class="feature">
+                        <div style="font-size: 24px; margin-bottom: 10px;">📦</div>
+                        <div><strong>Inventory</strong></div>
+                        <div style="font-size: 12px; color: #666;">Manage stock levels and orders</div>
+                    </div>
+                    <div class="feature">
+                        <div style="font-size: 24px; margin-bottom: 10px;">🐔</div>
+                        <div><strong>Production</strong></div>
+                        <div style="font-size: 12px; color: #666;">Record daily production data</div>
+                    </div>
+                    <div class="feature">
+                        <div style="font-size: 24px; margin-bottom: 10px;">📊</div>
+                        <div><strong>Reports</strong></div>
+                        <div style="font-size: 12px; color: #666;">Generate detailed analytics</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>📞 Support Information</h2>
+                <div class="contact-info">
+                    <p><strong>Email Support:</strong> farm-support@yourcompany.com</p>
+                    <p><strong>Team Channel:</strong> #farm-management</p>
+                    <p><strong>Support Hours:</strong> Monday-Friday, 8AM-6PM</p>
+                    <p><strong>Urgent Issues:</strong> Contact your department administrator</p>
+                </div>
+            </div>
+
+            <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc; font-size: 12px; color: #666; text-align: center;">
+                <p>Generated on: ${new Date().toLocaleDateString()}</p>
+                <p>Farm Manager System v1.0 • © ${new Date().getFullYear()} All rights reserved</p>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    // Create and trigger download
+    const blob = new Blob([guideContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'Farm_Manager_Quick_Guide.html';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    this.showNotification('Quick guide downloaded!', 'success');
+},
+
+// ✅ ADD: Open YouTube tutorial method
+openYouTubeTutorials() {
+    // Replace with your actual YouTube playlist URL
+    const youtubeUrl = 'https://youtube.com/playlist?list=YOUR_PLAYLIST';
+    window.open(youtubeUrl, '_blank');
+    this.showNotification('Opening YouTube tutorials...', 'info');
+},
+
+// ✅ ADD: Open Slack channel method
+openSlackChannel() {
+    // Try to open Slack app, fallback to web
+    const slackUrl = 'slack://channel?team=YOUR_TEAM&id=YOUR_CHANNEL';
+    const webUrl = 'https://your-company.slack.com/archives/YOUR_CHANNEL';
+    
+    // Try to open Slack app
+    window.location.href = slackUrl;
+    
+    // Fallback after timeout
+    setTimeout(() => {
+        if (!document.hidden) {
+            window.open(webUrl, '_blank');
+        }
+    }, 500);
+},
+    
 // ==================== PDF FUNCTIONALITY ====================
 
 initializePDFService() {
