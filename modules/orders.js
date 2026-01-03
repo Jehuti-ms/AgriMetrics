@@ -629,10 +629,10 @@ const OrdersModule = {
                                 </div>
                             </div>
                             <div style="display: flex; gap: 4px;">
-                                <button class="btn-icon edit-customer" data-id="${customer.id}" style="background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; color: var(--text-secondary);" title="Edit Customer">
+                                <button class="btn-icon edit-customer" data-action="edit-customer" data-id="${customer.id}" title="Edit Customer">
                                     ✏️
                                 </button>
-                                <button class="btn-icon delete-customer" data-id="${customer.id}" style="background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; color: var(--text-secondary);" title="Delete Customer">
+                                <button class="btn-icon delete-customer" data-action="delete-customer" data-id="${customer.id}" title="Delete Customer">
                                     🗑️
                                 </button>
                             </div>
@@ -863,27 +863,35 @@ const OrdersModule = {
         }
     },
 
-    setupActionHandlers() {
-        // Handle order actions
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.delete-order')) {
-                const id = parseInt(e.target.closest('.delete-order').dataset.id);
+setupActionHandlers() {
+    // Use event delegation for all action buttons
+    document.addEventListener('click', (e) => {
+        const button = e.target.closest('[data-action]');
+        if (!button) return;
+        
+        const action = button.getAttribute('data-action');
+        const id = parseInt(button.getAttribute('data-id'));
+        
+        switch(action) {
+            case 'delete-order':
+                e.preventDefault();
                 this.deleteOrder(id);
-            }
-            else if (e.target.closest('.edit-order')) {
-                const id = parseInt(e.target.closest('.edit-order').dataset.id);
+                break;
+            case 'edit-order':
+                e.preventDefault();
                 this.editOrder(id);
-            }
-            else if (e.target.closest('.delete-customer')) {
-                const id = parseInt(e.target.closest('.delete-customer').dataset.id);
+                break;
+            case 'delete-customer':
+                e.preventDefault();
                 this.deleteCustomer(id);
-            }
-            else if (e.target.closest('.edit-customer')) {
-                const id = parseInt(e.target.closest('.edit-customer').dataset.id);
+                break;
+            case 'edit-customer':
+                e.preventDefault();
                 this.editCustomer(id);
-            }
-        });
-    },
+                break;
+        }
+    });
+},
 
     setupHoverEffects() {
         const buttons = document.querySelectorAll('.quick-action-btn');
