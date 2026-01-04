@@ -387,73 +387,82 @@ const FeedRecordModule = {
     },
 
     // ==================== ACTIONS ====================
-    scrollToForm() {
-        console.log('🎯 scrollToForm() called');
+        scrollToForm() {
+        console.log('🎯 scrollToForm() called - DEBUG MODE');
         
-        // Try multiple selectors to find the form section
-        let formSection = this.element.querySelector('#feed-record-form-section');
+        // Debug: Show all elements with classes
+        const allElements = this.element.querySelectorAll('*');
+        console.log('🔍 All elements in module:');
+        allElements.forEach(el => {
+            if (el.className) {
+                console.log(`  - ${el.tagName}.${el.className.replace(/\s+/g, '.')}`);
+            }
+        });
         
-        if (!formSection) {
-            console.log('🔍 Trying alternative selectors...');
-            formSection = this.element.querySelector('.form-section');
-        }
+        // Try ALL possible selectors
+        const selectors = [
+            '#feed-record-form-section',
+            '.form-section',
+            '#feed-record-form',
+            'form',
+            'div[class*="form"]',
+            'div[class*="section"]',
+            'section',
+            'div > h2:contains("Record Feed Usage")',
+            'div:has(> h2:contains("Record Feed Usage"))'
+        ];
         
-        if (!formSection) {
-            formSection = this.element.querySelector('#feed-record-form')?.parentElement;
-        }
-        
-        if (!formSection) {
-            // Last resort: find any div that contains "Record Feed Usage" text
-            const allDivs = this.element.querySelectorAll('div');
-            for (const div of allDivs) {
-                if (div.textContent.includes('Record Feed Usage')) {
-                    formSection = div;
-                    break;
-                }
+        let formSection = null;
+        for (const selector of selectors) {
+            formSection = this.element.querySelector(selector);
+            if (formSection) {
+                console.log(`✅ Found with selector: ${selector}`, formSection);
+                break;
             }
         }
         
-        if (formSection) {
-            console.log('✅ Found form section:', formSection);
-            
-            // Visual feedback on button click
-            const recordFeedBtn = this.element.querySelector('[data-action="record-feed"]');
-            if (recordFeedBtn) {
-                recordFeedBtn.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    recordFeedBtn.style.transform = '';
-                }, 200);
-            }
-            
-            // Scroll to form
-            formSection.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center' 
-            });
-            
-            // Highlight form
-            formSection.classList.add('highlight');
-            setTimeout(() => {
-                formSection.classList.remove('highlight');
-            }, 2000);
-            
-            // Focus on first input
-            setTimeout(() => {
-                const feedTypeSelect = this.element.querySelector('#feed-type');
-                if (feedTypeSelect) {
-                    feedTypeSelect.focus();
-                    console.log('🎯 Focused on feed type select');
-                }
-            }, 500);
-        } else {
-            console.error('❌ Form section not found in element:', this.element);
-            console.log('🔍 Element HTML:', this.element.innerHTML);
-            
-            // Fallback: scroll to bottom
-            this.element.scrollIntoView({ behavior: 'smooth' });
+        if (!formSection) {
+            // Create a temporary form section if none exists
+            console.log('⚠️ No form section found, creating one...');
+            formSection = document.createElement('div');
+            formSection.className = 'form-section';
+            formSection.innerHTML = `
+                <h2>Record Feed Usage</h2>
+                <form id="feed-record-form" class="feed-form">
+                    <div class="form-group">
+                        <label>Feed Type</label>
+                        <select id="feed-type">
+                            <option value="">Select feed type</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity (kg)</label>
+                        <input type="number" id="feed-quantity" step="0.1" min="0.1">
+                    </div>
+                    <button type="submit" class="submit-button">Save Record</button>
+                </form>
+            `;
+            this.element.appendChild(formSection);
         }
+        
+        // Now scroll to it
+        formSection.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+        });
+        
+        formSection.classList.add('highlight');
+        
+        setTimeout(() => {
+            const feedTypeSelect = document.getElementById('feed-type');
+            if (feedTypeSelect) feedTypeSelect.focus();
+        }, 500);
+        
+        setTimeout(() => {
+            formSection.classList.remove('highlight');
+        }, 2000);
     },
-
+    
     showAddStockDialog() {
         const feedType = prompt('Enter feed type (starter/grower/finisher/layer):');
         if (!feedType) return;
