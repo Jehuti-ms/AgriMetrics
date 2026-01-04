@@ -1,5 +1,5 @@
-// modules/sales-record.js - COMPLETE FIXED VERSION WITH DATA BROADCASTER
-console.log('💰 Loading Enhanced Sales Records module...');
+// modules/sales-record.js - CSP COMPLIANT VERSION WITH DATA BROADCASTER
+console.log('💰 Loading CSP Compliant Sales Records module...');
 
 const SalesRecordModule = {
     name: 'sales-record',
@@ -7,10 +7,10 @@ const SalesRecordModule = {
     element: null,
     currentEditingId: null,
     pendingProductionSale: null,
-    broadcaster: null, // Add broadcaster reference
+    broadcaster: null,
 
     initialize() {
-        console.log('💰 Initializing Enhanced Sales Records...');
+        console.log('💰 Initializing CSP Compliant Sales Records...');
         
         if (!this.checkDependencies()) {
             console.error('❌ Sales Records initialization failed');
@@ -23,13 +23,13 @@ const SalesRecordModule = {
             return false;
         }
         
-        // ✅ Get Broadcaster instance
+        // Get Broadcaster instance
         if (window.Broadcaster) {
             this.broadcaster = window.Broadcaster;
             console.log('📡 Sales module connected to Data Broadcaster');
         }
         
-        // ✅ Register with StyleManager
+        // Register with StyleManager
         if (window.StyleManager) {
             window.StyleManager.registerComponent(this.name);
         }
@@ -37,49 +37,42 @@ const SalesRecordModule = {
         this.loadSalesData();
         this.renderModule();
         this.setupEventListeners();
-        this.setupBroadcasterListeners(); // NEW: Setup broadcaster listeners
+        this.setupBroadcasterListeners();
         this.initialized = true;
         
-        console.log('✅ Enhanced Sales Records initialized with Data Broadcaster');
+        console.log('✅ CSP Compliant Sales Records initialized');
         console.log('📅 DateUtils available:', !!window.DateUtils);
         
-        // ✅ Broadcast sales loaded
+        // Broadcast sales loaded
         this.broadcastSalesLoaded();
         
         return true;
     },
 
-    // ✅ NEW: Setup broadcaster listeners
     setupBroadcasterListeners() {
         if (!this.broadcaster) return;
         
-        // Listen for orders completed
         this.broadcaster.on('order-completed', (data) => {
             console.log('📡 Sales received order completion:', data);
             this.handleOrderCompletion(data);
         });
         
-        // Listen for production updates
         this.broadcaster.on('production-updated', (data) => {
             console.log('📡 Sales received production update:', data);
             this.updateAvailableProductionItems(data);
         });
         
-        // Listen for inventory updates
         this.broadcaster.on('inventory-updated', (data) => {
             console.log('📡 Sales received inventory update:', data);
             this.checkInventoryForSales(data);
         });
     },
 
-    // ✅ NEW: Broadcast when sales data is loaded
     broadcastSalesLoaded() {
         if (!this.broadcaster) return;
         
         const sales = window.FarmModules.appData.sales || [];
         const today = this.getCurrentDate();
-        
-        // Use our own areDatesEqual method
         const todaySales = sales.filter(sale => this.areDatesEqual(sale.date, today));
         const todayRevenue = todaySales.reduce((sum, sale) => sum + sale.totalAmount, 0);
         
@@ -93,7 +86,6 @@ const SalesRecordModule = {
         });
     },
 
-    // ✅ NEW: Broadcast when sale is recorded
     broadcastSaleRecorded(sale) {
         if (!this.broadcaster) return;
         
@@ -120,7 +112,6 @@ const SalesRecordModule = {
             productionSourceId: sale.productionSourceId
         });
         
-        // ✅ Broadcast income update for dashboard
         this.broadcaster.broadcast('income-updated', {
             module: 'sales-record',
             timestamp: new Date().toISOString(),
@@ -131,7 +122,6 @@ const SalesRecordModule = {
             product: sale.product
         });
         
-        // ✅ If it's a meat sale, broadcast weight update
         if (isMeatSale && sale.weight) {
             this.broadcaster.broadcast('meat-sold', {
                 module: 'sales-record',
@@ -144,11 +134,9 @@ const SalesRecordModule = {
             });
         }
         
-        // ✅ Update dashboard stats
         this.broadcastSalesStats();
     },
 
-    // ✅ NEW: Broadcast when sale is updated
     broadcastSaleUpdated(oldSale, newSale) {
         if (!this.broadcaster) return;
         
@@ -163,7 +151,6 @@ const SalesRecordModule = {
             product: newSale.product
         });
         
-        // If total amount changed, broadcast income adjustment
         if (oldSale.totalAmount !== newSale.totalAmount) {
             this.broadcaster.broadcast('income-adjusted', {
                 module: 'sales-record',
@@ -176,7 +163,6 @@ const SalesRecordModule = {
         }
     },
 
-    // ✅ NEW: Broadcast when sale is deleted
     broadcastSaleDeleted(sale) {
         if (!this.broadcaster) return;
         
@@ -189,7 +175,6 @@ const SalesRecordModule = {
             date: sale.date
         });
         
-        // Broadcast income removal for dashboard
         this.broadcaster.broadcast('income-removed', {
             module: 'sales-record',
             timestamp: new Date().toISOString(),
@@ -199,7 +184,6 @@ const SalesRecordModule = {
             saleId: sale.id
         });
         
-        // If it was a meat sale, broadcast weight adjustment
         const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
         if (meatProducts.includes(sale.product)) {
             this.broadcaster.broadcast('meat-sale-deleted', {
@@ -211,11 +195,9 @@ const SalesRecordModule = {
             });
         }
         
-        // Update dashboard stats
         this.broadcastSalesStats();
     },
 
-    // ✅ NEW: Broadcast sales stats for dashboard
     broadcastSalesStats() {
         if (!this.broadcaster) return;
         
@@ -241,11 +223,9 @@ const SalesRecordModule = {
         });
     },
 
-    // ✅ NEW: Handle order completions from orders module
     handleOrderCompletion(orderData) {
         console.log('🔄 Converting order to sale:', orderData);
         
-        // Convert order data to sale format
         const saleData = {
             id: 'ORDER-' + orderData.orderId,
             date: this.getCurrentDate(),
@@ -262,18 +242,13 @@ const SalesRecordModule = {
             orderId: orderData.orderId
         };
         
-        // Add the sale
         this.addSale(saleData);
-        
-        // Show notification
         this.showNotification(`Order #${orderData.orderId} converted to sale`, 'success');
     },
 
-    // ✅ NEW: Helper to map order items to products
     mapOrderItemToProduct(items) {
         if (!items || items.length === 0) return 'other';
         
-        // Simple mapping - you can expand this based on your product catalog
         const firstItem = items[0];
         const productMap = {
             'eggs': 'eggs',
@@ -284,26 +259,21 @@ const SalesRecordModule = {
         return productMap[firstItem.productId] || 'other';
     },
 
-    // ✅ NEW: Calculate order quantity
     calculateOrderQuantity(items) {
         return items.reduce((total, item) => total + (item.quantity || 0), 0);
     },
 
-    // ✅ NEW: Calculate average price
     calculateAveragePrice(orderData) {
         if (!orderData.items || orderData.items.length === 0) return 0;
         return orderData.totalAmount / this.calculateOrderQuantity(orderData.items);
     },
 
-    // ✅ NEW: Update available production items when production updates
     updateAvailableProductionItems(productionData) {
         console.log('🔄 Updating available production items from broadcast');
         
-        // Re-render production items section if module is currently displayed
         if (this.initialized && this.element) {
             const productionItemsSection = document.querySelector('.glass-card[style*="background: linear-gradient(135deg, #f0f9ff"]');
             if (productionItemsSection) {
-                // Re-render just the production items section
                 setTimeout(() => {
                     const newProductionItems = this.renderProductionItems();
                     if (productionItemsSection.parentNode) {
@@ -314,231 +284,76 @@ const SalesRecordModule = {
         }
     },
 
-    // ✅ NEW: Check inventory for sales availability
     checkInventoryForSales(inventoryData) {
         if (!inventoryData || !inventoryData.items) return;
-        
-        // Check if we have enough inventory for common sales
         console.log('📦 Checking inventory for sales:', inventoryData.items.length, 'items');
-        
-        // You can add logic here to warn about low inventory for popular products
     },
 
-    // ==================== NEW NAVIGATION METHODS ====================
-
-showProductionModule() {
-    console.log('🚜 Navigating to Production module...');
-    
-    // Hide current module
-    this.hideAllModals();
-    
-    // Check if Production module exists
-    if (window.FarmModules && window.FarmModules.Production) {
-        // If Production module has a showModule method, use it
-        if (typeof window.FarmModules.Production.showModule === 'function') {
-            window.FarmModules.Production.showModule();
-        } 
-        // If Production module has an initialize method
-        else if (typeof window.FarmModules.Production.initialize === 'function') {
-            // Clear content area and show Production module
-            const contentArea = document.getElementById('content-area');
-            if (contentArea) {
-                contentArea.innerHTML = '';
+    navigateToProduction() {
+        console.log('🔄 Navigating to Production module...');
+        this.hideProductionItemsModal();
+        
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) {
+            this.showNotification('Content area not found', 'error');
+            return;
+        }
+        
+        if (window.FarmModules && window.FarmModules.showModule) {
+            console.log('🚀 Using FarmModules.showModule("production")');
+            window.FarmModules.showModule('production');
+            return;
+        }
+        
+        if (window.FarmModules && window.FarmModules.Production) {
+            console.log('📦 Found Production module directly');
+            contentArea.innerHTML = '';
+            
+            if (typeof window.FarmModules.Production.initialize === 'function') {
                 window.FarmModules.Production.initialize();
+            } else if (typeof window.FarmModules.Production.renderModule === 'function') {
+                window.FarmModules.Production.renderModule();
+            } else {
+                window.FarmModules.Production();
             }
-        } else {
-            this.showNotification('Production module not properly loaded', 'error');
+            return;
         }
-    } else {
-        // Try to load Production module if not available
-        this.loadProductionModule();
-    }
-},
-
-// Add this method to load Production module dynamically
-loadProductionModule() {
-    console.log('📦 Attempting to load Production module...');
-    
-    // Check if module exists in the FarmModules system
-    if (window.FarmModules && window.FarmModules.modules && window.FarmModules.modules.has('production')) {
-        const ProductionModule = window.FarmModules.modules.get('production');
-        if (typeof ProductionModule.initialize === 'function') {
-            const contentArea = document.getElementById('content-area');
-            if (contentArea) {
-                contentArea.innerHTML = '';
-                ProductionModule.initialize();
-            }
-        }
-    } else {
-        this.showNotification('Production module not found. Please ensure it is loaded.', 'error');
         
-        // Provide alternative instructions
-        setTimeout(() => {
-            this.showNotification(
-                'Production module is typically at /modules/production.js', 
-                'info'
-            );
-        }, 2000);
-    }
-},
-
-// Add this method for navigation
-// Replace JUST this method (keep the other two new methods as-is)
-navigateToProduction() {
-    console.log('🔄 Navigating to Production module...');
-    this.hideProductionItemsModal();
-    
-    // Clear the content area
-    const contentArea = document.getElementById('content-area');
-    if (!contentArea) {
-        this.showNotification('Content area not found', 'error');
-        return;
-    }
-    
-    // First, let's check what modules are available
-    console.log('🔍 Available FarmModules:', Object.keys(window.FarmModules || {}));
-    
-    // Try multiple approaches in order:
-    
-    // APPROACH 1: If there's a main navigation system, try to trigger it
-    if (window.FarmModules && window.FarmModules.showModule) {
-        console.log('🚀 Using FarmModules.showModule("production")');
-        window.FarmModules.showModule('production');
-        return;
-    }
-    
-    // APPROACH 2: Check if Production module exists directly
-    if (window.FarmModules && window.FarmModules.Production) {
-        console.log('📦 Found Production module directly');
-        
-        // Clear content area and initialize Production module
-        contentArea.innerHTML = '';
-        
-        if (typeof window.FarmModules.Production.initialize === 'function') {
-            window.FarmModules.Production.initialize();
-        } else if (typeof window.FarmModules.Production.renderModule === 'function') {
-            window.FarmModules.Production.renderModule();
-        } else {
-            // Try to call it as a function
-            window.FarmModules.Production();
-        }
-        return;
-    }
-    
-    // APPROACH 3: Check modules Map
-    if (window.FarmModules && window.FarmModules.modules) {
-        console.log('🗺️ Checking modules Map');
-        
-        // Try different module names
-        const moduleNames = ['production', 'Production', 'prod', 'PRODUCTION'];
-        for (const name of moduleNames) {
-            if (window.FarmModules.modules.has(name)) {
-                console.log(`✅ Found module: ${name}`);
-                const ProductionModule = window.FarmModules.modules.get(name);
-                contentArea.innerHTML = '';
-                
-                if (typeof ProductionModule.initialize === 'function') {
-                    ProductionModule.initialize();
-                } else if (typeof ProductionModule.renderModule === 'function') {
-                    ProductionModule.renderModule();
+        if (window.FarmModules && window.FarmModules.modules) {
+            console.log('🗺️ Checking modules Map');
+            
+            const moduleNames = ['production', 'Production', 'prod', 'PRODUCTION'];
+            for (const name of moduleNames) {
+                if (window.FarmModules.modules.has(name)) {
+                    console.log(`✅ Found module: ${name}`);
+                    const ProductionModule = window.FarmModules.modules.get(name);
+                    contentArea.innerHTML = '';
+                    
+                    if (typeof ProductionModule.initialize === 'function') {
+                        ProductionModule.initialize();
+                    } else if (typeof ProductionModule.renderModule === 'function') {
+                        ProductionModule.renderModule();
+                    }
+                    return;
                 }
-                return;
             }
         }
-    }
-    
-    // APPROACH 4: Try to trigger sidebar click for production
-    console.log('🔄 Trying to trigger sidebar navigation...');
-    
-    // First try: Look for production in the sidebar
-    const productionLinks = [
-        '[data-module="production"]',
-        '[href*="production"]',
-        '[onclick*="production"]',
-        '.nav-item:contains("Production")',
-        'a:contains("Production")',
-        'button:contains("Production")'
-    ];
-    
-    for (const selector of productionLinks) {
-        try {
-            const element = document.querySelector(selector);
-            if (element) {
-                console.log(`✅ Found element with selector: ${selector}`);
-                element.click();
-                return;
+        
+        console.log('🌐 Trying URL hash navigation');
+        window.location.hash = '#production';
+        
+        setTimeout(() => {
+            if (window.location.hash === '#production') {
+                console.log('✅ URL hash set successfully');
+                setTimeout(() => {
+                    location.reload();
+                }, 100);
+            } else {
+                this.showNotification('Please select "Production" from the left sidebar menu', 'info');
+                console.log('❌ Could not navigate to Production module');
             }
-        } catch (e) {
-            // Ignore selector errors
-        }
-    }
-    
-    // APPROACH 5: Try URL hash navigation (if your app uses it)
-    console.log('🌐 Trying URL hash navigation');
-    window.location.hash = '#production';
-    
-    // Give it a moment, then check if it worked
-    setTimeout(() => {
-        if (window.location.hash === '#production') {
-            console.log('✅ URL hash set successfully');
-            // Force a reload if needed
-            setTimeout(() => {
-                location.reload();
-            }, 100);
-        } else {
-            // Final fallback: Show clear instructions
-            this.showNotification(
-                'Please select "Production" from the left sidebar menu', 
-                'info'
-            );
-            console.log('❌ Could not navigate to Production module');
-            console.log('💡 Available modules:', 
-                window.FarmModules ? Object.keys(window.FarmModules).filter(k => !k.startsWith('_')) : 'none');
-        }
-    }, 300);
-},
-
-    // Add this debug method to help identify the issue
-debugModules() {
-    console.log('🔍 DEBUG: FarmModules System Analysis');
-    console.log('======================================');
-    
-    if (!window.FarmModules) {
-        console.log('❌ window.FarmModules is undefined');
-        return;
-    }
-    
-    console.log('📦 FarmModules object keys:', Object.keys(window.FarmModules));
-    
-    // Check for modules Map
-    if (window.FarmModules.modules) {
-        console.log('🗺️ modules Map size:', window.FarmModules.modules.size);
-        console.log('🗺️ modules Map entries:');
-        for (const [key, value] of window.FarmModules.modules.entries()) {
-            console.log(`  - ${key}:`, typeof value);
-        }
-    }
-    
-    // Check specifically for Production
-    console.log('🔍 Looking for Production module:');
-    console.log('  - window.FarmModules.Production:', !!window.FarmModules.Production);
-    console.log('  - window.FarmModules.production:', !!window.FarmModules.production);
-    console.log('  - window.FarmModules.Prod:', !!window.FarmModules.Prod);
-    
-    // Check for showModule function
-    console.log('🎯 Navigation methods:');
-    console.log('  - FarmModules.showModule:', typeof (window.FarmModules.showModule || window.FarmModules.showModule));
-    console.log('  - FarmModules.navigateToModule:', typeof (window.FarmModules.navigateToModule || window.FarmModules.navigateToModule));
-    
-    // Check sidebar
-    console.log('📋 Sidebar analysis:');
-    const sidebarItems = document.querySelectorAll('.nav-item, [data-module], [href*="#"]');
-    console.log('  - Found sidebar items:', sidebarItems.length);
-    sidebarItems.forEach((item, i) => {
-        console.log(`  ${i + 1}. ${item.textContent?.trim()}`, 
-                   item.getAttribute('data-module') || item.getAttribute('href'));
-    });
-},
+        }, 300);
+    },
 
     checkDependencies() {
         if (!window.FarmModules || !window.FarmModules.appData) {
@@ -555,13 +370,11 @@ debugModules() {
         return true;
     },
 
-    // Date methods using DateUtils
     getCurrentDate() {
         if (window.DateUtils && window.DateUtils.getToday) {
             return window.DateUtils.getToday();
         }
         
-        // Fallback to local implementation
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -576,7 +389,6 @@ debugModules() {
             return window.DateUtils.formatDateForInput(dateString);
         }
         
-        // Fallback implementation
         if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
             return dateString;
         }
@@ -595,7 +407,6 @@ debugModules() {
             return window.DateUtils.formatDateForDisplay(dateString);
         }
         
-        // Fallback implementation
         const date = new Date(dateString);
         if (isNaN(date.getTime())) {
             return dateString;
@@ -608,9 +419,7 @@ debugModules() {
     },
 
     areDatesEqual(date1, date2) {
-        // Simple string comparison for YYYY-MM-DD format
         if (!date1 || !date2) return false;
-        
         const d1 = this.formatDateForInput(date1);
         const d2 = this.formatDateForInput(date2);
         return d1 === d2;
@@ -621,7 +430,6 @@ debugModules() {
             return window.DateUtils.toStorageFormat(dateString);
         }
         
-        // Fallback implementation
         if (dateString.includes('T')) {
             return dateString.split('T')[0];
         }
@@ -643,7 +451,6 @@ debugModules() {
         console.log('📊 Loaded sales data:', window.FarmModules.appData.sales.length, 'records');
     },
 
-    // ✅ MODIFIED: Enhanced saveData with broadcasting
     saveData() {
         localStorage.setItem('farm-sales-data', JSON.stringify(window.FarmModules.appData.sales));
         
@@ -651,7 +458,6 @@ debugModules() {
             window.FarmModules.Income.updateFromSales();
         }
         
-        // ✅ Broadcast data saved
         if (this.broadcaster) {
             this.broadcaster.broadcast('sales-data-saved', {
                 module: 'sales-record',
@@ -670,7 +476,6 @@ debugModules() {
 
     startSaleFromProduction(productionData) {
         console.log('🔄 Starting sale from production:', productionData);
-        
         this.pendingProductionSale = productionData;
         this.showSaleModal();
         this.prefillFromProduction(productionData);
@@ -732,35 +537,18 @@ debugModules() {
 
     setDefaultPrice(product) {
         const defaultPrices = {
-            'broilers-dressed': 5.50,
-            'pork': 4.25,
-            'beef': 6.75,
-            'chicken-parts': 3.95,
-            'goat': 5.25,
-            'lamb': 6.50,
-            'broilers-live': 4.00,
-            'layers': 12.00,
-            'chicks': 2.50,
-            'eggs': 3.25,
-            'tomatoes': 1.75,
-            'peppers': 2.25,
-            'cucumbers': 1.50,
-            'lettuce': 1.25,
-            'carrots': 1.00,
-            'potatoes': 0.75,
-            'milk': 2.50,
-            'cheese': 6.00,
-            'yogurt': 3.50,
-            'butter': 4.50,
-            'honey': 8.00,
-            'jam': 5.00,
-            'bread': 2.75
+            'broilers-dressed': 5.50, 'pork': 4.25, 'beef': 6.75, 'chicken-parts': 3.95,
+            'goat': 5.25, 'lamb': 6.50, 'broilers-live': 4.00, 'layers': 12.00,
+            'chicks': 2.50, 'eggs': 3.25, 'tomatoes': 1.75, 'peppers': 2.25,
+            'cucumbers': 1.50, 'lettuce': 1.25, 'carrots': 1.00, 'potatoes': 0.75,
+            'milk': 2.50, 'cheese': 6.00, 'yogurt': 3.50, 'butter': 4.50,
+            'honey': 8.00, 'jam': 5.00, 'bread': 2.75
         };
         
         if (defaultPrices[product]) {
             const price = defaultPrices[product];
-            
             const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+            
             if (meatProducts.includes(product)) {
                 const priceInput = document.getElementById('meat-price');
                 if (priceInput) priceInput.value = price;
@@ -773,152 +561,131 @@ debugModules() {
         }
     },
 
- renderProductionItems() {
-    // Get production data
-    const productionRecords = JSON.parse(localStorage.getItem('farm-production') || '[]');
-    const sales = window.FarmModules.appData.sales || [];
-    
-    if (productionRecords.length === 0) {
+    renderProductionItems() {
+        const productionRecords = JSON.parse(localStorage.getItem('farm-production') || '[]');
+        const sales = window.FarmModules.appData.sales || [];
+        
+        if (productionRecords.length === 0) {
+            return `
+                <div class="glass-card" style="padding: 24px; margin-bottom: 24px; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border: 2px solid #cbd5e1;">
+                    <div style="text-align: center; padding: 16px;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
+                        <h3 style="color: #475569; margin-bottom: 8px;">No Production Items</h3>
+                        <p style="color: #64748b; margin-bottom: 16px;">Add production records to sell them here</p>
+                        <button class="btn-primary production-nav-btn" data-action="navigate-to-production"
+                                style="background: #0ea5e9; border: none; padding: 10px 20px; border-radius: 8px; color: white; font-weight: 500; cursor: pointer;">
+                            ➕ Go to Production Module
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        const productCount = new Set(productionRecords.map(r => r.product)).size;
+        const totalProduced = productionRecords.reduce((sum, r) => sum + (r.quantity || 0), 0);
+        const soldFromProduction = sales.filter(s => s.productionSource).length;
+        
         return `
-            <div class="glass-card" style="padding: 24px; margin-bottom: 24px; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border: 2px solid #cbd5e1;">
-                <div style="text-align: center; padding: 16px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
-                    <h3 style="color: #475569; margin-bottom: 8px;">No Production Items</h3>
-                    <p style="color: #64748b; margin-bottom: 16px;">Add production records to sell them here</p>
-                    <button class="btn-primary" 
-                            id="go-to-production-btn"
-                            style="background: #0ea5e9; border: none; padding: 10px 20px; border-radius: 8px; color: white; font-weight: 500; cursor: pointer;">
-                        ➕ Go to Production Module
-                    </button>
+            <div class="glass-card" style="padding: 24px; margin-bottom: 24px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #bae6fd;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div>
+                        <h3 style="color: #0369a1; margin: 0; font-size: 18px;">🔄 Available Production Items</h3>
+                        <p style="color: #0c4a6e; margin: 4px 0 0 0; font-size: 14px;">Sell directly from production records</p>
+                    </div>
+                    <button class="btn-primary" id="from-production-btn-2">Sell from Production</button>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 16px;">
+                    <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #bae6fd; text-align: center;">
+                        <div style="font-size: 24px; color: #0c4a6e;">${productCount}</div>
+                        <div style="font-size: 12px; color: #475569;">Product Types</div>
+                    </div>
+                    <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #bae6fd; text-align: center;">
+                        <div style="font-size: 24px; color: #0c4a6e;">${totalProduced}</div>
+                        <div style="font-size: 12px; color: #475569;">Total Produced</div>
+                    </div>
+                    <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #bae6fd; text-align: center;">
+                        <div style="font-size: 24px; color: #0c4a6e;">${soldFromProduction}</div>
+                        <div style="font-size: 12px; color: #475569;">Sold from Production</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 16px; padding: 12px; background: #f0f9ff; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="color: #0ea5e9;">💡</span>
+                        <div style="font-size: 13px; color: #0369a1;">
+                            Selling from production helps track inventory and source of goods. 
+                            <a href="#" class="production-nav-btn" data-action="show-production-items" style="color: #0ea5e9; text-decoration: none; font-weight: 500;">Browse available items →</a>
+                        </div>
+                    </div>
+                    <div style="margin-top: 8px; display: flex; justify-content: flex-end;">
+                        <button class="btn-outline production-nav-btn" data-action="navigate-to-production"
+                                style="background: white; color: #0ea5e9; border: 1px solid #0ea5e9; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                            ➕ Add New Production
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
-    }
-    
-    // Calculate available items
-    const productCount = new Set(productionRecords.map(r => r.product)).size;
-    const totalProduced = productionRecords.reduce((sum, r) => sum + (r.quantity || 0), 0);
-    
-    // Calculate sold from production
-    const soldFromProduction = sales.filter(s => s.productionSource).length;
-    
-    return `
-        <div class="glass-card" style="padding: 24px; margin-bottom: 24px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #bae6fd;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <div>
-                    <h3 style="color: #0369a1; margin: 0; font-size: 18px;">🔄 Available Production Items</h3>
-                    <p style="color: #0c4a6e; margin: 4px 0 0 0; font-size: 14px;">Sell directly from production records</p>
-                </div>
-                <button class="btn-primary" id="from-production-btn-2" 
-                        style="background: #0ea5e9;">
-                    Sell from Production
-                </button>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 16px;">
-                <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #bae6fd; text-align: center;">
-                    <div style="font-size: 24px; color: #0c4a6e;">${productCount}</div>
-                    <div style="font-size: 12px; color: #475569;">Product Types</div>
-                </div>
-                <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #bae6fd; text-align: center;">
-                    <div style="font-size: 24px; color: #0c4a6e;">${totalProduced}</div>
-                    <div style="font-size: 12px; color: #475569;">Total Produced</div>
-                </div>
-                <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #bae6fd; text-align: center;">
-                    <div style="font-size: 24px; color: #0c4a6e;">${soldFromProduction}</div>
-                    <div style="font-size: 12px; color: #475569;">Sold from Production</div>
-                </div>
-            </div>
-            
-            <div style="margin-top: 16px; padding: 12px; background: #f0f9ff; border-radius: 8px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="color: #0ea5e9;">💡</span>
-                    <div style="font-size: 13px; color: #0369a1;">
-                        Selling from production helps track inventory and source of goods. 
-                        <a href="#" class="browse-production-items" 
-                           style="color: #0ea5e9; text-decoration: none; font-weight: 500;">Browse available items →</a>
-                    </div>
-                </div>
-                <div style="margin-top: 8px; display: flex; justify-content: flex-end;">
-                    <button class="btn-outline add-production-btn"
-                            style="background: white; color: #0ea5e9; border: 1px solid #0ea5e9; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">
-                        ➕ Add New Production
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-},
+    },
     
     selectProductionItem(itemId) {
-    console.log('🔄 Selecting production item:', itemId);
-    
-    // Parse the itemId to get product and date
-    const [product, date] = itemId.split('-').slice(0, 2);
-    
-    if (!product || !date) {
-        this.showNotification('Could not parse production item data', 'error');
-        return;
-    }
-    
-    // Get production records
-    const productionRecords = JSON.parse(localStorage.getItem('farm-production') || '[]');
-    
-    // Find matching production records
-    const matchingRecords = productionRecords.filter(record => 
-        record.product === product && record.date === date
-    );
-    
-    if (matchingRecords.length === 0) {
-        this.showNotification('Production item not found', 'error');
-        return;
-    }
-    
-    // Calculate total quantity
-    const totalQuantity = matchingRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
-    
-    // Get existing sales to calculate sold quantity
-    const existingSales = window.FarmModules.appData.sales || [];
-    let soldQuantity = 0;
-    
-    existingSales.forEach(sale => {
-        if (sale.productionSourceId === itemId || 
-            (sale.product === product && sale.date === date && sale.productionSource)) {
-            soldQuantity += sale.quantity || sale.animalCount || 0;
+        console.log('🔄 Selecting production item:', itemId);
+        
+        const [product, date] = itemId.split('-').slice(0, 2);
+        
+        if (!product || !date) {
+            this.showNotification('Could not parse production item data', 'error');
+            return;
         }
-    });
-    
-    const availableQuantity = totalQuantity - soldQuantity;
-    
-    if (availableQuantity <= 0) {
-        this.showNotification('This production item is already sold out', 'error');
-        return;
-    }
-    
-    // Create production data object
-    const productionData = {
-        id: itemId,
-        product: product,
-        date: date,
-        totalQuantity: totalQuantity,
-        availableQuantity: availableQuantity,
-        unit: matchingRecords[0].unit || 'units',
-        notes: matchingRecords[0].notes || '',
-        type: product
-    };
-    
-    // Start sale from production
-    this.startSaleFromProduction(productionData);
-    
-    // Close production items modal
-    this.hideProductionItemsModal();
-},
+        
+        const productionRecords = JSON.parse(localStorage.getItem('farm-production') || '[]');
+        const matchingRecords = productionRecords.filter(record => 
+            record.product === product && record.date === date
+        );
+        
+        if (matchingRecords.length === 0) {
+            this.showNotification('Production item not found', 'error');
+            return;
+        }
+        
+        const totalQuantity = matchingRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
+        const existingSales = window.FarmModules.appData.sales || [];
+        let soldQuantity = 0;
+        
+        existingSales.forEach(sale => {
+            if (sale.productionSourceId === itemId || 
+                (sale.product === product && sale.date === date && sale.productionSource)) {
+                soldQuantity += sale.quantity || sale.animalCount || 0;
+            }
+        });
+        
+        const availableQuantity = totalQuantity - soldQuantity;
+        
+        if (availableQuantity <= 0) {
+            this.showNotification('This production item is already sold out', 'error');
+            return;
+        }
+        
+        const productionData = {
+            id: itemId,
+            product: product,
+            date: date,
+            totalQuantity: totalQuantity,
+            availableQuantity: availableQuantity,
+            unit: matchingRecords[0].unit || 'units',
+            notes: matchingRecords[0].notes || '',
+            type: product
+        };
+        
+        this.startSaleFromProduction(productionData);
+        this.hideProductionItemsModal();
+    },
 
-    // FIXED: Changed button class names in renderSalesTable
     renderSalesTable(period = 'today') {
         const sales = window.FarmModules.appData.sales || [];
-        
         let filteredSales = sales;
+        
         if (period === 'meat') {
             const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
             filteredSales = sales.filter(sale => meatProducts.includes(sale.product));
@@ -953,14 +720,14 @@ debugModules() {
                 <table style="width: 100%; border-collapse: collapse;">
                     <thead>
                         <tr style="border-bottom: 2px solid var(--glass-border);">
-                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Date</th>
-                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Product</th>
-                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Customer</th>
-                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Animals/Quantity</th>
-                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Unit Price</th>
-                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Total</th>
-                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Source</th>
-                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Actions</th>
+                            <th style="padding: 12px 8px; text-align: left;">Date</th>
+                            <th style="padding: 12px 8px; text-align: left;">Product</th>
+                            <th style="padding: 12px 8px; text-align: left;">Customer</th>
+                            <th style="padding: 12px 8px; text-align: left;">Animals/Quantity</th>
+                            <th style="padding: 12px 8px; text-align: left;">Unit Price</th>
+                            <th style="padding: 12px 8px; text-align: left;">Total</th>
+                            <th style="padding: 12px 8px; text-align: left;">Source</th>
+                            <th style="padding: 12px 8px; text-align: left;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -983,28 +750,28 @@ debugModules() {
                             
                             return `
                                 <tr style="border-bottom: 1px solid var(--glass-border);">
-                                    <td style="padding: 12px 8px; color: var(--text-primary);">${this.formatDate(sale.date)}</td>
-                                    <td style="padding: 12px 8px; color: var(--text-primary);">
+                                    <td style="padding: 12px 8px;">${this.formatDate(sale.date)}</td>
+                                    <td style="padding: 12px 8px;">
                                         <div style="display: flex; align-items: center; gap: 8px;">
                                             <span style="font-size: 18px;">${this.getProductIcon(sale.product)}</span>
                                             <span style="font-weight: 500;">${this.formatProductName(sale.product)}</span>
                                             ${sourceBadge}
                                         </div>
                                     </td>
-                                    <td style="padding: 12px 8px; color: var(--text-secondary);">${sale.customer || 'Walk-in'}</td>
-                                    <td style="padding: 12px 8px; color: var(--text-primary);">${quantityInfo}</td>
-                                    <td style="padding: 12px 8px; color: var(--text-primary);">
+                                    <td style="padding: 12px 8px;">${sale.customer || 'Walk-in'}</td>
+                                    <td style="padding: 12px 8px;">${quantityInfo}</td>
+                                    <td style="padding: 12px 8px;">
                                         ${this.formatCurrency(sale.unitPrice)}
                                         ${sale.weightUnit === 'lbs' ? '/lb' : sale.weightUnit ? `/${sale.weightUnit}` : sale.priceUnit === 'per-lb' ? '/lb' : '/kg'}
                                     </td>
-                                    <td style="padding: 12px 8px; color: var(--text-primary); font-weight: 600;">${this.formatCurrency(sale.totalAmount)}</td>
-                                    <td style="padding: 12px 8px; color: var(--text-secondary); font-size: 12px;">
+                                    <td style="padding: 12px 8px; font-weight: 600;">${this.formatCurrency(sale.totalAmount)}</td>
+                                    <td style="padding: 12px 8px; font-size: 12px;">
                                         ${sale.productionSource ? 'Production' : 'Direct'}
                                     </td>
                                     <td style="padding: 12px 8px;">
                                         <div style="display: flex; gap: 4px;">
-                                            <button class="btn-icon edit-sale-btn" data-id="${sale.id}" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary);" title="Edit">✏️</button>
-                                            <button class="btn-icon delete-sale-btn" data-id="${sale.id}" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary);" title="Delete">🗑️</button>
+                                            <button class="btn-icon edit-sale-btn" data-id="${sale.id}" title="Edit">✏️</button>
+                                            <button class="btn-icon delete-sale-btn" data-id="${sale.id}" title="Delete">🗑️</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -1021,8 +788,6 @@ debugModules() {
 
         const today = this.getCurrentDate();
         const sales = window.FarmModules.appData.sales || [];
-        
-        // Use our own areDatesEqual method
         const todaySales = sales.filter(sale => this.areDatesEqual(sale.date, today))
                                .reduce((sum, sale) => sum + sale.totalAmount, 0);
         
@@ -1038,9 +803,7 @@ debugModules() {
                     <h1 class="module-title">Sales Records</h1>
                     <p class="module-subtitle">Track product sales, revenue, and weight (for meat)</p>
                     <div class="header-actions">
-                        <button class="btn-primary" id="add-sale">
-                            ➕ Record Sale
-                        </button>
+                        <button class="btn-primary" id="add-sale">➕ Record Sale</button>
                     </div>
                 </div>
 
@@ -1048,23 +811,23 @@ debugModules() {
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="today-sales">${this.formatCurrency(todaySales)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Today's Revenue</div>
+                        <div style="font-size: 24px; font-weight: bold;" id="today-sales">${this.formatCurrency(todaySales)}</div>
+                        <div style="font-size: 14px;">Today's Revenue</div>
                     </div>
                     <div class="stat-card">
                         <div style="font-size: 24px; margin-bottom: 8px;">⚖️</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-meat-weight">${totalMeatWeight.toFixed(2)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Meat Weight Sold</div>
+                        <div style="font-size: 24px; font-weight: bold;" id="total-meat-weight">${totalMeatWeight.toFixed(2)}</div>
+                        <div style="font-size: 14px;">Meat Weight Sold</div>
                     </div>
                     <div class="stat-card">
                         <div style="font-size: 24px; margin-bottom: 8px;">🐄</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-animals">${totalAnimalsSold}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Animals Sold</div>
+                        <div style="font-size: 24px; font-weight: bold;" id="total-animals">${totalAnimalsSold}</div>
+                        <div style="font-size: 14px;">Animals Sold</div>
                     </div>
                     <div class="stat-card">
                         <div style="font-size: 24px; margin-bottom: 8px;">📈</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-sales">${sales.length}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Total Sales Records</div>
+                        <div style="font-size: 24px; font-weight: bold;" id="total-sales">${sales.length}</div>
+                        <div style="font-size: 14px;">Total Sales Records</div>
                     </div>
                 </div>
 
@@ -1072,23 +835,23 @@ debugModules() {
                 <div class="quick-action-grid">
                     <button class="quick-action-btn" id="add-sale-btn">
                         <div style="font-size: 32px;">➕</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Record Sale</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Add new sale record</span>
+                        <span style="font-size: 14px; font-weight: 600;">Record Sale</span>
+                        <span style="font-size: 12px;">Add new sale record</span>
                     </button>
                     <button class="quick-action-btn" id="from-production-btn">
                         <div style="font-size: 32px;">🔄</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">From Production</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Sell from production items</span>
+                        <span style="font-size: 14px; font-weight: 600;">From Production</span>
+                        <span style="font-size: 12px;">Sell from production items</span>
                     </button>
                     <button class="quick-action-btn" id="meat-sales-btn">
                         <div style="font-size: 32px;">🍗</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Meat Sales</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Weight-based sales report</span>
+                        <span style="font-size: 14px; font-weight: 600;">Meat Sales</span>
+                        <span style="font-size: 12px;">Weight-based sales report</span>
                     </button>
                     <button class="quick-action-btn" id="daily-report-btn">
                         <div style="font-size: 32px;">📊</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Daily Report</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Today's sales summary</span>
+                        <span style="font-size: 14px; font-weight: 600;">Daily Report</span>
+                        <span style="font-size: 12px;">Today's sales summary</span>
                     </button>
                 </div>
 
@@ -1097,7 +860,7 @@ debugModules() {
 
                 <!-- Quick Sale Form -->
                 <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 16px;">⚡ Quick Sale</h3>
+                    <h3 style="margin-bottom: 16px;">⚡ Quick Sale</h3>
                     <form id="quick-sale-form">
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end;">
                             <div>
@@ -1163,7 +926,7 @@ debugModules() {
                 <!-- Sales Records Table -->
                 <div class="glass-card" style="padding: 24px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="color: var(--text-primary); font-size: 20px;">📋 Recent Sales</h3>
+                        <h3 style="font-size: 20px;">📋 Recent Sales</h3>
                         <div style="display: flex; gap: 12px;">
                             <select id="period-filter" class="form-input" style="width: auto;">
                                 <option value="today">Today</option>
@@ -1376,13 +1139,13 @@ debugModules() {
                             </div>
 
                             <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border); margin-bottom: 16px;">
-                                <h4 style="color: var(--text-primary); margin: 0; text-align: center;">
+                                <h4 style="margin: 0; text-align: center;">
                                     Sale Total: <span id="sale-total-amount" style="color: var(--primary-color);">$0.00</span>
                                 </h4>
-                                <div id="meat-summary" style="display: none; text-align: center; margin-top: 8px; font-size: 14px; color: var(--text-secondary);">
+                                <div id="meat-summary" style="display: none; text-align: center; margin-top: 8px; font-size: 14px;">
                                     <div id="meat-summary-info">0 animals • 0 kg total • $0.00/animal average</div>
                                 </div>
-                                <div id="standard-summary" style="display: none; text-align: center; margin-top: 8px; font-size: 14px; color: var(--text-secondary);">
+                                <div id="standard-summary" style="display: none; text-align: center; margin-top: 8px; font-size: 14px;">
                                     <div id="standard-summary-info">0 units at $0.00/unit</div>
                                 </div>
                             </div>
@@ -1404,9 +1167,7 @@ debugModules() {
                         <button class="popout-modal-close" id="close-daily-report">&times;</button>
                     </div>
                     <div class="popout-modal-body">
-                        <div id="daily-report-content">
-                            <!-- Report content will be inserted here -->
-                        </div>
+                        <div id="daily-report-content"></div>
                     </div>
                     <div class="popout-modal-footer">
                         <button class="btn-outline" id="print-daily-report">🖨️ Print</button>
@@ -1423,9 +1184,7 @@ debugModules() {
                         <button class="popout-modal-close" id="close-meat-sales">&times;</button>
                     </div>
                     <div class="popout-modal-body">
-                        <div id="meat-sales-content">
-                            <!-- Report content will be inserted here -->
-                        </div>
+                        <div id="meat-sales-content"></div>
                     </div>
                     <div class="popout-modal-footer">
                         <button class="btn-outline" id="print-meat-sales">🖨️ Print</button>
@@ -1442,9 +1201,7 @@ debugModules() {
                         <button class="popout-modal-close" id="close-production-items">&times;</button>
                     </div>
                     <div class="popout-modal-body">
-                        <div id="production-items-content">
-                            <!-- Production items will be inserted here -->
-                        </div>
+                        <div id="production-items-content"></div>
                     </div>
                     <div class="popout-modal-footer">
                         <button class="btn-outline" id="close-production-items-btn">Close</button>
@@ -1456,31 +1213,28 @@ debugModules() {
         this.setupEventListeners();
     },
 
-    // === FIXED EVENT LISTENERS AND DELETE METHODS ===
-
     setupEventListeners() {
-    console.log('🔧 Setting up event listeners...');
-    
-    // Remove any existing event listeners first
-    this.removeEventListeners();
-    
-    // Quick sale form
-    const quickSaleForm = document.getElementById('quick-sale-form');
-    if (quickSaleForm) {
-        quickSaleForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleQuickSale();
-        });
-    }
+        console.log('🔧 Setting up event listeners...');
+        
+        // Remove existing event listeners
+        this.removeEventListeners();
+        
+        // Quick sale form
+        const quickSaleForm = document.getElementById('quick-sale-form');
+        if (quickSaleForm) {
+            quickSaleForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleQuickSale();
+            });
+        }
 
-    // Modal buttons
-    document.getElementById('add-sale')?.addEventListener('click', () => this.showSaleModal());
-    document.getElementById('add-sale-btn')?.addEventListener('click', () => this.showSaleModal());
-    document.getElementById('from-production-btn')?.addEventListener('click', () => this.showProductionItems());
-    document.getElementById('from-production-btn-2')?.addEventListener('click', () => this.showProductionItems()); // ADD THIS LINE
-    document.getElementById('meat-sales-btn')?.addEventListener('click', () => this.generateMeatSalesReport());
-    document.getElementById('daily-report-btn')?.addEventListener('click', () => this.generateDailyReport());
-    document.getElementById('view-production-items')?.addEventListener('click', () => this.showProductionItems());
+        // Modal buttons
+        document.getElementById('add-sale')?.addEventListener('click', () => this.showSaleModal());
+        document.getElementById('add-sale-btn')?.addEventListener('click', () => this.showSaleModal());
+        document.getElementById('from-production-btn')?.addEventListener('click', () => this.showProductionItems());
+        document.getElementById('from-production-btn-2')?.addEventListener('click', () => this.showProductionItems());
+        document.getElementById('meat-sales-btn')?.addEventListener('click', () => this.generateMeatSalesReport());
+        document.getElementById('daily-report-btn')?.addEventListener('click', () => this.generateDailyReport());
         
         // Sale modal handlers
         document.getElementById('save-sale')?.addEventListener('click', () => this.saveSale());
@@ -1523,35 +1277,32 @@ debugModules() {
         });
 
         // Production navigation buttons (delegated)
-    document.addEventListener('click', (e) => {
-        const goToProdBtn = e.target.closest('#go-to-production-btn');
-        const addProdBtn = e.target.closest('.add-production-btn');
-        const browseProdLink = e.target.closest('.browse-production-items');
-        
-        if (goToProdBtn || addProdBtn) {
-            e.preventDefault();
-            this.navigateToProduction();
-        }
-        
-        if (browseProdLink) {
-            e.preventDefault();
-            this.showProductionItems();
-        }
-    });
-    
-    // Sell production item buttons (delegated)
-    document.addEventListener('click', (e) => {
-        const sellItemBtn = e.target.closest('.sell-production-item-btn');
-        if (sellItemBtn) {
-            e.preventDefault();
-            const itemId = sellItemBtn.getAttribute('data-item-id');
-            if (itemId) {
-                this.selectProductionItem(itemId);
+        document.addEventListener('click', (e) => {
+            const productionNavBtn = e.target.closest('.production-nav-btn');
+            if (productionNavBtn) {
+                e.preventDefault();
+                const action = productionNavBtn.getAttribute('data-action');
+                if (action === 'navigate-to-production') {
+                    this.navigateToProduction();
+                } else if (action === 'show-production-items') {
+                    this.showProductionItems();
+                }
             }
-        }
-    });
+        });
+        
+        // Sell production item buttons (delegated)
+        document.addEventListener('click', (e) => {
+            const sellItemBtn = e.target.closest('.sell-production-item-btn');
+            if (sellItemBtn) {
+                e.preventDefault();
+                const itemId = sellItemBtn.getAttribute('data-item-id');
+                if (itemId) {
+                    this.selectProductionItem(itemId);
+                }
+            }
+        });
 
-        // FIXED: Single delegated event listener for edit/delete buttons
+        // Edit/Delete sale buttons (delegated)
         document.addEventListener('click', (e) => {
             const editBtn = e.target.closest('.edit-sale-btn');
             const deleteBtn = e.target.closest('.delete-sale-btn');
@@ -1578,7 +1329,6 @@ debugModules() {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                // Direct call to delete method
                 if (confirm('Are you sure you want to delete this sale?')) {
                     this.deleteSaleRecord(saleId);
                 }
@@ -1588,15 +1338,14 @@ debugModules() {
         console.log('✅ Event listeners set up');
     },
     
-    // Method to remove existing event listeners
     removeEventListeners() {
-        // Remove any previously attached listeners to prevent duplicates
         const oldListeners = [
             'add-sale', 'add-sale-btn', 'from-production-btn', 'meat-sales-btn', 
-            'daily-report-btn', 'view-production-items', 'save-sale', 'delete-sale',
-            'cancel-sale', 'close-sale-modal', 'close-daily-report', 'close-daily-report-btn',
-            'print-daily-report', 'close-meat-sales', 'close-meat-sales-btn', 'print-meat-sales',
-            'close-production-items', 'close-production-items-btn', 'quick-product', 'period-filter'
+            'daily-report-btn', 'save-sale', 'delete-sale', 'cancel-sale',
+            'close-sale-modal', 'close-daily-report', 'close-daily-report-btn',
+            'print-daily-report', 'close-meat-sales', 'close-meat-sales-btn', 
+            'print-meat-sales', 'close-production-items', 'close-production-items-btn', 
+            'quick-product', 'period-filter'
         ];
         
         oldListeners.forEach(id => {
@@ -1609,21 +1358,20 @@ debugModules() {
     },
 
     setupFormFieldListeners() {
-        // Product change
         const productSelect = document.getElementById('sale-product');
         if (productSelect) {
             productSelect.addEventListener('change', () => this.handleProductChange());
         }
         
-        // Real-time total calculation
-        const fieldsToWatch = [
-            'standard-quantity',
-            'standard-price',
-            'meat-animal-count',
-            'meat-weight',
-            'meat-price'
-        ];
+        const unitSelect = document.getElementById('sale-unit');
+        if (unitSelect) {
+            unitSelect.addEventListener('change', () => {
+                this.updateStandardPriceLabel();
+                this.calculateSaleTotal();
+            });
+        }
         
+        const fieldsToWatch = ['standard-quantity', 'standard-price', 'meat-animal-count', 'meat-weight', 'meat-price'];
         fieldsToWatch.forEach(fieldId => {
             const field = document.getElementById(fieldId);
             if (field) {
@@ -1631,7 +1379,6 @@ debugModules() {
             }
         });
         
-        // Weight unit change
         const weightUnit = document.getElementById('meat-weight-unit');
         if (weightUnit) {
             weightUnit.addEventListener('change', () => {
@@ -1643,7 +1390,6 @@ debugModules() {
 
     updateMeatLabels() {
         const weightUnit = document.getElementById('meat-weight-unit')?.value;
-        
         const priceLabel = document.getElementById('meat-price-label');
         const priceUnitLabel = document.getElementById('meat-price-unit-label');
         const avgLabel = document.getElementById('meat-avg-label');
@@ -1666,301 +1412,212 @@ debugModules() {
         }
     },
 
-       handleProductChange() {
-    const productSelect = document.getElementById('sale-product');
-    if (!productSelect) return;
-    
-    const selectedValue = productSelect.value;
-    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
-    const isMeatProduct = meatProducts.includes(selectedValue);
-    
-    const meatSection = document.getElementById('meat-section');
-    const standardSection = document.getElementById('standard-section');
-    const meatSummary = document.getElementById('meat-summary');
-    const standardSummary = document.getElementById('standard-summary');
-    
-    if (isMeatProduct) {
-        if (meatSection) meatSection.style.display = 'block';
-        if (meatSummary) meatSummary.style.display = 'block';
-        if (standardSection) standardSection.style.display = 'none';
-        if (standardSummary) standardSummary.style.display = 'none';
+    handleProductChange() {
+        const productSelect = document.getElementById('sale-product');
+        if (!productSelect) return;
         
-        const unitSelect = document.getElementById('sale-unit');
-        if (unitSelect) unitSelect.value = 'animals';
+        const selectedValue = productSelect.value;
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        const isMeatProduct = meatProducts.includes(selectedValue);
         
-        const weightUnit = document.getElementById('meat-weight-unit');
-        if (weightUnit) {
-            // Don't reset if user already selected something
-            if (!weightUnit.value) {
+        const meatSection = document.getElementById('meat-section');
+        const standardSection = document.getElementById('standard-section');
+        const meatSummary = document.getElementById('meat-summary');
+        const standardSummary = document.getElementById('standard-summary');
+        
+        if (isMeatProduct) {
+            if (meatSection) meatSection.style.display = 'block';
+            if (meatSummary) meatSummary.style.display = 'block';
+            if (standardSection) standardSection.style.display = 'none';
+            if (standardSummary) standardSummary.style.display = 'none';
+            
+            const unitSelect = document.getElementById('sale-unit');
+            if (unitSelect) unitSelect.value = 'animals';
+            
+            const weightUnit = document.getElementById('meat-weight-unit');
+            if (weightUnit && !weightUnit.value) {
                 weightUnit.value = 'kg';
             }
-        }
-        
-        const animalLabel = selectedValue === 'chicken-parts' ? 'Number of Packages' : 
-                          selectedValue.includes('broilers') ? 'Number of Birds' : 
-                          selectedValue === 'pork' ? 'Number of Pigs' :
-                          selectedValue === 'beef' ? 'Number of Cattle' :
-                          selectedValue === 'goat' ? 'Number of Goats' :
-                          selectedValue === 'lamb' ? 'Number of Lambs' : 'Number of Animals';
-        
-        const animalLabelElement = document.querySelector('label[for="meat-animal-count"]');
-        if (animalLabelElement) {
-            animalLabelElement.textContent = animalLabel + ' *';
-        }
-        
-        this.updateMeatLabels();
-        
-        const standardQuantity = document.getElementById('standard-quantity');
-        const standardPrice = document.getElementById('standard-price');
-        if (standardQuantity) standardQuantity.value = '';
-        if (standardPrice) standardPrice.value = '';
-        
-    } else {
-        if (meatSection) meatSection.style.display = 'none';
-        if (meatSummary) meatSummary.style.display = 'none';
-        if (standardSection) standardSection.style.display = 'block';
-        if (standardSummary) standardSummary.style.display = 'block';
-        
-        const unitSelect = document.getElementById('sale-unit');
-        if (unitSelect) {
-            // Only set default if no unit is selected yet
-            if (!unitSelect.value || unitSelect.value === '') {
-                if (selectedValue === 'eggs') {
-                    unitSelect.value = 'dozen';
-                } else if (selectedValue === 'milk') {
-                    unitSelect.value = 'liters';
-                } else if (selectedValue === 'broilers-live' || selectedValue === 'layers' || selectedValue === 'chicks') {
-                    unitSelect.value = 'birds';
-                } else {
-                    unitSelect.value = 'kg';
+            
+            const animalLabel = selectedValue === 'chicken-parts' ? 'Number of Packages' : 
+                              selectedValue.includes('broilers') ? 'Number of Birds' : 
+                              selectedValue === 'pork' ? 'Number of Pigs' :
+                              selectedValue === 'beef' ? 'Number of Cattle' :
+                              selectedValue === 'goat' ? 'Number of Goats' :
+                              selectedValue === 'lamb' ? 'Number of Lambs' : 'Number of Animals';
+            
+            const animalLabelElement = document.querySelector('label[for="meat-animal-count"]');
+            if (animalLabelElement) {
+                animalLabelElement.textContent = animalLabel + ' *';
+            }
+            
+            this.updateMeatLabels();
+            
+            document.getElementById('standard-quantity')?.value = '';
+            document.getElementById('standard-price')?.value = '';
+        } else {
+            if (meatSection) meatSection.style.display = 'none';
+            if (meatSummary) meatSummary.style.display = 'none';
+            if (standardSection) standardSection.style.display = 'block';
+            if (standardSummary) standardSummary.style.display = 'block';
+            
+            const unitSelect = document.getElementById('sale-unit');
+            if (unitSelect) {
+                if (!unitSelect.value || unitSelect.value === '') {
+                    if (selectedValue === 'eggs') {
+                        unitSelect.value = 'dozen';
+                    } else if (selectedValue === 'milk') {
+                        unitSelect.value = 'liters';
+                    } else if (selectedValue === 'broilers-live' || selectedValue === 'layers' || selectedValue === 'chicks') {
+                        unitSelect.value = 'birds';
+                    } else {
+                        unitSelect.value = 'kg';
+                    }
                 }
             }
-            // If user already selected a unit, keep it but update the label
+            
+            this.updateStandardPriceLabel();
+            
+            document.getElementById('meat-animal-count')?.value = '';
+            document.getElementById('meat-weight')?.value = '';
+            document.getElementById('meat-price')?.value = '';
         }
         
-        // Update the price label based on current unit selection
-        this.updateStandardPriceLabel();
-        
-        const meatAnimalCount = document.getElementById('meat-animal-count');
-        const meatWeight = document.getElementById('meat-weight');
-        const meatPrice = document.getElementById('meat-price');
-        if (meatAnimalCount) meatAnimalCount.value = '';
-        if (meatWeight) meatWeight.value = '';
-        if (meatPrice) meatPrice.value = '';
-    }
-    
-    this.calculateSaleTotal();
-    this.setDefaultPrice(selectedValue);
-},
+        this.calculateSaleTotal();
+        this.setDefaultPrice(selectedValue);
+    },
 
-// Add this new method to update the price label
-updateStandardPriceLabel() {
-    const unitSelect = document.getElementById('sale-unit');
-    const productSelect = document.getElementById('sale-product');
-    const standardPriceUnitLabel = document.getElementById('standard-price-unit-label');
-    
-    if (!unitSelect || !standardPriceUnitLabel || !productSelect) return;
-    
-    const unit = unitSelect.value;
-    const product = productSelect.value;
-    
-    let labelText = 'per unit';
-    
-    // Map units to their labels
-    const unitLabels = {
-        'kg': 'per kg',
-        'lbs': 'per lb',
-        'birds': 'per bird',
-        'animals': 'per animal',
-        'dozen': 'per dozen',
-        'liters': 'per liter',
-        'pieces': 'per piece',
-        'case': 'per case',
-        'crate': 'per crate',
-        'bag': 'per bag',
-        'bottle': 'per bottle',
-        'jar': 'per jar'
-    };
-    
-    // Special cases based on product
-    if (unit === 'birds') {
-        if (product.includes('chicks')) labelText = 'per chick';
-        else if (product.includes('layers')) labelText = 'per layer';
-        else if (product.includes('broilers')) labelText = 'per bird';
-        else labelText = 'per bird';
-    } else if (unit === 'animals') {
-        if (product === 'pork') labelText = 'per pig';
-        else if (product === 'beef') labelText = 'per head';
-        else if (product === 'goat') labelText = 'per goat';
-        else if (product === 'lamb') labelText = 'per lamb';
-        else labelText = 'per animal';
-    } else if (unitLabels[unit]) {
-        labelText = unitLabels[unit];
-    }
-    
-    standardPriceUnitLabel.textContent = labelText;
-},
-
-// Also update calculateSaleTotal to show correct units in summary
-calculateSaleTotal() {
-    const product = document.getElementById('sale-product')?.value;
-    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
-    
-    let total = 0;
-    
-    if (meatProducts.includes(product)) {
-        const animalCount = parseFloat(document.getElementById('meat-animal-count')?.value) || 0;
-        const weight = parseFloat(document.getElementById('meat-weight')?.value) || 0;
-        const weightUnit = document.getElementById('meat-weight-unit')?.value;
-        const pricePerUnit = parseFloat(document.getElementById('meat-price')?.value) || 0;
+    updateStandardPriceLabel() {
+        const unitSelect = document.getElementById('sale-unit');
+        const productSelect = document.getElementById('sale-product');
+        const standardPriceUnitLabel = document.getElementById('standard-price-unit-label');
         
-        if (weightUnit === 'lbs') {
+        if (!unitSelect || !standardPriceUnitLabel || !productSelect) return;
+        
+        const unit = unitSelect.value;
+        const product = productSelect.value;
+        
+        let labelText = 'per unit';
+        const unitLabels = {
+            'kg': 'per kg', 'lbs': 'per lb', 'birds': 'per bird', 'animals': 'per animal',
+            'dozen': 'per dozen', 'liters': 'per liter', 'pieces': 'per piece',
+            'case': 'per case', 'crate': 'per crate', 'bag': 'per bag',
+            'bottle': 'per bottle', 'jar': 'per jar'
+        };
+        
+        if (unit === 'birds') {
+            if (product.includes('chicks')) labelText = 'per chick';
+            else if (product.includes('layers')) labelText = 'per layer';
+            else if (product.includes('broilers')) labelText = 'per bird';
+            else labelText = 'per bird';
+        } else if (unit === 'animals') {
+            if (product === 'pork') labelText = 'per pig';
+            else if (product === 'beef') labelText = 'per head';
+            else if (product === 'goat') labelText = 'per goat';
+            else if (product === 'lamb') labelText = 'per lamb';
+            else labelText = 'per animal';
+        } else if (unitLabels[unit]) {
+            labelText = unitLabels[unit];
+        }
+        
+        standardPriceUnitLabel.textContent = labelText;
+    },
+
+    calculateSaleTotal() {
+        const product = document.getElementById('sale-product')?.value;
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        
+        let total = 0;
+        
+        if (meatProducts.includes(product)) {
+            const animalCount = parseFloat(document.getElementById('meat-animal-count')?.value) || 0;
+            const weight = parseFloat(document.getElementById('meat-weight')?.value) || 0;
+            const weightUnit = document.getElementById('meat-weight-unit')?.value;
+            const pricePerUnit = parseFloat(document.getElementById('meat-price')?.value) || 0;
+            
             total = weight * pricePerUnit;
+            
+            const meatSummary = document.getElementById('meat-summary-info');
+            const avgWeightElement = document.getElementById('meat-avg-weight');
+            const avgValueElement = document.getElementById('meat-avg-value');
+            
+            if (meatSummary && avgWeightElement && avgValueElement) {
+                if (animalCount > 0 && weight > 0) {
+                    const avgWeight = weight / animalCount;
+                    const avgValue = total / animalCount;
+                    const weightUnitText = weightUnit === 'lbs' ? 'lbs' : 'kg';
+                    
+                    meatSummary.textContent = `${animalCount} animal${animalCount !== 1 ? 's' : ''} • ${weight.toFixed(2)} ${weightUnitText} total • ${this.formatCurrency(avgValue)} per animal`;
+                    avgWeightElement.textContent = `${avgWeight.toFixed(2)} ${weightUnitText}/animal`;
+                    avgValueElement.textContent = `${this.formatCurrency(avgValue)}/animal`;
+                } else {
+                    const weightUnitText = weightUnit === 'lbs' ? 'lbs' : 'kg';
+                    meatSummary.textContent = `0 animals • 0 ${weightUnitText} total • $0.00 per animal`;
+                    avgWeightElement.textContent = `0.00 ${weightUnitText}/animal`;
+                    avgValueElement.textContent = '$0.00/animal';
+                }
+            }
         } else {
-            total = weight * pricePerUnit;
-        }
-        
-        const meatSummary = document.getElementById('meat-summary-info');
-        const avgWeightElement = document.getElementById('meat-avg-weight');
-        const avgValueElement = document.getElementById('meat-avg-value');
-        
-        if (meatSummary && avgWeightElement && avgValueElement) {
-            if (animalCount > 0 && weight > 0) {
-                const avgWeight = weight / animalCount;
-                const avgValue = total / animalCount;
-                
-                const weightUnitText = weightUnit === 'lbs' ? 'lbs' : 'kg';
-                const priceUnitText = weightUnit === 'lbs' ? 'per lb' : 'per kg';
-                
-                meatSummary.textContent = `${animalCount} animal${animalCount !== 1 ? 's' : ''} • ${weight.toFixed(2)} ${weightUnitText} total • ${this.formatCurrency(avgValue)} per animal`;
-                avgWeightElement.textContent = `${avgWeight.toFixed(2)} ${weightUnitText}/animal`;
-                avgValueElement.textContent = `${this.formatCurrency(avgValue)}/animal`;
-            } else {
-                const weightUnitText = weightUnit === 'lbs' ? 'lbs' : 'kg';
-                meatSummary.textContent = `0 animals • 0 ${weightUnitText} total • $0.00 per animal`;
-                avgWeightElement.textContent = `0.00 ${weightUnitText}/animal`;
-                avgValueElement.textContent = '$0.00/animal';
+            const quantity = parseFloat(document.getElementById('standard-quantity')?.value) || 0;
+            const price = parseFloat(document.getElementById('standard-price')?.value) || 0;
+            const unit = document.getElementById('sale-unit')?.value || 'unit';
+            
+            total = quantity * price;
+            
+            const standardSummary = document.getElementById('standard-summary-info');
+            if (standardSummary) {
+                const unitLabel = this.getUnitDisplayName(unit, product);
+                standardSummary.textContent = `${quantity} ${unitLabel} at ${this.formatCurrency(price)} ${this.getPriceUnitLabel(unit, product)}`;
             }
         }
-    } else {
-        const quantity = parseFloat(document.getElementById('standard-quantity')?.value) || 0;
-        const price = parseFloat(document.getElementById('standard-price')?.value) || 0;
-        const unit = document.getElementById('sale-unit')?.value || 'unit';
         
-        total = quantity * price;
+        const totalElement = document.getElementById('sale-total-amount');
+        if (totalElement) {
+            totalElement.textContent = this.formatCurrency(total);
+        }
+    },
+
+    getUnitDisplayName(unit, product) {
+        const unitNames = {
+            'kg': 'kg', 'lbs': 'lbs',
+            'birds': product.includes('chicks') ? 'chicks' : 
+                     product.includes('layers') ? 'layers' : 'birds',
+            'animals': product === 'pork' ? 'pigs' :
+                       product === 'beef' ? 'heads' :
+                       product === 'goat' ? 'goats' :
+                       product === 'lamb' ? 'lambs' : 'animals',
+            'dozen': 'dozen', 'liters': 'liters', 'pieces': 'pieces',
+            'case': 'cases', 'crate': 'crates', 'bag': 'bags',
+            'bottle': 'bottles', 'jar': 'jars'
+        };
         
-        const standardSummary = document.getElementById('standard-summary-info');
-        if (standardSummary) {
-            const unitLabel = this.getUnitDisplayName(unit, product);
-            standardSummary.textContent = `${quantity} ${unitLabel} at ${this.formatCurrency(price)} ${this.getPriceUnitLabel(unit, product)}`;
-        }
-    }
-    
-    const totalElement = document.getElementById('sale-total-amount');
-    if (totalElement) {
-        totalElement.textContent = this.formatCurrency(total);
-    }
-},
+        return unitNames[unit] || unit;
+    },
 
-// Helper method to get display name for units
-getUnitDisplayName(unit, product) {
-    const unitNames = {
-        'kg': 'kg',
-        'lbs': 'lbs',
-        'birds': product.includes('chicks') ? 'chicks' : 
-                 product.includes('layers') ? 'layers' : 'birds',
-        'animals': product === 'pork' ? 'pigs' :
-                   product === 'beef' ? 'heads' :
-                   product === 'goat' ? 'goats' :
-                   product === 'lamb' ? 'lambs' : 'animals',
-        'dozen': 'dozen',
-        'liters': 'liters',
-        'pieces': 'pieces',
-        'case': 'cases',
-        'crate': 'crates',
-        'bag': 'bags',
-        'bottle': 'bottles',
-        'jar': 'jars'
-    };
-    
-    return unitNames[unit] || unit;
-},
+    getPriceUnitLabel(unit, product) {
+        const priceLabels = {
+            'kg': 'per kg', 'lbs': 'per lb',
+            'birds': product.includes('chicks') ? 'per chick' : 
+                     product.includes('layers') ? 'per layer' : 'per bird',
+            'animals': product === 'pork' ? 'per pig' :
+                       product === 'beef' ? 'per head' :
+                       product === 'goat' ? 'per goat' :
+                       product === 'lamb' ? 'per lamb' : 'per animal',
+            'dozen': 'per dozen', 'liters': 'per liter', 'pieces': 'per piece',
+            'case': 'per case', 'crate': 'per crate', 'bag': 'per bag',
+            'bottle': 'per bottle', 'jar': 'per jar'
+        };
+        
+        return priceLabels[unit] || 'per unit';
+    },
 
-// Helper method to get price unit label
-getPriceUnitLabel(unit, product) {
-    const priceLabels = {
-        'kg': 'per kg',
-        'lbs': 'per lb',
-        'birds': product.includes('chicks') ? 'per chick' : 
-                 product.includes('layers') ? 'per layer' : 'per bird',
-        'animals': product === 'pork' ? 'per pig' :
-                   product === 'beef' ? 'per head' :
-                   product === 'goat' ? 'per goat' :
-                   product === 'lamb' ? 'per lamb' : 'per animal',
-        'dozen': 'per dozen',
-        'liters': 'per liter',
-        'pieces': 'per piece',
-        'case': 'per case',
-        'crate': 'per crate',
-        'bag': 'per bag',
-        'bottle': 'per bottle',
-        'jar': 'per jar'
-    };
-    
-    return priceLabels[unit] || 'per unit';
-},
-
-// Also add a unit change listener to setupFormFieldListeners()
-setupFormFieldListeners() {
-    // Product change
-    const productSelect = document.getElementById('sale-product');
-    if (productSelect) {
-        productSelect.addEventListener('change', () => this.handleProductChange());
-    }
-    
-    // Unit change - NEW: Update labels when unit changes
-    const unitSelect = document.getElementById('sale-unit');
-    if (unitSelect) {
-        unitSelect.addEventListener('change', () => {
-            this.updateStandardPriceLabel();
-            this.calculateSaleTotal();
-        });
-    }
-    
-    // Real-time total calculation
-    const fieldsToWatch = [
-        'standard-quantity',
-        'standard-price',
-        'meat-animal-count',
-        'meat-weight',
-        'meat-price'
-    ];
-    
-    fieldsToWatch.forEach(fieldId => {
-        const field = document.getElementById(fieldId);
-        if (field) {
-            field.addEventListener('input', () => this.calculateSaleTotal());
-        }
-    });
-    
-    // Weight unit change
-    const weightUnit = document.getElementById('meat-weight-unit');
-    if (weightUnit) {
-        weightUnit.addEventListener('change', () => {
-            this.updateMeatLabels();
-            this.calculateSaleTotal();
-        });
-    }
-},
     handleQuickProductChange() {
-    const productSelect = document.getElementById('quick-product');
-    const selectedValue = productSelect.value;
-    const unitSelect = document.getElementById('quick-unit');
-    
-    if (!unitSelect) return;
-    
-    // Only set default if no unit is selected yet
-    if (!unitSelect.value || unitSelect.value === '') {
+        const productSelect = document.getElementById('quick-product');
+        const selectedValue = productSelect.value;
+        const unitSelect = document.getElementById('quick-unit');
+        
+        if (!unitSelect || unitSelect.value) return;
+        
         if (selectedValue === 'eggs') {
             unitSelect.value = 'dozen';
         } else if (selectedValue === 'milk') {
@@ -1972,9 +1629,8 @@ setupFormFieldListeners() {
         } else {
             unitSelect.value = 'kg';
         }
-    }
-},
-    
+    },
+
     showSaleModal() {
         this.hideAllModals();
         const modal = document.getElementById('sale-modal');
@@ -1982,53 +1638,27 @@ setupFormFieldListeners() {
             modal.classList.remove('hidden');
         }
         
-        const dateInput = document.getElementById('sale-date');
-        if (dateInput) {
-            dateInput.value = this.getCurrentDate();
-        }
-        
-        const form = document.getElementById('sale-form');
-        if (form) {
-            form.reset();
-        }
-        
+        document.getElementById('sale-date').value = this.getCurrentDate();
+        document.getElementById('sale-form')?.reset();
         document.getElementById('sale-modal-title').textContent = 'Record Sale';
         document.getElementById('delete-sale').style.display = 'none';
         document.getElementById('production-source-notice').style.display = 'none';
         
-        const fieldsToClear = [
-            'meat-animal-count',
-            'meat-weight',
-            'meat-price',
-            'standard-quantity',
-            'standard-price',
-            'sale-customer',
-            'sale-notes'
-        ];
-        
-        fieldsToClear.forEach(fieldId => {
+        ['meat-animal-count', 'meat-weight', 'meat-price', 'standard-quantity', 
+         'standard-price', 'sale-customer', 'sale-notes'].forEach(fieldId => {
             const field = document.getElementById(fieldId);
             if (field) field.value = '';
         });
         
-        const unitSelect = document.getElementById('sale-unit');
-        if (unitSelect) unitSelect.value = '';
-        
-        const weightUnit = document.getElementById('meat-weight-unit');
-        if (weightUnit) weightUnit.value = 'kg';
-        
-        const paymentMethod = document.getElementById('sale-payment');
-        if (paymentMethod) paymentMethod.value = 'cash';
-        
-        const paymentStatus = document.getElementById('sale-status');
-        if (paymentStatus) paymentStatus.value = 'paid';
+        document.getElementById('sale-unit')?.value = '';
+        document.getElementById('meat-weight-unit').value = 'kg';
+        document.getElementById('sale-payment').value = 'cash';
+        document.getElementById('sale-status').value = 'paid';
+        document.getElementById('sale-product')?.value = '';
         
         if (this.pendingProductionSale) {
             this.prefillFromProduction(this.pendingProductionSale);
             this.showProductionSourceNotice();
-        } else {
-            const productSelect = document.getElementById('sale-product');
-            if (productSelect) productSelect.value = '';
         }
         
         setTimeout(() => {
@@ -2050,214 +1680,190 @@ setupFormFieldListeners() {
         }
     },
 
-   showProductionItems() {
-    console.log('🔄 Showing production items for sale...');
-    this.hideAllModals();
-    
-    // Get production records from localStorage
-    const productionRecords = JSON.parse(localStorage.getItem('farm-production') || '[]');
-    
-    // Get current sales to check what's already been sold
-    const existingSales = window.FarmModules.appData.sales || [];
-    
-    // Filter available production items (not yet sold)
-    const availableProducts = [];
-    
-    // Group by product and date
-    const productMap = {};
-    
-    productionRecords.forEach(record => {
-        const product = record.product || 'Unspecified';
-        const date = record.date;
-        const key = `${product}-${date}`;
+    showProductionItems() {
+        console.log('🔄 Showing production items for sale...');
+        this.hideAllModals();
         
-        if (!productMap[key]) {
-            productMap[key] = {
-                product: product,
-                date: date,
-                totalQuantity: 0,
-                unit: record.unit || 'units',
-                notes: record.notes || '',
-                soldQuantity: 0,
-                availableQuantity: 0
-            };
-        }
+        const productionRecords = JSON.parse(localStorage.getItem('farm-production') || '[]');
+        const existingSales = window.FarmModules.appData.sales || [];
+        const availableProducts = [];
+        const productMap = {};
         
-        productMap[key].totalQuantity += record.quantity || 0;
-    });
-    
-    // Calculate sold quantities from existing sales
-    existingSales.forEach(sale => {
-        if (sale.productionSourceId || sale.productionSource) {
-            const product = sale.product;
-            const date = sale.date;
+        productionRecords.forEach(record => {
+            const product = record.product || 'Unspecified';
+            const date = record.date;
             const key = `${product}-${date}`;
             
-            if (productMap[key]) {
-                productMap[key].soldQuantity += sale.quantity || sale.animalCount || 0;
+            if (!productMap[key]) {
+                productMap[key] = {
+                    product: product,
+                    date: date,
+                    totalQuantity: 0,
+                    unit: record.unit || 'units',
+                    notes: record.notes || '',
+                    soldQuantity: 0,
+                    availableQuantity: 0
+                };
             }
-        }
-    });
-    
-    // Calculate available quantities
-    Object.keys(productMap).forEach(key => {
-        const item = productMap[key];
-        item.availableQuantity = item.totalQuantity - item.soldQuantity;
+            
+            productMap[key].totalQuantity += record.quantity || 0;
+        });
         
-        if (item.availableQuantity > 0) {
-            availableProducts.push({
-                id: key,
-                product: item.product,
-                date: item.date,
-                totalQuantity: item.totalQuantity,
-                availableQuantity: item.availableQuantity,
-                unit: item.unit,
-                notes: item.notes
-            });
-        }
-    });
-    
-    // Create modal content
-    let content = '<div class="production-items-list">';
-    
-    if (availableProducts.length === 0) {
-        content += `
-            <div style="text-align: center; padding: 40px 20px;">
-                <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
-                <h4 style="color: #374151; margin-bottom: 8px;">No production items available for sale</h4>
-                <p style="color: var(--text-secondary);">All production items have been sold or no production records exist.</p>
-                <div style="margin-top: 20px;">
-                    <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
-                        <button class="btn-primary" 
-                                onclick="window.FarmModules.SalesRecord.navigateToProduction()"
+        existingSales.forEach(sale => {
+            if (sale.productionSourceId || sale.productionSource) {
+                const product = sale.product;
+                const date = sale.date;
+                const key = `${product}-${date}`;
+                
+                if (productMap[key]) {
+                    productMap[key].soldQuantity += sale.quantity || sale.animalCount || 0;
+                }
+            }
+        });
+        
+        Object.keys(productMap).forEach(key => {
+            const item = productMap[key];
+            item.availableQuantity = item.totalQuantity - item.soldQuantity;
+            
+            if (item.availableQuantity > 0) {
+                availableProducts.push({
+                    id: key,
+                    product: item.product,
+                    date: item.date,
+                    totalQuantity: item.totalQuantity,
+                    availableQuantity: item.availableQuantity,
+                    unit: item.unit,
+                    notes: item.notes
+                });
+            }
+        });
+        
+        let content = '<div class="production-items-list">';
+        
+        if (availableProducts.length === 0) {
+            content += `
+                <div style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
+                    <h4 style="margin-bottom: 8px;">No production items available for sale</h4>
+                    <p>All production items have been sold or no production records exist.</p>
+                    <div style="margin-top: 20px;">
+                        <button class="btn-primary production-nav-btn" data-action="navigate-to-production"
                                 style="background: #0ea5e9; border: none; padding: 10px 20px; border-radius: 8px; color: white; font-weight: 500; cursor: pointer;">
                             ➕ Go to Production Module
                         </button>
                     </div>
-                </div>
-                <p style="color: var(--text-secondary); font-size: 13px; margin-top: 12px;">
-                    Add new production records to sell them here
-                </p>
-            </div>
-        `;
-    } else {
-        content += `
-            <div style="margin-bottom: 16px;">
-                <p style="color: var(--text-secondary); font-size: 14px; margin: 0;">
-                    Select a production item to create a sale from:
-                </p>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
-        `;
-        
-        availableProducts.forEach((item, index) => {
-            const icon = this.getProductIcon(item.product);
-            const formattedDate = this.formatDate(item.date);
-            const productName = this.formatProductName(item.product);
-            
-            content += `
-                <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                        <div style="font-size: 24px; background: #e0f2fe; padding: 8px; border-radius: 8px;">
-                            ${icon}
-                        </div>
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; color: var(--text-primary);">${productName}</div>
-                            <div style="font-size: 12px; color: var(--text-secondary);">Produced: ${formattedDate}</div>
-                        </div>
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;">
-                        <div style="padding: 8px; background: #f0f9ff; border-radius: 6px; text-align: center;">
-                            <div style="font-size: 11px; color: #0c4a6e; margin-bottom: 4px;">Total Produced</div>
-                            <div style="font-weight: 600; color: #0369a1;">${item.totalQuantity} ${item.unit}</div>
-                        </div>
-                        <div style="padding: 8px; background: #f0fdf4; border-radius: 6px; text-align: center;">
-                            <div style="font-size: 11px; color: #166534; margin-bottom: 4px;">Available</div>
-                            <div style="font-weight: 600; color: #16a34a;">${item.availableQuantity} ${item.unit}</div>
-                        </div>
-                    </div>
-                    
-                    ${item.notes ? `
-                        <div style="margin-bottom: 12px; padding: 8px; background: #f8fafc; border-radius: 6px;">
-                            <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">Notes</div>
-                            <div style="font-size: 12px; color: #475569;">${item.notes}</div>
-                        </div>
-                    ` : ''}
-                    
-                    <div style="display: flex; gap: 8px;">
-                        <button style="flex: 1; padding: 8px 12px; background: var(--primary-color); color: white; 
-                                border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px;"
-                                data-item-id="${item.id}" class="sell-production-item-btn">
-                            Sell This Item
-                        </button>
-                    </div>
+                    <p style="font-size: 13px; margin-top: 12px;">
+                        Add new production records to sell them here
+                    </p>
                 </div>
             `;
-        });
-        
-        content += `
-            </div>
-            
-            <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border-radius: 8px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="color: #0ea5e9; font-size: 16px;">💡</span>
-                    <div style="font-size: 13px; color: #475569;">
-                        Need more products? Add new production records.
-                    </div>
+        } else {
+            content += `
+                <div style="margin-bottom: 16px;">
+                    <p style="font-size: 14px; margin: 0;">
+                        Select a production item to create a sale from:
+                    </p>
                 </div>
-                <button class="btn-outline" 
-                        onclick="window.FarmModules.SalesRecord.navigateToProduction()"
-                        style="background: white; color: #0ea5e9; border: 1px solid #0ea5e9; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">
-                    ➕ Add Production
-                </button>
-            </div>
-        `;
-    }
-    
-    content += '</div>';
-    
-    // Update modal content
-    const contentElement = document.getElementById('production-items-content');
-    if (contentElement) {
-        contentElement.innerHTML = content;
-    }
-    
-    // Show modal
-    const modal = document.getElementById('production-items-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-    }
-},
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
+            `;
+            
+            availableProducts.forEach((item) => {
+                const icon = this.getProductIcon(item.product);
+                const formattedDate = this.formatDate(item.date);
+                const productName = this.formatProductName(item.product);
+                
+                content += `
+                    <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                            <div style="font-size: 24px; background: #e0f2fe; padding: 8px; border-radius: 8px;">
+                                ${icon}
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600;">${productName}</div>
+                                <div style="font-size: 12px;">Produced: ${formattedDate}</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;">
+                            <div style="padding: 8px; background: #f0f9ff; border-radius: 6px; text-align: center;">
+                                <div style="font-size: 11px; margin-bottom: 4px;">Total Produced</div>
+                                <div style="font-weight: 600;">${item.totalQuantity} ${item.unit}</div>
+                            </div>
+                            <div style="padding: 8px; background: #f0fdf4; border-radius: 6px; text-align: center;">
+                                <div style="font-size: 11px; margin-bottom: 4px;">Available</div>
+                                <div style="font-weight: 600;">${item.availableQuantity} ${item.unit}</div>
+                            </div>
+                        </div>
+                        
+                        ${item.notes ? `
+                            <div style="margin-bottom: 12px; padding: 8px; background: #f8fafc; border-radius: 6px;">
+                                <div style="font-size: 11px; margin-bottom: 4px;">Notes</div>
+                                <div style="font-size: 12px;">${item.notes}</div>
+                            </div>
+                        ` : ''}
+                        
+                        <div style="display: flex; gap: 8px;">
+                            <button style="flex: 1; padding: 8px 12px; background: var(--primary-color); color: white; 
+                                    border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px;"
+                                    data-item-id="${item.id}" class="sell-production-item-btn">
+                                Sell This Item
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            content += `
+                </div>
+                
+                <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="color: #0ea5e9; font-size: 16px;">💡</span>
+                        <div style="font-size: 13px;">
+                            Need more products? Add new production records.
+                        </div>
+                    </div>
+                    <button class="btn-outline production-nav-btn" data-action="navigate-to-production"
+                            style="background: white; color: #0ea5e9; border: 1px solid #0ea5e9; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                        ➕ Add Production
+                    </button>
+                </div>
+            `;
+        }
+        
+        content += '</div>';
+        
+        const contentElement = document.getElementById('production-items-content');
+        if (contentElement) {
+            contentElement.innerHTML = content;
+        }
+        
+        const modal = document.getElementById('production-items-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    },
     
     hideSaleModal() {
         const modal = document.getElementById('sale-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
+        if (modal) modal.classList.add('hidden');
         this.pendingProductionSale = null;
     },
 
     hideProductionItemsModal() {
         const modal = document.getElementById('production-items-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
+        if (modal) modal.classList.add('hidden');
     },
 
     hideDailyReportModal() {
         const modal = document.getElementById('daily-report-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
+        if (modal) modal.classList.add('hidden');
     },
 
     hideMeatSalesModal() {
         const modal = document.getElementById('meat-sales-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
+        if (modal) modal.classList.add('hidden');
     },
 
     hideAllModals() {
@@ -2276,28 +1882,15 @@ setupFormFieldListeners() {
         
         const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
         if (meatProducts.includes(saleData.product)) {
-            if (!saleData.weight || saleData.weight <= 0) {
-                errors.push('Weight must be greater than 0');
-            }
-            if (!saleData.animalCount || saleData.animalCount <= 0) {
-                errors.push('Number of animals must be greater than 0');
-            }
-            if (!saleData.unitPrice || saleData.unitPrice <= 0) {
-                errors.push('Price per kg must be greater than 0');
-            }
+            if (!saleData.weight || saleData.weight <= 0) errors.push('Weight must be greater than 0');
+            if (!saleData.animalCount || saleData.animalCount <= 0) errors.push('Number of animals must be greater than 0');
+            if (!saleData.unitPrice || saleData.unitPrice <= 0) errors.push('Price per kg must be greater than 0');
         } else {
-            if (!saleData.quantity || saleData.quantity <= 0) {
-                errors.push('Quantity must be greater than 0');
-            }
-            if (!saleData.unitPrice || saleData.unitPrice <= 0) {
-                errors.push('Price must be greater than 0');
-            }
+            if (!saleData.quantity || saleData.quantity <= 0) errors.push('Quantity must be greater than 0');
+            if (!saleData.unitPrice || saleData.unitPrice <= 0) errors.push('Price must be greater than 0');
         }
         
-        return {
-            isValid: errors.length === 0,
-            errors: errors
-        };
+        return { isValid: errors.length === 0, errors: errors };
     },
 
     handleQuickSale() {
@@ -2311,8 +1904,6 @@ setupFormFieldListeners() {
             return;
         }
 
-        const today = this.getCurrentDate();
-
         const saleData = {
             id: 'SALE-' + Date.now().toString().slice(-6),
             product: product,
@@ -2320,22 +1911,17 @@ setupFormFieldListeners() {
             unit: unit,
             unitPrice: price,
             totalAmount: quantity * price,
-            date: today,
+            date: this.getCurrentDate(),
             paymentMethod: 'cash',
             paymentStatus: 'paid',
             customer: 'Walk-in'
         };
 
         this.addSale(saleData);
-        
-        const form = document.getElementById('quick-sale-form');
-        if (form) {
-            form.reset();
-        }
+        document.getElementById('quick-sale-form')?.reset();
         this.showNotification('Sale recorded successfully!', 'success');
     },
 
-    // ✅ MODIFIED: Enhanced saveSale with broadcasting
     saveSale() {
         const saleId = document.getElementById('sale-id')?.value;
         let date = document.getElementById('sale-date')?.value;
@@ -2351,9 +1937,7 @@ setupFormFieldListeners() {
             return;
         }
 
-        // Use our normalizeDateForStorage method
         date = this.normalizeDateForStorage(date);
-
         const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
         const isMeatProduct = meatProducts.includes(product);
 
@@ -2365,16 +1949,8 @@ setupFormFieldListeners() {
             const weightUnit = document.getElementById('meat-weight-unit')?.value;
             const unitPrice = parseFloat(document.getElementById('meat-price')?.value) || 0;
             
-            let totalAmount;
-            let priceUnit;
-            
-            if (weightUnit === 'lbs') {
-                totalAmount = weight * unitPrice;
-                priceUnit = 'per-lb';
-            } else {
-                totalAmount = weight * unitPrice;
-                priceUnit = 'per-kg';
-            }
+            const totalAmount = weight * unitPrice;
+            const priceUnit = weightUnit === 'lbs' ? 'per-lb' : 'per-kg';
             
             saleData = {
                 id: saleId || 'SALE-' + Date.now().toString().slice(-6),
@@ -2428,13 +2004,11 @@ setupFormFieldListeners() {
         }
 
         if (saleId) {
-            // Update existing sale
             const oldSale = window.FarmModules.appData.sales.find(s => s.id === saleId);
             const index = window.FarmModules.appData.sales.findIndex(s => s.id === saleId);
             if (index !== -1) {
                 window.FarmModules.appData.sales[index] = saleData;
                 
-                // ✅ Broadcast sale updated
                 if (oldSale) {
                     this.broadcastSaleUpdated(oldSale, saleData);
                 }
@@ -2442,12 +2016,8 @@ setupFormFieldListeners() {
                 this.showNotification('Sale updated successfully!', 'success');
             }
         } else {
-            // Add new sale
             window.FarmModules.appData.sales.push(saleData);
-            
-            // ✅ Broadcast new sale recorded
             this.broadcastSaleRecorded(saleData);
-            
             this.showNotification('Sale recorded successfully!', 'success');
         }
 
@@ -2467,7 +2037,6 @@ setupFormFieldListeners() {
         const quantitySold = saleData.animalCount || saleData.quantity || 0;
         productionModule.updateQuantityAfterSale(productionId, quantitySold);
         
-        // ✅ Broadcast production update
         if (this.broadcaster) {
             this.broadcaster.broadcast('production-sold', {
                 module: 'sales-record',
@@ -2479,68 +2048,86 @@ setupFormFieldListeners() {
         }
     },
 
-    // ✅ MODIFIED: Enhanced deleteSaleRecord with broadcasting
     deleteSaleRecord(saleId) {
         console.log('🗑️ Deleting sale:', saleId);
         
-        // Find the sale before deleting
         const saleToDelete = window.FarmModules.appData.sales.find(s => s.id === saleId);
-        
-        // Filter out the sale to be deleted
         window.FarmModules.appData.sales = window.FarmModules.appData.sales.filter(s => s.id !== saleId);
         
-        // Save the updated data
         this.saveData();
         
-        // ✅ Broadcast sale deleted
         if (saleToDelete) {
             this.broadcastSaleDeleted(saleToDelete);
         }
         
-        // Update the display
         this.renderModule();
-        
-        // Hide modal if open
         this.hideSaleModal();
-        
-        // Show notification
         this.showNotification('Sale deleted successfully!', 'success');
     },
 
-    // ✅ MODIFIED: Enhanced addSale with broadcasting
     addSale(saleData) {
         saleData.id = 'SALE-' + Date.now().toString().slice(-6);
         window.FarmModules.appData.sales.push(saleData);
         this.saveData();
-        
-        // ✅ Broadcast new sale recorded
         this.broadcastSaleRecorded(saleData);
-        
         this.renderModule();
         return saleData.id;
     },
 
-    // ... [All other existing methods remain exactly the same] ...
+    editSale(saleId) {
+        const sale = window.FarmModules.appData.sales.find(s => s.id === saleId);
+        if (!sale) {
+            this.showNotification('Sale not found', 'error');
+            return;
+        }
 
-    // ✅ MODIFIED: Enhanced generateDailyReport to include real-time data
+        this.currentEditingId = saleId;
+        this.showSaleModal();
+        this.fillSaleForm(sale);
+    },
+
+    fillSaleForm(sale) {
+        document.getElementById('sale-id').value = sale.id;
+        document.getElementById('sale-date').value = this.formatDateForInput(sale.date);
+        document.getElementById('sale-customer').value = sale.customer || '';
+        document.getElementById('sale-product').value = sale.product;
+        document.getElementById('sale-unit').value = sale.unit;
+        document.getElementById('sale-payment').value = sale.paymentMethod;
+        document.getElementById('sale-status').value = sale.paymentStatus || 'paid';
+        document.getElementById('sale-notes').value = sale.notes || '';
+        
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        if (meatProducts.includes(sale.product)) {
+            document.getElementById('meat-animal-count').value = sale.animalCount || sale.quantity || '';
+            document.getElementById('meat-weight').value = sale.weight || '';
+            document.getElementById('meat-weight-unit').value = sale.weightUnit || 'kg';
+            document.getElementById('meat-price').value = sale.unitPrice || '';
+        } else {
+            document.getElementById('standard-quantity').value = sale.quantity || '';
+            document.getElementById('standard-price').value = sale.unitPrice || '';
+        }
+        
+        document.getElementById('sale-modal-title').textContent = 'Edit Sale';
+        document.getElementById('delete-sale').style.display = 'block';
+        
+        setTimeout(() => {
+            this.handleProductChange();
+        }, 10);
+    },
+
     generateDailyReport() {
         const today = this.getCurrentDate();
         const sales = window.FarmModules.appData.sales || [];
-        
         const todaySales = sales.filter(sale => this.areDatesEqual(sale.date, today));
         
         const totalRevenue = todaySales.reduce((sum, sale) => sum + sale.totalAmount, 0);
         const totalTransactions = todaySales.length;
-        
         const productsSold = {};
         const paymentMethods = {};
         
         todaySales.forEach(sale => {
-            // Track products
             const productName = this.formatProductName(sale.product);
-            if (!productsSold[productName]) {
-                productsSold[productName] = 0;
-            }
+            if (!productsSold[productName]) productsSold[productName] = 0;
             
             if (['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'].includes(sale.product)) {
                 productsSold[productName] += sale.animalCount || sale.quantity || 0;
@@ -2548,15 +2135,11 @@ setupFormFieldListeners() {
                 productsSold[productName] += sale.quantity || 0;
             }
             
-            // Track payment methods
             const method = sale.paymentMethod || 'cash';
-            if (!paymentMethods[method]) {
-                paymentMethods[method] = 0;
-            }
+            if (!paymentMethods[method]) paymentMethods[method] = 0;
             paymentMethods[method] += sale.totalAmount;
         });
         
-        // ✅ Broadcast report generation
         if (this.broadcaster) {
             this.broadcaster.broadcast('daily-report-generated', {
                 module: 'sales-record',
@@ -2571,39 +2154,39 @@ setupFormFieldListeners() {
         let content = `
             <div style="background: white; padding: 24px; border-radius: 12px;">
                 <div style="text-align: center; margin-bottom: 24px;">
-                    <h2 style="color: var(--text-primary); margin-bottom: 8px;">📊 Daily Sales Report</h2>
-                    <p style="color: var(--text-secondary); font-size: 16px;">${this.formatDate(today)}</p>
+                    <h2 style="margin-bottom: 8px;">📊 Daily Sales Report</h2>
+                    <p style="font-size: 16px;">${this.formatDate(today)}</p>
                 </div>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
                     <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px;">
                         <div style="font-size: 32px; margin-bottom: 8px;">💰</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(totalRevenue)}</div>
-                        <div style="color: var(--text-secondary); font-size: 14px;">Total Revenue</div>
+                        <div style="font-size: 24px; font-weight: bold;">${this.formatCurrency(totalRevenue)}</div>
+                        <div style="font-size: 14px;">Total Revenue</div>
                     </div>
                     
                     <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #fef3f3 0%, #fed7d7 100%); border-radius: 8px;">
                         <div style="font-size: 32px; margin-bottom: 8px;">📈</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${totalTransactions}</div>
-                        <div style="color: var(--text-secondary); font-size: 14px;">Transactions</div>
+                        <div style="font-size: 24px; font-weight: bold;">${totalTransactions}</div>
+                        <div style="font-size: 14px;">Transactions</div>
                     </div>
                     
                     <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px;">
                         <div style="font-size: 32px; margin-bottom: 8px;">📦</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${Object.keys(productsSold).length}</div>
-                        <div style="color: var(--text-secondary); font-size: 14px;">Products Sold</div>
+                        <div style="font-size: 24px; font-weight: bold;">${Object.keys(productsSold).length}</div>
+                        <div style="font-size: 14px;">Products Sold</div>
                     </div>
                 </div>
                 
                 <div style="margin-bottom: 32px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--glass-border); padding-bottom: 8px;">📋 Products Sold Today</h3>
+                    <h3 style="margin-bottom: 16px; border-bottom: 2px solid var(--glass-border); padding-bottom: 8px;">📋 Products Sold Today</h3>
                     <div style="overflow-x: auto;">
                         <table style="width: 100%; border-collapse: collapse;">
                             <thead>
                                 <tr style="border-bottom: 2px solid #e5e7eb;">
-                                    <th style="padding: 12px; text-align: left; color: #374151;">Product</th>
-                                    <th style="padding: 12px; text-align: left; color: #374151;">Quantity</th>
-                                    <th style="padding: 12px; text-align: left; color: #374151;">Revenue</th>
+                                    <th style="padding: 12px; text-align: left;">Product</th>
+                                    <th style="padding: 12px; text-align: left;">Quantity</th>
+                                    <th style="padding: 12px; text-align: left;">Revenue</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -2615,9 +2198,9 @@ setupFormFieldListeners() {
             
             content += `
                 <tr style="border-bottom: 1px solid #e5e7eb;">
-                    <td style="padding: 12px; color: var(--text-primary);">${product}</td>
-                    <td style="padding: 12px; color: var(--text-primary);">${quantity}</td>
-                    <td style="padding: 12px; color: var(--text-primary); font-weight: 600;">${this.formatCurrency(productRevenue)}</td>
+                    <td style="padding: 12px;">${product}</td>
+                    <td style="padding: 12px;">${quantity}</td>
+                    <td style="padding: 12px; font-weight: 600;">${this.formatCurrency(productRevenue)}</td>
                 </tr>
             `;
         });
@@ -2629,7 +2212,7 @@ setupFormFieldListeners() {
                 </div>
                 
                 <div>
-                    <h3 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--glass-border); padding-bottom: 8px;">💳 Payment Methods</h3>
+                    <h3 style="margin-bottom: 16px; border-bottom: 2px solid var(--glass-border); padding-bottom: 8px;">💳 Payment Methods</h3>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
         `;
         
@@ -2638,9 +2221,9 @@ setupFormFieldListeners() {
             
             content += `
                 <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${method.charAt(0).toUpperCase() + method.slice(1)}</div>
-                    <div style="font-size: 20px; font-weight: bold; color: var(--primary-color);">${this.formatCurrency(amount)}</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">${percentage}% of total</div>
+                    <div style="font-weight: 600; margin-bottom: 4px;">${method.charAt(0).toUpperCase() + method.slice(1)}</div>
+                    <div style="font-size: 20px; font-weight: bold;">${this.formatCurrency(amount)}</div>
+                    <div style="font-size: 12px;">${percentage}% of total</div>
                 </div>
             `;
         });
@@ -2648,16 +2231,6 @@ setupFormFieldListeners() {
         content += `
                     </div>
                 </div>
-                
-                ${todaySales.length > 0 ? `
-                    <div style="margin-top: 32px; padding: 20px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
-                        <h4 style="color: var(--text-primary); margin-bottom: 12px;">📝 Summary</h4>
-                        <p style="color: var(--text-secondary); line-height: 1.6;">
-                            Today's sales show ${totalTransactions} transaction${totalTransactions !== 1 ? 's' : ''} totaling ${this.formatCurrency(totalRevenue)}. 
-                            The most popular payment method was ${Object.keys(paymentMethods).reduce((a, b) => paymentMethods[a] > paymentMethods[b] ? a : b)}.
-                        </p>
-                    </div>
-                ` : ''}
             </div>
         `;
         
@@ -2672,164 +2245,129 @@ setupFormFieldListeners() {
         }
     },
     
-    // ✅ MODIFIED: Enhanced generateMeatSalesReport to include real-time data
-   generateMeatSalesReport() {
-    const sales = window.FarmModules.appData.sales || [];
-    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
-    
-    const meatSales = sales.filter(sale => meatProducts.includes(sale.product));
-    
-    const totalWeight = meatSales.reduce((sum, sale) => {
-        if (sale.weightUnit === 'lbs') {
-            return sum + (sale.weight || 0) * 0.453592; // Convert lbs to kg
-        }
-        return sum + (sale.weight || 0);
-    }, 0);
-    
-    const totalAnimals = meatSales.reduce((sum, sale) => sum + (sale.animalCount || sale.quantity || 0), 0);
-    const totalRevenue = meatSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
-    
-    // ✅ FIXED: Properly initialize productBreakdown object
-    const productBreakdown = {};
-    
-    meatSales.forEach(sale => {
-        const productName = this.formatProductName(sale.product);
-        if (!productBreakdown[productName]) {
-            productBreakdown[productName] = {
-                weight: 0,
-                animals: 0,
-                revenue: 0
-            };
-        }
+    generateMeatSalesReport() {
+        const sales = window.FarmModules.appData.sales || [];
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        const meatSales = sales.filter(sale => meatProducts.includes(sale.product));
         
-        let weight = sale.weight || 0;
-        if (sale.weightUnit === 'lbs') {
-            weight = weight * 0.453592; // Convert to kg for consistent reporting
-        }
+        const totalWeight = meatSales.reduce((sum, sale) => {
+            if (sale.weightUnit === 'lbs') {
+                return sum + (sale.weight || 0) * 0.453592;
+            }
+            return sum + (sale.weight || 0);
+        }, 0);
         
-        productBreakdown[productName].weight += weight;
-        productBreakdown[productName].animals += sale.animalCount || sale.quantity || 0;
-        productBreakdown[productName].revenue += sale.totalAmount;
-    });
-    
-    // ✅ Broadcast meat report generation
-    if (this.broadcaster) {
-        this.broadcaster.broadcast('meat-report-generated', {
-            module: 'sales-record',
-            timestamp: new Date().toISOString(),
-            totalAnimals: totalAnimals,
-            totalWeight: totalWeight,
-            totalRevenue: totalRevenue,
-            meatSalesCount: meatSales.length
+        const totalAnimals = meatSales.reduce((sum, sale) => sum + (sale.animalCount || sale.quantity || 0), 0);
+        const totalRevenue = meatSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+        const productBreakdown = {};
+        
+        meatSales.forEach(sale => {
+            const productName = this.formatProductName(sale.product);
+            if (!productBreakdown[productName]) {
+                productBreakdown[productName] = { weight: 0, animals: 0, revenue: 0 };
+            }
+            
+            let weight = sale.weight || 0;
+            if (sale.weightUnit === 'lbs') {
+                weight = weight * 0.453592;
+            }
+            
+            productBreakdown[productName].weight += weight;
+            productBreakdown[productName].animals += sale.animalCount || sale.quantity || 0;
+            productBreakdown[productName].revenue += sale.totalAmount;
         });
-    }
-    
-    let content = `
-        <div style="background: white; padding: 24px; border-radius: 12px;">
-            <div style="text-align: center; margin-bottom: 24px;">
-                <h2 style="color: var(--text-primary); margin-bottom: 8px;">🍗 Meat Sales Report</h2>
-                <p style="color: var(--text-secondary); font-size: 16px;">Weight-based meat sales analysis</p>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
-                <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #fef3f3 0%, #fed7d7 100%); border-radius: 8px;">
-                    <div style="font-size: 32px; margin-bottom: 8px;">🍖</div>
-                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${totalAnimals}</div>
-                    <div style="color: var(--text-secondary); font-size: 14px;">Total Animals</div>
-                </div>
-                
-                <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #fef9c3 0%, #fde047 100%); border-radius: 8px;">
-                    <div style="font-size: 32px; margin-bottom: 8px;">⚖️</div>
-                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${totalWeight.toFixed(2)} kg</div>
-                    <div style="color: var(--text-secondary); font-size: 14px;">Total Weight</div>
-                </div>
-                
-                <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-radius: 8px;">
-                    <div style="font-size: 32px; margin-bottom: 8px;">💰</div>
-                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(totalRevenue)}</div>
-                    <div style="color: var(--text-secondary); font-size: 14px;">Total Revenue</div>
-                </div>
-                
-                <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); border-radius: 8px;">
-                    <div style="font-size: 32px; margin-bottom: 8px;">📊</div>
-                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${meatSales.length}</div>
-                    <div style="color: var(--text-secondary); font-size: 14px;">Transactions</div>
-                </div>
-            </div>
-            
-            <div style="margin-bottom: 32px;">
-                <h3 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--glass-border); padding-bottom: 8px;">📋 Product Breakdown</h3>
-                <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 2px solid #e5e7eb;">
-                                <th style="padding: 12px; text-align: left; color: #374151;">Product</th>
-                                <th style="padding: 12px; text-align: left; color: #374151;">Animals</th>
-                                <th style="padding: 12px; text-align: left; color: #374151;">Weight (kg)</th>
-                                <th style="padding: 12px; text-align: left; color: #374151;">Avg Weight</th>
-                                <th style="padding: 12px; text-align: left; color: #374151;">Revenue</th>
-                                <th style="padding: 12px; text-align: left; color: #374151;">Avg Price/kg</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-    `;
-    
-    Object.entries(productBreakdown).forEach(([product, data]) => {
-        const avgWeight = data.animals > 0 ? (data.weight / data.animals).toFixed(2) : 0;
-        const avgPricePerKg = data.weight > 0 ? (data.revenue / data.weight).toFixed(2) : 0;
         
-        content += `
-            <tr style="border-bottom: 1px solid #e5e7eb;">
-                <td style="padding: 12px; color: var(--text-primary); font-weight: 600;">${product}</td>
-                <td style="padding: 12px; color: var(--text-primary);">${data.animals}</td>
-                <td style="padding: 12px; color: var(--text-primary);">${data.weight.toFixed(2)} kg</td>
-                <td style="padding: 12px; color: var(--text-primary);">${avgWeight} kg/animal</td>
-                <td style="padding: 12px; color: var(--text-primary); font-weight: 600;">${this.formatCurrency(data.revenue)}</td>
-                <td style="padding: 12px; color: var(--text-primary);">${this.formatCurrency(parseFloat(avgPricePerKg))}/kg</td>
-            </tr>
-        `;
-    });
-    
-    content += `
-                        </tbody>
-                    </table>
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('meat-report-generated', {
+                module: 'sales-record',
+                timestamp: new Date().toISOString(),
+                totalAnimals: totalAnimals,
+                totalWeight: totalWeight,
+                totalRevenue: totalRevenue,
+                meatSalesCount: meatSales.length
+            });
+        }
+        
+        let content = `
+            <div style="background: white; padding: 24px; border-radius: 12px;">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <h2 style="margin-bottom: 8px;">🍗 Meat Sales Report</h2>
+                    <p style="font-size: 16px;">Weight-based meat sales analysis</p>
                 </div>
-            </div>
-            
-            ${totalWeight > 0 ? `
-                <div style="margin-top: 32px; padding: 20px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
-                    <h4 style="color: var(--text-primary); margin-bottom: 12px;">📊 Key Metrics</h4>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                        <div style="text-align: center;">
-                            <div style="font-size: 14px; color: var(--text-secondary);">Average Weight per Animal</div>
-                            <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${(totalWeight / totalAnimals).toFixed(2)} kg</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 14px; color: var(--text-secondary);">Average Price per kg</div>
-                            <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(totalRevenue / totalWeight)}/kg</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 14px; color: var(--text-secondary);">Average Sale Value</div>
-                            <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(totalRevenue / meatSales.length)}</div>
-                        </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
+                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #fef3f3 0%, #fed7d7 100%); border-radius: 8px;">
+                        <div style="font-size: 32px; margin-bottom: 8px;">🍖</div>
+                        <div style="font-size: 24px; font-weight: bold;">${totalAnimals}</div>
+                        <div style="font-size: 14px;">Total Animals</div>
+                    </div>
+                    
+                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #fef9c3 0%, #fde047 100%); border-radius: 8px;">
+                        <div style="font-size: 32px; margin-bottom: 8px;">⚖️</div>
+                        <div style="font-size: 24px; font-weight: bold;">${totalWeight.toFixed(2)} kg</div>
+                        <div style="font-size: 14px;">Total Weight</div>
+                    </div>
+                    
+                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-radius: 8px;">
+                        <div style="font-size: 32px; margin-bottom: 8px;">💰</div>
+                        <div style="font-size: 24px; font-weight: bold;">${this.formatCurrency(totalRevenue)}</div>
+                        <div style="font-size: 14px;">Total Revenue</div>
                     </div>
                 </div>
-            ` : ''}
-        </div>
-    `;
-    
-    const contentElement = document.getElementById('meat-sales-content');
-    if (contentElement) {
-        contentElement.innerHTML = content;
-    }
-    
-    const modal = document.getElementById('meat-sales-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-    }
-},
+                
+                <div style="margin-bottom: 32px;">
+                    <h3 style="margin-bottom: 16px; border-bottom: 2px solid var(--glass-border); padding-bottom: 8px;">📋 Product Breakdown</h3>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #e5e7eb;">
+                                    <th style="padding: 12px; text-align: left;">Product</th>
+                                    <th style="padding: 12px; text-align: left;">Animals</th>
+                                    <th style="padding: 12px; text-align: left;">Weight (kg)</th>
+                                    <th style="padding: 12px; text-align: left;">Avg Weight</th>
+                                    <th style="padding: 12px; text-align: left;">Revenue</th>
+                                    <th style="padding: 12px; text-align: left;">Avg Price/kg</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+        `;
+        
+        Object.entries(productBreakdown).forEach(([product, data]) => {
+            const avgWeight = data.animals > 0 ? (data.weight / data.animals).toFixed(2) : 0;
+            const avgPricePerKg = data.weight > 0 ? (data.revenue / data.weight).toFixed(2) : 0;
+            
+            content += `
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px; font-weight: 600;">${product}</td>
+                    <td style="padding: 12px;">${data.animals}</td>
+                    <td style="padding: 12px;">${data.weight.toFixed(2)} kg</td>
+                    <td style="padding: 12px;">${avgWeight} kg/animal</td>
+                    <td style="padding: 12px; font-weight: 600;">${this.formatCurrency(data.revenue)}</td>
+                    <td style="padding: 12px;">${this.formatCurrency(parseFloat(avgPricePerKg))}/kg</td>
+                </tr>
+            `;
+        });
+        
+        content += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        const contentElement = document.getElementById('meat-sales-content');
+        if (contentElement) {
+            contentElement.innerHTML = content;
+        }
+        
+        const modal = document.getElementById('meat-sales-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    },
 
-     printDailyReport() {
+    printDailyReport() {
         const printContent = document.getElementById('daily-report-content').innerHTML;
         const originalContent = document.body.innerHTML;
         
@@ -2844,7 +2382,6 @@ setupFormFieldListeners() {
                     table { width: 100%; border-collapse: collapse; margin: 20px 0; }
                     th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
                     th { background-color: #f8f9fa; font-weight: bold; }
-                    .total { font-weight: bold; color: #2d3748; }
                     .header { text-align: center; margin-bottom: 30px; }
                     @media print {
                         body { padding: 0; }
@@ -2886,7 +2423,6 @@ setupFormFieldListeners() {
                     table { width: 100%; border-collapse: collapse; margin: 20px 0; }
                     th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
                     th { background-color: #f8f9fa; font-weight: bold; }
-                    .total { font-weight: bold; color: #2d3748; }
                     .header { text-align: center; margin-bottom: 30px; }
                     @media print {
                         body { padding: 0; }
@@ -2913,62 +2449,28 @@ setupFormFieldListeners() {
         this.renderModule();
     },
 
-    // Utility methods (keep all existing ones)
-    // Utility methods
     getProductIcon(product) {
         const iconMap = {
-            'broilers-dressed': '🍗',
-            'pork': '🐖',
-            'beef': '🐄',
-            'chicken-parts': '🍗',
-            'goat': '🐐',
-            'lamb': '🐑',
-            'broilers-live': '🐔',
-            'layers': '🐓',
-            'chicks': '🐤',
-            'eggs': '🥚',
-            'tomatoes': '🍅',
-            'peppers': '🌶️',
-            'cucumbers': '🥒',
-            'lettuce': '🥬',
-            'carrots': '🥕',
-            'potatoes': '🥔',
-            'milk': '🥛',
-            'cheese': '🧀',
-            'yogurt': '🥛',
-            'butter': '🧈',
-            'honey': '🍯',
-            'jam': '🍓',
-            'bread': '🍞'
+            'broilers-dressed': '🍗', 'pork': '🐖', 'beef': '🐄', 'chicken-parts': '🍗',
+            'goat': '🐐', 'lamb': '🐑', 'broilers-live': '🐔', 'layers': '🐓',
+            'chicks': '🐤', 'eggs': '🥚', 'tomatoes': '🍅', 'peppers': '🌶️',
+            'cucumbers': '🥒', 'lettuce': '🥬', 'carrots': '🥕', 'potatoes': '🥔',
+            'milk': '🥛', 'cheese': '🧀', 'yogurt': '🥛', 'butter': '🧈',
+            'honey': '🍯', 'jam': '🍓', 'bread': '🍞'
         };
         return iconMap[product] || '📦';
     },
 
     formatProductName(product) {
         const nameMap = {
-            'broilers-dressed': 'Broilers (Dressed)',
-            'pork': 'Pork',
-            'beef': 'Beef',
-            'chicken-parts': 'Chicken Parts',
-            'goat': 'Goat',
-            'lamb': 'Lamb',
-            'broilers-live': 'Broilers (Live)',
-            'layers': 'Layers',
-            'chicks': 'Baby Chicks',
-            'eggs': 'Eggs',
-            'tomatoes': 'Tomatoes',
-            'peppers': 'Peppers',
-            'cucumbers': 'Cucumbers',
-            'lettuce': 'Lettuce',
-            'carrots': 'Carrots',
-            'potatoes': 'Potatoes',
-            'milk': 'Milk',
-            'cheese': 'Cheese',
-            'yogurt': 'Yogurt',
-            'butter': 'Butter',
-            'honey': 'Honey',
-            'jam': 'Jam/Preserves',
-            'bread': 'Bread'
+            'broilers-dressed': 'Broilers (Dressed)', 'pork': 'Pork', 'beef': 'Beef',
+            'chicken-parts': 'Chicken Parts', 'goat': 'Goat', 'lamb': 'Lamb',
+            'broilers-live': 'Broilers (Live)', 'layers': 'Layers', 'chicks': 'Baby Chicks',
+            'eggs': 'Eggs', 'tomatoes': 'Tomatoes', 'peppers': 'Peppers',
+            'cucumbers': 'Cucumbers', 'lettuce': 'Lettuce', 'carrots': 'Carrots',
+            'potatoes': 'Potatoes', 'milk': 'Milk', 'cheese': 'Cheese',
+            'yogurt': 'Yogurt', 'butter': 'Butter', 'honey': 'Honey',
+            'jam': 'Jam/Preserves', 'bread': 'Bread'
         };
         return nameMap[product] || product.charAt(0).toUpperCase() + product.slice(1).replace('-', ' ');
     },
@@ -2982,7 +2484,6 @@ setupFormFieldListeners() {
     },
 
     showNotification(message, type = 'info') {
-        // Create notification element
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
         notification.style.cssText = `
@@ -2997,7 +2498,6 @@ setupFormFieldListeners() {
             animation: slideIn 0.3s ease;
         `;
         
-        // Set background color based on type
         if (type === 'success') {
             notification.style.backgroundColor = '#10b981';
         } else if (type === 'error') {
@@ -3011,7 +2511,6 @@ setupFormFieldListeners() {
         notification.textContent = message;
         document.body.appendChild(notification);
         
-        // Remove after 3 seconds
         setTimeout(() => {
             notification.style.animation = 'slideOut 0.3s ease';
             setTimeout(() => {
@@ -3027,29 +2526,20 @@ setupFormFieldListeners() {
 window.FarmModules = window.FarmModules || {};
 window.FarmModules.SalesRecord = SalesRecordModule;
 
-console.log('✅ Enhanced Sales Records module loaded successfully with Data Broadcaster');
+console.log('✅ CSP Compliant Sales Records module loaded successfully');
 
-// ==================== FIXED REGISTRATION ====================
-// This will properly register with FarmModules framework
+// Registration with FarmModules framework
 (function() {
     const moduleName = 'sales-record';
     console.log(`📦 Registering ${moduleName} module with FarmModules...`);
     
     if (window.FarmModules) {
-        // Method 1: Use registerModule if available
         if (typeof FarmModules.registerModule === 'function') {
             FarmModules.registerModule(moduleName, SalesRecordModule);
             console.log(`✅ ${moduleName} registered via FarmModules.registerModule()`);
-        }
-        // Method 2: Directly add to modules Map
-        else {
-            // Ensure modules Map exists
+        } else {
             FarmModules.modules = FarmModules.modules || new Map();
-            
-            // Add to modules Map
             FarmModules.modules.set(moduleName, SalesRecordModule);
-            
-            // Also set as property for backward compatibility
             FarmModules[moduleName] = SalesRecordModule;
             FarmModules.SalesRecord = SalesRecordModule;
             
@@ -3057,7 +2547,6 @@ console.log('✅ Enhanced Sales Records module loaded successfully with Data Bro
             console.log(`✅ Also available as FarmModules.${moduleName} and FarmModules.SalesRecord`);
         }
         
-        // Verify registration
         console.log(`🔍 Verification: ${moduleName} in modules Map?`, 
                    FarmModules.modules?.has(moduleName));
     } else {
