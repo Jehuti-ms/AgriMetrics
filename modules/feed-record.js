@@ -1227,8 +1227,7 @@ showFeedForm() {
         this.editingRecordId = null;
         
         console.log('✅ Feed-record module cleaned up');
-    }
-},
+    },
 
 // ==================== DEBUG HELPERS ====================
 debugCheckButtons() {
