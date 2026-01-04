@@ -1229,66 +1229,39 @@ showFeedForm() {
         console.log('✅ Feed-record module cleaned up');
     },
 
-// ==================== DEBUG HELPERS ====================
-debugCheckButtons() {
-    console.log('🔍 Debug: Checking buttons...');
-    
-    // Check if quick action buttons exist
-    const buttons = this.element.querySelectorAll('[data-action]');
-    console.log(`Found ${buttons.length} action buttons:`);
-    
-    buttons.forEach(btn => {
-        const action = btn.getAttribute('data-action');
-        const text = btn.textContent.trim();
-        console.log(`  - ${action}: "${text.substring(0, 30)}..."`);
-    });
-    
-    // Specifically check for record-feed button
-    const recordFeedBtn = this.element.querySelector('[data-action="record-feed"]');
-    if (recordFeedBtn) {
-        console.log('✅ Record Feed button found:', recordFeedBtn);
-    } else {
-        console.error('❌ Record Feed button NOT found!');
+    // ==================== DEBUG HELPERS ====================
+    debugCheckButtons() {
+        console.log('🔍 Debug: Checking buttons...');
         
-        // Try to find it by other means
-        const possibleButtons = this.element.querySelectorAll('button');
-        console.log('All buttons found:');
-        possibleButtons.forEach(btn => {
-            if (btn.textContent.includes('Record Feed') || 
-                btn.textContent.includes('📝')) {
-                console.log('  - Possible match:', btn);
-            }
+        // Check if quick action buttons exist
+        const buttons = this.element?.querySelectorAll('[data-action]') || [];
+        console.log(`Found ${buttons.length} action buttons:`);
+        
+        buttons.forEach(btn => {
+            const action = btn.getAttribute('data-action');
+            const text = btn.textContent.trim();
+            console.log(`  - ${action}: "${text.substring(0, 30)}..."`);
         });
+        
+        // Specifically check for record-feed button
+        const recordFeedBtn = this.element?.querySelector('[data-action="record-feed"]');
+        if (recordFeedBtn) {
+            console.log('✅ Record Feed button found:', recordFeedBtn);
+        } else {
+            console.error('❌ Record Feed button NOT found!');
+            
+            // Try to find it by other means
+            const possibleButtons = this.element?.querySelectorAll('button') || [];
+            console.log('All buttons found:');
+            possibleButtons.forEach(btn => {
+                if (btn.textContent.includes('Record Feed') || 
+                    btn.textContent.includes('📝')) {
+                    console.log('  - Possible match:', btn);
+                }
+            });
+        }
     }
-};
-
-// Call this in initialize() for debugging
-initialize() {
-    console.log('🌾 Initializing Feed Records...');
-    
-    this.element = document.getElementById('content-area');
-    if (!this.element) {
-        console.error('❌ Content area not found');
-        return false;
-    }
-
-    // Register with StyleManager if available
-    if (window.StyleManager) {
-        StyleManager.registerModule(this.name, this.element, this);
-    }
-
-    this.loadData();
-    this.renderModule();
-    this.setupEventListeners();
-    this.initialized = true;
-    this.syncStatsWithSharedData();
-    
-    // Debug: Check buttons
-    setTimeout(() => this.debugCheckButtons(), 500);
-    
-    console.log('✅ Feed Records initialized');
-    return true;
-},
+};  // <-- This is the END of FeedRecordModule
 
 // ==================== STYLES ====================
 const feedRecordStyles = `
