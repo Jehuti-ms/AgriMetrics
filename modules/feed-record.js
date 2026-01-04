@@ -357,49 +357,58 @@ const FeedRecordModule = {
         `).join('');
     },
 
-    // ==================== EVENT HANDLERS ====================
+        // ==================== EVENT HANDLERS ====================
     setupEventListeners() {
         this.removeAllEventListeners();
         
         if (!this.element) return;
 
-        // Event delegation for all buttons
+        // FIXED: Event delegation - listen on the entire module container
         this.addEventListener(this.element, 'click', (e) => {
-            const button = e.target.closest('[data-action]');
-            if (!button) return;
-            
-            e.preventDefault();
-            const action = button.getAttribute('data-action');
-            const id = button.getAttribute('data-id');
-            
-            switch(action) {
-                case 'record-feed':
-                    this.scrollToForm();
-                    break;
-                case 'add-stock':
-                    this.showAddStockDialog();
-                    break;
-                case 'adjust-birds':
-                    this.showAdjustBirdsDialog();
-                    break;
-                case 'export-records':
-                    this.exportFeedRecords();
-                    break;
-                case 'edit-record':
-                    if (id) this.editFeedRecord(parseInt(id));
-                    break;
-                case 'delete-record':
-                    if (id) this.deleteFeedRecord(parseInt(id));
-                    break;
-                case 'edit-inventory':
-                    if (id) this.editInventoryItem(parseInt(id));
-                    break;
-                case 'delete-inventory':
-                    if (id) this.deleteInventoryItem(parseInt(id));
-                    break;
-                case 'cancel-edit':
-                    this.cancelEdit();
-                    break;
+            // Check if clicked element or any parent has data-action
+            let target = e.target;
+            while (target && target !== this.element) {
+                if (target.hasAttribute && target.hasAttribute('data-action')) {
+                    const action = target.getAttribute('data-action');
+                    const id = target.getAttribute('data-id');
+                    
+                    console.log(`🌾 Action triggered: ${action}`);
+                    
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    switch(action) {
+                        case 'record-feed':
+                            this.scrollToForm();
+                            break;
+                        case 'add-stock':
+                            this.showAddStockDialog();
+                            break;
+                        case 'adjust-birds':
+                            this.showAdjustBirdsDialog();
+                            break;
+                        case 'export-records':
+                            this.exportFeedRecords();
+                            break;
+                        case 'edit-record':
+                            if (id) this.editFeedRecord(parseInt(id));
+                            break;
+                        case 'delete-record':
+                            if (id) this.deleteFeedRecord(parseInt(id));
+                            break;
+                        case 'edit-inventory':
+                            if (id) this.editInventoryItem(parseInt(id));
+                            break;
+                        case 'delete-inventory':
+                            if (id) this.deleteInventoryItem(parseInt(id));
+                            break;
+                        case 'cancel-edit':
+                            this.cancelEdit();
+                            break;
+                    }
+                    return;
+                }
+                target = target.parentNode;
             }
         });
 
@@ -419,45 +428,84 @@ const FeedRecordModule = {
                 this.cancelEdit();
             });
         }
-    },
-
-    addEventListener(element, event, handler) {
-        element.addEventListener(event, handler);
-        this.eventListeners.push({ element, event, handler });
-    },
-
-    removeAllEventListeners() {
-        this.eventListeners.forEach(({ element, event, handler }) => {
-            element.removeEventListener(event, handler);
-        });
-        this.eventListeners = [];
-    },
-
-    // ==================== FORM HANDLING ====================
-        scrollToForm() {
-        const formSection = this.element.querySelector('.form-section');
-        if (formSection) {
-            formSection.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'start' 
+        
+        // DIRECT event listener as backup for Record Feed button
+        const recordFeedBtn = this.element.querySelector('[data-action="record-feed"]');
+        if (recordFeedBtn) {
+            this.addEventListener(recordFeedBtn, 'click', (e) => {
+                e.preventDefault();
+                console.log('📝 Record Feed button clicked (direct listener)');
+                this.scrollToForm();
             });
+        }
+    },
+    
+    // ==================== FORM HANDLING ====================
+    scrollToForm() {
+        console.log('🎯 scrollToForm() called');
+        
+        // Try multiple ways to find the form section
+        let formSection = this.element.querySelector('.form-section');
+        
+        if (!formSection) {
+            console.log('🔍 Trying alternative selectors...');
+            // Try other selectors
+            formSection = this.element.querySelector('#feed-record-form')?.parentElement;
+        }
+        
+        if (!formSection) {
+            formSection = this.element.querySelector('form')?.parentElement;
+        }
+        
+        if (formSection) {
+            console.log('✅ Form section found:', formSection);
+            
+            // Ensure it's visible
+            formSection.style.display = 'block';
+            formSection.style.visibility = 'visible';
+            
+            // Scroll to it
+            const scrollOptions = {
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'nearest'
+            };
+            
+            formSection.scrollIntoView(scrollOptions);
             
             // Add highlight effect
             formSection.classList.add('highlight');
             
-            // Focus on first input
+            // Focus on the feed type select after a short delay
             setTimeout(() => {
-                const feedTypeSelect = this.element.querySelector('#feed-type');
-                if (feedTypeSelect) feedTypeSelect.focus();
-            }, 300);
+                const feedTypeSelect = document.getElementById('feed-type');
+                if (feedTypeSelect) {
+                    feedTypeSelect.focus();
+                    console.log('🎯 Focused on feed type select');
+                } else {
+                    console.log('⚠️ Could not find feed-type element');
+                }
+            }, 600);
             
             // Remove highlight after animation
             setTimeout(() => {
                 formSection.classList.remove('highlight');
-            }, 1500);
+            }, 2000);
+        } else {
+            console.error('❌ Could not find form section!');
+            console.log('🔍 Available elements in module:', this.element.innerHTML);
+            
+            // Fallback: alert or show notification
+            this.showNotification('Please fill out the form below to record feed usage.', 'info');
+            
+            // Try to find any form in the document
+            const anyForm = document.querySelector('form');
+            if (anyForm) {
+                anyForm.scrollIntoView({ behavior: 'smooth' });
+            }
         }
     },
-
+    
     populateEditForm() {
         const record = this.feedRecords.find(r => r.id === this.editingRecordId);
         if (!record) {
