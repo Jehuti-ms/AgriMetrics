@@ -1623,13 +1623,16 @@ const SalesRecordModule = {
         return priceLabels[unit] || 'per unit';
     },
 
-    handleQuickProductChange() {
-        const productSelect = document.getElementById('quick-product');
-        const selectedValue = productSelect.value;
-        const unitSelect = document.getElementById('quick-unit');
-        
-        if (!unitSelect || unitSelect.value) return;
-        
+handleQuickProductChange() {
+    const productSelect = document.getElementById('quick-product');
+    const selectedValue = productSelect.value;
+    const unitSelect = document.getElementById('quick-unit');
+    
+    // FIXED: Simple check for unitSelect existence
+    if (!unitSelect) return;
+    
+    // Only set default if unit is empty
+    if (unitSelect.value === '') {
         if (selectedValue === 'eggs') {
             unitSelect.value = 'dozen';
         } else if (selectedValue === 'milk') {
@@ -1641,7 +1644,8 @@ const SalesRecordModule = {
         } else {
             unitSelect.value = 'kg';
         }
-    },
+    }
+},
 
     showSaleModal() {
         this.hideAllModals();
