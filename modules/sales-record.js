@@ -773,7 +773,7 @@ debugModules() {
         }
     },
 
-  renderProductionItems() {
+ renderProductionItems() {
     // Get production data
     const productionRecords = JSON.parse(localStorage.getItem('farm-production') || '[]');
     const sales = window.FarmModules.appData.sales || [];
@@ -786,7 +786,7 @@ debugModules() {
                     <h3 style="color: #475569; margin-bottom: 8px;">No Production Items</h3>
                     <p style="color: #64748b; margin-bottom: 16px;">Add production records to sell them here</p>
                     <button class="btn-primary" 
-                            onclick="window.FarmModules.SalesRecord.navigateToProduction()" 
+                            id="go-to-production-btn"
                             style="background: #0ea5e9; border: none; padding: 10px 20px; border-radius: 8px; color: white; font-weight: 500; cursor: pointer;">
                         ➕ Go to Production Module
                     </button>
@@ -810,7 +810,6 @@ debugModules() {
                     <p style="color: #0c4a6e; margin: 4px 0 0 0; font-size: 14px;">Sell directly from production records</p>
                 </div>
                 <button class="btn-primary" id="from-production-btn-2" 
-                        onclick="window.FarmModules.SalesRecord.showProductionItems()"
                         style="background: #0ea5e9;">
                     Sell from Production
                 </button>
@@ -836,13 +835,12 @@ debugModules() {
                     <span style="color: #0ea5e9;">💡</span>
                     <div style="font-size: 13px; color: #0369a1;">
                         Selling from production helps track inventory and source of goods. 
-                        <a href="#" onclick="window.FarmModules.SalesRecord.showProductionItems(); return false;" 
+                        <a href="#" class="browse-production-items" 
                            style="color: #0ea5e9; text-decoration: none; font-weight: 500;">Browse available items →</a>
                     </div>
                 </div>
                 <div style="margin-top: 8px; display: flex; justify-content: flex-end;">
-                    <button class="btn-outline" 
-                            onclick="window.FarmModules.SalesRecord.navigateToProduction()"
+                    <button class="btn-outline add-production-btn"
                             style="background: white; color: #0ea5e9; border: 1px solid #0ea5e9; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">
                         ➕ Add New Production
                     </button>
@@ -1524,6 +1522,35 @@ debugModules() {
             }
         });
 
+        // Production navigation buttons (delegated)
+    document.addEventListener('click', (e) => {
+        const goToProdBtn = e.target.closest('#go-to-production-btn');
+        const addProdBtn = e.target.closest('.add-production-btn');
+        const browseProdLink = e.target.closest('.browse-production-items');
+        
+        if (goToProdBtn || addProdBtn) {
+            e.preventDefault();
+            this.navigateToProduction();
+        }
+        
+        if (browseProdLink) {
+            e.preventDefault();
+            this.showProductionItems();
+        }
+    });
+    
+    // Sell production item buttons (delegated)
+    document.addEventListener('click', (e) => {
+        const sellItemBtn = e.target.closest('.sell-production-item-btn');
+        if (sellItemBtn) {
+            e.preventDefault();
+            const itemId = sellItemBtn.getAttribute('data-item-id');
+            if (itemId) {
+                this.selectProductionItem(itemId);
+            }
+        }
+    });
+
         // FIXED: Single delegated event listener for edit/delete buttons
         document.addEventListener('click', (e) => {
             const editBtn = e.target.closest('.edit-sale-btn');
@@ -2162,7 +2189,7 @@ setupFormFieldListeners() {
                     <div style="display: flex; gap: 8px;">
                         <button style="flex: 1; padding: 8px 12px; background: var(--primary-color); color: white; 
                                 border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px;"
-                                onclick="window.FarmModules.SalesRecord.selectProductionItem('${item.id}')">
+                                data-item-id="${item.id}" class="sell-production-item-btn">
                             Sell This Item
                         </button>
                     </div>
