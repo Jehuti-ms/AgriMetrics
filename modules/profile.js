@@ -658,7 +658,7 @@ const ProfileModule = {
         });
 
         // ✅ ADD: Support section event listeners
-    document.addEventListener('click', (e) => {
+   /* document.addEventListener('click', (e) => {
         const button = e.target.closest('button[data-action]');
         if (!button) return;
         
@@ -686,6 +686,47 @@ const ProfileModule = {
                 break;
         }
     });
+    }, */
+
+                // ✅ BEST: Event delegation on module element
+        this.element.addEventListener('click', (e) => {
+            const button = e.target.closest('button[data-action]');
+            if (!button) return;
+            
+            e.preventDefault();
+            const action = button.getAttribute('data-action');
+            console.log('👤 Profile module action:', action);
+            
+            switch(action) {
+                case 'copy-email':
+                    this.copyToClipboard('farm-support@yourcompany.com');
+                    break;
+                    
+                case 'open-slack':
+                    this.openSlackChannel();
+                    break;
+                    
+                case 'open-guide':
+                    this.openQuickGuide();
+                    break;
+                    
+                case 'download-guide':
+                    this.downloadQuickGuide();
+                    break;
+                    
+                case 'watch-tutorials':
+                    this.openYouTubeTutorials();
+                    break;
+                    
+                // Also handle other profile module actions
+                case 'record-feed':
+                case 'add-stock':
+                case 'adjust-birds':
+                case 'export-records':
+                    // Handle other actions if needed
+                    break;
+            }
+        });
     },
 
     // ==================== FORM VALIDATION ====================
