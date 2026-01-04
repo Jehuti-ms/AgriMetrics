@@ -150,7 +150,7 @@ const FeedRecordModule = {
         }
     },
 
-    // ==================== MODULE RENDERING ====================
+       // ==================== MODULE RENDERING ====================
     renderModule() {
         if (!this.element) return;
 
@@ -224,7 +224,8 @@ const FeedRecordModule = {
                     </div>
                 </div>
 
-                <div class="form-section">
+                <!-- ADDED 'form-section' CLASS HERE -->
+                <div class="form-section glass-card">
                     <h2>${formTitle}</h2>
                     <form id="feed-record-form" class="feed-form">
                         <div class="form-row">
@@ -433,12 +434,27 @@ const FeedRecordModule = {
     },
 
     // ==================== FORM HANDLING ====================
-    scrollToForm() {
+        scrollToForm() {
         const formSection = this.element.querySelector('.form-section');
         if (formSection) {
-            formSection.scrollIntoView({ behavior: 'smooth' });
+            formSection.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
+            
+            // Add highlight effect
             formSection.classList.add('highlight');
-            setTimeout(() => formSection.classList.remove('highlight'), 1000);
+            
+            // Focus on first input
+            setTimeout(() => {
+                const feedTypeSelect = this.element.querySelector('#feed-type');
+                if (feedTypeSelect) feedTypeSelect.focus();
+            }, 300);
+            
+            // Remove highlight after animation
+            setTimeout(() => {
+                formSection.classList.remove('highlight');
+            }, 1500);
         }
     },
 
