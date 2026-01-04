@@ -1,13 +1,6 @@
 // modules/feed-record.js - COMPLETE WITH EDIT FUNCTIONALITY
 console.log('Loading feed-record module...');
 
-// At the TOP of feed-record.js (after console.log)
-/*const Broadcaster = window.DataBroadcaster || {
-    recordCreated: () => {},
-    recordUpdated: () => {},
-    recordDeleted: () => {}
-};*/
-
 const FeedRecordModule = {
     name: 'feed-record',
     initialized: false,
