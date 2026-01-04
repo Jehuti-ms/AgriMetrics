@@ -1435,9 +1435,9 @@ try {
                 }
                 
                 this.updateMeatLabels();
-                
-                document.getElementById('standard-quantity')?.value = '';
-                document.getElementById('standard-price')?.value = '';
+
+                document.getElementById('standard-quantity') && (document.getElementById('standard-quantity').value = '');
+                document.getElementById('standard-price') && (document.getElementById('standard-price').value = '');
             } else {
                 if (meatSection) meatSection.style.display = 'none';
                 if (meatSummary) meatSummary.style.display = 'none';
