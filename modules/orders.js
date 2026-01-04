@@ -577,6 +577,37 @@ debugButtons() {
         console.log(`- "${btn.getAttribute('data-action')}":`, btn.textContent.trim().substring(0, 30) + '...');
     });
 },
+
+    removeEventListeners() {
+    // Simple cleanup method - just needs to exist
+    console.log('🔄 Cleaning up event listeners');
+    
+    // Remove any stored event handlers
+    if (this._clickHandler) {
+        this.element.removeEventListener('click', this._clickHandler);
+        this._clickHandler = null;
+    }
+    if (this._inputHandler) {
+        this.element.removeEventListener('input', this._inputHandler);
+        this._inputHandler = null;
+    }
+    if (this._changeHandler) {
+        this.element.removeEventListener('change', this._changeHandler);
+        this._changeHandler = null;
+    }
+    if (this._submitHandler) {
+        this.element.removeEventListener('submit', this._submitHandler);
+        this._submitHandler = null;
+    }
+    if (this._mouseEnterHandler) {
+        this.element.removeEventListener('mouseenter', this._mouseEnterHandler, true);
+        this._mouseEnterHandler = null;
+    }
+    if (this._mouseLeaveHandler) {
+        this.element.removeEventListener('mouseleave', this._mouseLeaveHandler, true);
+        this._mouseLeaveHandler = null;
+    }
+},
     
    handleElementClick(event) {
     console.log('🎯 Click event fired on:', event.target.tagName, event.target.className);
