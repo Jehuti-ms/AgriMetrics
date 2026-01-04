@@ -1227,41 +1227,8 @@ showFeedForm() {
         this.editingRecordId = null;
         
         console.log('✅ Feed-record module cleaned up');
-    },
-
-    // ==================== DEBUG HELPERS ====================
-    debugCheckButtons() {
-        console.log('🔍 Debug: Checking buttons...');
-        
-        // Check if quick action buttons exist
-        const buttons = this.element?.querySelectorAll('[data-action]') || [];
-        console.log(`Found ${buttons.length} action buttons:`);
-        
-        buttons.forEach(btn => {
-            const action = btn.getAttribute('data-action');
-            const text = btn.textContent.trim();
-            console.log(`  - ${action}: "${text.substring(0, 30)}..."`);
-        });
-        
-        // Specifically check for record-feed button
-        const recordFeedBtn = this.element?.querySelector('[data-action="record-feed"]');
-        if (recordFeedBtn) {
-            console.log('✅ Record Feed button found:', recordFeedBtn);
-        } else {
-            console.error('❌ Record Feed button NOT found!');
-            
-            // Try to find it by other means
-            const possibleButtons = this.element?.querySelectorAll('button') || [];
-            console.log('All buttons found:');
-            possibleButtons.forEach(btn => {
-                if (btn.textContent.includes('Record Feed') || 
-                    btn.textContent.includes('📝')) {
-                    console.log('  - Possible match:', btn);
-                }
-            });
-        }
     }
-};  // <-- This is the END of FeedRecordModule
+};
 
 // ==================== STYLES ====================
 const feedRecordStyles = `
