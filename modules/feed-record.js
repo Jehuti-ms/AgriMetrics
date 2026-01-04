@@ -1,4 +1,4 @@
-// modules/feed-record.js - COMPLETE CSP-COMPLIANT VERSION WITH ALL FUNCTIONALITY
+// modules/feed-record.js - COMPLETE WORKING VERSION
 console.log('🌾 Loading feed-record module...');
 
 const FeedRecordModule = {
@@ -9,10 +9,8 @@ const FeedRecordModule = {
     birdsStock: 1000,
     element: null,
     eventListeners: [],
-    isEditing: false,
-    editingRecordId: null,
 
-    // ==================== CORE FUNCTIONS ====================
+    // ==================== INITIALIZATION ====================
     initialize() {
         console.log('🌾 Initializing Feed Records...');
         
@@ -29,20 +27,6 @@ const FeedRecordModule = {
         
         console.log('✅ Feed Records initialized');
         return true;
-    },
-
-    onThemeChange(theme) {
-        console.log(`Feed Records updating for theme: ${theme}`);
-        this.applyThemeStyles(theme);
-    },
-
-    cleanup() {
-        this.removeAllEventListeners();
-        this.initialized = false;
-        this.element = null;
-        this.isEditing = false;
-        this.editingRecordId = null;
-        console.log('🧹 Feed-record module cleaned up');
     },
 
     // ==================== DATA MANAGEMENT ====================
@@ -137,26 +121,29 @@ const FeedRecordModule = {
             localStorage.setItem('farm-feed-records', JSON.stringify(this.feedRecords));
             localStorage.setItem('farm-feed-inventory', JSON.stringify(this.feedInventory));
             localStorage.setItem('farm-birds-stock', this.birdsStock.toString());
-            
-            // Broadcast data change
-            this.broadcastDataChange('feed-record', {
-                records: this.feedRecords,
-                inventory: this.feedInventory,
-                birdsStock: this.birdsStock
-            });
-            
         } catch (error) {
             console.error('❌ Error saving feed data:', error);
         }
     },
 
-       // ==================== MODULE RENDERING ====================
+    // ==================== EVENT LISTENER MANAGEMENT ====================
+    addEventListener(element, event, handler) {
+        element.addEventListener(event, handler);
+        this.eventListeners.push({ element, event, handler });
+    },
+
+    removeAllEventListeners() {
+        this.eventListeners.forEach(({ element, event, handler }) => {
+            element.removeEventListener(event, handler);
+        });
+        this.eventListeners = [];
+    },
+
+    // ==================== MODULE RENDERING ====================
     renderModule() {
         if (!this.element) return;
 
         const stats = this.calculateStats();
-        const formTitle = this.isEditing ? 'Edit Feed Record' : 'Record Feed Usage';
-        const submitButtonText = this.isEditing ? 'Update Record' : 'Save Record';
 
         this.element.innerHTML = `
             <div class="feed-record-module">
@@ -224,9 +211,8 @@ const FeedRecordModule = {
                     </div>
                 </div>
 
-                <!-- ADDED 'form-section' CLASS HERE -->
-                <div class="form-section glass-card">
-                    <h2>${formTitle}</h2>
+                <div class="form-section">
+                    <h2>Record Feed Usage</h2>
                     <form id="feed-record-form" class="feed-form">
                         <div class="form-row">
                             <div class="form-group">
@@ -249,10 +235,7 @@ const FeedRecordModule = {
                             <label>Notes</label>
                             <textarea id="feed-notes" rows="2" placeholder="Feeding details..."></textarea>
                         </div>
-                        <div class="form-buttons">
-                            <button type="submit" class="submit-button" id="feed-submit-btn">${submitButtonText}</button>
-                            ${this.isEditing ? '<button type="button" class="btn-outline" id="cancel-edit-btn">Cancel</button>' : ''}
-                        </div>
+                        <button type="submit" class="submit-button">Save Record</button>
                     </form>
                 </div>
 
@@ -267,11 +250,6 @@ const FeedRecordModule = {
                 </div>
             </div>
         `;
-
-        // Populate form if editing
-        if (this.isEditing && this.editingRecordId) {
-            this.populateEditForm();
-        }
 
         this.setupEventListeners();
     },
@@ -315,14 +293,6 @@ const FeedRecordModule = {
                             <span class="detail-value">${this.formatCurrency(item.costPerKg)}/kg</span>
                         </div>
                     </div>
-                    <div class="inventory-actions">
-                        <button class="btn-icon" data-action="edit-inventory" data-id="${item.id}" title="Edit Inventory">
-                            ✏️
-                        </button>
-                        <button class="btn-icon" data-action="delete-inventory" data-id="${item.id}" title="Delete Inventory">
-                            🗑️
-                        </button>
-                    </div>
                 </div>
             `;
         }).join('');
@@ -333,8 +303,8 @@ const FeedRecordModule = {
             return '<div class="no-records">No feed records yet. Record your first feed usage!</div>';
         }
 
-        return this.feedRecords.slice(0, 10).map(record => `
-            <div class="record-item" data-id="${record.id}">
+        return this.feedRecords.slice(0, 5).map(record => `
+            <div class="record-item">
                 <div class="record-header">
                     <div class="record-type">${record.feedType.charAt(0).toUpperCase() + record.feedType.slice(1)} Feed</div>
                     <div class="record-date">${record.date}</div>
@@ -345,70 +315,39 @@ const FeedRecordModule = {
                     <div class="detail">${this.formatCurrency(record.cost)}</div>
                 </div>
                 ${record.notes ? `<div class="record-notes">${record.notes}</div>` : ''}
-                <div class="record-actions">
-                    <button class="btn-icon" data-action="edit-record" data-id="${record.id}" title="Edit Record">
-                        ✏️
-                    </button>
-                    <button class="btn-icon" data-action="delete-record" data-id="${record.id}" title="Delete Record">
-                        🗑️
-                    </button>
-                </div>
             </div>
         `).join('');
     },
 
-        // ==================== EVENT HANDLERS ====================
+    // ==================== EVENT HANDLERS ====================
     setupEventListeners() {
         this.removeAllEventListeners();
         
         if (!this.element) return;
 
-        // FIXED: Event delegation - listen on the entire module container
+        // Main event delegation
         this.addEventListener(this.element, 'click', (e) => {
-            // Check if clicked element or any parent has data-action
-            let target = e.target;
-            while (target && target !== this.element) {
-                if (target.hasAttribute && target.hasAttribute('data-action')) {
-                    const action = target.getAttribute('data-action');
-                    const id = target.getAttribute('data-id');
-                    
-                    console.log(`🌾 Action triggered: ${action}`);
-                    
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    switch(action) {
-                        case 'record-feed':
-                            this.scrollToForm();
-                            break;
-                        case 'add-stock':
-                            this.showAddStockDialog();
-                            break;
-                        case 'adjust-birds':
-                            this.showAdjustBirdsDialog();
-                            break;
-                        case 'export-records':
-                            this.exportFeedRecords();
-                            break;
-                        case 'edit-record':
-                            if (id) this.editFeedRecord(parseInt(id));
-                            break;
-                        case 'delete-record':
-                            if (id) this.deleteFeedRecord(parseInt(id));
-                            break;
-                        case 'edit-inventory':
-                            if (id) this.editInventoryItem(parseInt(id));
-                            break;
-                        case 'delete-inventory':
-                            if (id) this.deleteInventoryItem(parseInt(id));
-                            break;
-                        case 'cancel-edit':
-                            this.cancelEdit();
-                            break;
-                    }
-                    return;
-                }
-                target = target.parentNode;
+            const button = e.target.closest('[data-action]');
+            if (!button) return;
+            
+            e.preventDefault();
+            const action = button.getAttribute('data-action');
+            
+            console.log(`🌾 Action clicked: ${action}`);
+            
+            switch(action) {
+                case 'record-feed':
+                    this.scrollToForm();
+                    break;
+                case 'add-stock':
+                    this.showAddStockDialog();
+                    break;
+                case 'adjust-birds':
+                    this.showAdjustBirdsDialog();
+                    break;
+                case 'export-records':
+                    this.exportFeedRecords();
+                    break;
             }
         });
 
@@ -420,109 +359,100 @@ const FeedRecordModule = {
                 this.saveFeedRecord();
             });
         }
-
-        // Cancel button
-        const cancelBtn = this.element.querySelector('#cancel-edit-btn');
-        if (cancelBtn) {
-            this.addEventListener(cancelBtn, 'click', () => {
-                this.cancelEdit();
-            });
-        }
-        
-        // DIRECT event listener as backup for Record Feed button
-        const recordFeedBtn = this.element.querySelector('[data-action="record-feed"]');
-        if (recordFeedBtn) {
-            this.addEventListener(recordFeedBtn, 'click', (e) => {
-                e.preventDefault();
-                console.log('📝 Record Feed button clicked (direct listener)');
-                this.scrollToForm();
-            });
-        }
     },
-    
-    // ==================== FORM HANDLING ====================
+
+    // ==================== ACTIONS ====================
     scrollToForm() {
         console.log('🎯 scrollToForm() called');
         
-        // Try multiple ways to find the form section
-        let formSection = this.element.querySelector('.form-section');
-        
-        if (!formSection) {
-            console.log('🔍 Trying alternative selectors...');
-            // Try other selectors
-            formSection = this.element.querySelector('#feed-record-form')?.parentElement;
-        }
-        
-        if (!formSection) {
-            formSection = this.element.querySelector('form')?.parentElement;
-        }
-        
+        const formSection = this.element.querySelector('.form-section');
         if (formSection) {
-            console.log('✅ Form section found:', formSection);
+            console.log('✅ Found form section, scrolling...');
             
-            // Ensure it's visible
-            formSection.style.display = 'block';
-            formSection.style.visibility = 'visible';
+            // Visual feedback on button click
+            const recordFeedBtn = this.element.querySelector('[data-action="record-feed"]');
+            if (recordFeedBtn) {
+                recordFeedBtn.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    recordFeedBtn.style.transform = '';
+                }, 200);
+            }
             
-            // Scroll to it
-            const scrollOptions = {
-                behavior: 'smooth',
-                block: 'center',
-                inline: 'nearest'
-            };
+            // Scroll to form
+            formSection.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
             
-            formSection.scrollIntoView(scrollOptions);
-            
-            // Add highlight effect
+            // Highlight form
             formSection.classList.add('highlight');
-            
-            // Focus on the feed type select after a short delay
-            setTimeout(() => {
-                const feedTypeSelect = document.getElementById('feed-type');
-                if (feedTypeSelect) {
-                    feedTypeSelect.focus();
-                    console.log('🎯 Focused on feed type select');
-                } else {
-                    console.log('⚠️ Could not find feed-type element');
-                }
-            }, 600);
-            
-            // Remove highlight after animation
             setTimeout(() => {
                 formSection.classList.remove('highlight');
             }, 2000);
+            
+            // Focus on first input
+            setTimeout(() => {
+                const feedTypeSelect = this.element.querySelector('#feed-type');
+                if (feedTypeSelect) {
+                    feedTypeSelect.focus();
+                    console.log('🎯 Focused on feed type select');
+                }
+            }, 500);
         } else {
-            console.error('❌ Could not find form section!');
-            console.log('🔍 Available elements in module:', this.element.innerHTML);
-            
-            // Fallback: alert or show notification
-            this.showNotification('Please fill out the form below to record feed usage.', 'info');
-            
-            // Try to find any form in the document
-            const anyForm = document.querySelector('form');
-            if (anyForm) {
-                anyForm.scrollIntoView({ behavior: 'smooth' });
-            }
+            console.error('❌ Form section not found');
         }
     },
-    
-    populateEditForm() {
-        const record = this.feedRecords.find(r => r.id === this.editingRecordId);
-        if (!record) {
-            this.showNotification('Record not found', 'error');
-            this.cancelEdit();
+
+    showAddStockDialog() {
+        const feedType = prompt('Enter feed type (starter/grower/finisher/layer):');
+        if (!feedType) return;
+        
+        const quantity = parseFloat(prompt(`Enter quantity to add to ${feedType} (kg):`, '0'));
+        if (!quantity || quantity <= 0) {
+            this.showNotification('Invalid quantity', 'error');
             return;
         }
 
-        const feedTypeSelect = this.element.querySelector('#feed-type');
-        const quantityInput = this.element.querySelector('#feed-quantity');
-        const notesTextarea = this.element.querySelector('#feed-notes');
-        const submitBtn = this.element.querySelector('#feed-submit-btn');
+        this.addToInventory(feedType, quantity);
+    },
 
-        if (feedTypeSelect) feedTypeSelect.value = record.feedType;
-        if (quantityInput) quantityInput.value = record.quantity;
-        if (notesTextarea) notesTextarea.value = record.notes || '';
-        if (submitBtn) submitBtn.textContent = 'Update Record';
+    showAdjustBirdsDialog() {
+        const newCount = parseInt(prompt(`Current birds: ${this.birdsStock}\nEnter new bird count:`, this.birdsStock.toString()));
+        if (!newCount || newCount < 0) {
+            this.showNotification('Invalid bird count', 'error');
+            return;
+        }
+
+        this.adjustBirdCount(newCount);
+    },
+
+    addToInventory(feedType, quantity) {
+        const normalizedFeedType = feedType.toLowerCase();
+        const item = this.feedInventory.find(i => i.feedType === normalizedFeedType);
+        
+        if (item) {
+            item.currentStock += quantity;
+        } else {
+            this.feedInventory.push({
+                id: Date.now(),
+                feedType: normalizedFeedType,
+                currentStock: quantity,
+                unit: 'kg',
+                costPerKg: 2.5,
+                minStock: 20
+            });
+        }
+        
+        this.saveData();
+        this.renderModule();
+        this.showNotification(`Added ${quantity}kg to ${feedType} inventory!`, 'success');
+    },
+
+    adjustBirdCount(newCount) {
+        this.birdsStock = newCount;
+        this.saveData();
+        this.renderModule();
+        this.showNotification(`Bird count adjusted to ${newCount}!`, 'success');
     },
 
     saveFeedRecord() {
@@ -542,14 +472,6 @@ const FeedRecordModule = {
             return;
         }
 
-        if (this.isEditing && this.editingRecordId) {
-            this.updateFeedRecord(this.editingRecordId, feedType, quantity, notes);
-        } else {
-            this.createFeedRecord(feedType, quantity, notes);
-        }
-    },
-
-    createFeedRecord(feedType, quantity, notes) {
         if (inventoryItem.currentStock < quantity) {
             this.showNotification(`Insufficient stock! Only ${inventoryItem.currentStock}kg available.`, 'error');
             return;
@@ -572,199 +494,18 @@ const FeedRecordModule = {
         // Save record
         this.feedRecords.unshift(newRecord);
         this.saveData();
+        
+        // Update UI
         this.renderModule();
-        this.syncStatsWithSharedData();
+        
+        // Reset form
+        this.element.querySelector('#feed-record-form').reset();
         
         this.showNotification(`Recorded ${quantity}kg of ${feedType} feed usage!`, 'success');
     },
 
-    editFeedRecord(recordId) {
-        this.isEditing = true;
-        this.editingRecordId = recordId;
-        this.renderModule();
-    },
-
-    updateFeedRecord(recordId, feedType, quantity, notes) {
-        const recordIndex = this.feedRecords.findIndex(r => r.id === recordId);
-        if (recordIndex === -1) {
-            this.showNotification('Record not found', 'error');
-            this.cancelEdit();
-            return;
-        }
-
-        const oldRecord = this.feedRecords[recordIndex];
-        const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
-        
-        if (!inventoryItem) {
-            this.showNotification('Invalid feed type selected', 'error');
-            return;
-        }
-
-        // Calculate stock adjustment
-        const stockAdjustment = oldRecord.quantity - quantity;
-        const newStock = inventoryItem.currentStock + stockAdjustment;
-
-        if (newStock < 0) {
-            this.showNotification(`Cannot adjust stock below zero!`, 'error');
-            return;
-        }
-
-        // Update inventory
-        inventoryItem.currentStock = newStock;
-
-        // Update record
-        const updatedRecord = {
-            ...oldRecord,
-            feedType,
-            quantity,
-            cost: quantity * inventoryItem.costPerKg,
-            notes,
-            updatedAt: new Date().toISOString()
-        };
-
-        this.feedRecords[recordIndex] = updatedRecord;
-        this.saveData();
-        this.cancelEdit();
-        this.renderModule();
-        this.syncStatsWithSharedData();
-        
-        this.showNotification(`Feed record updated!`, 'success');
-    },
-
-    deleteFeedRecord(recordId) {
-        if (!confirm('Are you sure you want to delete this feed record?')) {
-            return;
-        }
-
-        const record = this.feedRecords.find(r => r.id === recordId);
-        if (!record) return;
-
-        // Return stock to inventory
-        const inventoryItem = this.feedInventory.find(item => item.feedType === record.feedType);
-        if (inventoryItem) {
-            inventoryItem.currentStock += record.quantity;
-        }
-
-        // Remove record
-        this.feedRecords = this.feedRecords.filter(r => r.id !== recordId);
-        this.saveData();
-        this.renderModule();
-        this.syncStatsWithSharedData();
-        
-        this.showNotification('Feed record deleted!', 'success');
-    },
-
-    cancelEdit() {
-        this.isEditing = false;
-        this.editingRecordId = null;
-        this.renderModule();
-    },
-
-    // ==================== INVENTORY MANAGEMENT ====================
-    showAddStockDialog() {
-        const feedType = prompt('Enter feed type (starter/grower/finisher/layer):');
-        if (!feedType) return;
-        
-        const quantity = parseFloat(prompt(`Enter quantity to add to ${feedType} (kg):`, '0'));
-        if (!quantity || quantity <= 0) {
-            this.showNotification('Invalid quantity', 'error');
-            return;
-        }
-
-        this.addToInventory(feedType, quantity);
-    },
-
-    editInventoryItem(itemId) {
-        const item = this.feedInventory.find(i => i.id === itemId);
-        if (!item) {
-            this.showNotification('Inventory item not found', 'error');
-            return;
-        }
-
-        const newCost = parseFloat(prompt(`Current cost: ${item.costPerKg}/kg\nEnter new cost per kg:`, item.costPerKg.toString()));
-        const newMinStock = parseInt(prompt(`Current min stock: ${item.minStock}kg\nEnter new minimum stock:`, item.minStock.toString()));
-
-        if (newCost && newCost > 0) {
-            item.costPerKg = newCost;
-        }
-        if (newMinStock && newMinStock >= 0) {
-            item.minStock = newMinStock;
-        }
-
-        this.saveData();
-        this.renderModule();
-        this.showNotification('Inventory item updated!', 'success');
-    },
-
-    deleteInventoryItem(itemId) {
-        const item = this.feedInventory.find(i => i.id === itemId);
-        if (!item) return;
-
-        if (item.currentStock > 0) {
-            if (!confirm(`This inventory item has ${item.currentStock}kg remaining. Are you sure you want to delete it?`)) {
-                return;
-            }
-        }
-
-        this.feedInventory = this.feedInventory.filter(i => i.id !== itemId);
-        this.saveData();
-        this.renderModule();
-        this.showNotification('Inventory item deleted!', 'success');
-    },
-
-    addToInventory(feedType, quantity) {
-        const normalizedFeedType = feedType.toLowerCase();
-        const item = this.feedInventory.find(i => i.feedType === normalizedFeedType);
-        
-        if (item) {
-            item.currentStock += quantity;
-        } else {
-            this.feedInventory.push({
-                id: Date.now(),
-                feedType: normalizedFeedType,
-                currentStock: quantity,
-                unit: 'kg',
-                costPerKg: 2.5,
-                minStock: 20
-            });
-        }
-        
-        this.saveData();
-        this.renderModule();
-        this.syncStatsWithSharedData();
-        this.showNotification(`Added ${quantity}kg to ${feedType} inventory!`, 'success');
-    },
-
-    // ==================== BIRD MANAGEMENT ====================
-    showAdjustBirdsDialog() {
-        const newCount = parseInt(prompt(`Current birds: ${this.birdsStock}\nEnter new bird count:`, this.birdsStock.toString()));
-        if (!newCount || newCount < 0) {
-            this.showNotification('Invalid bird count', 'error');
-            return;
-        }
-
-        this.adjustBirdCount(newCount);
-    },
-
-    adjustBirdCount(newCount) {
-        this.birdsStock = newCount;
-        this.saveData();
-        this.renderModule();
-        this.syncStatsWithSharedData();
-        this.showNotification(`Bird count adjusted to ${newCount}!`, 'success');
-    },
-
-    // ==================== EXPORT ====================
     exportFeedRecords() {
-        const data = {
-            records: this.feedRecords,
-            inventory: this.feedInventory,
-            stats: this.calculateStats(),
-            birdsStock: this.birdsStock,
-            exportDate: new Date().toISOString()
-        };
-
-        const dataStr = JSON.stringify(data, null, 2);
+        const dataStr = JSON.stringify(this.feedRecords, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(dataBlob);
         const link = document.createElement('a');
@@ -779,32 +520,6 @@ const FeedRecordModule = {
     },
 
     // ==================== UTILITIES ====================
-    getTypeIcon(type) {
-        const icons = {
-            'news': '📰',
-            'update': '🔄',
-            'alert': '⚠️',
-            'announcement': '📢',
-            'default': '📄'
-        };
-        return icons[type] || icons.default;
-    },
-
-    applyThemeStyles(theme) {
-        const root = document.documentElement;
-        if (theme === 'dark') {
-            root.style.setProperty('--text-primary', '#ffffff');
-            root.style.setProperty('--text-secondary', '#b0b0b0');
-            root.style.setProperty('--bg-primary', '#1a1a1a');
-            root.style.setProperty('--bg-secondary', '#2a2a2a');
-        } else {
-            root.style.setProperty('--text-primary', '#1a1a1a');
-            root.style.setProperty('--text-secondary', '#666');
-            root.style.setProperty('--bg-primary', '#ffffff');
-            root.style.setProperty('--bg-secondary', '#f9f9f9');
-        }
-    },
-
     showNotification(message, type = 'info') {
         if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
             window.coreModule.showNotification(message, type);
@@ -823,28 +538,8 @@ const FeedRecordModule = {
         }).format(amount);
     },
 
-    syncStatsWithSharedData() {
-        const stats = this.calculateStats();
-        
-        if (window.FarmModules && window.FarmModules.appData) {
-            window.FarmModules.appData.profile = window.FarmModules.appData.profile || {};
-            window.FarmModules.appData.profile.dashboardStats = window.FarmModules.appData.profile.dashboardStats || {};
-            
-            window.FarmModules.appData.profile.dashboardStats.totalBirds = this.birdsStock;
-            window.FarmModules.appData.profile.dashboardStats.totalFeedStock = stats.totalStock;
-            window.FarmModules.appData.profile.dashboardStats.inventoryValue = stats.totalInventoryValue;
-        }
-    },
-
-    broadcastDataChange(moduleName, data) {
-        const event = new CustomEvent('farmDataChanged', {
-            detail: { 
-                module: moduleName,
-                data: data,
-                timestamp: new Date().toISOString()
-            }
-        });
-        document.dispatchEvent(event);
+    onThemeChange(theme) {
+        console.log(`Feed Records updating for theme: ${theme}`);
     }
 };
 
@@ -907,16 +602,11 @@ const feedRecordStyles = `
         transform: translateY(-4px);
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
         border-color: var(--primary-color, #3b82f6);
-        background: var(--bg-hover, #f8f9fa);
     }
 
     .action-icon {
         font-size: 32px;
         flex-shrink: 0;
-    }
-
-    .action-text {
-        flex: 1;
     }
 
     .action-title {
@@ -950,7 +640,6 @@ const feedRecordStyles = `
     .stat-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        border-color: var(--primary-color, #3b82f6);
     }
 
     .stat-icon {
@@ -996,8 +685,6 @@ const feedRecordStyles = `
         border: 1px solid var(--border-color, #e0e0e0);
         border-radius: 8px;
         transition: all 0.3s ease;
-        background: var(--bg-primary, white);
-        position: relative;
     }
 
     .inventory-card:hover {
@@ -1015,7 +702,6 @@ const feedRecordStyles = `
     .inventory-type {
         font-weight: 600;
         color: var(--text-primary, #1a1a1a);
-        text-transform: capitalize;
     }
 
     .inventory-status {
@@ -1023,6 +709,7 @@ const feedRecordStyles = `
         font-weight: 600;
         padding: 2px 8px;
         border-radius: 12px;
+        background: rgba(239, 68, 68, 0.1);
     }
 
     .inventory-stock {
@@ -1046,7 +733,6 @@ const feedRecordStyles = `
         display: flex;
         flex-direction: column;
         gap: 4px;
-        margin-bottom: 12px;
     }
 
     .detail-item {
@@ -1064,28 +750,34 @@ const feedRecordStyles = `
         font-weight: 500;
     }
 
-    .inventory-actions {
-        display: flex;
-        gap: 8px;
-        justify-content: flex-end;
-    }
-
     .form-section {
         background: var(--bg-primary, white);
         border: 1px solid var(--border-color, #e0e0e0);
         border-radius: 12px;
         padding: 24px;
         margin-bottom: 30px;
+        transition: all 0.3s ease;
     }
 
     .form-section.highlight {
-        animation: highlight 1s ease;
+        animation: highlight 2s ease;
+        border-color: var(--primary-color, #3b82f6);
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
     }
 
     @keyframes highlight {
-        0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); }
-        50% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        0% {
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            border-color: var(--primary-color, #3b82f6);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+            border-color: var(--primary-color, #3b82f6);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+            border-color: var(--border-color, #e0e0e0);
+        }
     }
 
     .form-section h2 {
@@ -1139,12 +831,6 @@ const feedRecordStyles = `
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
-    .form-buttons {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-    }
-
     .submit-button {
         background: var(--primary-color, #3b82f6);
         color: white;
@@ -1155,10 +841,11 @@ const feedRecordStyles = `
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s ease;
+        align-self: flex-start;
     }
 
     .submit-button:hover {
-        background: var(--primary-dark, #2563eb);
+        background: #2563eb;
         transform: translateY(-1px);
     }
 
@@ -1196,7 +883,7 @@ const feedRecordStyles = `
     }
 
     .btn-outline:hover {
-        background: var(--bg-hover, #f5f5f5);
+        background: #f5f5f5;
         border-color: var(--primary-color, #3b82f6);
     }
 
@@ -1211,8 +898,6 @@ const feedRecordStyles = `
         border: 1px solid var(--border-color, #e0e0e0);
         border-radius: 8px;
         transition: all 0.3s ease;
-        background: var(--bg-primary, white);
-        position: relative;
     }
 
     .record-item:hover {
@@ -1230,7 +915,6 @@ const feedRecordStyles = `
     .record-type {
         font-weight: 600;
         color: var(--text-primary, #1a1a1a);
-        text-transform: capitalize;
     }
 
     .record-date {
@@ -1254,38 +938,7 @@ const feedRecordStyles = `
         font-size: 14px;
         font-style: italic;
         padding-top: 8px;
-        border-top: 1px solid var(--border-light, #f0f0f0);
-    }
-
-    .record-actions {
-        position: absolute;
-        top: 16px;
-        right: 16px;
-        display: flex;
-        gap: 8px;
-        opacity: 0;
-        transition: opacity 0.2s ease;
-    }
-
-    .record-item:hover .record-actions {
-        opacity: 1;
-    }
-
-    .btn-icon {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 6px;
-        border-radius: 6px;
-        font-size: 14px;
-        transition: all 0.2s ease;
-        color: var(--text-secondary, #666);
-    }
-
-    .btn-icon:hover {
-        background: var(--bg-hover, #f5f5f5);
-        color: var(--text-primary, #1a1a1a);
-        transform: scale(1.1);
+        border-top: 1px solid #f0f0f0;
     }
 
     .no-inventory,
@@ -1293,9 +946,9 @@ const feedRecordStyles = `
         text-align: center;
         color: var(--text-secondary, #666);
         padding: 40px 20px;
-        background: var(--bg-secondary, #f9f9f9);
+        background: #f9f9f9;
         border-radius: 8px;
-        border: 2px dashed var(--border-color, #e0e0e0);
+        border: 2px dashed #e0e0e0;
         grid-column: 1 / -1;
     }
 
@@ -1314,13 +967,6 @@ const feedRecordStyles = `
         
         .inventory-grid {
             grid-template-columns: 1fr;
-        }
-        
-        .record-actions {
-            position: static;
-            opacity: 1;
-            margin-top: 12px;
-            justify-content: flex-end;
         }
     }
 `;
