@@ -1228,7 +1228,7 @@ showFeedForm() {
         
         console.log('✅ Feed-record module cleaned up');
     }
-};
+},
 
 // ==================== DEBUG HELPERS ====================
 debugCheckButtons() {
@@ -1261,7 +1261,7 @@ debugCheckButtons() {
             }
         });
     }
-},
+};
 
 // Call this in initialize() for debugging
 initialize() {
