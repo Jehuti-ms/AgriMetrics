@@ -1,4 +1,4 @@
-// modules/sales-record.js - COMPLETE FIXED VERSION WITH DATA BROADCASTER
+// modules/sales-record.js - COMPLETE FIXED VERSION WITH DATA BROADCASTER (CSP COMPLIANT)
 console.log('💰 Loading Enhanced Sales Records module...');
 
 const SalesRecordModule = {
@@ -647,6 +647,8 @@ const SalesRecordModule = {
         }
     },
 
+    // ==================== FIXED: CSP COMPLIANT RENDER METHODS ====================
+
     renderProductionItems() {
         // Get production data
         const productionRecords = JSON.parse(localStorage.getItem('farm-production') || '[]');
@@ -659,8 +661,7 @@ const SalesRecordModule = {
                         <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
                         <h3 style="color: #475569; margin-bottom: 8px;">No Production Items</h3>
                         <p style="color: #64748b; margin-bottom: 16px;">Add production records to sell them here</p>
-                        <button class="btn-primary" 
-                                onclick="window.FarmModules.SalesRecord.navigateToProduction()" 
+                        <button class="btn-primary production-nav-btn" data-action="navigate-to-production" 
                                 style="background: #0ea5e9; border: none; padding: 10px 20px; border-radius: 8px; color: white; font-weight: 500; cursor: pointer;">
                             ➕ Go to Production Module
                         </button>
@@ -683,8 +684,7 @@ const SalesRecordModule = {
                         <h3 style="color: #0369a1; margin: 0; font-size: 18px;">🔄 Available Production Items</h3>
                         <p style="color: #0c4a6e; margin: 4px 0 0 0; font-size: 14px;">Sell directly from production records</p>
                     </div>
-                    <button class="btn-primary" id="from-production-btn-2" 
-                            onclick="window.FarmModules.SalesRecord.showProductionItems()"
+                    <button class="btn-primary production-nav-btn" data-action="show-production-items"
                             style="background: #0ea5e9;">
                         Sell from Production
                     </button>
@@ -710,13 +710,12 @@ const SalesRecordModule = {
                         <span style="color: #0ea5e9;">💡</span>
                         <div style="font-size: 13px; color: #0369a1;">
                             Selling from production helps track inventory and source of goods. 
-                            <a href="#" onclick="window.FarmModules.SalesRecord.showProductionItems(); return false;" 
+                            <a href="#" class="production-nav-btn" data-action="show-production-items" 
                                style="color: #0ea5e9; text-decoration: none; font-weight: 500;">Browse available items →</a>
                         </div>
                     </div>
                     <div style="margin-top: 8px; display: flex; justify-content: flex-end;">
-                        <button class="btn-outline" 
-                                onclick="window.FarmModules.SalesRecord.navigateToProduction()"
+                        <button class="btn-outline production-nav-btn" data-action="navigate-to-production"
                                 style="background: white; color: #0ea5e9; border: 1px solid #0ea5e9; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">
                             ➕ Add New Production
                         </button>
@@ -1331,6 +1330,8 @@ const SalesRecordModule = {
         this.setupEventListeners();
     },
 
+    // ==================== FIXED: CSP COMPLIANT EVENT LISTENERS ====================
+
     setupEventListeners() {
         console.log('🔧 Setting up event listeners...');
         
@@ -1346,63 +1347,8 @@ const SalesRecordModule = {
             });
         }
 
-        // Modal buttons
-        const addSaleBtn = document.getElementById('add-sale');
-        if (addSaleBtn) addSaleBtn.addEventListener('click', () => this.showSaleModal());
-        
-        const addSaleBtn2 = document.getElementById('add-sale-btn');
-        if (addSaleBtn2) addSaleBtn2.addEventListener('click', () => this.showSaleModal());
-        
-        const fromProductionBtn = document.getElementById('from-production-btn');
-        if (fromProductionBtn) fromProductionBtn.addEventListener('click', () => this.showProductionItems());
-        
-        const fromProductionBtn2 = document.getElementById('from-production-btn-2');
-        if (fromProductionBtn2) fromProductionBtn2.addEventListener('click', () => this.showProductionItems());
-        
-        const meatSalesBtn = document.getElementById('meat-sales-btn');
-        if (meatSalesBtn) meatSalesBtn.addEventListener('click', () => this.generateMeatSalesReport());
-        
-        const dailyReportBtn = document.getElementById('daily-report-btn');
-        if (dailyReportBtn) dailyReportBtn.addEventListener('click', () => this.generateDailyReport());
-        
-        // Sale modal handlers
-        const saveSaleBtn = document.getElementById('save-sale');
-        if (saveSaleBtn) saveSaleBtn.addEventListener('click', () => this.saveSale());
-        
-        const deleteSaleBtn = document.getElementById('delete-sale');
-        if (deleteSaleBtn) deleteSaleBtn.addEventListener('click', () => this.deleteSale());
-        
-        const cancelSaleBtn = document.getElementById('cancel-sale');
-        if (cancelSaleBtn) cancelSaleBtn.addEventListener('click', () => this.hideSaleModal());
-        
-        const closeSaleModalBtn = document.getElementById('close-sale-modal');
-        if (closeSaleModalBtn) closeSaleModalBtn.addEventListener('click', () => this.hideSaleModal());
-        
-        // Report modal handlers
-        const closeDailyReportBtn = document.getElementById('close-daily-report');
-        if (closeDailyReportBtn) closeDailyReportBtn.addEventListener('click', () => this.hideDailyReportModal());
-        
-        const closeDailyReportBtn2 = document.getElementById('close-daily-report-btn');
-        if (closeDailyReportBtn2) closeDailyReportBtn2.addEventListener('click', () => this.hideDailyReportModal());
-        
-        const printDailyReportBtn = document.getElementById('print-daily-report');
-        if (printDailyReportBtn) printDailyReportBtn.addEventListener('click', () => this.printDailyReport());
-        
-        const closeMeatSalesBtn = document.getElementById('close-meat-sales');
-        if (closeMeatSalesBtn) closeMeatSalesBtn.addEventListener('click', () => this.hideMeatSalesModal());
-        
-        const closeMeatSalesBtn2 = document.getElementById('close-meat-sales-btn');
-        if (closeMeatSalesBtn2) closeMeatSalesBtn2.addEventListener('click', () => this.hideMeatSalesModal());
-        
-        const printMeatSalesBtn = document.getElementById('print-meat-sales');
-        if (printMeatSalesBtn) printMeatSalesBtn.addEventListener('click', () => this.printMeatSalesReport());
-        
-        // Production items modal
-        const closeProductionItemsBtn = document.getElementById('close-production-items');
-        if (closeProductionItemsBtn) closeProductionItemsBtn.addEventListener('click', () => this.hideProductionItemsModal());
-        
-        const closeProductionItemsBtn2 = document.getElementById('close-production-items-btn');
-        if (closeProductionItemsBtn2) closeProductionItemsBtn2.addEventListener('click', () => this.hideProductionItemsModal());
+        // Setup all button listeners
+        this.setupButtonListeners();
         
         // Form field event listeners
         this.setupFormFieldListeners();
@@ -1463,9 +1409,307 @@ const SalesRecordModule = {
                     this.deleteSaleRecord(saleId);
                 }
             }
+            
+            // NEW: Handle production navigation buttons
+            const productionNavBtn = e.target.closest('.production-nav-btn');
+            if (productionNavBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                const action = productionNavBtn.getAttribute('data-action');
+                this.handleProductionNavAction(action);
+            }
+            
+            // NEW: Handle sell production item buttons
+            const sellItemBtn = e.target.closest('.sell-production-item-btn');
+            if (sellItemBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                const itemId = sellItemBtn.getAttribute('data-item-id');
+                if (itemId) {
+                    this.selectProductionItem(itemId);
+                }
+            }
         });
         
         console.log('✅ Event listeners set up');
+    },
+    
+    setupButtonListeners() {
+        // Modal buttons
+        const addSaleBtn = document.getElementById('add-sale');
+        if (addSaleBtn) addSaleBtn.addEventListener('click', () => this.showSaleModal());
+        
+        const addSaleBtn2 = document.getElementById('add-sale-btn');
+        if (addSaleBtn2) addSaleBtn2.addEventListener('click', () => this.showSaleModal());
+        
+        const fromProductionBtn = document.getElementById('from-production-btn');
+        if (fromProductionBtn) fromProductionBtn.addEventListener('click', () => this.showProductionItems());
+        
+        const fromProductionBtn2 = document.getElementById('from-production-btn-2');
+        if (fromProductionBtn2) fromProductionBtn2.addEventListener('click', () => this.showProductionItems());
+        
+        const meatSalesBtn = document.getElementById('meat-sales-btn');
+        if (meatSalesBtn) meatSalesBtn.addEventListener('click', () => this.generateMeatSalesReport());
+        
+        const dailyReportBtn = document.getElementById('daily-report-btn');
+        if (dailyReportBtn) dailyReportBtn.addEventListener('click', () => this.generateDailyReport());
+        
+        // Sale modal handlers
+        const saveSaleBtn = document.getElementById('save-sale');
+        if (saveSaleBtn) saveSaleBtn.addEventListener('click', () => this.saveSale());
+        
+        const deleteSaleBtn = document.getElementById('delete-sale');
+        if (deleteSaleBtn) deleteSaleBtn.addEventListener('click', () => this.deleteSale());
+        
+        const cancelSaleBtn = document.getElementById('cancel-sale');
+        if (cancelSaleBtn) cancelSaleBtn.addEventListener('click', () => this.hideSaleModal());
+        
+        const closeSaleModalBtn = document.getElementById('close-sale-modal');
+        if (closeSaleModalBtn) closeSaleModalBtn.addEventListener('click', () => this.hideSaleModal());
+        
+        // Report modal handlers
+        const closeDailyReportBtn = document.getElementById('close-daily-report');
+        if (closeDailyReportBtn) closeDailyReportBtn.addEventListener('click', () => this.hideDailyReportModal());
+        
+        const closeDailyReportBtn2 = document.getElementById('close-daily-report-btn');
+        if (closeDailyReportBtn2) closeDailyReportBtn2.addEventListener('click', () => this.hideDailyReportModal());
+        
+        const printDailyReportBtn = document.getElementById('print-daily-report');
+        if (printDailyReportBtn) printDailyReportBtn.addEventListener('click', () => this.printDailyReport());
+        
+        const closeMeatSalesBtn = document.getElementById('close-meat-sales');
+        if (closeMeatSalesBtn) closeMeatSalesBtn.addEventListener('click', () => this.hideMeatSalesModal());
+        
+        const closeMeatSalesBtn2 = document.getElementById('close-meat-sales-btn');
+        if (closeMeatSalesBtn2) closeMeatSalesBtn2.addEventListener('click', () => this.hideMeatSalesModal());
+        
+        const printMeatSalesBtn = document.getElementById('print-meat-sales');
+        if (printMeatSalesBtn) printMeatSalesBtn.addEventListener('click', () => this.printMeatSalesReport());
+        
+        // Production items modal
+        const closeProductionItemsBtn = document.getElementById('close-production-items');
+        if (closeProductionItemsBtn) closeProductionItemsBtn.addEventListener('click', () => this.hideProductionItemsModal());
+        
+        const closeProductionItemsBtn2 = document.getElementById('close-production-items-btn');
+        if (closeProductionItemsBtn2) closeProductionItemsBtn2.addEventListener('click', () => this.hideProductionItemsModal());
+    },
+    
+    setupProductionItemsListeners() {
+        // This is called after showing production items modal to set up listeners for dynamic content
+        const productionNavBtns = document.querySelectorAll('.production-nav-btn');
+        productionNavBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const action = btn.getAttribute('data-action');
+                this.handleProductionNavAction(action);
+            });
+        });
+        
+        const sellItemBtns = document.querySelectorAll('.sell-production-item-btn');
+        sellItemBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const itemId = btn.getAttribute('data-item-id');
+                if (itemId) {
+                    this.selectProductionItem(itemId);
+                }
+            });
+        });
+    },
+    
+    handleProductionNavAction(action) {
+        switch(action) {
+            case 'navigate-to-production':
+                this.navigateToProduction();
+                break;
+            case 'show-production-items':
+                this.showProductionItems();
+                break;
+            default:
+                console.warn('Unknown production nav action:', action);
+        }
+    },
+
+    showProductionItems() {
+        console.log('🔄 Showing production items for sale...');
+        this.hideAllModals();
+        
+        // Get production records from localStorage
+        const productionRecords = JSON.parse(localStorage.getItem('farm-production') || '[]');
+        
+        // Get current sales to check what's already been sold
+        const existingSales = window.FarmModules.appData.sales || [];
+        
+        // Filter available production items (not yet sold)
+        const availableProducts = [];
+        
+        // Group by product and date
+        const productMap = {};
+        
+        productionRecords.forEach(record => {
+            const product = record.product || 'Unspecified';
+            const date = record.date;
+            const key = `${product}-${date}`;
+            
+            if (!productMap[key]) {
+                productMap[key] = {
+                    product: product,
+                    date: date,
+                    totalQuantity: 0,
+                    unit: record.unit || 'units',
+                    notes: record.notes || '',
+                    soldQuantity: 0,
+                    availableQuantity: 0
+                };
+            }
+            
+            productMap[key].totalQuantity += record.quantity || 0;
+        });
+        
+        // Calculate sold quantities from existing sales
+        existingSales.forEach(sale => {
+            if (sale.productionSourceId || sale.productionSource) {
+                const product = sale.product;
+                const date = sale.date;
+                const key = `${product}-${date}`;
+                
+                if (productMap[key]) {
+                    productMap[key].soldQuantity += sale.quantity || sale.animalCount || 0;
+                }
+            }
+        });
+        
+        // Calculate available quantities
+        Object.keys(productMap).forEach(key => {
+            const item = productMap[key];
+            item.availableQuantity = item.totalQuantity - item.soldQuantity;
+            
+            if (item.availableQuantity > 0) {
+                availableProducts.push({
+                    id: key,
+                    product: item.product,
+                    date: item.date,
+                    totalQuantity: item.totalQuantity,
+                    availableQuantity: item.availableQuantity,
+                    unit: item.unit,
+                    notes: item.notes
+                });
+            }
+        });
+        
+        // Create modal content
+        let content = '<div class="production-items-list">';
+        
+        if (availableProducts.length === 0) {
+            content += `
+                <div style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
+                    <h4 style="color: #374151; margin-bottom: 8px;">No production items available for sale</h4>
+                    <p style="color: var(--text-secondary);">All production items have been sold or no production records exist.</p>
+                    <div style="margin-top: 20px;">
+                        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                            <button class="btn-primary production-nav-btn" data-action="navigate-to-production"
+                                    style="background: #0ea5e9; border: none; padding: 10px 20px; border-radius: 8px; color: white; font-weight: 500; cursor: pointer;">
+                                ➕ Go to Production Module
+                            </button>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-top: 12px;">
+                        Add new production records to sell them here
+                    </p>
+                </div>
+            `;
+        } else {
+            content += `
+                <div style="margin-bottom: 16px;">
+                    <p style="color: var(--text-secondary); font-size: 14px; margin: 0;">
+                        Select a production item to create a sale from:
+                    </p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
+            `;
+            
+            availableProducts.forEach((item, index) => {
+                const icon = this.getProductIcon(item.product);
+                const formattedDate = this.formatDate(item.date);
+                const productName = this.formatProductName(item.product);
+                
+                content += `
+                    <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                            <div style="font-size: 24px; background: #e0f2fe; padding: 8px; border-radius: 8px;">
+                                ${icon}
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: var(--text-primary);">${productName}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">Produced: ${formattedDate}</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;">
+                            <div style="padding: 8px; background: #f0f9ff; border-radius: 6px; text-align: center;">
+                                <div style="font-size: 11px; color: #0c4a6e; margin-bottom: 4px;">Total Produced</div>
+                                <div style="font-weight: 600; color: #0369a1;">${item.totalQuantity} ${item.unit}</div>
+                            </div>
+                            <div style="padding: 8px; background: #f0fdf4; border-radius: 6px; text-align: center;">
+                                <div style="font-size: 11px; color: #166534; margin-bottom: 4px;">Available</div>
+                                <div style="font-weight: 600; color: #16a34a;">${item.availableQuantity} ${item.unit}</div>
+                            </div>
+                        </div>
+                        
+                        ${item.notes ? `
+                            <div style="margin-bottom: 12px; padding: 8px; background: #f8fafc; border-radius: 6px;">
+                                <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">Notes</div>
+                                <div style="font-size: 12px; color: #475569;">${item.notes}</div>
+                            </div>
+                        ` : ''}
+                        
+                        <div style="display: flex; gap: 8px;">
+                            <button class="sell-production-item-btn" data-item-id="${item.id}"
+                                    style="flex: 1; padding: 8px 12px; background: var(--primary-color); color: white; 
+                                    border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px;">
+                                Sell This Item
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            content += `
+                </div>
+                
+                <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="color: #0ea5e9; font-size: 16px;">💡</span>
+                        <div style="font-size: 13px; color: #475569;">
+                            Need more products? Add new production records.
+                        </div>
+                    </div>
+                    <button class="btn-outline production-nav-btn" data-action="navigate-to-production"
+                            style="background: white; color: #0ea5e9; border: 1px solid #0ea5e9; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                        ➕ Add Production
+                    </button>
+                </div>
+            `;
+        }
+        
+        content += '</div>';
+        
+        // Update modal content
+        const contentElement = document.getElementById('production-items-content');
+        if (contentElement) {
+            contentElement.innerHTML = content;
+        }
+        
+        // Show modal
+        const modal = document.getElementById('production-items-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+        
+        // Set up event listeners for the new content
+        this.setupProductionItemsListeners();
     },
     
     removeEventListeners() {
@@ -1946,187 +2190,6 @@ const SalesRecordModule = {
         }
     },
 
-    showProductionItems() {
-        console.log('🔄 Showing production items for sale...');
-        this.hideAllModals();
-        
-        // Get production records from localStorage
-        const productionRecords = JSON.parse(localStorage.getItem('farm-production') || '[]');
-        
-        // Get current sales to check what's already been sold
-        const existingSales = window.FarmModules.appData.sales || [];
-        
-        // Filter available production items (not yet sold)
-        const availableProducts = [];
-        
-        // Group by product and date
-        const productMap = {};
-        
-        productionRecords.forEach(record => {
-            const product = record.product || 'Unspecified';
-            const date = record.date;
-            const key = `${product}-${date}`;
-            
-            if (!productMap[key]) {
-                productMap[key] = {
-                    product: product,
-                    date: date,
-                    totalQuantity: 0,
-                    unit: record.unit || 'units',
-                    notes: record.notes || '',
-                    soldQuantity: 0,
-                    availableQuantity: 0
-                };
-            }
-            
-            productMap[key].totalQuantity += record.quantity || 0;
-        });
-        
-        // Calculate sold quantities from existing sales
-        existingSales.forEach(sale => {
-            if (sale.productionSourceId || sale.productionSource) {
-                const product = sale.product;
-                const date = sale.date;
-                const key = `${product}-${date}`;
-                
-                if (productMap[key]) {
-                    productMap[key].soldQuantity += sale.quantity || sale.animalCount || 0;
-                }
-            }
-        });
-        
-        // Calculate available quantities
-        Object.keys(productMap).forEach(key => {
-            const item = productMap[key];
-            item.availableQuantity = item.totalQuantity - item.soldQuantity;
-            
-            if (item.availableQuantity > 0) {
-                availableProducts.push({
-                    id: key,
-                    product: item.product,
-                    date: item.date,
-                    totalQuantity: item.totalQuantity,
-                    availableQuantity: item.availableQuantity,
-                    unit: item.unit,
-                    notes: item.notes
-                });
-            }
-        });
-        
-        // Create modal content
-        let content = '<div class="production-items-list">';
-        
-        if (availableProducts.length === 0) {
-            content += `
-                <div style="text-align: center; padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
-                    <h4 style="color: #374151; margin-bottom: 8px;">No production items available for sale</h4>
-                    <p style="color: var(--text-secondary);">All production items have been sold or no production records exist.</p>
-                    <div style="margin-top: 20px;">
-                        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
-                            <button class="btn-primary" 
-                                    onclick="window.FarmModules.SalesRecord.navigateToProduction()"
-                                    style="background: #0ea5e9; border: none; padding: 10px 20px; border-radius: 8px; color: white; font-weight: 500; cursor: pointer;">
-                                ➕ Go to Production Module
-                            </button>
-                        </div>
-                    </div>
-                    <p style="color: var(--text-secondary); font-size: 13px; margin-top: 12px;">
-                        Add new production records to sell them here
-                    </p>
-                </div>
-            `;
-        } else {
-            content += `
-                <div style="margin-bottom: 16px;">
-                    <p style="color: var(--text-secondary); font-size: 14px; margin: 0;">
-                        Select a production item to create a sale from:
-                    </p>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
-            `;
-            
-            availableProducts.forEach((item, index) => {
-                const icon = this.getProductIcon(item.product);
-                const formattedDate = this.formatDate(item.date);
-                const productName = this.formatProductName(item.product);
-                
-                content += `
-                    <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                            <div style="font-size: 24px; background: #e0f2fe; padding: 8px; border-radius: 8px;">
-                                ${icon}
-                            </div>
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; color: var(--text-primary);">${productName}</div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">Produced: ${formattedDate}</div>
-                            </div>
-                        </div>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;">
-                            <div style="padding: 8px; background: #f0f9ff; border-radius: 6px; text-align: center;">
-                                <div style="font-size: 11px; color: #0c4a6e; margin-bottom: 4px;">Total Produced</div>
-                                <div style="font-weight: 600; color: #0369a1;">${item.totalQuantity} ${item.unit}</div>
-                            </div>
-                            <div style="padding: 8px; background: #f0fdf4; border-radius: 6px; text-align: center;">
-                                <div style="font-size: 11px; color: #166534; margin-bottom: 4px;">Available</div>
-                                <div style="font-weight: 600; color: #16a34a;">${item.availableQuantity} ${item.unit}</div>
-                            </div>
-                        </div>
-                        
-                        ${item.notes ? `
-                            <div style="margin-bottom: 12px; padding: 8px; background: #f8fafc; border-radius: 6px;">
-                                <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">Notes</div>
-                                <div style="font-size: 12px; color: #475569;">${item.notes}</div>
-                            </div>
-                        ` : ''}
-                        
-                        <div style="display: flex; gap: 8px;">
-                            <button style="flex: 1; padding: 8px 12px; background: var(--primary-color); color: white; 
-                                    border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px;"
-                                    onclick="window.FarmModules.SalesRecord.selectProductionItem('${item.id}')">
-                                Sell This Item
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            content += `
-                </div>
-                
-                <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border-radius: 8px;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="color: #0ea5e9; font-size: 16px;">💡</span>
-                        <div style="font-size: 13px; color: #475569;">
-                            Need more products? Add new production records.
-                        </div>
-                    </div>
-                    <button class="btn-outline" 
-                            onclick="window.FarmModules.SalesRecord.navigateToProduction()"
-                            style="background: white; color: #0ea5e9; border: 1px solid #0ea5e9; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">
-                        ➕ Add Production
-                    </button>
-                </div>
-            `;
-        }
-        
-        content += '</div>';
-        
-        // Update modal content
-        const contentElement = document.getElementById('production-items-content');
-        if (contentElement) {
-            contentElement.innerHTML = content;
-        }
-        
-        // Show modal
-        const modal = document.getElementById('production-items-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-        }
-    },
-    
     hideSaleModal() {
         const modal = document.getElementById('sale-modal');
         if (modal) {
