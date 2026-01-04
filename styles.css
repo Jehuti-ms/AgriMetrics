@@ -7528,3 +7528,106 @@ header, .top-nav {
     color: #ff4757;
 }
 
+/* Fix for report buttons on mobile */
+    @media (max-width: 480px) {
+        /* Report action buttons */
+        .report-actions,
+        .action-buttons,
+        .btn-group,
+        .button-group {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            justify-content: center !important;
+            width: 100% !important;
+            margin-bottom: 16px !important;
+        }
+        
+        /* Individual report buttons */
+        .report-btn,
+        .btn-report,
+        .export-btn,
+        .generate-btn,
+        .action-button,
+        .btn-primary,
+        .btn-outline {
+            flex: 1 1 auto !important;
+            min-width: 120px !important;
+            max-width: 45% !important;
+            padding: 10px 12px !important;
+            font-size: 12px !important;
+            text-align: center !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        
+        /* Fix for floating/positioned buttons */
+        .fixed-bottom,
+        .sticky-bottom,
+        [style*="position: fixed"],
+        [style*="position: absolute"] {
+            position: relative !important;
+            bottom: auto !important;
+            right: auto !important;
+            left: auto !important;
+            width: 100% !important;
+            margin-top: 16px !important;
+        }
+        
+        /* Report containers */
+        .report-container,
+        .report-section,
+        .glass-card {
+            padding: 12px !important;
+            margin: 8px !important;
+            width: calc(100% - 16px) !important;
+            box-sizing: border-box !important;
+            overflow-x: hidden !important;
+        }
+        
+        /* Prevent horizontal scroll */
+        body, html {
+            overflow-x: hidden !important;
+            max-width: 100% !important;
+        }
+        
+        /* Table responsiveness */
+        .report-table,
+        table {
+            display: block !important;
+            overflow-x: auto !important;
+            white-space: nowrap !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+        
+        /* Modal/dialog fixes */
+        .modal-content,
+        .dialog-box {
+            width: 95vw !important;
+            max-width: 95vw !important;
+            margin: 10px auto !important;
+            left: 2.5vw !important;
+            right: 2.5vw !important;
+        }
+    }
+    
+    /* Extra small screens (very small phones) */
+    @media (max-width: 360px) {
+        .report-btn,
+        .btn-report,
+        .export-btn,
+        .generate-btn,
+        .action-button {
+            min-width: 110px !important;
+            max-width: 48% !important;
+            padding: 8px 10px !important;
+            font-size: 11px !important;
+        }
+        
+        /* Two-column grid for very small screens */
+        .report-actions {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 6px !important;
+        }
