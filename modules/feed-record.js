@@ -1213,20 +1213,6 @@ showFeedForm() {
             hour: '2-digit',
             minute: '2-digit'
         });
-    },
-
-    cleanup() {
-        console.log('🧹 Cleaning up feed-record module...');
-        
-        // Remove event listeners
-        this.removeAllEventListeners();
-        
-        // Reset state
-        this.initialized = false;
-        this.element = null;
-        this.editingRecordId = null;
-        
-        console.log('✅ Feed-record module cleaned up');
     }
 };
 
