@@ -541,9 +541,11 @@ const OrdersModule = {
     },
 
     // ==================== EVENT HANDLERS ====================
-    setupEventListeners() {
-        this.removeEventListeners();
-        
+   setupEventListeners() {
+    this.removeEventListeners();
+    
+    // Use setTimeout to ensure DOM is ready
+    setTimeout(() => {
         // Main event delegation
         this.element.addEventListener('click', this.handleElementClick.bind(this));
         this.element.addEventListener('input', this.handleElementInput.bind(this));
@@ -551,22 +553,41 @@ const OrdersModule = {
         this.element.addEventListener('submit', this.handleFormSubmit.bind(this));
         this.element.addEventListener('mouseenter', this.handleMouseEnter.bind(this), true);
         this.element.addEventListener('mouseleave', this.handleMouseLeave.bind(this), true);
-    },
+        
+        // Store handlers for cleanup
+        this._clickHandler = this.handleElementClick.bind(this);
+        this._inputHandler = this.handleElementInput.bind(this);
+        this._changeHandler = this.handleElementChange.bind(this);
+        this._submitHandler = this.handleFormSubmit.bind(this);
+        this._mouseEnterHandler = this.handleMouseEnter.bind(this);
+        this._mouseLeaveHandler = this.handleMouseLeave.bind(this);
+        
+        console.log('✅ Event listeners set up');
+        
+        // Debug: Log all buttons
+        this.debugButtons();
+        
+    }, 100);
+},
 
-    removeEventListeners() {
-        // Clone element to remove all event listeners
-        if (this.element && this.element.parentNode) {
-            const newElement = this.element.cloneNode(true);
-            this.element.parentNode.replaceChild(newElement, this.element);
-            this.element = newElement;
-        }
-    },
-
+debugButtons() {
+    const buttons = this.element.querySelectorAll('[data-action]');
+    console.log(`Found ${buttons.length} action buttons in orders module:`);
+    buttons.forEach(btn => {
+        console.log(`- "${btn.getAttribute('data-action')}":`, btn.textContent.trim().substring(0, 30) + '...');
+    });
+},
+    
    handleElementClick(event) {
+    console.log('🎯 Click event fired on:', event.target.tagName, event.target.className);
+    
     const target = event.target;
     const button = target.closest('[data-action]');
     
-    if (!button) return;
+    if (!button) {
+        console.log('❌ No data-action attribute found');
+        return;
+    }
     
     event.preventDefault();
     event.stopPropagation();
@@ -574,58 +595,93 @@ const OrdersModule = {
     const action = button.getAttribute('data-action');
     const id = button.getAttribute('data-id');
     
-    console.log('Orders action:', action, 'ID:', id);
+    console.log('📝 Orders action:', action, 'ID:', id, 'Button:', button);
+    
+    // Add visual feedback for debugging
+    button.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+        button.style.transform = '';
+    }, 150);
     
     switch(action) {
         case 'create-order':
+            console.log('🎯 Creating new order...');
+            this.showOrderForm();
+            break;
         case 'show-order-form':
+            console.log('🎯 Showing order form...');
             this.showOrderForm();
             break;
         case 'manage-customers':
+            console.log('🎯 Managing customers...');
             this.showCustomersSection();
             break;
         case 'view-orders':
+            console.log('🎯 Viewing all orders...');
             this.showAllOrders();
             break;
         case 'add-customer':
+            console.log('🎯 Adding customer...');
+            this.showCustomerForm();
+            break;
         case 'show-customer-form':
+            console.log('🎯 Showing customer form...');
             this.showCustomerForm();
             break;
         case 'cancel-order-form':
+            console.log('🎯 Canceling order form...');
             this.hideOrderForm();
             break;
         case 'cancel-customer-form':
+            console.log('🎯 Canceling customer form...');
             this.hideCustomerForm();
             break;
         case 'add-order-item':
+            console.log('🎯 Adding order item...');
             this.addOrderItem();
             break;
         case 'remove-order-item':
+            console.log('🎯 Removing order item...');
             this.removeOrderItem(button);
             break;
         case 'export-orders':
+            console.log('🎯 Exporting orders...');
             this.exportOrders();
             break;
         case 'edit-order':
-            if (id) this.editOrder(parseInt(id));
+            if (id) {
+                console.log('🎯 Editing order:', id);
+                this.editOrder(parseInt(id));
+            }
             break;
         case 'delete-order':
-            if (id) this.deleteOrder(parseInt(id));
+            if (id) {
+                console.log('🎯 Deleting order:', id);
+                this.deleteOrder(parseInt(id));
+            }
             break;
         case 'edit-customer':
-            if (id) this.editCustomer(parseInt(id));
+            if (id) {
+                console.log('🎯 Editing customer:', id);
+                this.editCustomer(parseInt(id));
+            }
             break;
         case 'delete-customer':
-            if (id) this.deleteCustomer(parseInt(id));
+            if (id) {
+                console.log('🎯 Deleting customer:', id);
+                this.deleteCustomer(parseInt(id));
+            }
             break;
         case 'submit-order':
+            console.log('🎯 Submitting order form...');
             // Handled by form submit
             break;
         case 'submit-customer':
+            console.log('🎯 Submitting customer form...');
             // Handled by form submit
             break;
         default:
-            console.log('Unhandled action:', action);
+            console.warn('⚠️ Unhandled action:', action);
     }
 },
 
@@ -691,15 +747,30 @@ const OrdersModule = {
 
     // ==================== FORM MANAGEMENT ====================
     showOrderForm() {
-        this.editingOrderId = null;
-        this.editingCustomerId = null;
-        this.renderModule();
-        
+    console.log('📄 Showing order form...');
+    this.editingOrderId = null;
+    this.editingCustomerId = null;
+    
+    // Force a re-render
+    this.renderModule();
+    
+    // Scroll to form
+    setTimeout(() => {
         const formContainer = document.getElementById('order-form-container');
         if (formContainer) {
-            formContainer.scrollIntoView({ behavior: 'smooth' });
+            formContainer.scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+            
+            // Add highlight effect
+            formContainer.style.boxShadow = '0 0 0 3px #3b82f6';
+            setTimeout(() => {
+                formContainer.style.boxShadow = '';
+            }, 2000);
         }
-    },
+    }, 100);
+},
 
     hideOrderForm() {
         this.editingOrderId = null;
@@ -707,15 +778,30 @@ const OrdersModule = {
     },
 
     showCustomerForm() {
-        this.editingOrderId = null;
-        this.editingCustomerId = null;
-        this.renderModule();
-        
+    console.log('👤 Showing customer form...');
+    this.editingOrderId = null;
+    this.editingCustomerId = null;
+    
+    // Force a re-render
+    this.renderModule();
+    
+    // Scroll to form
+    setTimeout(() => {
         const formContainer = document.getElementById('customer-form-container');
         if (formContainer) {
-            formContainer.scrollIntoView({ behavior: 'smooth' });
+            formContainer.scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+            
+            // Add highlight effect
+            formContainer.style.boxShadow = '0 0 0 3px #3b82f6';
+            setTimeout(() => {
+                formContainer.style.boxShadow = '';
+            }, 2000);
         }
-    },
+    }, 100);
+},
 
     hideCustomerForm() {
         this.editingCustomerId = null;
