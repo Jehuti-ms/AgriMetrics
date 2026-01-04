@@ -734,3 +734,80 @@ if (window.FarmModules) {
     console.log('✅ Feed record edit enhancements loaded');
     
 })();
+
+// ==================== BUTTON SIZE FIX ====================
+(function() {
+    // Create style element for button fixes
+    const styleId = 'feed-record-button-fix';
+    
+    // Remove existing fix if present
+    const existingStyle = document.getElementById(styleId);
+    if (existingStyle) {
+        existingStyle.remove();
+    }
+    
+    // Create new style element
+    const styleElement = document.createElement('style');
+    styleElement.id = styleId;
+    
+    // CSS to make buttons smaller
+    styleElement.textContent = `
+        /* Override quick action button sizes in feed-record module only */
+        #content-area .quick-action-grid {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+            gap: 12px !important;
+            margin-bottom: 20px !important;
+        }
+        
+        #content-area .quick-action-btn {
+            padding: 12px !important;
+            min-height: 80px !important;
+            border-radius: 8px !important;
+            gap: 6px !important;
+        }
+        
+        #content-area .quick-action-btn > div {
+            font-size: 24px !important;
+            margin-bottom: 2px !important;
+        }
+        
+        #content-area .quick-action-btn > span:nth-of-type(1) {
+            font-size: 12px !important;
+            line-height: 1.2 !important;
+        }
+        
+        #content-area .quick-action-btn > span:nth-of-type(2) {
+            font-size: 10px !important;
+            line-height: 1.2 !important;
+        }
+        
+        /* Make stats cards smaller too */
+        #content-area .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+            gap: 12px !important;
+        }
+        
+        #content-area .stat-card {
+            padding: 12px !important;
+        }
+        
+        #content-area .stat-card > div:nth-of-type(1) {
+            font-size: 20px !important;
+            margin-bottom: 4px !important;
+        }
+        
+        #content-area .stat-card > div:nth-of-type(2) {
+            font-size: 18px !important;
+            margin-bottom: 2px !important;
+        }
+        
+        #content-area .stat-card > div:nth-of-type(3) {
+            font-size: 11px !important;
+        }
+    `;
+    
+    // Add to document
+    document.head.appendChild(styleElement);
+    console.log('✅ Feed record button size fix applied');
+})();
