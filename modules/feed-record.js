@@ -437,106 +437,110 @@ const FeedRecordModule = {
     },
 
     // ==================== EVENT HANDLERS ====================
-    setupEventListeners() {
-        this.removeAllEventListeners();
-        
-        if (!this.element) return;
+   // ==================== EVENT HANDLERS ====================
+setupEventListeners() {
+    this.removeAllEventListeners();
+    
+    if (!this.element) return;
 
-        // Main event delegation
-        this.addEventListener(this.element, 'click', this.handleElementClick.bind(this));
-        this.addEventListener(this.element, 'change', this.handleElementChange.bind(this));
-        this.addEventListener(this.element, 'submit', this.handleFormSubmit.bind(this));
+    // Main event delegation
+    this.addEventListener(this.element, 'click', this.handleElementClick.bind(this));
+    this.addEventListener(this.element, 'change', this.handleElementChange.bind(this));
+    this.addEventListener(this.element, 'submit', this.handleFormSubmit.bind(this));
 
-        // Form-specific listeners
-        const feedTypeSelect = this.element.querySelector('#feed-type');
-        const feedQuantityInput = this.element.querySelector('#feed-quantity');
-        
-        if (feedTypeSelect) {
-            this.addEventListener(feedTypeSelect, 'change', this.updateStockInfo.bind(this));
-        }
-        
-        if (feedQuantityInput) {
-            this.addEventListener(feedQuantityInput, 'input', this.validateQuantity.bind(this));
-        }
-    },
+    // Form-specific listeners
+    const feedTypeSelect = this.element.querySelector('#feed-type');
+    const feedQuantityInput = this.element.querySelector('#feed-quantity');
+    
+    if (feedTypeSelect) {
+        this.addEventListener(feedTypeSelect, 'change', this.updateStockInfo.bind(this));
+    }
+    
+    if (feedQuantityInput) {
+        this.addEventListener(feedQuantityInput, 'input', this.validateQuantity.bind(this));
+    }
+},
 
-    handleElementClick(event) {
-        const target = event.target;
-        const button = target.closest('[data-action]');
-        
-        if (!button) return;
-        
-        event.preventDefault();
-        event.stopPropagation();
-        
-        const action = button.getAttribute('data-action');
-        const recordId = button.getAttribute('data-record-id');
-        const inventoryId = button.getAttribute('data-inventory-id');
-        const feedType = button.getAttribute('data-feed-type');
-        
-        console.log('🌾 Feed action:', action);
-        
-        switch(action) {
-            case 'record-feed':
-                this.showFeedForm();
-                break;
-                
-            case 'add-stock':
-                this.showAddStockDialog();
-                break;
-                
-            case 'adjust-birds':
-                this.showAdjustBirdsDialog();
-                break;
-                
-            case 'export-records':
-                this.exportFeedRecords();
-                break;
-                
-            case 'clear-records':
-                this.clearAllRecords();
-                break;
-                
-            case 'refresh-inventory':
-                this.refreshInventory();
-                break;
-                
-            case 'save-record':
-            case 'update-record':
-                // Handled by form submission
-                break;
-                
-            case 'cancel-edit':
-                this.cancelEdit();
-                break;
-                
-            case 'edit-record':
-                if (recordId) this.editFeedRecord(parseInt(recordId));
-                break;
-                
-            case 'delete-record':
-                if (recordId) this.deleteFeedRecord(parseInt(recordId));
-                break;
-                
-            case 'add-to-inventory':
-                if (feedType) this.showAddToInventoryDialog(feedType);
-                break;
-                
-            case 'edit-inventory':
-                if (inventoryId) this.editInventoryItem(parseInt(inventoryId));
-                break;
-                
-            case 'inventory-details':
-                // Show inventory details modal
-                const card = target.closest('.inventory-card');
-                if (card) {
-                    const inventoryId = card.getAttribute('data-inventory-id');
-                    this.showInventoryDetails(parseInt(inventoryId));
-                }
-                break;
-        }
-    },
-
+handleElementClick(event) {
+    const target = event.target;
+    const button = target.closest('[data-action]');
+    
+    if (!button) return;
+    
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const action = button.getAttribute('data-action');
+    const recordId = button.getAttribute('data-record-id');
+    const inventoryId = button.getAttribute('data-inventory-id');
+    const feedType = button.getAttribute('data-feed-type');
+    
+    console.log('🌾 Feed action:', action);
+    
+    switch(action) {
+        case 'record-feed':  // ADD THIS CASE
+            this.showFeedForm();
+            break;
+            
+        case 'add-stock':
+            this.showAddStockDialog();
+            break;
+            
+        case 'adjust-birds':
+            this.showAdjustBirdsDialog();
+            break;
+            
+        case 'export-records':
+            this.exportFeedRecords();
+            break;
+            
+        case 'clear-records':
+            this.clearAllRecords();
+            break;
+            
+        case 'refresh-inventory':
+            this.refreshInventory();
+            break;
+            
+        case 'save-record':
+        case 'update-record':
+            // Handled by form submission
+            break;
+            
+        case 'cancel-edit':
+            this.cancelEdit();
+            break;
+            
+        case 'edit-record':
+            if (recordId) this.editFeedRecord(parseInt(recordId));
+            break;
+            
+        case 'delete-record':
+            if (recordId) this.deleteFeedRecord(parseInt(recordId));
+            break;
+            
+        case 'add-to-inventory':
+            if (feedType) this.showAddToInventoryDialog(feedType);
+            break;
+            
+        case 'edit-inventory':
+            if (inventoryId) this.editInventoryItem(parseInt(inventoryId));
+            break;
+            
+        case 'inventory-details':
+            // Show inventory details modal
+            const card = target.closest('.inventory-card');
+            if (card) {
+                const inventoryId = card.getAttribute('data-inventory-id');
+                this.showInventoryDetails(parseInt(inventoryId));
+            }
+            break;
+            
+        default:
+            console.log('⚠️ Unhandled action:', action);
+    }
+},
+    
     handleElementChange(event) {
         const target = event.target;
         
@@ -1087,12 +1091,37 @@ Last Updated: ${this.formatDateTime(item.lastUpdated)}
     },
 
     // ==================== UTILITY METHODS ====================
-    showFeedForm() {
+showFeedForm() {
+    try {
         const formSection = this.element.querySelector('.form-section');
         if (formSection) {
-            formSection.scrollIntoView({ behavior: 'smooth' });
+            formSection.scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+            
+            // Highlight the form briefly
+            formSection.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.3)';
+            setTimeout(() => {
+                formSection.style.boxShadow = 'none';
+            }, 1000);
+            
+            // Focus on the first input field
+            setTimeout(() => {
+                const feedTypeSelect = document.getElementById('feed-type');
+                if (feedTypeSelect) {
+                    feedTypeSelect.focus();
+                }
+            }, 300);
+        } else {
+            console.error('❌ Form section not found');
+            this.showNotification('Form section not found', 'error');
         }
-    },
+    } catch (error) {
+        console.error('❌ Error showing feed form:', error);
+        this.showNotification('Error showing feed form', 'error');
+    }
+},
 
     calculateCost(feedType, quantity) {
         const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
@@ -1200,6 +1229,67 @@ Last Updated: ${this.formatDateTime(item.lastUpdated)}
         console.log('✅ Feed-record module cleaned up');
     }
 };
+
+// ==================== DEBUG HELPERS ====================
+debugCheckButtons() {
+    console.log('🔍 Debug: Checking buttons...');
+    
+    // Check if quick action buttons exist
+    const buttons = this.element.querySelectorAll('[data-action]');
+    console.log(`Found ${buttons.length} action buttons:`);
+    
+    buttons.forEach(btn => {
+        const action = btn.getAttribute('data-action');
+        const text = btn.textContent.trim();
+        console.log(`  - ${action}: "${text.substring(0, 30)}..."`);
+    });
+    
+    // Specifically check for record-feed button
+    const recordFeedBtn = this.element.querySelector('[data-action="record-feed"]');
+    if (recordFeedBtn) {
+        console.log('✅ Record Feed button found:', recordFeedBtn);
+    } else {
+        console.error('❌ Record Feed button NOT found!');
+        
+        // Try to find it by other means
+        const possibleButtons = this.element.querySelectorAll('button');
+        console.log('All buttons found:');
+        possibleButtons.forEach(btn => {
+            if (btn.textContent.includes('Record Feed') || 
+                btn.textContent.includes('📝')) {
+                console.log('  - Possible match:', btn);
+            }
+        });
+    }
+},
+
+// Call this in initialize() for debugging
+initialize() {
+    console.log('🌾 Initializing Feed Records...');
+    
+    this.element = document.getElementById('content-area');
+    if (!this.element) {
+        console.error('❌ Content area not found');
+        return false;
+    }
+
+    // Register with StyleManager if available
+    if (window.StyleManager) {
+        StyleManager.registerModule(this.name, this.element, this);
+    }
+
+    this.loadData();
+    this.renderModule();
+    this.setupEventListeners();
+    this.initialized = true;
+    this.syncStatsWithSharedData();
+    
+    // Debug: Check buttons
+    setTimeout(() => this.debugCheckButtons(), 500);
+    
+    console.log('✅ Feed Records initialized');
+    return true;
+},
 
 // ==================== STYLES ====================
 const feedRecordStyles = `
