@@ -140,6 +140,7 @@ const FeedRecordModule = {
     },
 
     // ==================== MODULE RENDERING ====================
+        // ==================== MODULE RENDERING ====================
     renderModule() {
         if (!this.element) return;
 
@@ -211,7 +212,8 @@ const FeedRecordModule = {
                     </div>
                 </div>
 
-                <div class="form-section">
+                <!-- FORM SECTION - ADDED ID FOR EASY SELECTION -->
+                <div class="form-section" id="feed-record-form-section">
                     <h2>Record Feed Usage</h2>
                     <form id="feed-record-form" class="feed-form">
                         <div class="form-row">
@@ -253,7 +255,7 @@ const FeedRecordModule = {
 
         this.setupEventListeners();
     },
-
+    
     calculateStats() {
         const totalStock = this.feedInventory.reduce((sum, item) => sum + item.currentStock, 0);
         const totalInventoryValue = this.feedInventory.reduce((sum, item) => sum + (item.currentStock * item.costPerKg), 0);
@@ -320,15 +322,35 @@ const FeedRecordModule = {
     },
 
     // ==================== EVENT HANDLERS ====================
-    setupEventListeners() {
+        setupEventListeners() {
         this.removeAllEventListeners();
         
         if (!this.element) return;
 
+        console.log('🔍 Setting up event listeners for feed-record module');
+        console.log('📝 Element content length:', this.element.innerHTML.length);
+        
+        // Check if Record Feed button exists
+        const recordFeedBtn = this.element.querySelector('[data-action="record-feed"]');
+        console.log('🔍 Record Feed button found:', recordFeedBtn);
+        
+        if (recordFeedBtn) {
+            console.log('🔍 Button HTML:', recordFeedBtn.outerHTML);
+        }
+
         // Main event delegation
         this.addEventListener(this.element, 'click', (e) => {
+            console.log('🎯 Click event fired on feed-record module');
+            
             const button = e.target.closest('[data-action]');
-            if (!button) return;
+            if (!button) {
+                console.log('🎯 Clicked element:', e.target);
+                console.log('🎯 Clicked element parent:', e.target.parentElement);
+                return;
+            }
+            
+            console.log('🎯 Button clicked:', button);
+            console.log('🎯 Button data-action:', button.getAttribute('data-action'));
             
             e.preventDefault();
             const action = button.getAttribute('data-action');
@@ -354,10 +376,13 @@ const FeedRecordModule = {
         // Form submission
         const form = this.element.querySelector('#feed-record-form');
         if (form) {
+            console.log('🔍 Form found:', form);
             this.addEventListener(form, 'submit', (e) => {
                 e.preventDefault();
                 this.saveFeedRecord();
             });
+        } else {
+            console.log('⚠️ Form not found');
         }
     },
 
@@ -365,9 +390,31 @@ const FeedRecordModule = {
     scrollToForm() {
         console.log('🎯 scrollToForm() called');
         
-        const formSection = this.element.querySelector('.form-section');
+        // Try multiple selectors to find the form section
+        let formSection = this.element.querySelector('#feed-record-form-section');
+        
+        if (!formSection) {
+            console.log('🔍 Trying alternative selectors...');
+            formSection = this.element.querySelector('.form-section');
+        }
+        
+        if (!formSection) {
+            formSection = this.element.querySelector('#feed-record-form')?.parentElement;
+        }
+        
+        if (!formSection) {
+            // Last resort: find any div that contains "Record Feed Usage" text
+            const allDivs = this.element.querySelectorAll('div');
+            for (const div of allDivs) {
+                if (div.textContent.includes('Record Feed Usage')) {
+                    formSection = div;
+                    break;
+                }
+            }
+        }
+        
         if (formSection) {
-            console.log('✅ Found form section, scrolling...');
+            console.log('✅ Found form section:', formSection);
             
             // Visual feedback on button click
             const recordFeedBtn = this.element.querySelector('[data-action="record-feed"]');
@@ -399,7 +446,11 @@ const FeedRecordModule = {
                 }
             }, 500);
         } else {
-            console.error('❌ Form section not found');
+            console.error('❌ Form section not found in element:', this.element);
+            console.log('🔍 Element HTML:', this.element.innerHTML);
+            
+            // Fallback: scroll to bottom
+            this.element.scrollIntoView({ behavior: 'smooth' });
         }
     },
 
