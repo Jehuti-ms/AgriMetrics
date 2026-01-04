@@ -1,13 +1,6 @@
 // modules/feed-record.js - COMPLETE REWRITE WITH ALL FUNCTIONALITY
 console.log('🌾 Loading feed-record module...');
 
-// Data Broadcaster integration
-const Broadcaster = window.DataBroadcaster || {
-    recordCreated: () => {},
-    recordUpdated: () => {},
-    recordDeleted: () => {}
-};
-
 const FeedRecordModule = {
     name: 'feed-record',
     initialized: false,
