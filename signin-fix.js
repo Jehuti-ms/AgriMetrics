@@ -1,19 +1,42 @@
-// signin-fix.js - ULTIMATE WORKING VERSION
-console.log('🔐 ULTIMATE SIGN-IN FIX LOADING...');
+// signin-fix.js - COMPLETE REDIRECT FIX
+console.log('🔐 ULTIMATE SIGN-IN FIX WITH REDIRECT LOADING...');
 
 class UltimateSignInFix {
     constructor() {
+        this.redirectAttempted = false;
         this.init();
     }
     
     init() {
-        console.log('🔧 Initializing ultimate sign-in fix...');
+        console.log('🔧 Initializing ultimate sign-in fix with redirect...');
         
-        // Wait for everything to load
+        // Listen for auth state changes
+        this.setupAuthListener();
+        
+        // Wait a bit and setup sign-in
         setTimeout(() => {
             this.setupSignIn();
             this.monitorForms();
-        }, 2000);
+        }, 1500);
+    }
+    
+    setupAuthListener() {
+        if (!window.firebase || !window.firebase.auth) {
+            console.log('⏳ Waiting for Firebase...');
+            setTimeout(() => this.setupAuthListener(), 500);
+            return;
+        }
+        
+        const auth = firebase.auth();
+        
+        auth.onAuthStateChanged((user) => {
+            console.log('📡 Auth state changed:', user ? 'User signed in' : 'No user');
+            
+            if (user && !this.redirectAttempted) {
+                console.log('✅ User authenticated via listener:', user.email);
+                this.handleSuccessfulAuth(user);
+            }
+        });
     }
     
     setupSignIn() {
@@ -137,16 +160,8 @@ class UltimateSignInFix {
             console.log('✅ SIGN IN SUCCESS!');
             console.log('User:', userCredential.user.email);
             
-            this.showMessage('Sign in successful! Redirecting...', 'success');
-            
-            // Store user data
-            localStorage.setItem('userEmail', email);
-            localStorage.setItem('userName', userCredential.user.displayName || email);
-            
-            // Reload page to trigger app initialization
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
+            // Call the successful auth handler
+            await this.handleSuccessfulAuth(userCredential.user);
             
         } catch (error) {
             console.error('❌ SIGN IN ERROR:', error.code, error.message);
@@ -188,6 +203,87 @@ class UltimateSignInFix {
         } finally {
             this.showLoading(false);
         }
+    }
+    
+    async handleSuccessfulAuth(user) {
+        // Prevent multiple redirect attempts
+        if (this.redirectAttempted) {
+            console.log('⚠️ Redirect already attempted, skipping');
+            return;
+        }
+        
+        this.redirectAttempted = true;
+        
+        console.log('🎯 Handling successful authentication for:', user.email);
+        
+        // Save user data
+        localStorage.setItem('userEmail', user.email);
+        localStorage.setItem('userName', user.displayName || user.email);
+        localStorage.setItem('userUid', user.uid);
+        localStorage.setItem('lastLogin', new Date().toISOString());
+        
+        console.log('💾 User data saved to localStorage:', {
+            email: localStorage.getItem('userEmail'),
+            name: localStorage.getItem('userName'),
+            uid: localStorage.getItem('userUid')
+        });
+        
+        // Show success message
+        this.showMessage('Sign in successful! Redirecting...', 'success');
+        
+        // Wait 1 second to show the message
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Check current page
+        const currentPath = window.location.pathname;
+        console.log('📍 Current path:', currentPath);
+        
+        // Determine where to redirect
+        let redirectUrl;
+        
+        if (currentPath.includes('auth.html') || currentPath.includes('login.html') || 
+            currentPath.includes('signin.html') || window.location.href.includes('auth')) {
+            // We're on an auth page, redirect to main app
+            redirectUrl = window.location.origin + window.location.pathname
+                .replace(/auth\.html|login\.html|signin\.html/, 'index.html')
+                .replace(/\/[^\/]*$/, '/index.html');
+        } else {
+            // We're already on main app, just reload
+            redirectUrl = window.location.href;
+        }
+        
+        // Ensure we have a proper URL
+        if (!redirectUrl.includes('index.html') && !redirectUrl.includes('dashboard')) {
+            redirectUrl = window.location.origin + '/index.html';
+        }
+        
+        console.log('🔀 Redirecting to:', redirectUrl);
+        
+        // Force redirect with multiple methods
+        this.forceRedirect(redirectUrl);
+    }
+    
+    forceRedirect(url) {
+        console.log('🚀 Forcing redirect...');
+        
+        // Method 1: Direct location change (primary)
+        window.location.href = url;
+        
+        // Method 2: Timeout backup
+        setTimeout(() => {
+            if (window.location.href !== url) {
+                console.log('⏱️ Backup redirect triggered');
+                window.location.assign(url);
+            }
+        }, 1500);
+        
+        // Method 3: Replace state
+        setTimeout(() => {
+            if (window.location.href !== url) {
+                console.log('🔄 Replace state redirect');
+                window.location.replace(url);
+            }
+        }, 3000);
     }
     
     async resetPassword(email) {
@@ -268,7 +364,7 @@ class UltimateSignInFix {
                 div.style.animation = 'slideOut 0.3s ease';
                 setTimeout(() => div.remove(), 300);
             }
-        }, 5000);
+        }, 3000);
     }
     
     showMessageWithAction(message, type, actionText, actionCallback) {
@@ -335,16 +431,11 @@ class UltimateSignInFix {
                     this.handleSignInAction();
                 }
             }
-        }, true); // Use capture phase
+        }, true);
     }
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    window.ultimateSignInFix = new UltimateSignInFix();
-});
-
-// Also initialize if page already loaded
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.ultimateSignInFix = new UltimateSignInFix();
@@ -353,4 +444,4 @@ if (document.readyState === 'loading') {
     window.ultimateSignInFix = new UltimateSignInFix();
 }
 
-console.log('✅ Ultimate Sign-In Fix Loaded');
+console.log('✅ Ultimate Sign-In Fix with Redirect Loaded');
