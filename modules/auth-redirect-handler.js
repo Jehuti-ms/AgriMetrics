@@ -1,4 +1,4 @@
-// modules/auth-redirect-handler.js
+// modules/auth-redirect-handler.js - UPDATED
 console.log('🔍 Loading Auth Redirect Handler...');
 
 class AuthRedirectHandler {
@@ -59,8 +59,8 @@ class AuthRedirectHandler {
         // Update UI to show success
         this.showSuccessMessage(user);
         
-        // Redirect to dashboard
-        this.redirectToDashboard();
+        // Handle successful auth (NO REDIRECT to HTML files)
+        this.handleSuccessfulAuth(user);
     }
 
     showSuccessMessage(user) {
@@ -121,7 +121,7 @@ class AuthRedirectHandler {
                     font-size: 14px;
                     margin-top: 20px;
                 ">
-                    Redirecting to dashboard...
+                    Loading your dashboard...
                 </p>
             </div>
         `;
@@ -151,18 +151,75 @@ class AuthRedirectHandler {
         }
     }
 
-    redirectToDashboard() {
-        console.log('🔄 Redirecting to dashboard in 2 seconds...');
+    handleSuccessfulAuth(user) {
+        console.log('🔄 Auth successful! Showing app interface...');
         
-        // Store auth success in session for dashboard
+        // Store auth success in session
         sessionStorage.setItem('authRedirectSuccess', 'true');
         sessionStorage.setItem('authTimestamp', Date.now().toString());
         
-        // Redirect after delay
-        setTimeout(() => {
-            console.log('📍 Navigating to dashboard...');
-            window.location.href = 'dashboard.html';
-        }, 2000);
+        // Save user data to localStorage
+        localStorage.setItem('userEmail', user.email);
+        localStorage.setItem('userName', user.displayName || user.email);
+        localStorage.setItem('userUid', user.uid);
+        localStorage.setItem('farm-profile', JSON.stringify({
+            farmName: 'My Farm',
+            ownerName: user.displayName || user.email,
+            email: user.email,
+            uid: user.uid
+        }));
+        
+        // Method 1: Use app.js if available
+        if (typeof window.app !== 'undefined' && window.app.showApp) {
+            console.log('✅ Using app.showApp() method');
+            window.app.showApp();
+            
+            // Switch to dashboard
+            if (window.app.switchSection) {
+                setTimeout(() => {
+                    window.app.switchSection('dashboard');
+                }, 1000);
+            }
+        } 
+        // Method 2: Manual show/hide
+        else {
+            console.log('🛠️ Manually showing app interface');
+            this.showAppInterface();
+        }
+    }
+    
+    showAppInterface() {
+        // Hide auth container
+        const authContainer = document.getElementById('auth-container');
+        const appContainer = document.getElementById('app-container');
+        
+        if (authContainer && appContainer) {
+            authContainer.style.display = 'none';
+            appContainer.classList.remove('hidden');
+            appContainer.style.display = 'block';
+            
+            console.log('✅ App container shown');
+            
+            // Try to load dashboard module
+            setTimeout(() => {
+                if (typeof window.dashboardModule !== 'undefined') {
+                    window.dashboardModule.init();
+                    console.log('✅ Dashboard module initialized');
+                } else if (typeof window.framework !== 'undefined' && window.framework.renderModule) {
+                    window.framework.renderModule('dashboard');
+                    console.log('✅ Dashboard rendered via framework');
+                }
+            }, 500);
+        } else {
+            console.error('❌ Containers not found');
+            console.log('Auth container:', authContainer);
+            console.log('App container:', appContainer);
+            
+            // Fallback: reload page
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        }
     }
 
     handleRedirectError(error) {
@@ -188,10 +245,9 @@ class AuthRedirectHandler {
         
         this.showNotification(errorMessage, 'error');
         
-        // Return to auth page
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 3000);
+        // FIXED: Don't redirect to index.html, just stay on current page
+        // The auth forms are already visible
+        console.log('🔄 Staying on current page after error');
     }
 
     showNotification(message, type = 'info') {
