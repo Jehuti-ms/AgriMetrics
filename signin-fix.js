@@ -1,14 +1,13 @@
-// signin-fix.js - SIMPLE GITHUB PAGES FIX
-console.log('🔐 SIMPLE SIGN-IN FIX FOR GITHUB PAGES');
+// signin-fix.js - UPDATED FOR SINGLE PAGE APP
+console.log('🔐 SIGN-IN FIX FOR SINGLE PAGE APP');
 
-class SimpleSignInFix {
+class SignInFix {
     constructor() {
         this.init();
     }
     
     init() {
-        console.log('📍 Current URL:', window.location.href);
-        console.log('✅ You are at the correct GitHub Pages URL');
+        console.log('🔧 Initializing sign-in fix...');
         
         // Setup sign-in handlers
         this.setupSignInHandlers();
@@ -18,7 +17,7 @@ class SimpleSignInFix {
     }
     
     setupSignInHandlers() {
-        console.log('🔧 Setting up sign-in handlers...');
+        console.log('🛠️ Setting up sign-in handlers...');
         
         // Look for sign-in forms and buttons
         document.addEventListener('click', (e) => {
@@ -74,12 +73,10 @@ class SimpleSignInFix {
             
             console.log('✅ SIGN IN SUCCESS!');
             
-            // Save user data
+            // Save user data to localStorage
             localStorage.setItem('userEmail', userCredential.user.email);
             localStorage.setItem('userName', userCredential.user.displayName || userCredential.user.email);
             localStorage.setItem('userUid', userCredential.user.uid);
-            
-            // CRITICAL: Save farm-profile for your app.js to detect
             localStorage.setItem('farm-profile', JSON.stringify({
                 farmName: 'My Farm',
                 ownerName: userCredential.user.displayName || userCredential.user.email,
@@ -89,11 +86,23 @@ class SimpleSignInFix {
             
             this.showMessage('Sign in successful! Loading app...', 'success');
             
-            // SIMPLE FIX: Just reload the page
-            console.log('🔄 Reloading page to trigger app.js auth listener...');
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
+            // Method 1: Use app.js showApp() if available
+            if (typeof window.app !== 'undefined' && window.app.showApp) {
+                console.log('✅ Using app.showApp() method');
+                window.app.showApp();
+                
+                // Switch to dashboard
+                if (window.app.switchSection) {
+                    setTimeout(() => {
+                        window.app.switchSection('dashboard');
+                    }, 1000);
+                }
+            } 
+            // Method 2: Manual show/hide
+            else {
+                console.log('🛠️ Manually showing app interface');
+                this.showAppInterface();
+            }
             
         } catch (error) {
             console.error('❌ Sign in error:', error.code, error.message);
@@ -114,10 +123,41 @@ class SimpleSignInFix {
         }
     }
     
+    showAppInterface() {
+        // Hide auth container, show app container
+        const authContainer = document.getElementById('auth-container');
+        const appContainer = document.getElementById('app-container');
+        
+        if (authContainer && appContainer) {
+            authContainer.style.display = 'none';
+            appContainer.classList.remove('hidden');
+            appContainer.style.display = 'block';
+            
+            console.log('✅ App container shown');
+            
+            // Load dashboard module
+            setTimeout(() => {
+                if (typeof window.dashboardModule !== 'undefined') {
+                    window.dashboardModule.init();
+                    console.log('✅ Dashboard module initialized');
+                } else if (typeof window.framework !== 'undefined' && window.framework.renderModule) {
+                    window.framework.renderModule('dashboard');
+                    console.log('✅ Dashboard rendered via framework');
+                }
+            }, 500);
+        } else {
+            console.warn('⚠️ Containers not found, reloading page...');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        }
+    }
+    
     checkExistingAuth() {
         // Check if user is already signed in
-        if (firebase.auth().currentUser) {
-            console.log('👤 Already signed in:', firebase.auth().currentUser.email);
+        const auth = firebase.auth();
+        if (auth.currentUser) {
+            console.log('👤 Already signed in:', auth.currentUser.email);
             this.ensureLocalStorageSynced();
         }
     }
@@ -128,12 +168,16 @@ class SimpleSignInFix {
             localStorage.setItem('userEmail', user.email);
             localStorage.setItem('userName', user.displayName || user.email);
             localStorage.setItem('userUid', user.uid);
-            localStorage.setItem('farm-profile', JSON.stringify({
-                farmName: 'My Farm',
-                ownerName: user.displayName || user.email,
-                email: user.email,
-                uid: user.uid
-            }));
+            
+            // Only set farm-profile if it doesn't exist
+            if (!localStorage.getItem('farm-profile')) {
+                localStorage.setItem('farm-profile', JSON.stringify({
+                    farmName: 'My Farm',
+                    ownerName: user.displayName || user.email,
+                    email: user.email,
+                    uid: user.uid
+                }));
+            }
         }
     }
     
@@ -188,19 +232,15 @@ class SimpleSignInFix {
             }
         }, 3000);
     }
-    
-    isValidEmail(email) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    }
 }
 
 // Initialize when page loads
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        window.simpleSignInFix = new SimpleSignInFix();
+        window.signInFix = new SignInFix();
     });
 } else {
-    window.simpleSignInFix = new SimpleSignInFix();
+    window.signInFix = new SignInFix();
 }
 
-console.log('✅ Simple Sign-In Fix Loaded');
+console.log('✅ Sign-In Fix Loaded');
