@@ -275,272 +275,368 @@ class AuthModule {
 
     // ======== REBUILT SIGN UP METHOD (100% WORKING) ========
     async handleSignUp() {
-        console.log('🚀 STARTING SIGN UP PROCESS...');
+    console.log('🚀 STARTING SIGN UP PROCESS...');
+    
+    const form = document.getElementById('signup-form-element');
+    if (!form) {
+        console.error('❌ Signup form not found');
+        return;
+    }
+
+    // Get form values
+    const name = document.getElementById('signup-name')?.value.trim() || '';
+    const email = document.getElementById('signup-email')?.value.trim() || '';
+    const password = document.getElementById('signup-password')?.value || '';
+    const confirmPassword = document.getElementById('signup-confirm-password')?.value || '';
+    const farmName = document.getElementById('farm-name')?.value.trim() || 'My Farm';
+
+    console.log('📝 Signup data:', { name, email, farmName, passwordLength: password.length });
+
+    // Validate
+    if (!this.isValidEmail(email)) {
+        this.showNotification('Please enter a valid email address', 'error');
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        this.showNotification('Passwords do not match', 'error');
+        return;
+    }
+
+    if (password.length < 6) {
+        this.showNotification('Password must be at least 6 characters', 'error');
+        return;
+    }
+
+    // Show loading
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn?.innerHTML || 'Create Account';
+    if (submitBtn) {
+        submitBtn.innerHTML = 'Creating Account...';
+        submitBtn.disabled = true;
+    }
+
+    try {
+        // ===== CRITICAL: Check if user already exists =====
+        console.log('🔍 Checking if user exists...');
+        const auth = window.firebase.auth();
+        const methods = await auth.fetchSignInMethodsForEmail(email);
         
-        const form = document.getElementById('signup-form-element');
-        if (!form) {
-            console.error('❌ Signup form not found');
-            return;
-        }
-
-        // Get form values
-        const name = document.getElementById('signup-name')?.value.trim() || '';
-        const email = document.getElementById('signup-email')?.value.trim() || '';
-        const password = document.getElementById('signup-password')?.value || '';
-        const confirmPassword = document.getElementById('signup-confirm-password')?.value || '';
-        const farmName = document.getElementById('farm-name')?.value.trim() || '';
-
-        console.log('📝 Signup data:', { name, email, farmName, passwordLength: password.length });
-
-        // Validate
-        if (!this.isValidEmail(email)) {
-            this.showNotification('Please enter a valid email address', 'error');
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            this.showNotification('Passwords do not match', 'error');
-            return;
-        }
-
-        if (password.length < 6) {
-            this.showNotification('Password must be at least 6 characters', 'error');
-            return;
-        }
-
-        // Show loading
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn?.innerHTML || 'Create Account';
-        if (submitBtn) {
-            submitBtn.innerHTML = 'Creating Account...';
-            submitBtn.disabled = true;
-        }
-
-        try {
-            // ===== FIX 1: VERIFY FIREBASE IS READY =====
-            if (!window.firebase || !window.firebase.auth) {
-                throw new Error('Firebase not loaded. Please refresh the page.');
-            }
-            
-            console.log('✅ Firebase is ready, creating user...');
-            
-            // ===== FIX 2: DIRECT FIREBASE SIGNUP =====
-            const auth = window.firebase.auth();
-            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-            
-            console.log('✅ User created:', userCredential.user.uid);
-            
-            // ===== FIX 3: UPDATE PROFILE =====
-            if (name || farmName) {
-                await userCredential.user.updateProfile({
-                    displayName: name || email
-                });
-                console.log('✅ Profile updated');
-            }
-            
-            // ===== FIX 4: STORE EXTRA DATA =====
-            if (farmName) {
-                try {
-                    const db = window.firebase.firestore?.();
-                    if (db) {
-                        await db.collection('users').doc(userCredential.user.uid).set({
-                            email: email,
-                            name: name || email,
-                            farmName: farmName,
-                            createdAt: new Date().toISOString(),
-                            uid: userCredential.user.uid
-                        }, { merge: true });
-                        console.log('✅ User data saved to Firestore');
+        if (methods.length > 0) {
+            if (methods.includes('password')) {
+                // User exists with password - redirect to sign in
+                this.showNotificationWithAction(
+                    'Account already exists with this email. Please sign in instead.',
+                    'warning',
+                    'Sign In',
+                    () => {
+                        this.showAuthForm('signin');
+                        if (document.getElementById('signin-email')) {
+                            document.getElementById('signin-email').value = email;
+                        }
                     }
-                } catch (firestoreError) {
-                    console.warn('⚠️ Could not save to Firestore:', firestoreError);
-                    // Continue anyway - auth is more important
-                }
+                );
+            } else {
+                // User exists without password - offer to reset
+                this.showNotificationWithAction(
+                    'Account exists but email/password is not set up. Would you like to reset your password?',
+                    'warning',
+                    'Reset Password',
+                    async () => {
+                        try {
+                            await auth.sendPasswordResetEmail(email);
+                            this.showNotification('Password reset email sent!', 'success');
+                        } catch (resetError) {
+                            this.showNotification('Reset failed: ' + resetError.message, 'error');
+                        }
+                    }
+                );
             }
             
-            // ===== FIX 5: SEND VERIFICATION EMAIL =====
-            await userCredential.user.sendEmailVerification();
-            console.log('✅ Verification email sent');
-            
-            // ===== FIX 6: SIGN IN AUTOMATICALLY =====
-            console.log('🔐 Auto-signing in after account creation...');
-            await auth.signInWithEmailAndPassword(email, password);
-            
-            // ===== FIX 7: SAVE TO LOCALSTORAGE =====
-            localStorage.setItem('userEmail', email);
-            localStorage.setItem('userName', name || email);
-            localStorage.setItem('userUid', userCredential.user.uid);
-            if (farmName) localStorage.setItem('farmName', farmName);
-            
-            console.log('💾 User data saved to localStorage');
-            
-            // ===== FIX 8: SUCCESS & REDIRECT =====
-            this.showNotification(`Account created successfully! Welcome ${name || email}!`, 'success');
-            
-            // Wait and redirect
-            setTimeout(() => {
-                console.log('🔀 Redirecting to main app...');
-                window.location.href = window.location.href.replace('/auth.html', '/index.html') || '/index.html';
-            }, 2000);
-            
-        } catch (error) {
-            console.error('❌ SIGN UP ERROR:', error.code, error.message);
-            
-            // Restore button
             if (submitBtn) {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
             }
-            
-            // User-friendly error messages
-            let errorMessage = 'Sign up failed: ';
-            
-            switch(error.code) {
-                case 'auth/email-already-in-use':
-                    errorMessage = 'This email is already registered. Try signing in instead.';
-                    break;
-                case 'auth/invalid-email':
-                    errorMessage = 'Invalid email address format.';
-                    break;
-                case 'auth/weak-password':
-                    errorMessage = 'Password is too weak. Use at least 6 characters.';
-                    break;
-                case 'auth/operation-not-allowed':
-                    errorMessage = 'Email/password sign-up is disabled. Contact support.';
-                    break;
-                case 'auth/network-request-failed':
-                    errorMessage = 'Network error. Please check your connection.';
-                    break;
-                default:
-                    errorMessage += error.message;
-            }
-            
-            this.showNotification(errorMessage, 'error');
+            return;
         }
+        
+        // ===== CREATE NEW ACCOUNT =====
+        console.log('✅ No account found, creating new one...');
+        
+        // Use the new createAccountWithPassword method
+        await this.createAccountWithPassword(email, password, name, farmName);
+        
+    } catch (error) {
+        console.error('❌ SIGN UP ERROR:', error.code, error.message);
+        
+        // Restore button
+        if (submitBtn) {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
+        
+        // User-friendly error messages
+        let errorMessage = 'Sign up failed: ';
+        
+        switch(error.code) {
+            case 'auth/email-already-in-use':
+                errorMessage = 'This email is already registered. Try signing in instead.';
+                break;
+            case 'auth/invalid-email':
+                errorMessage = 'Invalid email address format.';
+                break;
+            case 'auth/weak-password':
+                errorMessage = 'Password is too weak. Use at least 6 characters.';
+                break;
+            case 'auth/operation-not-allowed':
+                errorMessage = 'Email/password sign-up is disabled. Contact support.';
+                break;
+            case 'auth/network-request-failed':
+                errorMessage = 'Network error. Please check your connection.';
+                break;
+            default:
+                errorMessage += error.message;
+        }
+        
+        this.showNotification(errorMessage, 'error');
     }
+}
 
     // ======== REBUILT SIGN IN METHOD (100% WORKING) ========
     async handleSignIn() {
-        console.log('🚀 STARTING SIGN IN PROCESS...');
+    console.log('🚀 STARTING SIGN IN PROCESS...');
+    
+    const form = document.getElementById('signin-form-element');
+    if (!form) {
+        console.error('❌ Signin form not found');
+        return;
+    }
+
+    const email = document.getElementById('signin-email')?.value.trim() || '';
+    const password = document.getElementById('signin-password')?.value || '';
+
+    console.log('🔐 Attempting login for:', email);
+
+    // Validate
+    if (!this.isValidEmail(email)) {
+        this.showNotification('Please enter a valid email address', 'error');
+        return;
+    }
+
+    if (!password) {
+        this.showNotification('Please enter your password', 'error');
+        return;
+    }
+
+    // Show loading
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn?.innerHTML || 'Sign In';
+    if (submitBtn) {
+        submitBtn.innerHTML = 'Signing In...';
+        submitBtn.disabled = true;
+    }
+
+    try {
+        // ===== IMPORTANT: Check sign-in methods FIRST =====
+        console.log('🔍 Checking sign-in methods for:', email);
+        const auth = window.firebase.auth();
+        const methods = await auth.fetchSignInMethodsForEmail(email);
+        console.log('📋 Available sign-in methods:', methods);
         
-        const form = document.getElementById('signin-form-element');
-        if (!form) {
-            console.error('❌ Signin form not found');
+        if (methods.length === 0) {
+            // No account exists - create one
+            console.log('❌ No account found, creating one...');
+            await this.createAccountWithPassword(email, password, 'User', 'My Farm');
             return;
         }
-
-        const email = document.getElementById('signin-email')?.value.trim() || '';
-        const password = document.getElementById('signin-password')?.value || '';
-
-        console.log('🔐 Attempting login for:', email);
-
-        // Validate
-        if (!this.isValidEmail(email)) {
-            this.showNotification('Please enter a valid email address', 'error');
-            return;
-        }
-
-        if (!password) {
-            this.showNotification('Please enter your password', 'error');
-            return;
-        }
-
-        // Show loading
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn?.innerHTML || 'Sign In';
-        if (submitBtn) {
-            submitBtn.innerHTML = 'Signing In...';
-            submitBtn.disabled = true;
-        }
-
-        try {
-            // ===== FIX 1: VERIFY FIREBASE =====
-            if (!window.firebase || !window.firebase.auth) {
-                throw new Error('Firebase not loaded. Please refresh.');
-            }
+        
+        if (!methods.includes('password')) {
+            // Email/password not enabled - offer to reset
+            console.log('❌ Email/password not enabled for this account');
+            this.showNotificationWithAction(
+                'Account exists but email/password sign-in is not set up. ' +
+                'Would you like to reset your password to enable it?',
+                'warning',
+                'Reset Password',
+                async () => {
+                    try {
+                        await auth.sendPasswordResetEmail(email);
+                        this.showNotification('Password reset email sent! Check your inbox.', 'success');
+                    } catch (resetError) {
+                        this.showNotification('Reset failed: ' + resetError.message, 'error');
+                    }
+                }
+            );
             
-            console.log('✅ Firebase is ready, signing in...');
-            
-            // ===== FIX 2: DIRECT FIREBASE SIGNIN =====
-            const auth = window.firebase.auth();
-            const userCredential = await auth.signInWithEmailAndPassword(email, password);
-            
-            console.log('✅ Login successful:', {
-                email: userCredential.user.email,
-                uid: userCredential.user.uid,
-                verified: userCredential.user.emailVerified
-            });
-            
-            // ===== FIX 3: CHECK EMAIL VERIFICATION =====
-            if (!userCredential.user.emailVerified) {
-                console.warn('⚠️ Email not verified');
-                this.showNotification('Please verify your email address. Check your inbox.', 'warning');
-            }
-            
-            // ===== FIX 4: SAVE USER DATA =====
-            localStorage.setItem('userEmail', email);
-            localStorage.setItem('userName', userCredential.user.displayName || email);
-            localStorage.setItem('userUid', userCredential.user.uid);
-            
-            console.log('💾 User data saved to localStorage');
-            
-            // ===== FIX 5: SUCCESS & REDIRECT =====
-            this.showNotification(`Welcome back, ${userCredential.user.displayName || email}!`, 'success');
-            
-            // Wait and redirect
-            setTimeout(() => {
-                console.log('🔀 Redirecting to main app...');
-                window.location.href = window.location.href.replace('/auth.html', '/index.html') || '/index.html';
-            }, 1500);
-            
-        } catch (error) {
-            console.error('❌ LOGIN ERROR:', error.code, error.message);
-            
-            // Restore button
             if (submitBtn) {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
             }
-            
-            // User-friendly error messages
-            let errorMessage = 'Login failed: ';
-            let action = null;
-            
-            switch(error.code) {
-                case 'auth/invalid-login-credentials':
-                case 'auth/wrong-password':
-                case 'auth/invalid-credential':
-                    errorMessage = 'Invalid email or password. Please try again.';
-                    break;
-                case 'auth/user-not-found':
-                    errorMessage = 'No account found with this email. Would you like to sign up?';
-                    action = () => {
+            return;
+        }
+        
+        // ===== TRY SIGN IN =====
+        console.log('✅ Email/password enabled, attempting sign in...');
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        
+        console.log('✅ Login successful!');
+        
+        // ===== CRITICAL: Save to localStorage for your app's auth listener =====
+        const userData = {
+            email: userCredential.user.email,
+            name: userCredential.user.displayName || userCredential.user.email,
+            uid: userCredential.user.uid
+        };
+        
+        // Save to localStorage (this is what your app checks)
+        localStorage.setItem('userEmail', userData.email);
+        localStorage.setItem('userName', userData.name);
+        localStorage.setItem('userUid', userData.uid);
+        
+        // Also create farm-profile for local fallback
+        localStorage.setItem('farm-profile', JSON.stringify({
+            farmName: 'My Farm',
+            ownerName: userData.name,
+            email: userData.email,
+            uid: userData.uid
+        }));
+        
+        console.log('💾 User data saved to localStorage:', userData);
+        
+        // ===== Force Firestore profile creation =====
+        try {
+            const db = firebase.firestore();
+            await db.collection('users').doc(userData.uid).set({
+                ...userData,
+                lastLogin: new Date().toISOString(),
+                farmName: 'My Farm'
+            }, { merge: true });
+            console.log('✅ Profile saved to Firestore');
+        } catch (firestoreError) {
+            console.warn('⚠️ Firestore error:', firestoreError);
+            // Continue anyway - auth is more important
+        }
+        
+        // ===== Show success =====
+        this.showNotification(`Welcome back, ${userData.name}!`, 'success');
+        
+        // ===== Force redirect/reload =====
+        console.log('🔀 Reloading page to trigger auth listener...');
+        setTimeout(() => {
+            window.location.reload(); // This will trigger your onAuthStateChanged
+        }, 1500);
+        
+    } catch (error) {
+        console.error('❌ LOGIN ERROR:', error.code, error.message);
+        
+        // Restore button
+        if (submitBtn) {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
+        
+        // Enhanced error handling
+        let errorMessage = 'Login failed: ';
+        let action = null;
+        
+        switch(error.code) {
+            case 'auth/invalid-login-credentials':
+            case 'auth/wrong-password':
+                errorMessage = 'Incorrect password. ';
+                action = {
+                    text: 'Reset Password',
+                    callback: () => this.resetPassword(email)
+                };
+                break;
+            case 'auth/user-not-found':
+                errorMessage = 'No account found. ';
+                action = {
+                    text: 'Sign Up',
+                    callback: () => {
                         this.showAuthForm('signup');
                         if (document.getElementById('signup-email')) {
                             document.getElementById('signup-email').value = email;
                         }
-                    };
-                    break;
-                case 'auth/user-disabled':
-                    errorMessage = 'This account has been disabled. Contact support.';
-                    break;
-                case 'auth/too-many-requests':
-                    errorMessage = 'Too many failed attempts. Please try again in 15 minutes.';
-                    break;
-                case 'auth/network-request-failed':
-                    errorMessage = 'Network error. Please check your internet connection.';
-                    break;
-                default:
-                    errorMessage += error.message;
-            }
-            
-            if (action) {
-                this.showNotificationWithAction(errorMessage, 'error', 'Sign Up', action);
-            } else {
-                this.showNotification(errorMessage, 'error');
-            }
+                    }
+                };
+                break;
+            case 'auth/user-disabled':
+                errorMessage = 'Account disabled. Contact support.';
+                break;
+            case 'auth/too-many-requests':
+                errorMessage = 'Too many attempts. Try again later.';
+                break;
+            default:
+                errorMessage += error.message;
+        }
+        
+        if (action) {
+            this.showNotificationWithAction(errorMessage, 'error', action.text, action.callback);
+        } else {
+            this.showNotification(errorMessage, 'error');
         }
     }
+}
+
+// NEW METHOD: Create account with password
+async createAccountWithPassword(email, password, name = '', farmName = '') {
+    console.log('👷 Creating account with email/password...');
+    
+    try {
+        const auth = firebase.auth();
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        
+        console.log('✅ Account created:', userCredential.user.uid);
+        
+        // Update profile if name provided
+        if (name) {
+            await userCredential.user.updateProfile({
+                displayName: name
+            });
+        }
+        
+        // CRITICAL: Save to localStorage for your app
+        localStorage.setItem('userEmail', email);
+        localStorage.setItem('userName', name || email);
+        localStorage.setItem('userUid', userCredential.user.uid);
+        localStorage.setItem('farmName', farmName || 'My Farm');
+        localStorage.setItem('farm-profile', JSON.stringify({
+            farmName: farmName || 'My Farm',
+            ownerName: name || email,
+            email: email,
+            uid: userCredential.user.uid
+        }));
+        
+        // Create Firestore profile
+        try {
+            const db = firebase.firestore();
+            await db.collection('users').doc(userCredential.user.uid).set({
+                email: email,
+                name: name || email,
+                farmName: farmName || 'My Farm',
+                createdAt: new Date().toISOString(),
+                uid: userCredential.user.uid
+            });
+            console.log('✅ Profile saved to Firestore');
+        } catch (firestoreError) {
+            console.warn('⚠️ Firestore error:', firestoreError);
+        }
+        
+        // Auto sign-in
+        await auth.signInWithEmailAndPassword(email, password);
+        
+        this.showNotification('Account created successfully! Welcome!', 'success');
+        
+        // Force reload to trigger auth listener
+        setTimeout(() => {
+            window.location.reload();
+        }, 1500);
+        
+    } catch (error) {
+        console.error('Account creation error:', error);
+        throw error;
+    }
+}
 
     // ======== REBUILT FORGOT PASSWORD METHOD ========
     async handleForgotPassword() {
