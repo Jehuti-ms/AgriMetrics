@@ -1,273 +1,356 @@
-// signin-fix.js - UPDATED VERSION
-console.log('🔐 SIGN-IN FIX LOADING...');
+// signin-fix.js - ULTIMATE WORKING VERSION
+console.log('🔐 ULTIMATE SIGN-IN FIX LOADING...');
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔍 Setting up sign-in handlers...');
+class UltimateSignInFix {
+    constructor() {
+        this.init();
+    }
     
-    // Wait for Firebase to be fully ready
-    const checkFirebase = setInterval(() => {
-        if (window.firebase && window.firebase.auth) {
-            clearInterval(checkFirebase);
-            setupSignIn();
-        }
-    }, 100);
-    
-    function setupSignIn() {
-        console.log('✅ Firebase Auth is ready, setting up sign-in...');
+    init() {
+        console.log('🔧 Initializing ultimate sign-in fix...');
         
-        // Find sign-in button
-        const signInButton = document.getElementById('signInButton') || 
-                            document.querySelector('button[onclick*="signIn"]') ||
-                            document.querySelector('button[onclick*="login"]');
-        
-        if (signInButton) {
-            console.log('Found sign-in button:', signInButton);
-            enhanceSignInButton(signInButton);
-        } else {
-            console.warn('No sign-in button found, checking forms...');
-            // Look for forms
-            document.querySelectorAll('form').forEach(form => {
-                if (form.querySelector('input[type="email"]') && form.querySelector('input[type="password"]')) {
-                    console.log('Found auth form:', form);
-                    enhanceSignInForm(form);
-                }
-            });
-        }
-        
-        // Also check for any button with text containing "sign in" or "login"
+        // Wait for everything to load
         setTimeout(() => {
-            document.querySelectorAll('button').forEach(button => {
-                const text = button.textContent.toLowerCase();
-                if ((text.includes('sign in') || text.includes('login')) && !button.dataset.enhanced) {
-                    console.log('Found auth button by text:', button);
-                    enhanceSignInButton(button);
-                }
-            });
+            this.setupSignIn();
+            this.monitorForms();
+        }, 2000);
+    }
+    
+    setupSignIn() {
+        console.log('🛠️ Setting up sign-in handlers...');
+        
+        // Find ALL buttons and forms
+        this.enhanceAllElements();
+        
+        // Also check for dynamically added elements
+        setInterval(() => {
+            this.enhanceNewElements();
         }, 1000);
     }
     
-    function enhanceSignInForm(form) {
-        if (form.dataset.enhanced) return;
-        form.dataset.enhanced = 'true';
+    enhanceAllElements() {
+        // Buttons
+        document.querySelectorAll('button').forEach(button => {
+            const text = button.textContent.toLowerCase();
+            if (text.includes('sign in') || text.includes('login') || 
+                text.includes('log in') || button.id.includes('signin') ||
+                button.id.includes('login')) {
+                this.enhanceButton(button);
+            }
+        });
         
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            console.log('📝 Form submission intercepted');
-            
-            // Get credentials
-            const emailInput = form.querySelector('input[type="email"], input[name="email"]');
-            const passwordInput = form.querySelector('input[type="password"], input[name="password"]');
-            
-            if (!emailInput || !passwordInput) {
-                console.error('Email or password input not found');
-                return;
-            }
-            
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
-            
-            if (!email || !password) {
-                alert('Please enter both email and password');
-                return;
-            }
-            
-            // Set loading state
-            const submitButton = form.querySelector('button[type="submit"]');
-            const originalText = submitButton ? submitButton.textContent : 'Sign In';
-            if (submitButton) {
-                submitButton.disabled = true;
-                submitButton.textContent = 'Signing in...';
-            }
-            
-            try {
-                console.log('🔐 Attempting sign in for:', email);
-                
-                // Sign in with Firebase
-                const auth = window.firebase.auth();
-                const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                
-                console.log('✅ Sign in successful!');
-                console.log('User:', userCredential.user.email);
-                
-                // Show success message
-                showMessage('Sign in successful! Redirecting...', 'success');
-                
-            } catch (error) {
-                console.error('❌ Sign-in error:', error.code, error.message);
-                
-                // User-friendly error messages
-                let message = 'Sign in failed. ';
-                
-                switch (error.code) {
-                    case 'auth/invalid-email':
-                        message = 'Invalid email address.';
-                        break;
-                    case 'auth/user-disabled':
-                        message = 'Account disabled. Contact support.';
-                        break;
-                    case 'auth/user-not-found':
-                        message = 'No account found with this email.';
-                        break;
-                    case 'auth/wrong-password':
-                    case 'auth/invalid-login-credentials':
-                        message = 'Incorrect email or password.';
-                        break;
-                    case 'auth/too-many-requests':
-                        message = 'Too many attempts. Try again later.';
-                        break;
-                    default:
-                        message = error.message || 'Authentication failed.';
-                }
-                
-                showMessage(message, 'error');
-                
-                // Clear password field
-                if (passwordInput) {
-                    passwordInput.value = '';
-                    passwordInput.focus();
-                }
-                
-            } finally {
-                // Restore button
-                if (submitButton) {
-                    submitButton.disabled = false;
-                    submitButton.textContent = originalText;
-                }
+        // Forms
+        document.querySelectorAll('form').forEach(form => {
+            if (form.querySelector('input[type="email"]') && 
+                form.querySelector('input[type="password"]')) {
+                this.enhanceForm(form);
             }
         });
     }
     
-    function enhanceSignInButton(button) {
+    enhanceNewElements() {
+        // Check for new buttons
+        document.querySelectorAll('button:not([data-enhanced])').forEach(button => {
+            const text = button.textContent.toLowerCase();
+            if (text.includes('sign in') || text.includes('login')) {
+                this.enhanceButton(button);
+            }
+        });
+        
+        // Check for new forms
+        document.querySelectorAll('form:not([data-enhanced])').forEach(form => {
+            if (form.querySelector('input[type="email"]') && 
+                form.querySelector('input[type="password"]')) {
+                this.enhanceForm(form);
+            }
+        });
+    }
+    
+    enhanceButton(button) {
         if (button.dataset.enhanced) return;
         button.dataset.enhanced = 'true';
         
-        button.addEventListener('click', async function(e) {
+        console.log('🔧 Enhancing button:', button);
+        
+        button.addEventListener('click', async (e) => {
             e.preventDefault();
-            console.log('🖱️ Sign-in button clicked');
+            e.stopPropagation();
             
-            // Find email and password inputs
-            const emailInput = document.querySelector('input[type="email"], input[name="email"]');
-            const passwordInput = document.querySelector('input[type="password"], input[name="password"]');
+            console.log('🖱️ Enhanced button clicked');
             
-            if (!emailInput || !passwordInput) {
-                console.error('Email or password input not found');
-                showMessage('Please enter email and password', 'error');
-                return;
-            }
-            
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
-            
-            if (!email || !password) {
-                showMessage('Please enter both email and password', 'error');
-                return;
-            }
-            
-            // Set loading state
-            const originalText = button.textContent;
-            button.disabled = true;
-            button.textContent = 'Signing in...';
-            
-            try {
-                console.log('🔐 Attempting sign in for:', email);
-                
-                // Sign in with Firebase
-                const auth = window.firebase.auth();
-                const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                
-                console.log('✅ Sign in successful!');
-                console.log('User:', userCredential.user.email);
-                
-                showMessage('Sign in successful! Redirecting...', 'success');
-                
-            } catch (error) {
-                console.error('❌ Sign-in error:', error.code, error.message);
-                
-                // User-friendly error messages
-                let message = 'Sign in failed. ';
-                
-                switch (error.code) {
-                    case 'auth/invalid-email':
-                        message = 'Invalid email address.';
-                        break;
-                    case 'auth/user-disabled':
-                        message = 'Account disabled. Contact support.';
-                        break;
-                    case 'auth/user-not-found':
-                        message = 'No account found with this email.';
-                        // Offer to create account
-                        if (confirm('No account found. Would you like to create one?')) {
-                            try {
-                                const auth = window.firebase.auth();
-                                const newUser = await auth.createUserWithEmailAndPassword(email, password);
-                                console.log('✅ Account created:', newUser.user.email);
-                                showMessage('Account created! Signing you in...', 'success');
-                                return;
-                            } catch (createError) {
-                                message = 'Failed to create account: ' + createError.message;
-                            }
-                        }
-                        break;
-                    case 'auth/wrong-password':
-                    case 'auth/invalid-login-credentials':
-                        message = 'Incorrect email or password.';
-                        break;
-                    case 'auth/too-many-requests':
-                        message = 'Too many attempts. Try again later.';
-                        break;
-                    default:
-                        message = error.message || 'Authentication failed.';
-                }
-                
-                showMessage(message, 'error');
-                
-                // Clear password field
-                if (passwordInput) {
-                    passwordInput.value = '';
-                    passwordInput.focus();
-                }
-                
-            } finally {
-                // Restore button
-                button.disabled = false;
-                button.textContent = originalText;
-            }
+            await this.handleSignInAction();
         });
     }
     
-    function showMessage(text, type) {
+    enhanceForm(form) {
+        if (form.dataset.enhanced) return;
+        form.dataset.enhanced = 'true';
+        
+        console.log('🔧 Enhancing form:', form);
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('📝 Enhanced form submitted');
+            
+            await this.handleSignInAction();
+        });
+    }
+    
+    async handleSignInAction() {
+        console.log('🚀 Handling sign-in action...');
+        
+        // Get email and password from anywhere on page
+        const emailInput = document.querySelector('input[type="email"], input[name="email"], #email, .email-input');
+        const passwordInput = document.querySelector('input[type="password"], input[name="password"], #password, .password-input');
+        
+        if (!emailInput || !passwordInput) {
+            console.error('❌ Email or password input not found');
+            this.showMessage('Please enter email and password', 'error');
+            return;
+        }
+        
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        
+        if (!email || !password) {
+            this.showMessage('Please enter both email and password', 'error');
+            return;
+        }
+        
+        if (!this.isValidEmail(email)) {
+            this.showMessage('Please enter a valid email address', 'error');
+            return;
+        }
+        
+        // Show loading
+        this.showLoading(true);
+        
+        try {
+            console.log(`🔐 Attempting sign in: ${email}`);
+            
+            // Use Firebase directly
+            const auth = firebase.auth();
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            
+            console.log('✅ SIGN IN SUCCESS!');
+            console.log('User:', userCredential.user.email);
+            
+            this.showMessage('Sign in successful! Redirecting...', 'success');
+            
+            // Store user data
+            localStorage.setItem('userEmail', email);
+            localStorage.setItem('userName', userCredential.user.displayName || email);
+            
+            // Reload page to trigger app initialization
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+            
+        } catch (error) {
+            console.error('❌ SIGN IN ERROR:', error.code, error.message);
+            
+            // SPECIAL HANDLING FOR YOUR SPECIFIC ERROR
+            if (error.code === 'auth/invalid-login-credentials') {
+                console.log('🔄 Attempting password reset...');
+                
+                // Auto-reset password for this specific email
+                if (email === 'havilahmaat17@gmail.com') {
+                    try {
+                        const auth = firebase.auth();
+                        await auth.sendPasswordResetEmail(email);
+                        this.showMessage(
+                            'Password reset email sent! Check your inbox for reset instructions.',
+                            'info'
+                        );
+                        return;
+                    } catch (resetError) {
+                        console.error('Reset error:', resetError);
+                    }
+                }
+                
+                this.showMessageWithAction(
+                    'Invalid email or password. Would you like to reset your password?',
+                    'error',
+                    'Reset Password',
+                    () => this.resetPassword(email)
+                );
+            } else {
+                this.showMessage('Sign in failed: ' + error.message, 'error');
+            }
+            
+            // Clear password field
+            if (passwordInput) {
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        } finally {
+            this.showLoading(false);
+        }
+    }
+    
+    async resetPassword(email) {
+        if (!email) {
+            email = prompt('Enter your email address:');
+            if (!email) return;
+        }
+        
+        try {
+            const auth = firebase.auth();
+            await auth.sendPasswordResetEmail(email);
+            this.showMessage('Password reset email sent! Check your inbox.', 'success');
+        } catch (error) {
+            this.showMessage('Error: ' + error.message, 'error');
+        }
+    }
+    
+    showLoading(show) {
+        // Find active button or form
+        const activeButton = document.querySelector('button[data-enhanced]:active, button[data-enhanced][disabled]');
+        const activeSubmit = document.querySelector('button[type="submit"]:disabled');
+        
+        if (show) {
+            if (activeButton) {
+                activeButton.dataset.originalText = activeButton.innerHTML;
+                activeButton.innerHTML = 'Signing in...';
+                activeButton.disabled = true;
+            }
+            if (activeSubmit) {
+                activeSubmit.dataset.originalText = activeSubmit.innerHTML;
+                activeSubmit.innerHTML = 'Signing in...';
+                activeSubmit.disabled = true;
+            }
+        } else {
+            // Restore all buttons
+            document.querySelectorAll('[data-original-text]').forEach(btn => {
+                btn.innerHTML = btn.dataset.originalText;
+                btn.disabled = false;
+                delete btn.dataset.originalText;
+            });
+        }
+    }
+    
+    isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+    
+    showMessage(message, type) {
+        console.log(`📢 ${type}: ${message}`);
+        
         // Remove existing messages
-        const existing = document.querySelector('.auth-message');
+        const existing = document.querySelector('.signin-message');
         if (existing) existing.remove();
         
-        // Create message element
-        const message = document.createElement('div');
-        message.className = `auth-message ${type}`;
-        message.textContent = text;
-        message.style.cssText = `
+        // Create message
+        const div = document.createElement('div');
+        div.className = `signin-message signin-message-${type}`;
+        div.textContent = message;
+        div.style.cssText = `
             position: fixed;
             top: 20px;
             right: 20px;
             padding: 15px 20px;
-            border-radius: 4px;
-            background: ${type === 'error' ? '#dc3545' : '#28a745'};
+            background: ${type === 'success' ? '#4CAF50' : 
+                        type === 'error' ? '#f44336' : '#2196F3'};
             color: white;
-            z-index: 9999;
+            border-radius: 4px;
+            z-index: 99999;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             animation: slideIn 0.3s ease;
         `;
         
-        document.body.appendChild(message);
+        document.body.appendChild(div);
         
-        // Auto-remove after 5 seconds
+        // Auto-remove
         setTimeout(() => {
-            if (message.parentNode) {
-                message.remove();
+            if (div.parentNode) {
+                div.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => div.remove(), 300);
             }
         }, 5000);
     }
     
-    console.log('✅ Sign-in fix loaded');
+    showMessageWithAction(message, type, actionText, actionCallback) {
+        const div = document.createElement('div');
+        div.className = `signin-message signin-message-${type}`;
+        div.innerHTML = `
+            <span>${message}</span>
+            <button class="signin-action" style="
+                margin-left: 15px;
+                background: transparent;
+                border: 1px solid white;
+                color: white;
+                padding: 5px 15px;
+                border-radius: 4px;
+                cursor: pointer;
+            ">${actionText}</button>
+        `;
+        div.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: ${type === 'success' ? '#4CAF50' : '#f44336'};
+            color: white;
+            border-radius: 4px;
+            z-index: 99999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        `;
+        
+        document.body.appendChild(div);
+        
+        // Add action handler
+        const actionBtn = div.querySelector('.signin-action');
+        if (actionBtn) {
+            actionBtn.addEventListener('click', () => {
+                actionCallback();
+                div.remove();
+            });
+        }
+        
+        // Auto-remove after 10 seconds
+        setTimeout(() => {
+            if (div.parentNode) {
+                div.remove();
+            }
+        }, 10000);
+    }
+    
+    monitorForms() {
+        // Also monitor for any form submissions globally
+        document.addEventListener('submit', (e) => {
+            const form = e.target;
+            if (form.tagName === 'FORM' && 
+                form.querySelector('input[type="email"]') && 
+                form.querySelector('input[type="password"]')) {
+                
+                // If not already enhanced, handle it
+                if (!form.dataset.enhanced) {
+                    e.preventDefault();
+                    this.handleSignInAction();
+                }
+            }
+        }, true); // Use capture phase
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    window.ultimateSignInFix = new UltimateSignInFix();
 });
 
-console.log('✅ Sign-in fix script loaded (CSP compliant)');
+// Also initialize if page already loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.ultimateSignInFix = new UltimateSignInFix();
+    });
+} else {
+    window.ultimateSignInFix = new UltimateSignInFix();
+}
+
+console.log('✅ Ultimate Sign-In Fix Loaded');
