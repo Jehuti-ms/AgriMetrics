@@ -7743,3 +7743,62 @@ header, .top-nav {
         opacity: 0;
     }
 }
+
+/* Add to your styles.css */
+.auth-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 4px;
+    z-index: 9999;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: slideIn 0.3s ease;
+    max-width: 400px;
+}
+
+.auth-notification-success {
+    background: #4CAF50;
+    color: white;
+    border-left: 4px solid #388E3C;
+}
+
+.auth-notification-error {
+    background: #f44336;
+    color: white;
+    border-left: 4px solid #d32f2f;
+}
+
+.auth-notification-warning {
+    background: #ff9800;
+    color: white;
+    border-left: 4px solid #f57c00;
+}
+
+.auth-notification-info {
+    background: #2196F3;
+    color: white;
+    border-left: 4px solid #1976D2;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
