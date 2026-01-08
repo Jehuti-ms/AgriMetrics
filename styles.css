@@ -7910,3 +7910,27 @@ body {
 .hidden {
   display: none !important;
 }
+
+/* Force navbar/header to be visible */
+header, .top-nav {
+  display: block !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 70px; /* adjust to your design */
+  background: var(--primary-color) !important; /* green theme */
+  color: white !important;
+  z-index: 10000 !important;
+}
+
+/* Ensure main content sits below the navbar */
+#app-container main,
+main#content-area {
+  padding-top: 80px !important; /* slightly larger than header height */
+}
+
+/* Navbar links visible */
+.nav-link, .nav-item, .nav-brand {
+  color: white !important;
+}
