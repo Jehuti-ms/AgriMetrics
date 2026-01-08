@@ -20,7 +20,10 @@ class FirebaseAuth {
   try {
     // Create the user (this also signs them in)
     const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
-
+    console.log('✅ User created:', userCredential.user.uid, userCredential.user.email);
+      } catch (error) { console.error('❌ Sign-up failed:', error.code, error.message); 
+    this.showNotification(`Sign-up failed: ${error.message}`, 'error'); }
+   
     // Save profile data if provided
     if (userData) {
       await this.saveUserData(userCredential.user.uid, userData);
