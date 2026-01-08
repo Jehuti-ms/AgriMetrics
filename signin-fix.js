@@ -64,6 +64,12 @@ console.log('Sign-in Fix Loading...');
                 localStorage.setItem('userEmail', userCredential.user.email);
             }
 
+            const authContainer = document.getElementById('auth-container');
+            if (authContainer) authContainer.style.display = 'none';
+            
+            const authForms = document.querySelector('.auth-forms');
+            if (authForms) authForms.style.display = 'none';
+
             this.hideAuthUI();
 
             setTimeout(function () {
