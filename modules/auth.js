@@ -403,7 +403,7 @@ class AuthModule {
 }
 
     // ======== REBUILT SIGN IN METHOD (100% WORKING) ========
-    async handleSignIn() {
+   async handleSignIn() {
     console.log('🚀 STARTING SIGN IN PROCESS...');
     
     const form = document.getElementById('signin-form-element');
@@ -520,11 +520,26 @@ class AuthModule {
         // ===== Show success =====
         this.showNotification(`Welcome back, ${userData.name}!`, 'success');
         
-        // ===== Force redirect/reload =====
-        console.log('🔀 Reloading page to trigger auth listener...');
-        setTimeout(() => {
-            window.location.reload(); // This will trigger your onAuthStateChanged
-        }, 1500);
+        // ===== CRITICAL: IMMEDIATELY SHOW THE APP =====
+        console.log('🚀 Immediately showing app interface...');
+        
+        // Method 1: Use app.js if available
+        if (typeof window.app !== 'undefined' && window.app.showApp) {
+            console.log('✅ Calling app.showApp()');
+            window.app.showApp();
+            
+            // Also switch to dashboard
+            if (window.app.switchSection) {
+                setTimeout(() => {
+                    window.app.switchSection('dashboard');
+                }, 1000);
+            }
+        } 
+        // Method 2: Manual show/hide
+        else {
+            console.log('🛠️ Manually showing app interface');
+            this.showAppInterface();
+        }
         
     } catch (error) {
         console.error('❌ LOGIN ERROR:', error.code, error.message);
@@ -575,6 +590,50 @@ class AuthModule {
         } else {
             this.showNotification(errorMessage, 'error');
         }
+    }
+}
+
+// Add this method to your auth.js class
+showAppInterface() {
+    console.log('🛠️ Manually showing app interface...');
+    
+    // Hide auth container
+    const authContainer = document.getElementById('auth-container');
+    const appContainer = document.getElementById('app-container');
+    
+    if (authContainer && appContainer) {
+        // Hide auth
+        authContainer.style.display = 'none';
+        authContainer.classList.add('hidden');
+        
+        // Show app
+        appContainer.style.display = 'block';
+        appContainer.classList.remove('hidden');
+        
+        console.log('✅ App interface shown');
+        
+        // Add CSS class to body for styling
+        document.body.classList.add('user-authenticated');
+        
+        // Load dashboard module
+        setTimeout(() => {
+            if (typeof window.dashboardModule !== 'undefined') {
+                window.dashboardModule.init();
+                console.log('✅ Dashboard module initialized');
+            } else if (typeof window.framework !== 'undefined' && window.framework.renderModule) {
+                window.framework.renderModule('dashboard');
+                console.log('✅ Dashboard rendered via framework');
+            }
+        }, 500);
+    } else {
+        console.error('❌ Containers not found');
+        console.log('Auth container:', authContainer);
+        console.log('App container:', appContainer);
+        
+        // Fallback: reload page
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
     }
 }
 
