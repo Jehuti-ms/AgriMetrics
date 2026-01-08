@@ -51,25 +51,31 @@ class FarmManagementApp {
     }
     
     handleAuthStateChange(user) {
-        console.log('🔥 Auth state changed:', user ? 'User found' : 'No user');
+    console.log('🔥 Auth state changed:', user ? `User: ${user.email}` : 'No user');
+    
+    // Always update current user
+    this.currentUser = user;
+    
+    if (user) {
+        console.log('👤 User authenticated:', {
+            email: user.email,
+            uid: user.uid,
+            displayName: user.displayName
+        });
         
-        if (this.authChecked) {
-            console.log('⚠️ Auth already checked, ignoring duplicate');
-            return;
-        }
+        // Save to localStorage
+        this.saveUserToLocalStorage(user);
         
-        this.authChecked = true;
+        // Show app interface
+        this.showApp();
         
-        if (user) {
-            // User is authenticated
-            this.currentUser = user;
-            this.saveUserToLocalStorage(user);
-            this.showApp();
-        } else {
-            // No Firebase user, check localStorage
-            this.checkLocalStorage();
-        }
+    } else {
+        console.log('🔒 No user - showing auth');
+        this.showAuth();
     }
+    
+    this.authChecked = true;
+}
     
     checkLocalStorage() {
         console.log('🔍 Checking localStorage for saved user...');
