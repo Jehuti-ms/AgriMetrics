@@ -34,23 +34,24 @@ class AuthRedirectHandler {
     }
 
     handleSuccessfulRedirect(user) {
-    this.showSuccessMessage(user);
+        this.showSuccessMessage(user);
 
-    setTimeout(() => {
-        if (window.app && typeof window.app.showApp === 'function') {
-            console.log('✅ Calling app.showApp() after redirect');
-            window.app.showApp();
-        }
-    }, 2000);
-}
+        // Hide login UI
+        const authForms = document.querySelector('.auth-forms');
+        if (authForms) authForms.style.display = 'none';
+
+        setTimeout(() => {
+            if (window.app && typeof window.app.showApp === 'function') {
+                console.log('✅ Calling app.showApp() after redirect');
+                window.app.showApp();
+            }
+        }, 2000);
+    }
 
     showSuccessMessage(user) {
         const authContainer = document.getElementById('auth-container');
         if (!authContainer) return;
-        authContainer.innerHTML = `
-            <h2>Welcome ${user.displayName || user.email}!</h2>
-            <p>Redirecting...</p>
-        `;
+        authContainer.innerHTML = `<h2>Welcome ${user.displayName || user.email}!</h2><p>Redirecting...</p>`;
     }
 
     showNormalAuthUI() {
