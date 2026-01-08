@@ -19,8 +19,13 @@ class FirebaseAuth {
 
   try {
     // Create the user (this also signs them in)
-    try { const userCredential = await this.auth.createUserWithEmailAndPassword(email, password); console.log('✅ User created:', userCredential.user.uid, userCredential.user.email); } catch (error) { console.error('❌ Sign-up failed:', error.code, error.message); this.showNotification(`Sign-up failed: ${error.message}`, 'error'); }
-       
+    try { const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+         console.log('✅ User created:', userCredential.user.uid, userCredential.user.email); 
+         return userCredential.user;
+        } catch (error) { console.error('❌ Sign-up failed:', error.code, error.message); 
+        alert(`Sign-up failed: ${error.code} — ${error.message}`); throw error; } 
+  }
+      
     // Save profile data if provided
     if (userData) {
       await this.saveUserData(userCredential.user.uid, userData);
