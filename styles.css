@@ -7934,3 +7934,37 @@ main#content-area {
 .nav-link, .nav-item, .nav-brand {
   color: white !important;
 }
+
+header, .top-nav {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: var(--primary-color) !important;
+  color: white !important;
+  padding: 0 1rem;
+  z-index: 10000;
+}
+
+.nav-list {
+  display: flex !important;
+  gap: 1rem;
+  list-style: none;
+}
+
+.nav-link {
+  color: white !important;
+  text-decoration: none;
+}
+
+.hamburger {
+  font-size: 24px;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
