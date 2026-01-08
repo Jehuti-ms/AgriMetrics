@@ -1,4 +1,4 @@
-// modules/auth-fixed.js
+// modules/auth.js
 console.log('Loading auth module...');
 
 class AuthModule {
@@ -17,7 +17,6 @@ class AuthModule {
         if (socialContainer && window.authManager) {
             socialContainer.innerHTML = window.authManager.renderAuthButtons();
 
-            // Attach handlers explicitly (avoid inline onclick conflicts)
             const googleBtn = socialContainer.querySelector('.btn-social.google');
             const appleBtn = socialContainer.querySelector('.btn-social.apple');
 
@@ -270,4 +269,55 @@ class AuthModule {
         }
     }
 
-    async handleForgotPassword()
+       async handleForgotPassword() {
+        const form = document.getElementById('forgot-password-form-element');
+        if (!form) return;
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const email = document.getElementById('forgot-email')?.value || '';
+
+        if (submitBtn) {
+            submitBtn.innerHTML = 'Sending Reset Link...';
+            submitBtn.disabled = true;
+        }
+
+        try {
+            const result = await window.authManager.resetPassword(email);
+            if (result?.success) {
+                this.showNotification('Password reset email sent!', 'success');
+                this.showAuthForm('signin');
+            } else {
+                this.showNotification(result?.error || 'Error sending reset email', 'error');
+            }
+        } catch (error) {
+            this.showNotification('Error sending reset email', 'error');
+        } finally {
+            if (submitBtn) {
+                submitBtn.innerHTML = 'Send Reset Link';
+                submitBtn.disabled = false;
+            }
+        }
+    }
+
+    showAuthForm(formName) {
+        document.querySelectorAll('.auth-form').forEach(form => {
+            form.classList.remove('active');
+        });
+        const targetForm = document.getElementById(`${formName}-form`);
+        if (targetForm) {
+            targetForm.classList.add('active');
+        }
+    }
+
+    showNotification(message, type) {
+        if (window.coreModule && window.coreModule.showNotification) {
+            window.coreModule.showNotification(message, type);
+        } else {
+            alert(message);
+        }
+    }
+}
+
+// ✅ Close the class and initialize
+window.authModule = new AuthModule();
+
