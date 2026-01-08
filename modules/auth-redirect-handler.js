@@ -34,20 +34,15 @@ class AuthRedirectHandler {
     }
 
     handleSuccessfulRedirect(user) {
-        this.showSuccessMessage(user);
+    this.showSuccessMessage(user);
 
-        // ✅ No more dashboard.html redirect
-        setTimeout(() => {
-            if (window.app && typeof window.app.showApp === 'function') {
-                console.log('✅ Calling app.showApp() after redirect');
-                window.app.showApp();
-            } else {
-                console.log('📍 Navigating to dashboard route...');
-                // Use SPA route instead of non-existent dashboard.html
-                window.location.href = 'index.html#dashboard';
-            }
-        }, 2000);
-    }
+    setTimeout(() => {
+        if (window.app && typeof window.app.showApp === 'function') {
+            console.log('✅ Calling app.showApp() after redirect');
+            window.app.showApp();
+        }
+    }, 2000);
+}
 
     showSuccessMessage(user) {
         const authContainer = document.getElementById('auth-container');
