@@ -160,6 +160,19 @@ showApp() {
   if (window.FarmModules && window.FarmModules.renderModule) {
     window.FarmModules.renderModule('dashboard');
   }
+
+    const header = document.querySelector('header');
+if (header) {
+  header.classList.remove('hidden');
+  header.style.display = 'flex';
+}
+
+const hamburger = document.getElementById('hamburger-btn');
+if (hamburger) {
+  hamburger.classList.remove('hidden');
+  hamburger.style.display = 'block';
+}
+
 }
     
     initializeAppComponents() {
