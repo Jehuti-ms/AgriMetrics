@@ -12,51 +12,38 @@ class FirebaseAuth {
         }
     }
 
-   async signUp(email, password, userData) {
-    if (!this.auth) {
-        return { success: false, error: 'Firebase Auth not available' };
+  async signUp(email, password, userData) {
+  if (!this.auth) {
+    return { success: false, error: 'Firebase Auth not available' };
+  }
+
+  try {
+    // Create the user (this also signs them in)
+    const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
+
+    // Save profile data if provided
+    if (userData) {
+      await this.saveUserData(userCredential.user.uid, userData);
     }
 
-    try {
-        // Ensure session persistence so the user stays signed in after redirects/reloads
-        try {
-            await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-        } catch (pErr) {
-            console.warn('Could not set auth persistence:', pErr);
-        }
+    // Notify
+    this.showNotification(`Welcome ${userCredential.user.displayName || email}!`, 'success');
 
-        // Create the user (this also signs them in)
-        const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
-
-        // Save profile metadata (never save raw passwords)
-        if (userData) {
-            // Prefer saveUserToFirestore if available, otherwise fallback to saveUserData
-            if (typeof this.saveUserToFirestore === 'function') {
-                await this.saveUserToFirestore(userCredential.user);
-                // Merge any additional userData into Firestore record
-                await this.saveUserData(userCredential.user.uid, userData);
-            } else {
-                await this.saveUserData(userCredential.user.uid, userData);
-            }
-        }
-
-        // Notify and redirect into the app (avoid forcing a second sign-in)
-        this.showNotification(`Welcome ${userCredential.user.displayName || email}!`, 'success');
-
-        // Small delay so notification can be seen, then go to dashboard
-        setTimeout(() => {
-            window.location.href = 'dashboard.html';
-        }, 800);
-
-        return { success: true, user: userCredential.user };
-    } catch (error) {
-        console.error('Sign-up error:', error);
-        // Provide a friendly message and keep the original error for debugging
-        const message = error && error.message ? error.message : 'Sign-up failed';
-        this.showNotification(`Sign-up failed: ${message}`, 'error');
-        return { success: false, error: message };
+    // ✅ Show the app immediately (no extra sign-in step)
+    if (window.app) {
+      window.app.currentUser = userCredential.user;
+      window.app.showApp();
+      window.app.showSection('dashboard');
     }
+
+    return { success: true, user: userCredential.user };
+  } catch (error) {
+    console.error('Sign-up error:', error);
+    this.showNotification(`Sign-up failed: ${error.message}`, 'error');
+    return { success: false, error: error.message };
+  }
 }
+
 
     async signIn(email, password) {
     if (!this.auth) {
