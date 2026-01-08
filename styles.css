@@ -7836,3 +7836,38 @@ header, .top-nav {
     background: rgba(255,255,255,0.2) !important;
 }
         
+/* Ensure auth container is visible */
+#auth-container {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: all 0.3s ease;
+}
+
+#auth-container.hidden {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+.auth-forms {
+    display: block !important;
+}
+
+.auth-form {
+    display: none;
+}
+
+.auth-form.active {
+    display: block !important;
+}
+
+/* Ensure app container is hidden initially */
+#app-container {
+    display: none;
+}
+
+#app-container:not(.hidden) {
+    display: block;
+}
+
