@@ -151,7 +151,7 @@ class FarmManagementApp {
         console.log('✅ App interface shown');
     } */
 
-    function showApp() {
+    showApp() {
   console.log('🏠 Showing app interface...');
 
   const appContainer = document.getElementById('app-container');
