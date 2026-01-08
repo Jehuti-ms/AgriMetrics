@@ -45,38 +45,34 @@ class FirebaseAuth {
 }
 
 
-    async signIn(email, password) {
-    if (!this.auth) {
-        return { success: false, error: 'Firebase Auth not available' };
+   async signIn(email, password) {
+  if (!this.auth) {
+    return { success: false, error: 'Firebase Auth not available' };
+  }
+
+  try {
+    // Keep session persistent across reloads
+    await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+
+    // Attempt sign-in
+    const userCredential = await this.auth.signInWithEmailAndPassword(email, password);
+    const user = userCredential.user;
+
+    this.showNotification(`Welcome back ${user.displayName || user.email}!`, 'success');
+
+    // ✅ Show the app immediately
+    if (window.app) {
+      window.app.currentUser = user;
+      window.app.showApp();
+      window.app.showSection('dashboard');
     }
 
-    try {
-        // Ensure session persistence so the user stays signed in across reloads
-        try {
-            await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-        } catch (pErr) {
-            console.warn('Could not set auth persistence:', pErr);
-        }
-
-        // Attempt sign-in
-        const userCredential = await this.auth.signInWithEmailAndPassword(email, password);
-        const user = userCredential.user;
-
-        console.log('🎉 Sign-in successful:', user && user.email);
-        this.showNotification(`Welcome back ${user.displayName || user.email}!`, 'success');
-
-        // Small delay so notification is visible, then go to dashboard
-        setTimeout(() => {
-            window.location.href = 'dashboard.html';
-        }, 600);
-
-        return { success: true, user };
-    } catch (error) {
-        console.error('❌ Sign-in error:', error);
-        const message = error && error.message ? error.message : 'Sign-in failed';
-        this.showNotification(`Sign-in failed: ${message}`, 'error');
-        return { success: false, error: message };
-    }
+    return { success: true, user };
+  } catch (error) {
+    console.error('Sign-in error:', error);
+    this.showNotification(`Sign-in failed: ${error.message}`, 'error');
+    return { success: false, error: error.message };
+  }
 }
 
     async resetPassword(email) {
