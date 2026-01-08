@@ -1,4 +1,4 @@
-// app.js - FIXED FARM MODULES INITIALIZATION
+// app.js - UPDATED FOR BETTER SIGN-IN INTEGRATION
 console.log('Loading main app...');
 
 class FarmManagementApp {
@@ -7,6 +7,7 @@ class FarmManagementApp {
         this.currentSection = 'dashboard';
         this.isDemoMode = false;
         this.userPreferences = {};
+        this.authChecked = false;
         this.setupInit();
     }
 
@@ -94,6 +95,7 @@ class FarmManagementApp {
                 
                 if (!authResolved) {
                     authResolved = true;
+                    this.authChecked = true;
                     this.hideLoading();
                     
                     if (user) {
@@ -108,6 +110,7 @@ class FarmManagementApp {
                         
                         if (hasLocalProfile) {
                             console.log('💾 Using local profile data');
+                            this.currentUser = this.createUserFromLocalStorage();
                             this.showApp();
                             resolve(true);
                         } else {
@@ -126,6 +129,7 @@ class FarmManagementApp {
                 if (!authResolved) {
                     console.log('⏰ Auth check timeout');
                     authResolved = true;
+                    this.authChecked = true;
                     this.hideLoading();
                     unsubscribe();
                     
@@ -135,7 +139,7 @@ class FarmManagementApp {
                     
                     if (user || hasLocalProfile) {
                         console.log('✅ Found user after timeout');
-                        this.currentUser = user;
+                        this.currentUser = user || this.createUserFromLocalStorage();
                         this.showApp();
                         resolve(true);
                     } else {
@@ -146,6 +150,22 @@ class FarmManagementApp {
                 }
             }, 5000);
         });
+    }
+    
+    createUserFromLocalStorage() {
+        const userEmail = localStorage.getItem('userEmail');
+        const userName = localStorage.getItem('userName');
+        const userUid = localStorage.getItem('userUid');
+        
+        if (userEmail || userName || userUid) {
+            return {
+                email: userEmail || 'localuser@farm.com',
+                displayName: userName || 'Local User',
+                uid: userUid || 'local-' + Date.now(),
+                isLocalUser: true
+            };
+        }
+        return null;
     }
 
     showLoading() {
@@ -442,13 +462,72 @@ class FarmManagementApp {
     }
 
     showApp() {
+        console.log('🏠 Showing app interface...');
+        
         const authContainer = document.getElementById('auth-container');
         const appContainer = document.getElementById('app-container');
         
-        if (authContainer) authContainer.classList.add('hidden');
-        if (appContainer) appContainer.classList.remove('hidden');
+        if (authContainer) {
+            authContainer.style.display = 'none';
+            authContainer.classList.add('hidden');
+        }
         
-        console.log('🏠 App container shown');
+        if (appContainer) {
+            appContainer.style.display = 'block';
+            appContainer.classList.remove('hidden');
+        }
+        
+        console.log('✅ App container shown');
+    }
+
+    showAuth() {
+        console.log('🔐 Showing auth interface');
+        const authContainer = document.getElementById('auth-container');
+        const appContainer = document.getElementById('app-container');
+        
+        if (authContainer) {
+            authContainer.style.display = 'block';
+            authContainer.classList.remove('hidden');
+        }
+        
+        if (appContainer) {
+            appContainer.style.display = 'none';
+            appContainer.classList.add('hidden');
+        }
+        
+        this.hideLoading();
+    }
+    
+    // PUBLIC METHOD: Can be called from signin-fix.js and auth-redirect-handler.js
+    showAppPublic() {
+        if (!this.authChecked) {
+            console.log('🔍 Auth not checked yet, checking now...');
+            this.checkAuthState().then(isAuthenticated => {
+                if (isAuthenticated) {
+                    this.showApp();
+                    // Initialize modules if not already done
+                    if (!this.isDemoMode) {
+                        this.initializeStyleManager();
+                        this.initializeFarmModules();
+                        this.loadUserPreferences();
+                        this.createTopNavigation();
+                        this.setupHamburgerMenu();
+                        this.setupSideMenuEvents();
+                        this.setupEventListeners();
+                        this.setupDarkMode();
+                        this.showSection('dashboard');
+                    }
+                }
+            });
+        } else {
+            this.showApp();
+        }
+    }
+    
+    // PUBLIC METHOD: Switch sections from external scripts
+    switchSection(sectionId) {
+        console.log(`🔀 Switching to section from external: ${sectionId}`);
+        this.showSection(sectionId);
     }
 
     createTopNavigation() {
@@ -657,16 +736,6 @@ class FarmManagementApp {
                 activeSideMenuItemWithJS.classList.add('active');
             }
         }
-    }
-    
-    showAuth() {
-        console.log('🔐 Showing auth interface');
-        const authContainer = document.getElementById('auth-container');
-        const appContainer = document.getElementById('app-container');
-        
-        if (authContainer) authContainer.classList.remove('hidden');
-        if (appContainer) appContainer.classList.add('hidden');
-        this.hideLoading();
     }
     
     loadFallbackContent(sectionId) {
