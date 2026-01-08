@@ -1,4 +1,4 @@
-// signin-fix.js - COMPLETE WORKING VERSION
+// signin-fix.js - COMPLETE WORKING VERSION WITH DASHBOARD REDIRECT
 console.log('🔐 Sign-in Fix Loading...');
 
 class SignInFix {
@@ -84,8 +84,14 @@ class SignInFix {
             localStorage.setItem('userName', userCredential.user.displayName || userCredential.user.email);
             localStorage.setItem('userUid', userCredential.user.uid);
             
-            // CRITICAL: Force app to show
+            // Trigger app UI
             this.triggerAppShow();
+            
+            // Force redirect to dashboard
+            setTimeout(() => {
+                console.log('📍 Navigating to dashboard...');
+                window.location.href = 'dashboard.html';
+            }, 1500);
             
             this.showMessage('Sign in successful! Loading app...', 'success');
             
