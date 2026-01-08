@@ -89,14 +89,12 @@ class SignInFix {
             
             // Force redirect to dashboard
             setTimeout(() => {
-                if (window.app && typeof window.app.showApp === 'function') {
-                    console.log('✅ Showing app after sign-in');
-                    window.app.showApp();
-                } else {
-                    console.log('📍 Navigating to dashboard route...');
-                    window.location.href = 'index.html#dashboard';
-                }
-            }, 1500);          
+            if (window.app && typeof window.app.showApp === 'function') {
+                console.log('✅ Showing app after sign-in');
+                window.app.showApp();
+            }
+        }, 1500);
+  
             this.showMessage('Sign in successful! Loading app...', 'success');
             
         } catch (error) {
