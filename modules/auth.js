@@ -55,6 +55,7 @@ class AuthModule {
 
             if (result?.success) {
                 this.showNotification(`Signed in with ${provider}!`, 'success');
+                this.hideAuthUI();
                 setTimeout(() => {
                     if (window.app && typeof window.app.showApp === 'function') {
                         window.app.showApp();
@@ -126,6 +127,7 @@ class AuthModule {
             const result = await window.authManager.signUp(email, password, { name, email, farmName });
             if (result?.success) {
                 this.showNotification('Account created successfully!', 'success');
+                this.hideAuthUI();
                 setTimeout(() => {
                     if (window.app && typeof window.app.showApp === 'function') {
                         window.app.showApp();
@@ -159,6 +161,7 @@ class AuthModule {
             const result = await window.authManager.signIn(email, password);
             if (result?.success) {
                 this.showNotification('Welcome back!', 'success');
+                this.hideAuthUI();
                 setTimeout(() => {
                     if (window.app && typeof window.app.showApp === 'function') {
                         window.app.showApp();
@@ -202,6 +205,11 @@ class AuthModule {
                 submitBtn.disabled = false;
             }
         }
+    }
+
+    hideAuthUI() {
+        const authForms = document.querySelector('.auth-forms');
+        if (authForms) authForms.style.display = 'none';
     }
 
     showNotification(message, type) {
