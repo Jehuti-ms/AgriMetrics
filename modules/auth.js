@@ -11,7 +11,6 @@ class AuthModule {
         this.setupAuthForms();
     }
 
-    // ======== SOCIAL LOGIN BUTTONS ========
     renderSocialLoginButtons() {
         const socialContainer = document.getElementById('social-login-container');
         if (socialContainer && window.authManager) {
@@ -56,13 +55,11 @@ class AuthModule {
 
             if (result?.success) {
                 this.showNotification(`Signed in with ${provider}!`, 'success');
-               setTimeout(() => {
-            if (window.app && typeof window.app.showApp === 'function') {
-                window.app.showApp();
-            }
-        }, 1500);
-
-                
+                setTimeout(() => {
+                    if (window.app && typeof window.app.showApp === 'function') {
+                        window.app.showApp();
+                    }
+                }, 1500);
             } else {
                 this.showNotification(result?.error || `Error signing in with ${provider}`, 'error');
             }
@@ -76,88 +73,6 @@ class AuthModule {
         }
     }
 
-    // ======== PASSWORD VALIDATION ========
-    setupPasswordValidation() {
-        const passwordInput = document.getElementById('signup-password');
-        const confirmInput = document.getElementById('signup-confirm-password');
-
-        if (passwordInput) {
-            passwordInput.addEventListener('input', () => {
-                this.checkPasswordStrength(passwordInput.value);
-            });
-        }
-        if (confirmInput) {
-            confirmInput.addEventListener('input', () => {
-                this.checkPasswordMatch(passwordInput.value, confirmInput.value);
-            });
-        }
-    }
-
-    checkPasswordStrength(password) {
-        const strengthBar = document.querySelector('.strength-progress');
-        const strengthText = document.querySelector('.strength-text');
-        if (!strengthBar || !strengthText) return;
-
-        let strength = 0;
-        if (password.length >= 8) strength++;
-        if (/[a-z]/.test(password)) strength++;
-        if (/[A-Z]/.test(password)) strength++;
-        if (/\d/.test(password)) strength++;
-        if (/[^A-Za-z0-9]/.test(password)) strength++;
-
-        const width = (strength / 5) * 100;
-        strengthBar.style.width = width + '%';
-
-        if (password.length === 0) {
-            strengthBar.style.backgroundColor = '#ddd';
-            strengthText.textContent = '';
-        } else if (strength < 2) {
-            strengthBar.style.backgroundColor = '#ff4757';
-            strengthText.textContent = 'Weak';
-        } else if (strength < 4) {
-            strengthBar.style.backgroundColor = '#ffa502';
-            strengthText.textContent = 'Medium';
-        } else {
-            strengthBar.style.backgroundColor = '#2ed573';
-            strengthText.textContent = 'Strong';
-        }
-
-        this.showPasswordRequirements(password);
-    }
-
-    checkPasswordMatch(password, confirmPassword) {
-        const matchIndicator = document.querySelector('.password-match-indicator');
-        if (!matchIndicator) return;
-
-        if (confirmPassword.length === 0) {
-            matchIndicator.textContent = '';
-        } else if (password === confirmPassword) {
-            matchIndicator.textContent = '✓ Passwords match';
-            matchIndicator.style.color = '#2ed573';
-        } else {
-            matchIndicator.textContent = '✗ Passwords do not match';
-            matchIndicator.style.color = '#ff4757';
-        }
-    }
-
-    showPasswordRequirements(password) {
-        const requirements = document.getElementById('password-requirements');
-        if (!requirements) return;
-
-        const checks = {
-            length: password.length >= 8,
-            lowercase: /[a-z]/.test(password),
-            uppercase: /[A-Z]/.test(password),
-            number: /\d/.test(password),
-            special: /[^A-Za-z0-9]/.test(password)
-        };
-        const fulfilled = Object.values(checks).filter(Boolean).length;
-        const total = Object.keys(checks).length;
-
-        requirements.innerHTML = `<div>${fulfilled}/${total} requirements met</div>`;
-    }
-
-    // ======== FORM HANDLERS ========
     setupAuthForms() {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.attachFormHandlers());
@@ -168,7 +83,6 @@ class AuthModule {
 
     attachFormHandlers() {
         this.renderSocialLoginButtons();
-        this.setupPasswordValidation();
 
         const signinForm = document.getElementById('signin-form-element');
         if (signinForm) {
@@ -185,24 +99,6 @@ class AuthModule {
                 await this.handleForgotPassword();
             });
         }
-
-        this.setupAuthListeners();
-    }
-
-    setupAuthListeners() {
-        const map = {
-            'show-signup': 'signup',
-            'show-signin': 'signin',
-            'show-forgot-password': 'forgot-password',
-            'show-signin-from-forgot': 'signin'
-        };
-        Object.entries(map).forEach(([id, form]) => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('click', e => {
-                e.preventDefault();
-                this.showAuthForm(form);
-            });
-        });
     }
 
     async handleSignUp() {
@@ -220,10 +116,6 @@ class AuthModule {
             this.showNotification('Passwords do not match', 'error');
             return;
         }
-        if (password.length < 6) {
-            this.showNotification('Password must be at least 6 characters', 'error');
-            return;
-        }
 
         if (submitBtn) {
             submitBtn.innerHTML = 'Creating Account...';
@@ -235,11 +127,10 @@ class AuthModule {
             if (result?.success) {
                 this.showNotification('Account created successfully!', 'success');
                 setTimeout(() => {
-            if (window.app && typeof window.app.showApp === 'function') {
-                window.app.showApp();
-            }
-        }, 1500);
-
+                    if (window.app && typeof window.app.showApp === 'function') {
+                        window.app.showApp();
+                    }
+                }, 1500);
             } else {
                 this.showNotification(result?.error || 'Error creating account', 'error');
             }
@@ -269,11 +160,10 @@ class AuthModule {
             if (result?.success) {
                 this.showNotification('Welcome back!', 'success');
                 setTimeout(() => {
-            if (window.app && typeof window.app.showApp === 'function') {
-                window.app.showApp();
-            }
-        }, 1500);
-
+                    if (window.app && typeof window.app.showApp === 'function') {
+                        window.app.showApp();
+                    }
+                }, 1500);
             } else {
                 this.showNotification(result?.error || 'Error signing in', 'error');
             }
@@ -285,7 +175,7 @@ class AuthModule {
         }
     }
 
-       async handleForgotPassword() {
+    async handleForgotPassword() {
         const form = document.getElementById('forgot-password-form-element');
         if (!form) return;
 
@@ -301,7 +191,6 @@ class AuthModule {
             const result = await window.authManager.resetPassword(email);
             if (result?.success) {
                 this.showNotification('Password reset email sent!', 'success');
-                this.showAuthForm('signin');
             } else {
                 this.showNotification(result?.error || 'Error sending reset email', 'error');
             }
@@ -315,16 +204,6 @@ class AuthModule {
         }
     }
 
-    showAuthForm(formName) {
-        document.querySelectorAll('.auth-form').forEach(form => {
-            form.classList.remove('active');
-        });
-        const targetForm = document.getElementById(`${formName}-form`);
-        if (targetForm) {
-            targetForm.classList.add('active');
-        }
-    }
-
     showNotification(message, type) {
         if (window.coreModule && window.coreModule.showNotification) {
             window.coreModule.showNotification(message, type);
@@ -334,6 +213,4 @@ class AuthModule {
     }
 }
 
-// ✅ Close the class and initialize
 window.authModule = new AuthModule();
-
