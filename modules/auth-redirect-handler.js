@@ -33,20 +33,24 @@ class AuthRedirectHandler {
         }
     }
 
-    handleSuccessfulRedirect(user) {
-        this.showSuccessMessage(user);
+   handleSuccessfulRedirect(user) {
+    this.showSuccessMessage(user);
 
-        // Hide login UI
-        const authForms = document.querySelector('.auth-forms');
-        if (authForms) authForms.style.display = 'none';
+    // Hide login UI
+    const authForms = document.querySelector('.auth-forms');
+    if (authForms) authForms.style.display = 'none';
 
-        setTimeout(() => {
-            if (window.app && typeof window.app.showApp === 'function') {
-                console.log('✅ Calling app.showApp() after redirect');
-                window.app.showApp();
-            }
-        }, 2000);
-    }
+    const authContainer = document.getElementById('auth-container');
+    if (authContainer) authContainer.style.display = 'none';
+
+    setTimeout(() => {
+        if (window.app && typeof window.app.showApp === 'function') {
+            console.log('✅ Calling app.showApp() after redirect');
+            window.app.showApp();
+        }
+    }, 2000);
+}
+
 
     showSuccessMessage(user) {
         const authContainer = document.getElementById('auth-container');
