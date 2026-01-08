@@ -481,22 +481,187 @@ class FarmManagementApp {
     }
 
     showAuth() {
-        console.log('🔐 Showing auth interface');
-        const authContainer = document.getElementById('auth-container');
-        const appContainer = document.getElementById('app-container');
+    console.log('🔐 Showing auth interface');
+    const authContainer = document.getElementById('auth-container');
+    const appContainer = document.getElementById('app-container');
+    
+    if (authContainer) {
+        authContainer.style.display = 'block';
+        authContainer.classList.remove('hidden');
         
-        if (authContainer) {
-            authContainer.style.display = 'block';
-            authContainer.classList.remove('hidden');
+        // Also ensure auth forms are visible
+        const authForms = authContainer.querySelector('.auth-forms');
+        if (authForms) {
+            authForms.style.display = 'block';
         }
         
-        if (appContainer) {
-            appContainer.style.display = 'none';
-            appContainer.classList.add('hidden');
-        }
-        
-        this.hideLoading();
+        // Show the correct form (signin by default)
+        this.showAuthForm('signin');
     }
+    
+    if (appContainer) {
+        appContainer.style.display = 'none';
+        appContainer.classList.add('hidden');
+    }
+    
+    // Clear any module content
+    const contentArea = document.getElementById('content-area');
+    if (contentArea) {
+        contentArea.innerHTML = '';
+    }
+    
+    // Also reset current user
+    this.currentUser = null;
+    this.authChecked = false;
+    
+    this.hideLoading();
+    console.log('✅ Auth interface shown');
+}
+
+// Add this helper method to show specific auth forms
+showAuthForm(formName) {
+    console.log(`📄 Showing auth form: ${formName}`);
+    
+    const authContainer = document.getElementById('auth-container');
+    if (!authContainer) return;
+    
+    // Hide all forms first
+    const forms = authContainer.querySelectorAll('.auth-form');
+    forms.forEach(form => {
+        form.classList.remove('active');
+        form.style.display = 'none';
+    });
+    
+    // Show the requested form
+    const targetForm = authContainer.querySelector(`#${formName}-form`);
+    if (targetForm) {
+        targetForm.classList.add('active');
+        targetForm.style.display = 'block';
+    }
+    
+    // Also ensure forgot password form is hidden
+    const forgotForm = document.getElementById('forgot-password-form');
+    if (forgotForm) {
+        forgotForm.classList.remove('active');
+        forgotForm.style.display = 'none';
+    }
+}
+
+    // Add this method for logout
+logout() {
+    console.log('🚪 Logging out...');
+    
+    // Sign out from Firebase
+    if (firebase.auth().currentUser) {
+        firebase.auth().signOut().then(() => {
+            console.log('✅ Signed out from Firebase');
+        }).catch(error => {
+            console.error('Sign out error:', error);
+        });
+    }
+    
+    // Clear local data
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userUid');
+    localStorage.removeItem('farm-profile');
+    
+    // Reset app state
+    this.currentUser = null;
+    this.authChecked = false;
+    this.isDemoMode = false;
+    
+    // Show auth interface
+    this.showAuth();
+}
+
+// Add logout button to your navigation
+createTopNavigation() {
+    const appContainer = document.getElementById('app-container');
+    if (!appContainer) return;
+
+    let header = appContainer.querySelector('header');
+    if (header) {
+        header.remove();
+    }
+    
+    header = document.createElement('header');
+    appContainer.insertBefore(header, appContainer.firstChild);
+
+    header.innerHTML = `
+        <nav class="top-nav">
+            <div class="nav-brand">
+                <img src="icons/icon-96x96_a.png" alt="AgriMetrics">
+                <span class="brand-text">AgriMetrics</span>
+                <span class="brand-subtitle">Farm Management System</span>
+            </div>
+            
+            <div class="nav-items">
+                <button class="nav-item" data-view="dashboard" title="Dashboard">
+                    <span>📊</span>
+                    <span class="nav-label">Dashboard</span>
+                </button>
+
+                <button class="nav-item" data-view="income-expenses" title="Income & Expenses">
+                    <span>💰</span>
+                    <span class="nav-label">Income</span>
+                </button>
+
+                <button class="nav-item" data-view="inventory-check" title="Inventory">
+                    <span>📦</span>
+                    <span class="nav-label">Inventory</span>
+                </button>
+
+                <button class="nav-item" data-view="orders" title="Orders">
+                    <span>📋</span>
+                    <span class="nav-label">Orders</span>
+                </button>
+
+                <button class="nav-item" data-view="sales-record" title="Sales">
+                    <span>🛒</span>
+                    <span class="nav-label">Sales</span>
+                </button>
+
+                <button class="nav-item" data-view="profile" title="Profile">
+                    <span>👤</span>
+                    <span class="nav-label">Profile</span>
+                </button>
+
+                <button class="nav-item dark-mode-toggle" id="dark-mode-toggle" title="Toggle Dark Mode">
+                    <span>🌙</span>
+                    <span class="nav-label">Theme</span>
+                </button>
+                
+                <!-- ADD LOGOUT BUTTON -->
+                <button class="nav-item logout-btn" id="logout-btn" title="Logout">
+                    <span>🚪</span>
+                    <span class="nav-label">Logout</span>
+                </button>
+                
+                <button class="nav-item hamburger-menu" id="hamburger-menu" title="Farm Operations">
+                    <span>☰</span>
+                    <span class="nav-label">More</span>
+                </button>
+            </div>
+        </nav>
+    `;
+
+    const main = appContainer.querySelector('main');
+    if (main) {
+        main.style.paddingTop = '80px';
+    }
+    
+    // Add logout button event listener
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.logout();
+        });
+    }
+    
+    console.log('✅ Top Navigation created with logout button');
+}
     
     // PUBLIC METHOD: Can be called from signin-fix.js and auth-redirect-handler.js
     showAppPublic() {
