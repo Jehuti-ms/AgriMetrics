@@ -33,10 +33,21 @@ class AuthRedirectHandler {
         }
     }
 
-    handleSuccessfulRedirect(user) {
-        this.showSuccessMessage(user);
-        setTimeout(() => window.location.href = 'dashboard.html', 2000);
-    }
+   handleSuccessfulRedirect(user) {
+    this.showSuccessMessage(user);
+
+    // Use app.showApp if available
+    setTimeout(() => {
+        if (window.app && typeof window.app.showApp === 'function') {
+            console.log('✅ Calling app.showApp() after redirect');
+            window.app.showApp();
+        } else {
+            console.log('📍 Navigating to dashboard route...');
+            // Adjust this route to match your SPA
+            window.location.href = 'index.html#dashboard';
+        }
+    }, 2000);
+}
 
     showSuccessMessage(user) {
         const authContainer = document.getElementById('auth-container');
