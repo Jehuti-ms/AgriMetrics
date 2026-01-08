@@ -137,30 +137,30 @@ class FarmManagementApp {
         // Keep farm-profile for data persistence
     }
     
-    showApp() {
-      console.log('🏠 Showing app interface...');
-    
-      const appContainer = document.getElementById('app-container');
-      const authForms = document.querySelector('.auth-forms');
-    
-      // Unhide the app container
-      if (appContainer) {
-        appContainer.classList.remove('hidden');
-        appContainer.style.display = 'block';
-        appContainer.style.visibility = 'visible';
-        appContainer.style.opacity = '1';
-      }
-    
-      // Hide only the login forms
-      if (authForms) {
-        authForms.style.display = 'none';
-      }
-    
-      // Render the dashboard
-      if (window.FarmModules && window.FarmModules.renderModule) {
-        window.FarmModules.renderModule('dashboard');
-      }
-    }
+showApp() {
+  console.log('🏠 Showing app interface...');
+
+  const appContainer = document.getElementById('app-container');
+  const authForms = document.querySelector('.auth-forms');
+
+  // Unhide the app container
+  if (appContainer) {
+    appContainer.classList.remove('hidden');
+    appContainer.style.display = 'block';
+    appContainer.style.visibility = 'visible';
+    appContainer.style.opacity = '1';
+  }
+
+  // Hide only the login forms
+  if (authForms) {
+    authForms.style.display = 'none';
+  }
+
+  // Render the dashboard
+  if (window.FarmModules && window.FarmModules.renderModule) {
+    window.FarmModules.renderModule('dashboard');
+  }
+}
     
     initializeAppComponents() {
         // Initialize StyleManager
