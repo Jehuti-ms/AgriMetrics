@@ -57,7 +57,7 @@ class SignInFix {
             console.log('✅ SIGN IN SUCCESS!');
             localStorage.setItem('userEmail', userCredential.user.email);
 
-            this.triggerAppShow();
+            this.hideAuthUI();
 
             setTimeout(() => {
                 if (window.app && typeof window.app.showApp === 'function') {
@@ -69,22 +69,15 @@ class SignInFix {
             this.showMessage('Sign in successful! Loading app...', 'success');
         } catch (error) {
             console.error('❌ Sign in error:', error.code, error.message);
+            this.showMessage(`Error: ${error.message}`, 'error');
         } finally {
             this.showLoading(false);
         }
     }
 
-    triggerAppShow() {
-        console.log('🚀 Triggering app show...');
-        if (window.app && typeof window.app.showApp === 'function') {
-            console.log('✅ Calling app.showApp() directly');
-            window.app.showApp();
-        } else {
-            console.log('🔄 App not available, reloading page...');
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
-        }
+    hideAuthUI() {
+        const authForms = document.querySelector('.auth-forms');
+        if (authForms) authForms.style.display = 'none';
     }
 
     showLoading(show) {
