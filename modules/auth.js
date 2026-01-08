@@ -56,12 +56,12 @@ class AuthModule {
 
             if (result?.success) {
                 this.showNotification(`Signed in with ${provider}!`, 'success');
-               setTimeout(() => { if (window.app && typeof window.app.showApp === 'function') { 
-                window.app.showApp(); 
-               } else { 
-                window.location.href = 'index.html#dashboard'; 
-               } 
-            }, 1500);
+               setTimeout(() => {
+            if (window.app && typeof window.app.showApp === 'function') {
+                window.app.showApp();
+            }
+        }, 1500);
+
                 
             } else {
                 this.showNotification(result?.error || `Error signing in with ${provider}`, 'error');
@@ -234,7 +234,12 @@ class AuthModule {
             const result = await window.authManager.signUp(email, password, { name, email, farmName });
             if (result?.success) {
                 this.showNotification('Account created successfully!', 'success');
-                setTimeout(() => { if (window.app && typeof window.app.showApp === 'function') { window.app.showApp(); } else { window.location.href = 'index.html#dashboard'; } }, 1500);
+                setTimeout(() => {
+            if (window.app && typeof window.app.showApp === 'function') {
+                window.app.showApp();
+            }
+        }, 1500);
+
             } else {
                 this.showNotification(result?.error || 'Error creating account', 'error');
             }
@@ -263,7 +268,12 @@ class AuthModule {
             const result = await window.authManager.signIn(email, password);
             if (result?.success) {
                 this.showNotification('Welcome back!', 'success');
-                setTimeout(() => { if (window.app && typeof window.app.showApp === 'function') { window.app.showApp(); } else { window.location.href = 'index.html#dashboard'; } }, 1500);
+                setTimeout(() => {
+            if (window.app && typeof window.app.showApp === 'function') {
+                window.app.showApp();
+            }
+        }, 1500);
+
             } else {
                 this.showNotification(result?.error || 'Error signing in', 'error');
             }
