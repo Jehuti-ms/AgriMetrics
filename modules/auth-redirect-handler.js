@@ -1,4 +1,4 @@
-// auth-redirect-handler-fixed.js
+// modules/auth-redirect-handler.js
 console.log('🔍 Loading Auth Redirect Handler...');
 
 class AuthRedirectHandler {
@@ -33,26 +33,29 @@ class AuthRedirectHandler {
         }
     }
 
-   handleSuccessfulRedirect(user) {
-    this.showSuccessMessage(user);
+    handleSuccessfulRedirect(user) {
+        this.showSuccessMessage(user);
 
-    // Use app.showApp if available
-    setTimeout(() => {
-        if (window.app && typeof window.app.showApp === 'function') {
-            console.log('✅ Calling app.showApp() after redirect');
-            window.app.showApp();
-        } else {
-            console.log('📍 Navigating to dashboard route...');
-            // Adjust this route to match your SPA
-            window.location.href = 'index.html#dashboard';
-        }
-    }, 2000);
-}
+        // ✅ No more dashboard.html redirect
+        setTimeout(() => {
+            if (window.app && typeof window.app.showApp === 'function') {
+                console.log('✅ Calling app.showApp() after redirect');
+                window.app.showApp();
+            } else {
+                console.log('📍 Navigating to dashboard route...');
+                // Use SPA route instead of non-existent dashboard.html
+                window.location.href = 'index.html#dashboard';
+            }
+        }, 2000);
+    }
 
     showSuccessMessage(user) {
         const authContainer = document.getElementById('auth-container');
         if (!authContainer) return;
-        authContainer.innerHTML = `<h2>Welcome ${user.displayName || user.email}!</h2><p>Redirecting...</p>`;
+        authContainer.innerHTML = `
+            <h2>Welcome ${user.displayName || user.email}!</h2>
+            <p>Redirecting...</p>
+        `;
     }
 
     showNormalAuthUI() {
