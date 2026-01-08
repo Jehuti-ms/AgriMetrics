@@ -582,15 +582,258 @@ class AuthModule {
                 errorMessage = 'Too many attempts. Try again later.';
                 break;
             default:
-                errorMessage += error.message;
+                errorMessaasync handleSignIn() {
+    console.log('🚀 STARTING SIGN IN PROCESS...');
+    
+    const form = document.getElementById('signin-form-element');
+    if (!form) {
+        console.error('❌ Signin form not found');
+        return;
+    }
+
+    const email = document.getElementById('signin-email')?.value.trim() || '';
+    const password = document.getElementById('signin-password')?.value || '';
+
+    console.log('🔐 Attempting login for:', email);
+
+    // Validate
+    if (!this.isValidEmail(email)) {
+        this.showNotification('Please enter a valid email address', 'error');
+        return;
+    }
+
+    if (!password) {
+        this.showNotification('Please enter your password', 'error');
+        return;
+    }
+
+    // Show loading
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn?.innerHTML || 'Sign In';
+    if (submitBtn) {
+        submitBtn.innerHTML = 'Signing In...';
+        submitBtn.disabled = true;
+    }
+
+    try {
+        // ===== TRY SIGN IN DIRECTLY (skip all checks) =====
+        console.log('🔐 Attempting sign in directly...');
+        const auth = window.firebase.auth();
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        
+        console.log('✅ LOGIN SUCCESSFUL!');
+        console.log('User:', userCredential.user.email);
+        
+        // ===== CRITICAL: SAVE USER DATA =====
+        localStorage.setItem('userEmail', userCredential.user.email);
+        localStorage.setItem('userName', userCredential.user.displayName || userCredential.user.email);
+        localStorage.setItem('userUid', userCredential.user.uid);
+        
+        // Also create farm-profile
+        localStorage.setItem('farm-profile', JSON.stringify({
+            farmName: 'My Farm',
+            ownerName: userCredential.user.displayName || userCredential.user.email,
+            email: userCredential.user.email,
+            uid: userCredential.user.uid
+        }));
+        
+        console.log('💾 User data saved to localStorage');
+        
+        // ===== FORCE SHOW THE APP IMMEDIATELY =====
+        console.log('🚀 FORCING APP TO SHOW...');
+        
+        // Method 1: Direct DOM manipulation (100% guaranteed)
+        this.forceShowApp();
+        
+        // Method 2: Also try app.js if it exists
+        if (typeof window.app !== 'undefined' && window.app.showApp) {
+            setTimeout(() => {
+                window.app.showApp();
+            }, 100);
         }
         
-        if (action) {
-            this.showNotificationWithAction(errorMessage, 'error', action.text, action.callback);
-        } else {
-            this.showNotification(errorMessage, 'error');
+        // Show success message
+        this.showNotification(`Welcome back, ${userCredential.user.displayName || userCredential.user.email}!`, 'success');
+        
+    } catch (error) {
+        console.error('❌ LOGIN ERROR:', error.code, error.message);
+        
+        // Restore button
+        if (submitBtn) {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
         }
+        
+        // Simple error message
+        let errorMessage = 'Sign in failed. ';
+        if (error.code === 'auth/invalid-login-credentials' || error.code === 'auth/wrong-password') {
+            errorMessage = 'Incorrect email or password.';
+        } else if (error.code === 'auth/user-not-found') {
+            errorMessage = 'No account found. Please sign up first.';
+        } else {
+            errorMessage += error.message;
+        }
+        
+        this.showNotification(errorMessage, 'error');
     }
+}
+
+// ADD THIS METHOD TO YOUR auth.js CLASS
+forceShowApp() {
+    console.log('💥 FORCE SHOWING APP...');
+    
+    // 1. Hide auth container COMPLETELY
+    const authContainer = document.getElementById('auth-container');
+    if (authContainer) {
+        authContainer.style.display = 'none';
+        authContainer.style.visibility = 'hidden';
+        authContainer.style.opacity = '0';
+        authContainer.style.position = 'absolute';
+        authContainer.style.zIndex = '-1000';
+        console.log('✅ Auth container hidden');
+    }
+    
+    // 2. Show app container COMPLETELY
+    const appContainer = document.getElementById('app-container');
+    if (appContainer) {
+        appContainer.style.display = 'block';
+        appContainer.style.visibility = 'visible';
+        appContainer.style.opacity = '1';
+        appContainer.style.position = 'relative';
+        appContainer.style.zIndex = '1000';
+        appContainer.classList.remove('hidden');
+        console.log('✅ App container shown');
+    }
+    
+    // 3. Add CSS class to body
+    document.body.classList.add('user-authenticated');
+    document.body.classList.add('app-loaded');
+    document.body.classList.remove('app-loading');
+    
+    // 4. Force create navigation if missing
+    if (!document.querySelector('.top-nav')) {
+        console.log('🛠️ Creating navigation...');
+        this.createEmergencyNavigation();
+    }
+    
+    // 5. Load dashboard
+    setTimeout(() => {
+        this.loadDashboard();
+    }, 500);
+    
+    console.log('🎉 APP FORCE-SHOW COMPLETE');
+}
+
+// ADD THESE HELPER METHODS
+createEmergencyNavigation() {
+    const appContainer = document.getElementById('app-container');
+    if (!appContainer) return;
+    
+    // Check if navigation already exists
+    if (appContainer.querySelector('header')) return;
+    
+    // Create emergency header
+    const header = document.createElement('header');
+    header.innerHTML = `
+        <nav class="top-nav" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        ">
+            <div class="nav-brand">
+                <span style="font-size: 20px; font-weight: bold; color: #4CAF50;">🌱 AgriMetrics</span>
+            </div>
+            <div class="nav-items">
+                <button class="nav-item" onclick="window.location.reload()" style="
+                    background: #4CAF50;
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                ">Dashboard</button>
+            </div>
+        </nav>
+    `;
+    
+    appContainer.insertBefore(header, appContainer.firstChild);
+    
+    // Adjust main content padding
+    const main = document.getElementById('content-area');
+    if (main) {
+        main.style.paddingTop = '60px';
+    }
+}
+
+loadDashboard() {
+    const contentArea = document.getElementById('content-area');
+    if (!contentArea) return;
+    
+    console.log('📊 Loading dashboard...');
+    
+    // Show loading indicator
+    contentArea.innerHTML = `
+        <div style="padding: 40px; text-align: center;">
+            <div style="
+                width: 40px;
+                height: 40px;
+                border: 4px solid #f3f3f3;
+                border-top: 4px solid #4CAF50;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 20px;
+            "></div>
+            <h3>Loading Dashboard...</h3>
+            <p>Welcome to AgriMetrics Farm Management System</p>
+            <button onclick="window.location.reload()" style="
+                background: #4CAF50;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 4px;
+                margin-top: 20px;
+                cursor: pointer;
+            ">Refresh Page</button>
+        </div>
+    `;
+    
+    // Try to load dashboard module
+    setTimeout(() => {
+        if (typeof window.dashboardModule !== 'undefined' && window.dashboardModule.init) {
+            window.dashboardModule.init();
+            console.log('✅ Dashboard module loaded');
+        } else if (typeof window.framework !== 'undefined' && window.framework.renderModule) {
+            window.framework.renderModule('dashboard');
+            console.log('✅ Dashboard rendered via framework');
+        } else {
+            // Show basic dashboard
+            contentArea.innerHTML = `
+                <div style="padding: 20px;">
+                    <h2>Dashboard</h2>
+                    <p>Welcome to your farm management dashboard!</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 30px;">
+                        <div style="background: #4CAF50; color: white; padding: 20px; border-radius: 8px;">
+                            <h3>Total Orders</h3>
+                            <p style="font-size: 24px; margin: 10px 0;">0</p>
+                        </div>
+                        <div style="background: #2196F3; color: white; padding: 20px; border-radius: 8px;">
+                            <h3>Total Revenue</h3>
+                            <p style="font-size: 24px; margin: 10px 0;">$0</p>
+                        </div>
+                        <div style="background: #FF9800; color: white; padding: 20px; border-radius: 8px;">
+                            <h3>Pending Orders</h3>
+                            <p style="font-size: 24px; margin: 10px 0;">0</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }, 1000);
 }
 
 // Add this method to your auth.js class
