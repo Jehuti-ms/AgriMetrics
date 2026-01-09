@@ -12,25 +12,20 @@ class FirebaseAuth {
         }
     }
 
-  async signUp(email, password, userData) {
-  if (!this.auth) {
-    return { success: false, error: 'Firebase Auth not available' };
-  }
+  // firebase-auth.js
 
+async function signUp(email, password) {
   try {
-    // Create the user (this also signs them in)
-    const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password); console.log('✅ User created:', userCredential.user.uid, userCredential.user.email); return { success: true, user: userCredential.user }; } catch (error) { console.error('❌ Sign-up failed:', error.code, error.message); alert(`Sign-up failed: ${error.code} — ${error.message}`); return { success: false, error: error.message }; } }
-  }
-      
-    // Save profile data if provided
-    if (userData) {
-      await this.saveUserData(userCredential.user.uid, userData);
-    }
+    // Attempt to create the user in Firebase Auth
+    const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
 
-    // Notify
-    this.showNotification(`Welcome ${userCredential.user.displayName || email}!`, 'success');
+    // Log success
+    console.log('✅ User created:', userCredential.user.uid, userCredential.user.email);
 
-    // ✅ Show the app immediately (no extra sign-in step)
+    // Optionally save extra profile data here
+    // await saveUserData(userCredential.user.uid, { ... });
+
+    // Show app immediately
     if (window.app) {
       window.app.currentUser = userCredential.user;
       window.app.showApp();
@@ -39,8 +34,12 @@ class FirebaseAuth {
 
     return { success: true, user: userCredential.user };
   } catch (error) {
-    console.error('Sign-up error:', error);
-    this.showNotification(`Sign-up failed: ${error.message}`, 'error');
+    // Log the exact error code and message
+    console.error('❌ Sign-up failed:', error.code, error.message);
+
+    // Show a notification or alert so you actually see it
+    alert(`Sign-up failed: ${error.code} — ${error.message}`);
+
     return { success: false, error: error.message };
   }
 }
