@@ -1,4 +1,4 @@
-// modules/auth.js - Fixed Forgot Password
+// modules/auth.js - FIXED FORGOT PASSWORD
 console.log('Loading auth module...');
 
 class AuthModule {
@@ -22,40 +22,39 @@ class AuthModule {
     }
     
     attachFormHandlers() {
-        // RENDER SOCIAL BUTTONS
-        this.renderSocialLoginButtons();
-        
-        // SETUP PASSWORD VALIDATION
-        this.setupPasswordValidation();
+        console.log('🔧 Attaching form handlers...');
         
         // SIGN-UP FORM HANDLER
         const signupForm = document.getElementById('signup-form-element');
         if (signupForm) {
+            console.log('✅ Found sign-up form');
             signupForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 await this.handleSignUp();
             });
-            console.log('✅ Sign-up form handler attached');
+            
+            // Setup password validation for sign-up form
+            this.setupPasswordValidation();
         }
 
         // SIGN IN FORM HANDLER
         const signinForm = document.getElementById('signin-form-element');
         if (signinForm) {
+            console.log('✅ Found sign-in form');
             signinForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 await this.handleSignIn();
             });
-            console.log('✅ Sign-in form handler attached');
         }
 
-        // FORGOT PASSWORD FORM HANDLER - FIX THIS
+        // FORGOT PASSWORD FORM HANDLER
         const forgotForm = document.getElementById('forgot-password-form-element');
         if (forgotForm) {
+            console.log('✅ Found forgot password form');
             forgotForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 await this.handleForgotPassword();
             });
-            console.log('✅ Forgot password form handler attached');
         }
 
         // FORM SWITCHING LISTENERS
@@ -63,11 +62,14 @@ class AuthModule {
     }
 
     setupAuthListeners() {
+        console.log('🔧 Setting up auth listeners...');
+        
         // Show Sign Up form
         const showSignup = document.getElementById('show-signup');
         if (showSignup) {
             showSignup.addEventListener('click', (e) => {
                 e.preventDefault();
+                console.log('🔄 Switching to signup form');
                 this.showAuthForm('signup');
             });
         }
@@ -77,6 +79,7 @@ class AuthModule {
         if (showSignin) {
             showSignin.addEventListener('click', (e) => {
                 e.preventDefault();
+                console.log('🔄 Switching to signin form');
                 this.showAuthForm('signin');
             });
         }
@@ -86,6 +89,7 @@ class AuthModule {
         if (showForgot) {
             showForgot.addEventListener('click', (e) => {
                 e.preventDefault();
+                console.log('🔄 Switching to forgot password form');
                 this.showAuthForm('forgot-password');
             });
         }
@@ -95,56 +99,64 @@ class AuthModule {
         if (showSigninFromForgot) {
             showSigninFromForgot.addEventListener('click', (e) => {
                 e.preventDefault();
+                console.log('🔄 Switching back to signin form');
                 this.showAuthForm('signin');
             });
         }
     }
 
-    // ======== FORGOT PASSWORD HANDLER - FIXED ========
+    // ======== FORGOT PASSWORD HANDLER ========
     async handleForgotPassword() {
-        console.log('🔐 Handling forgot password...');
+        console.log('🔐 Handling forgot password request...');
         
         const form = document.getElementById('forgot-password-form-element');
         if (!form) {
-            this.showNotification('Forgot password form not found', 'error');
+            console.error('❌ Forgot password form not found');
+            this.showNotification('Form error. Please refresh the page.', 'error');
             return;
         }
 
         const submitBtn = form.querySelector('button[type="submit"]');
-        const email = document.getElementById('forgot-email')?.value.trim() || '';
+        const emailInput = document.getElementById('forgot-email');
+        const email = emailInput?.value.trim() || '';
 
+        // Validate email
         if (!email) {
             this.showNotification('Please enter your email address', 'error');
+            if (emailInput) emailInput.focus();
             return;
         }
 
-        // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             this.showNotification('Please enter a valid email address', 'error');
+            if (emailInput) emailInput.focus();
             return;
         }
 
+        // Disable button and show loading
         if (submitBtn) {
-            submitBtn.innerHTML = 'Sending Reset Link...';
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Sending...';
             submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.7';
         }
 
         try {
             console.log('📧 Sending password reset email to:', email);
             
-            // Send password reset email
+            // Send password reset email using Firebase
             await firebase.auth().sendPasswordResetEmail(email);
             
             console.log('✅ Password reset email sent successfully');
             
             // Show success message
             this.showNotification(
-                'Password reset email sent! Check your inbox (and spam folder) for reset instructions.',
+                '✅ Password reset email sent! Check your inbox (and spam folder) for reset instructions.',
                 'success'
             );
             
-            // Clear form
+            // Clear the form
             form.reset();
             
             // Switch back to sign-in form after 2 seconds
@@ -155,7 +167,7 @@ class AuthModule {
         } catch (error) {
             console.error('❌ Password reset error:', error);
             
-            let errorMessage = 'Error sending reset email: ';
+            let errorMessage = 'Error: ';
             switch (error.code) {
                 case 'auth/user-not-found':
                     errorMessage = 'No account found with this email address.';
@@ -167,10 +179,10 @@ class AuthModule {
                     errorMessage = 'Please enter your email address.';
                     break;
                 case 'auth/too-many-requests':
-                    errorMessage = 'Too many attempts. Please try again later.';
+                    errorMessage = 'Too many attempts. Please try again in a few minutes.';
                     break;
                 case 'auth/network-request-failed':
-                    errorMessage = 'Network error. Please check your connection.';
+                    errorMessage = 'Network error. Please check your internet connection.';
                     break;
                 default:
                     errorMessage += error.message;
@@ -179,9 +191,11 @@ class AuthModule {
             this.showNotification(errorMessage, 'error');
             
         } finally {
+            // Re-enable button
             if (submitBtn) {
-                submitBtn.innerHTML = 'Send Reset Link';
+                submitBtn.textContent = 'Send Reset Link';
                 submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
             }
         }
     }
@@ -227,7 +241,6 @@ class AuthModule {
         try {
             console.log('🔄 Creating Firebase user account...');
             
-            // Create user with email/password in Firebase Auth
             const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
             const user = userCredential.user;
             
@@ -249,7 +262,6 @@ class AuthModule {
             
             console.log('✅ User data saved to Firestore');
             
-            // Show success message
             this.showNotification(`Welcome ${name}! Account created successfully.`, 'success');
             
             // Clear form
@@ -311,12 +323,10 @@ class AuthModule {
             
             console.log('✅ User signed in:', user.email);
             
-            // Update last login in Firestore
             await this.updateLastLogin(user.uid);
             
             this.showNotification(`Welcome back, ${user.displayName || user.email}!`, 'success');
             
-            // Clear form
             form.reset();
             
         } catch (error) {
@@ -380,35 +390,32 @@ class AuthModule {
     }
 
     showAuthForm(formName) {
-        console.log(`🔄 Switching to ${formName} form`);
+        console.log(`🔄 Showing ${formName} form`);
         
-        // Hide all forms
+        // Hide all forms first
         document.querySelectorAll('.auth-form').forEach(form => {
             form.classList.remove('active');
+            form.style.display = 'none';
         });
         
         // Show the requested form
         const targetForm = document.getElementById(`${formName}-form`);
         if (targetForm) {
             targetForm.classList.add('active');
-        }
-    }
-
-    // ======== SOCIAL LOGIN METHODS ========
-    renderSocialLoginButtons() {
-        console.log('🔄 Rendering social login buttons...');
-        const socialContainer = document.getElementById('social-login-container');
-        
-        if (socialContainer && window.authManager) {
-            console.log('✅ Social container found, rendering buttons...');
-            socialContainer.innerHTML = window.authManager.renderAuthButtons();
-            console.log('✅ Social buttons HTML rendered');
+            targetForm.style.display = 'block';
+            console.log(`✅ ${formName} form shown`);
+            
+            // Focus on first input field
+            setTimeout(() => {
+                const firstInput = targetForm.querySelector('input');
+                if (firstInput) firstInput.focus();
+            }, 100);
         } else {
-            console.log('⚠️ Social container or authManager not found');
+            console.error(`❌ ${formName} form not found`);
         }
     }
 
-    // ======== PASSWORD STRENGTH METHODS ========
+    // ======== PASSWORD VALIDATION ========
     setupPasswordValidation() {
         const passwordInput = document.getElementById('signup-password');
         const confirmInput = document.getElementById('signup-confirm-password');
@@ -435,42 +442,30 @@ class AuthModule {
         
         if (!strengthBar || !strengthText) return;
         
-        // Calculate strength
         let strength = 0;
         
-        // Length check
         if (password.length >= 8) strength++;
-        
-        // Contains lowercase
         if (/[a-z]/.test(password)) strength++;
-        
-        // Contains uppercase
         if (/[A-Z]/.test(password)) strength++;
-        
-        // Contains numbers
         if (/\d/.test(password)) strength++;
-        
-        // Contains special characters
         if (/[^A-Za-z0-9]/.test(password)) strength++;
         
-        // Set visual feedback
         const width = (strength / 5) * 100;
         strengthBar.style.width = width + '%';
         
-        // Set color and text based on strength
         if (password.length === 0) {
             strengthBar.style.backgroundColor = '#ddd';
             strengthText.textContent = '';
         } else if (strength < 2) {
-            strengthBar.style.backgroundColor = '#ff4757'; // Red
+            strengthBar.style.backgroundColor = '#ff4757';
             strengthText.textContent = 'Weak';
             strengthText.style.color = '#ff4757';
         } else if (strength < 4) {
-            strengthBar.style.backgroundColor = '#ffa502'; // Orange
+            strengthBar.style.backgroundColor = '#ffa502';
             strengthText.textContent = 'Medium';
             strengthText.style.color = '#ffa502';
         } else {
-            strengthBar.style.backgroundColor = '#2ed573'; // Green
+            strengthBar.style.backgroundColor = '#2ed573';
             strengthText.textContent = 'Strong';
             strengthText.style.color = '#2ed573';
         }
@@ -485,16 +480,20 @@ class AuthModule {
             matchIndicator.style.color = '';
         } else if (password === confirmPassword) {
             matchIndicator.textContent = '✓ Passwords match';
-            matchIndicator.style.color = '#2ed573'; // Green
+            matchIndicator.style.color = '#2ed573';
         } else {
             matchIndicator.textContent = '✗ Passwords do not match';
-            matchIndicator.style.color = '#ff4757'; // Red
+            matchIndicator.style.color = '#ff4757';
         }
     }
 
     showNotification(message, type) {
-        // Simple notification system
+        // Remove existing notifications
+        const existing = document.querySelectorAll('.auth-notification');
+        existing.forEach(el => el.remove());
+        
         const notification = document.createElement('div');
+        notification.className = 'auth-notification';
         notification.style.cssText = `
             position: fixed;
             top: 20px;
@@ -532,9 +531,9 @@ class AuthModule {
         }, 4000);
         
         // Add animation styles if not present
-        if (!document.querySelector('#notification-animations')) {
+        if (!document.querySelector('#auth-notification-styles')) {
             const style = document.createElement('style');
-            style.id = 'notification-animations';
+            style.id = 'auth-notification-styles';
             style.textContent = `
                 @keyframes slideIn {
                     from { transform: translateX(100%); opacity: 0; }
@@ -550,4 +549,7 @@ class AuthModule {
     }
 }
 
-window.authModule = new AuthModule();
+// Initialize the auth module
+document.addEventListener('DOMContentLoaded', () => {
+    window.authModule = new AuthModule();
+});
