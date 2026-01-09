@@ -1,4 +1,4 @@
-// modules/auth.js - FIXED WITH PROPER SIGN-UP FLOW
+// modules/auth.js - Updated to prevent conflicts
 console.log('Loading auth module...');
 
 class AuthModule {
@@ -263,7 +263,7 @@ class AuthModule {
     }
 
     // ======== SIGN-UP HANDLER - FIXED ========
-    async handleSignUp() {
+   async handleSignUp() {
         console.log('📝 Starting sign-up process...');
         
         const form = document.getElementById('signup-form-element');
