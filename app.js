@@ -1,4 +1,15 @@
 // app.js - FIXED FARM MODULES INITIALIZATION
+// app.js - Add at the very top
+console.log('🔒 Anti-loop check...');
+
+// Prevent multiple initializations
+if (window.appInitialized) {
+    console.log('⚠️ App already initialized, skipping...');
+    // Don't throw error, just exit gracefully
+    return;
+}
+window.appInitialized = true;
+
 console.log('Loading main app...');
 
 class FarmManagementApp {
