@@ -4,13 +4,21 @@
  * CSP COMPLIANT: No inline event handlers
  */
 
+// signin-fix.js - ADD AT THE BEGINNING
 (function() {
     'use strict';
     
     console.log('🔧 Loading sign-in fix...');
     
-    // Flag to prevent multiple initializations
-    let signInFixApplied = false;
+    // Prevent multiple sign-in attempts
+    if (window.signInFixApplied) {
+        console.log('⚠️ Sign-in fix already applied');
+        return;
+    }
+    window.signInFixApplied = true;
+    
+    let signInAttempts = 0;
+    const maxSignInAttempts = 2;
     
     function fixSignInButton() {
         if (signInFixApplied) {
@@ -37,15 +45,21 @@
         
         // Add proper event listener (CSP compliant)
         signInBtn.addEventListener('click', async function(e) {
-            e.preventDefault();
-            
-            const email = document.getElementById('signin-email').value;
-            const password = document.getElementById('signin-password').value;
-            
-            if (!email || !password) {
-                alert('Please enter email and password');
-                return;
-            }
+        e.preventDefault();
+        
+        // Prevent multiple sign-in attempts
+        signInAttempts++;
+        if (signInAttempts > maxSignInAttempts) {
+            console.warn('⚠️ Too many sign-in attempts, stopping');
+            this.textContent = 'Too many attempts';
+            this.disabled = true;
+            setTimeout(() => {
+                this.textContent = originalText;
+                this.disabled = false;
+                signInAttempts = 0;
+            }, 5000);
+            return;
+        }
             
             // Show loading state
             this.textContent = 'Signing In...';
