@@ -76,52 +76,115 @@ class FarmManagementApp {
     }
 
     async checkAuthState() {
-    showLoading() {
-        console.log('⏳ Showing loading screen');
-        if (!document.getElementById('app-loading')) {
-            const loadingDiv = document.createElement('div');
-            loadingDiv.id = 'app-loading';
-            loadingDiv.innerHTML = `
-                <div style="
-                    position: fixed;
-                    top: 0; left: 0; right: 0; bottom: 0;
-                    background: white;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 9999;
-                ">
-                    <div style="
-                        width: 50px;
-                        height: 50px;
-                        border: 5px solid #f3f3f3;
-                        border-top: 5px solid #4CAF50;
-                        border-radius: 50%;
-                        animation: spin 1s linear infinite;
-                        margin-bottom: 20px;
-                    "></div>
-                    <div style="color: #666; font-size: 16px;">Loading Farm Manager...</div>
-                </div>
-            `;
-            document.body.appendChild(loadingDiv);
-            
-            // Add animation style
-            if (!document.querySelector('#loading-styles')) {
-                const style = document.createElement('style');
-                style.id = 'loading-styles';
-                style.textContent = `
-                    @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-        } else {
-            document.getElementById('app-loading').style.display = 'flex';
+    console.log('🔐 Checking authentication state...');
+    
+    return new Promise((resolve) => {
+        if (typeof firebase === 'undefined' || !firebase.auth) {
+            console.log('⚠️ Firebase not available');
+            this.hideLoading();
+            this.showAuth();
+            resolve(false);
+            return;
         }
-    }
+        
+        let authResolved = false;
+        
+        const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+            console.log('🔥 Auth state changed:', user ? `User: ${user.email}` : 'No user');
+            
+            if (!authResolved) {
+                authResolved = true;
+                this.hideLoading();
+                
+                if (user) {
+                    console.log('👤 User authenticated:', user.email);
+                    this.currentUser = user;
+                    this.showApp();
+                    
+                    // IMPORTANT: Trigger app initialization here
+                    setTimeout(() => {
+                        this.initializeAppAfterAuth();
+                    }, 100);
+                    
+                    resolve(true);
+                } else {
+                    // Check local data
+                    const hasLocalProfile = localStorage.getItem('farm-profile') || 
+                                           localStorage.getItem('profileData');
+                    
+                    if (hasLocalProfile) {
+                        console.log('💾 Using local profile data');
+                        this.showApp();
+                        resolve(true);
+                    } else {
+                        console.log('🔒 Showing login screen');
+                        this.showAuth();
+                        resolve(false);
+                    }
+                }
+                
+                unsubscribe();
+            }
+        });
+        
+        // 5 second timeout
+        setTimeout(() => {
+            if (!authResolved) {
+                console.log('⏰ Auth check timeout');
+                authResolved = true;
+                this.hideLoading();
+                unsubscribe();
+                
+                const user = firebase.auth().currentUser;
+                const hasLocalProfile = localStorage.getItem('farm-profile') || 
+                                       localStorage.getItem('profileData');
+                
+                if (user || hasLocalProfile) {
+                    console.log('✅ Found user after timeout');
+                    this.currentUser = user;
+                    this.showApp();
+                    resolve(true);
+                } else {
+                    console.log('❌ No user found after timeout');
+                    this.showAuth();
+                    resolve(false);
+                }
+            }
+        }, 5000);
+    });
+}
+
+// New method to initialize app after auth
+async initializeAppAfterAuth() {
+    console.log('🚀 User authenticated, continuing app initialization...');
+    
+    // CRITICAL: Initialize StyleManager FIRST before any modules
+    this.initializeStyleManager();
+    
+    // CRITICAL: Initialize FarmModules core system
+    this.initializeFarmModules();
+    
+    this.isDemoMode = true;
+    
+    // Load user preferences
+    await this.loadUserPreferences();
+    
+    // Setup navigation and events
+    this.createTopNavigation();
+    
+    // Small delay to ensure DOM is fully rendered
+    setTimeout(() => {
+        this.setupHamburgerMenu();
+        this.setupSideMenuEvents();
+        this.setupEventListeners();
+        this.setupDarkMode();
+        
+        // Load initial section
+        this.showSection(this.currentSection);
+        
+        console.log('✅ App initialized successfully');
+    }, 100);
+}
 
     hideLoading() {
         const loadingDiv = document.getElementById('app-loading');
