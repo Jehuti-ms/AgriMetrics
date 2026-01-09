@@ -1,8 +1,8 @@
 // app.js - FIXED FARM MODULES INITIALIZATION
 console.log('Loading main app...');
 
-/*class FarmManagementApp {
-    constructor() {
+class FarmManagementApp {
+    /*constructor() {
         this.currentUser = null;
         this.currentSection = 'dashboard';
         this.isDemoMode = false;
