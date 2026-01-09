@@ -1,5 +1,3 @@
-[file name]: auth.js
-[file content begin]
 // modules/auth.js - FIXED WITH PROPER SIGN-UP FLOW
 console.log('Loading auth module...');
 
@@ -582,4 +580,4 @@ class AuthModule {
 }
 
 window.authModule = new AuthModule();
-[file content end]
+
