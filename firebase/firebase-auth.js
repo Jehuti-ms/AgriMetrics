@@ -14,35 +14,49 @@ class FirebaseAuth {
 
   // firebase-auth.js
 
-async function signUp(email, password) {
-  try {
-    // Attempt to create the user in Firebase Auth
-    const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+// firebase-auth.js
 
-    // Log success
-    console.log('✅ User created:', userCredential.user.uid, userCredential.user.email);
-
-    // Optionally save extra profile data here
-    // await saveUserData(userCredential.user.uid, { ... });
-
-    // Show app immediately
-    if (window.app) {
-      window.app.currentUser = userCredential.user;
-      window.app.showApp();
-      window.app.showSection('dashboard');
-    }
-
-    return { success: true, user: userCredential.user };
-  } catch (error) {
-    // Log the exact error code and message
-    console.error('❌ Sign-up failed:', error.code, error.message);
-
-    // Show a notification or alert so you actually see it
-    alert(`Sign-up failed: ${error.code} — ${error.message}`);
-
-    return { success: false, error: error.message };
+function signUp(email, password, userData) {
+  if (!firebase || !firebase.auth) {
+    console.error('Firebase Auth not available');
+    return Promise.resolve({ success: false, error: 'Firebase Auth not available' });
   }
+
+  // Keep session persistent across reloads
+  return firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+    .catch(() => {}) // ignore persistence errors
+    .then(() => firebase.auth().createUserWithEmailAndPassword(email, password))
+    .then((userCredential) => {
+      const user = userCredential.user;
+      console.log('✅ User created:', user.uid, user.email);
+
+      // Optional: save profile data
+      if (userData && typeof window.saveUserData === 'function') {
+        return window.saveUserData(user.uid, userData).then(() => user);
+      }
+      return user;
+    })
+    .then((user) => {
+      // Show the app immediately
+      if (window.app) {
+        window.app.currentUser = user;
+        window.app.showApp();
+        window.app.showSection('dashboard');
+      }
+      return { success: true, user };
+    })
+    .catch((error) => {
+      console.error('❌ Sign-up failed:', error.code, error.message);
+      // Surface the error so you see it
+      if (window.coreModule?.showNotification) {
+        window.coreModule.showNotification(`Sign-up failed: ${error.code} — ${error.message}`, 'error');
+      } else {
+        alert(`Sign-up failed: ${error.code} — ${error.message}`);
+      }
+      return { success: false, error: error.message, code: error.code };
+    });
 }
+
 
 
    async signIn(email, password) {
