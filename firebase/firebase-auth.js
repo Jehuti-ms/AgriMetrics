@@ -16,78 +16,55 @@ class FirebaseAuth {
 
 // firebase-auth.js
 
-function signUp(email, password, userData) {
-  if (!firebase || !firebase.auth) {
-    console.error('Firebase Auth not available');
-    return Promise.resolve({ success: false, error: 'Firebase Auth not available' });
-  }
+// firebase-auth.js
 
-  // Keep session persistent across reloads
-  return firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-    .catch(() => {}) // ignore persistence errors
-    .then(() => firebase.auth().createUserWithEmailAndPassword(email, password))
+function signUp(email, password) {
+  return firebase.auth().createUserWithEmailAndPassword(email, password)
     .then((userCredential) => {
       const user = userCredential.user;
-      console.log('✅ User created:', user.uid, user.email);
+      console.log("✅ User created:", user.uid, user.email);
 
-      // Optional: save profile data
-      if (userData && typeof window.saveUserData === 'function') {
-        return window.saveUserData(user.uid, userData).then(() => user);
-      }
-      return user;
-    })
-    .then((user) => {
-      // Show the app immediately
       if (window.app) {
         window.app.currentUser = user;
         window.app.showApp();
-        window.app.showSection('dashboard');
+        window.app.showSection("dashboard");
       }
+
       return { success: true, user };
     })
     .catch((error) => {
-      console.error('❌ Sign-up failed:', error.code, error.message);
-      // Surface the error so you see it
-      if (window.coreModule?.showNotification) {
-        window.coreModule.showNotification(`Sign-up failed: ${error.code} — ${error.message}`, 'error');
-      } else {
-        alert(`Sign-up failed: ${error.code} — ${error.message}`);
-      }
-      return { success: false, error: error.message, code: error.code };
+      console.error("❌ Sign-up failed:", error.code, error.message);
+      alert(`Sign-up failed: ${error.code} — ${error.message}`);
+      return { success: false, error: error.message };
     });
 }
 
+// expose globally if needed
+window.signUp = signUp;
+    
+function signIn(email, password) {
+  return firebase.auth().signInWithEmailAndPassword(email, password)
+    .then((userCredential) => {
+      const user = userCredential.user;
+      console.log("✅ Signed in:", user.uid, user.email);
 
+      if (window.app) {
+        window.app.currentUser = user;
+        window.app.showApp();
+        window.app.showSection("dashboard");
+      }
 
-   async signIn(email, password) {
-  if (!this.auth) {
-    return { success: false, error: 'Firebase Auth not available' };
-  }
-
-  try {
-    // Keep session persistent across reloads
-    await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
-
-    // Attempt sign-in
-    const userCredential = await this.auth.signInWithEmailAndPassword(email, password);
-    const user = userCredential.user;
-
-    this.showNotification(`Welcome back ${user.displayName || user.email}!`, 'success');
-
-    // ✅ Show the app immediately
-    if (window.app) {
-      window.app.currentUser = user;
-      window.app.showApp();
-      window.app.showSection('dashboard');
-    }
-
-    return { success: true, user };
-  } catch (error) {
-    console.error('Sign-in error:', error);
-    this.showNotification(`Sign-in failed: ${error.message}`, 'error');
-    return { success: false, error: error.message };
-  }
+      return { success: true, user };
+    })
+    .catch((error) => {
+      console.error("❌ Sign-in failed:", error.code, error.message);
+      alert(`Sign-in failed: ${error.code} — ${error.message}`);
+      return { success: false, error: error.message };
+    });
 }
+
+window.signIn = signIn;
+
 
     async resetPassword(email) {
         if (!this.auth) {
