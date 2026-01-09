@@ -162,6 +162,32 @@ class FarmManagementApp {
   });
 }
 
+// Inside FirebaseAuth class
+signOut() {
+  if (!this.auth) {
+    console.error('⚠️ Auth not initialized');
+    return Promise.resolve({ success: false, error: 'Auth not initialized' });
+  }
+
+  return this.auth.signOut()
+    .then(() => {
+      console.log('🚪 Signed out');
+      this.currentUser = null;
+
+      // Show login screen after sign-out
+      if (window.app) {
+        window.app.currentUser = null;
+        window.app.showAuth();
+      }
+
+      return { success: true };
+    })
+    .catch((error) => {
+      console.error('❌ Sign-out failed:', error.code, error.message);
+      this.showNotification(`Sign-out failed: ${error.code} — ${error.message}`, 'error');
+      return { success: false, code: error.code, error: error.message };
+    });
+}
 
     showLoading() {
         console.log('⏳ Showing loading screen');
