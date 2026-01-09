@@ -75,49 +75,81 @@ class FarmManagementApp {
         }, 100);
     }
 
-    async checkAuthState() {
+async checkAuthState() {
     console.log('🔐 Checking authentication state...');
     
-    // Check if we've already resolved auth
-    if (sessionStorage.getItem('authChecked') === 'true') {
-        console.log('📌 Auth already checked this session');
-        const user = firebase.auth().currentUser;
-        const hasLocalProfile = localStorage.getItem('farm-profile');
-        
-        if (user || hasLocalProfile) {
-            console.log('👤 User exists from previous check');
-            this.currentUser = user;
-            this.showApp();
-            return true;
-        }
-    }
-    
     return new Promise((resolve) => {
-        console.log('⏳ Setting up auth state listener...');
+        if (typeof firebase === 'undefined' || !firebase.auth) {
+            console.log('⚠️ Firebase not available');
+            this.hideLoading();
+            this.showAuth();
+            resolve(false);
+            return;
+        }
         
         let authResolved = false;
-        let timeoutId = null;
         
-        // Use the centralized auth manager if available
-        const authManager = window.firebaseAuthManager;
-        const unsubscribe = authManager 
-            ? authManager.onAuthStateChanged(this.handleAuthChange.bind(this, resolve))
-            : firebase.auth().onAuthStateChanged(this.handleAuthChange.bind(this, resolve));
+        // Use a single auth state listener
+        const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+            console.log('🔥 Auth state changed (app.js):', user ? `User: ${user.email}` : 'No user');
+            
+            if (authResolved) {
+                console.log('⚠️ Auth already resolved, ignoring duplicate event');
+                return;
+            }
+            
+            authResolved = true;
+            this.hideLoading();
+            
+            if (user) {
+                console.log('👤 User authenticated:', user.email);
+                this.currentUser = user;
+                this.showApp();
+                resolve(true);
+            } else {
+                // Check local data
+                const hasLocalProfile = localStorage.getItem('farm-profile') || 
+                                       localStorage.getItem('profileData');
+                
+                if (hasLocalProfile) {
+                    console.log('💾 Using local profile data');
+                    this.showApp();
+                    resolve(true);
+                } else {
+                    console.log('🔒 Showing login screen');
+                    this.showAuth();
+                    resolve(false);
+                }
+            }
+            
+            // Clean up listener
+            unsubscribe();
+        });
         
-        // Set timeout
-        timeoutId = setTimeout(() => {
+        // 3 second timeout
+        setTimeout(() => {
             if (!authResolved) {
                 console.log('⏰ Auth check timeout');
-                this.handleAuthTimeout(resolve, authResolved, unsubscribe);
+                authResolved = true;
+                this.hideLoading();
+                unsubscribe();
+                
+                const user = firebase.auth().currentUser;
+                const hasLocalProfile = localStorage.getItem('farm-profile') || 
+                                       localStorage.getItem('profileData');
+                
+                if (user || hasLocalProfile) {
+                    console.log('✅ Found user after timeout');
+                    this.currentUser = user;
+                    this.showApp();
+                    resolve(true);
+                } else {
+                    console.log('❌ No user found after timeout');
+                    this.showAuth();
+                    resolve(false);
+                }
             }
-        }, 5000);
-        
-        // Store unsubscribe function and timeout ID for cleanup
-        this.authCleanup = { unsubscribe, timeoutId };
-        
-    }).catch(error => {
-        console.error('❌ Auth check promise rejected:', error);
-        return false;
+        }, 3000);
     });
 }
 
