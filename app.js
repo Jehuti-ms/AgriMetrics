@@ -1,5 +1,3 @@
-[file name]: app.js
-[file content begin]
 // app.js - FIXED WITH PROPER AUTH SYNCHRONIZATION
 console.log('Loading main app...');
 
@@ -731,4 +729,4 @@ if (document.readyState === 'loading') {
 } else {
     window.app = new FarmManagementApp();
 }
-[file content end]
+
