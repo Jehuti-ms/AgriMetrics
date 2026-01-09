@@ -1,5 +1,3 @@
-[file name]: signin-fix.js
-[file content begin]
 /**
  * Simple sign-in fix - Minimal version
  * Only handles basic sign-in, sign-up is handled by auth.js
@@ -102,4 +100,4 @@
         setTimeout(() => clearInterval(waitForFirebase), 5000);
     }
 })();
-[file content end]
+
