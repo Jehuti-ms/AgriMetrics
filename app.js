@@ -1,4 +1,6 @@
-// app.js - FIXED FARM MODULES INITIALIZATION
+[file name]: app.js
+[file content begin]
+// app.js - FIXED WITH PROPER AUTH SYNCHRONIZATION
 console.log('Loading main app...');
 
 class FarmManagementApp {
@@ -7,6 +9,7 @@ class FarmManagementApp {
         this.currentSection = 'dashboard';
         this.isDemoMode = false;
         this.userPreferences = {};
+        this.authCheckComplete = false;
         this.setupInit();
     }
 
@@ -33,12 +36,20 @@ class FarmManagementApp {
         // Show loading immediately
         this.showLoading();
         
+        // Check auth state with timeout
+        const authTimeout = setTimeout(() => {
+            if (!this.authCheckComplete) {
+                console.log('⏰ Auth check timeout - proceeding with local check');
+                this.handleAuthTimeout();
+            }
+        }, 3000);
+        
         // Check auth state
         const isAuthenticated = await this.checkAuthState();
+        clearTimeout(authTimeout);
         
         // If not authenticated, stop here (auth screen already shown)
         if (!isAuthenticated) {
-            this.hideLoading();
             console.log('⏸️ App initialization stopped - user not authenticated');
             return;
         }
@@ -81,7 +92,6 @@ class FarmManagementApp {
         return new Promise((resolve) => {
             if (typeof firebase === 'undefined' || !firebase.auth) {
                 console.log('⚠️ Firebase not available');
-                this.hideLoading();
                 this.showAuth();
                 resolve(false);
                 return;
@@ -89,63 +99,71 @@ class FarmManagementApp {
             
             let authResolved = false;
             
+            // Use a single auth state change listener
             const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
-                console.log('🔥 Auth state changed:', user ? 'User logged in' : 'No user');
+                if (authResolved) return;
                 
-                if (!authResolved) {
-                    authResolved = true;
-                    this.hideLoading();
-                    
-                    if (user) {
-                        console.log('👤 User authenticated:', user.email);
-                        this.currentUser = user;
-                        this.showApp();
-                        resolve(true);
-                    } else {
-                        // Check local data
-                        const hasLocalProfile = localStorage.getItem('farm-profile') || 
-                                               localStorage.getItem('profileData');
-                        
-                        if (hasLocalProfile) {
-                            console.log('💾 Using local profile data');
-                            this.showApp();
-                            resolve(true);
-                        } else {
-                            console.log('🔒 Showing login screen');
-                            this.showAuth();
-                            resolve(false);
-                        }
-                    }
-                    
+                console.log('🔥 Auth state changed:', user ? 'User logged in' : 'No user');
+                authResolved = true;
+                this.authCheckComplete = true;
+                
+                if (user) {
+                    console.log('👤 User authenticated:', user.email);
+                    this.currentUser = user;
+                    this.showApp();
                     unsubscribe();
-                }
-            });
-            
-            // 5 second timeout
-            setTimeout(() => {
-                if (!authResolved) {
-                    console.log('⏰ Auth check timeout');
-                    authResolved = true;
-                    this.hideLoading();
-                    unsubscribe();
-                    
-                    const user = firebase.auth().currentUser;
+                    resolve(true);
+                } else {
+                    // No Firebase user, check local storage
                     const hasLocalProfile = localStorage.getItem('farm-profile') || 
                                            localStorage.getItem('profileData');
                     
-                    if (user || hasLocalProfile) {
-                        console.log('✅ Found user after timeout');
-                        this.currentUser = user;
+                    if (hasLocalProfile) {
+                        console.log('💾 Using local profile data');
                         this.showApp();
+                        unsubscribe();
                         resolve(true);
                     } else {
-                        console.log('❌ No user found after timeout');
+                        console.log('🔒 Showing login screen - no user found');
                         this.showAuth();
+                        unsubscribe();
                         resolve(false);
                     }
                 }
-            }, 5000);
+            });
+            
+            // Fallback: Check current user directly
+            setTimeout(() => {
+                if (!authResolved) {
+                    console.log('⏱️ Auth check fallback');
+                    const user = firebase.auth().currentUser;
+                    if (user) {
+                        authResolved = true;
+                        this.authCheckComplete = true;
+                        this.currentUser = user;
+                        this.showApp();
+                        unsubscribe();
+                        resolve(true);
+                    }
+                }
+            }, 2000);
         });
+    }
+
+    handleAuthTimeout() {
+        // Direct check without waiting for auth state change
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            const user = firebase.auth().currentUser;
+            if (user) {
+                this.authCheckComplete = true;
+                this.currentUser = user;
+                this.showApp();
+            } else {
+                this.showAuth();
+            }
+        } else {
+            this.showAuth();
+        }
     }
 
     showLoading() {
@@ -445,8 +463,11 @@ class FarmManagementApp {
         const authContainer = document.getElementById('auth-container');
         const appContainer = document.getElementById('app-container');
         
-        if (authContainer) authContainer.classList.add('hidden');
-        if (appContainer) appContainer.classList.remove('hidden');
+        if (authContainer) authContainer.style.display = 'none';
+        if (appContainer) {
+            appContainer.style.display = 'block';
+            appContainer.classList.remove('hidden');
+        }
         
         console.log('🏠 App container shown');
     }
@@ -664,8 +685,14 @@ class FarmManagementApp {
         const authContainer = document.getElementById('auth-container');
         const appContainer = document.getElementById('app-container');
         
-        if (authContainer) authContainer.classList.remove('hidden');
-        if (appContainer) appContainer.classList.add('hidden');
+        if (authContainer) {
+            authContainer.style.display = 'block';
+            authContainer.classList.remove('hidden');
+        }
+        if (appContainer) {
+            appContainer.style.display = 'none';
+            appContainer.classList.add('hidden');
+        }
         this.hideLoading();
     }
     
@@ -704,3 +731,4 @@ if (document.readyState === 'loading') {
 } else {
     window.app = new FarmManagementApp();
 }
+[file content end]
