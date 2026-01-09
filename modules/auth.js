@@ -1,722 +1,498 @@
-// app.js - FIXED FARM MODULES INITIALIZATION
-console.log('Loading main app...');
+// modules/auth.js
+console.log('Loading auth module...');
 
-class FarmManagementApp {
+class AuthModule {
     constructor() {
-        this.currentUser = null;
-        this.currentSection = 'dashboard';
-        this.isDemoMode = false;
-        this.userPreferences = {};
-        this.setupInit();
+        this.init();
     }
 
-    setupInit() {
-        // Wait for DOM and Firebase to be ready
-        const checkReady = () => {
-            if (typeof firebase !== 'undefined' && firebase.auth) {
-                this.initializeApp();
+    init() {
+        console.log('✅ Auth module initialized');
+        this.setupAuthForms();
+    }
+
+    // ======== ADD THE SOCIAL LOGIN METHODS  ========
+        renderSocialLoginButtons() {
+            console.log('🔄 Rendering social login buttons...');
+            const socialContainer = document.getElementById('social-login-container');
+            
+            if (socialContainer && window.authManager) {
+                console.log('✅ Social container found, rendering buttons...');
+                socialContainer.innerHTML = window.authManager.renderAuthButtons();
+                console.log('✅ Social buttons rendered');
+                
+                // Add click handlers
+                const googleBtn = socialContainer.querySelector('.btn-social.google');
+                const appleBtn = socialContainer.querySelector('.btn-social.apple');
+                
+                if (googleBtn) {
+                    googleBtn.onclick = async (e) => {
+                        e.preventDefault();
+                        await this.handleSocialSignIn('google');
+                    };
+                }
+                
+                if (appleBtn) {
+                    appleBtn.onclick = async (e) => {
+                        e.preventDefault();
+                        await this.handleSocialSignIn('apple');
+                    };
+                }
             } else {
-                setTimeout(checkReady, 100);
+                console.log('⚠️ Social container or authManager not found');
             }
-        };
-        
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', checkReady);
-        } else {
-            checkReady();
         }
-    }
-    
-    async initializeApp() {
-        console.log('✅ Initializing app...');
-        
-        // Show loading immediately
-        this.showLoading();
-        
-        // Check auth state
-        const isAuthenticated = await this.checkAuthState();
-        
-        // If not authenticated, stop here (auth screen already shown)
-        if (!isAuthenticated) {
-            this.hideLoading();
-            console.log('⏸️ App initialization stopped - user not authenticated');
-            return;
-        }
-        
-        // User is authenticated - continue with app initialization
-        console.log('🚀 User authenticated, continuing app initialization...');
-        
-        // CRITICAL: Initialize StyleManager FIRST before any modules
-        this.initializeStyleManager();
-        
-        // CRITICAL: Initialize FarmModules core system
-        this.initializeFarmModules();
-        
-        this.isDemoMode = true;
-        
-        // Load user preferences
-        await this.loadUserPreferences();
-        
-        // Setup navigation and events
-        this.createTopNavigation();
-        
-        // Small delay to ensure DOM is fully rendered
-        setTimeout(() => {
-            this.setupHamburgerMenu();
-            this.setupSideMenuEvents();
-            this.setupEventListeners();
-            this.setupDarkMode();
-            
-            // Load initial section
-            this.showSection(this.currentSection);
-            
-            this.hideLoading();
-            console.log('✅ App initialized successfully');
-        }, 100);
-    }
 
-  // In app.js, update the checkAuthState method:
+        // ======== PASSWORD STRENGTH METHODS ========
 
-async checkAuthState() {
-    console.log('🔐 Checking authentication state...');
-    
-    return new Promise((resolve) => {
-        if (typeof firebase === 'undefined' || !firebase.auth) {
-            console.log('⚠️ Firebase not available');
-            this.hideLoading();
-            this.showAuth();
-            resolve(false);
-            return;
-        }
-        
-        let authResolved = false;
-        
-        const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
-            console.log('🔥 Auth state changed:', user ? `User logged in: ${user.email}` : 'No user');
-            
-            if (!authResolved) {
-                authResolved = true;
-                this.hideLoading();
+            setupPasswordValidation() {
+                const passwordInput = document.getElementById('signup-password');
+                const confirmInput = document.getElementById('signup-confirm-password');
                 
-                if (user) {
-                    console.log('👤 User authenticated:', user.email, user.uid);
-                    this.currentUser = user;
-                    
-                    // Set persistence for auth state
-                    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-                        .then(() => {
-                            console.log('✅ Auth persistence set to LOCAL');
-                        })
-                        .catch((error) => {
-                            console.error('❌ Error setting auth persistence:', error);
-                        });
-                    
-                    this.showApp();
-                    resolve(true);
-                } else {
-                    // Check local data
-                    const hasLocalProfile = localStorage.getItem('farm-profile') || 
-                                           localStorage.getItem('profileData');
-                    
-                    if (hasLocalProfile) {
-                        console.log('💾 Using local profile data');
-                        this.showApp();
-                        resolve(true);
-                    } else {
-                        console.log('🔒 Showing login screen');
-                        this.showAuth();
-                        resolve(false);
-                    }
+                if (passwordInput) {
+                    passwordInput.addEventListener('input', () => {
+                        this.checkPasswordStrength(passwordInput.value);
+                    });
                 }
                 
-                unsubscribe();
-            }
-        });
-        
-        // 5 second timeout
-        setTimeout(() => {
-            if (!authResolved) {
-                console.log('⏰ Auth check timeout');
-                authResolved = true;
-                this.hideLoading();
-                unsubscribe();
-                
-                const user = firebase.auth().currentUser;
-                const hasLocalProfile = localStorage.getItem('farm-profile') || 
-                                       localStorage.getItem('profileData');
-                
-                if (user) {
-                    console.log('✅ Found user after timeout:', user.email);
-                    this.currentUser = user;
-                    this.showApp();
-                    resolve(true);
-                } else if (hasLocalProfile) {
-                    console.log('💾 Using local profile data after timeout');
-                    this.showApp();
-                    resolve(true);
-                } else {
-                    console.log('❌ No user found after timeout');
-                    this.showAuth();
-                    resolve(false);
+                if (confirmInput) {
+                    confirmInput.addEventListener('input', () => {
+                        this.checkPasswordMatch(
+                            document.getElementById('signup-password')?.value,
+                            confirmInput.value
+                        );
+                    });
                 }
             }
-        }, 5000);
-    });
-}
-
-    showLoading() {
-        console.log('⏳ Showing loading screen');
-        if (!document.getElementById('app-loading')) {
-            const loadingDiv = document.createElement('div');
-            loadingDiv.id = 'app-loading';
-            loadingDiv.innerHTML = `
-                <div style="
-                    position: fixed;
-                    top: 0; left: 0; right: 0; bottom: 0;
-                    background: white;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 9999;
-                ">
-                    <div style="
-                        width: 50px;
-                        height: 50px;
-                        border: 5px solid #f3f3f3;
-                        border-top: 5px solid #4CAF50;
-                        border-radius: 50%;
-                        animation: spin 1s linear infinite;
-                        margin-bottom: 20px;
-                    "></div>
-                    <div style="color: #666; font-size: 16px;">Loading Farm Manager...</div>
-                </div>
-            `;
-            document.body.appendChild(loadingDiv);
             
-            // Add animation style
-            if (!document.querySelector('#loading-styles')) {
-                const style = document.createElement('style');
-                style.id = 'loading-styles';
-                style.textContent = `
-                    @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                    }
+            checkPasswordStrength(password) {
+                const strengthBar = document.querySelector('.strength-progress');
+                const strengthText = document.querySelector('.strength-text');
+                
+                if (!strengthBar || !strengthText) return;
+                
+                // Calculate strength
+                let strength = 0;
+                let feedback = '';
+                
+                // Length check
+                if (password.length >= 8) strength++;
+                
+                // Contains lowercase
+                if (/[a-z]/.test(password)) strength++;
+                
+                // Contains uppercase
+                if (/[A-Z]/.test(password)) strength++;
+                
+                // Contains numbers
+                if (/\d/.test(password)) strength++;
+                
+                // Contains special characters
+                if (/[^A-Za-z0-9]/.test(password)) strength++;
+                
+                // Set visual feedback
+                const width = (strength / 5) * 100;
+                strengthBar.style.width = width + '%';
+                strengthBar.style.transition = 'width 0.3s ease';
+                
+                // Set color and text based on strength
+                if (password.length === 0) {
+                    strengthBar.style.backgroundColor = '#ddd';
+                    strengthText.textContent = '';
+                } else if (strength < 2) {
+                    strengthBar.style.backgroundColor = '#ff4757'; // Red
+                    strengthText.textContent = 'Weak';
+                    strengthText.style.color = '#ff4757';
+                } else if (strength < 4) {
+                    strengthBar.style.backgroundColor = '#ffa502'; // Orange
+                    strengthText.textContent = 'Medium';
+                    strengthText.style.color = '#ffa502';
+                } else {
+                    strengthBar.style.backgroundColor = '#2ed573'; // Green
+                    strengthText.textContent = 'Strong';
+                    strengthText.style.color = '#2ed573';
+                }
+                
+                // Show requirements feedback
+                this.showPasswordRequirements(password);
+            }
+            
+            checkPasswordMatch(password, confirmPassword) {
+                const matchIndicator = document.querySelector('.password-match-indicator');
+                if (!matchIndicator) return;
+                
+                if (confirmPassword.length === 0) {
+                    matchIndicator.textContent = '';
+                    matchIndicator.style.color = '';
+                } else if (password === confirmPassword) {
+                    matchIndicator.textContent = '✓ Passwords match';
+                    matchIndicator.style.color = '#2ed573'; // Green
+                } else {
+                    matchIndicator.textContent = '✗ Passwords do not match';
+                    matchIndicator.style.color = '#ff4757'; // Red
+                }
+            }
+            
+            showPasswordRequirements(password) {
+                // Optional: Show detailed requirements
+                const requirements = document.getElementById('password-requirements');
+                if (!requirements) return;
+                
+                const checks = {
+                    length: password.length >= 8,
+                    lowercase: /[a-z]/.test(password),
+                    uppercase: /[A-Z]/.test(password),
+                    number: /\d/.test(password),
+                    special: /[^A-Za-z0-9]/.test(password)
+                };
+                
+                const fulfilled = Object.values(checks).filter(Boolean).length;
+                const total = Object.keys(checks).length;
+                
+                requirements.innerHTML = `
+                    <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                        ${fulfilled}/${total} requirements met
+                    </div>
                 `;
-                document.head.appendChild(style);
             }
-        } else {
-            document.getElementById('app-loading').style.display = 'flex';
-        }
-    }
-
-    hideLoading() {
-        const loadingDiv = document.getElementById('app-loading');
-        if (loadingDiv) {
-            loadingDiv.style.display = 'none';
-        }
-    }
-    
-    initializeStyleManager() {
-        if (window.StyleManager && typeof StyleManager.init === 'function') {
-            StyleManager.init();
-            console.log('🎨 StyleManager initialized');
-        } else {
-            console.warn('⚠️ StyleManager not available - modules may not style properly');
-        }
-    }
-
-    initializeFarmModules() {
-        if (window.FarmModules) {
-            if (typeof FarmModules.initializeAll === 'function') {
-                FarmModules.initializeAll();
-                console.log('🔧 FarmModules initialized all modules');
-            } else {
-                console.log('🔧 FarmModules core ready - modules can register');
-            }
-        } else {
-            console.warn('⚠️ FarmModules core not available');
             
-            window.FarmModules = {
-                modules: {},
-                registerModule: function(name, module) {
-                    console.log(`✅ Registering module: ${name}`);
-                    this.modules[name] = module;
-                },
-                getModule: function(name) {
-                    return this.modules[name];
-                }
-            };
-            console.log('🔧 Created basic FarmModules fallback');
-        }
-    }
+            // Optional: Add password requirements list HTML
+            /*
+            <div id="password-requirements" style="font-size: 12px; color: #666; margin-top: 8px;">
+                <div>Password must contain:</div>
+                <ul style="margin: 4px 0 0 15px; padding: 0;">
+                    <li>At least 8 characters</li>
+                    <li>One uppercase letter</li>
+                    <li>One lowercase letter</li>
+                    <li>One number</li>
+                    <li>One special character</li>
+                </ul>
+            </div>
+            */
     
-    async loadUserPreferences() {
+    // Add this new method for social sign-in
+    async handleSocialSignIn(provider) {
+        let result;
+        const socialContainer = document.getElementById('social-login-container');
+        
+        if (!socialContainer) return;
+        
+        // Disable all social buttons
+        const buttons = socialContainer.querySelectorAll('.btn-social');
+        buttons.forEach(btn => {
+            btn.disabled = true;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `Signing in with ${provider === 'google' ? 'Google' : 'Apple'}...`;
+            btn.dataset.originalText = originalText;
+        });
+        
         try {
-            if (window.ProfileModule && typeof window.ProfileModule.loadUserPreferences === 'function') {
-                this.userPreferences = window.ProfileModule.loadUserPreferences();
-                console.log('✅ User preferences loaded via ProfileModule');
-            } else {
-                const savedPrefs = localStorage.getItem('farm-user-preferences');
-                this.userPreferences = savedPrefs ? JSON.parse(savedPrefs) : this.getDefaultPreferences();
-                console.log('⚠️ ProfileModule not available, using localStorage fallback');
-                this.createProfileModuleFallback();
+            if (provider === 'google') {
+                result = await window.authManager?.signInWithGoogle();
+            } else if (provider === 'apple') {
+                result = await window.authManager?.signInWithApple();
             }
             
-            this.applyUserTheme();
-            
+            if (result?.success) {
+                this.showNotification(`Signed in with ${provider === 'google' ? 'Google' : 'Apple'}!`, 'success');
+                // Redirect to dashboard
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
+            } else {
+                this.showNotification(result?.error || `Error signing in with ${provider === 'google' ? 'Google' : 'Apple'}`, 'error');
+            }
         } catch (error) {
-            console.error('❌ Error loading user preferences:', error);
-            this.userPreferences = this.getDefaultPreferences();
-            this.createProfileModuleFallback();
+            this.showNotification(`Error signing in with ${provider === 'google' ? 'Google' : 'Apple'}`, 'error');
+        } finally {
+            // Re-enable buttons
+            buttons.forEach(btn => {
+                btn.disabled = false;
+                if (btn.dataset.originalText) {
+                    btn.innerHTML = btn.dataset.originalText;
+                }
+            });
+        }
+    }
+    
+    setupAuthForms() {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.attachFormHandlers();
+            });
+        } else {
+            this.attachFormHandlers();
+        }
+    }
+    
+   attachFormHandlers() {
+    // RENDER SOCIAL BUTTONS HERE
+    this.renderSocialLoginButtons();
+    
+    // ADD THIS LINE: Setup password validation
+    this.setupPasswordValidation();
+    
+    // Sign in form
+    const signinForm = document.getElementById('signin-form-element');
+    if (signinForm) {
+        signinForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.handleSignIn();
+        });
+    }
+
+    // Forgot password form
+    const forgotForm = document.getElementById('forgot-password-form-element');
+    if (forgotForm) {
+        forgotForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.handleForgotPassword();
+        });
+    }
+
+    this.setupAuthListeners();
+    }
+
+    setupAuthListeners() {
+        // Form switching
+        const showSignup = document.getElementById('show-signup');
+        if (showSignup) {
+            showSignup.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showAuthForm('signup');
+            });
+        }
+
+        const showSignin = document.getElementById('show-signin');
+        if (showSignin) {
+            showSignin.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showAuthForm('signin');
+            });
+        }
+
+        const showForgot = document.getElementById('show-forgot-password');
+        if (showForgot) {
+            showForgot.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showAuthForm('forgot-password');
+            });
+        }
+
+        const showSigninFromForgot = document.getElementById('show-signin-from-forgot');
+        if (showSigninFromForgot) {
+            showSigninFromForgot.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showAuthForm('signin');
+            });
         }
     }
 
-    getDefaultPreferences() {
-        return {
-            theme: 'auto',
-            language: 'en',
-            currency: 'USD',
-            notifications: true,
-            businessName: 'My Farm',
-            businessType: 'poultry',
-            lowStockThreshold: 10,
-            autoSync: true,
-            dashboardStats: {
-                totalOrders: 0,
-                totalRevenue: 0,
-                pendingOrders: 0,
-                totalCustomers: 0,
-                totalProducts: 0,
-                monthlyRevenue: 0,
-                monthlyOrders: 0,
-                avgOrderValue: 0,
-                completedOrders: 0,
-                paidOrders: 0
-            }
-        };
+       // In auth.js, update the handleSignUp method:
+
+async handleSignUp() {
+    const form = document.getElementById('signup-form-element');
+    if (!form) return;
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const name = document.getElementById('signup-name')?.value || '';
+    const email = document.getElementById('signup-email')?.value || '';
+    const password = document.getElementById('signup-password')?.value || '';
+    const confirmPassword = document.getElementById('signup-confirm-password')?.value || '';
+    const farmName = document.getElementById('farm-name')?.value || '';
+
+    // Validation
+    if (password !== confirmPassword) {
+        this.showNotification('Passwords do not match', 'error');
+        return;
     }
 
-    createProfileModuleFallback() {
-        if (typeof ProfileModule === 'undefined') {
-            window.ProfileModule = {
-                userPreferences: this.userPreferences,
-                
-                loadUserPreferences: () => this.userPreferences,
-                getUserPreferences: () => this.userPreferences,
-                updatePreference: (key, value) => {
-                    this.userPreferences[key] = value;
-                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-                    console.log(`⚙️ Preference updated: ${key} = ${value}`);
-                },
-                
-                updateBusinessStats: (module, stats) => {
-                    if (!this.userPreferences.dashboardStats) {
-                        this.userPreferences.dashboardStats = {};
-                    }
-                    Object.keys(stats).forEach(key => {
-                        this.userPreferences.dashboardStats[key] = stats[key];
-                    });
-                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-                    console.log('📊 Stats updated for', module + ':', stats);
-                },
-                
-                updateStats: (stats) => {
-                    if (!this.userPreferences.dashboardStats) {
-                        this.userPreferences.dashboardStats = {};
-                    }
-                    Object.keys(stats).forEach(key => {
-                        this.userPreferences.dashboardStats[key] = stats[key];
-                    });
-                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-                    console.log('📊 Stats updated:', stats);
-                },
-                
-                getStats: () => {
-                    return this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
-                },
-                
-                getProfileData: () => {
-                    return {
-                        farmName: this.userPreferences.businessName || 'My Farm',
-                        farmerName: 'Farm Manager',
-                        stats: this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats
-                    };
-                },
-                
-                getProfileStats: () => {
-                    return this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
-                },
-                
-                getBusinessOverview: () => {
-                    const stats = this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
-                    return {
-                        totalOrders: stats.totalOrders || 0,
-                        totalRevenue: stats.totalRevenue || 0,
-                        pendingOrders: stats.pendingOrders || 0,
-                        totalCustomers: stats.totalCustomers || 0,
-                        totalProducts: stats.totalProducts || 0,
-                        monthlyRevenue: stats.monthlyRevenue || 0,
-                        monthlyOrders: stats.monthlyOrders || 0
-                    };
-                },
-                
-                initialize: () => {
-                    console.log('✅ ProfileModule fallback initialized');
-                    return true;
-                }
+    if (password.length < 6) {
+        this.showNotification('Password must be at least 6 characters', 'error');
+        return;
+    }
+
+    if (!email || !email.includes('@')) {
+        this.showNotification('Please enter a valid email address', 'error');
+        return;
+    }
+
+    if (submitBtn) {
+        submitBtn.innerHTML = 'Creating Account...';
+        submitBtn.disabled = true;
+    }
+
+    try {
+        const result = await window.authManager?.signUp(email, password, {
+            name: name,
+            email: email,
+            farmName: farmName || 'My Farm',
+            createdAt: new Date().toISOString()
+        });
+
+        if (result?.success) {
+            console.log('✅ Sign-up successful, user auto-logged in:', result.user?.email);
+            
+            // IMPORTANT: Store user data locally
+            const userData = {
+                uid: result.user.uid,
+                email: result.user.email,
+                name: name,
+                farmName: farmName || 'My Farm',
+                createdAt: new Date().toISOString()
             };
             
-            window.profileInstance = window.ProfileModule;
-            console.log('✅ Complete ProfileModule fallback created');
-        }
-    }
-
-    applyUserTheme() {
-        const theme = this.userPreferences.theme || 'auto';
-        
-        if (theme === 'dark') {
-            document.body.classList.add('dark-mode');
-            this.updateDarkModeIcon(true);
-        } else if (theme === 'light') {
-            document.body.classList.remove('dark-mode');
-            this.updateDarkModeIcon(false);
+            localStorage.setItem('farm-profile', JSON.stringify(userData));
+            localStorage.setItem('userEmail', email);
+            
+            // Show success and redirect
+            this.showNotification('Account created successfully! Redirecting to dashboard...', 'success');
+            
+            // Redirect to dashboard after short delay
+            setTimeout(() => {
+                console.log('🔄 Redirecting to dashboard from sign-up...');
+                // Check if we're on index.html or another page
+                if (window.location.pathname.includes('index.html') || 
+                    window.location.pathname === '/' || 
+                    window.location.pathname.endsWith('.html')) {
+                    window.location.href = 'dashboard.html';
+                } else {
+                    // Reload to trigger auth state change
+                    window.location.reload();
+                }
+            }, 1500);
+            
         } else {
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            document.body.classList.toggle('dark-mode', prefersDark);
-            this.updateDarkModeIcon(prefersDark);
+            this.showNotification(result?.error || 'Error creating account', 'error');
         }
-        
-        console.log('🎨 Applied user theme:', theme);
+    } catch (error) {
+        console.error('Sign-up error:', error);
+        this.showNotification('Error creating account: ' + error.message, 'error');
+    } finally {
+        if (submitBtn) {
+            submitBtn.innerHTML = 'Create Account';
+            submitBtn.disabled = false;
+        }
+    }
+}
+    
+    // In auth.js, update the handleSignIn method:
+
+async handleSignIn() {
+    const form = document.getElementById('signin-form-element');
+    if (!form) return;
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const email = document.getElementById('signin-email')?.value || '';
+    const password = document.getElementById('signin-password')?.value || '';
+
+    // Basic validation
+    if (!email || !password) {
+        this.showNotification('Please enter both email and password', 'error');
+        return;
     }
 
-    setupDarkMode() {
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
-        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-        
-        if (darkModeToggle) {
-            darkModeToggle.addEventListener('click', () => {
-                document.body.classList.toggle('dark-mode');
-                const isDarkMode = document.body.classList.contains('dark-mode');
-                
-                const newTheme = isDarkMode ? 'dark' : 'light';
-                this.userPreferences.theme = newTheme;
-                localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-                
-                if (window.ProfileModule && window.ProfileModule.updatePreference) {
-                    window.ProfileModule.updatePreference('theme', newTheme);
-                }
-                
-                this.updateDarkModeIcon(isDarkMode);
-                console.log('🎨 Theme changed to:', newTheme);
-            });
-        }
-        
-        prefersDarkScheme.addEventListener('change', (e) => {
-            if (this.userPreferences.theme === 'auto') {
-                document.body.classList.toggle('dark-mode', e.matches);
-                this.updateDarkModeIcon(e.matches);
-            }
-        });
+    if (submitBtn) {
+        submitBtn.innerHTML = 'Signing In...';
+        submitBtn.disabled = true;
     }
 
-    updateDarkModeIcon(isDarkMode) {
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
-        if (darkModeToggle) {
-            const icon = darkModeToggle.querySelector('span:first-child');
-            const label = darkModeToggle.querySelector('.nav-label');
+    try {
+        console.log('🔐 Attempting sign-in for:', email);
+        
+        const result = await window.authManager?.signIn(email, password);
+
+        if (result?.success) {
+            console.log('✅ Sign-in successful:', result.user?.email);
             
-            if (isDarkMode) {
-                icon.textContent = '☀️';
-                label.textContent = 'Light';
+            // Store user data locally
+            const userData = {
+                uid: result.user.uid,
+                email: result.user.email,
+                lastLogin: new Date().toISOString()
+            };
+            
+            localStorage.setItem('farm-profile', JSON.stringify(userData));
+            localStorage.setItem('userEmail', email);
+            
+            this.showNotification('Welcome back! Redirecting to dashboard...', 'success');
+            
+            // Redirect to dashboard
+            setTimeout(() => {
+                console.log('🔄 Redirecting to dashboard from sign-in...');
+                if (window.location.pathname.includes('index.html') || 
+                    window.location.pathname === '/' || 
+                    window.location.pathname.endsWith('.html')) {
+                    window.location.href = 'dashboard.html';
+                } else {
+                    window.location.reload();
+                }
+            }, 1500);
+            
+        } else {
+            console.error('❌ Sign-in failed:', result?.error);
+            this.showNotification(result?.error || 'Invalid email or password', 'error');
+        }
+    } catch (error) {
+        console.error('Sign-in error:', error);
+        this.showNotification('Error signing in: ' + error.message, 'error');
+    } finally {
+        if (submitBtn) {
+            submitBtn.innerHTML = 'Sign In';
+            submitBtn.disabled = false;
+        }
+    }
+}
+    
+    async handleForgotPassword() {
+        const form = document.getElementById('forgot-password-form-element');
+        if (!form) return;
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const email = document.getElementById('forgot-email')?.value || '';
+
+        if (submitBtn) {
+            submitBtn.innerHTML = 'Sending Reset Link...';
+            submitBtn.disabled = true;
+        }
+
+        try {
+            const result = await window.authManager?.resetPassword(email);
+
+            if (result?.success) {
+                this.showNotification('Password reset email sent!', 'success');
+                this.showAuthForm('signin');
             } else {
-                icon.textContent = '🌙';
-                label.textContent = 'Dark';
+                this.showNotification(result?.error || 'Error sending reset email', 'error');
+            }
+        } catch (error) {
+            this.showNotification('Error sending reset email', 'error');
+        } finally {
+            if (submitBtn) {
+                submitBtn.innerHTML = 'Send Reset Link';
+                submitBtn.disabled = false;
             }
         }
     }
-  
-    setupEventListeners() {
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.nav-item')) {
-                const navItem = e.target.closest('.nav-item');
-                const view = navItem.getAttribute('data-view');
-                if (view) {
-                    this.showSection(view);
-                }
-            }
-            
-            if (e.target.closest('.side-menu-item')) {
-                const menuItem = e.target.closest('.side-menu-item');
-                const section = menuItem.getAttribute('data-section');
-                if (section) {
-                    this.showSection(section);
-                }
-            }
-        });
-    }
 
-    showApp() {
-        const authContainer = document.getElementById('auth-container');
-        const appContainer = document.getElementById('app-container');
-        
-        if (authContainer) authContainer.classList.add('hidden');
-        if (appContainer) appContainer.classList.remove('hidden');
-        
-        console.log('🏠 App container shown');
-    }
-
-    createTopNavigation() {
-        const appContainer = document.getElementById('app-container');
-        if (!appContainer) return;
-
-        let header = appContainer.querySelector('header');
-        if (header) {
-            header.remove();
-        }
-        
-        header = document.createElement('header');
-        appContainer.insertBefore(header, appContainer.firstChild);
-
-        header.innerHTML = `
-            <nav class="top-nav">
-                <div class="nav-brand">
-                    <img src="icons/icon-96x96_a.png" alt="AgriMetrics">
-                    <span class="brand-text">AgriMetrics</span>
-                    <span class="brand-subtitle">Farm Management System</span>
-                </div>
-                
-                <div class="nav-items">
-                    <button class="nav-item" data-view="dashboard" title="Dashboard">
-                        <span>📊</span>
-                        <span class="nav-label">Dashboard</span>
-                    </button>
-
-                    <button class="nav-item" data-view="income-expenses" title="Income & Expenses">
-                        <span>💰</span>
-                        <span class="nav-label">Income</span>
-                    </button>
-
-                    <button class="nav-item" data-view="inventory-check" title="Inventory">
-                        <span>📦</span>
-                        <span class="nav-label">Inventory</span>
-                    </button>
-
-                    <button class="nav-item" data-view="orders" title="Orders">
-                        <span>📋</span>
-                        <span class="nav-label">Orders</span>
-                    </button>
-
-                    <button class="nav-item" data-view="sales-record" title="Sales">
-                        <span>🛒</span>
-                        <span class="nav-label">Sales</span>
-                    </button>
-
-                    <button class="nav-item" data-view="profile" title="Profile">
-                        <span>👤</span>
-                        <span class="nav-label">Profile</span>
-                    </button>
-
-                    <button class="nav-item dark-mode-toggle" id="dark-mode-toggle" title="Toggle Dark Mode">
-                        <span>🌙</span>
-                        <span class="nav-label">Theme</span>
-                    </button>
-                    
-                    <button class="nav-item hamburger-menu" id="hamburger-menu" title="Farm Operations">
-                        <span>☰</span>
-                        <span class="nav-label">More</span>
-                    </button>
-                </div>
-            </nav>
-        `;
-
-        const main = appContainer.querySelector('main');
-        if (main) {
-            main.style.paddingTop = '80px';
-        }
-        
-        console.log('✅ Top Navigation created');
-    }
-    
-    setupHamburgerMenu() {
-        const hamburger = document.getElementById('hamburger-menu');
-        const sideMenu = document.getElementById('side-menu');
-        
-        if (hamburger && sideMenu) {
-            sideMenu.style.left = 'auto';
-            sideMenu.style.right = '0';
-            sideMenu.style.transform = 'translateX(100%)';
-            sideMenu.classList.remove('active');
-            
-            hamburger.replaceWith(hamburger.cloneNode(true));
-            const newHamburger = document.getElementById('hamburger-menu');
-            
-            newHamburger.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                sideMenu.classList.toggle('active');
-            });
-        }
-        
-        document.addEventListener('click', (e) => {
-            const sideMenu = document.getElementById('side-menu');
-            const hamburger = document.getElementById('hamburger-menu');
-            
-            if (sideMenu && sideMenu.classList.contains('active') && hamburger) {
-                if (!sideMenu.contains(e.target) && !hamburger.contains(e.target)) {
-                    sideMenu.classList.remove('active');
-                }
-            }
-        });
-    }
-    
-    setupSideMenuEvents() {
-        const sideMenuItems = document.querySelectorAll('.side-menu-item');
-        sideMenuItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                const section = item.getAttribute('data-section');
-                if (section) {
-                    console.log('📱 Side menu item clicked:', section);
-                    this.showSection(section);
-                    
-                    const sideMenu = document.getElementById('side-menu');
-                    if (sideMenu) {
-                        sideMenu.classList.remove('active');
-                    }
-                }
-            });
+    showAuthForm(formName) {
+        document.querySelectorAll('.auth-form').forEach(form => {
+            form.classList.remove('active');
         });
         
-        console.log('✅ Side menu events setup');
-    }
-    
-    showSection(sectionId) {
-        console.log(`🔄 Switching to section: ${sectionId}`);
-        
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) {
-            console.error('❌ Content area not found');
-            return;
-        }
-        
-        const cleanSectionId = sectionId.replace('.js', '');
-        this.currentSection = cleanSectionId;
-        this.setActiveMenuItem(cleanSectionId);
-        
-        contentArea.innerHTML = `
-            <div style="padding: 40px; text-align: center;">
-                <div style="
-                    width: 40px;
-                    height: 40px;
-                    border: 4px solid #f3f3f3;
-                    border-top: 4px solid #4CAF50;
-                    border-radius: 50%;
-                    animation: spin 1s linear infinite;
-                    margin: 0 auto 20px;
-                "></div>
-                <p>Loading ${cleanSectionId} module...</p>
-            </div>
-        `;
-        
-        if (!document.querySelector('#spinner-styles')) {
-            const style = document.createElement('style');
-            style.id = 'spinner-styles';
-            style.textContent = `
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-        
-        setTimeout(() => {
-            if (FarmModules && FarmModules.renderModule) {
-                const success = FarmModules.renderModule(cleanSectionId, contentArea);
-                if (!success) {
-                    FarmModules.renderModule(sectionId, contentArea);
-                }
-            } else {
-                console.error('❌ FarmModules.renderModule not available');
-                this.loadFallbackContent(cleanSectionId);
-            }
-        }, 100);
-    }
-    
-    setActiveMenuItem(sectionId) {
-        console.log(`🎯 Setting active menu item: ${sectionId}`);
-        
-        document.querySelectorAll('.nav-item, .side-menu-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        
-        const activeNavItem = document.querySelector(`.nav-item[data-view="${sectionId}"]`);
-        if (activeNavItem) {
-            activeNavItem.classList.add('active');
-        }
-        
-        const activeSideMenuItem = document.querySelector(`.side-menu-item[data-section="${sectionId}"]`);
-        if (activeSideMenuItem) {
-            activeSideMenuItem.classList.add('active');
-        }
-        
-        if (!activeNavItem && !activeSideMenuItem) {
-            const activeNavItemWithJS = document.querySelector(`.nav-item[data-view="${sectionId}.js"]`);
-            if (activeNavItemWithJS) {
-                activeNavItemWithJS.classList.add('active');
-            }
-            
-            const activeSideMenuItemWithJS = document.querySelector(`.side-menu-item[data-section="${sectionId}.js"]`);
-            if (activeSideMenuItemWithJS) {
-                activeSideMenuItemWithJS.classList.add('active');
-            }
+        const targetForm = document.getElementById(`${formName}-form`);
+        if (targetForm) {
+            targetForm.classList.add('active');
         }
     }
-    
-    showAuth() {
-        console.log('🔐 Showing auth interface');
-        const authContainer = document.getElementById('auth-container');
-        const appContainer = document.getElementById('app-container');
-        
-        if (authContainer) authContainer.classList.remove('hidden');
-        if (appContainer) appContainer.classList.add('hidden');
-        this.hideLoading();
-    }
-    
-    loadFallbackContent(sectionId) {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
 
-        const sectionTitles = {
-            'dashboard': 'Dashboard',
-            'income-expenses': 'Income & Expenses',
-            'inventory-check': 'Inventory Check',
-            'feed-record': 'Feed Record',
-            'broiler-mortality': 'Broiler Mortality',
-            'production': 'Production Records',
-            'sales-record': 'Sales Record',
-            'orders': 'Orders',
-            'reports': 'Reports',
-            'profile': 'Profile'
-        };
-
-        contentArea.innerHTML = `
-            <div style="padding: 20px;">
-                <h2 style="color: #1a1a1a;">${sectionTitles[sectionId] || sectionId}</h2>
-                <p style="color: #666;">Content loading...</p>
-                <p style="color: #999; font-size: 14px;">Module system not loaded yet</p>
-            </div>
-        `;
+    showNotification(message, type) {
+        if (window.coreModule && window.coreModule.showNotification) {
+            window.coreModule.showNotification(message, type);
+        } else {
+            alert(message);
+        }
     }
 }
 
-// Initialize the app
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.app = new FarmManagementApp();
-    });
-} else {
-    window.app = new FarmManagementApp();
-}
+window.authModule = new AuthModule();
