@@ -714,4 +714,4 @@ if (document.readyState === 'loading') {
     });
 } else {
     window.app = new FarmManagementApp();
-}
+})();
