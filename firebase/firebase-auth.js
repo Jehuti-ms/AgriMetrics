@@ -1,5 +1,3 @@
-[file name]: firebase-auth.js
-[file content begin]
 // firebase-auth.js - FIXED GOOGLE SIGN-IN
 console.log('Loading Firebase auth...');
 
@@ -296,4 +294,4 @@ document.addEventListener('DOMContentLoaded', () => {
         FirebaseAuth.handleRedirectResult();
     }
 });
-[file content end]
+
