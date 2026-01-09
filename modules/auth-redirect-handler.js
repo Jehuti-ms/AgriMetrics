@@ -151,11 +151,59 @@ class AuthRedirectHandler {
         }
     }
 
-redirectToDashboard()
-showNotification(message, type = 'info') {
-    // Simple alert fallback
-    alert(message);
-}
+    redirectToDashboard() {
+        console.log('🔄 Redirecting to dashboard in 2 seconds...');
+        
+        // Store auth success in session for dashboard
+        sessionStorage.setItem('authRedirectSuccess', 'true');
+        sessionStorage.setItem('authTimestamp', Date.now().toString());
+        
+        // Redirect after delay
+        setTimeout(() => {
+            console.log('📍 Navigating to dashboard...');
+            window.location.href = 'dashboard.html';
+        }, 2000);
+    }
+
+    handleRedirectError(error) {
+        console.error('❌ Redirect error:', error);
+        
+        // Don't show error for "no user" cases
+        if (error.code === 'auth/no-auth-event' || 
+            error.code === 'auth/popup-closed-by-user') {
+            console.log('ℹ️ Normal redirect flow - no error');
+            return;
+        }
+        
+        // Show user-friendly error
+        let errorMessage = 'Authentication redirect failed. ';
+        
+        if (error.code === 'auth/unauthorized-domain') {
+            errorMessage += 'Domain not authorized. Please contact support.';
+        } else if (error.code === 'auth/network-request-failed') {
+            errorMessage += 'Network error. Please check your connection.';
+        } else {
+            errorMessage += `Error: ${error.message}`;
+        }
+        
+        this.showNotification(errorMessage, 'error');
+        
+        // Return to auth page
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 3000);
+    }
+
+    showNotification(message, type = 'info') {
+        // Use your existing notification system or create simple alert
+        if (window.authModule && typeof window.authModule.showNotification === 'function') {
+            window.authModule.showNotification(message, type);
+        } else if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
+            window.coreModule.showNotification(message, type);
+        } else {
+            alert(message);
+        }
+    }
 
     addSpinnerStyles() {
         // Only add styles if not already present
