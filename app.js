@@ -1,171 +1,122 @@
-// app.js - FIXED WITH PROPER AUTH SYNCHRONIZATION
+// app.js - Updated with better auth handling
 console.log('Loading main app...');
 
 class FarmManagementApp {
     constructor() {
         this.currentUser = null;
         this.currentSection = 'dashboard';
-        this.isDemoMode = false;
         this.userPreferences = {};
-        this.authCheckComplete = false;
+        this.authInitialized = false;
         this.setupInit();
     }
 
     setupInit() {
-        // Wait for DOM and Firebase to be ready
-        const checkReady = () => {
-            if (typeof firebase !== 'undefined' && firebase.auth) {
-                this.initializeApp();
-            } else {
-                setTimeout(checkReady, 100);
-            }
-        };
-        
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', checkReady);
+            document.addEventListener('DOMContentLoaded', () => this.initializeApp());
         } else {
-            checkReady();
+            this.initializeApp();
         }
     }
     
     async initializeApp() {
         console.log('✅ Initializing app...');
         
-        // Show loading immediately
+        // Show loading screen
         this.showLoading();
         
-        // Check auth state with timeout
-        const authTimeout = setTimeout(() => {
-            if (!this.authCheckComplete) {
-                console.log('⏰ Auth check timeout - proceeding with local check');
-                this.handleAuthTimeout();
-            }
-        }, 3000);
+        // Setup Firebase auth listener FIRST
+        await this.setupAuthListener();
         
-        // Check auth state
-        const isAuthenticated = await this.checkAuthState();
-        clearTimeout(authTimeout);
-        
-        // If not authenticated, stop here (auth screen already shown)
-        if (!isAuthenticated) {
-            console.log('⏸️ App initialization stopped - user not authenticated');
+        // Check if user is already authenticated
+        this.checkInitialAuth();
+    }
+    
+    async setupAuthListener() {
+        if (typeof firebase === 'undefined' || !firebase.auth) {
+            console.log('⏳ Waiting for Firebase...');
+            setTimeout(() => this.setupAuthListener(), 100);
             return;
         }
         
-        // User is authenticated - continue with app initialization
-        console.log('🚀 User authenticated, continuing app initialization...');
+        // Setup auth state listener
+        firebase.auth().onAuthStateChanged((user) => {
+            console.log('🔥 Auth state changed:', user ? `User: ${user.email}` : 'No user');
+            
+            if (user) {
+                this.handleUserAuthenticated(user);
+            } else {
+                this.handleNoUser();
+            }
+        });
+    }
+    
+    checkInitialAuth() {
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            const user = firebase.auth().currentUser;
+            if (user) {
+                console.log('👤 User already signed in:', user.email);
+                this.handleUserAuthenticated(user);
+            } else {
+                console.log('🔒 No user found initially');
+                // Give auth listener time to fire
+                setTimeout(() => {
+                    if (!this.authInitialized) {
+                        this.handleNoUser();
+                    }
+                }, 1000);
+            }
+        }
+    }
+    
+    handleUserAuthenticated(user) {
+        console.log('🎉 User authenticated, showing app...');
+        this.currentUser = user;
+        this.authInitialized = true;
         
-        // CRITICAL: Initialize StyleManager FIRST before any modules
+        // Store user info
+        localStorage.setItem('userEmail', user.email);
+        localStorage.setItem('userId', user.uid);
+        localStorage.setItem('userAuthenticated', 'true');
+        
+        // Show app
+        this.showApp();
+        
+        // Initialize app components
+        this.initializeAppComponents();
+    }
+    
+    async initializeAppComponents() {
+        console.log('🚀 Initializing app components...');
+        
+        // Initialize modules
         this.initializeStyleManager();
-        
-        // CRITICAL: Initialize FarmModules core system
         this.initializeFarmModules();
-        
-        this.isDemoMode = true;
         
         // Load user preferences
         await this.loadUserPreferences();
         
-        // Setup navigation and events
+        // Setup UI
         this.createTopNavigation();
         
-        // Small delay to ensure DOM is fully rendered
         setTimeout(() => {
             this.setupHamburgerMenu();
             this.setupSideMenuEvents();
             this.setupEventListeners();
             this.setupDarkMode();
-            
-            // Load initial section
             this.showSection(this.currentSection);
-            
             this.hideLoading();
-            console.log('✅ App initialized successfully');
+            console.log('✅ App fully initialized');
         }, 100);
     }
-
-    async checkAuthState() {
-        console.log('🔐 Checking authentication state...');
-        
-        return new Promise((resolve) => {
-            if (typeof firebase === 'undefined' || !firebase.auth) {
-                console.log('⚠️ Firebase not available');
-                this.showAuth();
-                resolve(false);
-                return;
-            }
-            
-            let authResolved = false;
-            
-            // Use a single auth state change listener
-            const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
-                if (authResolved) return;
-                
-                console.log('🔥 Auth state changed:', user ? 'User logged in' : 'No user');
-                authResolved = true;
-                this.authCheckComplete = true;
-                
-                if (user) {
-                    console.log('👤 User authenticated:', user.email);
-                    this.currentUser = user;
-                    this.showApp();
-                    unsubscribe();
-                    resolve(true);
-                } else {
-                    // No Firebase user, check local storage
-                    const hasLocalProfile = localStorage.getItem('farm-profile') || 
-                                           localStorage.getItem('profileData');
-                    
-                    if (hasLocalProfile) {
-                        console.log('💾 Using local profile data');
-                        this.showApp();
-                        unsubscribe();
-                        resolve(true);
-                    } else {
-                        console.log('🔒 Showing login screen - no user found');
-                        this.showAuth();
-                        unsubscribe();
-                        resolve(false);
-                    }
-                }
-            });
-            
-            // Fallback: Check current user directly
-            setTimeout(() => {
-                if (!authResolved) {
-                    console.log('⏱️ Auth check fallback');
-                    const user = firebase.auth().currentUser;
-                    if (user) {
-                        authResolved = true;
-                        this.authCheckComplete = true;
-                        this.currentUser = user;
-                        this.showApp();
-                        unsubscribe();
-                        resolve(true);
-                    }
-                }
-            }, 2000);
-        });
-    }
-
-    handleAuthTimeout() {
-        // Direct check without waiting for auth state change
-        if (typeof firebase !== 'undefined' && firebase.auth) {
-            const user = firebase.auth().currentUser;
-            if (user) {
-                this.authCheckComplete = true;
-                this.currentUser = user;
-                this.showApp();
-            } else {
-                this.showAuth();
-            }
-        } else {
-            this.showAuth();
-        }
+    
+    handleNoUser() {
+        console.log('🔒 No user found, showing auth screen');
+        this.authInitialized = true;
+        this.showAuth();
+        this.hideLoading();
     }
 
     showLoading() {
-        console.log('⏳ Showing loading screen');
         if (!document.getElementById('app-loading')) {
             const loadingDiv = document.createElement('div');
             loadingDiv.id = 'app-loading';
@@ -189,23 +140,10 @@ class FarmManagementApp {
                         animation: spin 1s linear infinite;
                         margin-bottom: 20px;
                     "></div>
-                    <div style="color: #666; font-size: 16px;">Loading Farm Manager...</div>
+                    <div style="color: #666; font-size: 16px;">Loading AgriMetrics...</div>
                 </div>
             `;
             document.body.appendChild(loadingDiv);
-            
-            // Add animation style
-            if (!document.querySelector('#loading-styles')) {
-                const style = document.createElement('style');
-                style.id = 'loading-styles';
-                style.textContent = `
-                    @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
         } else {
             document.getElementById('app-loading').style.display = 'flex';
         }
@@ -222,155 +160,38 @@ class FarmManagementApp {
         if (window.StyleManager && typeof StyleManager.init === 'function') {
             StyleManager.init();
             console.log('🎨 StyleManager initialized');
-        } else {
-            console.warn('⚠️ StyleManager not available - modules may not style properly');
         }
     }
 
     initializeFarmModules() {
         if (window.FarmModules) {
-            if (typeof FarmModules.initializeAll === 'function') {
-                FarmModules.initializeAll();
-                console.log('🔧 FarmModules initialized all modules');
-            } else {
-                console.log('🔧 FarmModules core ready - modules can register');
-            }
+            console.log('🔧 FarmModules core ready');
         } else {
-            console.warn('⚠️ FarmModules core not available');
-            
             window.FarmModules = {
                 modules: {},
                 registerModule: function(name, module) {
-                    console.log(`✅ Registering module: ${name}`);
                     this.modules[name] = module;
-                },
-                getModule: function(name) {
-                    return this.modules[name];
                 }
             };
-            console.log('🔧 Created basic FarmModules fallback');
         }
     }
     
     async loadUserPreferences() {
         try {
-            if (window.ProfileModule && typeof window.ProfileModule.loadUserPreferences === 'function') {
-                this.userPreferences = window.ProfileModule.loadUserPreferences();
-                console.log('✅ User preferences loaded via ProfileModule');
-            } else {
-                const savedPrefs = localStorage.getItem('farm-user-preferences');
-                this.userPreferences = savedPrefs ? JSON.parse(savedPrefs) : this.getDefaultPreferences();
-                console.log('⚠️ ProfileModule not available, using localStorage fallback');
-                this.createProfileModuleFallback();
-            }
-            
+            const savedPrefs = localStorage.getItem('farm-user-preferences');
+            this.userPreferences = savedPrefs ? JSON.parse(savedPrefs) : this.getDefaultPreferences();
             this.applyUserTheme();
-            
         } catch (error) {
-            console.error('❌ Error loading user preferences:', error);
             this.userPreferences = this.getDefaultPreferences();
-            this.createProfileModuleFallback();
         }
     }
 
     getDefaultPreferences() {
         return {
             theme: 'auto',
-            language: 'en',
-            currency: 'USD',
-            notifications: true,
             businessName: 'My Farm',
-            businessType: 'poultry',
-            lowStockThreshold: 10,
-            autoSync: true,
-            dashboardStats: {
-                totalOrders: 0,
-                totalRevenue: 0,
-                pendingOrders: 0,
-                totalCustomers: 0,
-                totalProducts: 0,
-                monthlyRevenue: 0,
-                monthlyOrders: 0,
-                avgOrderValue: 0,
-                completedOrders: 0,
-                paidOrders: 0
-            }
+            businessType: 'poultry'
         };
-    }
-
-    createProfileModuleFallback() {
-        if (typeof ProfileModule === 'undefined') {
-            window.ProfileModule = {
-                userPreferences: this.userPreferences,
-                
-                loadUserPreferences: () => this.userPreferences,
-                getUserPreferences: () => this.userPreferences,
-                updatePreference: (key, value) => {
-                    this.userPreferences[key] = value;
-                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-                    console.log(`⚙️ Preference updated: ${key} = ${value}`);
-                },
-                
-                updateBusinessStats: (module, stats) => {
-                    if (!this.userPreferences.dashboardStats) {
-                        this.userPreferences.dashboardStats = {};
-                    }
-                    Object.keys(stats).forEach(key => {
-                        this.userPreferences.dashboardStats[key] = stats[key];
-                    });
-                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-                    console.log('📊 Stats updated for', module + ':', stats);
-                },
-                
-                updateStats: (stats) => {
-                    if (!this.userPreferences.dashboardStats) {
-                        this.userPreferences.dashboardStats = {};
-                    }
-                    Object.keys(stats).forEach(key => {
-                        this.userPreferences.dashboardStats[key] = stats[key];
-                    });
-                    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-                    console.log('📊 Stats updated:', stats);
-                },
-                
-                getStats: () => {
-                    return this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
-                },
-                
-                getProfileData: () => {
-                    return {
-                        farmName: this.userPreferences.businessName || 'My Farm',
-                        farmerName: 'Farm Manager',
-                        stats: this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats
-                    };
-                },
-                
-                getProfileStats: () => {
-                    return this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
-                },
-                
-                getBusinessOverview: () => {
-                    const stats = this.userPreferences.dashboardStats || this.getDefaultPreferences().dashboardStats;
-                    return {
-                        totalOrders: stats.totalOrders || 0,
-                        totalRevenue: stats.totalRevenue || 0,
-                        pendingOrders: stats.pendingOrders || 0,
-                        totalCustomers: stats.totalCustomers || 0,
-                        totalProducts: stats.totalProducts || 0,
-                        monthlyRevenue: stats.monthlyRevenue || 0,
-                        monthlyOrders: stats.monthlyOrders || 0
-                    };
-                },
-                
-                initialize: () => {
-                    console.log('✅ ProfileModule fallback initialized');
-                    return true;
-                }
-            };
-            
-            window.profileInstance = window.ProfileModule;
-            console.log('✅ Complete ProfileModule fallback created');
-        }
     }
 
     applyUserTheme() {
@@ -378,62 +199,23 @@ class FarmManagementApp {
         
         if (theme === 'dark') {
             document.body.classList.add('dark-mode');
-            this.updateDarkModeIcon(true);
         } else if (theme === 'light') {
             document.body.classList.remove('dark-mode');
-            this.updateDarkModeIcon(false);
         } else {
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             document.body.classList.toggle('dark-mode', prefersDark);
-            this.updateDarkModeIcon(prefersDark);
         }
-        
-        console.log('🎨 Applied user theme:', theme);
     }
 
     setupDarkMode() {
         const darkModeToggle = document.getElementById('dark-mode-toggle');
-        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-        
         if (darkModeToggle) {
             darkModeToggle.addEventListener('click', () => {
                 document.body.classList.toggle('dark-mode');
                 const isDarkMode = document.body.classList.contains('dark-mode');
-                
-                const newTheme = isDarkMode ? 'dark' : 'light';
-                this.userPreferences.theme = newTheme;
+                this.userPreferences.theme = isDarkMode ? 'dark' : 'light';
                 localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-                
-                if (window.ProfileModule && window.ProfileModule.updatePreference) {
-                    window.ProfileModule.updatePreference('theme', newTheme);
-                }
-                
-                this.updateDarkModeIcon(isDarkMode);
-                console.log('🎨 Theme changed to:', newTheme);
             });
-        }
-        
-        prefersDarkScheme.addEventListener('change', (e) => {
-            if (this.userPreferences.theme === 'auto') {
-                document.body.classList.toggle('dark-mode', e.matches);
-                this.updateDarkModeIcon(e.matches);
-            }
-        });
-    }
-
-    updateDarkModeIcon(isDarkMode) {
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
-        if (darkModeToggle) {
-            const icon = darkModeToggle.querySelector('span:first-child');
-            const label = darkModeToggle.querySelector('.nav-label');
-            
-            if (isDarkMode) {
-                icon.textContent = '☀️';
-                label.textContent = 'Light';
-            } else {
-                icon.textContent = '🌙';
-                label.textContent = 'Dark';
-            }
         }
     }
   
@@ -442,17 +224,13 @@ class FarmManagementApp {
             if (e.target.closest('.nav-item')) {
                 const navItem = e.target.closest('.nav-item');
                 const view = navItem.getAttribute('data-view');
-                if (view) {
-                    this.showSection(view);
-                }
+                if (view) this.showSection(view);
             }
             
             if (e.target.closest('.side-menu-item')) {
                 const menuItem = e.target.closest('.side-menu-item');
                 const section = menuItem.getAttribute('data-section');
-                if (section) {
-                    this.showSection(section);
-                }
+                if (section) this.showSection(section);
             }
         });
     }
@@ -475,9 +253,7 @@ class FarmManagementApp {
         if (!appContainer) return;
 
         let header = appContainer.querySelector('header');
-        if (header) {
-            header.remove();
-        }
+        if (header) header.remove();
         
         header = document.createElement('header');
         appContainer.insertBefore(header, appContainer.firstChild);
@@ -533,13 +309,6 @@ class FarmManagementApp {
                 </div>
             </nav>
         `;
-
-        const main = appContainer.querySelector('main');
-        if (main) {
-            main.style.paddingTop = '80px';
-        }
-        
-        console.log('✅ Top Navigation created');
     }
     
     setupHamburgerMenu() {
@@ -547,15 +316,7 @@ class FarmManagementApp {
         const sideMenu = document.getElementById('side-menu');
         
         if (hamburger && sideMenu) {
-            sideMenu.style.left = 'auto';
-            sideMenu.style.right = '0';
-            sideMenu.style.transform = 'translateX(100%)';
-            sideMenu.classList.remove('active');
-            
-            hamburger.replaceWith(hamburger.cloneNode(true));
-            const newHamburger = document.getElementById('hamburger-menu');
-            
-            newHamburger.addEventListener('click', (e) => {
+            hamburger.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 sideMenu.classList.toggle('active');
@@ -581,7 +342,6 @@ class FarmManagementApp {
                 e.preventDefault();
                 const section = item.getAttribute('data-section');
                 if (section) {
-                    console.log('📱 Side menu item clicked:', section);
                     this.showSection(section);
                     
                     const sideMenu = document.getElementById('side-menu');
@@ -591,18 +351,13 @@ class FarmManagementApp {
                 }
             });
         });
-        
-        console.log('✅ Side menu events setup');
     }
     
     showSection(sectionId) {
         console.log(`🔄 Switching to section: ${sectionId}`);
         
         const contentArea = document.getElementById('content-area');
-        if (!contentArea) {
-            console.error('❌ Content area not found');
-            return;
-        }
+        if (!contentArea) return;
         
         const cleanSectionId = sectionId.replace('.js', '');
         this.currentSection = cleanSectionId;
@@ -619,79 +374,41 @@ class FarmManagementApp {
                     animation: spin 1s linear infinite;
                     margin: 0 auto 20px;
                 "></div>
-                <p>Loading ${cleanSectionId} module...</p>
+                <p>Loading ${cleanSectionId}...</p>
             </div>
         `;
         
-        if (!document.querySelector('#spinner-styles')) {
-            const style = document.createElement('style');
-            style.id = 'spinner-styles';
-            style.textContent = `
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-        
         setTimeout(() => {
             if (FarmModules && FarmModules.renderModule) {
-                const success = FarmModules.renderModule(cleanSectionId, contentArea);
-                if (!success) {
-                    FarmModules.renderModule(sectionId, contentArea);
-                }
+                FarmModules.renderModule(cleanSectionId, contentArea);
             } else {
-                console.error('❌ FarmModules.renderModule not available');
                 this.loadFallbackContent(cleanSectionId);
             }
         }, 100);
     }
     
     setActiveMenuItem(sectionId) {
-        console.log(`🎯 Setting active menu item: ${sectionId}`);
-        
         document.querySelectorAll('.nav-item, .side-menu-item').forEach(item => {
             item.classList.remove('active');
         });
         
         const activeNavItem = document.querySelector(`.nav-item[data-view="${sectionId}"]`);
-        if (activeNavItem) {
-            activeNavItem.classList.add('active');
-        }
+        if (activeNavItem) activeNavItem.classList.add('active');
         
         const activeSideMenuItem = document.querySelector(`.side-menu-item[data-section="${sectionId}"]`);
-        if (activeSideMenuItem) {
-            activeSideMenuItem.classList.add('active');
-        }
-        
-        if (!activeNavItem && !activeSideMenuItem) {
-            const activeNavItemWithJS = document.querySelector(`.nav-item[data-view="${sectionId}.js"]`);
-            if (activeNavItemWithJS) {
-                activeNavItemWithJS.classList.add('active');
-            }
-            
-            const activeSideMenuItemWithJS = document.querySelector(`.side-menu-item[data-section="${sectionId}.js"]`);
-            if (activeSideMenuItemWithJS) {
-                activeSideMenuItemWithJS.classList.add('active');
-            }
-        }
+        if (activeSideMenuItem) activeSideMenuItem.classList.add('active');
     }
     
     showAuth() {
-        console.log('🔐 Showing auth interface');
         const authContainer = document.getElementById('auth-container');
         const appContainer = document.getElementById('app-container');
         
         if (authContainer) {
             authContainer.style.display = 'block';
-            authContainer.classList.remove('hidden');
         }
         if (appContainer) {
             appContainer.style.display = 'none';
-            appContainer.classList.add('hidden');
         }
-        this.hideLoading();
     }
     
     loadFallbackContent(sectionId) {
@@ -715,18 +432,10 @@ class FarmManagementApp {
             <div style="padding: 20px;">
                 <h2 style="color: #1a1a1a;">${sectionTitles[sectionId] || sectionId}</h2>
                 <p style="color: #666;">Content loading...</p>
-                <p style="color: #999; font-size: 14px;">Module system not loaded yet</p>
             </div>
         `;
     }
 }
 
 // Initialize the app
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.app = new FarmManagementApp();
-    });
-} else {
-    window.app = new FarmManagementApp();
-}
-
+window.app = new FarmManagementApp();
