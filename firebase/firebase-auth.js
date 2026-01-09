@@ -1,498 +1,393 @@
-// modules/auth.js
-console.log('Loading auth module...');
+// firebase-auth.js
+console.log('Loading Firebase auth...');
 
-class AuthModule {
+class FirebaseAuth {
     constructor() {
-        this.init();
-    }
-
-    init() {
-        console.log('✅ Auth module initialized');
-        this.setupAuthForms();
-    }
-
-    // ======== ADD THE SOCIAL LOGIN METHODS  ========
-        renderSocialLoginButtons() {
-            console.log('🔄 Rendering social login buttons...');
-            const socialContainer = document.getElementById('social-login-container');
-            
-            if (socialContainer && window.authManager) {
-                console.log('✅ Social container found, rendering buttons...');
-                socialContainer.innerHTML = window.authManager.renderAuthButtons();
-                console.log('✅ Social buttons rendered');
-                
-                // Add click handlers
-                const googleBtn = socialContainer.querySelector('.btn-social.google');
-                const appleBtn = socialContainer.querySelector('.btn-social.apple');
-                
-                if (googleBtn) {
-                    googleBtn.onclick = async (e) => {
-                        e.preventDefault();
-                        await this.handleSocialSignIn('google');
-                    };
-                }
-                
-                if (appleBtn) {
-                    appleBtn.onclick = async (e) => {
-                        e.preventDefault();
-                        await this.handleSocialSignIn('apple');
-                    };
-                }
-            } else {
-                console.log('⚠️ Social container or authManager not found');
-            }
+        this.auth = null;
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            this.auth = firebase.auth();
+            console.log('✅ Firebase Auth initialized');
+        } else {
+            console.log('⚠️ Firebase Auth not available');
         }
+    }
 
-        // ======== PASSWORD STRENGTH METHODS ========
-
-            setupPasswordValidation() {
-                const passwordInput = document.getElementById('signup-password');
-                const confirmInput = document.getElementById('signup-confirm-password');
-                
-                if (passwordInput) {
-                    passwordInput.addEventListener('input', () => {
-                        this.checkPasswordStrength(passwordInput.value);
-                    });
-                }
-                
-                if (confirmInput) {
-                    confirmInput.addEventListener('input', () => {
-                        this.checkPasswordMatch(
-                            document.getElementById('signup-password')?.value,
-                            confirmInput.value
-                        );
-                    });
-                }
-            }
-            
-            checkPasswordStrength(password) {
-                const strengthBar = document.querySelector('.strength-progress');
-                const strengthText = document.querySelector('.strength-text');
-                
-                if (!strengthBar || !strengthText) return;
-                
-                // Calculate strength
-                let strength = 0;
-                let feedback = '';
-                
-                // Length check
-                if (password.length >= 8) strength++;
-                
-                // Contains lowercase
-                if (/[a-z]/.test(password)) strength++;
-                
-                // Contains uppercase
-                if (/[A-Z]/.test(password)) strength++;
-                
-                // Contains numbers
-                if (/\d/.test(password)) strength++;
-                
-                // Contains special characters
-                if (/[^A-Za-z0-9]/.test(password)) strength++;
-                
-                // Set visual feedback
-                const width = (strength / 5) * 100;
-                strengthBar.style.width = width + '%';
-                strengthBar.style.transition = 'width 0.3s ease';
-                
-                // Set color and text based on strength
-                if (password.length === 0) {
-                    strengthBar.style.backgroundColor = '#ddd';
-                    strengthText.textContent = '';
-                } else if (strength < 2) {
-                    strengthBar.style.backgroundColor = '#ff4757'; // Red
-                    strengthText.textContent = 'Weak';
-                    strengthText.style.color = '#ff4757';
-                } else if (strength < 4) {
-                    strengthBar.style.backgroundColor = '#ffa502'; // Orange
-                    strengthText.textContent = 'Medium';
-                    strengthText.style.color = '#ffa502';
-                } else {
-                    strengthBar.style.backgroundColor = '#2ed573'; // Green
-                    strengthText.textContent = 'Strong';
-                    strengthText.style.color = '#2ed573';
-                }
-                
-                // Show requirements feedback
-                this.showPasswordRequirements(password);
-            }
-            
-            checkPasswordMatch(password, confirmPassword) {
-                const matchIndicator = document.querySelector('.password-match-indicator');
-                if (!matchIndicator) return;
-                
-                if (confirmPassword.length === 0) {
-                    matchIndicator.textContent = '';
-                    matchIndicator.style.color = '';
-                } else if (password === confirmPassword) {
-                    matchIndicator.textContent = '✓ Passwords match';
-                    matchIndicator.style.color = '#2ed573'; // Green
-                } else {
-                    matchIndicator.textContent = '✗ Passwords do not match';
-                    matchIndicator.style.color = '#ff4757'; // Red
-                }
-            }
-            
-            showPasswordRequirements(password) {
-                // Optional: Show detailed requirements
-                const requirements = document.getElementById('password-requirements');
-                if (!requirements) return;
-                
-                const checks = {
-                    length: password.length >= 8,
-                    lowercase: /[a-z]/.test(password),
-                    uppercase: /[A-Z]/.test(password),
-                    number: /\d/.test(password),
-                    special: /[^A-Za-z0-9]/.test(password)
-                };
-                
-                const fulfilled = Object.values(checks).filter(Boolean).length;
-                const total = Object.keys(checks).length;
-                
-                requirements.innerHTML = `
-                    <div style="font-size: 11px; color: #666; margin-top: 4px;">
-                        ${fulfilled}/${total} requirements met
-                    </div>
-                `;
-            }
-            
-            // Optional: Add password requirements list HTML
-            /*
-            <div id="password-requirements" style="font-size: 12px; color: #666; margin-top: 8px;">
-                <div>Password must contain:</div>
-                <ul style="margin: 4px 0 0 15px; padding: 0;">
-                    <li>At least 8 characters</li>
-                    <li>One uppercase letter</li>
-                    <li>One lowercase letter</li>
-                    <li>One number</li>
-                    <li>One special character</li>
-                </ul>
-            </div>
-            */
-    
-    // Add this new method for social sign-in
-    async handleSocialSignIn(provider) {
-        let result;
-        const socialContainer = document.getElementById('social-login-container');
-        
-        if (!socialContainer) return;
-        
-        // Disable all social buttons
-        const buttons = socialContainer.querySelectorAll('.btn-social');
-        buttons.forEach(btn => {
-            btn.disabled = true;
-            const originalText = btn.innerHTML;
-            btn.innerHTML = `Signing in with ${provider === 'google' ? 'Google' : 'Apple'}...`;
-            btn.dataset.originalText = originalText;
-        });
+    async signUp(email, password, userData) {
+        if (!this.auth) {
+            return { success: false, error: 'Firebase Auth not available' };
+        }
         
         try {
-            if (provider === 'google') {
-                result = await window.authManager?.signInWithGoogle();
-            } else if (provider === 'apple') {
-                result = await window.authManager?.signInWithApple();
+            const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
+            if (userData) {
+                await this.saveUserData(userCredential.user.uid, userData);
             }
-            
-            if (result?.success) {
-                this.showNotification(`Signed in with ${provider === 'google' ? 'Google' : 'Apple'}!`, 'success');
-                // Redirect to dashboard
-                setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 1500);
-            } else {
-                this.showNotification(result?.error || `Error signing in with ${provider === 'google' ? 'Google' : 'Apple'}`, 'error');
-            }
+            return { success: true, user: userCredential.user };
         } catch (error) {
-            this.showNotification(`Error signing in with ${provider === 'google' ? 'Google' : 'Apple'}`, 'error');
-        } finally {
-            // Re-enable buttons
-            buttons.forEach(btn => {
-                btn.disabled = false;
-                if (btn.dataset.originalText) {
-                    btn.innerHTML = btn.dataset.originalText;
-                }
-            });
-        }
-    }
-    
-    setupAuthForms() {
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                this.attachFormHandlers();
-            });
-        } else {
-            this.attachFormHandlers();
-        }
-    }
-    
-   attachFormHandlers() {
-    // RENDER SOCIAL BUTTONS HERE
-    this.renderSocialLoginButtons();
-    
-    // ADD THIS LINE: Setup password validation
-    this.setupPasswordValidation();
-    
-    // Sign in form
-    const signinForm = document.getElementById('signin-form-element');
-    if (signinForm) {
-        signinForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await this.handleSignIn();
-        });
-    }
-
-    // Forgot password form
-    const forgotForm = document.getElementById('forgot-password-form-element');
-    if (forgotForm) {
-        forgotForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await this.handleForgotPassword();
-        });
-    }
-
-    this.setupAuthListeners();
-    }
-
-    setupAuthListeners() {
-        // Form switching
-        const showSignup = document.getElementById('show-signup');
-        if (showSignup) {
-            showSignup.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.showAuthForm('signup');
-            });
-        }
-
-        const showSignin = document.getElementById('show-signin');
-        if (showSignin) {
-            showSignin.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.showAuthForm('signin');
-            });
-        }
-
-        const showForgot = document.getElementById('show-forgot-password');
-        if (showForgot) {
-            showForgot.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.showAuthForm('forgot-password');
-            });
-        }
-
-        const showSigninFromForgot = document.getElementById('show-signin-from-forgot');
-        if (showSigninFromForgot) {
-            showSigninFromForgot.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.showAuthForm('signin');
-            });
+            return { success: false, error: error.message };
         }
     }
 
-       // In auth.js, update the handleSignUp method:
-
-async handleSignUp() {
-    const form = document.getElementById('signup-form-element');
-    if (!form) return;
-
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const name = document.getElementById('signup-name')?.value || '';
-    const email = document.getElementById('signup-email')?.value || '';
-    const password = document.getElementById('signup-password')?.value || '';
-    const confirmPassword = document.getElementById('signup-confirm-password')?.value || '';
-    const farmName = document.getElementById('farm-name')?.value || '';
-
-    // Validation
-    if (password !== confirmPassword) {
-        this.showNotification('Passwords do not match', 'error');
-        return;
+    async signIn(email, password) {
+        if (!this.auth) {
+            return { success: false, error: 'Firebase Auth not available' };
+        }
+        
+        try {
+            const userCredential = await this.auth.signInWithEmailAndPassword(email, password);
+            return { success: true, user: userCredential.user };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
     }
 
-    if (password.length < 6) {
-        this.showNotification('Password must be at least 6 characters', 'error');
-        return;
+    async resetPassword(email) {
+        if (!this.auth) {
+            return { success: false, error: 'Firebase Auth not available' };
+        }
+        
+        try {
+            await this.auth.sendPasswordResetEmail(email);
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
     }
 
-    if (!email || !email.includes('@')) {
-        this.showNotification('Please enter a valid email address', 'error');
-        return;
+    async saveUserData(uid, userData) {
+        if (!firebase.firestore) {
+            return { success: false, error: 'Firestore not available' };
+        }
+        
+        try {
+            await firebase.firestore().collection('users').doc(uid).set({
+                ...userData,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
     }
 
-    if (submitBtn) {
-        submitBtn.innerHTML = 'Creating Account...';
-        submitBtn.disabled = true;
-    }
-
+    // Google Sign-in
+  async signInWithGoogle() {
     try {
-        const result = await window.authManager?.signUp(email, password, {
-            name: name,
-            email: email,
-            farmName: farmName || 'My Farm',
-            createdAt: new Date().toISOString()
+        console.log('🔐 Starting Google sign-in...');
+        console.log('=== ENVIRONMENT INFO ===');
+        console.log('Current domain:', window.location.hostname);
+        console.log('Full URL:', window.location.href);
+        console.log('Protocol:', window.location.protocol);
+        console.log('User Agent:', navigator.userAgent);
+        console.log('GitHub Pages:', window.location.hostname.includes('github.io'));
+        console.log('====================');
+        
+        // Check if we're in a valid environment
+        if (window.location.protocol === 'file:') {
+            throw new Error('Cannot use Google Sign-In with file:// protocol. Please use a local server (http://localhost).');
+        }
+        
+        // Check for GitHub Pages (needs redirect instead of popup)
+        const isGitHubPages = window.location.hostname.includes('github.io');
+        
+        if (isGitHubPages) {
+            console.log('🌐 GitHub Pages detected - using redirect method');
+            console.log('⚠️ Popups may be blocked by Cross-Origin-Opener-Policy');
+            
+            // Ask user if they want to use redirect
+            const useRedirect = confirm(
+                'For GitHub Pages compatibility:\n\n' +
+                'We need to use redirect method instead of popup.\n' +
+                'You will be taken to Google and then back to this app.\n\n' +
+                'Click OK to continue with Google Sign-In,\n' +
+                'or Cancel to use Email/Password.'
+            );
+            
+            if (!useRedirect) {
+                console.log('User chose to cancel redirect');
+                return { success: false, error: 'User cancelled redirect' };
+            }
+            
+            // Use redirect method for GitHub Pages
+            return await this.signInWithGoogleRedirect();
+        }
+        
+        console.log('🎯 Using popup method...');
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.addScope('profile');
+        provider.addScope('email');
+        
+        // Add custom parameters for better UX
+        provider.setCustomParameters({
+            prompt: 'select_account',
+            login_hint: '',
+            hd: ''
         });
-
-        if (result?.success) {
-            console.log('✅ Sign-up successful, user auto-logged in:', result.user?.email);
-            
-            // IMPORTANT: Store user data locally
-            const userData = {
-                uid: result.user.uid,
-                email: result.user.email,
-                name: name,
-                farmName: farmName || 'My Farm',
-                createdAt: new Date().toISOString()
-            };
-            
-            localStorage.setItem('farm-profile', JSON.stringify(userData));
-            localStorage.setItem('userEmail', email);
-            
-            // Show success and redirect
-            this.showNotification('Account created successfully! Redirecting to dashboard...', 'success');
-            
-            // Redirect to dashboard after short delay
-            setTimeout(() => {
-                console.log('🔄 Redirecting to dashboard from sign-up...');
-                // Check if we're on index.html or another page
-                if (window.location.pathname.includes('index.html') || 
-                    window.location.pathname === '/' || 
-                    window.location.pathname.endsWith('.html')) {
-                    window.location.href = 'dashboard.html';
-                } else {
-                    // Reload to trigger auth state change
-                    window.location.reload();
-                }
-            }, 1500);
-            
-        } else {
-            this.showNotification(result?.error || 'Error creating account', 'error');
-        }
+        
+        console.log('✅ Google provider created');
+        console.log('🪟 Attempting popup...');
+        
+        // Add timeout to catch popup blockers
+        const signInPromise = firebase.auth().signInWithPopup(provider);
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Sign-in timeout (30s). Please check for popup blockers.')), 30000);
+        });
+        
+        console.log('⏱️ Waiting for popup response...');
+        const result = await Promise.race([signInPromise, timeoutPromise]);
+        
+        console.log('🎉 ✅ Google sign-in successful!');
+        console.log('📋 USER INFO:');
+        console.log('- Email:', result.user.email);
+        console.log('- Display Name:', result.user.displayName);
+        console.log('- UID:', result.user.uid);
+        console.log('- Provider:', result.user.providerId);
+        console.log('- Email Verified:', result.user.emailVerified);
+        
+        this.showNotification(`Welcome ${result.user.displayName}!`, 'success');
+        
+        // Save user to Firestore
+        await this.saveUserToFirestore(result.user);
+        
+        // Redirect to dashboard after successful login
+        setTimeout(() => {
+            console.log('🔄 Redirecting to dashboard...');
+            window.location.href = 'dashboard.html';
+        }, 1500);
+        
+        return { success: true, user: result.user };
+        
     } catch (error) {
-        console.error('Sign-up error:', error);
-        this.showNotification('Error creating account: ' + error.message, 'error');
-    } finally {
-        if (submitBtn) {
-            submitBtn.innerHTML = 'Create Account';
-            submitBtn.disabled = false;
+        console.error('❌ Google sign-in error:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        console.error('Full error object:', error);
+        
+        // Handle specific errors
+        let userMessage = `Google sign-in failed: ${error.message}`;
+        let shouldTryRedirect = false;
+        
+        if (error.code === 'auth/unauthorized-domain') {
+            userMessage = 
+                `Domain "${window.location.hostname}" is not authorized.\n\n` +
+                `Please add it to Firebase Console:\n` +
+                `1. Go to Firebase Console → Authentication\n` +
+                `2. Click "Sign-in method" tab\n` +
+                `3. Scroll to "Authorized domains"\n` +
+                `4. Add: "localhost" and "${window.location.hostname}"`;
+                
+        } else if (error.code === 'auth/popup-blocked') {
+            userMessage = 'Popup was blocked by your browser. Please allow popups for this site.';
+            shouldTryRedirect = true;
+            
+        } else if (error.code === 'auth/popup-closed-by-user') {
+            userMessage = 'Sign-in was cancelled. Please try again.';
+            
+            // If on GitHub Pages, suggest redirect
+            if (window.location.hostname.includes('github.io')) {
+                userMessage += '\n\nGitHub Pages may block popups. Try redirect method?';
+                shouldTryRedirect = true;
+            }
+            
+        } else if (error.code === 'auth/cancelled-popup-request') {
+            userMessage = 'Another popup is already open. Please close other popups and try again.';
+            
+        } else if (error.message.includes('Cross-Origin-Opener-Policy')) {
+            userMessage = 'GitHub Pages security policy blocks popups. Using redirect method instead...';
+            shouldTryRedirect = true;
+            
+        } else if (error.message.includes('file://')) {
+            userMessage = 
+                'Cannot use Google Sign-In when opening file directly.\n\n' +
+                'Please run a local server:\n' +
+                '1. Open terminal in project folder\n' +
+                '2. Run: npx serve .\n' +
+                '3. Open http://localhost:3000';
         }
+        
+        this.showNotification(userMessage, 'error');
+        
+        // Try redirect as fallback
+        if (shouldTryRedirect) {
+            console.log('🔄 Attempting redirect as fallback...');
+            setTimeout(() => {
+                const tryRedirect = confirm(
+                    'Popup method failed. Would you like to try redirect method instead?\n\n' +
+                    'You will be taken to Google and then back here.'
+                );
+                
+                if (tryRedirect) {
+                    this.signInWithGoogleRedirect();
+                }
+            }, 1000);
+        }
+        
+        return { success: false, error: error.message };
     }
 }
-    
-    // In auth.js, update the handleSignIn method:
 
-async handleSignIn() {
-    const form = document.getElementById('signin-form-element');
-    if (!form) return;
-
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const email = document.getElementById('signin-email')?.value || '';
-    const password = document.getElementById('signin-password')?.value || '';
-
-    // Basic validation
-    if (!email || !password) {
-        this.showNotification('Please enter both email and password', 'error');
-        return;
-    }
-
-    if (submitBtn) {
-        submitBtn.innerHTML = 'Signing In...';
-        submitBtn.disabled = true;
-    }
-
+// Add this new method for redirect authentication
+async signInWithGoogleRedirect() {
     try {
-        console.log('🔐 Attempting sign-in for:', email);
+        console.log('🔄 Starting Google sign-in with redirect method...');
+        console.log('Current domain:', window.location.hostname);
         
-        const result = await window.authManager?.signIn(email, password);
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.addScope('profile');
+        provider.addScope('email');
+        
+        // Store where to return after auth
+        sessionStorage.setItem('authReturnUrl', window.location.href);
+        sessionStorage.setItem('authMethod', 'google-redirect');
+        sessionStorage.setItem('authTimestamp', Date.now().toString());
+        
+        console.log('📝 Stored auth state in sessionStorage');
+        console.log('🔀 Redirecting to Google...');
+        
+        // Start redirect
+        await firebase.auth().signInWithRedirect(provider);
+        
+        console.log('↪️ Redirect initiated - user will return after authentication');
+        
+        // Show message (user will be redirected away momentarily)
+        this.showNotification('Redirecting to Google for sign-in...', 'info');
+        
+        return { success: true, redirecting: true };
 
-        if (result?.success) {
-            console.log('✅ Sign-in successful:', result.user?.email);
+        // Mark that we're attempting a redirect
+        sessionStorage.setItem('googleRedirectAttempt', 'true');
+        sessionStorage.setItem('redirectStartTime', Date.now().toString());
+        
+        console.log('🔀 Starting redirect to Google...');
+        await firebase.auth().signInWithRedirect(provider);
+        
+        return { success: true, redirecting: true };
+        
+    }catch (error) {
+        console.error('❌ Redirect sign-in error:', error);
+        this.showNotification(`Redirect failed: ${error.message}`, 'error');
+        return { success: false, error: error.message };
+    }  
+}
+
+// Add this method to handle redirect results
+static handleRedirectResult() {
+    console.log('🔄 Checking for redirect authentication result...');
+    
+    firebase.auth().getRedirectResult()
+    .then((result) => {
+        if (result.user) {
+            console.log('🎉 ✅ Redirect authentication successful!');
+            console.log('User:', result.user.email);
             
-            // Store user data locally
-            const userData = {
-                uid: result.user.uid,
-                email: result.user.email,
-                lastLogin: new Date().toISOString()
-            };
-            
-            localStorage.setItem('farm-profile', JSON.stringify(userData));
-            localStorage.setItem('userEmail', email);
-            
-            this.showNotification('Welcome back! Redirecting to dashboard...', 'success');
+            // Clear stored data
+            sessionStorage.removeItem('authReturnUrl');
+            sessionStorage.removeItem('authMethod');
+            sessionStorage.removeItem('authTimestamp');
             
             // Redirect to dashboard
             setTimeout(() => {
-                console.log('🔄 Redirecting to dashboard from sign-in...');
-                if (window.location.pathname.includes('index.html') || 
-                    window.location.pathname === '/' || 
-                    window.location.pathname.endsWith('.html')) {
-                    window.location.href = 'dashboard.html';
-                } else {
-                    window.location.reload();
-                }
-            }, 1500);
+                window.location.href = 'dashboard.html';
+            }, 1000);
             
         } else {
-            console.error('❌ Sign-in failed:', result?.error);
-            this.showNotification(result?.error || 'Invalid email or password', 'error');
+            console.log('No redirect user found - normal page load');
         }
+    })
+    .catch((error) => {
+        console.error('❌ Redirect result error:', error);
+        
+        // Return to original page
+        const returnUrl = sessionStorage.getItem('authReturnUrl') || 'index.html';
+        sessionStorage.clear();
+        
+        if (error.code !== 'auth/popup-closed-by-user') {
+            console.log('Returning to:', returnUrl);
+            // Don't redirect if we're already on index
+            if (!window.location.href.includes('index.html')) {
+                window.location.href = returnUrl;
+            }
+        }
+    });
+}
+
+async saveUserToFirestore(user) {
+    try {
+        if (!firebase.firestore) {
+            console.log('Firestore not available, skipping user save');
+            return;
+        }
+        
+        const userRef = firebase.firestore().collection('users').doc(user.uid);
+        
+        const userData = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+            provider: 'google',
+            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        await userRef.set(userData, { merge: true });
+        console.log('✅ User data saved to Firestore');
+        
     } catch (error) {
-        console.error('Sign-in error:', error);
-        this.showNotification('Error signing in: ' + error.message, 'error');
-    } finally {
-        if (submitBtn) {
-            submitBtn.innerHTML = 'Sign In';
-            submitBtn.disabled = false;
-        }
+        console.error('Error saving user to Firestore:', error);
+        // Don't show error to user - this is background operation
     }
 }
     
-    async handleForgotPassword() {
-        const form = document.getElementById('forgot-password-form-element');
-        if (!form) return;
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const email = document.getElementById('forgot-email')?.value || '';
-
-        if (submitBtn) {
-            submitBtn.innerHTML = 'Sending Reset Link...';
-            submitBtn.disabled = true;
-        }
-
+    // Apple Sign-in (requires proper setup in Firebase console)
+    async signInWithApple() {
         try {
-            const result = await window.authManager?.resetPassword(email);
-
-            if (result?.success) {
-                this.showNotification('Password reset email sent!', 'success');
-                this.showAuthForm('signin');
-            } else {
-                this.showNotification(result?.error || 'Error sending reset email', 'error');
-            }
+            const provider = new firebase.auth.OAuthProvider('apple.com');
+            provider.addScope('email');
+            provider.addScope('name');
+            
+            const result = await firebase.auth().signInWithPopup(provider);
+            this.showNotification(`Welcome!`, 'success');
+            return { success: true, user: result.user };
         } catch (error) {
-            this.showNotification('Error sending reset email', 'error');
-        } finally {
-            if (submitBtn) {
-                submitBtn.innerHTML = 'Send Reset Link';
-                submitBtn.disabled = false;
-            }
+            console.error('Apple sign-in error:', error);
+            this.showNotification(`Apple sign-in failed: ${error.message}`, 'error');
+            return { success: false, error: error.message };
         }
     }
-
-    showAuthForm(formName) {
-        document.querySelectorAll('.auth-form').forEach(form => {
-            form.classList.remove('active');
-        });
-        
-        const targetForm = document.getElementById(`${formName}-form`);
-        if (targetForm) {
-            targetForm.classList.add('active');
-        }
+    
+    // Add to auth UI
+    renderAuthButtons() {
+        return `
+            <button class="btn-social google" onclick="authManager.signInWithGoogle()">
+                <span class="social-icon">G</span>
+                Continue with Google
+            </button>
+            <button class="btn-social apple" onclick="authManager.signInWithApple()">
+                <span class="social-icon"></span>
+                Continue with Apple
+            </button>
+        `;
     }
 
-    showNotification(message, type) {
-        if (window.coreModule && window.coreModule.showNotification) {
+    showNotification(message, type = 'info') {
+        if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
             window.coreModule.showNotification(message, type);
+        } else if (type === 'error') {
+            console.error('❌ ' + message);
+            alert('❌ ' + message);
+        } else if (type === 'success') {
+            console.log('✅ ' + message);
+            alert('✅ ' + message);
+        } else if (type === 'warning') {
+            console.warn('⚠️ ' + message);
+            alert('⚠️ ' + message);
         } else {
-            alert(message);
+            console.log('ℹ️ ' + message);
+            alert('ℹ️ ' + message);
         }
     }
 }
 
-window.authModule = new AuthModule();
+window.authManager = new FirebaseAuth();
