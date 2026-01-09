@@ -78,82 +78,112 @@ class FarmManagementApp {
     async checkAuthState() {
     console.log('🔐 Checking authentication state...');
     
-    return new Promise((resolve) => {
-        if (typeof firebase === 'undefined' || !firebase.auth) {
-            console.log('⚠️ Firebase not available');
-            this.hideLoading();
-            this.showAuth();
-            resolve(false);
-            return;
+    // Check if we've already resolved auth
+    if (sessionStorage.getItem('authChecked') === 'true') {
+        console.log('📌 Auth already checked this session');
+        const user = firebase.auth().currentUser;
+        const hasLocalProfile = localStorage.getItem('farm-profile');
+        
+        if (user || hasLocalProfile) {
+            console.log('👤 User exists from previous check');
+            this.currentUser = user;
+            this.showApp();
+            return true;
         }
+    }
+    
+    return new Promise((resolve) => {
+        console.log('⏳ Setting up auth state listener...');
         
         let authResolved = false;
+        let timeoutId = null;
         
-        const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
-            console.log('🔥 Auth state changed:', user ? `User: ${user.email}` : 'No user');
-            
-            if (!authResolved) {
-                authResolved = true;
-                this.hideLoading();
-                
-                if (user) {
-                    console.log('👤 User authenticated:', user.email);
-                    this.currentUser = user;
-                    this.showApp();
-                    
-                    // IMPORTANT: Trigger app initialization here
-                    setTimeout(() => {
-                        this.initializeAppAfterAuth();
-                    }, 100);
-                    
-                    resolve(true);
-                } else {
-                    // Check local data
-                    const hasLocalProfile = localStorage.getItem('farm-profile') || 
-                                           localStorage.getItem('profileData');
-                    
-                    if (hasLocalProfile) {
-                        console.log('💾 Using local profile data');
-                        this.showApp();
-                        resolve(true);
-                    } else {
-                        console.log('🔒 Showing login screen');
-                        this.showAuth();
-                        resolve(false);
-                    }
-                }
-                
-                unsubscribe();
-            }
-        });
+        // Use the centralized auth manager if available
+        const authManager = window.firebaseAuthManager;
+        const unsubscribe = authManager 
+            ? authManager.onAuthStateChanged(this.handleAuthChange.bind(this, resolve))
+            : firebase.auth().onAuthStateChanged(this.handleAuthChange.bind(this, resolve));
         
-        // 5 second timeout
-        setTimeout(() => {
+        // Set timeout
+        timeoutId = setTimeout(() => {
             if (!authResolved) {
                 console.log('⏰ Auth check timeout');
-                authResolved = true;
-                this.hideLoading();
-                unsubscribe();
-                
-                const user = firebase.auth().currentUser;
-                const hasLocalProfile = localStorage.getItem('farm-profile') || 
-                                       localStorage.getItem('profileData');
-                
-                if (user || hasLocalProfile) {
-                    console.log('✅ Found user after timeout');
-                    this.currentUser = user;
-                    this.showApp();
-                    resolve(true);
-                } else {
-                    console.log('❌ No user found after timeout');
-                    this.showAuth();
-                    resolve(false);
-                }
+                this.handleAuthTimeout(resolve, authResolved, unsubscribe);
             }
         }, 5000);
+        
+        // Store unsubscribe function and timeout ID for cleanup
+        this.authCleanup = { unsubscribe, timeoutId };
+        
+    }).catch(error => {
+        console.error('❌ Auth check promise rejected:', error);
+        return false;
     });
 }
 
+handleAuthChange(resolve, user) {
+    console.log('🔄 Auth change handler called:', user ? `User: ${user.email}` : 'No user');
+    
+    // Mark auth as checked
+    sessionStorage.setItem('authChecked', 'true');
+    
+    // Clear any pending cleanup
+    if (this.authCleanup) {
+        if (this.authCleanup.timeoutId) {
+            clearTimeout(this.authCleanup.timeoutId);
+        }
+        this.authCleanup = null;
+    }
+    
+    this.hideLoading();
+    
+    if (user) {
+        console.log('👤 User authenticated in handler:', user.email);
+        this.currentUser = user;
+        this.showApp();
+        resolve(true);
+    } else {
+        // Check local data
+        const hasLocalProfile = localStorage.getItem('farm-profile') || 
+                               localStorage.getItem('profileData');
+        
+        if (hasLocalProfile) {
+            console.log('💾 Using local profile data');
+            this.showApp();
+            resolve(true);
+        } else {
+            console.log('🔒 Showing login screen - no user found');
+            this.showAuth();
+            resolve(false);
+        }
+    }
+}
+
+handleAuthTimeout(resolve, authResolved, unsubscribe) {
+    console.log('⏰ Auth check timeout reached');
+    
+    if (unsubscribe && typeof unsubscribe === 'function') {
+        unsubscribe();
+    }
+    
+    const user = firebase.auth().currentUser;
+    const hasLocalProfile = localStorage.getItem('farm-profile') || 
+                           localStorage.getItem('profileData');
+    
+    this.hideLoading();
+    
+    if (user || hasLocalProfile) {
+        console.log('✅ Found user after timeout');
+        this.currentUser = user;
+        this.showApp();
+        resolve(true);
+    } else {
+        console.log('❌ No user found after timeout');
+        this.showAuth();
+        resolve(false);
+    }
+}
+    
 // New method to initialize app after auth
 async initializeAppAfterAuth() {
     console.log('🚀 User authenticated, continuing app initialization...');
