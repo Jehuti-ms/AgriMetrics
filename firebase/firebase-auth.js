@@ -1,4 +1,6 @@
-// firebase-auth.js
+[file name]: firebase-auth.js
+[file content begin]
+// firebase-auth.js - FIXED GOOGLE SIGN-IN
 console.log('Loading Firebase auth...');
 
 class FirebaseAuth {
@@ -12,342 +14,164 @@ class FirebaseAuth {
         }
     }
 
+    // ======== EMAIL/PASSWORD AUTH METHODS ========
     async signUp(email, password, userData) {
-        if (!this.auth) {
-            return { success: false, error: 'Firebase Auth not available' };
-        }
-        
         try {
             const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
-            if (userData) {
-                await this.saveUserData(userCredential.user.uid, userData);
+            const user = userCredential.user;
+            
+            // Update display name if provided
+            if (userData?.name) {
+                await user.updateProfile({
+                    displayName: userData.name
+                });
             }
-            return { success: true, user: userCredential.user };
+            
+            // Save user data to Firestore
+            await this.saveUserToFirestore(user, {
+                ...userData,
+                provider: 'email'
+            });
+            
+            return { success: true, user: user };
         } catch (error) {
+            console.error('Sign-up error:', error);
             return { success: false, error: error.message };
         }
     }
 
     async signIn(email, password) {
-        if (!this.auth) {
-            return { success: false, error: 'Firebase Auth not available' };
-        }
-        
         try {
             const userCredential = await this.auth.signInWithEmailAndPassword(email, password);
-            return { success: true, user: userCredential.user };
+            const user = userCredential.user;
+            
+            // Update last login
+            await this.saveUserToFirestore(user, {
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            return { success: true, user: user };
         } catch (error) {
+            console.error('Sign-in error:', error);
             return { success: false, error: error.message };
         }
     }
 
     async resetPassword(email) {
-        if (!this.auth) {
-            return { success: false, error: 'Firebase Auth not available' };
-        }
-        
         try {
             await this.auth.sendPasswordResetEmail(email);
             return { success: true };
         } catch (error) {
+            console.error('Reset password error:', error);
             return { success: false, error: error.message };
         }
     }
 
-    async saveUserData(uid, userData) {
-        if (!firebase.firestore) {
-            return { success: false, error: 'Firestore not available' };
-        }
-        
+    // ======== GOOGLE SIGN-IN ========
+    async signInWithGoogle() {
         try {
-            await firebase.firestore().collection('users').doc(uid).set({
-                ...userData,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            console.log('🔐 Starting Google sign-in...');
+            
+            // Check environment
+            if (window.location.protocol === 'file:') {
+                throw new Error('Cannot use Google Sign-In with file:// protocol. Please use a local server.');
+            }
+            
+            // Check for GitHub Pages
+            const isGitHubPages = window.location.hostname.includes('github.io');
+            
+            if (isGitHubPages) {
+                console.log('🌐 GitHub Pages detected - using redirect method');
+                return await this.signInWithGoogleRedirect();
+            }
+            
+            // Use popup method for local/dev
+            console.log('🎯 Using popup method...');
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('profile');
+            provider.addScope('email');
+            provider.setCustomParameters({
+                prompt: 'select_account'
             });
-            return { success: true };
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
-    }
-
-    // Google Sign-in
-  async signInWithGoogle() {
-    try {
-        console.log('🔐 Starting Google sign-in...');
-        console.log('=== ENVIRONMENT INFO ===');
-        console.log('Current domain:', window.location.hostname);
-        console.log('Full URL:', window.location.href);
-        console.log('Protocol:', window.location.protocol);
-        console.log('User Agent:', navigator.userAgent);
-        console.log('GitHub Pages:', window.location.hostname.includes('github.io'));
-        console.log('====================');
-        
-        // Check if we're in a valid environment
-        if (window.location.protocol === 'file:') {
-            throw new Error('Cannot use Google Sign-In with file:// protocol. Please use a local server (http://localhost).');
-        }
-        
-        // Check for GitHub Pages (needs redirect instead of popup)
-        const isGitHubPages = window.location.hostname.includes('github.io');
-        
-        if (isGitHubPages) {
-            console.log('🌐 GitHub Pages detected - using redirect method');
-            console.log('⚠️ Popups may be blocked by Cross-Origin-Opener-Policy');
             
-            // Ask user if they want to use redirect
-            const useRedirect = confirm(
-                'For GitHub Pages compatibility:\n\n' +
-                'We need to use redirect method instead of popup.\n' +
-                'You will be taken to Google and then back to this app.\n\n' +
-                'Click OK to continue with Google Sign-In,\n' +
-                'or Cancel to use Email/Password.'
-            );
+            console.log('✅ Google provider created');
             
-            if (!useRedirect) {
-                console.log('User chose to cancel redirect');
-                return { success: false, error: 'User cancelled redirect' };
-            }
+            // Add timeout for popup
+            const signInPromise = this.auth.signInWithPopup(provider);
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Sign-in timeout (30s)')), 30000);
+            });
             
-            // Use redirect method for GitHub Pages
-            return await this.signInWithGoogleRedirect();
-        }
-        
-        console.log('🎯 Using popup method...');
-        const provider = new firebase.auth.GoogleAuthProvider();
-        provider.addScope('profile');
-        provider.addScope('email');
-        
-        // Add custom parameters for better UX
-        provider.setCustomParameters({
-            prompt: 'select_account',
-            login_hint: '',
-            hd: ''
-        });
-        
-        console.log('✅ Google provider created');
-        console.log('🪟 Attempting popup...');
-        
-        // Add timeout to catch popup blockers
-        const signInPromise = firebase.auth().signInWithPopup(provider);
-        const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Sign-in timeout (30s). Please check for popup blockers.')), 30000);
-        });
-        
-        console.log('⏱️ Waiting for popup response...');
-        const result = await Promise.race([signInPromise, timeoutPromise]);
-        
-        console.log('🎉 ✅ Google sign-in successful!');
-        console.log('📋 USER INFO:');
-        console.log('- Email:', result.user.email);
-        console.log('- Display Name:', result.user.displayName);
-        console.log('- UID:', result.user.uid);
-        console.log('- Provider:', result.user.providerId);
-        console.log('- Email Verified:', result.user.emailVerified);
-        
-        this.showNotification(`Welcome ${result.user.displayName}!`, 'success');
-        
-        // Save user to Firestore
-        await this.saveUserToFirestore(result.user);
-        
-        // Redirect to dashboard after successful login
-        setTimeout(() => {
-            console.log('🔄 Redirecting to dashboard...');
-            window.location.href = 'dashboard.html';
-        }, 1500);
-        
-        return { success: true, user: result.user };
-        
-    } catch (error) {
-        console.error('❌ Google sign-in error:', error);
-        console.error('Error code:', error.code);
-        console.error('Error message:', error.message);
-        console.error('Full error object:', error);
-        
-        // Handle specific errors
-        let userMessage = `Google sign-in failed: ${error.message}`;
-        let shouldTryRedirect = false;
-        
-        if (error.code === 'auth/unauthorized-domain') {
-            userMessage = 
-                `Domain "${window.location.hostname}" is not authorized.\n\n` +
-                `Please add it to Firebase Console:\n` +
-                `1. Go to Firebase Console → Authentication\n` +
-                `2. Click "Sign-in method" tab\n` +
-                `3. Scroll to "Authorized domains"\n` +
-                `4. Add: "localhost" and "${window.location.hostname}"`;
-                
-        } else if (error.code === 'auth/popup-blocked') {
-            userMessage = 'Popup was blocked by your browser. Please allow popups for this site.';
-            shouldTryRedirect = true;
+            console.log('⏱️ Waiting for popup response...');
+            const result = await Promise.race([signInPromise, timeoutPromise]);
             
-        } else if (error.code === 'auth/popup-closed-by-user') {
-            userMessage = 'Sign-in was cancelled. Please try again.';
-            
-            // If on GitHub Pages, suggest redirect
-            if (window.location.hostname.includes('github.io')) {
-                userMessage += '\n\nGitHub Pages may block popups. Try redirect method?';
-                shouldTryRedirect = true;
-            }
-            
-        } else if (error.code === 'auth/cancelled-popup-request') {
-            userMessage = 'Another popup is already open. Please close other popups and try again.';
-            
-        } else if (error.message.includes('Cross-Origin-Opener-Policy')) {
-            userMessage = 'GitHub Pages security policy blocks popups. Using redirect method instead...';
-            shouldTryRedirect = true;
-            
-        } else if (error.message.includes('file://')) {
-            userMessage = 
-                'Cannot use Google Sign-In when opening file directly.\n\n' +
-                'Please run a local server:\n' +
-                '1. Open terminal in project folder\n' +
-                '2. Run: npx serve .\n' +
-                '3. Open http://localhost:3000';
-        }
-        
-        this.showNotification(userMessage, 'error');
-        
-        // Try redirect as fallback
-        if (shouldTryRedirect) {
-            console.log('🔄 Attempting redirect as fallback...');
-            setTimeout(() => {
-                const tryRedirect = confirm(
-                    'Popup method failed. Would you like to try redirect method instead?\n\n' +
-                    'You will be taken to Google and then back here.'
-                );
-                
-                if (tryRedirect) {
-                    this.signInWithGoogleRedirect();
-                }
-            }, 1000);
-        }
-        
-        return { success: false, error: error.message };
-    }
-}
-
-// Add this new method for redirect authentication
-async signInWithGoogleRedirect() {
-    try {
-        console.log('🔄 Starting Google sign-in with redirect method...');
-        console.log('Current domain:', window.location.hostname);
-        
-        const provider = new firebase.auth.GoogleAuthProvider();
-        provider.addScope('profile');
-        provider.addScope('email');
-        
-        // Store where to return after auth
-        sessionStorage.setItem('authReturnUrl', window.location.href);
-        sessionStorage.setItem('authMethod', 'google-redirect');
-        sessionStorage.setItem('authTimestamp', Date.now().toString());
-        
-        console.log('📝 Stored auth state in sessionStorage');
-        console.log('🔀 Redirecting to Google...');
-        
-        // Start redirect
-        await firebase.auth().signInWithRedirect(provider);
-        
-        console.log('↪️ Redirect initiated - user will return after authentication');
-        
-        // Show message (user will be redirected away momentarily)
-        this.showNotification('Redirecting to Google for sign-in...', 'info');
-        
-        return { success: true, redirecting: true };
-
-        // Mark that we're attempting a redirect
-        sessionStorage.setItem('googleRedirectAttempt', 'true');
-        sessionStorage.setItem('redirectStartTime', Date.now().toString());
-        
-        console.log('🔀 Starting redirect to Google...');
-        await firebase.auth().signInWithRedirect(provider);
-        
-        return { success: true, redirecting: true };
-        
-    }catch (error) {
-        console.error('❌ Redirect sign-in error:', error);
-        this.showNotification(`Redirect failed: ${error.message}`, 'error');
-        return { success: false, error: error.message };
-    }  
-}
-
-// Add this method to handle redirect results
-static handleRedirectResult() {
-    console.log('🔄 Checking for redirect authentication result...');
-    
-    firebase.auth().getRedirectResult()
-    .then((result) => {
-        if (result.user) {
-            console.log('🎉 ✅ Redirect authentication successful!');
+            console.log('🎉 Google sign-in successful!');
             console.log('User:', result.user.email);
             
-            // Clear stored data
-            sessionStorage.removeItem('authReturnUrl');
-            sessionStorage.removeItem('authMethod');
-            sessionStorage.removeItem('authTimestamp');
+            // Save user to Firestore
+            await this.saveUserToFirestore(result.user, {
+                provider: 'google'
+            });
             
-            // Redirect to dashboard
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 1000);
+            return { success: true, user: result.user };
             
-        } else {
-            console.log('No redirect user found - normal page load');
-        }
-    })
-    .catch((error) => {
-        console.error('❌ Redirect result error:', error);
-        
-        // Return to original page
-        const returnUrl = sessionStorage.getItem('authReturnUrl') || 'index.html';
-        sessionStorage.clear();
-        
-        if (error.code !== 'auth/popup-closed-by-user') {
-            console.log('Returning to:', returnUrl);
-            // Don't redirect if we're already on index
-            if (!window.location.href.includes('index.html')) {
-                window.location.href = returnUrl;
+        } catch (error) {
+            console.error('❌ Google sign-in error:', error);
+            
+            let userMessage = `Google sign-in failed: ${error.message}`;
+            
+            if (error.code === 'auth/popup-blocked') {
+                userMessage = 'Popup was blocked. Trying redirect method...';
+                // Try redirect as fallback
+                return await this.signInWithGoogleRedirect();
+            } else if (error.code === 'auth/unauthorized-domain') {
+                userMessage = `Domain "${window.location.hostname}" is not authorized in Firebase Console.`;
             }
+            
+            this.showNotification(userMessage, 'error');
+            return { success: false, error: error.message };
         }
-    });
-}
-
-async saveUserToFirestore(user) {
-    try {
-        if (!firebase.firestore) {
-            console.log('Firestore not available, skipping user save');
-            return;
-        }
-        
-        const userRef = firebase.firestore().collection('users').doc(user.uid);
-        
-        const userData = {
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName,
-            photoURL: user.photoURL,
-            provider: 'google',
-            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        await userRef.set(userData, { merge: true });
-        console.log('✅ User data saved to Firestore');
-        
-    } catch (error) {
-        console.error('Error saving user to Firestore:', error);
-        // Don't show error to user - this is background operation
     }
-}
-    
-    // Apple Sign-in (requires proper setup in Firebase console)
+
+    // Redirect method for GitHub Pages
+    async signInWithGoogleRedirect() {
+        try {
+            console.log('🔄 Starting Google sign-in redirect...');
+            
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('profile');
+            provider.addScope('email');
+            
+            // Store current URL to return after auth
+            sessionStorage.setItem('authReturnUrl', window.location.href);
+            sessionStorage.setItem('authMethod', 'google-redirect');
+            
+            console.log('🔀 Redirecting to Google...');
+            await this.auth.signInWithRedirect(provider);
+            
+            return { success: true, redirecting: true };
+            
+        } catch (error) {
+            console.error('❌ Redirect sign-in error:', error);
+            this.showNotification(`Redirect failed: ${error.message}`, 'error');
+            return { success: false, error: error.message };
+        }
+    }
+
+    // ======== APPLE SIGN-IN ========
     async signInWithApple() {
         try {
             const provider = new firebase.auth.OAuthProvider('apple.com');
             provider.addScope('email');
             provider.addScope('name');
             
-            const result = await firebase.auth().signInWithPopup(provider);
+            const result = await this.auth.signInWithPopup(provider);
+            
+            // Save user to Firestore
+            await this.saveUserToFirestore(result.user, {
+                provider: 'apple'
+            });
+            
             this.showNotification(`Welcome!`, 'success');
             return { success: true, user: result.user };
         } catch (error) {
@@ -357,38 +181,119 @@ async saveUserToFirestore(user) {
         }
     }
     
-    // Add to auth UI
+    // ======== USER DATA MANAGEMENT ========
+    async saveUserToFirestore(user, additionalData = {}) {
+        try {
+            if (!firebase.firestore) {
+                console.log('Firestore not available, skipping user save');
+                return;
+            }
+            
+            const userRef = firebase.firestore().collection('users').doc(user.uid);
+            
+            const userData = {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName || additionalData.name || '',
+                photoURL: user.photoURL || '',
+                provider: additionalData.provider || 'unknown',
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                ...additionalData
+            };
+            
+            // Remove undefined values
+            Object.keys(userData).forEach(key => {
+                if (userData[key] === undefined) {
+                    delete userData[key];
+                }
+            });
+            
+            await userRef.set(userData, { merge: true });
+            console.log('✅ User data saved to Firestore');
+            
+        } catch (error) {
+            console.error('Error saving user to Firestore:', error);
+        }
+    }
+    
+    // ======== UI METHODS ========
     renderAuthButtons() {
         return `
-            <button class="btn-social google" onclick="authManager.signInWithGoogle()">
-                <span class="social-icon">G</span>
-                Continue with Google
-            </button>
-            <button class="btn-social apple" onclick="authManager.signInWithApple()">
-                <span class="social-icon"></span>
-                Continue with Apple
-            </button>
+            <div class="social-buttons-container">
+                <button class="btn-social google" data-provider="google">
+                    <span class="social-icon">G</span>
+                    Continue with Google
+                </button>
+                <button class="btn-social apple" data-provider="apple">
+                    <span class="social-icon"></span>
+                    Continue with Apple
+                </button>
+            </div>
         `;
     }
 
     showNotification(message, type = 'info') {
-        if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
-            window.coreModule.showNotification(message, type);
+        // Use existing notification system or create simple one
+        if (window.authModule && typeof window.authModule.showNotification === 'function') {
+            window.authModule.showNotification(message, type);
         } else if (type === 'error') {
             console.error('❌ ' + message);
             alert('❌ ' + message);
         } else if (type === 'success') {
             console.log('✅ ' + message);
             alert('✅ ' + message);
-        } else if (type === 'warning') {
-            console.warn('⚠️ ' + message);
-            alert('⚠️ ' + message);
         } else {
             console.log('ℹ️ ' + message);
             alert('ℹ️ ' + message);
         }
     }
+    
+    // Static method to handle redirect results
+    static handleRedirectResult() {
+        console.log('🔄 Checking for redirect authentication result...');
+        
+        firebase.auth().getRedirectResult()
+        .then((result) => {
+            if (result.user) {
+                console.log('🎉 Redirect authentication successful!');
+                console.log('User:', result.user.email);
+                
+                // Clear stored data
+                sessionStorage.removeItem('authReturnUrl');
+                sessionStorage.removeItem('authMethod');
+                
+                // Show success message
+                if (window.authManager) {
+                    window.authManager.showNotification(`Welcome ${result.user.displayName || result.user.email}!`, 'success');
+                }
+                
+            } else {
+                console.log('No redirect user found');
+            }
+        })
+        .catch((error) => {
+            console.error('❌ Redirect result error:', error);
+            
+            // Don't show error for "no user" cases
+            if (error.code !== 'auth/no-auth-event' && 
+                error.code !== 'auth/popup-closed-by-user') {
+                console.error('Redirect authentication failed:', error);
+            }
+            
+            // Clear session storage
+            sessionStorage.removeItem('authReturnUrl');
+            sessionStorage.removeItem('authMethod');
+        });
+    }
 }
 
+// Initialize auth manager
 window.authManager = new FirebaseAuth();
 
+// Handle redirect results on page load
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+        FirebaseAuth.handleRedirectResult();
+    }
+});
+[file content end]
