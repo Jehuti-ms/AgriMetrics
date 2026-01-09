@@ -18,29 +18,41 @@ class FirebaseAuth {
 
 // firebase-auth.js
 
-function signUp(email, password) {
-  return firebase.auth().createUserWithEmailAndPassword(email, password)
-    .then((userCredential) => {
-      const user = userCredential.user;
-      console.log("✅ User created:", user.uid, user.email);
+// firebase-auth.js
 
+function signUp(email, password) {
+  firebase.auth().createUserWithEmailAndPassword(email, password)
+    .then((cred) => {
+      console.log("✅ User created:", cred.user.uid, cred.user.email);
       if (window.app) {
-        window.app.currentUser = user;
+        window.app.currentUser = cred.user;
         window.app.showApp();
         window.app.showSection("dashboard");
       }
-
-      return { success: true, user };
     })
     .catch((error) => {
       console.error("❌ Sign-up failed:", error.code, error.message);
       alert(`Sign-up failed: ${error.code} — ${error.message}`);
-      return { success: false, error: error.message };
     });
 }
-
-// expose globally if needed
 window.signUp = signUp;
+
+function signIn(email, password) {
+  firebase.auth().signInWithEmailAndPassword(email, password)
+    .then((cred) => {
+      console.log("✅ Signed in:", cred.user.uid, cred.user.email);
+      if (window.app) {
+        window.app.currentUser = cred.user;
+        window.app.showApp();
+        window.app.showSection("dashboard");
+      }
+    })
+    .catch((error) => {
+      console.error("❌ Sign-in failed:", error.code, error.message);
+      alert(`Sign-in failed: ${error.code} — ${error.message}`);
+    });
+}
+window.signIn = signIn;
     
 function signIn(email, password) {
   return firebase.auth().signInWithEmailAndPassword(email, password)
