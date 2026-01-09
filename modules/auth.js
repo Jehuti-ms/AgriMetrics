@@ -288,161 +288,92 @@ class AuthModule {
         }
     }
 
-       // In auth.js, update the handleSignUp method:
-
-async handleSignUp() {
-    const form = document.getElementById('signup-form-element');
-    if (!form) return;
-
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const name = document.getElementById('signup-name')?.value || '';
-    const email = document.getElementById('signup-email')?.value || '';
-    const password = document.getElementById('signup-password')?.value || '';
-    const confirmPassword = document.getElementById('signup-confirm-password')?.value || '';
-    const farmName = document.getElementById('farm-name')?.value || '';
-
-    // Validation
-    if (password !== confirmPassword) {
-        this.showNotification('Passwords do not match', 'error');
-        return;
-    }
-
-    if (password.length < 6) {
-        this.showNotification('Password must be at least 6 characters', 'error');
-        return;
-    }
-
-    if (!email || !email.includes('@')) {
-        this.showNotification('Please enter a valid email address', 'error');
-        return;
-    }
-
-    if (submitBtn) {
-        submitBtn.innerHTML = 'Creating Account...';
-        submitBtn.disabled = true;
-    }
-
-    try {
-        const result = await window.authManager?.signUp(email, password, {
-            name: name,
-            email: email,
-            farmName: farmName || 'My Farm',
-            createdAt: new Date().toISOString()
-        });
-
-        if (result?.success) {
-            console.log('✅ Sign-up successful, user auto-logged in:', result.user?.email);
-            
-            // IMPORTANT: Store user data locally
-            const userData = {
-                uid: result.user.uid,
-                email: result.user.email,
-                name: name,
-                farmName: farmName || 'My Farm',
-                createdAt: new Date().toISOString()
-            };
-            
-            localStorage.setItem('farm-profile', JSON.stringify(userData));
-            localStorage.setItem('userEmail', email);
-            
-            // Show success and redirect
-            this.showNotification('Account created successfully! Redirecting to dashboard...', 'success');
-            
-            // Redirect to dashboard after short delay
-            setTimeout(() => {
-                console.log('🔄 Redirecting to dashboard from sign-up...');
-                // Check if we're on index.html or another page
-                if (window.location.pathname.includes('index.html') || 
-                    window.location.pathname === '/' || 
-                    window.location.pathname.endsWith('.html')) {
-                    window.location.href = 'dashboard.html';
-                } else {
-                    // Reload to trigger auth state change
-                    window.location.reload();
-                }
-            }, 1500);
-            
-        } else {
-            this.showNotification(result?.error || 'Error creating account', 'error');
-        }
-    } catch (error) {
-        console.error('Sign-up error:', error);
-        this.showNotification('Error creating account: ' + error.message, 'error');
-    } finally {
-        if (submitBtn) {
-            submitBtn.innerHTML = 'Create Account';
-            submitBtn.disabled = false;
-        }
-    }
-}
+        async handleSignUp() {
+        const form = document.getElementById('signup-form-element');
+        if (!form) return;
     
-    // In auth.js, update the handleSignIn method:
-
-async handleSignIn() {
-    const form = document.getElementById('signin-form-element');
-    if (!form) return;
-
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const email = document.getElementById('signin-email')?.value || '';
-    const password = document.getElementById('signin-password')?.value || '';
-
-    // Basic validation
-    if (!email || !password) {
-        this.showNotification('Please enter both email and password', 'error');
-        return;
-    }
-
-    if (submitBtn) {
-        submitBtn.innerHTML = 'Signing In...';
-        submitBtn.disabled = true;
-    }
-
-    try {
-        console.log('🔐 Attempting sign-in for:', email);
-        
-        const result = await window.authManager?.signIn(email, password);
-
-        if (result?.success) {
-            console.log('✅ Sign-in successful:', result.user?.email);
-            
-            // Store user data locally
-            const userData = {
-                uid: result.user.uid,
-                email: result.user.email,
-                lastLogin: new Date().toISOString()
-            };
-            
-            localStorage.setItem('farm-profile', JSON.stringify(userData));
-            localStorage.setItem('userEmail', email);
-            
-            this.showNotification('Welcome back! Redirecting to dashboard...', 'success');
-            
-            // Redirect to dashboard
-            setTimeout(() => {
-                console.log('🔄 Redirecting to dashboard from sign-in...');
-                if (window.location.pathname.includes('index.html') || 
-                    window.location.pathname === '/' || 
-                    window.location.pathname.endsWith('.html')) {
-                    window.location.href = 'dashboard.html';
-                } else {
-                    window.location.reload();
-                }
-            }, 1500);
-            
-        } else {
-            console.error('❌ Sign-in failed:', result?.error);
-            this.showNotification(result?.error || 'Invalid email or password', 'error');
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const name = document.getElementById('signup-name')?.value || '';
+        const email = document.getElementById('signup-email')?.value || '';
+        const password = document.getElementById('signup-password')?.value || '';
+        const confirmPassword = document.getElementById('signup-confirm-password')?.value || '';
+        const farmName = document.getElementById('farm-name')?.value || '';
+    
+        if (password !== confirmPassword) {
+            this.showNotification('Passwords do not match', 'error');
+            return;
         }
-    } catch (error) {
-        console.error('Sign-in error:', error);
-        this.showNotification('Error signing in: ' + error.message, 'error');
-    } finally {
+    
+        if (password.length < 6) {
+            this.showNotification('Password must be at least 6 characters', 'error');
+            return;
+        }
+    
         if (submitBtn) {
-            submitBtn.innerHTML = 'Sign In';
-            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Creating Account...';
+            submitBtn.disabled = true;
+        }
+    
+        try {
+            const result = await window.authManager?.signUp(email, password, {
+                name: name,
+                email: email,
+                farmName: farmName
+            });
+    
+            if (result?.success) {
+                this.showNotification('Account created successfully!', 'success');
+                // ADD REDIRECTION
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
+            } else {
+                this.showNotification(result?.error || 'Error creating account', 'error');
+            }
+        } catch (error) {
+            this.showNotification('Error creating account', 'error');
+        } finally {
+            if (submitBtn) {
+                submitBtn.innerHTML = 'Create Account';
+                submitBtn.disabled = false;
+            }
         }
     }
-}
+    
+    async handleSignIn() {
+        const form = document.getElementById('signin-form-element');
+        if (!form) return;
+    
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const email = document.getElementById('signin-email')?.value || '';
+        const password = document.getElementById('signin-password')?.value || '';
+    
+        if (submitBtn) {
+            submitBtn.innerHTML = 'Signing In...';
+            submitBtn.disabled = true;
+        }
+    
+        try {
+            const result = await window.authManager?.signIn(email, password);
+    
+            if (result?.success) {
+                this.showNotification('Welcome back!', 'success');
+                // ADD REDIRECTION
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
+            } else {
+                this.showNotification(result?.error || 'Error signing in', 'error');
+            }
+        } catch (error) {
+            this.showNotification('Error signing in', 'error');
+        } finally {
+            if (submitBtn) {
+                submitBtn.innerHTML = 'Sign In';
+                submitBtn.disabled = false;
+            }
+        }
+    }
     
     async handleForgotPassword() {
         const form = document.getElementById('forgot-password-form-element');
