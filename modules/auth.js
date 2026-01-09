@@ -12,52 +12,65 @@ class AuthModule {
     }
 
     // ======== SOCIAL LOGIN METHODS ========
-    renderSocialLoginButtons() {
-        console.log('🔄 Rendering social login buttons...');
-        const socialContainer = document.getElementById('social-login-container');
-        
-        if (!socialContainer) {
-            console.warn('⚠️ Social container not found');
-            return;
-        }
+   // In your auth.js, update this method:
+renderSocialLoginButtons() {
+    console.log('🔄 Rendering social login buttons...');
+    const socialContainer = document.getElementById('social-login-container');
+    
+    if (!socialContainer) {
+        console.warn('⚠️ Social container not found - retrying...');
+        // Try again after a delay
+        setTimeout(() => this.renderSocialLoginButtons(), 500);
+        return;
+    }
 
-        console.log('✅ Social container found, rendering buttons...');
-        
-        // Create social buttons HTML directly (no need for renderAuthButtons method)
-        socialContainer.innerHTML = `
-            <div class="social-buttons">
-                <button id="google-signin-btn" class="social-btn google-btn">
-                    <span class="social-icon">G</span>
-                    <span class="social-text">Sign in with Google</span>
-                </button>
-                <button id="github-signin-btn" class="social-btn github-btn">
-                    <span class="social-icon">⚡</span>
-                    <span class="social-text">Sign in with GitHub</span>
-                </button>
-            </div>
-        `;
+    console.log('✅ Social container found, rendering buttons...');
+    
+    // Create social buttons HTML directly
+    socialContainer.innerHTML = `
+        <div class="social-buttons">
+            <button id="google-signin-btn" class="social-btn google-btn">
+                <span class="social-icon">G</span>
+                <span class="social-text">Sign in with Google</span>
+            </button>
+            <button id="github-signin-btn" class="social-btn github-btn">
+                <span class="social-icon">⚡</span>
+                <span class="social-text">Sign in with GitHub</span>
+            </button>
+        </div>
+    `;
 
-        // Add click handlers
+    console.log('✅ Social buttons HTML rendered');
+    
+    // Wait a bit for DOM to update, then add event listeners
+    setTimeout(() => {
         const googleBtn = document.getElementById('google-signin-btn');
         const githubBtn = document.getElementById('github-signin-btn');
         
         if (googleBtn) {
-            googleBtn.onclick = async (e) => {
+            console.log('✅ Google button found, adding listener');
+            googleBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
                 await this.handleSocialSignIn('google');
-            };
+            });
+        } else {
+            console.warn('⚠️ Google button not found');
         }
         
         if (githubBtn) {
-            githubBtn.onclick = async (e) => {
+            console.log('✅ GitHub button found, adding listener');
+            githubBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
                 await this.handleSocialSignIn('github');
-            };
+            });
+        } else {
+            console.warn('⚠️ GitHub button not found');
         }
         
-        console.log('✅ Social buttons rendered');
-    }
-
+        console.log('✅ Social buttons rendered with listeners');
+    }, 100);
+}
+    
     async handleSocialSignIn(provider) {
         console.log(`🔐 Attempting ${provider} sign-in...`);
         
