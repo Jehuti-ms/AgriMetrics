@@ -75,7 +75,7 @@ class FarmManagementApp {
         }, 100);
     }
 
-    async checkAuthState() {
+  async checkAuthState() {
   console.log('🔐 Checking authentication state...');
 
   return new Promise((resolve) => {
