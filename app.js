@@ -1,17 +1,4 @@
 // app.js - FIXED FARM MODULES INITIALIZATION
-// app.js - Add at the very top
-(function() {
-    'use strict';
-    
-    console.log('🔒 Anti-loop check...');
-    
-    // Prevent multiple initializations
-    if (window.appInitialized) {
-        console.log('⚠️ App already initialized, skipping...');
-        return; // This is now inside a function, so it's legal
-    }
-    window.appInitialized = true;
-
 console.log('Loading main app...');
 
 class FarmManagementApp {
@@ -88,123 +75,125 @@ class FarmManagementApp {
         }, 100);
     }
 
-async checkAuthState() {
-    console.log('🔐 Checking authentication state...');
-    
-    // Immediately hide loading
-    this.hideLoading();
-    
-    // Check for user
-    const user = firebase.auth().currentUser;
-    const hasLocalProfile = localStorage.getItem('farm-profile');
-    
-    if (user || hasLocalProfile) {
-        console.log('✅ User found:', user ? user.email : 'from localStorage');
-        this.currentUser = user;
-        this.showApp();
-        return true;
-    }
-    
-    // No user found
-    console.log('❌ No user found');
-    this.showAuth();
-    return false;
-}
-    
-handleAuthChange(resolve, user) {
-    console.log('🔄 Auth change handler called:', user ? `User: ${user.email}` : 'No user');
-    
-    // Mark auth as checked
-    sessionStorage.setItem('authChecked', 'true');
-    
-    // Clear any pending cleanup
-    if (this.authCleanup) {
-        if (this.authCleanup.timeoutId) {
-            clearTimeout(this.authCleanup.timeoutId);
-        }
-        this.authCleanup = null;
-    }
-    
-    this.hideLoading();
-    
-    if (user) {
-        console.log('👤 User authenticated in handler:', user.email);
-        this.currentUser = user;
-        this.showApp();
-        resolve(true);
-    } else {
-        // Check local data
-        const hasLocalProfile = localStorage.getItem('farm-profile') || 
-                               localStorage.getItem('profileData');
+    async checkAuthState() {
+        console.log('🔐 Checking authentication state...');
         
-        if (hasLocalProfile) {
-            console.log('💾 Using local profile data');
-            this.showApp();
-            resolve(true);
-        } else {
-            console.log('🔒 Showing login screen - no user found');
-            this.showAuth();
-            resolve(false);
-        }
+        return new Promise((resolve) => {
+            if (typeof firebase === 'undefined' || !firebase.auth) {
+                console.log('⚠️ Firebase not available');
+                this.hideLoading();
+                this.showAuth();
+                resolve(false);
+                return;
+            }
+            
+            let authResolved = false;
+            
+            const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+                console.log('🔥 Auth state changed:', user ? 'User logged in' : 'No user');
+                
+                if (!authResolved) {
+                    authResolved = true;
+                    this.hideLoading();
+                    
+                    if (user) {
+                        console.log('👤 User authenticated:', user.email);
+                        this.currentUser = user;
+                        this.showApp();
+                        resolve(true);
+                    } else {
+                        // Check local data
+                        const hasLocalProfile = localStorage.getItem('farm-profile') || 
+                                               localStorage.getItem('profileData');
+                        
+                        if (hasLocalProfile) {
+                            console.log('💾 Using local profile data');
+                            this.showApp();
+                            resolve(true);
+                        } else {
+                            console.log('🔒 Showing login screen');
+                            this.showAuth();
+                            resolve(false);
+                        }
+                    }
+                    
+                    unsubscribe();
+                }
+            });
+            
+            // 5 second timeout
+            setTimeout(() => {
+                if (!authResolved) {
+                    console.log('⏰ Auth check timeout');
+                    authResolved = true;
+                    this.hideLoading();
+                    unsubscribe();
+                    
+                    const user = firebase.auth().currentUser;
+                    const hasLocalProfile = localStorage.getItem('farm-profile') || 
+                                           localStorage.getItem('profileData');
+                    
+                    if (user || hasLocalProfile) {
+                        console.log('✅ Found user after timeout');
+                        this.currentUser = user;
+                        this.showApp();
+                        resolve(true);
+                    } else {
+                        console.log('❌ No user found after timeout');
+                        this.showAuth();
+                        resolve(false);
+                    }
+                }
+            }, 5000);
+        });
     }
-}
 
-handleAuthTimeout(resolve, authResolved, unsubscribe) {
-    console.log('⏰ Auth check timeout reached');
-    
-    if (unsubscribe && typeof unsubscribe === 'function') {
-        unsubscribe();
+    showLoading() {
+        console.log('⏳ Showing loading screen');
+        if (!document.getElementById('app-loading')) {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'app-loading';
+            loadingDiv.innerHTML = `
+                <div style="
+                    position: fixed;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    background: white;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 9999;
+                ">
+                    <div style="
+                        width: 50px;
+                        height: 50px;
+                        border: 5px solid #f3f3f3;
+                        border-top: 5px solid #4CAF50;
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                        margin-bottom: 20px;
+                    "></div>
+                    <div style="color: #666; font-size: 16px;">Loading Farm Manager...</div>
+                </div>
+            `;
+            document.body.appendChild(loadingDiv);
+            
+            // Add animation style
+            if (!document.querySelector('#loading-styles')) {
+                const style = document.createElement('style');
+                style.id = 'loading-styles';
+                style.textContent = `
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        } else {
+            document.getElementById('app-loading').style.display = 'flex';
+        }
     }
-    
-    const user = firebase.auth().currentUser;
-    const hasLocalProfile = localStorage.getItem('farm-profile') || 
-                           localStorage.getItem('profileData');
-    
-    this.hideLoading();
-    
-    if (user || hasLocalProfile) {
-        console.log('✅ Found user after timeout');
-        this.currentUser = user;
-        this.showApp();
-        resolve(true);
-    } else {
-        console.log('❌ No user found after timeout');
-        this.showAuth();
-        resolve(false);
-    }
-}
-    
-// New method to initialize app after auth
-async initializeAppAfterAuth() {
-    console.log('🚀 User authenticated, continuing app initialization...');
-    
-    // CRITICAL: Initialize StyleManager FIRST before any modules
-    this.initializeStyleManager();
-    
-    // CRITICAL: Initialize FarmModules core system
-    this.initializeFarmModules();
-    
-    this.isDemoMode = true;
-    
-    // Load user preferences
-    await this.loadUserPreferences();
-    
-    // Setup navigation and events
-    this.createTopNavigation();
-    
-    // Small delay to ensure DOM is fully rendered
-    setTimeout(() => {
-        this.setupHamburgerMenu();
-        this.setupSideMenuEvents();
-        this.setupEventListeners();
-        this.setupDarkMode();
-        
-        // Load initial section
-        this.showSection(this.currentSection);
-        
-        console.log('✅ App initialized successfully');
-    }, 100);
-}
 
     hideLoading() {
         const loadingDiv = document.getElementById('app-loading');
@@ -714,4 +703,4 @@ if (document.readyState === 'loading') {
     });
 } else {
     window.app = new FarmManagementApp();
-})();
+}
