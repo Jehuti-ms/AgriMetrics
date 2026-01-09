@@ -1,393 +1,490 @@
-// firebase-auth.js
+// firebase-auth.js - FIXED SIGNUP/SIGNIN FLOW
 console.log('Loading Firebase auth...');
 
-class FirebaseAuth {
+// Ensure Firebase is initialized
+if (typeof firebase !== 'undefined') {
+    console.log('✅ Firebase Auth initialized');
+} else {
+    console.error('❌ Firebase not loaded');
+}
+
+class FirebaseAuthManager {
     constructor() {
-        this.auth = null;
-        if (typeof firebase !== 'undefined' && firebase.auth) {
-            this.auth = firebase.auth();
-            console.log('✅ Firebase Auth initialized');
-        } else {
-            console.log('⚠️ Firebase Auth not available');
-        }
+        this.auth = firebase.auth();
+        this.db = firebase.firestore();
+        this.isInitialized = false;
+        this.init();
     }
 
-    async signUp(email, password, userData) {
-        if (!this.auth) {
-            return { success: false, error: 'Firebase Auth not available' };
-        }
-        
-        try {
-            const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
-            if (userData) {
-                await this.saveUserData(userCredential.user.uid, userData);
+    init() {
+        console.log('🔧 Initializing Firebase Auth Manager...');
+        this.setupAuthStateListener();
+        this.setupErrorHandlers();
+        this.isInitialized = true;
+    }
+
+    setupAuthStateListener() {
+        this.auth.onAuthStateChanged((user) => {
+            console.log('🔥 Auth state changed:', user ? `User: ${user.email}` : 'No user');
+            
+            if (user) {
+                // User is signed in
+                this.handleUserSignedIn(user);
+            } else {
+                // User is signed out
+                this.handleUserSignedOut();
             }
-            return { success: true, user: userCredential.user };
+        }, (error) => {
+            console.error('❌ Auth state change error:', error);
+        });
+    }
+
+    setupErrorHandlers() {
+        // Handle common auth errors
+        this.auth.onAuthStateChanged(() => {}, (error) => {
+            console.error('❌ Auth state error:', error.code, error.message);
+            this.handleAuthError(error);
+        });
+    }
+
+    handleAuthError(error) {
+        const errorMessages = {
+            'auth/invalid-credential': 'Invalid email or password',
+            'auth/user-not-found': 'No account found with this email',
+            'auth/wrong-password': 'Incorrect password',
+            'auth/email-already-in-use': 'Email already in use',
+            'auth/weak-password': 'Password should be at least 6 characters',
+            'auth/invalid-email': 'Invalid email address',
+            'auth/network-request-failed': 'Network error. Please check your connection',
+            'auth/popup-closed-by-user': 'Sign-in popup was closed',
+            'auth/cancelled-popup-request': 'Multiple sign-in attempts detected'
+        };
+        
+        const userMessage = errorMessages[error.code] || error.message;
+        this.showAuthError(userMessage);
+    }
+
+    async signUp(email, password, userData = {}) {
+        try {
+            console.log('📝 Attempting sign up for:', email);
+            
+            // Clear any previous errors
+            this.clearAuthErrors();
+            
+            // Validate inputs
+            if (!this.validateEmail(email)) {
+                throw new Error('Please enter a valid email address');
+            }
+            
+            if (!this.validatePassword(password)) {
+                throw new Error('Password must be at least 6 characters');
+            }
+            
+            // Show loading state
+            this.showLoading('Creating account...');
+            
+            // Create user with email/password
+            const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
+            console.log('✅ User created:', userCredential.user.uid);
+            
+            // Get the user
+            const user = userCredential.user;
+            
+            // Send email verification (optional but recommended)
+            await user.sendEmailVerification();
+            console.log('📧 Verification email sent');
+            
+            // Create user profile in Firestore
+            await this.createUserProfile(user.uid, email, userData);
+            
+            // Auto-login the user (Firebase does this automatically)
+            console.log('🚀 User auto-logged in after sign-up');
+            
+            // Show success message
+            this.showSuccessMessage('Account created successfully! Redirecting...');
+            
+            // Return user for immediate use
+            return user;
+            
         } catch (error) {
-            return { success: false, error: error.message };
+            console.error('❌ Sign-up error:', error.code, error.message);
+            this.handleAuthError(error);
+            throw error;
+        } finally {
+            this.hideLoading();
         }
     }
 
     async signIn(email, password) {
-        if (!this.auth) {
-            return { success: false, error: 'Firebase Auth not available' };
-        }
-        
         try {
+            console.log('🔐 Attempting sign in for:', email);
+            
+            // Clear any previous errors
+            this.clearAuthErrors();
+            
+            // Validate inputs
+            if (!this.validateEmail(email)) {
+                throw new Error('Please enter a valid email address');
+            }
+            
+            // Show loading state
+            this.showLoading('Signing in...');
+            
+            // Sign in with email/password
             const userCredential = await this.auth.signInWithEmailAndPassword(email, password);
-            return { success: true, user: userCredential.user };
+            
+            console.log('✅ Sign in successful:', userCredential.user.email);
+            
+            // Return user
+            return userCredential.user;
+            
         } catch (error) {
-            return { success: false, error: error.message };
+            console.error('❌ Sign-in error:', error.code, error.message);
+            this.handleAuthError(error);
+            throw error;
+        } finally {
+            this.hideLoading();
         }
     }
 
-    async resetPassword(email) {
-        if (!this.auth) {
-            return { success: false, error: 'Firebase Auth not available' };
-        }
-        
+    async createUserProfile(uid, email, userData) {
         try {
-            await this.auth.sendPasswordResetEmail(email);
-            return { success: true };
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
-    }
-
-    async saveUserData(uid, userData) {
-        if (!firebase.firestore) {
-            return { success: false, error: 'Firestore not available' };
-        }
-        
-        try {
-            await firebase.firestore().collection('users').doc(uid).set({
-                ...userData,
+            console.log('📝 Creating user profile for:', uid);
+            
+            const profileData = {
+                email: email,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            return { success: true };
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                displayName: userData.displayName || email.split('@')[0],
+                role: 'farmer',
+                isDemo: false,
+                preferences: {
+                    theme: 'auto',
+                    currency: 'USD',
+                    notifications: true
+                },
+                farmProfile: {
+                    name: userData.farmName || 'My Farm',
+                    type: userData.farmType || 'poultry',
+                    established: new Date().toISOString().split('T')[0]
+                },
+                ...userData
+            };
+            
+            // Save to Firestore
+            await this.db.collection('users').doc(uid).set(profileData, { merge: true });
+            
+            console.log('✅ User profile created in Firestore');
+            
+            // Also save to localStorage as backup
+            localStorage.setItem('farm-profile', JSON.stringify(profileData));
+            localStorage.setItem('current-user-uid', uid);
+            
+            return profileData;
+            
         } catch (error) {
-            return { success: false, error: error.message };
+            console.error('❌ Error creating user profile:', error);
+            // Don't throw - we can still proceed even if Firestore fails
         }
     }
 
-    // Google Sign-in
-  async signInWithGoogle() {
-    try {
-        console.log('🔐 Starting Google sign-in...');
-        console.log('=== ENVIRONMENT INFO ===');
-        console.log('Current domain:', window.location.hostname);
-        console.log('Full URL:', window.location.href);
-        console.log('Protocol:', window.location.protocol);
-        console.log('User Agent:', navigator.userAgent);
-        console.log('GitHub Pages:', window.location.hostname.includes('github.io'));
-        console.log('====================');
-        
-        // Check if we're in a valid environment
-        if (window.location.protocol === 'file:') {
-            throw new Error('Cannot use Google Sign-In with file:// protocol. Please use a local server (http://localhost).');
-        }
-        
-        // Check for GitHub Pages (needs redirect instead of popup)
-        const isGitHubPages = window.location.hostname.includes('github.io');
-        
-        if (isGitHubPages) {
-            console.log('🌐 GitHub Pages detected - using redirect method');
-            console.log('⚠️ Popups may be blocked by Cross-Origin-Opener-Policy');
+    validateEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    validatePassword(password) {
+        return password && password.length >= 6;
+    }
+
+    showLoading(message = 'Loading...') {
+        // Create or show loading overlay
+        let loadingEl = document.getElementById('auth-loading');
+        if (!loadingEl) {
+            loadingEl = document.createElement('div');
+            loadingEl.id = 'auth-loading';
+            loadingEl.innerHTML = `
+                <div style="
+                    position: fixed;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    background: rgba(255,255,255,0.9);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                    font-family: Arial, sans-serif;
+                ">
+                    <div style="
+                        width: 50px;
+                        height: 50px;
+                        border: 5px solid #f3f3f3;
+                        border-top: 5px solid #4CAF50;
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                        margin-bottom: 15px;
+                    "></div>
+                    <div style="color: #333; font-size: 16px; font-weight: 500;">${message}</div>
+                </div>
+            `;
+            document.body.appendChild(loadingEl);
             
-            // Ask user if they want to use redirect
-            const useRedirect = confirm(
-                'For GitHub Pages compatibility:\n\n' +
-                'We need to use redirect method instead of popup.\n' +
-                'You will be taken to Google and then back to this app.\n\n' +
-                'Click OK to continue with Google Sign-In,\n' +
-                'or Cancel to use Email/Password.'
-            );
-            
-            if (!useRedirect) {
-                console.log('User chose to cancel redirect');
-                return { success: false, error: 'User cancelled redirect' };
-            }
-            
-            // Use redirect method for GitHub Pages
-            return await this.signInWithGoogleRedirect();
-        }
-        
-        console.log('🎯 Using popup method...');
-        const provider = new firebase.auth.GoogleAuthProvider();
-        provider.addScope('profile');
-        provider.addScope('email');
-        
-        // Add custom parameters for better UX
-        provider.setCustomParameters({
-            prompt: 'select_account',
-            login_hint: '',
-            hd: ''
-        });
-        
-        console.log('✅ Google provider created');
-        console.log('🪟 Attempting popup...');
-        
-        // Add timeout to catch popup blockers
-        const signInPromise = firebase.auth().signInWithPopup(provider);
-        const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Sign-in timeout (30s). Please check for popup blockers.')), 30000);
-        });
-        
-        console.log('⏱️ Waiting for popup response...');
-        const result = await Promise.race([signInPromise, timeoutPromise]);
-        
-        console.log('🎉 ✅ Google sign-in successful!');
-        console.log('📋 USER INFO:');
-        console.log('- Email:', result.user.email);
-        console.log('- Display Name:', result.user.displayName);
-        console.log('- UID:', result.user.uid);
-        console.log('- Provider:', result.user.providerId);
-        console.log('- Email Verified:', result.user.emailVerified);
-        
-        this.showNotification(`Welcome ${result.user.displayName}!`, 'success');
-        
-        // Save user to Firestore
-        await this.saveUserToFirestore(result.user);
-        
-        // Redirect to dashboard after successful login
-        setTimeout(() => {
-            console.log('🔄 Redirecting to dashboard...');
-            window.location.href = 'dashboard.html';
-        }, 1500);
-        
-        return { success: true, user: result.user };
-        
-    } catch (error) {
-        console.error('❌ Google sign-in error:', error);
-        console.error('Error code:', error.code);
-        console.error('Error message:', error.message);
-        console.error('Full error object:', error);
-        
-        // Handle specific errors
-        let userMessage = `Google sign-in failed: ${error.message}`;
-        let shouldTryRedirect = false;
-        
-        if (error.code === 'auth/unauthorized-domain') {
-            userMessage = 
-                `Domain "${window.location.hostname}" is not authorized.\n\n` +
-                `Please add it to Firebase Console:\n` +
-                `1. Go to Firebase Console → Authentication\n` +
-                `2. Click "Sign-in method" tab\n` +
-                `3. Scroll to "Authorized domains"\n` +
-                `4. Add: "localhost" and "${window.location.hostname}"`;
-                
-        } else if (error.code === 'auth/popup-blocked') {
-            userMessage = 'Popup was blocked by your browser. Please allow popups for this site.';
-            shouldTryRedirect = true;
-            
-        } else if (error.code === 'auth/popup-closed-by-user') {
-            userMessage = 'Sign-in was cancelled. Please try again.';
-            
-            // If on GitHub Pages, suggest redirect
-            if (window.location.hostname.includes('github.io')) {
-                userMessage += '\n\nGitHub Pages may block popups. Try redirect method?';
-                shouldTryRedirect = true;
-            }
-            
-        } else if (error.code === 'auth/cancelled-popup-request') {
-            userMessage = 'Another popup is already open. Please close other popups and try again.';
-            
-        } else if (error.message.includes('Cross-Origin-Opener-Policy')) {
-            userMessage = 'GitHub Pages security policy blocks popups. Using redirect method instead...';
-            shouldTryRedirect = true;
-            
-        } else if (error.message.includes('file://')) {
-            userMessage = 
-                'Cannot use Google Sign-In when opening file directly.\n\n' +
-                'Please run a local server:\n' +
-                '1. Open terminal in project folder\n' +
-                '2. Run: npx serve .\n' +
-                '3. Open http://localhost:3000';
-        }
-        
-        this.showNotification(userMessage, 'error');
-        
-        // Try redirect as fallback
-        if (shouldTryRedirect) {
-            console.log('🔄 Attempting redirect as fallback...');
-            setTimeout(() => {
-                const tryRedirect = confirm(
-                    'Popup method failed. Would you like to try redirect method instead?\n\n' +
-                    'You will be taken to Google and then back here.'
-                );
-                
-                if (tryRedirect) {
-                    this.signInWithGoogleRedirect();
+            // Add spinner animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
                 }
-            }, 1000);
-        }
-        
-        return { success: false, error: error.message };
-    }
-}
-
-// Add this new method for redirect authentication
-async signInWithGoogleRedirect() {
-    try {
-        console.log('🔄 Starting Google sign-in with redirect method...');
-        console.log('Current domain:', window.location.hostname);
-        
-        const provider = new firebase.auth.GoogleAuthProvider();
-        provider.addScope('profile');
-        provider.addScope('email');
-        
-        // Store where to return after auth
-        sessionStorage.setItem('authReturnUrl', window.location.href);
-        sessionStorage.setItem('authMethod', 'google-redirect');
-        sessionStorage.setItem('authTimestamp', Date.now().toString());
-        
-        console.log('📝 Stored auth state in sessionStorage');
-        console.log('🔀 Redirecting to Google...');
-        
-        // Start redirect
-        await firebase.auth().signInWithRedirect(provider);
-        
-        console.log('↪️ Redirect initiated - user will return after authentication');
-        
-        // Show message (user will be redirected away momentarily)
-        this.showNotification('Redirecting to Google for sign-in...', 'info');
-        
-        return { success: true, redirecting: true };
-
-        // Mark that we're attempting a redirect
-        sessionStorage.setItem('googleRedirectAttempt', 'true');
-        sessionStorage.setItem('redirectStartTime', Date.now().toString());
-        
-        console.log('🔀 Starting redirect to Google...');
-        await firebase.auth().signInWithRedirect(provider);
-        
-        return { success: true, redirecting: true };
-        
-    }catch (error) {
-        console.error('❌ Redirect sign-in error:', error);
-        this.showNotification(`Redirect failed: ${error.message}`, 'error');
-        return { success: false, error: error.message };
-    }  
-}
-
-// Add this method to handle redirect results
-static handleRedirectResult() {
-    console.log('🔄 Checking for redirect authentication result...');
-    
-    firebase.auth().getRedirectResult()
-    .then((result) => {
-        if (result.user) {
-            console.log('🎉 ✅ Redirect authentication successful!');
-            console.log('User:', result.user.email);
-            
-            // Clear stored data
-            sessionStorage.removeItem('authReturnUrl');
-            sessionStorage.removeItem('authMethod');
-            sessionStorage.removeItem('authTimestamp');
-            
-            // Redirect to dashboard
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 1000);
-            
+            `;
+            document.head.appendChild(style);
         } else {
-            console.log('No redirect user found - normal page load');
+            loadingEl.style.display = 'flex';
         }
-    })
-    .catch((error) => {
-        console.error('❌ Redirect result error:', error);
-        
-        // Return to original page
-        const returnUrl = sessionStorage.getItem('authReturnUrl') || 'index.html';
-        sessionStorage.clear();
-        
-        if (error.code !== 'auth/popup-closed-by-user') {
-            console.log('Returning to:', returnUrl);
-            // Don't redirect if we're already on index
-            if (!window.location.href.includes('index.html')) {
-                window.location.href = returnUrl;
-            }
-        }
-    });
-}
+    }
 
-async saveUserToFirestore(user) {
-    try {
-        if (!firebase.firestore) {
-            console.log('Firestore not available, skipping user save');
-            return;
-        }
-        
-        const userRef = firebase.firestore().collection('users').doc(user.uid);
-        
-        const userData = {
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName,
-            photoURL: user.photoURL,
-            provider: 'google',
-            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        await userRef.set(userData, { merge: true });
-        console.log('✅ User data saved to Firestore');
-        
-    } catch (error) {
-        console.error('Error saving user to Firestore:', error);
-        // Don't show error to user - this is background operation
-    }
-}
-    
-    // Apple Sign-in (requires proper setup in Firebase console)
-    async signInWithApple() {
-        try {
-            const provider = new firebase.auth.OAuthProvider('apple.com');
-            provider.addScope('email');
-            provider.addScope('name');
-            
-            const result = await firebase.auth().signInWithPopup(provider);
-            this.showNotification(`Welcome!`, 'success');
-            return { success: true, user: result.user };
-        } catch (error) {
-            console.error('Apple sign-in error:', error);
-            this.showNotification(`Apple sign-in failed: ${error.message}`, 'error');
-            return { success: false, error: error.message };
+    hideLoading() {
+        const loadingEl = document.getElementById('auth-loading');
+        if (loadingEl) {
+            loadingEl.style.display = 'none';
         }
     }
-    
-    // Add to auth UI
-    renderAuthButtons() {
-        return `
-            <button class="btn-social google" onclick="authManager.signInWithGoogle()">
-                <span class="social-icon">G</span>
-                Continue with Google
-            </button>
-            <button class="btn-social apple" onclick="authManager.signInWithApple()">
-                <span class="social-icon"></span>
-                Continue with Apple
-            </button>
+
+    showAuthError(message) {
+        console.error('❌ Auth error shown:', message);
+        
+        // Remove any existing error messages
+        this.clearAuthErrors();
+        
+        // Create error message element
+        const errorEl = document.createElement('div');
+        errorEl.className = 'auth-error-message';
+        errorEl.innerHTML = `
+            <div style="
+                background: #ffebee;
+                color: #c62828;
+                padding: 12px 16px;
+                border-radius: 8px;
+                border-left: 4px solid #c62828;
+                margin: 15px 0;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            ">
+                <span style="font-size: 18px;">⚠️</span>
+                <span>${message}</span>
+            </div>
         `;
+        
+        // Insert near auth form
+        const authContainer = document.getElementById('auth-container') || 
+                            document.querySelector('.auth-form-container') ||
+                            document.body;
+        
+        const form = authContainer.querySelector('form') || 
+                    authContainer.querySelector('.auth-form') ||
+                    authContainer;
+        
+        form.insertBefore(errorEl, form.firstChild);
+        
+        // Auto-remove after 10 seconds
+        setTimeout(() => {
+            if (errorEl.parentNode) {
+                errorEl.remove();
+            }
+        }, 10000);
     }
 
-    showNotification(message, type = 'info') {
-        if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
-            window.coreModule.showNotification(message, type);
-        } else if (type === 'error') {
-            console.error('❌ ' + message);
-            alert('❌ ' + message);
-        } else if (type === 'success') {
-            console.log('✅ ' + message);
-            alert('✅ ' + message);
-        } else if (type === 'warning') {
-            console.warn('⚠️ ' + message);
-            alert('⚠️ ' + message);
-        } else {
-            console.log('ℹ️ ' + message);
-            alert('ℹ️ ' + message);
+    clearAuthErrors() {
+        document.querySelectorAll('.auth-error-message').forEach(el => el.remove());
+    }
+
+    showSuccessMessage(message) {
+        // Create success message
+        const successEl = document.createElement('div');
+        successEl.className = 'auth-success-message';
+        successEl.innerHTML = `
+            <div style="
+                background: #e8f5e9;
+                color: #2e7d32;
+                padding: 12px 16px;
+                border-radius: 8px;
+                border-left: 4px solid #4CAF50;
+                margin: 15px 0;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            ">
+                <span style="font-size: 18px;">✅</span>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        // Insert near auth form
+        const authContainer = document.getElementById('auth-container') || 
+                            document.querySelector('.auth-form-container') ||
+                            document.body;
+        
+        const form = authContainer.querySelector('form') || 
+                    authContainer.querySelector('.auth-form') ||
+                    authContainer;
+        
+        form.insertBefore(successEl, form.firstChild);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (successEl.parentNode) {
+                successEl.remove();
+            }
+        }, 5000);
+    }
+
+    handleUserSignedIn(user) {
+        console.log('👤 User signed in:', user.email, user.uid);
+        
+        // Update last login time
+        this.updateLastLogin(user.uid);
+        
+        // Save user info to localStorage
+        localStorage.setItem('current-user-uid', user.uid);
+        localStorage.setItem('current-user-email', user.email);
+        
+        // Check if profile exists, create if not
+        this.ensureUserProfile(user);
+        
+        // Hide auth container, show app
+        this.redirectToApp();
+    }
+
+    handleUserSignedOut() {
+        console.log('👋 User signed out');
+        
+        // Clear local storage
+        localStorage.removeItem('current-user-uid');
+        localStorage.removeItem('current-user-email');
+        
+        // Show auth container
+        this.redirectToAuth();
+    }
+
+    async ensureUserProfile(user) {
+        try {
+            const userDoc = await this.db.collection('users').doc(user.uid).get();
+            
+            if (!userDoc.exists) {
+                console.log('📝 Creating missing user profile for:', user.uid);
+                await this.createUserProfile(user.uid, user.email, {});
+            } else {
+                console.log('✅ User profile exists');
+            }
+        } catch (error) {
+            console.error('❌ Error checking user profile:', error);
+        }
+    }
+
+    async updateLastLogin(uid) {
+        try {
+            await this.db.collection('users').doc(uid).update({
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } catch (error) {
+            console.error('❌ Error updating last login:', error);
+        }
+    }
+
+    redirectToApp() {
+        console.log('🔄 Redirecting to app...');
+        
+        // Give a small delay for any Firebase operations to complete
+        setTimeout(() => {
+            // Hide auth, show app
+            const authContainer = document.getElementById('auth-container');
+            const appContainer = document.getElementById('app-container');
+            
+            if (authContainer) authContainer.classList.add('hidden');
+            if (appContainer) appContainer.classList.remove('hidden');
+            
+            // Refresh the page to ensure all modules load with user context
+            // Or trigger app initialization
+            if (window.app && typeof window.app.initializeApp === 'function') {
+                window.app.initializeApp();
+            } else {
+                // Reload the page
+                console.log('🔄 Reloading page for clean app initialization...');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }
+        }, 1000);
+    }
+
+    redirectToAuth() {
+        console.log('🔄 Redirecting to auth...');
+        
+        // Show auth, hide app
+        const authContainer = document.getElementById('auth-container');
+        const appContainer = document.getElementById('app-container');
+        
+        if (authContainer) authContainer.classList.remove('hidden');
+        if (appContainer) appContainer.classList.add('hidden');
+    }
+
+    // Social sign-in methods
+    async signInWithGoogle() {
+        try {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('profile');
+            provider.addScope('email');
+            
+            this.showLoading('Connecting with Google...');
+            
+            const result = await this.auth.signInWithPopup(provider);
+            console.log('✅ Google sign-in successful:', result.user.email);
+            
+            return result.user;
+        } catch (error) {
+            console.error('❌ Google sign-in error:', error);
+            this.handleAuthError(error);
+            throw error;
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async signInWithGithub() {
+        try {
+            const provider = new firebase.auth.GithubAuthProvider();
+            provider.addScope('user:email');
+            
+            this.showLoading('Connecting with GitHub...');
+            
+            const result = await this.auth.signInWithPopup(provider);
+            console.log('✅ GitHub sign-in successful:', result.user.email);
+            
+            return result.user;
+        } catch (error) {
+            console.error('❌ GitHub sign-in error:', error);
+            this.handleAuthError(error);
+            throw error;
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async signOut() {
+        try {
+            await this.auth.signOut();
+            console.log('✅ User signed out');
+            return true;
+        } catch (error) {
+            console.error('❌ Sign-out error:', error);
+            return false;
         }
     }
 }
 
-window.authManager = new FirebaseAuth();
+// Initialize auth manager
+window.firebaseAuthManager = new FirebaseAuthManager();
+console.log('✅ Firebase Auth Manager initialized');
