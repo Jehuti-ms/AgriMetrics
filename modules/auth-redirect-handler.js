@@ -152,17 +152,10 @@ class AuthRedirectHandler {
     }
 
 redirectToDashboard()
-
-    showNotification(message, type = 'info') {
-        // Use your existing notification system or create simple alert
-        if (window.authModule && typeof window.authModule.showNotification === 'function') {
-            window.authModule.showNotification(message, type);
-        } else if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
-            window.coreModule.showNotification(message, type);
-        } else {
-            alert(message);
-        }
-    }
+showNotification(message, type = 'info') {
+    // Simple alert fallback
+    alert(message);
+}
 
     addSpinnerStyles() {
         // Only add styles if not already present
