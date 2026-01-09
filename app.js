@@ -1,16 +1,6 @@
 // app.js - FIXED FARM MODULES INITIALIZATION
 console.log('Loading main app...');
-
-class FarmManagementApp {
-    constructor() {
-        this.currentUser = null;
-        this.currentSection = 'dashboard';
-        this.isDemoMode = false;
-        this.userPreferences = {};
-        this.setupInit();
-    }
-
-    setupInit() {
+ setupInit() {
         // Wait for DOM and Firebase to be ready
         const checkReady = () => {
             if (typeof firebase !== 'undefined' && firebase.auth) {
