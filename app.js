@@ -2,13 +2,13 @@
 console.log('Loading main app...');
 
 class FarmManagementApp {
-    /*constructor() {
+    constructor() {
         this.currentUser = null;
         this.currentSection = 'dashboard';
         this.isDemoMode = false;
         this.userPreferences = {};
         this.setupInit();
-    }*/
+    }
 
     setupInit() {
         // Wait for DOM and Firebase to be ready
