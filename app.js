@@ -76,90 +76,92 @@ class FarmManagementApp {
     }
 
     async checkAuthState() {
-    console.log('🔐 Checking authentication state...');
+  console.log('🔐 Checking authentication state...');
 
-    return new Promise((resolve) => {
-        if (typeof firebase === 'undefined' || !firebase.auth) {
-            console.log('⚠️ Firebase not available');
-            this.hideLoading();
-            this.showAuth();
-            resolve(false);
-            return;
+  return new Promise((resolve) => {
+    if (typeof firebase === 'undefined' || !firebase.auth) {
+      console.log('⚠️ Firebase not available');
+      this.hideLoading();
+      this.showAuth();
+      resolve(false);
+      return;
+    }
+
+    let authResolved = false;
+
+    const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+      console.log('🔥 Auth state changed:', user ? 'User logged in' : 'No user');
+
+      if (!authResolved) {
+        authResolved = true;
+        this.hideLoading();
+
+        if (user) {
+          console.log('👤 User authenticated:', user.email);
+          this.currentUser = user;
+          this.showApp();
+          this.showSection('dashboard');
+          resolve(true);
+        } else {
+          // ⏳ Grace period before forcing login screen
+          setTimeout(() => {
+            const currentUser = firebase.auth().currentUser;
+            if (currentUser) {
+              console.log('✅ Found currentUser after short delay:', currentUser.email);
+              this.currentUser = currentUser;
+              this.showApp();
+              this.showSection('dashboard');
+              resolve(true);
+            } else {
+              const hasLocalProfile = localStorage.getItem('farm-profile') ||
+                                      localStorage.getItem('profileData');
+
+              if (hasLocalProfile) {
+                console.log('💾 Using local profile data');
+                this.showApp();
+                this.showSection('dashboard');
+                resolve(true);
+              } else {
+                console.log('🔒 Showing login screen');
+                this.showAuth();
+                resolve(false);
+              }
+            }
+          }, 500); // half‑second grace period
         }
 
-        let authResolved = false;
-
-        const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
-            console.log('🔥 Auth state changed:', user ? 'User logged in' : 'No user');
-
-            if (!authResolved) {
-                authResolved = true;
-                this.hideLoading();
-
-                if (user) {
-                    console.log('👤 User authenticated:', user.email);
-                    this.currentUser = user;
-                    this.showApp();
-                    this.showSection('dashboard'); // ✅ force dashboard
-                    resolve(true);
-                } else {
-                    // 🔎 Double‑check currentUser before forcing login screen
-                    const currentUser = firebase.auth().currentUser;
-                    if (currentUser) {
-                        console.log('✅ Found currentUser after sign-up:', currentUser.email);
-                        this.currentUser = currentUser;
-                        this.showApp();
-                        this.showSection('dashboard'); // ✅ force dashboard
-                        resolve(true);
-                    } else {
-                        // Check local data fallback
-                        const hasLocalProfile = localStorage.getItem('farm-profile') ||
-                                                localStorage.getItem('profileData');
-
-                        if (hasLocalProfile) {
-                            console.log('💾 Using local profile data');
-                            this.showApp();
-                            this.showSection('dashboard'); // ✅ force dashboard
-                            resolve(true);
-                        } else {
-                            console.log('🔒 Showing login screen');
-                            this.showAuth();
-                            resolve(false);
-                        }
-                    }
-                }
-
-                unsubscribe();
-            }
-        });
-
-        // 5 second timeout safeguard
-        setTimeout(() => {
-            if (!authResolved) {
-                console.log('⏰ Auth check timeout');
-                authResolved = true;
-                this.hideLoading();
-                unsubscribe();
-
-                const user = firebase.auth().currentUser;
-                const hasLocalProfile = localStorage.getItem('farm-profile') ||
-                                        localStorage.getItem('profileData');
-
-                if (user || hasLocalProfile) {
-                    console.log('✅ Found user after timeout');
-                    this.currentUser = user;
-                    this.showApp();
-                    this.showSection('dashboard'); // ✅ force dashboard
-                    resolve(true);
-                } else {
-                    console.log('❌ No user found after timeout');
-                    this.showAuth();
-                    resolve(false);
-                }
-            }
-        }, 5000);
+        unsubscribe();
+      }
     });
+
+    // 5 second timeout safeguard
+    setTimeout(() => {
+      if (!authResolved) {
+        console.log('⏰ Auth check timeout');
+        authResolved = true;
+        this.hideLoading();
+        unsubscribe();
+
+        const user = firebase.auth().currentUser;
+        const hasLocalProfile = localStorage.getItem('farm-profile') ||
+                                localStorage.getItem('profileData');
+
+        if (user || hasLocalProfile) {
+          console.log('✅ Found user after timeout');
+          this.currentUser = user;
+          this.showApp();
+          this.showSection('dashboard');
+          resolve(true);
+        } else {
+          console.log('❌ No user found after timeout');
+          this.showAuth();
+          resolve(false);
+        }
+      }
+    }, 5000);
+  });
 }
+
 
     showLoading() {
         console.log('⏳ Showing loading screen');
