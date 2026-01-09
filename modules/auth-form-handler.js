@@ -194,39 +194,74 @@ class AuthFormHandler {
         this.currentAuthForm = formName;
     }
 
-    async handleSignIn() {
-        const email = this.signinEmail?.value.trim();
-        const password = this.signinPassword?.value;
-        
-        if (!this.validateSignIn(email, password)) {
-            return;
-        }
-        
-        try {
-            console.log('🔐 Attempting sign in for:', email);
-            
-            // Show loading
-            this.showLoading('Signing in...');
-            
-            // Check if firebaseAuthManager exists
-            if (window.firebaseAuthManager && typeof window.firebaseAuthManager.signIn === 'function') {
-                await window.firebaseAuthManager.signIn(email, password);
-            } else {
-                // Fallback to direct Firebase auth
-                await firebase.auth().signInWithEmailAndPassword(email, password);
-                console.log('✅ Sign in successful');
-            }
-            
-            // Success - Firebase will trigger auth state change automatically
-            // The onAuthStateChanged listener in app.js will handle the redirect
-            
-        } catch (error) {
-            console.error('❌ Sign-in error:', error);
-            this.showError(error.message || 'Sign in failed');
-        } finally {
-            this.hideLoading();
-        }
+    // In auth-form-handler.js, update the form submission handlers:
+
+async handleSignIn() {
+    const email = this.signinEmail?.value.trim();
+    const password = this.signinPassword?.value;
+    
+    if (!this.validateSignIn(email, password)) {
+        return;
     }
+    
+    try {
+        console.log('🔐 Attempting sign in for:', email);
+        
+        // Show loading
+        this.showLoading('Signing in...');
+        
+        await window.firebaseAuthManager.signIn(email, password);
+        
+        console.log('✅ Sign in successful');
+        
+        // DO NOT redirect here - Firebase's onAuthStateChanged will handle it
+        // Just show success message
+        this.showSuccess('Sign in successful! Redirecting...');
+        
+    } catch (error) {
+        console.error('❌ Sign-in error:', error);
+        this.showError(error.message || 'Sign in failed');
+    } finally {
+        this.hideLoading();
+    }
+}
+
+async handleSignUp() {
+    const name = this.signupName?.value.trim();
+    const email = this.signupEmail?.value.trim();
+    const password = this.signupPassword?.value;
+    const confirmPassword = this.signupConfirmPassword?.value;
+    const farmName = this.farmName?.value.trim();
+    
+    if (!this.validateSignUp(name, email, password, confirmPassword, farmName)) {
+        return;
+    }
+    
+    try {
+        console.log('📝 Attempting sign up for:', email);
+        
+        // Show loading
+        this.showLoading('Creating account...');
+        
+        await window.firebaseAuthManager.signUp(email, password, {
+            displayName: name,
+            farmName: farmName
+        });
+        
+        console.log('✅ Sign up successful');
+        
+        // Show success message
+        this.showSuccess('Account created successfully! You are now signed in. Redirecting...');
+        
+        // DO NOT redirect here - Firebase will trigger auth state change
+        
+    } catch (error) {
+        console.error('❌ Sign-up error:', error);
+        this.showError(error.message || 'Sign up failed');
+    } finally {
+        this.hideLoading();
+    }
+}
 
     async handleSignUp() {
         const name = this.signupName?.value.trim();
