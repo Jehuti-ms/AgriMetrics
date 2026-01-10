@@ -1038,8 +1038,6 @@ const ProfileModule = {
     },
 
     // ==================== DIRECT SAVE HANDLER - SIMPLE FIX ====================
-      // ==================== ULTIMATE SAVE FIX ====================
-       // ==================== ULTIMATE SAVE FIX - WITH LOCK ====================
     async handleDirectSave() {
         console.log('💾 Starting ULTIMATE save WITH LOCK...');
         
@@ -1152,6 +1150,35 @@ const ProfileModule = {
             this.isSaving = false;
         }
     },
+
+    function updateMainProfileCardFarmName(farmName) {
+    console.log('🎯 Updating main profile card farm name:', farmName);
+    
+    // Target the main profile card title (most specific)
+    const mainProfileCard = document.querySelector('.profile-card, .user-profile-card, #profile-card');
+    
+    if (mainProfileCard) {
+        // Look for farm name elements inside the main profile card
+        const farmNameElements = mainProfileCard.querySelectorAll(
+            '.farm-name-display, .profile-farm-name, h2, .card-title, [data-farm-name]'
+        );
+        
+        farmNameElements.forEach(element => {
+            // Skip inputs that users should edit directly
+            if (!(element.tagName === 'INPUT' && element.classList.contains('editable'))) {
+                if (element.textContent !== farmName) {
+                    element.textContent = farmName;
+                    console.log(`✅ Updated: ${element.className || element.tagName} = "${farmName}"`);
+                }
+            }
+        });
+        
+        return true;
+    }
+    
+    console.warn('⚠️ Main profile card not found');
+    return false;
+},
     
     // 🔥 NEW: Force immediate card update
     updateProfileCardImmediately(profile) {
@@ -1180,6 +1207,36 @@ const ProfileModule = {
         const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
         document.getElementById('member-since').textContent = `Member since: ${memberSince}`;
     },
+
+    function debugFarmNameDisplay() {
+    console.log('🔍 Debugging farm name display:');
+    
+    // Check all possible farm name elements
+    const allElements = document.querySelectorAll('*');
+    const farmNameElements = [];
+    
+    allElements.forEach(el => {
+        const text = el.textContent?.trim() || el.value;
+        if (text && (
+            text.includes('Farm') || 
+            text.includes('farm') ||
+            el.className?.includes('farm') ||
+            el.id?.includes('farm') ||
+            el.getAttribute('data-farm-name')
+        )) {
+            farmNameElements.push({
+                element: el,
+                text: text,
+                tag: el.tagName,
+                className: el.className,
+                id: el.id
+            });
+        }
+    });
+    
+    console.log('📋 Found farm name related elements:', farmNameElements);
+    return farmNameElements;
+},
 
     // ==================== USER DATA MANAGEMENT ====================
     loadUserData() {
