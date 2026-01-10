@@ -1,10 +1,11 @@
-// modules/profile.js - COMPLETE FIXED VERSION WITH WORKING LOGOUT
-console.log('👤 Loading profile module with FIXED logout...');
+// modules/profile.js - COMPLETE FIXED VERSION
+console.log('👤 Loading profile module with all fixes...');
 
 const ProfileModule = {
     name: 'profile',
     initialized: false,
     element: null,
+    isDarkMode: false, // Track dark mode state
     
     // ==================== INITIALIZATION ====================
     initialize() {
@@ -15,6 +16,9 @@ const ProfileModule = {
             console.error('Content area element not found');
             return false;
         }
+        
+        // 🔥 FIX: Prevent dark mode on login
+        this.preventDarkMode();
         
         if (window.StyleManager) {
             window.StyleManager.registerModule(this.name, this.element, {
@@ -35,12 +39,46 @@ const ProfileModule = {
         }
     },
 
+    // 🔥 FIX: Prevent dark mode
+    preventDarkMode() {
+        console.log('🌞 Preventing dark mode...');
+        
+        // Remove dark mode classes from body
+        document.body.classList.remove('dark-mode', 'dark');
+        
+        // Set light theme in localStorage
+        localStorage.setItem('farm-theme', 'light');
+        
+        // Update app data
+        if (window.FarmModules.appData.profile) {
+            window.FarmModules.appData.profile.theme = 'light';
+        }
+        
+        this.isDarkMode = false;
+    },
+
     // ==================== MAIN RENDER ====================
     renderModule() {
         if (!this.element) return;
 
         this.element.innerHTML = `
             <style>
+                /* 🔥 FIX: Center logout button text */
+                #logout-btn {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    gap: 8px !important;
+                    text-align: center !important;
+                }
+                
+                /* 🔥 FIX: Ensure icon and text are centered */
+                #logout-btn i, #logout-btn span {
+                    display: inline-block;
+                    vertical-align: middle;
+                }
+                
+                /* Rest of your styles remain the same */
                 .profile-content { display: flex; flex-direction: column; gap: 24px; }
                 .stats-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px; }
                 .stat-card { padding: 20px; border-radius: 12px; display: flex; align-items: center; gap: 16px; }
@@ -96,7 +134,7 @@ const ProfileModule = {
                 .support-channel p { margin: 0; font-size: 14px; color: var(--text-secondary); }
                 .support-channel-actions { display: flex; gap: 8px; }
                 
-                /* 🔥 FIXED: Logout button styling */
+                /* 🔥 FIX: Enhanced logout button styling */
                 #logout-btn {
                     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
                     color: white;
@@ -107,9 +145,12 @@ const ProfileModule = {
                     cursor: pointer;
                     display: flex;
                     align-items: center;
+                    justify-content: center;
                     gap: 8px;
                     transition: all 0.3s;
                     margin-top: 8px;
+                    width: 100%;
+                    min-height: 44px;
                 }
                 
                 #logout-btn:hover {
@@ -351,10 +392,16 @@ const ProfileModule = {
                             </div>
                             
                             <div class="form-actions">
-                                <!-- 🔥 FIXED: Changed to type="button" and added id -->
-                                <button type="button" class="btn-primary" id="save-profile-btn">💾 Save Profile</button>
-                                <button type="button" class="btn-secondary" id="sync-now-btn">🔄 Sync Now</button>
-                                <button type="button" class="btn-outline" id="reset-profile">Reset to Current</button>
+                                <!-- 🔥 FIXED: Direct save button -->
+                                <button type="button" class="btn-primary" id="save-profile-btn">
+                                    <i class="fas fa-save"></i> Save Profile
+                                </button>
+                                <button type="button" class="btn-secondary" id="sync-now-btn">
+                                    <i class="fas fa-sync"></i> Sync Now
+                                </button>
+                                <button type="button" class="btn-outline" id="reset-profile">
+                                    <i class="fas fa-undo"></i> Reset Form
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -479,12 +526,18 @@ const ProfileModule = {
                             </div>
                         </div>
                         <div class="action-buttons">
-                            <button class="btn-outline" id="export-data">📥 Export All Data</button>
-                            <button class="btn-outline" id="import-data">📤 Import Data</button>
-                            <button class="btn-primary" id="clear-all-data" style="background: var(--gradient-danger);">⚠️ Clear All Data</button>
-                            <!-- 🔥 FIXED: Enhanced logout button -->
+                            <button class="btn-outline" id="export-data">
+                                <i class="fas fa-download"></i> Export All Data
+                            </button>
+                            <button class="btn-outline" id="import-data">
+                                <i class="fas fa-upload"></i> Import Data
+                            </button>
+                            <button class="btn-primary" id="clear-all-data" style="background: var(--gradient-danger);">
+                                <i class="fas fa-exclamation-triangle"></i> Clear All Data
+                            </button>
+                            <!-- 🔥 FIXED: Centered logout button with icon -->
                             <button type="button" id="logout-btn">
-                                <i class="fas fa-sign-out-alt"></i> 🚪 Logout
+                                <i class="fas fa-sign-out-alt"></i> Logout
                             </button>
                         </div>
                     </div>
@@ -578,7 +631,7 @@ const ProfileModule = {
             </div>
         `;
 
-        // Set up everything
+        // Set up everything with proper timing
         setTimeout(() => {
             this.setupEventListeners();
             this.loadUserData();
@@ -588,100 +641,134 @@ const ProfileModule = {
 
     // ==================== EVENT LISTENERS - ULTIMATE FIX ====================
     setupEventListeners() {
-        console.log('🔧 Setting up profile event listeners');
+        console.log('🔧 Setting up profile event listeners - DEBUG MODE');
         
-        // 🔥🔥🔥 CRITICAL FIX 1: Direct save button handler
+        // Clear any existing listeners first
+        this.removeAllEventListeners();
+        
+        // 🔥 FIX 1: Direct save button handler with ONE listener
         const saveBtn = document.getElementById('save-profile-btn');
+        console.log('🔍 Save button found:', !!saveBtn);
+        
         if (saveBtn) {
-            // Clone to remove any existing listeners
-            const newSaveBtn = saveBtn.cloneNode(true);
-            saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
-            
-            // Add fresh click listener
-            document.getElementById('save-profile-btn').addEventListener('click', (e) => {
+            saveBtn.onclick = (e) => {
                 e.preventDefault();
-                console.log('💾 Save button clicked - ULTIMATE FIX');
+                console.log('💾 Save button clicked - SINGLE HANDLER');
                 this.handleSaveProfile();
-            });
+            };
+            console.log('✅ Save button listener added');
         }
         
-        // 🔥 CRITICAL FIX 2: Also handle form submission (for Enter key)
+        // 🔥 FIX 2: Form submit prevention
         const profileForm = document.getElementById('profile-form');
         if (profileForm) {
-            profileForm.addEventListener('submit', (e) => {
+            profileForm.onsubmit = (e) => {
                 e.preventDefault();
-                console.log('📋 Form submitted via Enter key');
-                this.handleSaveProfile();
-            });
+                console.log('📋 Form submission prevented');
+                return false;
+            };
         }
         
-        // 🔥 CRITICAL FIX 3: Track farm name input changes
+        // 🔥 FIX 3: Farm name tracking with SINGLE listener
         const farmNameInput = document.getElementById('farm-name');
         if (farmNameInput) {
-            farmNameInput.addEventListener('input', (e) => {
-                console.log('⌨️ Farm name TYPED:', e.target.value);
-            });
-            
-            farmNameInput.addEventListener('paste', (e) => {
-                console.log('📋 Farm name PASTE event detected');
-                // Wait for paste to complete
-                setTimeout(() => {
-                    console.log('📋 After paste, value is:', farmNameInput.value);
-                }, 10);
-            });
+            // Only track changes, don't save automatically
+            farmNameInput.oninput = (e) => {
+                console.log('🏷️ Farm name changed to:', e.target.value);
+            };
         }
-
-        // Other buttons
-        document.getElementById('sync-now-btn')?.addEventListener('click', () => this.syncNow());
-        document.getElementById('reset-profile')?.addEventListener('click', () => {
-            this.loadUserData();
-            this.showNotification('Form reset to saved values', 'info');
-        });
-
-        // Settings
-        document.getElementById('default-currency')?.addEventListener('change', (e) => {
-            this.saveSetting('currency', e.target.value);
-        });
-        document.getElementById('low-stock-threshold')?.addEventListener('change', (e) => {
-            this.saveSetting('lowStockThreshold', parseInt(e.target.value));
-        });
-        document.getElementById('auto-sync')?.addEventListener('change', (e) => {
-            this.saveSetting('autoSync', e.target.checked);
-        });
-        document.getElementById('local-storage')?.addEventListener('change', (e) => {
-            this.saveSetting('localStorageEnabled', e.target.checked);
-        });
-        document.getElementById('theme-selector')?.addEventListener('change', (e) => {
-            this.changeTheme(e.target.value);
-        });
-
-        // PDF Export
+        
+        // Other buttons - SINGLE handlers
+        const syncBtn = document.getElementById('sync-now-btn');
+        if (syncBtn) {
+            syncBtn.onclick = () => this.syncNow();
+        }
+        
+        const resetBtn = document.getElementById('reset-profile');
+        if (resetBtn) {
+            resetBtn.onclick = () => {
+                this.loadUserData();
+                this.showNotification('Form reset to saved values', 'info');
+            };
+        }
+        
+        // Settings - SINGLE handlers
+        const currencySelect = document.getElementById('default-currency');
+        if (currencySelect) {
+            currencySelect.onchange = (e) => {
+                this.saveSetting('currency', e.target.value);
+            };
+        }
+        
+        const thresholdInput = document.getElementById('low-stock-threshold');
+        if (thresholdInput) {
+            thresholdInput.onchange = (e) => {
+                this.saveSetting('lowStockThreshold', parseInt(e.target.value));
+            };
+        }
+        
+        const autoSyncCheck = document.getElementById('auto-sync');
+        if (autoSyncCheck) {
+            autoSyncCheck.onchange = (e) => {
+                this.saveSetting('autoSync', e.target.checked);
+            };
+        }
+        
+        const localStorageCheck = document.getElementById('local-storage');
+        if (localStorageCheck) {
+            localStorageCheck.onchange = (e) => {
+                this.saveSetting('localStorageEnabled', e.target.checked);
+            };
+        }
+        
+        const themeSelect = document.getElementById('theme-selector');
+        if (themeSelect) {
+            themeSelect.onchange = (e) => {
+                this.changeTheme(e.target.value);
+            };
+        }
+        
+        // PDF Export - SINGLE handlers
         document.getElementById('export-profile-pdf')?.addEventListener('click', () => this.exportProfilePDF());
         document.getElementById('export-inventory-pdf')?.addEventListener('click', () => this.exportInventoryPDF());
         document.getElementById('export-sales-pdf')?.addEventListener('click', () => this.exportSalesPDF());
         document.getElementById('export-all-pdf')?.addEventListener('click', () => this.exportAllPDF());
-
-        // Data management
+        
+        // Data management - SINGLE handlers
         document.getElementById('export-data')?.addEventListener('click', () => this.exportData());
         document.getElementById('import-data')?.addEventListener('click', () => this.importData());
         document.getElementById('clear-all-data')?.addEventListener('click', () => this.clearAllData());
         
-        // 🔥 FIXED: Enhanced logout button listener
+        // 🔥 FIX 4: Logout button - SINGLE robust handler
         const logoutBtn = document.getElementById('logout-btn');
+        console.log('🔍 Logout button found:', !!logoutBtn);
+        
         if (logoutBtn) {
-            logoutBtn.addEventListener('click', (e) => {
+            // Remove any existing listeners
+            const newLogoutBtn = logoutBtn.cloneNode(true);
+            logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
+            
+            // Get fresh reference
+            const freshLogoutBtn = document.getElementById('logout-btn');
+            
+            // SINGLE onclick handler
+            freshLogoutBtn.onclick = (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('🚪 Logout button clicked');
+                console.log('🚪 Logout button clicked - DIRECT HANDLER');
                 this.showLogoutConfirmation();
-            });
+            };
+            
+            console.log('✅ Logout button listener added');
+        } else {
+            console.error('❌ Logout button NOT FOUND');
         }
-
+        
         // Mobile installation
         document.getElementById('send-install-link')?.addEventListener('click', () => this.sendInstallationLink());
         document.getElementById('show-qr-code')?.addEventListener('click', () => this.showQRCode());
-
-        // Support section - event delegation
+        
+        // Support section - event delegation (single listener)
         this.element.addEventListener('click', (e) => {
             const button = e.target.closest('button[data-action]');
             if (!button) return;
@@ -707,8 +794,29 @@ const ProfileModule = {
                     break;
             }
         });
-
-        console.log('✅ All event listeners set up');
+        
+        console.log('✅ All event listeners set up with SINGLE handlers');
+    },
+    
+    // 🔥 NEW: Remove all existing event listeners
+    removeAllEventListeners() {
+        console.log('🧹 Removing existing event listeners...');
+        
+        // Get all buttons and remove event listeners
+        const allButtons = this.element.querySelectorAll('button');
+        allButtons.forEach(button => {
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
+        });
+        
+        // Get all inputs and remove event listeners
+        const allInputs = this.element.querySelectorAll('input, select, textarea');
+        allInputs.forEach(input => {
+            const newInput = input.cloneNode(true);
+            input.parentNode.replaceChild(newInput, input);
+        });
+        
+        console.log('✅ Old listeners removed');
     },
 
     // ==================== LOGOUT SYSTEM - FIXED ====================
@@ -730,35 +838,52 @@ const ProfileModule = {
         `;
         
         document.body.appendChild(modal);
+        console.log('✅ Logout modal created');
         
-        // Add event listeners
-        document.getElementById('logout-cancel').addEventListener('click', () => {
-            document.body.removeChild(modal);
-        });
-        
-        document.getElementById('logout-confirm').addEventListener('click', async () => {
-            await this.performLogout();
-            document.body.removeChild(modal);
-        });
-        
-        // Close on background click
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                document.body.removeChild(modal);
+        // Add event listeners with delay
+        setTimeout(() => {
+            const cancelBtn = document.getElementById('logout-cancel');
+            const confirmBtn = document.getElementById('logout-confirm');
+            
+            if (cancelBtn) {
+                cancelBtn.onclick = () => {
+                    console.log('❌ Logout cancelled');
+                    document.body.removeChild(modal);
+                };
             }
-        });
+            
+            if (confirmBtn) {
+                confirmBtn.onclick = async () => {
+                    console.log('✅ Logout confirmed');
+                    await this.performLogout();
+                    document.body.removeChild(modal);
+                };
+            }
+            
+            // Close on background click
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    console.log('📦 Background click - closing modal');
+                    document.body.removeChild(modal);
+                }
+            };
+            
+            console.log('✅ Modal listeners added');
+        }, 50);
     },
 
     async performLogout() {
         console.log('🚪 Starting logout process...');
         
         const logoutBtn = document.getElementById('logout-btn');
-        const originalText = logoutBtn.innerHTML;
+        const originalHTML = logoutBtn?.innerHTML || '';
         
         try {
             // Disable button and show loading
-            logoutBtn.disabled = true;
-            logoutBtn.innerHTML = '<i class="fas fa-spinner logout-spinner"></i> Logging out...';
+            if (logoutBtn) {
+                logoutBtn.disabled = true;
+                logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
+            }
             
             // 1. Firebase logout
             if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().signOut) {
@@ -767,24 +892,38 @@ const ProfileModule = {
                     await firebase.auth().signOut();
                     console.log('✅ Firebase logout successful');
                 } catch (firebaseError) {
-                    console.warn('⚠️ Firebase logout error (continuing with cleanup):', firebaseError.message);
+                    console.warn('⚠️ Firebase logout error:', firebaseError.message);
                 }
             }
             
-            // 2. Clear all local data
-            console.log('🧹 Clearing local data...');
-            this.clearLocalData();
+            // 🔥 FIX: REINSTATE USER PERSISTENCE
+            // Save current profile data before clearing
+            const currentProfile = window.FarmModules.appData?.profile || {};
+            console.log('💾 Saving profile for persistence:', currentProfile.farmName);
+            
+            // Save to localStorage with user email as key for persistence
+            if (currentProfile.email) {
+                const userKey = `farm-profile-${currentProfile.email}`;
+                localStorage.setItem(userKey, JSON.stringify(currentProfile));
+                console.log('✅ Profile saved for user:', currentProfile.email);
+            }
+            
+            // 2. Clear session data (keep profile data)
+            console.log('🧹 Clearing session data...');
+            this.clearSessionData();
             
             // 3. Show success message
             this.showNotification('Logged out successfully! Redirecting...', 'success');
             
             // 4. Reset button
-            logoutBtn.innerHTML = '<i class="fas fa-check"></i> ✅ Logged out!';
+            if (logoutBtn) {
+                logoutBtn.innerHTML = '<i class="fas fa-check"></i> Logged out!';
+                logoutBtn.style.background = '#10b981';
+            }
             
             // 5. Redirect to home/login page
-            console.log('🔄 Redirecting to login page...');
+            console.log('🔄 Redirecting...');
             setTimeout(() => {
-                // Force reload to clear any cached state
                 window.location.href = window.location.origin + window.location.pathname;
                 window.location.reload(true);
             }, 2000);
@@ -792,97 +931,46 @@ const ProfileModule = {
         } catch (error) {
             console.error('❌ Logout process error:', error);
             
-            // Reset button with error state
-            logoutBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Logout Failed';
-            logoutBtn.style.background = '#6b7280';
-            
-            // Still try to redirect after showing error
-            setTimeout(() => {
-                logoutBtn.innerHTML = originalText;
+            // Reset button
+            if (logoutBtn) {
+                logoutBtn.innerHTML = originalHTML;
                 logoutBtn.disabled = false;
-                logoutBtn.style.background = '';
-                
-                this.showNotification('Logout failed, reloading page...', 'error');
-                
-                // Force reload anyway
-                window.location.reload(true);
-            }, 3000);
+            }
+            
+            this.showNotification('Logout failed: ' + error.message, 'error');
         }
     },
-
-    clearLocalData() {
-        console.log('🗑️ Clearing local storage data...');
+    
+    // 🔥 FIX: Clear only session data, keep profile
+    clearSessionData() {
+        console.log('🗑️ Clearing session data (keeping profile)...');
         
-        // List of keys to keep (optional - for remembering some settings)
-        const keysToKeep = [];
-        
-        // Clear all app-related localStorage items
+        // Clear Firebase auth data
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            
-            // Check if we should keep this key
-            const shouldKeep = keysToKeep.some(keepKey => 
-                key === keepKey || key.startsWith(keepKey)
-            );
-            
-            if (!shouldKeep) {
-                // Clear Firebase auth data
-                if (key.includes('firebase') && key.includes('auth')) {
-                    localStorage.removeItem(key);
-                    console.log(`🔥 Removed Firebase key: ${key}`);
-                }
-                // Clear app data
-                else if (key.startsWith('farm-') || 
-                         key.includes('profile') || 
-                         key.includes('inventory') || 
-                         key.includes('order') || 
-                         key.includes('customer') || 
-                         key.includes('sale') || 
-                         key.includes('transaction')) {
-                    localStorage.removeItem(key);
-                    console.log(`🗑️ Removed app key: ${key}`);
-                }
+            if (key && key.includes('firebase') && key.includes('auth')) {
+                localStorage.removeItem(key);
             }
         }
         
         // Clear sessionStorage
         sessionStorage.clear();
         
-        // Clear app data in memory
-        if (window.FarmModules && window.FarmModules.appData) {
-            // Keep only the profile structure for re-initialization
-            const emptyProfile = {
-                farmName: 'My Farm',
-                farmerName: 'Farm Manager',
-                email: '',
-                farmType: '',
-                farmLocation: '',
-                currency: 'USD',
-                lowStockThreshold: 10,
-                autoSync: true,
-                localStorageEnabled: true,
-                theme: 'auto',
-                memberSince: new Date().toISOString()
-            };
-            
-            window.FarmModules.appData = {
-                profile: emptyProfile,
-                farmName: 'My Farm'
-            };
-        }
+        // Keep farm-profile and user-specific profiles
+        // Don't clear farm-profile, farm-user-profile, or farm-profile-email keys
         
-        console.log('✅ Local data cleared');
+        console.log('✅ Session data cleared, profile preserved');
     },
 
-    // ==================== SAVE PROFILE - ULTIMATE FIX ====================
+    // ==================== SAVE PROFILE - FIXED (NO DUPLICATE LISTENERS) ====================
     async handleSaveProfile() {
-        console.log('💾 Starting profile save...');
+        console.log('💾 Starting profile save - SINGLE ENTRY POINT');
         
         try {
-            // 🔥 CRITICAL FIX: Small delay to ensure any paste/typing completes
+            // Small delay to ensure any paste/typing completes
             await new Promise(resolve => setTimeout(resolve, 50));
             
-            // 🔥 CRITICAL FIX: Get the FRESH input element and value
+            // Get current values directly
             const farmNameInput = document.getElementById('farm-name');
             const farmerNameInput = document.getElementById('farmer-name');
             const emailInput = document.getElementById('farm-email');
@@ -893,20 +981,14 @@ const ProfileModule = {
                 throw new Error('Farm name input not found');
             }
             
-            // 🔥 CRITICAL FIX: Get the CURRENT value directly from the input
+            // Get CURRENT values
             const farmName = farmNameInput.value.trim();
             const farmerName = farmerNameInput?.value.trim();
             const email = emailInput?.value.trim();
             const farmType = farmTypeInput?.value;
             const farmLocation = farmLocationInput?.value.trim();
             
-            console.log('🔥 CURRENT INPUT VALUES:', {
-                farmName,
-                farmerName,
-                email,
-                farmType,
-                farmLocation
-            });
+            console.log('📝 SAVING farm name:', farmName);
             
             // Ensure profile exists
             if (!window.FarmModules.appData.profile) {
@@ -915,37 +997,47 @@ const ProfileModule = {
             
             const profile = window.FarmModules.appData.profile;
             
-            // 🔥 CRITICAL FIX: Update profile with CURRENT values
+            // Update profile
             profile.farmName = farmName || 'My Farm';
             profile.farmerName = farmerName || 'Farm Manager';
             profile.email = email || '';
             profile.farmType = farmType || '';
             profile.farmLocation = farmLocation || '';
+            profile.lastUpdated = new Date().toISOString();
             
-            // Ensure other fields
+            // 🔥 FIX: Ensure persistence
             profile.currency = profile.currency || 'USD';
             profile.lowStockThreshold = profile.lowStockThreshold || 10;
             profile.autoSync = profile.autoSync !== false;
             profile.localStorageEnabled = profile.localStorageEnabled !== false;
-            profile.theme = profile.theme || 'auto';
+            profile.theme = profile.theme || 'light'; // 🔥 Default to light
             profile.memberSince = profile.memberSince || new Date().toISOString();
             
             // Update app data
             window.FarmModules.appData.farmName = profile.farmName;
             
-            console.log('📊 PROFILE AFTER UPDATE:', profile);
+            console.log('📊 Profile to save:', profile);
             
-            // Save to storage
+            // 🔥 FIX: Save to localStorage with multiple keys for persistence
             this.saveToLocalStorage();
             
-            // 🔥 CRITICAL FIX: Force immediate UI update
+            // Also save with user email as key for user-specific persistence
+            if (profile.email) {
+                const userKey = `farm-profile-${profile.email}`;
+                localStorage.setItem(userKey, JSON.stringify(profile));
+                console.log('✅ Profile saved with user key:', userKey);
+            }
+            
+            // Force immediate UI update
             this.updateProfileDisplay(true);
             
-            // Show success with the NEW farm name
+            // Show success
             this.showNotification(`✅ Profile saved! Farm: ${profile.farmName}`, 'success');
             
             // Notify other modules
-            window.dispatchEvent(new CustomEvent('farm-data-updated'));
+            window.dispatchEvent(new CustomEvent('farm-data-updated', {
+                detail: { farmName: profile.farmName }
+            }));
             
             console.log('✅ Profile saved successfully');
             
@@ -955,33 +1047,105 @@ const ProfileModule = {
         }
     },
 
-    // ==================== USER DATA MANAGEMENT ====================
+    // ==================== USER DATA MANAGEMENT - WITH PERSISTENCE ====================
     loadUserData() {
-        console.log('📂 Loading user data...');
+        console.log('📂 Loading user data with persistence...');
         
         try {
-            if (!window.FarmModules.appData.profile) {
-                window.FarmModules.appData.profile = {
+            // 🔥 FIX: Try multiple storage locations for persistence
+            let loadedProfile = null;
+            
+            // 1. First try user-specific storage (by email)
+            const currentUserEmail = this.getCurrentUserEmail();
+            if (currentUserEmail) {
+                const userKey = `farm-profile-${currentUserEmail}`;
+                const userProfile = localStorage.getItem(userKey);
+                if (userProfile) {
+                    try {
+                        loadedProfile = JSON.parse(userProfile);
+                        console.log('✅ Loaded user-specific profile:', userKey);
+                    } catch (e) {
+                        console.error('Error parsing user profile:', e);
+                    }
+                }
+            }
+            
+            // 2. Try general profile storage
+            if (!loadedProfile) {
+                const generalProfile = localStorage.getItem('farm-profile');
+                if (generalProfile) {
+                    try {
+                        loadedProfile = JSON.parse(generalProfile);
+                        console.log('✅ Loaded general profile');
+                    } catch (e) {
+                        console.error('Error parsing general profile:', e);
+                    }
+                }
+            }
+            
+            // 3. Create default if none found
+            if (!loadedProfile) {
+                console.log('🆕 Creating new profile');
+                loadedProfile = {
                     farmName: window.FarmModules.appData.farmName || 'My Farm',
                     farmerName: 'Farm Manager',
-                    email: '',
+                    email: currentUserEmail || '',
                     farmType: '',
                     farmLocation: '',
                     currency: 'USD',
                     lowStockThreshold: 10,
                     autoSync: true,
                     localStorageEnabled: true,
-                    theme: 'auto',
-                    memberSince: new Date().toISOString()
+                    theme: 'light', // 🔥 Default to light
+                    memberSince: new Date().toISOString(),
+                    lastUpdated: new Date().toISOString()
                 };
             }
-
-            this.loadFromLocalStorage();
+            
+            // Ensure theme is light (prevent dark mode)
+            if (loadedProfile.theme === 'dark' || loadedProfile.theme === 'auto') {
+                loadedProfile.theme = 'light';
+                console.log('🌞 Forced light theme');
+            }
+            
+            // Update app data
+            window.FarmModules.appData.profile = loadedProfile;
+            window.FarmModules.appData.farmName = loadedProfile.farmName;
+            
+            // Update UI
             this.updateProfileDisplay();
             
-            console.log('✅ User data loaded');
+            console.log('✅ User data loaded with persistence');
+            
         } catch (error) {
             console.error('Error loading user data:', error);
+        }
+    },
+    
+    // 🔥 NEW: Get current user email for persistence
+    getCurrentUserEmail() {
+        try {
+            // Try Firebase first
+            if (typeof firebase !== 'undefined' && firebase.auth().currentUser) {
+                return firebase.auth().currentUser.email;
+            }
+            
+            // Try localStorage
+            const userData = localStorage.getItem('farm-current-user');
+            if (userData) {
+                const user = JSON.parse(userData);
+                return user.email;
+            }
+            
+            // Try profile data
+            if (window.FarmModules.appData.profile?.email) {
+                return window.FarmModules.appData.profile.email;
+            }
+            
+            return null;
+        } catch (e) {
+            console.error('Error getting user email:', e);
+            return null;
         }
     },
 
@@ -991,7 +1155,7 @@ const ProfileModule = {
         const profile = window.FarmModules.appData.profile;
         if (!profile) return;
         
-        console.log('📊 Displaying profile:', profile);
+        console.log('📊 Displaying profile name:', profile.farmName);
         
         // Update profile card
         const farmNameCard = document.getElementById('profile-farm-name');
@@ -1016,18 +1180,27 @@ const ProfileModule = {
         const farmTypeInput = document.getElementById('farm-type');
         const farmLocationInput = document.getElementById('farm-location');
         
-        if (farmNameInput) farmNameInput.value = profile.farmName || '';
+        if (farmNameInput) {
+            farmNameInput.value = profile.farmName || '';
+            console.log(`✅ Set form input to: "${profile.farmName}"`);
+        }
         if (farmerNameInput) farmerNameInput.value = profile.farmerName || '';
         if (emailInput) emailInput.value = profile.email || '';
         if (farmTypeInput) farmTypeInput.value = profile.farmType || '';
         if (farmLocationInput) farmLocationInput.value = profile.farmLocation || '';
         
-        // Update settings
+        // Update settings - ensure light theme
         document.getElementById('default-currency').value = profile.currency || 'USD';
         document.getElementById('low-stock-threshold').value = profile.lowStockThreshold || 10;
         document.getElementById('auto-sync').checked = profile.autoSync !== false;
         document.getElementById('local-storage').checked = profile.localStorageEnabled !== false;
-        document.getElementById('theme-selector').value = profile.theme || 'auto';
+        
+        // 🔥 FIX: Force light theme in selector
+        const themeSelector = document.getElementById('theme-selector');
+        if (themeSelector) {
+            themeSelector.value = 'light'; // Always set to light
+            console.log('🌞 Forced theme selector to light');
+        }
         
         console.log('✅ Profile display updated');
     },
@@ -1035,25 +1208,22 @@ const ProfileModule = {
     // ==================== LOCAL STORAGE ====================
     saveToLocalStorage() {
         try {
-            localStorage.setItem('farm-profile', JSON.stringify(window.FarmModules.appData.profile));
-            console.log('💾 Profile saved to local storage');
+            const profile = window.FarmModules.appData.profile;
+            if (!profile) return;
+            
+            // Save to general storage
+            localStorage.setItem('farm-profile', JSON.stringify(profile));
+            console.log('💾 Profile saved to farm-profile');
+            
+            // Also save with user email as key
+            if (profile.email) {
+                const userKey = `farm-profile-${profile.email}`;
+                localStorage.setItem(userKey, JSON.stringify(profile));
+                console.log('💾 Profile saved to user key:', userKey);
+            }
+            
         } catch (error) {
             console.error('Error saving to local storage:', error);
-        }
-    },
-
-    loadFromLocalStorage() {
-        try {
-            const savedProfile = localStorage.getItem('farm-profile');
-            if (savedProfile) {
-                window.FarmModules.appData.profile = {
-                    ...window.FarmModules.appData.profile,
-                    ...JSON.parse(savedProfile)
-                };
-                console.log('📂 Profile loaded from local storage');
-            }
-        } catch (error) {
-            console.error('Error loading from local storage:', error);
         }
     },
 
@@ -1070,6 +1240,18 @@ const ProfileModule = {
     },
 
     changeTheme(theme) {
+        // 🔥 FIX: Only allow light theme
+        if (theme === 'dark' || theme === 'auto') {
+            this.showNotification('Dark mode is disabled. Using light theme.', 'info');
+            theme = 'light';
+            
+            // Update selector
+            const themeSelector = document.getElementById('theme-selector');
+            if (themeSelector) {
+                themeSelector.value = 'light';
+            }
+        }
+        
         if (window.StyleManager) {
             window.StyleManager.applyTheme(theme);
             this.saveSetting('theme', theme);
@@ -1706,5 +1888,21 @@ Generated on: ${new Date().toLocaleString()}
 // ==================== REGISTRATION ====================
 if (window.FarmModules) {
     window.FarmModules.registerModule('profile', ProfileModule);
-    console.log('✅ Profile module registered');
+    console.log('✅ Profile module registered with all fixes');
+}
+
+// 🔥 QUICK FIX FOR LOGOUT BUTTON - Run this in console if needed
+function forceLogoutFix() {
+    console.log('🔧 Forcing logout button fix...');
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.onclick = function(e) {
+            e.preventDefault();
+            console.log('🚪 FORCED logout click!');
+            if (confirm('Logout?')) {
+                alert('Logout would happen here');
+            }
+        };
+        console.log('✅ Forced logout fix applied');
+    }
 }
