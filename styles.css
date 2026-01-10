@@ -1334,3 +1334,26 @@ main {
 .activity-list > div div:last-child {
     font-size: 11px !important;
 }
+
+/* ===== FIX: NAV BRAND TEXT SAME COLOR ===== */
+.nav-brand .brand-text,
+.nav-brand .brand-subtitle {
+    color: var(--text-primary) !important;
+    font-weight: 600;
+}
+
+/* In dark mode, both should be light text */
+.dark-mode .nav-brand .brand-text,
+.dark-mode .nav-brand .brand-subtitle {
+    color: var(--dm-text-primary) !important;
+}
+
+/* Make subtitle slightly smaller but same color */
+.nav-brand .brand-subtitle {
+    font-size: 11px;
+    opacity: 0.9;
+}
+
+.dark-mode .nav-brand .brand-subtitle {
+    opacity: 0.8;
+}
