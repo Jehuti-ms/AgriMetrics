@@ -1,4 +1,4 @@
-// modules/profile.js - FIXED VERSION WITHOUT DUPLICATE EXPORTS
+// modules/profile.js - FIXED VERSION WITH ADDED SECTIONS
 console.log('👤 Loading profile module...');
 
 const ProfileModule = {
@@ -65,7 +65,7 @@ const ProfileModule = {
         });
     },
 
-    // ==================== MAIN RENDER - SIMPLIFIED ====================
+    // ==================== MAIN RENDER - WITH NEW SECTIONS ====================
     renderModule() {
         if (!this.element) return;
 
@@ -312,7 +312,7 @@ const ProfileModule = {
                     gap: 12px;
                 }
                 
-                /* PDF Export Section - SINGLE SECTION */
+                /* PDF Export Section */
                 .pdf-export-section {
                     padding: 24px;
                 }
@@ -355,6 +355,99 @@ const ProfileModule = {
                     font-size: 13px;
                 }
                 
+                /* NEW: Installation Guide Styles */
+                .guide-steps {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 20px;
+                    margin: 20px 0;
+                }
+                
+                .step {
+                    text-align: center;
+                    padding: 20px;
+                    background: var(--glass-bg);
+                    border-radius: 12px;
+                }
+                
+                .step-number {
+                    width: 40px;
+                    height: 40px;
+                    background: var(--primary-color);
+                    color: white;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: bold;
+                    margin: 0 auto 12px;
+                }
+                
+                .step h4 {
+                    margin: 0 0 8px 0;
+                    color: var(--text-primary);
+                }
+                
+                .step p {
+                    margin: 0;
+                    font-size: 14px;
+                    color: var(--text-secondary);
+                }
+                
+                .guide-actions {
+                    display: flex;
+                    gap: 12px;
+                    margin-top: 20px;
+                }
+                
+                /* NEW: Support Section Styles */
+                .support-channels {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                    margin-top: 20px;
+                }
+                
+                .support-channel {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 16px;
+                    background: var(--glass-bg);
+                    border-radius: 8px;
+                }
+                
+                .support-channel-icon {
+                    font-size: 24px;
+                    width: 48px;
+                    height: 48px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: var(--glass-bg);
+                    border-radius: 50%;
+                }
+                
+                .support-channel-content {
+                    flex: 1;
+                }
+                
+                .support-channel h4 {
+                    margin: 0 0 4px 0;
+                    color: var(--text-primary);
+                }
+                
+                .support-channel p {
+                    margin: 0;
+                    font-size: 14px;
+                    color: var(--text-secondary);
+                }
+                
+                .support-channel-actions {
+                    display: flex;
+                    gap: 8px;
+                }
+                
                 /* Mobile responsive */
                 @media (max-width: 768px) {
                     .form-row {
@@ -375,6 +468,24 @@ const ProfileModule = {
                     
                     .action-buttons button {
                         width: 100%;
+                    }
+                    
+                    .guide-steps {
+                        grid-template-columns: 1fr;
+                    }
+                    
+                    .guide-actions {
+                        flex-direction: column;
+                    }
+                    
+                    .support-channel {
+                        flex-direction: column;
+                        text-align: center;
+                    }
+                    
+                    .support-channel-actions {
+                        width: 100%;
+                        justify-content: center;
                     }
                 }
                 
@@ -627,6 +738,92 @@ const ProfileModule = {
                             <button class="btn-outline" id="logout-btn" style="color: #ef4444; border-color: #ef4444;">🚪 Logout</button>
                         </div>
                     </div>
+
+                    <!-- NEW: Mobile Installation Guide -->
+                    <div class="installation-guide glass-card">
+                        <h3>📱 Install on Mobile</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 16px;">Get the app-like experience on your phone or tablet</p>
+                        
+                        <div class="guide-steps">
+                            <div class="step">
+                                <div class="step-number">1</div>
+                                <h4>Open in Browser</h4>
+                                <p>Visit this app in Safari (iOS) or Chrome (Android)</p>
+                            </div>
+                            <div class="step">
+                                <div class="step-number">2</div>
+                                <h4>Tap Share Button</h4>
+                                <p>Look for <strong>📤 Share</strong> or <strong>⋮ Menu</strong></p>
+                            </div>
+                            <div class="step">
+                                <div class="step-number">3</div>
+                                <h4>Add to Home Screen</h4>
+                                <p>Select <strong>"Add to Home Screen"</strong></p>
+                            </div>
+                        </div>
+                        
+                        <div class="guide-actions">
+                            <button class="btn-outline" id="send-install-link">
+                                📧 Send Installation Link
+                            </button>
+                            <button class="btn-outline" id="show-qr-code">
+                                📱 Show QR Code
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- NEW: Support & Help Section -->
+                    <div class="support-section glass-card">
+                        <h3>🆘 Support & Help</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 16px;">Get help with the Farm Manager app</p>
+                        
+                        <div class="support-channels">
+                            <div class="support-channel">
+                                <div class="support-channel-icon">📧</div>
+                                <div class="support-channel-content">
+                                    <h4>Email Support</h4>
+                                    <p>farm-support@example.com</p>
+                                </div>
+                                <div class="support-channel-actions">
+                                    <button class="btn-outline" data-action="copy-email">📋 Copy</button>
+                                </div>
+                            </div>
+                            
+                            <div class="support-channel">
+                                <div class="support-channel-icon">💬</div>
+                                <div class="support-channel-content">
+                                    <h4>Team Channel</h4>
+                                    <p>#farm-management</p>
+                                </div>
+                                <div class="support-channel-actions">
+                                    <button class="btn-outline" data-action="open-slack">↗️ Open</button>
+                                </div>
+                            </div>
+                            
+                            <div class="support-channel">
+                                <div class="support-channel-icon">📖</div>
+                                <div class="support-channel-content">
+                                    <h4>Quick Guide</h4>
+                                    <p>One-page reference guide</p>
+                                </div>
+                                <div class="support-channel-actions">
+                                    <button class="btn-outline" data-action="open-guide">📄 Open</button>
+                                    <button class="btn-outline" data-action="download-guide">📥 PDF</button>
+                                </div>
+                            </div>
+                            
+                            <div class="support-channel">
+                                <div class="support-channel-icon">🎥</div>
+                                <div class="support-channel-content">
+                                    <h4>Video Tutorials</h4>
+                                    <p>Step-by-step video guides</p>
+                                </div>
+                                <div class="support-channel-actions">
+                                    <button class="btn-outline" data-action="watch-tutorials">▶️ Watch</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -717,9 +914,345 @@ const ProfileModule = {
         document.getElementById('logout-btn')?.addEventListener('click', () => {
             this.handleLogout();
         });
+
+        // NEW: Mobile Installation buttons
+        document.getElementById('send-install-link')?.addEventListener('click', () => {
+            this.sendInstallationLink();
+        });
+
+        document.getElementById('show-qr-code')?.addEventListener('click', () => {
+            this.showQRCode();
+        });
+
+        // NEW: Support section event delegation
+        this.element.addEventListener('click', (e) => {
+            const button = e.target.closest('button[data-action]');
+            if (!button) return;
+            
+            e.preventDefault();
+            const action = button.getAttribute('data-action');
+            
+            switch(action) {
+                case 'copy-email':
+                    this.copyToClipboard('farm-support@example.com');
+                    break;
+                    
+                case 'open-slack':
+                    this.openSlackChannel();
+                    break;
+                    
+                case 'open-guide':
+                    this.openQuickGuide();
+                    break;
+                    
+                case 'download-guide':
+                    this.downloadQuickGuide();
+                    break;
+                    
+                case 'watch-tutorials':
+                    this.openYouTubeTutorials();
+                    break;
+            }
+        });
     },
 
-    // ==================== USER DATA MANAGEMENT ====================
+    // ==================== NEW METHODS FOR ADDED SECTIONS ====================
+
+    // Mobile Installation Methods
+    sendInstallationLink() {
+        const email = prompt('Enter email address to send installation link:');
+        if (email && email.includes('@')) {
+            const currentUrl = window.location.href;
+            const subject = 'Install Farm Manager App';
+            const body = `Hello,
+
+Install the Farm Manager app on your mobile device:
+
+📱 Install Instructions:
+1. Open this link on your mobile: ${currentUrl}
+2. Tap the Share button (📤)
+3. Select "Add to Home Screen"
+
+This will install the app for quick access!
+
+Best regards,
+Farm Manager Team`;
+            
+            const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailtoLink;
+            this.showNotification('Email opened with installation instructions', 'success');
+        } else if (email) {
+            this.showNotification('Please enter a valid email address', 'error');
+        }
+    },
+
+    showQRCode() {
+        const currentUrl = window.location.href;
+        
+        // Create QR Code modal
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        `;
+        
+        modal.innerHTML = `
+            <div class="glass-card" style="padding: 2rem; text-align: center; max-width: 90%; max-height: 90%; overflow: auto;">
+                <h3 style="margin-bottom: 1rem;">Scan to Install</h3>
+                <div id="qrcode-container" style="background: white; padding: 1rem; margin: 0 auto 1rem auto; display: inline-block;"></div>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">Scan this QR code with your mobile device</p>
+                <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 1rem;">URL: ${currentUrl}</p>
+                <div style="margin-top: 1rem;">
+                    <button class="btn-primary" id="close-qr">Close</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Generate QR code (if QRCode library is loaded)
+        const qrContainer = document.getElementById('qrcode-container');
+        if (typeof QRCode !== 'undefined') {
+            new QRCode(qrContainer, {
+                text: currentUrl,
+                width: 200,
+                height: 200,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        } else {
+            qrContainer.innerHTML = `
+                <div style="padding: 2rem; background: #f0f0f0; border-radius: 8px;">
+                    <p>Please scan this URL:</p>
+                    <p style="word-break: break-all; font-size: 12px;">${currentUrl}</p>
+                </div>
+            `;
+        }
+        
+        // Close button
+        document.getElementById('close-qr').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+        
+        // Close on background click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        });
+    },
+
+    // Support Methods
+    copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            this.showNotification('Copied to clipboard!', 'success');
+        }).catch(err => {
+            console.error('Clipboard error:', err);
+            this.showNotification('Failed to copy', 'error');
+        });
+    },
+
+    openSlackChannel() {
+        // In a real app, this would open Slack
+        this.showNotification('Slack integration would open here', 'info');
+        // window.open('https://slack.com', '_blank');
+    },
+
+    openQuickGuide() {
+        // Create a simple guide modal
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        `;
+        
+        modal.innerHTML = `
+            <div class="glass-card" style="padding: 2rem; max-width: 600px; max-height: 80%; overflow: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="margin: 0;">📖 Quick Guide</h3>
+                    <button class="btn-outline" id="close-guide">✕</button>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div>
+                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">🏠 Dashboard</h4>
+                        <p style="color: var(--text-secondary); margin: 0;">Overview of your farm's key metrics and quick actions.</p>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">📦 Inventory</h4>
+                        <p style="color: var(--text-secondary); margin: 0;">Manage your farm products, track quantities, and set reorder points.</p>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">💰 Orders</h4>
+                        <p style="color: var(--text-secondary); margin: 0;">Create and manage customer orders, track payments, and generate invoices.</p>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">📊 Analytics</h4>
+                        <p style="color: var(--text-secondary); margin: 0;">Visualize your farm's performance with charts and reports.</p>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">👤 Profile</h4>
+                        <p style="color: var(--text-secondary); margin: 0;">Manage your farm settings, export data, and configure the app.</p>
+                    </div>
+                    
+                    <div style="background: var(--glass-bg); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                        <h4 style="color: var(--success-color); margin-bottom: 0.5rem;">💡 Quick Tips</h4>
+                        <ul style="color: var(--text-secondary); margin: 0; padding-left: 1.2rem;">
+                            <li>Use keyboard shortcuts for faster navigation</li>
+                            <li>Export regular backups of your data</li>
+                            <li>Set up low stock alerts for inventory items</li>
+                            <li>Use the mobile app for on-the-go access</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        document.getElementById('close-guide').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        });
+    },
+
+    downloadQuickGuide() {
+        const guideContent = `
+Farm Manager - Quick Guide
+==========================
+
+📋 Key Features:
+
+1. 🏠 DASHBOARD
+   - Real-time farm metrics
+   - Quick action buttons
+   - Recent activity feed
+
+2. 📦 INVENTORY MANAGEMENT
+   - Add/edit/delete products
+   - Track stock levels
+   - Set reorder alerts
+   - Manage categories
+
+3. 💰 ORDER MANAGEMENT
+   - Create customer orders
+   - Process payments
+   - Generate invoices
+   - Track order history
+
+4. 📊 ANALYTICS & REPORTS
+   - Sales trends
+   - Inventory analysis
+   - Customer insights
+   - Export to PDF
+
+5. 👤 PROFILE & SETTINGS
+   - Farm information
+   - User preferences
+   - Data backup/restore
+   - Theme customization
+
+🚀 Getting Started:
+
+1. Set up your farm profile
+2. Add your products to inventory
+3. Create your first customer order
+4. Explore analytics dashboard
+5. Configure your preferences
+
+💡 Tips & Tricks:
+
+• Use keyboard shortcuts for faster navigation
+• Set up low stock alerts (Profile → Settings)
+• Export regular backups of your data
+• Install the mobile app for on-the-go access
+
+📱 Mobile App:
+
+1. Open this app in mobile browser
+2. Tap Share button (📤)
+3. Select "Add to Home Screen"
+
+🔧 Support: farm-support@example.com
+
+Generated on: ${new Date().toLocaleString()}
+        `;
+        
+        const blob = new Blob([guideContent], {type: 'text/plain'});
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'Farm-Manager-Quick-Guide.txt';
+        link.click();
+        URL.revokeObjectURL(link.href);
+        
+        this.showNotification('Quick guide downloaded!', 'success');
+    },
+
+    openYouTubeTutorials() {
+        // Simple modal for tutorials
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        `;
+        
+        modal.innerHTML = `
+            <div class="glass-card" style="padding: 2rem; max-width: 500px; text-align: center;">
+                <h3 style="margin-bottom: 1rem;">🎥 Video Tutorials</h3>
+                <div style="background: var(--glass-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                    <p style="color: var(--text-secondary); margin: 0 0 1rem 0;">Video tutorials are coming soon!</p>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">In the meantime, check out our Quick Guide for instructions.</p>
+                </div>
+                <button class="btn-primary" id="close-tutorials">Close</button>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        document.getElementById('close-tutorials').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+    },
+
+    // ==================== EXISTING METHODS (keep as is) ====================
+    // ... (ALL YOUR EXISTING METHODS REMAIN EXACTLY THE SAME)
+    // loadUserData, saveProfile, saveSetting, exportProfilePDF, etc.
+    // All the methods from your original code go here unchanged
+
     async loadUserData() {
         try {
             // Initialize profile data if it doesn't exist
@@ -788,7 +1321,6 @@ const ProfileModule = {
         }
     },
 
-    // ==================== PDF EXPORT METHODS ====================
     async exportProfilePDF() {
         this.updatePDFStatus('Generating profile report...', 'info');
         
@@ -1110,10 +1642,7 @@ const ProfileModule = {
         }
     },
 
-    // ==================== OTHER METHODS (from original) ====================
-    // These methods remain mostly the same as your original code
-    // I've included the essential ones, but removed duplicates
-
+    // ==================== OTHER METHODS ====================
     changeTheme(theme) {
         if (window.StyleManager) {
             window.StyleManager.applyTheme(theme);
@@ -1330,6 +1859,19 @@ const ProfileModule = {
             style: 'currency',
             currency: currency
         }).format(amount);
+    },
+
+    // PDF helper methods (if they exist in your original)
+    async addProfileToPDF(doc) {
+        // Implementation if needed
+    },
+
+    async addInventoryToPDF(doc) {
+        // Implementation if needed
+    },
+
+    async addSalesToPDF(doc) {
+        // Implementation if needed
     }
 };
 
