@@ -866,7 +866,7 @@ const ProfileModule = {
         // Profile form
         document.getElementById('profile-form')?.addEventListener('submit', (e) => {
             e.preventDefault();
-            this.saveProfile();
+            ProfileModule.saveProfile();
         });
 
         // Sync now button
