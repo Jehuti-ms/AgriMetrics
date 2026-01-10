@@ -1208,37 +1208,7 @@ const ProfileModule = {
         document.getElementById('member-since').textContent = `Member since: ${memberSince}`;
     },
 
-    function debugFarmNameDisplay() {
-    console.log('🔍 Debugging farm name display:');
-    
-    // Check all possible farm name elements
-    const allElements = document.querySelectorAll('*');
-    const farmNameElements = [];
-    
-    allElements.forEach(el => {
-        const text = el.textContent?.trim() || el.value;
-        if (text && (
-            text.includes('Farm') || 
-            text.includes('farm') ||
-            el.className?.includes('farm') ||
-            el.id?.includes('farm') ||
-            el.getAttribute('data-farm-name')
-        )) {
-            farmNameElements.push({
-                element: el,
-                text: text,
-                tag: el.tagName,
-                className: el.className,
-                id: el.id
-            });
-        }
-    });
-    
-    console.log('📋 Found farm name related elements:', farmNameElements);
-    return farmNameElements;
-},
-
-    // ==================== USER DATA MANAGEMENT ====================
+      // ==================== USER DATA MANAGEMENT ====================
     loadUserData() {
        // 🔥 DON'T LOAD if we're in the middle of saving
         if (this.isSaving) {
