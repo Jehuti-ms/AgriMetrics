@@ -1,19 +1,11 @@
-// modules/profile.js - FIXED VERSION WITH ADDED SECTIONS
+// modules/profile.js - COMPLETE FIXED VERSION WITH ALL SECTIONS
 console.log('👤 Loading profile module...');
 
 const ProfileModule = {
     name: 'profile',
     initialized: false,
     element: null,
-    currentInputValues: {},
-    pdfDataCache: {
-        inventory: null,
-        orders: null,
-        customers: null,
-        products: null,
-        lastUpdated: {}
-    },
-
+    
     // ==================== INITIALIZATION ====================
     initialize() {
         console.log('👤 Initializing profile...');
@@ -24,15 +16,11 @@ const ProfileModule = {
             return false;
         }
         
-        // Register with StyleManager
         if (window.StyleManager) {
             window.StyleManager.registerModule(this.name, this.element, {
                 onThemeChange: (theme) => this.onThemeChange(theme)
             });
         }
-        
-        // Setup data sync
-        this.setupDataSync();
         
         this.renderModule();
         this.initialized = true;
@@ -47,457 +35,68 @@ const ProfileModule = {
         }
     },
 
-    // ==================== DATA SYNC ====================
-    setupDataSync() {
-        // Listen for data updates from other modules
-        window.addEventListener('farm-data-updated', () => {
-            this.updateStatsFromModules();
-        });
-        
-        window.addEventListener('inventory-updated', () => {
-            this.updatePDFDataCache('inventory', 'update', window.FarmModules.appData.inventory);
-            this.updateStatsFromModules();
-        });
-        
-        window.addEventListener('orders-updated', () => {
-            this.updatePDFDataCache('orders', 'update', window.FarmModules.appData.orders);
-            this.updateStatsFromModules();
-        });
-    },
-
-    // ==================== MAIN RENDER - WITH NEW SECTIONS ====================
+    // ==================== MAIN RENDER ====================
     renderModule() {
         if (!this.element) return;
 
         this.element.innerHTML = `
             <style>
-                /* Profile specific styles */
-                .profile-content {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 24px;
-                }
-                
-                .stats-overview {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 16px;
-                    margin-bottom: 16px;
-                }
-                
-                .stat-card {
-                    padding: 20px;
-                    border-radius: 12px;
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                }
-                
-                .stat-icon {
-                    font-size: 32px;
-                    width: 60px;
-                    height: 60px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: var(--glass-bg);
-                    border-radius: 50%;
-                }
-                
-                .stat-content {
-                    flex: 1;
-                }
-                
-                .stat-content h3 {
-                    font-size: 14px;
-                    color: var(--text-secondary);
-                    margin-bottom: 4px;
-                }
-                
-                .stat-value {
-                    font-size: 24px;
-                    font-weight: bold;
-                    color: var(--text-primary);
-                }
-                
-                .profile-card {
-                    padding: 24px;
-                }
-                
-                .profile-header {
-                    display: flex;
-                    align-items: center;
-                    gap: 20px;
-                }
-                
-                .profile-avatar {
-                    width: 80px;
-                    height: 80px;
-                    border-radius: 50%;
-                    background: var(--glass-bg);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 32px;
-                }
-                
-                .profile-info h2 {
-                    margin: 0 0 8px 0;
-                    color: var(--text-primary);
-                }
-                
-                .profile-info p {
-                    margin: 4px 0;
-                    color: var(--text-secondary);
-                }
-                
-                .profile-stats {
-                    display: flex;
-                    gap: 12px;
-                    margin-top: 12px;
-                    flex-wrap: wrap;
-                }
-                
-                .stat-badge {
-                    padding: 4px 8px;
-                    background: var(--glass-bg);
-                    border-radius: 6px;
-                    font-size: 12px;
-                    color: var(--text-secondary);
-                }
-                
-                /* Form Styles */
-                .form-row {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 16px;
-                    margin-bottom: 16px;
-                }
-                
-                .form-group {
-                    margin-bottom: 16px;
-                }
-                
-                .form-label {
-                    display: block;
-                    margin-bottom: 8px;
-                    font-weight: 600;
-                    color: var(--text-primary);
-                }
-                
-                .form-input, .setting-control {
-                    width: 100%;
-                    padding: 10px 12px;
-                    border: 1px solid var(--glass-border);
-                    border-radius: 8px;
-                    background: var(--glass-bg);
-                    color: var(--text-primary);
-                    font-size: 14px;
-                }
-                
-                .form-actions {
-                    display: flex;
-                    gap: 12px;
-                    margin-top: 24px;
-                }
-                
-                /* Settings */
-                .settings-list {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 16px;
-                }
-                
-                .setting-item {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 12px 0;
-                    border-bottom: 1px solid var(--glass-border);
-                }
-                
-                .setting-info h4 {
-                    margin: 0 0 4px 0;
-                    color: var(--text-primary);
-                }
-                
-                .setting-info p {
-                    margin: 0;
-                    font-size: 14px;
-                    color: var(--text-secondary);
-                }
-                
-                .setting-unit {
-                    font-size: 14px;
-                    color: var(--text-secondary);
-                    margin-left: 8px;
-                }
-                
-                /* Switch */
-                .switch {
-                    position: relative;
-                    display: inline-block;
-                    width: 50px;
-                    height: 24px;
-                }
-                
-                .switch input {
-                    opacity: 0;
-                    width: 0;
-                    height: 0;
-                }
-                
-                .slider {
-                    position: absolute;
-                    cursor: pointer;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background-color: var(--glass-border);
-                    transition: .4s;
-                    border-radius: 24px;
-                }
-                
-                .slider:before {
-                    position: absolute;
-                    content: "";
-                    height: 16px;
-                    width: 16px;
-                    left: 4px;
-                    bottom: 4px;
-                    background-color: white;
-                    transition: .4s;
-                    border-radius: 50%;
-                }
-                
-                input:checked + .slider {
-                    background-color: var(--primary-color);
-                }
-                
-                input:checked + .slider:before {
-                    transform: translateX(26px);
-                }
-                
-                /* Data Management */
-                .data-stats {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                    gap: 16px;
-                    margin-bottom: 20px;
-                }
-                
-                .data-stat {
-                    padding: 12px;
-                    background: var(--glass-bg);
-                    border-radius: 8px;
-                }
-                
-                .data-stat label {
-                    display: block;
-                    font-size: 12px;
-                    color: var(--text-secondary);
-                    margin-bottom: 4px;
-                }
-                
-                .data-stat span {
-                    font-size: 16px;
-                    font-weight: bold;
-                    color: var(--text-primary);
-                }
-                
-                .action-buttons {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 12px;
-                }
-                
-                /* PDF Export Section */
-                .pdf-export-section {
-                    padding: 24px;
-                }
-                
-                .pdf-buttons-container {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 12px;
-                    margin-top: 16px;
-                }
-                
-                .pdf-btn {
-                    padding: 16px;
-                    background: var(--glass-bg);
-                    border: 1px solid var(--glass-border);
-                    border-radius: 8px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 8px;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                
-                .pdf-btn:hover {
-                    transform: translateY(-2px);
-                    border-color: var(--primary-color);
-                    background: var(--primary-color)10;
-                }
-                
-                .pdf-btn span:last-child {
-                    font-size: 14px;
-                    font-weight: 600;
-                    color: var(--text-primary);
-                }
-                
-                #pdf-status {
-                    margin-top: 12px;
-                    text-align: center;
-                    font-size: 13px;
-                }
-                
-                /* NEW: Installation Guide Styles */
-                .guide-steps {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 20px;
-                    margin: 20px 0;
-                }
-                
-                .step {
-                    text-align: center;
-                    padding: 20px;
-                    background: var(--glass-bg);
-                    border-radius: 12px;
-                }
-                
-                .step-number {
-                    width: 40px;
-                    height: 40px;
-                    background: var(--primary-color);
-                    color: white;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-weight: bold;
-                    margin: 0 auto 12px;
-                }
-                
-                .step h4 {
-                    margin: 0 0 8px 0;
-                    color: var(--text-primary);
-                }
-                
-                .step p {
-                    margin: 0;
-                    font-size: 14px;
-                    color: var(--text-secondary);
-                }
-                
-                .guide-actions {
-                    display: flex;
-                    gap: 12px;
-                    margin-top: 20px;
-                }
-                
-                /* NEW: Support Section Styles */
-                .support-channels {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                    margin-top: 20px;
-                }
-                
-                .support-channel {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    padding: 16px;
-                    background: var(--glass-bg);
-                    border-radius: 8px;
-                }
-                
-                .support-channel-icon {
-                    font-size: 24px;
-                    width: 48px;
-                    height: 48px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: var(--glass-bg);
-                    border-radius: 50%;
-                }
-                
-                .support-channel-content {
-                    flex: 1;
-                }
-                
-                .support-channel h4 {
-                    margin: 0 0 4px 0;
-                    color: var(--text-primary);
-                }
-                
-                .support-channel p {
-                    margin: 0;
-                    font-size: 14px;
-                    color: var(--text-secondary);
-                }
-                
-                .support-channel-actions {
-                    display: flex;
-                    gap: 8px;
-                }
-                
-                /* Mobile responsive */
-                @media (max-width: 768px) {
-                    .form-row {
-                        grid-template-columns: 1fr;
-                    }
-                    
-                    .stats-overview {
-                        grid-template-columns: repeat(2, 1fr);
-                    }
-                    
-                    .pdf-buttons-container {
-                        grid-template-columns: repeat(2, 1fr);
-                    }
-                    
-                    .action-buttons {
-                        flex-direction: column;
-                    }
-                    
-                    .action-buttons button {
-                        width: 100%;
-                    }
-                    
-                    .guide-steps {
-                        grid-template-columns: 1fr;
-                    }
-                    
-                    .guide-actions {
-                        flex-direction: column;
-                    }
-                    
-                    .support-channel {
-                        flex-direction: column;
-                        text-align: center;
-                    }
-                    
-                    .support-channel-actions {
-                        width: 100%;
-                        justify-content: center;
-                    }
-                }
-                
-                @media (max-width: 480px) {
-                    .stats-overview {
-                        grid-template-columns: 1fr;
-                    }
-                    
-                    .pdf-buttons-container {
-                        grid-template-columns: 1fr;
-                    }
-                }
+                .profile-content { display: flex; flex-direction: column; gap: 24px; }
+                .stats-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px; }
+                .stat-card { padding: 20px; border-radius: 12px; display: flex; align-items: center; gap: 16px; }
+                .stat-icon { font-size: 32px; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; background: var(--glass-bg); border-radius: 50%; }
+                .stat-content { flex: 1; }
+                .stat-content h3 { font-size: 14px; color: var(--text-secondary); margin-bottom: 4px; }
+                .stat-value { font-size: 24px; font-weight: bold; color: var(--text-primary); }
+                .profile-card { padding: 24px; }
+                .profile-header { display: flex; align-items: center; gap: 20px; }
+                .profile-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--glass-bg); display: flex; align-items: center; justify-content: center; font-size: 32px; }
+                .profile-info h2 { margin: 0 0 8px 0; color: var(--text-primary); }
+                .profile-info p { margin: 4px 0; color: var(--text-secondary); }
+                .profile-stats { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+                .stat-badge { padding: 4px 8px; background: var(--glass-bg); border-radius: 6px; font-size: 12px; color: var(--text-secondary); }
+                .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+                .form-group { margin-bottom: 16px; }
+                .form-label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary); }
+                .form-input, .setting-control { width: 100%; padding: 10px 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--glass-bg); color: var(--text-primary); font-size: 14px; }
+                .form-actions { display: flex; gap: 12px; margin-top: 24px; }
+                .settings-list { display: flex; flex-direction: column; gap: 16px; }
+                .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--glass-border); }
+                .setting-info h4 { margin: 0 0 4px 0; color: var(--text-primary); }
+                .setting-info p { margin: 0; font-size: 14px; color: var(--text-secondary); }
+                .setting-unit { font-size: 14px; color: var(--text-secondary); margin-left: 8px; }
+                .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+                .switch input { opacity: 0; width: 0; height: 0; }
+                .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--glass-border); transition: .4s; border-radius: 24px; }
+                .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+                input:checked + .slider { background-color: var(--primary-color); }
+                input:checked + .slider:before { transform: translateX(26px); }
+                .data-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 20px; }
+                .data-stat { padding: 12px; background: var(--glass-bg); border-radius: 8px; }
+                .data-stat label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+                .data-stat span { font-size: 16px; font-weight: bold; color: var(--text-primary); }
+                .action-buttons { display: flex; flex-wrap: wrap; gap: 12px; }
+                .pdf-export-section { padding: 24px; }
+                .pdf-buttons-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 16px; }
+                .pdf-btn { padding: 16px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; }
+                .pdf-btn:hover { transform: translateY(-2px); border-color: var(--primary-color); background: var(--primary-color)10; }
+                .pdf-btn span:last-child { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+                #pdf-status { margin-top: 12px; text-align: center; font-size: 13px; }
+                .guide-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }
+                .step { text-align: center; padding: 20px; background: var(--glass-bg); border-radius: 12px; }
+                .step-number { width: 40px; height: 40px; background: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 0 auto 12px; }
+                .step h4 { margin: 0 0 8px 0; color: var(--text-primary); }
+                .step p { margin: 0; font-size: 14px; color: var(--text-secondary); }
+                .guide-actions { display: flex; gap: 12px; margin-top: 20px; }
+                .support-channels { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+                .support-channel { display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--glass-bg); border-radius: 8px; }
+                .support-channel-icon { font-size: 24px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: var(--glass-bg); border-radius: 50%; }
+                .support-channel-content { flex: 1; }
+                .support-channel h4 { margin: 0 0 4px 0; color: var(--text-primary); }
+                .support-channel p { margin: 0; font-size: 14px; color: var(--text-secondary); }
+                .support-channel-actions { display: flex; gap: 8px; }
+                @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } .stats-overview { grid-template-columns: repeat(2, 1fr); } .pdf-buttons-container { grid-template-columns: repeat(2, 1fr); } .action-buttons { flex-direction: column; } .action-buttons button { width: 100%; } .guide-steps { grid-template-columns: 1fr; } .guide-actions { flex-direction: column; } .support-channel { flex-direction: column; text-align: center; } .support-channel-actions { width: 100%; justify-content: center; } }
+                @media (max-width: 480px) { .stats-overview { grid-template-columns: 1fr; } .pdf-buttons-container { grid-template-columns: 1fr; } }
             </style>
             
             <div class="module-container">
@@ -548,7 +147,7 @@ const ProfileModule = {
                             <div class="profile-info">
                                 <h2 id="profile-farm-name">My Farm</h2>
                                 <p id="profile-farmer-name">Farm Manager</p>
-                                <p class="profile-email" id="profile-email">Loading...</p>
+                                <p class="profile-email" id="profile-email">No email</p>
                                 <div class="profile-stats">
                                     <span class="stat-badge" id="member-since">Member since: Today</span>
                                     <span class="stat-badge" id="data-entries">Data entries: 0</span>
@@ -557,25 +156,33 @@ const ProfileModule = {
                             </div>
                         </div>
                     </div>
-
+                    
                     <!-- Farm Information Form -->
                     <div class="profile-details glass-card">
                         <h3>Farm Information</h3>
                         <form id="profile-form">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="farm-name" class="form-label">Farm Name</label>
-                                    <input type="text" id="farm-name" class="form-input" required>
+                                    <label for="farm-name" class="form-label">Farm Name *</label>
+                                    <input type="text" id="farm-name" name="farm-name" class="form-input" required 
+                                           placeholder="Enter farm name">
                                 </div>
                                 <div class="form-group">
-                                    <label for="farmer-name" class="form-label">Farmer Name</label>
-                                    <input type="text" id="farmer-name" class="form-input" required>
+                                    <label for="farmer-name" class="form-label">Farmer Name *</label>
+                                    <input type="text" id="farmer-name" name="farmer-name" class="form-input" required 
+                                           placeholder="Enter your name">
                                 </div>
                             </div>
+                            
                             <div class="form-row">
                                 <div class="form-group">
+                                    <label for="farm-email" class="form-label">Farm Email</label>
+                                    <input type="email" id="farm-email" name="farm-email" class="form-input" 
+                                           placeholder="farm@example.com">
+                                </div>
+                                <div class="form-group">
                                     <label for="farm-type" class="form-label">Farm Type</label>
-                                    <select id="farm-type" class="form-input">
+                                    <select id="farm-type" name="farm-type" class="form-input">
                                         <option value="">Select farm type</option>
                                         <option value="crop">Crop Farm</option>
                                         <option value="livestock">Livestock Farm</option>
@@ -585,27 +192,19 @@ const ProfileModule = {
                                         <option value="other">Other</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label for="farm-location" class="form-label">Farm Location</label>
-                                    <input type="text" id="farm-location" class="form-input" placeholder="e.g., City, State">
-                                </div>
                             </div>
                             
-                            <div class="form-group">
-                                <div class="setting-item">
-                                    <div class="setting-info">
-                                        <h4>Remember Me</h4>
-                                        <p>Keep me logged in on this device</p>
-                                    </div>
-                                    <label class="switch">
-                                        <input type="checkbox" id="remember-user" checked>
-                                        <span class="slider"></span>
-                                    </label>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="farm-location" class="form-label">Farm Location</label>
+                                    <input type="text" id="farm-location" name="farm-location" class="form-input" 
+                                           placeholder="e.g., City, State">
                                 </div>
                             </div>
                             
                             <div class="form-actions">
-                                <button type="submit" class="btn-primary">💾 Save Profile</button>
+                                <!-- 🔥 FIXED: Changed to type="button" and added id -->
+                                <button type="button" class="btn-primary" id="save-profile-btn">💾 Save Profile</button>
                                 <button type="button" class="btn-secondary" id="sync-now-btn">🔄 Sync Now</button>
                                 <button type="button" class="btn-outline" id="reset-profile">Reset to Current</button>
                             </div>
@@ -681,7 +280,7 @@ const ProfileModule = {
                         </div>
                     </div>
                     
-                    <!-- PDF EXPORT SECTION - SINGLE SECTION ONLY -->
+                    <!-- PDF EXPORT SECTION -->
                     <div class="pdf-export-section glass-card">
                         <h3>📄 Export Reports</h3>
                         <p style="color: var(--text-secondary); margin-bottom: 16px;">Generate PDF reports for your farm data</p>
@@ -739,7 +338,7 @@ const ProfileModule = {
                         </div>
                     </div>
 
-                    <!-- NEW: Mobile Installation Guide -->
+                    <!-- Mobile Installation Guide -->
                     <div class="installation-guide glass-card">
                         <h3>📱 Install on Mobile</h3>
                         <p style="color: var(--text-secondary); margin-bottom: 16px;">Get the app-like experience on your phone or tablet</p>
@@ -772,7 +371,7 @@ const ProfileModule = {
                         </div>
                     </div>
 
-                    <!-- NEW: Support & Help Section -->
+                    <!-- Support & Help Section -->
                     <div class="support-section glass-card">
                         <h3>🆘 Support & Help</h3>
                         <p style="color: var(--text-secondary); margin-bottom: 16px;">Get help with the Farm Manager app</p>
@@ -828,103 +427,100 @@ const ProfileModule = {
             </div>
         `;
 
-        this.loadUserData();
-        this.setupEventListeners();
-        this.updateAllDisplays();
+        // Set up everything
+        setTimeout(() => {
+            this.setupEventListeners();
+            this.loadUserData();
+            this.updateStatsFromModules();
+        }, 100);
     },
 
-    // ==================== EVENT LISTENERS ====================
+    // ==================== EVENT LISTENERS - ULTIMATE FIX ====================
     setupEventListeners() {
-        // Profile form
-        document.getElementById('profile-form')?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.saveProfile();
-        });
+        console.log('🔧 Setting up profile event listeners');
+        
+        // 🔥🔥🔥 CRITICAL FIX 1: Direct save button handler
+        const saveBtn = document.getElementById('save-profile-btn');
+        if (saveBtn) {
+            // Clone to remove any existing listeners
+            const newSaveBtn = saveBtn.cloneNode(true);
+            saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+            
+            // Add fresh click listener
+            document.getElementById('save-profile-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('💾 Save button clicked - ULTIMATE FIX');
+                this.handleSaveProfile();
+            });
+        }
+        
+        // 🔥 CRITICAL FIX 2: Also handle form submission (for Enter key)
+        const profileForm = document.getElementById('profile-form');
+        if (profileForm) {
+            profileForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                console.log('📋 Form submitted via Enter key');
+                this.handleSaveProfile();
+            });
+        }
+        
+        // 🔥 CRITICAL FIX 3: Track farm name input changes
+        const farmNameInput = document.getElementById('farm-name');
+        if (farmNameInput) {
+            farmNameInput.addEventListener('input', (e) => {
+                console.log('⌨️ Farm name TYPED:', e.target.value);
+            });
+            
+            farmNameInput.addEventListener('paste', (e) => {
+                console.log('📋 Farm name PASTE event detected');
+                // Wait for paste to complete
+                setTimeout(() => {
+                    console.log('📋 After paste, value is:', farmNameInput.value);
+                }, 10);
+            });
+        }
 
-        // Sync now button
-        document.getElementById('sync-now-btn')?.addEventListener('click', () => {
-            this.syncNow();
-        });
-
-        // Reset button
+        // Other buttons
+        document.getElementById('sync-now-btn')?.addEventListener('click', () => this.syncNow());
         document.getElementById('reset-profile')?.addEventListener('click', () => {
             this.loadUserData();
-            this.showNotification('Profile form reset to current values', 'info');
+            this.showNotification('Form reset to saved values', 'info');
         });
 
-        // Settings changes
+        // Settings
         document.getElementById('default-currency')?.addEventListener('change', (e) => {
             this.saveSetting('currency', e.target.value);
         });
-
         document.getElementById('low-stock-threshold')?.addEventListener('change', (e) => {
             this.saveSetting('lowStockThreshold', parseInt(e.target.value));
         });
-
         document.getElementById('auto-sync')?.addEventListener('change', (e) => {
             this.saveSetting('autoSync', e.target.checked);
         });
-
         document.getElementById('local-storage')?.addEventListener('change', (e) => {
             this.saveSetting('localStorageEnabled', e.target.checked);
         });
-
-        // Theme selector
         document.getElementById('theme-selector')?.addEventListener('change', (e) => {
             this.changeTheme(e.target.value);
         });
 
-        // Remember user
-        document.getElementById('remember-user')?.addEventListener('change', (e) => {
-            this.saveSetting('rememberUser', e.target.checked);
-            this.updateUserPersistence();
-        });
-
-        // PDF Export buttons
-        document.getElementById('export-profile-pdf')?.addEventListener('click', () => {
-            this.exportProfilePDF();
-        });
-
-        document.getElementById('export-inventory-pdf')?.addEventListener('click', () => {
-            this.exportInventoryPDF();
-        });
-
-        document.getElementById('export-sales-pdf')?.addEventListener('click', () => {
-            this.exportSalesPDF();
-        });
-
-        document.getElementById('export-all-pdf')?.addEventListener('click', () => {
-            this.exportAllPDF();
-        });
+        // PDF Export
+        document.getElementById('export-profile-pdf')?.addEventListener('click', () => this.exportProfilePDF());
+        document.getElementById('export-inventory-pdf')?.addEventListener('click', () => this.exportInventoryPDF());
+        document.getElementById('export-sales-pdf')?.addEventListener('click', () => this.exportSalesPDF());
+        document.getElementById('export-all-pdf')?.addEventListener('click', () => this.exportAllPDF());
 
         // Data management
-        document.getElementById('export-data')?.addEventListener('click', () => {
-            this.exportData();
-        });
+        document.getElementById('export-data')?.addEventListener('click', () => this.exportData());
+        document.getElementById('import-data')?.addEventListener('click', () => this.importData());
+        document.getElementById('clear-all-data')?.addEventListener('click', () => this.clearAllData());
+        document.getElementById('logout-btn')?.addEventListener('click', () => this.handleLogout());
 
-        document.getElementById('import-data')?.addEventListener('click', () => {
-            this.importData();
-        });
+        // Mobile installation
+        document.getElementById('send-install-link')?.addEventListener('click', () => this.sendInstallationLink());
+        document.getElementById('show-qr-code')?.addEventListener('click', () => this.showQRCode());
 
-        document.getElementById('clear-all-data')?.addEventListener('click', () => {
-            this.clearAllData();
-        });
-
-        // Logout button
-        document.getElementById('logout-btn')?.addEventListener('click', () => {
-            this.handleLogout();
-        });
-
-        // NEW: Mobile Installation buttons
-        document.getElementById('send-install-link')?.addEventListener('click', () => {
-            this.sendInstallationLink();
-        });
-
-        document.getElementById('show-qr-code')?.addEventListener('click', () => {
-            this.showQRCode();
-        });
-
-        // NEW: Support section event delegation
+        // Support section - event delegation
         this.element.addEventListener('click', (e) => {
             const button = e.target.closest('button[data-action]');
             if (!button) return;
@@ -936,29 +532,574 @@ const ProfileModule = {
                 case 'copy-email':
                     this.copyToClipboard('farm-support@example.com');
                     break;
-                    
                 case 'open-slack':
                     this.openSlackChannel();
                     break;
-                    
                 case 'open-guide':
                     this.openQuickGuide();
                     break;
-                    
                 case 'download-guide':
                     this.downloadQuickGuide();
                     break;
-                    
                 case 'watch-tutorials':
                     this.openYouTubeTutorials();
                     break;
             }
         });
+
+        console.log('✅ All event listeners set up');
     },
 
-    // ==================== NEW METHODS FOR ADDED SECTIONS ====================
+    // ==================== SAVE PROFILE - ULTIMATE FIX ====================
+    async handleSaveProfile() {
+        console.log('💾 Starting profile save...');
+        
+        try {
+            // 🔥 CRITICAL FIX: Small delay to ensure any paste/typing completes
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            // 🔥 CRITICAL FIX: Get the FRESH input element and value
+            const farmNameInput = document.getElementById('farm-name');
+            const farmerNameInput = document.getElementById('farmer-name');
+            const emailInput = document.getElementById('farm-email');
+            const farmTypeInput = document.getElementById('farm-type');
+            const farmLocationInput = document.getElementById('farm-location');
+            
+            if (!farmNameInput) {
+                throw new Error('Farm name input not found');
+            }
+            
+            // 🔥 CRITICAL FIX: Get the CURRENT value directly from the input
+            const farmName = farmNameInput.value.trim();
+            const farmerName = farmerNameInput?.value.trim();
+            const email = emailInput?.value.trim();
+            const farmType = farmTypeInput?.value;
+            const farmLocation = farmLocationInput?.value.trim();
+            
+            console.log('🔥 CURRENT INPUT VALUES:', {
+                farmName,
+                farmerName,
+                email,
+                farmType,
+                farmLocation
+            });
+            
+            // Ensure profile exists
+            if (!window.FarmModules.appData.profile) {
+                window.FarmModules.appData.profile = {};
+            }
+            
+            const profile = window.FarmModules.appData.profile;
+            
+            // 🔥 CRITICAL FIX: Update profile with CURRENT values
+            profile.farmName = farmName || 'My Farm';
+            profile.farmerName = farmerName || 'Farm Manager';
+            profile.email = email || '';
+            profile.farmType = farmType || '';
+            profile.farmLocation = farmLocation || '';
+            
+            // Ensure other fields
+            profile.currency = profile.currency || 'USD';
+            profile.lowStockThreshold = profile.lowStockThreshold || 10;
+            profile.autoSync = profile.autoSync !== false;
+            profile.localStorageEnabled = profile.localStorageEnabled !== false;
+            profile.theme = profile.theme || 'auto';
+            profile.memberSince = profile.memberSince || new Date().toISOString();
+            
+            // Update app data
+            window.FarmModules.appData.farmName = profile.farmName;
+            
+            console.log('📊 PROFILE AFTER UPDATE:', profile);
+            
+            // Save to storage
+            this.saveToLocalStorage();
+            
+            // 🔥 CRITICAL FIX: Force immediate UI update
+            this.updateProfileDisplay(true);
+            
+            // Show success with the NEW farm name
+            this.showNotification(`✅ Profile saved! Farm: ${profile.farmName}`, 'success');
+            
+            // Notify other modules
+            window.dispatchEvent(new CustomEvent('farm-data-updated'));
+            
+            console.log('✅ Profile saved successfully');
+            
+        } catch (error) {
+            console.error('❌ Error saving profile:', error);
+            this.showNotification('Error saving profile: ' + error.message, 'error');
+        }
+    },
 
-    // Mobile Installation Methods
+    // ==================== USER DATA MANAGEMENT ====================
+    loadUserData() {
+        console.log('📂 Loading user data...');
+        
+        try {
+            if (!window.FarmModules.appData.profile) {
+                window.FarmModules.appData.profile = {
+                    farmName: window.FarmModules.appData.farmName || 'My Farm',
+                    farmerName: 'Farm Manager',
+                    email: '',
+                    farmType: '',
+                    farmLocation: '',
+                    currency: 'USD',
+                    lowStockThreshold: 10,
+                    autoSync: true,
+                    localStorageEnabled: true,
+                    theme: 'auto',
+                    memberSince: new Date().toISOString()
+                };
+            }
+
+            this.loadFromLocalStorage();
+            this.updateProfileDisplay();
+            
+            console.log('✅ User data loaded');
+        } catch (error) {
+            console.error('Error loading user data:', error);
+        }
+    },
+
+    updateProfileDisplay(forceUpdate = false) {
+        console.log('🔄 Updating profile display...');
+        
+        const profile = window.FarmModules.appData.profile;
+        if (!profile) return;
+        
+        console.log('📊 Displaying profile:', profile);
+        
+        // Update profile card
+        const farmNameCard = document.getElementById('profile-farm-name');
+        const farmerNameCard = document.getElementById('profile-farmer-name');
+        const emailCard = document.getElementById('profile-email');
+        
+        if (farmNameCard) {
+            farmNameCard.textContent = profile.farmName || 'My Farm';
+            console.log(`✅ Updated profile card to: "${profile.farmName}"`);
+        }
+        if (farmerNameCard) farmerNameCard.textContent = profile.farmerName || 'Farm Manager';
+        if (emailCard) emailCard.textContent = profile.email || 'No email';
+        
+        // Update member since
+        const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
+        document.getElementById('member-since').textContent = `Member since: ${memberSince}`;
+        
+        // Update form inputs
+        const farmNameInput = document.getElementById('farm-name');
+        const farmerNameInput = document.getElementById('farmer-name');
+        const emailInput = document.getElementById('farm-email');
+        const farmTypeInput = document.getElementById('farm-type');
+        const farmLocationInput = document.getElementById('farm-location');
+        
+        if (farmNameInput) farmNameInput.value = profile.farmName || '';
+        if (farmerNameInput) farmerNameInput.value = profile.farmerName || '';
+        if (emailInput) emailInput.value = profile.email || '';
+        if (farmTypeInput) farmTypeInput.value = profile.farmType || '';
+        if (farmLocationInput) farmLocationInput.value = profile.farmLocation || '';
+        
+        // Update settings
+        document.getElementById('default-currency').value = profile.currency || 'USD';
+        document.getElementById('low-stock-threshold').value = profile.lowStockThreshold || 10;
+        document.getElementById('auto-sync').checked = profile.autoSync !== false;
+        document.getElementById('local-storage').checked = profile.localStorageEnabled !== false;
+        document.getElementById('theme-selector').value = profile.theme || 'auto';
+        
+        console.log('✅ Profile display updated');
+    },
+
+    // ==================== LOCAL STORAGE ====================
+    saveToLocalStorage() {
+        try {
+            localStorage.setItem('farm-profile', JSON.stringify(window.FarmModules.appData.profile));
+            console.log('💾 Profile saved to local storage');
+        } catch (error) {
+            console.error('Error saving to local storage:', error);
+        }
+    },
+
+    loadFromLocalStorage() {
+        try {
+            const savedProfile = localStorage.getItem('farm-profile');
+            if (savedProfile) {
+                window.FarmModules.appData.profile = {
+                    ...window.FarmModules.appData.profile,
+                    ...JSON.parse(savedProfile)
+                };
+                console.log('📂 Profile loaded from local storage');
+            }
+        } catch (error) {
+            console.error('Error loading from local storage:', error);
+        }
+    },
+
+    // ==================== SETTINGS ====================
+    async saveSetting(setting, value) {
+        try {
+            window.FarmModules.appData.profile[setting] = value;
+            this.saveToLocalStorage();
+            this.showNotification('Setting updated', 'info');
+        } catch (error) {
+            console.error('Error saving setting:', error);
+            this.showNotification('Error saving setting', 'error');
+        }
+    },
+
+    changeTheme(theme) {
+        if (window.StyleManager) {
+            window.StyleManager.applyTheme(theme);
+            this.saveSetting('theme', theme);
+            this.showNotification(`Theme changed to ${theme}`, 'success');
+        }
+    },
+
+    // ==================== SYNC ====================
+    async syncNow() {
+        document.getElementById('sync-status').textContent = '🔄 Syncing...';
+        
+        try {
+            this.saveToLocalStorage();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            this.showNotification('Data synchronized!', 'success');
+            document.getElementById('sync-status').textContent = '✅ Synced';
+            
+            setTimeout(() => {
+                document.getElementById('sync-status').textContent = '💾 Local';
+            }, 3000);
+            
+        } catch (error) {
+            console.error('Sync error:', error);
+            this.showNotification('Sync failed', 'error');
+            document.getElementById('sync-status').textContent = '❌ Failed';
+        }
+    },
+
+    // ==================== STATS ====================
+    updateStatsFromModules() {
+        try {
+            const orders = window.FarmModules.appData.orders || [];
+            const inventory = window.FarmModules.appData.inventory || [];
+            const customers = window.FarmModules.appData.customers || [];
+            const products = window.FarmModules.appData.products || [];
+            
+            document.getElementById('total-orders').textContent = orders.length;
+            document.getElementById('total-inventory').textContent = inventory.length;
+            document.getElementById('total-customers').textContent = customers.length;
+            
+            const totalRevenue = orders.reduce((sum, order) => {
+                return sum + (parseFloat(order.totalAmount) || 0);
+            }, 0);
+            document.getElementById('total-revenue').textContent = this.formatCurrency(totalRevenue);
+            
+            document.getElementById('orders-count').textContent = `${orders.length} records`;
+            document.getElementById('inventory-count').textContent = `${inventory.length} items`;
+            document.getElementById('customers-count').textContent = `${customers.length} customers`;
+            document.getElementById('products-count').textContent = `${products.length} products`;
+            
+            const totalEntries = orders.length + inventory.length + customers.length + products.length;
+            document.getElementById('data-entries').textContent = `Data entries: ${totalEntries}`;
+            
+        } catch (error) {
+            console.error('Error updating stats:', error);
+        }
+    },
+
+    // ==================== PDF EXPORT ====================
+    async exportProfilePDF() {
+        this.updatePDFStatus('Generating profile report...', 'info');
+        
+        try {
+            const profile = window.FarmModules.appData.profile;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(24);
+            doc.text('Farm Profile Report', 20, 20);
+            doc.setFontSize(12);
+            doc.text(`Farm Name: ${profile.farmName}`, 20, 40);
+            doc.text(`Farmer Name: ${profile.farmerName}`, 20, 50);
+            doc.text(`Farm Type: ${profile.farmType}`, 20, 60);
+            doc.text(`Location: ${profile.farmLocation}`, 20, 70);
+            doc.text(`Member Since: ${new Date(profile.memberSince).toLocaleDateString()}`, 20, 80);
+            
+            const fileName = `Profile_Report_${profile.farmName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(fileName);
+            
+            this.updatePDFStatus('✅ Profile report generated', 'success');
+            this.showNotification('Profile PDF generated successfully', 'success');
+            
+        } catch (error) {
+            console.error('Profile PDF error:', error);
+            this.updatePDFStatus('❌ Failed to generate', 'error');
+            this.showNotification('Error generating PDF', 'error');
+        }
+    },
+
+    async exportInventoryPDF() {
+        this.updatePDFStatus('Generating inventory report...', 'info');
+        
+        try {
+            const inventory = window.FarmModules.appData.inventory || [];
+            if (inventory.length === 0) {
+                this.updatePDFStatus('❌ No inventory data', 'error');
+                this.showNotification('No inventory data to export', 'warning');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(24);
+            doc.text('Inventory Report', 20, 20);
+            doc.setFontSize(12);
+            doc.text(`Total Items: ${inventory.length}`, 20, 40);
+            
+            let yPos = 60;
+            doc.setFont(undefined, 'bold');
+            doc.text('Item Name', 20, yPos);
+            doc.text('Category', 80, yPos);
+            doc.text('Quantity', 140, yPos);
+            doc.text('Price', 180, yPos);
+            
+            yPos += 10;
+            doc.setFont(undefined, 'normal');
+            
+            inventory.forEach((item) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                doc.text(item.name || 'Unknown', 20, yPos);
+                doc.text(item.category || 'Uncategorized', 80, yPos);
+                doc.text(item.quantity || '0', 140, yPos);
+                doc.text(`$${item.price || '0.00'}`, 180, yPos);
+                yPos += 10;
+            });
+            
+            const fileName = `Inventory_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(fileName);
+            
+            this.updatePDFStatus('✅ Inventory report generated', 'success');
+            this.showNotification('Inventory PDF generated successfully', 'success');
+            
+        } catch (error) {
+            console.error('Inventory PDF error:', error);
+            this.updatePDFStatus('❌ Failed to generate', 'error');
+            this.showNotification('Error generating inventory PDF', 'error');
+        }
+    },
+
+    async exportSalesPDF() {
+        this.updatePDFStatus('Generating sales report...', 'info');
+        
+        try {
+            const orders = window.FarmModules.appData.orders || [];
+            if (orders.length === 0) {
+                this.updatePDFStatus('❌ No sales data', 'error');
+                this.showNotification('No sales data to export', 'warning');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(24);
+            doc.text('Sales Report', 20, 20);
+            
+            const totalRevenue = orders.reduce((sum, order) => sum + (parseFloat(order.totalAmount) || 0), 0);
+            
+            doc.setFontSize(12);
+            doc.text(`Total Orders: ${orders.length}`, 20, 40);
+            doc.text(`Total Revenue: $${totalRevenue.toFixed(2)}`, 20, 50);
+            
+            let yPos = 70;
+            doc.setFont(undefined, 'bold');
+            doc.text('Order ID', 20, yPos);
+            doc.text('Date', 60, yPos);
+            doc.text('Customer', 100, yPos);
+            doc.text('Amount', 160, yPos);
+            
+            yPos += 10;
+            doc.setFont(undefined, 'normal');
+            
+            orders.slice(0, 20).forEach((order, index) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                doc.text(order.id || `ORD-${index + 1}`, 20, yPos);
+                doc.text(new Date(order.date || order.createdAt).toLocaleDateString(), 60, yPos);
+                doc.text(order.customerName || 'Walk-in', 100, yPos);
+                doc.text(`$${parseFloat(order.totalAmount || 0).toFixed(2)}`, 160, yPos);
+                yPos += 10;
+            });
+            
+            const fileName = `Sales_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(fileName);
+            
+            this.updatePDFStatus('✅ Sales report generated', 'success');
+            this.showNotification('Sales PDF generated successfully', 'success');
+            
+        } catch (error) {
+            console.error('Sales PDF error:', error);
+            this.updatePDFStatus('❌ Failed to generate', 'error');
+            this.showNotification('Error generating sales PDF', 'error');
+        }
+    },
+
+    async exportAllPDF() {
+        this.updatePDFStatus('Generating complete report...', 'info');
+        
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(24);
+            doc.text('Complete Farm Report', 20, 20);
+            doc.setFontSize(12);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 35);
+            
+            const fileName = `Complete_Farm_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(fileName);
+            
+            this.updatePDFStatus('✅ Complete report generated', 'success');
+            this.showNotification('Complete PDF report generated', 'success');
+            
+        } catch (error) {
+            console.error('Complete PDF error:', error);
+            this.updatePDFStatus('❌ Failed to generate', 'error');
+            this.showNotification('Error generating complete PDF', 'error');
+        }
+    },
+
+    updatePDFStatus(message, type = 'info') {
+        const statusElement = document.getElementById('pdf-status');
+        if (statusElement) {
+            statusElement.textContent = message;
+            statusElement.style.color = type === 'error' ? '#ef4444' : 
+                                       type === 'success' ? '#10b981' : 
+                                       'var(--text-secondary)';
+        }
+    },
+
+    // ==================== DATA MANAGEMENT ====================
+    exportData() {
+        try {
+            const exportData = {
+                appData: window.FarmModules.appData,
+                timestamp: new Date().toISOString(),
+                version: '1.0'
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `farm-data-export-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(link.href);
+            this.showNotification('All farm data exported successfully!', 'success');
+        } catch (error) {
+            console.error('Export error:', error);
+            this.showNotification('Error exporting data', 'error');
+        }
+    },
+
+    importData() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const importData = JSON.parse(event.target.result);
+                    this.mergeImportedData(importData);
+                } catch (error) {
+                    this.showNotification('Error importing data: Invalid file format', 'error');
+                }
+            };
+            reader.readAsText(file);
+        };
+        
+        input.click();
+    },
+
+    mergeImportedData(importData) {
+        try {
+            if (importData.appData) {
+                window.FarmModules.appData = importData.appData;
+                this.showNotification('Data imported successfully!', 'success');
+                this.loadUserData();
+                this.updateStatsFromModules();
+                window.dispatchEvent(new CustomEvent('farm-data-updated'));
+                this.saveToLocalStorage();
+            } else {
+                this.showNotification('Invalid data format', 'error');
+            }
+        } catch (error) {
+            console.error('Error merging imported data:', error);
+            this.showNotification('Error importing data', 'error');
+        }
+    },
+
+    clearAllData() {
+        if (confirm('ARE YOU SURE? This will delete ALL your farm data. This cannot be undone!')) {
+            if (confirm('THIS IS YOUR LAST WARNING! All data will be permanently deleted!')) {
+                try {
+                    const profile = window.FarmModules.appData.profile;
+                    
+                    window.FarmModules.appData.orders = [];
+                    window.FarmModules.appData.inventory = [];
+                    window.FarmModules.appData.customers = [];
+                    window.FarmModules.appData.products = [];
+                    
+                    window.FarmModules.appData.profile = profile;
+                    
+                    this.saveToLocalStorage();
+                    this.showNotification('All data cleared successfully', 'success');
+                    this.updateStatsFromModules();
+                    window.dispatchEvent(new CustomEvent('farm-data-updated'));
+                } catch (error) {
+                    console.error('Error clearing data:', error);
+                    this.showNotification('Error clearing data', 'error');
+                }
+            }
+        }
+    },
+
+    async handleLogout() {
+        if (confirm('Are you sure you want to logout?')) {
+            try {
+                if (!window.FarmModules.appData.profile.rememberUser) {
+                    const appKeys = ['farm-', 'profileData', 'transactions', 'sales', 'inventory'];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (appKeys.some(appKey => key.includes(appKey))) {
+                            localStorage.removeItem(key);
+                        }
+                    }
+                }
+                
+                this.showNotification('Logged out successfully', 'success');
+                
+            } catch (error) {
+                console.error('Logout error:', error);
+                this.showNotification('Error during logout', 'error');
+            }
+        }
+    },
+
+    // ==================== MOBILE INSTALLATION ====================
     sendInstallationLink() {
         const email = prompt('Enter email address to send installation link:');
         if (email && email.includes('@')) {
@@ -989,7 +1130,6 @@ Farm Manager Team`;
     showQRCode() {
         const currentUrl = window.location.href;
         
-        // Create QR Code modal
         const modal = document.createElement('div');
         modal.style.cssText = `
             position: fixed;
@@ -1018,7 +1158,6 @@ Farm Manager Team`;
         
         document.body.appendChild(modal);
         
-        // Generate QR code (if QRCode library is loaded)
         const qrContainer = document.getElementById('qrcode-container');
         if (typeof QRCode !== 'undefined') {
             new QRCode(qrContainer, {
@@ -1038,12 +1177,10 @@ Farm Manager Team`;
             `;
         }
         
-        // Close button
         document.getElementById('close-qr').addEventListener('click', () => {
             document.body.removeChild(modal);
         });
         
-        // Close on background click
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 document.body.removeChild(modal);
@@ -1051,7 +1188,7 @@ Farm Manager Team`;
         });
     },
 
-    // Support Methods
+    // ==================== SUPPORT METHODS ====================
     copyToClipboard(text) {
         navigator.clipboard.writeText(text).then(() => {
             this.showNotification('Copied to clipboard!', 'success');
@@ -1062,13 +1199,10 @@ Farm Manager Team`;
     },
 
     openSlackChannel() {
-        // In a real app, this would open Slack
         this.showNotification('Slack integration would open here', 'info');
-        // window.open('https://slack.com', '_blank');
     },
 
     openQuickGuide() {
-        // Create a simple guide modal
         const modal = document.createElement('div');
         modal.style.cssText = `
             position: fixed;
@@ -1215,7 +1349,6 @@ Generated on: ${new Date().toLocaleString()}
     },
 
     openYouTubeTutorials() {
-        // Simple modal for tutorials
         const modal = document.createElement('div');
         modal.style.cssText = `
             position: fixed;
@@ -1248,609 +1381,15 @@ Generated on: ${new Date().toLocaleString()}
         });
     },
 
-    // ==================== EXISTING METHODS (keep as is) ====================
-    // ... (ALL YOUR EXISTING METHODS REMAIN EXACTLY THE SAME)
-    // loadUserData, saveProfile, saveSetting, exportProfilePDF, etc.
-    // All the methods from your original code go here unchanged
-
-    async loadUserData() {
-        try {
-            // Initialize profile data if it doesn't exist
-            if (!window.FarmModules.appData.profile) {
-                window.FarmModules.appData.profile = {
-                    farmName: window.FarmModules.appData.farmName || 'My Farm',
-                    farmerName: 'Farm Manager',
-                    email: 'No email',
-                    farmType: 'poultry',
-                    farmLocation: '',
-                    currency: 'USD',
-                    lowStockThreshold: 10,
-                    autoSync: true,
-                    rememberUser: true,
-                    localStorageEnabled: true,
-                    theme: 'auto',
-                    memberSince: new Date().toISOString()
-                };
-            }
-
-            // Load from local storage
-            this.loadFromLocalStorage();
-
-            // Update UI
-            this.updateAllDisplays();
-
-        } catch (error) {
-            console.error('Error loading user data:', error);
-        }
-    },
-
-    async saveProfile() {
-        try {
-            const profile = window.FarmModules.appData.profile;
-            
-            // Get values from form
-            profile.farmName = document.getElementById('farm-name')?.value || profile.farmName;
-            profile.farmerName = document.getElementById('farmer-name')?.value || profile.farmerName;
-            profile.farmType = document.getElementById('farm-type')?.value || profile.farmType;
-            profile.farmLocation = document.getElementById('farm-location')?.value || profile.farmLocation;
-            profile.rememberUser = document.getElementById('remember-user')?.checked || profile.rememberUser;
-
-            // Update app data
-            window.FarmModules.appData.farmName = profile.farmName;
-
-            // Save to local storage
-            this.saveToLocalStorage();
-
-            this.updateAllDisplays();
-            this.showNotification('Profile saved successfully!', 'success');
-            
-        } catch (error) {
-            console.error('Error saving profile:', error);
-            this.showNotification('Error saving profile', 'error');
-        }
-    },
-
-    async saveSetting(setting, value) {
-        try {
-            window.FarmModules.appData.profile[setting] = value;
-            this.saveToLocalStorage();
-            this.showNotification('Setting updated', 'info');
-        } catch (error) {
-            console.error('Error saving setting:', error);
-            this.showNotification('Error saving setting', 'error');
-        }
-    },
-
-    async exportProfilePDF() {
-        this.updatePDFStatus('Generating profile report...', 'info');
-        
-        try {
-            const profile = window.FarmModules.appData.profile;
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Add content
-            doc.setFontSize(24);
-            doc.text('Farm Profile Report', 20, 20);
-            
-            doc.setFontSize(12);
-            doc.text(`Farm Name: ${profile.farmName}`, 20, 40);
-            doc.text(`Farmer Name: ${profile.farmerName}`, 20, 50);
-            doc.text(`Farm Type: ${profile.farmType}`, 20, 60);
-            doc.text(`Location: ${profile.farmLocation}`, 20, 70);
-            doc.text(`Member Since: ${new Date(profile.memberSince).toLocaleDateString()}`, 20, 80);
-            
-            // Save
-            const fileName = `Profile_Report_${profile.farmName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-            doc.save(fileName);
-            
-            this.updatePDFStatus('✅ Profile report generated', 'success');
-            this.showNotification('Profile PDF generated successfully', 'success');
-            
-        } catch (error) {
-            console.error('Profile PDF error:', error);
-            this.updatePDFStatus('❌ Failed to generate', 'error');
-            this.showNotification('Error generating PDF', 'error');
-        }
-    },
-
-    async exportInventoryPDF() {
-        this.updatePDFStatus('Generating inventory report...', 'info');
-        
-        try {
-            const inventory = window.FarmModules.appData.inventory || [];
-            if (inventory.length === 0) {
-                this.updatePDFStatus('❌ No inventory data', 'error');
-                this.showNotification('No inventory data to export', 'warning');
-                return;
-            }
-            
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Header
-            doc.setFontSize(24);
-            doc.text('Inventory Report', 20, 20);
-            
-            // Summary
-            doc.setFontSize(12);
-            doc.text(`Total Items: ${inventory.length}`, 20, 40);
-            
-            let yPos = 60;
-            // Table headers
-            doc.setFont(undefined, 'bold');
-            doc.text('Item Name', 20, yPos);
-            doc.text('Category', 80, yPos);
-            doc.text('Quantity', 140, yPos);
-            doc.text('Price', 180, yPos);
-            
-            yPos += 10;
-            doc.setFont(undefined, 'normal');
-            
-            // Table rows
-            inventory.forEach((item, index) => {
-                if (yPos > 250) {
-                    doc.addPage();
-                    yPos = 20;
-                }
-                
-                doc.text(item.name || 'Unknown', 20, yPos);
-                doc.text(item.category || 'Uncategorized', 80, yPos);
-                doc.text(item.quantity || '0', 140, yPos);
-                doc.text(`$${item.price || '0.00'}`, 180, yPos);
-                yPos += 10;
-            });
-            
-            // Save
-            const fileName = `Inventory_Report_${new Date().toISOString().split('T')[0]}.pdf`;
-            doc.save(fileName);
-            
-            this.updatePDFStatus('✅ Inventory report generated', 'success');
-            this.showNotification('Inventory PDF generated successfully', 'success');
-            
-        } catch (error) {
-            console.error('Inventory PDF error:', error);
-            this.updatePDFStatus('❌ Failed to generate', 'error');
-            this.showNotification('Error generating inventory PDF', 'error');
-        }
-    },
-
-    async exportSalesPDF() {
-        this.updatePDFStatus('Generating sales report...', 'info');
-        
-        try {
-            const orders = window.FarmModules.appData.orders || [];
-            if (orders.length === 0) {
-                this.updatePDFStatus('❌ No sales data', 'error');
-                this.showNotification('No sales data to export', 'warning');
-                return;
-            }
-            
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Header
-            doc.setFontSize(24);
-            doc.text('Sales Report', 20, 20);
-            
-            // Summary
-            const totalRevenue = orders.reduce((sum, order) => sum + (parseFloat(order.totalAmount) || 0), 0);
-            
-            doc.setFontSize(12);
-            doc.text(`Total Orders: ${orders.length}`, 20, 40);
-            doc.text(`Total Revenue: $${totalRevenue.toFixed(2)}`, 20, 50);
-            
-            let yPos = 70;
-            // Table headers
-            doc.setFont(undefined, 'bold');
-            doc.text('Order ID', 20, yPos);
-            doc.text('Date', 60, yPos);
-            doc.text('Customer', 100, yPos);
-            doc.text('Amount', 160, yPos);
-            
-            yPos += 10;
-            doc.setFont(undefined, 'normal');
-            
-            // Table rows
-            orders.slice(0, 20).forEach((order, index) => {
-                if (yPos > 250) {
-                    doc.addPage();
-                    yPos = 20;
-                }
-                
-                doc.text(order.id || `ORD-${index + 1}`, 20, yPos);
-                doc.text(new Date(order.date || order.createdAt).toLocaleDateString(), 60, yPos);
-                doc.text(order.customerName || 'Walk-in', 100, yPos);
-                doc.text(`$${parseFloat(order.totalAmount || 0).toFixed(2)}`, 160, yPos);
-                yPos += 10;
-            });
-            
-            // Save
-            const fileName = `Sales_Report_${new Date().toISOString().split('T')[0]}.pdf`;
-            doc.save(fileName);
-            
-            this.updatePDFStatus('✅ Sales report generated', 'success');
-            this.showNotification('Sales PDF generated successfully', 'success');
-            
-        } catch (error) {
-            console.error('Sales PDF error:', error);
-            this.updatePDFStatus('❌ Failed to generate', 'error');
-            this.showNotification('Error generating sales PDF', 'error');
-        }
-    },
-
-    async exportAllPDF() {
-        this.updatePDFStatus('Generating complete report...', 'info');
-        
-        try {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Add profile
-            doc.setFontSize(24);
-            doc.text('Complete Farm Report', 20, 20);
-            doc.setFontSize(12);
-            doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 35);
-            
-            // Add page breaks and call individual report methods
-            // This is a simplified version - you could enhance it
-            doc.addPage();
-            await this.addProfileToPDF(doc);
-            
-            doc.addPage();
-            await this.addInventoryToPDF(doc);
-            
-            doc.addPage();
-            await this.addSalesToPDF(doc);
-            
-            // Save
-            const fileName = `Complete_Farm_Report_${new Date().toISOString().split('T')[0]}.pdf`;
-            doc.save(fileName);
-            
-            this.updatePDFStatus('✅ Complete report generated', 'success');
-            this.showNotification('Complete PDF report generated', 'success');
-            
-        } catch (error) {
-            console.error('Complete PDF error:', error);
-            this.updatePDFStatus('❌ Failed to generate', 'error');
-            this.showNotification('Error generating complete PDF', 'error');
-        }
-    },
-
-    // ==================== UTILITY METHODS ====================
-    updatePDFStatus(message, type = 'info') {
-        const statusElement = document.getElementById('pdf-status');
-        if (statusElement) {
-            statusElement.textContent = message;
-            statusElement.style.color = type === 'error' ? '#ef4444' : 
-                                       type === 'success' ? '#10b981' : 
-                                       'var(--text-secondary)';
-        }
-    },
-
-    updateAllDisplays() {
-        this.updateProfileInfo();
-        this.updateStatsOverview();
-        this.updateDataManagement();
-    },
-
-    updateProfileInfo() {
-        const profile = window.FarmModules.appData.profile;
-        
-        this.updateElement('profile-farm-name', profile.farmName);
-        this.updateElement('profile-farmer-name', profile.farmerName);
-        this.updateElement('profile-email', profile.email);
-        
-        this.setValue('farm-name', profile.farmName);
-        this.setValue('farmer-name', profile.farmerName);
-        this.setValue('farm-type', profile.farmType);
-        this.setValue('farm-location', profile.farmLocation);
-        
-        const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
-        this.updateElement('member-since', `Member since: ${memberSince}`);
-        
-        // Update settings
-        this.setValue('default-currency', profile.currency || 'USD');
-        this.setValue('low-stock-threshold', profile.lowStockThreshold || 10);
-        this.setChecked('auto-sync', profile.autoSync !== false);
-        this.setChecked('remember-user', profile.rememberUser !== false);
-        this.setChecked('local-storage', profile.localStorageEnabled !== false);
-        this.setValue('theme-selector', profile.theme || 'auto');
-    },
-
-    updateStatsOverview() {
-        const stats = window.FarmModules.appData.profile.dashboardStats || {};
-        
-        this.updateElement('total-revenue', this.formatCurrency(stats.totalRevenue || 0));
-        this.updateElement('total-orders', stats.totalOrders || 0);
-        this.updateElement('total-inventory', stats.totalInventoryItems || 0);
-        this.updateElement('total-customers', stats.totalCustomers || 0);
-        
-        const totalEntries = (stats.totalOrders || 0) + (stats.totalInventoryItems || 0) + (stats.totalCustomers || 0);
-        this.updateElement('data-entries', `Data entries: ${totalEntries}`);
-    },
-
-    updateDataManagement() {
-        const orders = window.FarmModules.appData.orders || [];
-        const inventory = window.FarmModules.appData.inventory || [];
-        const customers = window.FarmModules.appData.customers || [];
-        const products = window.FarmModules.appData.products || [];
-        
-        this.updateElement('orders-count', `${orders.length} records`);
-        this.updateElement('inventory-count', `${inventory.length} items`);
-        this.updateElement('customers-count', `${customers.length} customers`);
-        this.updateElement('products-count', `${products.length} products`);
-    },
-
-    updateStatsFromModules() {
-        // Sync stats from other modules
-        const orders = window.FarmModules.appData.orders || [];
-        const inventory = window.FarmModules.appData.inventory || [];
-        const customers = window.FarmModules.appData.customers || [];
-        
-        window.FarmModules.appData.profile.dashboardStats = {
-            totalOrders: orders.length,
-            totalRevenue: orders.reduce((sum, order) => sum + (parseFloat(order.totalAmount) || 0), 0),
-            totalInventoryItems: inventory.length,
-            totalCustomers: customers.length
-        };
-        
-        this.updateStatsOverview();
-    },
-
-    updatePDFDataCache(moduleName, action, data) {
-        const now = new Date().toISOString();
-        
-        switch(moduleName) {
-            case 'inventory':
-                this.pdfDataCache.inventory = data || [];
-                this.pdfDataCache.lastUpdated.inventory = now;
-                break;
-            case 'orders':
-                this.pdfDataCache.orders = data || [];
-                this.pdfDataCache.lastUpdated.orders = now;
-                break;
-            case 'customers':
-                this.pdfDataCache.customers = data || [];
-                this.pdfDataCache.lastUpdated.customers = now;
-                break;
-        }
-    },
-
-    // ==================== LOCAL STORAGE METHODS ====================
-    saveToLocalStorage() {
-        try {
-            localStorage.setItem('farm-profile', JSON.stringify(window.FarmModules.appData.profile));
-            console.log('✅ Profile saved to local storage');
-        } catch (error) {
-            console.error('Error saving to local storage:', error);
-        }
-    },
-
-    loadFromLocalStorage() {
-        try {
-            const savedProfile = localStorage.getItem('farm-profile');
-            if (savedProfile) {
-                window.FarmModules.appData.profile = {
-                    ...window.FarmModules.appData.profile,
-                    ...JSON.parse(savedProfile)
-                };
-                console.log('✅ Profile loaded from local storage');
-            }
-        } catch (error) {
-            console.error('Error loading from local storage:', error);
-        }
-    },
-
-    // ==================== OTHER METHODS ====================
-    changeTheme(theme) {
-        if (window.StyleManager) {
-            window.StyleManager.applyTheme(theme);
-            this.saveSetting('theme', theme);
-            this.showNotification(`Theme changed to ${theme}`, 'success');
-        }
-    },
-
-    updateUserPersistence() {
-        const rememberUser = window.FarmModules.appData.profile?.rememberUser !== false;
-        
-        if (typeof firebase !== 'undefined' && firebase.auth) {
-            const persistence = rememberUser 
-                ? firebase.auth.Auth.Persistence.LOCAL
-                : firebase.auth.Auth.Persistence.SESSION;
-            
-            firebase.auth().setPersistence(persistence)
-                .then(() => {
-                    console.log('User persistence set to:', rememberUser ? 'LOCAL' : 'SESSION');
-                })
-                .catch((error) => {
-                    console.error('Error setting auth persistence:', error);
-                });
-        }
-    },
-
-    async syncNow() {
-        this.updateSyncStatus('🔄 Syncing...');
-        
-        try {
-            // Save to local storage
-            this.saveToLocalStorage();
-            
-            // Here you would add Firebase sync if needed
-            this.showNotification('Data saved to local storage!', 'success');
-            this.updateSyncStatus('💾 Local');
-            
-        } catch (error) {
-            console.error('Sync error:', error);
-            this.showNotification('Sync failed', 'error');
-            this.updateSyncStatus('❌ Failed');
-        }
-    },
-
-    updateSyncStatus(status) {
-        const syncElement = document.getElementById('sync-status');
-        if (syncElement) {
-            syncElement.textContent = status;
-        }
-    },
-
-    exportData() {
-        try {
-            const exportData = {
-                appData: window.FarmModules.appData,
-                timestamp: new Date().toISOString(),
-                version: '1.0'
-            };
-            
-            const dataStr = JSON.stringify(exportData, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(dataBlob);
-            link.download = `farm-data-export-${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
-            
-            URL.revokeObjectURL(link.href);
-            this.showNotification('All farm data exported successfully!', 'success');
-        } catch (error) {
-            console.error('Export error:', error);
-            this.showNotification('Error exporting data', 'error');
-        }
-    },
-
-    importData() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        
-        input.onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    const importData = JSON.parse(event.target.result);
-                    this.mergeImportedData(importData);
-                } catch (error) {
-                    this.showNotification('Error importing data: Invalid file format', 'error');
-                }
-            };
-            reader.readAsText(file);
-        };
-        
-        input.click();
-    },
-
-    mergeImportedData(importData) {
-        try {
-            if (importData.appData) {
-                window.FarmModules.appData = importData.appData;
-                this.showNotification('Data imported successfully!', 'success');
-                this.updateAllDisplays();
-                window.dispatchEvent(new CustomEvent('farm-data-updated'));
-                
-                this.saveToLocalStorage();
-            } else {
-                this.showNotification('Invalid data format', 'error');
-            }
-        } catch (error) {
-            console.error('Error merging imported data:', error);
-            this.showNotification('Error importing data', 'error');
-        }
-    },
-
-    clearAllData() {
-        if (confirm('ARE YOU SURE? This will delete ALL your farm data. This cannot be undone!')) {
-            if (confirm('THIS IS YOUR LAST WARNING! All data will be permanently deleted!')) {
-                try {
-                    window.FarmModules.appData.orders = [];
-                    window.FarmModules.appData.inventory = [];
-                    window.FarmModules.appData.customers = [];
-                    window.FarmModules.appData.products = [];
-                    
-                    if (window.FarmModules.appData.profile.dashboardStats) {
-                        window.FarmModules.appData.profile.dashboardStats = {};
-                    }
-                    
-                    this.saveToLocalStorage();
-                    
-                    this.showNotification('All data cleared successfully', 'success');
-                    this.updateAllDisplays();
-                    window.dispatchEvent(new CustomEvent('farm-data-updated'));
-                } catch (error) {
-                    console.error('Error clearing data:', error);
-                    this.showNotification('Error clearing data', 'error');
-                }
-            }
-        }
-    },
-
-    async handleLogout() {
-        if (confirm('Are you sure you want to logout?')) {
-            try {
-                // Clear data if not remembering user
-                if (!window.FarmModules.appData.profile.rememberUser) {
-                    const appKeys = ['farm-', 'profileData', 'transactions', 'sales', 'inventory'];
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const key = localStorage.key(i);
-                        if (appKeys.some(appKey => key.includes(appKey))) {
-                            localStorage.removeItem(key);
-                        }
-                    }
-                }
-                
-                // Show notification
-                this.showNotification('Logged out successfully', 'success');
-                
-            } catch (error) {
-                console.error('Logout error:', error);
-                this.showNotification('Error during logout', 'error');
-            }
-        }
-    },
-
+    // ==================== UTILITIES ====================
     showNotification(message, type = 'info') {
         if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
             window.coreModule.showNotification(message, type);
-        } else if (type === 'error') {
-            console.error('❌ ' + message);
-            alert('❌ ' + message);
-        } else if (type === 'success') {
-            console.log('✅ ' + message);
-            alert('✅ ' + message);
-        } else if (type === 'warning') {
-            console.warn('⚠️ ' + message);
-            alert('⚠️ ' + message);
         } else {
-            console.log('ℹ️ ' + message);
-            alert('ℹ️ ' + message);
+            console.log(`${type.toUpperCase()}: ${message}`);
+            if (type === 'error') alert(`❌ ${message}`);
+            else if (type === 'success') alert(`✅ ${message}`);
         }
-    },
-
-    getValue(id) {
-        const element = document.getElementById(id);
-        return element ? element.value : '';
-    },
-
-    setValue(id, value) {
-        const element = document.getElementById(id);
-        if (element) element.value = value || '';
-    },
-
-    getChecked(id) {
-        const element = document.getElementById(id);
-        return element ? element.checked : false;
-    },
-
-    setChecked(id, checked) {
-        const element = document.getElementById(id);
-        if (element) element.checked = !!checked;
-    },
-
-    updateElement(id, value) {
-        const element = document.getElementById(id);
-        if (element) element.textContent = value;
     },
 
     formatCurrency(amount) {
@@ -1859,19 +1398,6 @@ Generated on: ${new Date().toLocaleString()}
             style: 'currency',
             currency: currency
         }).format(amount);
-    },
-
-    // PDF helper methods (if they exist in your original)
-    async addProfileToPDF(doc) {
-        // Implementation if needed
-    },
-
-    async addInventoryToPDF(doc) {
-        // Implementation if needed
-    },
-
-    async addSalesToPDF(doc) {
-        // Implementation if needed
     }
 };
 
