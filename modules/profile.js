@@ -995,7 +995,7 @@ setupEventListeners() {
     });
     
     console.log('✅ DEBUG - All profile event listeners set up');
-}  // <-- THIS WAS MISSING! Add this closing brace
+},  // <-- THIS WAS MISSING! Add this closing brace
     
     // ==================== USER DATA MANAGEMENT ====================
    async loadUserData() {
