@@ -843,6 +843,13 @@ const ProfileModule = {
 
         this.setupEventListeners();
         this.loadUserData(); 
+
+        // 🔥 Add a small delay to ensure DOM is ready
+    setTimeout(() => {
+        console.log('🕒 DEBUG - DOM should be ready now');
+        console.log('🕒 DEBUG - Farm name input value:', document.getElementById('farm-name')?.value);
+    }, 100);
+        
     },
 
     // ==================== FIXED EVENT LISTENERS ====================
