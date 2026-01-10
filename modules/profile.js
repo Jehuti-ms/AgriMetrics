@@ -1151,7 +1151,7 @@ const ProfileModule = {
         }
     },
 
-    function updateMainProfileCardFarmName(farmName) {
+    async function updateMainProfileCardFarmName(farmName) {
     console.log('🎯 Updating main profile card farm name:', farmName);
     
     // Target the main profile card title (most specific)
