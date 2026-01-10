@@ -997,66 +997,67 @@ const ProfileModule = {
         }
     },
 
-    async saveProfile() {
-        try {
-            const profile = window.FarmModules.appData.profile;
-            
-            // Get values from form
-            profile.farmName = document.getElementById('farm-name')?.value || profile.farmName;
-            profile.farmerName = document.getElementById('farmer-name')?.value || profile.farmerName;
-            profile.email = document.getElementById('farm-email')?.value || profile.email; // FIXED: Save email
-            profile.farmType = document.getElementById('farm-type')?.value || profile.farmType;
-            profile.farmLocation = document.getElementById('farm-location')?.value || profile.farmLocation;
-            profile.rememberUser = document.getElementById('remember-user')?.checked || profile.rememberUser;
-
-            // Update app data
-            window.FarmModules.appData.farmName = profile.farmName;
-
-            // Save to local storage
-            this.saveToLocalStorage();
-
-            // FIXED: Update profile display immediately
-            this.updateProfileInfo();
-            
-            this.showNotification('Profile saved successfully!', 'success');
-            
-        } catch (error) {
-            console.error('Error saving profile:', error);
-            this.showNotification('Error saving profile', 'error');
-        }
-    },
-
-    // ==================== FIXED: UPDATE PROFILE INFO METHOD ====================
-    updateProfileInfo() {
+    // ==================== FIXED: SAVE PROFILE METHOD ====================
+async saveProfile() {
+    try {
         const profile = window.FarmModules.appData.profile;
         
-        // Update profile card display
-        this.updateElement('profile-farm-name', profile.farmName);
-        this.updateElement('profile-farmer-name', profile.farmerName);
-        
-        // FIXED: Show email or "No email" if empty
-        const displayEmail = profile.email ? profile.email : 'No email';
-        this.updateElement('profile-email', displayEmail);
-        
-        // Update form fields
-        this.setValue('farm-name', profile.farmName);
-        this.setValue('farmer-name', profile.farmerName);
-        this.setValue('farm-email', profile.email); // FIXED: Set email field
-        this.setValue('farm-type', profile.farmType);
-        this.setValue('farm-location', profile.farmLocation);
-        
-        const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
-        this.updateElement('member-since', `Member since: ${memberSince}`);
-        
-        // Update settings
-        this.setValue('default-currency', profile.currency || 'USD');
-        this.setValue('low-stock-threshold', profile.lowStockThreshold || 10);
-        this.setChecked('auto-sync', profile.autoSync !== false);
-        this.setChecked('remember-user', profile.rememberUser !== false);
-        this.setChecked('local-storage', profile.localStorageEnabled !== false);
-        this.setValue('theme-selector', profile.theme || 'auto');
-    },
+        // Get values from form
+        profile.farmName = document.getElementById('farm-name')?.value || profile.farmName;
+        profile.farmerName = document.getElementById('farmer-name')?.value || profile.farmerName;
+        profile.email = document.getElementById('farm-email')?.value || profile.email;
+        profile.farmType = document.getElementById('farm-type')?.value || profile.farmType;
+        profile.farmLocation = document.getElementById('farm-location')?.value || profile.farmLocation;
+        profile.rememberUser = document.getElementById('remember-user')?.checked || profile.rememberUser;
 
+        // Update app data
+        window.FarmModules.appData.farmName = profile.farmName;
+
+        // Save to local storage
+        this.saveToLocalStorage();
+
+        // 🔥🔥🔥 FIXED: Update the profile display IMMEDIATELY 🔥🔥🔥
+        this.updateProfileInfo();
+        
+        this.showNotification('Profile saved successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Error saving profile:', error);
+        this.showNotification('Error saving profile', 'error');
+    }
+},
+
+// ==================== FIXED: UPDATE PROFILE INFO METHOD ====================
+updateProfileInfo() {
+    const profile = window.FarmModules.appData.profile;
+    
+    // 🔥🔥🔥 This is what updates the profile card at the top 🔥🔥🔥
+    document.getElementById('profile-farm-name').textContent = profile.farmName;
+    document.getElementById('profile-farmer-name').textContent = profile.farmerName;
+    
+    // Show email or "No email" if empty
+    const displayEmail = profile.email ? profile.email : 'No email';
+    document.getElementById('profile-email').textContent = displayEmail;
+    
+    // Update form fields
+    document.getElementById('farm-name').value = profile.farmName;
+    document.getElementById('farmer-name').value = profile.farmerName;
+    document.getElementById('farm-email').value = profile.email || '';
+    document.getElementById('farm-type').value = profile.farmType || '';
+    document.getElementById('farm-location').value = profile.farmLocation || '';
+    
+    const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
+    document.getElementById('member-since').textContent = `Member since: ${memberSince}`;
+    
+    // Update settings
+    document.getElementById('default-currency').value = profile.currency || 'USD';
+    document.getElementById('low-stock-threshold').value = profile.lowStockThreshold || 10;
+    document.getElementById('auto-sync').checked = profile.autoSync !== false;
+    document.getElementById('remember-user').checked = profile.rememberUser !== false;
+    document.getElementById('local-storage').checked = profile.localStorageEnabled !== false;
+    document.getElementById('theme-selector').value = profile.theme || 'auto';
+},
+    
     // ==================== REST OF THE METHODS (UNCHANGED) ====================
     // ... All other methods remain exactly the same as before
     // I'll just show the first few to keep it concise
