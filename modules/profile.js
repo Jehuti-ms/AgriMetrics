@@ -841,9 +841,8 @@ const ProfileModule = {
             </div>
         `;
 
-        this.loadUserData();
         this.setupEventListeners();
-        this.updateAllDisplays();
+        this.loadUserData(); 
     },
 
     // ==================== FIXED EVENT LISTENERS ====================
@@ -979,42 +978,59 @@ const ProfileModule = {
     },
 
     // ==================== USER DATA MANAGEMENT ====================
-    async loadUserData() {
-        try {
-            console.log('🔍 DEBUG - Loading user data...');
-            
-            // Initialize profile data if it doesn't exist
-            if (!window.FarmModules.appData.profile) {
-                console.log('🔍 DEBUG - Creating new profile data');
-                window.FarmModules.appData.profile = {
-                    farmName: window.FarmModules.appData.farmName || 'My Farm',
-                    farmerName: 'Farm Manager',
-                    email: '',
-                    farmType: '',
-                    farmLocation: '',
-                    currency: 'USD',
-                    lowStockThreshold: 10,
-                    autoSync: true,
-                    rememberUser: true,
-                    localStorageEnabled: true,
-                    theme: 'auto',
-                    memberSince: new Date().toISOString()
-                };
-            }
-
-            console.log('🔍 DEBUG - Profile data exists:', window.FarmModules.appData.profile);
-            
-            // Load from local storage
-            this.loadFromLocalStorage();
-
-            // Update UI
-            this.updateAllDisplays();
-
-            console.log('✅ DEBUG - User data loaded');
-        } catch (error) {
-            console.error('Error loading user data:', error);
+   async loadUserData() {
+    try {
+        console.log('🔍 DEBUG - Loading user data...');
+        
+        // Initialize profile data if it doesn't exist
+        if (!window.FarmModules.appData.profile) {
+            console.log('🔍 DEBUG - Creating new profile data');
+            window.FarmModules.appData.profile = {
+                farmName: window.FarmModules.appData.farmName || 'My Farm',
+                farmerName: 'Farm Manager',
+                email: '',
+                farmType: '',
+                farmLocation: '',
+                currency: 'USD',
+                lowStockThreshold: 10,
+                autoSync: true,
+                rememberUser: true,
+                localStorageEnabled: true,
+                theme: 'auto',
+                memberSince: new Date().toISOString()
+            };
         }
-    },
+
+        console.log('🔍 DEBUG - Profile data exists:', window.FarmModules.appData.profile);
+        
+        // Load from local storage
+        this.loadFromLocalStorage();
+
+        // 🔥🔥🔥 Update the profile card ONCE when loading
+        this.updateProfileCardOnly();
+        
+        console.log('✅ DEBUG - User data loaded');
+    } catch (error) {
+        console.error('Error loading user data:', error);
+    }
+},
+
+// 🔥🔥🔥 NEW METHOD: Only updates profile card, not form inputs
+updateProfileCardOnly() {
+    console.log('🔍 DEBUG - Updating profile card only (preserving form inputs)');
+    
+    const profile = window.FarmModules.appData.profile;
+    
+    // Update profile card
+    document.getElementById('profile-farm-name').textContent = profile.farmName || 'My Farm';
+    document.getElementById('profile-farmer-name').textContent = profile.farmerName || 'Farm Manager';
+    document.getElementById('profile-email').textContent = profile.email || 'No email';
+    
+    const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
+    document.getElementById('member-since').textContent = `Member since: ${memberSince}`;
+    
+    console.log('✅ DEBUG - Profile card updated (form inputs preserved)');
+},
 
     async saveProfile() {
     console.log('🔍 DEBUG - Starting saveProfile()');
@@ -1305,7 +1321,7 @@ const ProfileModule = {
         this.updateDataManagement();
     },
 
-   updateProfileInfo() {
+updateProfileInfo() {
     console.log('🔍 DEBUG - Updating profile info');
     
     const profile = window.FarmModules.appData.profile;
@@ -1325,7 +1341,7 @@ const ProfileModule = {
         formInputElement: !!farmNameInput
     });
     
-    if (farmNameElement) {
+   if (farmNameElement) {
         console.log(`🔄 DEBUG - Changing profile card from "${farmNameElement.textContent}" to "${profile.farmName}"`);
         farmNameElement.textContent = profile.farmName || 'My Farm';
     }
@@ -1338,9 +1354,12 @@ const ProfileModule = {
     // Update farmer name
     document.getElementById('profile-farmer-name').textContent = profile.farmerName || 'Farm Manager';
     document.getElementById('farmer-name').value = profile.farmerName || '';
+
+    // Update profile card only
+    document.getElementById('profile-farmer-name').textContent = profile.farmerName || 'Farm Manager';
     
     // Update email
-    const displayEmail = profile.email || 'No email';
+     const displayEmail = profile.email || 'No email';
     document.getElementById('profile-email').textContent = displayEmail;
     document.getElementById('farm-email').value = profile.email || '';
     
@@ -1348,10 +1367,10 @@ const ProfileModule = {
     document.getElementById('farm-type').value = profile.farmType || '';
     document.getElementById('farm-location').value = profile.farmLocation || '';
     
-    const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
+   const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
     document.getElementById('member-since').textContent = `Member since: ${memberSince}`;
     
-    // Update settings
+    // Update settings (these are checkboxes/selects, not text inputs)
     document.getElementById('default-currency').value = profile.currency || 'USD';
     document.getElementById('low-stock-threshold').value = profile.lowStockThreshold || 10;
     document.getElementById('auto-sync').checked = profile.autoSync !== false;
@@ -1359,7 +1378,7 @@ const ProfileModule = {
     document.getElementById('local-storage').checked = profile.localStorageEnabled !== false;
     document.getElementById('theme-selector').value = profile.theme || 'auto';
     
-    console.log('✅ DEBUG - Profile info updated');
+    console.log('✅ DEBUG - Profile info updated (form inputs preserved)');
 },
     
     updateStatsOverview() {
