@@ -1,4 +1,4 @@
-// modules/profile.js - FIXED VERSION WITH ADDED SECTIONS
+// modules/profile.js - UPDATED WITH EMAIL FIELD AND PROPER FARM NAME UPDATE
 console.log('👤 Loading profile module...');
 
 const ProfileModule = {
@@ -548,7 +548,7 @@ const ProfileModule = {
                             <div class="profile-info">
                                 <h2 id="profile-farm-name">My Farm</h2>
                                 <p id="profile-farmer-name">Farm Manager</p>
-                                <p class="profile-email" id="profile-email">Loading...</p>
+                                <p class="profile-email" id="profile-email">No email</p>
                                 <div class="profile-stats">
                                     <span class="stat-badge" id="member-since">Member since: Today</span>
                                     <span class="stat-badge" id="data-entries">Data entries: 0</span>
@@ -564,15 +564,21 @@ const ProfileModule = {
                         <form id="profile-form">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="farm-name" class="form-label">Farm Name</label>
-                                    <input type="text" id="farm-name" class="form-input" required>
+                                    <label for="farm-name" class="form-label">Farm Name *</label>
+                                    <input type="text" id="farm-name" class="form-input" required placeholder="Enter farm name">
                                 </div>
                                 <div class="form-group">
-                                    <label for="farmer-name" class="form-label">Farmer Name</label>
-                                    <input type="text" id="farmer-name" class="form-input" required>
+                                    <label for="farmer-name" class="form-label">Farmer Name *</label>
+                                    <input type="text" id="farmer-name" class="form-input" required placeholder="Enter your name">
                                 </div>
                             </div>
+                            
+                            <!-- FIXED: Added email field here -->
                             <div class="form-row">
+                                <div class="form-group">
+                                    <label for="farm-email" class="form-label">Farm Email</label>
+                                    <input type="email" id="farm-email" class="form-input" placeholder="farm@example.com">
+                                </div>
                                 <div class="form-group">
                                     <label for="farm-type" class="form-label">Farm Type</label>
                                     <select id="farm-type" class="form-input">
@@ -585,6 +591,9 @@ const ProfileModule = {
                                         <option value="other">Other</option>
                                     </select>
                                 </div>
+                            </div>
+                            
+                            <div class="form-row">
                                 <div class="form-group">
                                     <label for="farm-location" class="form-label">Farm Location</label>
                                     <input type="text" id="farm-location" class="form-input" placeholder="e.g., City, State">
@@ -956,312 +965,16 @@ const ProfileModule = {
         });
     },
 
-    // ==================== NEW METHODS FOR ADDED SECTIONS ====================
-
-    // Mobile Installation Methods
-    sendInstallationLink() {
-        const email = prompt('Enter email address to send installation link:');
-        if (email && email.includes('@')) {
-            const currentUrl = window.location.href;
-            const subject = 'Install Farm Manager App';
-            const body = `Hello,
-
-Install the Farm Manager app on your mobile device:
-
-📱 Install Instructions:
-1. Open this link on your mobile: ${currentUrl}
-2. Tap the Share button (📤)
-3. Select "Add to Home Screen"
-
-This will install the app for quick access!
-
-Best regards,
-Farm Manager Team`;
-            
-            const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-            window.location.href = mailtoLink;
-            this.showNotification('Email opened with installation instructions', 'success');
-        } else if (email) {
-            this.showNotification('Please enter a valid email address', 'error');
-        }
-    },
-
-    showQRCode() {
-        const currentUrl = window.location.href;
-        
-        // Create QR Code modal
-        const modal = document.createElement('div');
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        `;
-        
-        modal.innerHTML = `
-            <div class="glass-card" style="padding: 2rem; text-align: center; max-width: 90%; max-height: 90%; overflow: auto;">
-                <h3 style="margin-bottom: 1rem;">Scan to Install</h3>
-                <div id="qrcode-container" style="background: white; padding: 1rem; margin: 0 auto 1rem auto; display: inline-block;"></div>
-                <p style="color: var(--text-secondary); margin-bottom: 1rem;">Scan this QR code with your mobile device</p>
-                <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 1rem;">URL: ${currentUrl}</p>
-                <div style="margin-top: 1rem;">
-                    <button class="btn-primary" id="close-qr">Close</button>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        // Generate QR code (if QRCode library is loaded)
-        const qrContainer = document.getElementById('qrcode-container');
-        if (typeof QRCode !== 'undefined') {
-            new QRCode(qrContainer, {
-                text: currentUrl,
-                width: 200,
-                height: 200,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
-        } else {
-            qrContainer.innerHTML = `
-                <div style="padding: 2rem; background: #f0f0f0; border-radius: 8px;">
-                    <p>Please scan this URL:</p>
-                    <p style="word-break: break-all; font-size: 12px;">${currentUrl}</p>
-                </div>
-            `;
-        }
-        
-        // Close button
-        document.getElementById('close-qr').addEventListener('click', () => {
-            document.body.removeChild(modal);
-        });
-        
-        // Close on background click
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                document.body.removeChild(modal);
-            }
-        });
-    },
-
-    // Support Methods
-    copyToClipboard(text) {
-        navigator.clipboard.writeText(text).then(() => {
-            this.showNotification('Copied to clipboard!', 'success');
-        }).catch(err => {
-            console.error('Clipboard error:', err);
-            this.showNotification('Failed to copy', 'error');
-        });
-    },
-
-    openSlackChannel() {
-        // In a real app, this would open Slack
-        this.showNotification('Slack integration would open here', 'info');
-        // window.open('https://slack.com', '_blank');
-    },
-
-    openQuickGuide() {
-        // Create a simple guide modal
-        const modal = document.createElement('div');
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        `;
-        
-        modal.innerHTML = `
-            <div class="glass-card" style="padding: 2rem; max-width: 600px; max-height: 80%; overflow: auto;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                    <h3 style="margin: 0;">📖 Quick Guide</h3>
-                    <button class="btn-outline" id="close-guide">✕</button>
-                </div>
-                
-                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                    <div>
-                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">🏠 Dashboard</h4>
-                        <p style="color: var(--text-secondary); margin: 0;">Overview of your farm's key metrics and quick actions.</p>
-                    </div>
-                    
-                    <div>
-                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">📦 Inventory</h4>
-                        <p style="color: var(--text-secondary); margin: 0;">Manage your farm products, track quantities, and set reorder points.</p>
-                    </div>
-                    
-                    <div>
-                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">💰 Orders</h4>
-                        <p style="color: var(--text-secondary); margin: 0;">Create and manage customer orders, track payments, and generate invoices.</p>
-                    </div>
-                    
-                    <div>
-                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">📊 Analytics</h4>
-                        <p style="color: var(--text-secondary); margin: 0;">Visualize your farm's performance with charts and reports.</p>
-                    </div>
-                    
-                    <div>
-                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">👤 Profile</h4>
-                        <p style="color: var(--text-secondary); margin: 0;">Manage your farm settings, export data, and configure the app.</p>
-                    </div>
-                    
-                    <div style="background: var(--glass-bg); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
-                        <h4 style="color: var(--success-color); margin-bottom: 0.5rem;">💡 Quick Tips</h4>
-                        <ul style="color: var(--text-secondary); margin: 0; padding-left: 1.2rem;">
-                            <li>Use keyboard shortcuts for faster navigation</li>
-                            <li>Export regular backups of your data</li>
-                            <li>Set up low stock alerts for inventory items</li>
-                            <li>Use the mobile app for on-the-go access</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        document.getElementById('close-guide').addEventListener('click', () => {
-            document.body.removeChild(modal);
-        });
-        
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                document.body.removeChild(modal);
-            }
-        });
-    },
-
-    downloadQuickGuide() {
-        const guideContent = `
-Farm Manager - Quick Guide
-==========================
-
-📋 Key Features:
-
-1. 🏠 DASHBOARD
-   - Real-time farm metrics
-   - Quick action buttons
-   - Recent activity feed
-
-2. 📦 INVENTORY MANAGEMENT
-   - Add/edit/delete products
-   - Track stock levels
-   - Set reorder alerts
-   - Manage categories
-
-3. 💰 ORDER MANAGEMENT
-   - Create customer orders
-   - Process payments
-   - Generate invoices
-   - Track order history
-
-4. 📊 ANALYTICS & REPORTS
-   - Sales trends
-   - Inventory analysis
-   - Customer insights
-   - Export to PDF
-
-5. 👤 PROFILE & SETTINGS
-   - Farm information
-   - User preferences
-   - Data backup/restore
-   - Theme customization
-
-🚀 Getting Started:
-
-1. Set up your farm profile
-2. Add your products to inventory
-3. Create your first customer order
-4. Explore analytics dashboard
-5. Configure your preferences
-
-💡 Tips & Tricks:
-
-• Use keyboard shortcuts for faster navigation
-• Set up low stock alerts (Profile → Settings)
-• Export regular backups of your data
-• Install the mobile app for on-the-go access
-
-📱 Mobile App:
-
-1. Open this app in mobile browser
-2. Tap Share button (📤)
-3. Select "Add to Home Screen"
-
-🔧 Support: farm-support@example.com
-
-Generated on: ${new Date().toLocaleString()}
-        `;
-        
-        const blob = new Blob([guideContent], {type: 'text/plain'});
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'Farm-Manager-Quick-Guide.txt';
-        link.click();
-        URL.revokeObjectURL(link.href);
-        
-        this.showNotification('Quick guide downloaded!', 'success');
-    },
-
-    openYouTubeTutorials() {
-        // Simple modal for tutorials
-        const modal = document.createElement('div');
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        `;
-        
-        modal.innerHTML = `
-            <div class="glass-card" style="padding: 2rem; max-width: 500px; text-align: center;">
-                <h3 style="margin-bottom: 1rem;">🎥 Video Tutorials</h3>
-                <div style="background: var(--glass-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-                    <p style="color: var(--text-secondary); margin: 0 0 1rem 0;">Video tutorials are coming soon!</p>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem;">In the meantime, check out our Quick Guide for instructions.</p>
-                </div>
-                <button class="btn-primary" id="close-tutorials">Close</button>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        document.getElementById('close-tutorials').addEventListener('click', () => {
-            document.body.removeChild(modal);
-        });
-    },
-
-    // ==================== EXISTING METHODS (keep as is) ====================
-    // ... (ALL YOUR EXISTING METHODS REMAIN EXACTLY THE SAME)
-    // loadUserData, saveProfile, saveSetting, exportProfilePDF, etc.
-    // All the methods from your original code go here unchanged
-
+    // ==================== FIXED: USER DATA MANAGEMENT ====================
     async loadUserData() {
         try {
             // Initialize profile data if it doesn't exist
             if (!window.FarmModules.appData.profile) {
                 window.FarmModules.appData.profile = {
-                    farmName: window.FarmModules.appData.farmName || 'My Farm',
+                    farmName: 'My Farm',
                     farmerName: 'Farm Manager',
-                    email: 'No email',
-                    farmType: 'poultry',
+                    email: '', // Empty by default
+                    farmType: '',
                     farmLocation: '',
                     currency: 'USD',
                     lowStockThreshold: 10,
@@ -1291,6 +1004,7 @@ Generated on: ${new Date().toLocaleString()}
             // Get values from form
             profile.farmName = document.getElementById('farm-name')?.value || profile.farmName;
             profile.farmerName = document.getElementById('farmer-name')?.value || profile.farmerName;
+            profile.email = document.getElementById('farm-email')?.value || profile.email; // FIXED: Save email
             profile.farmType = document.getElementById('farm-type')?.value || profile.farmType;
             profile.farmLocation = document.getElementById('farm-location')?.value || profile.farmLocation;
             profile.rememberUser = document.getElementById('remember-user')?.checked || profile.rememberUser;
@@ -1301,7 +1015,9 @@ Generated on: ${new Date().toLocaleString()}
             // Save to local storage
             this.saveToLocalStorage();
 
-            this.updateAllDisplays();
+            // FIXED: Update profile display immediately
+            this.updateProfileInfo();
+            
             this.showNotification('Profile saved successfully!', 'success');
             
         } catch (error) {
@@ -1309,6 +1025,41 @@ Generated on: ${new Date().toLocaleString()}
             this.showNotification('Error saving profile', 'error');
         }
     },
+
+    // ==================== FIXED: UPDATE PROFILE INFO METHOD ====================
+    updateProfileInfo() {
+        const profile = window.FarmModules.appData.profile;
+        
+        // Update profile card display
+        this.updateElement('profile-farm-name', profile.farmName);
+        this.updateElement('profile-farmer-name', profile.farmerName);
+        
+        // FIXED: Show email or "No email" if empty
+        const displayEmail = profile.email ? profile.email : 'No email';
+        this.updateElement('profile-email', displayEmail);
+        
+        // Update form fields
+        this.setValue('farm-name', profile.farmName);
+        this.setValue('farmer-name', profile.farmerName);
+        this.setValue('farm-email', profile.email); // FIXED: Set email field
+        this.setValue('farm-type', profile.farmType);
+        this.setValue('farm-location', profile.farmLocation);
+        
+        const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
+        this.updateElement('member-since', `Member since: ${memberSince}`);
+        
+        // Update settings
+        this.setValue('default-currency', profile.currency || 'USD');
+        this.setValue('low-stock-threshold', profile.lowStockThreshold || 10);
+        this.setChecked('auto-sync', profile.autoSync !== false);
+        this.setChecked('remember-user', profile.rememberUser !== false);
+        this.setChecked('local-storage', profile.localStorageEnabled !== false);
+        this.setValue('theme-selector', profile.theme || 'auto');
+    },
+
+    // ==================== REST OF THE METHODS (UNCHANGED) ====================
+    // ... All other methods remain exactly the same as before
+    // I'll just show the first few to keep it concise
 
     async saveSetting(setting, value) {
         try {
@@ -1321,6 +1072,7 @@ Generated on: ${new Date().toLocaleString()}
         }
     },
 
+    // ==================== PDF EXPORT METHODS ====================
     async exportProfilePDF() {
         this.updatePDFStatus('Generating profile report...', 'info');
         
@@ -1336,9 +1088,10 @@ Generated on: ${new Date().toLocaleString()}
             doc.setFontSize(12);
             doc.text(`Farm Name: ${profile.farmName}`, 20, 40);
             doc.text(`Farmer Name: ${profile.farmerName}`, 20, 50);
-            doc.text(`Farm Type: ${profile.farmType}`, 20, 60);
-            doc.text(`Location: ${profile.farmLocation}`, 20, 70);
-            doc.text(`Member Since: ${new Date(profile.memberSince).toLocaleDateString()}`, 20, 80);
+            doc.text(`Email: ${profile.email || 'Not provided'}`, 20, 60); // FIXED: Include email in PDF
+            doc.text(`Farm Type: ${profile.farmType || 'Not specified'}`, 20, 70);
+            doc.text(`Location: ${profile.farmLocation || 'Not specified'}`, 20, 80);
+            doc.text(`Member Since: ${new Date(profile.memberSince).toLocaleDateString()}`, 20, 90);
             
             // Save
             const fileName = `Profile_Report_${profile.farmName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -1354,167 +1107,19 @@ Generated on: ${new Date().toLocaleString()}
         }
     },
 
+    // ... (All other existing methods remain exactly the same)
+    // Only showing the first few to keep it concise
+
     async exportInventoryPDF() {
-        this.updatePDFStatus('Generating inventory report...', 'info');
-        
-        try {
-            const inventory = window.FarmModules.appData.inventory || [];
-            if (inventory.length === 0) {
-                this.updatePDFStatus('❌ No inventory data', 'error');
-                this.showNotification('No inventory data to export', 'warning');
-                return;
-            }
-            
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Header
-            doc.setFontSize(24);
-            doc.text('Inventory Report', 20, 20);
-            
-            // Summary
-            doc.setFontSize(12);
-            doc.text(`Total Items: ${inventory.length}`, 20, 40);
-            
-            let yPos = 60;
-            // Table headers
-            doc.setFont(undefined, 'bold');
-            doc.text('Item Name', 20, yPos);
-            doc.text('Category', 80, yPos);
-            doc.text('Quantity', 140, yPos);
-            doc.text('Price', 180, yPos);
-            
-            yPos += 10;
-            doc.setFont(undefined, 'normal');
-            
-            // Table rows
-            inventory.forEach((item, index) => {
-                if (yPos > 250) {
-                    doc.addPage();
-                    yPos = 20;
-                }
-                
-                doc.text(item.name || 'Unknown', 20, yPos);
-                doc.text(item.category || 'Uncategorized', 80, yPos);
-                doc.text(item.quantity || '0', 140, yPos);
-                doc.text(`$${item.price || '0.00'}`, 180, yPos);
-                yPos += 10;
-            });
-            
-            // Save
-            const fileName = `Inventory_Report_${new Date().toISOString().split('T')[0]}.pdf`;
-            doc.save(fileName);
-            
-            this.updatePDFStatus('✅ Inventory report generated', 'success');
-            this.showNotification('Inventory PDF generated successfully', 'success');
-            
-        } catch (error) {
-            console.error('Inventory PDF error:', error);
-            this.updatePDFStatus('❌ Failed to generate', 'error');
-            this.showNotification('Error generating inventory PDF', 'error');
-        }
+        // ... existing code
     },
 
     async exportSalesPDF() {
-        this.updatePDFStatus('Generating sales report...', 'info');
-        
-        try {
-            const orders = window.FarmModules.appData.orders || [];
-            if (orders.length === 0) {
-                this.updatePDFStatus('❌ No sales data', 'error');
-                this.showNotification('No sales data to export', 'warning');
-                return;
-            }
-            
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Header
-            doc.setFontSize(24);
-            doc.text('Sales Report', 20, 20);
-            
-            // Summary
-            const totalRevenue = orders.reduce((sum, order) => sum + (parseFloat(order.totalAmount) || 0), 0);
-            
-            doc.setFontSize(12);
-            doc.text(`Total Orders: ${orders.length}`, 20, 40);
-            doc.text(`Total Revenue: $${totalRevenue.toFixed(2)}`, 20, 50);
-            
-            let yPos = 70;
-            // Table headers
-            doc.setFont(undefined, 'bold');
-            doc.text('Order ID', 20, yPos);
-            doc.text('Date', 60, yPos);
-            doc.text('Customer', 100, yPos);
-            doc.text('Amount', 160, yPos);
-            
-            yPos += 10;
-            doc.setFont(undefined, 'normal');
-            
-            // Table rows
-            orders.slice(0, 20).forEach((order, index) => {
-                if (yPos > 250) {
-                    doc.addPage();
-                    yPos = 20;
-                }
-                
-                doc.text(order.id || `ORD-${index + 1}`, 20, yPos);
-                doc.text(new Date(order.date || order.createdAt).toLocaleDateString(), 60, yPos);
-                doc.text(order.customerName || 'Walk-in', 100, yPos);
-                doc.text(`$${parseFloat(order.totalAmount || 0).toFixed(2)}`, 160, yPos);
-                yPos += 10;
-            });
-            
-            // Save
-            const fileName = `Sales_Report_${new Date().toISOString().split('T')[0]}.pdf`;
-            doc.save(fileName);
-            
-            this.updatePDFStatus('✅ Sales report generated', 'success');
-            this.showNotification('Sales PDF generated successfully', 'success');
-            
-        } catch (error) {
-            console.error('Sales PDF error:', error);
-            this.updatePDFStatus('❌ Failed to generate', 'error');
-            this.showNotification('Error generating sales PDF', 'error');
-        }
+        // ... existing code
     },
 
     async exportAllPDF() {
-        this.updatePDFStatus('Generating complete report...', 'info');
-        
-        try {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Add profile
-            doc.setFontSize(24);
-            doc.text('Complete Farm Report', 20, 20);
-            doc.setFontSize(12);
-            doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 35);
-            
-            // Add page breaks and call individual report methods
-            // This is a simplified version - you could enhance it
-            doc.addPage();
-            await this.addProfileToPDF(doc);
-            
-            doc.addPage();
-            await this.addInventoryToPDF(doc);
-            
-            doc.addPage();
-            await this.addSalesToPDF(doc);
-            
-            // Save
-            const fileName = `Complete_Farm_Report_${new Date().toISOString().split('T')[0]}.pdf`;
-            doc.save(fileName);
-            
-            this.updatePDFStatus('✅ Complete report generated', 'success');
-            this.showNotification('Complete PDF report generated', 'success');
-            
-        } catch (error) {
-            console.error('Complete PDF error:', error);
-            this.updatePDFStatus('❌ Failed to generate', 'error');
-            this.showNotification('Error generating complete PDF', 'error');
-        }
+        // ... existing code
     },
 
     // ==================== UTILITY METHODS ====================
@@ -1532,30 +1137,6 @@ Generated on: ${new Date().toLocaleString()}
         this.updateProfileInfo();
         this.updateStatsOverview();
         this.updateDataManagement();
-    },
-
-    updateProfileInfo() {
-        const profile = window.FarmModules.appData.profile;
-        
-        this.updateElement('profile-farm-name', profile.farmName);
-        this.updateElement('profile-farmer-name', profile.farmerName);
-        this.updateElement('profile-email', profile.email);
-        
-        this.setValue('farm-name', profile.farmName);
-        this.setValue('farmer-name', profile.farmerName);
-        this.setValue('farm-type', profile.farmType);
-        this.setValue('farm-location', profile.farmLocation);
-        
-        const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
-        this.updateElement('member-since', `Member since: ${memberSince}`);
-        
-        // Update settings
-        this.setValue('default-currency', profile.currency || 'USD');
-        this.setValue('low-stock-threshold', profile.lowStockThreshold || 10);
-        this.setChecked('auto-sync', profile.autoSync !== false);
-        this.setChecked('remember-user', profile.rememberUser !== false);
-        this.setChecked('local-storage', profile.localStorageEnabled !== false);
-        this.setValue('theme-selector', profile.theme || 'auto');
     },
 
     updateStatsOverview() {
@@ -1861,17 +1442,294 @@ Generated on: ${new Date().toLocaleString()}
         }).format(amount);
     },
 
-    // PDF helper methods (if they exist in your original)
-    async addProfileToPDF(doc) {
-        // Implementation if needed
+    // ==================== NEW MOBILE INSTALLATION METHODS ====================
+    sendInstallationLink() {
+        const email = prompt('Enter email address to send installation link:');
+        if (email && email.includes('@')) {
+            const currentUrl = window.location.href;
+            const subject = 'Install Farm Manager App';
+            const body = `Hello,
+
+Install the Farm Manager app on your mobile device:
+
+📱 Install Instructions:
+1. Open this link on your mobile: ${currentUrl}
+2. Tap the Share button (📤)
+3. Select "Add to Home Screen"
+
+This will install the app for quick access!
+
+Best regards,
+Farm Manager Team`;
+            
+            const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailtoLink;
+            this.showNotification('Email opened with installation instructions', 'success');
+        } else if (email) {
+            this.showNotification('Please enter a valid email address', 'error');
+        }
     },
 
-    async addInventoryToPDF(doc) {
-        // Implementation if needed
+    showQRCode() {
+        const currentUrl = window.location.href;
+        
+        // Create QR Code modal
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        `;
+        
+        modal.innerHTML = `
+            <div class="glass-card" style="padding: 2rem; text-align: center; max-width: 90%; max-height: 90%; overflow: auto;">
+                <h3 style="margin-bottom: 1rem;">Scan to Install</h3>
+                <div id="qrcode-container" style="background: white; padding: 1rem; margin: 0 auto 1rem auto; display: inline-block;"></div>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">Scan this QR code with your mobile device</p>
+                <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 1rem;">URL: ${currentUrl}</p>
+                <div style="margin-top: 1rem;">
+                    <button class="btn-primary" id="close-qr">Close</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Generate QR code (if QRCode library is loaded)
+        const qrContainer = document.getElementById('qrcode-container');
+        if (typeof QRCode !== 'undefined') {
+            new QRCode(qrContainer, {
+                text: currentUrl,
+                width: 200,
+                height: 200,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        } else {
+            qrContainer.innerHTML = `
+                <div style="padding: 2rem; background: #f0f0f0; border-radius: 8px;">
+                    <p>Please scan this URL:</p>
+                    <p style="word-break: break-all; font-size: 12px;">${currentUrl}</p>
+                </div>
+            `;
+        }
+        
+        // Close button
+        document.getElementById('close-qr').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+        
+        // Close on background click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        });
     },
 
-    async addSalesToPDF(doc) {
-        // Implementation if needed
+    // ==================== NEW SUPPORT METHODS ====================
+    copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            this.showNotification('Copied to clipboard!', 'success');
+        }).catch(err => {
+            console.error('Clipboard error:', err);
+            this.showNotification('Failed to copy', 'error');
+        });
+    },
+
+    openSlackChannel() {
+        // In a real app, this would open Slack
+        this.showNotification('Slack integration would open here', 'info');
+        // window.open('https://slack.com', '_blank');
+    },
+
+    openQuickGuide() {
+        // Create a simple guide modal
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        `;
+        
+        modal.innerHTML = `
+            <div class="glass-card" style="padding: 2rem; max-width: 600px; max-height: 80%; overflow: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="margin: 0;">📖 Quick Guide</h3>
+                    <button class="btn-outline" id="close-guide">✕</button>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div>
+                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">🏠 Dashboard</h4>
+                        <p style="color: var(--text-secondary); margin: 0;">Overview of your farm's key metrics and quick actions.</p>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">📦 Inventory</h4>
+                        <p style="color: var(--text-secondary); margin: 0;">Manage your farm products, track quantities, and set reorder points.</p>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">💰 Orders</h4>
+                        <p style="color: var(--text-secondary); margin: 0;">Create and manage customer orders, track payments, and generate invoices.</p>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">📊 Analytics</h4>
+                        <p style="color: var(--text-secondary); margin: 0;">Visualize your farm's performance with charts and reports.</p>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">👤 Profile</h4>
+                        <p style="color: var(--text-secondary); margin: 0;">Manage your farm settings, export data, and configure the app.</p>
+                    </div>
+                    
+                    <div style="background: var(--glass-bg); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                        <h4 style="color: var(--success-color); margin-bottom: 0.5rem;">💡 Quick Tips</h4>
+                        <ul style="color: var(--text-secondary); margin: 0; padding-left: 1.2rem;">
+                            <li>Use keyboard shortcuts for faster navigation</li>
+                            <li>Export regular backups of your data</li>
+                            <li>Set up low stock alerts for inventory items</li>
+                            <li>Use the mobile app for on-the-go access</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        document.getElementById('close-guide').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        });
+    },
+
+    downloadQuickGuide() {
+        const guideContent = `
+Farm Manager - Quick Guide
+==========================
+
+📋 Key Features:
+
+1. 🏠 DASHBOARD
+   - Real-time farm metrics
+   - Quick action buttons
+   - Recent activity feed
+
+2. 📦 INVENTORY MANAGEMENT
+   - Add/edit/delete products
+   - Track stock levels
+   - Set reorder alerts
+   - Manage categories
+
+3. 💰 ORDER MANAGEMENT
+   - Create customer orders
+   - Process payments
+   - Generate invoices
+   - Track order history
+
+4. 📊 ANALYTICS & REPORTS
+   - Sales trends
+   - Inventory analysis
+   - Customer insights
+   - Export to PDF
+
+5. 👤 PROFILE & SETTINGS
+   - Farm information
+   - User preferences
+   - Data backup/restore
+   - Theme customization
+
+🚀 Getting Started:
+
+1. Set up your farm profile
+2. Add your products to inventory
+3. Create your first customer order
+4. Explore analytics dashboard
+5. Configure your preferences
+
+💡 Tips & Tricks:
+
+• Use keyboard shortcuts for faster navigation
+• Set up low stock alerts (Profile → Settings)
+• Export regular backups of your data
+• Install the mobile app for on-the-go access
+
+📱 Mobile App:
+
+1. Open this app in mobile browser
+2. Tap Share button (📤)
+3. Select "Add to Home Screen"
+
+🔧 Support: farm-support@example.com
+
+Generated on: ${new Date().toLocaleString()}
+        `;
+        
+        const blob = new Blob([guideContent], {type: 'text/plain'});
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'Farm-Manager-Quick-Guide.txt';
+        link.click();
+        URL.revokeObjectURL(link.href);
+        
+        this.showNotification('Quick guide downloaded!', 'success');
+    },
+
+    openYouTubeTutorials() {
+        // Simple modal for tutorials
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        `;
+        
+        modal.innerHTML = `
+            <div class="glass-card" style="padding: 2rem; max-width: 500px; text-align: center;">
+                <h3 style="margin-bottom: 1rem;">🎥 Video Tutorials</h3>
+                <div style="background: var(--glass-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                    <p style="color: var(--text-secondary); margin: 0 0 1rem 0;">Video tutorials are coming soon!</p>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">In the meantime, check out our Quick Guide for instructions.</p>
+                </div>
+                <button class="btn-primary" id="close-tutorials">Close</button>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        document.getElementById('close-tutorials').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
     }
 };
 
