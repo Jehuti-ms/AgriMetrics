@@ -1017,51 +1017,34 @@ const ProfileModule = {
     },
 
     // ==================== FIXED: SAVE PROFILE METHOD ====================
-async saveProfile() {
-    try {
-        const profile = window.FarmModules.appData.profile;
-        
-        // Get values from form
-        profile.farmName = document.getElementById('farm-name')?.value || profile.farmName;
-        profile.farmerName = document.getElementById('farmer-name')?.value || profile.farmerName;
-        profile.email = document.getElementById('farm-email')?.value || profile.email;
-        profile.farmType = document.getElementById('farm-type')?.value || profile.farmType;
-        profile.farmLocation = document.getElementById('farm-location')?.value || profile.farmLocation;
-        profile.rememberUser = document.getElementById('remember-user')?.checked || profile.rememberUser;
-
-        // DEBUG LOG: Show what was entered
-        console.log('📝 DEBUG - Profile data to save:', {
-            farmName: profile.farmName,
-            farmerName: profile.farmerName,
-            email: profile.email,
-            farmType: profile.farmType,
-            farmLocation: profile.farmLocation
-        });
-
-        // Update app data
-        window.FarmModules.appData.farmName = profile.farmName;
-
-        // DEBUG LOG: Show what's in appData
-        console.log('📝 DEBUG - AppData after update:', {
-            appDataFarmName: window.FarmModules.appData.farmName,
-            profileFarmName: window.FarmModules.appData.profile.farmName
-        });
-
-        // Save to local storage
-        this.saveToLocalStorage();
-
-        // DEBUG LOG: Show what's being saved
-        console.log('📝 DEBUG - Saving to localStorage:', profile);
-
-        // 🔥🔥🔥 FIXED: Update the profile display IMMEDIATELY 🔥🔥🔥
-        this.updateProfileInfo();
-        
-        this.showNotification('Profile saved successfully!', 'success');
-        
-    } catch (error) {
-        console.error('Error saving profile:', error);
-        this.showNotification('Error saving profile', 'error');
-    }
+updateProfileInfo() {
+    const profile = window.FarmModules.appData.profile;
+    
+    console.log('🔍 DEBUG - Updating profile with:', profile);
+    
+    // Update profile card
+    document.getElementById('profile-farm-name').textContent = profile.farmName || 'My Farm';
+    document.getElementById('profile-farmer-name').textContent = profile.farmerName || 'Farm Manager';
+    document.getElementById('profile-email').textContent = profile.email || 'No email';
+    
+    // Update form fields
+    document.getElementById('farm-name').value = profile.farmName || '';
+    document.getElementById('farmer-name').value = profile.farmerName || '';
+    document.getElementById('farm-email').value = profile.email || '';
+    document.getElementById('farm-type').value = profile.farmType || '';
+    document.getElementById('farm-location').value = profile.farmLocation || '';
+    
+    // Update member since date
+    const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
+    document.getElementById('member-since').textContent = `Member since: ${memberSince}`;
+    
+    // Update settings
+    document.getElementById('default-currency').value = profile.currency || 'USD';
+    document.getElementById('low-stock-threshold').value = profile.lowStockThreshold || 10;
+    document.getElementById('auto-sync').checked = profile.autoSync !== false;
+    document.getElementById('remember-user').checked = profile.rememberUser !== false;
+    document.getElementById('local-storage').checked = profile.localStorageEnabled !== false;
+    document.getElementById('theme-selector').value = profile.theme || 'auto';
 },
 
 // ==================== FIXED: UPDATE PROFILE INFO METHOD ====================
