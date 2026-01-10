@@ -1,5 +1,5 @@
-// modules/income-expenses.js - COMPLETE REWRITTEN VERSION
-console.log('💰 Loading Income & Expenses module (Complete)...');
+// modules/income-expenses.js - COMPLETE REWRITTEN VERSION WITH RECEIPT FIXES
+console.log('💰 Loading Income & Expenses module (Complete with Receipt Fixes)...');
 
 const Broadcaster = window.DataBroadcaster || {
     recordCreated: () => {},
@@ -40,7 +40,6 @@ const IncomeExpensesModule = {
         }
 
         this.loadData();
-         // Clean up broken receipts before loading
         this.cleanupBrokenReceipts();
         this.loadReceiptsFromFirebase();
         this.renderModule();
@@ -170,6 +169,38 @@ const IncomeExpensesModule = {
                 /* Make button children not interfere with clicks */
                 #upload-receipt-btn * { pointer-events: none; }
                 .firebase-badge, .receipt-queue-badge { pointer-events: none; }
+                
+                /* RECEIPT ATTACHMENT FIXES */
+                #receipt-upload-area:hover {
+                    border-color: var(--primary-color);
+                    background: var(--primary-color)10;
+                }
+                
+                #receipt-preview-container {
+                    transition: all 0.3s ease;
+                }
+                
+                #receipt-preview-container.hidden {
+                    display: none !important;
+                }
+                
+                #image-preview.hidden {
+                    display: none !important;
+                }
+                
+                /* Fix modal z-index */
+                .popout-modal {
+                    z-index: 9999;
+                }
+                
+                /* Receipt preview styling */
+                .receipt-preview-item {
+                    background: var(--glass-bg);
+                    border-radius: 8px;
+                    padding: 12px;
+                    margin-top: 8px;
+                    border: 1px solid var(--glass-border);
+                }
             </style>
 
             <div class="module-container">
@@ -448,58 +479,49 @@ const IncomeExpensesModule = {
         `;
 
         this.setupEventListeners();
+        this.setupReceiptFormHandlers(); // ADDED: Setup receipt handlers immediately
     },
 
     // ==================== EVENT LISTENERS ====================
     setupEventListeners() {
-    console.log('Setting up event listeners...');
-    
-    // Main buttons - SIMPLE DIRECT EVENT LISTENERS
-    const addTransactionBtn = document.getElementById('add-transaction');
-    console.log('Add Transaction button found:', !!addTransactionBtn);
-    if (addTransactionBtn) {
-        addTransactionBtn.addEventListener('click', () => {
-            console.log('Add Transaction clicked');
-            this.showTransactionModal();
-        });
-    }
+        console.log('Setting up event listeners...');
+        
+        // Main buttons - SIMPLE DIRECT EVENT LISTENERS
+        const addTransactionBtn = document.getElementById('add-transaction');
+        console.log('Add Transaction button found:', !!addTransactionBtn);
+        if (addTransactionBtn) {
+            addTransactionBtn.addEventListener('click', () => {
+                console.log('Add Transaction clicked');
+                this.showTransactionModal();
+            });
+        }
 
-    // SIMPLE FIX: Import Receipts button
-    const uploadReceiptBtn = document.getElementById('upload-receipt-btn');
-    console.log('Upload Receipt button found:', !!uploadReceiptBtn);
-    
-    if (uploadReceiptBtn) {
-        console.log('Adding click listener to upload-receipt-btn');
+        // SIMPLE FIX: Import Receipts button
+        const uploadReceiptBtn = document.getElementById('upload-receipt-btn');
+        console.log('Upload Receipt button found:', !!uploadReceiptBtn);
         
-        // Simple event listener - NO CLONING
-        uploadReceiptBtn.addEventListener('click', (e) => {
-            console.log('UPLOAD RECEIPT BUTTON CLICKED!');
-            e.preventDefault();
-            e.stopPropagation();
-            this.showImportReceiptsModal();
-            return false;
-        });
-        
-        // Also test with direct onclick
-        uploadReceiptBtn.onclick = (e) => {
-            console.log('Direct onclick fired as backup');
-            e.preventDefault();
-            this.showImportReceiptsModal();
-            return false;
-        };
-        
-    } else {
-        console.error('ERROR: upload-receipt-btn not found!');
-        // Debug what buttons ARE available
-        const allButtons = document.querySelectorAll('button');
-        console.log('Available buttons:');
-        allButtons.forEach((btn, i) => {
-            if (btn.id) {
-                console.log(`  ${i}: #${btn.id} - "${btn.textContent?.trim()}"`);
-            }
-        });
-    }
+        if (uploadReceiptBtn) {
+            console.log('Adding click listener to upload-receipt-btn');
             
+            uploadReceiptBtn.addEventListener('click', (e) => {
+                console.log('UPLOAD RECEIPT BUTTON CLICKED!');
+                e.preventDefault();
+                e.stopPropagation();
+                this.showImportReceiptsModal();
+                return false;
+            });
+            
+            uploadReceiptBtn.onclick = (e) => {
+                console.log('Direct onclick fired as backup');
+                e.preventDefault();
+                this.showImportReceiptsModal();
+                return false;
+            };
+            
+        } else {
+            console.error('ERROR: upload-receipt-btn not found!');
+        }
+                
         // Quick actions
         this.setupButton('add-income-btn', () => this.showAddIncome());
         this.setupButton('add-expense-btn', () => this.showAddExpense());
@@ -555,11 +577,291 @@ const IncomeExpensesModule = {
         });
     },
 
+    // ==================== NEW: RECEIPT FORM HANDLERS ====================
+    setupReceiptFormHandlers() {
+        console.log('Setting up receipt form handlers...');
+        
+        // Handle receipt upload click
+        const uploadArea = document.getElementById('receipt-upload-area');
+        const fileInput = document.getElementById('receipt-upload');
+        
+        if (uploadArea && fileInput) {
+            uploadArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    this.handleTransactionReceiptUpload(e.target.files[0]);
+                }
+            });
+            
+            // Drag and drop for transaction form
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--primary-color)';
+                uploadArea.style.background = 'var(--primary-color)10';
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.borderColor = 'var(--glass-border)';
+                uploadArea.style.background = '';
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--glass-border)';
+                uploadArea.style.background = '';
+                
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    this.handleTransactionReceiptUpload(e.dataTransfer.files[0]);
+                }
+            });
+        }
+        
+        // Remove receipt button
+        this.setupButton('remove-receipt', () => {
+            this.receiptPreview = null;
+            this.clearReceiptPreview();
+            const fileInput = document.getElementById('receipt-upload');
+            if (fileInput) fileInput.value = '';
+        });
+        
+        // Process receipt button (OCR)
+        this.setupButton('process-receipt-btn', () => {
+            if (this.receiptPreview) {
+                this.showOCRSuggestion(this.receiptPreview);
+            } else {
+                this.showNotification('Please attach a receipt first', 'warning');
+            }
+        });
+    },
+
     setupButton(id, handler) {
         const button = document.getElementById(id);
         if (button) {
             button.addEventListener('click', handler);
         }
+    },
+
+    // ==================== FIXED: RECEIPT UPLOAD FOR TRANSACTION FORM ====================
+    handleTransactionReceiptUpload(file) {
+        if (!this.isValidReceiptFile(file)) {
+            this.showNotification('Invalid file. Please use JPG, PNG, or PDF under 10MB', 'error');
+            return;
+        }
+        
+        // Create a preview for the transaction form
+        this.createReceiptPreview(file);
+    },
+
+    createReceiptPreview(file) {
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+            // Create receipt preview object
+            this.receiptPreview = {
+                id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                name: file.name,
+                originalName: file.name,
+                fileName: file.name,
+                downloadURL: e.target.result, // Data URL
+                size: file.size,
+                type: file.type,
+                status: 'pending',
+                uploadedAt: new Date(),
+                uploadedBy: 'local-user',
+                metadata: {
+                    contentType: file.type,
+                    size: file.size
+                }
+            };
+            
+            // Show preview in form
+            this.showReceiptPreviewInTransactionModal(this.receiptPreview);
+            
+            this.showNotification(`Receipt "${file.name}" attached`, 'success');
+        };
+        
+        reader.onerror = () => {
+            this.showNotification('Failed to read file', 'error');
+        };
+        
+        reader.readAsDataURL(file);
+    },
+
+    showReceiptPreviewInTransactionModal(receipt) {
+        const previewContainer = document.getElementById('receipt-preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const receiptImage = document.getElementById('receipt-image-preview');
+        const filename = document.getElementById('receipt-filename');
+        const filesize = document.getElementById('receipt-size');
+        
+        if (!previewContainer || !filename || !filesize) return;
+        
+        previewContainer.classList.remove('hidden');
+        filename.textContent = receipt.name;
+        filesize.textContent = this.formatFileSize(receipt.size || 0);
+        
+        // Show image preview if it's an image
+        if (receipt.type?.startsWith('image/') && receiptImage && imagePreview) {
+            receiptImage.src = receipt.downloadURL;
+            imagePreview.classList.remove('hidden');
+        } else if (imagePreview) {
+            imagePreview.classList.add('hidden');
+        }
+    },
+
+    // ==================== FIXED: SAVE TRANSACTION WITH RECEIPT ====================
+    saveTransaction() {
+        console.log('Saving transaction...');
+        console.log('Current receipt preview:', this.receiptPreview);
+        
+        // Get form values
+        const id = document.getElementById('transaction-id')?.value || Date.now();
+        const date = document.getElementById('transaction-date')?.value;
+        const type = document.getElementById('transaction-type')?.value;
+        const category = document.getElementById('transaction-category')?.value;
+        const amount = parseFloat(document.getElementById('transaction-amount')?.value || 0);
+        const description = document.getElementById('transaction-description')?.value || '';
+        const paymentMethod = document.getElementById('transaction-payment')?.value || 'cash';
+        const reference = document.getElementById('transaction-reference')?.value || '';
+        const notes = document.getElementById('transaction-notes')?.value || '';
+        
+        // Validate
+        if (!date || !type || !category || !amount || !description) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        if (amount <= 0) {
+            this.showNotification('Amount must be greater than 0', 'error');
+            return;
+        }
+        
+        // Create receipt object with proper structure
+        let receiptData = null;
+        if (this.receiptPreview) {
+            receiptData = {
+                id: this.receiptPreview.id,
+                name: this.receiptPreview.name,
+                downloadURL: this.receiptPreview.downloadURL,
+                size: this.receiptPreview.size,
+                type: this.receiptPreview.type,
+                uploadedAt: this.receiptPreview.uploadedAt,
+                status: 'attached'
+            };
+            
+            console.log('Attaching receipt to transaction:', receiptData);
+        }
+        
+        const transactionData = {
+            id: parseInt(id),
+            date,
+            type,
+            category,
+            amount,
+            description,
+            paymentMethod,
+            reference,
+            notes,
+            receipt: receiptData  // This should now contain the receipt
+        };
+        
+        console.log('Transaction data to save:', transactionData);
+        
+        // Check if editing existing transaction
+        const existingIndex = this.transactions.findIndex(t => t.id == id);
+        if (existingIndex > -1) {
+            // Update existing
+            const oldTransaction = this.transactions[existingIndex];
+            this.transactions[existingIndex] = transactionData;
+            
+            // Broadcast update
+            Broadcaster.recordUpdated('income-expenses', {
+                id: transactionData.id,
+                oldData: oldTransaction,
+                newData: transactionData,
+                timestamp: new Date().toISOString()
+            });
+            
+            this.showNotification('Transaction updated successfully!', 'success');
+            
+            // If this was from a pending receipt, mark it as processed
+            if (this.receiptPreview?.id && this.receiptPreview.id.startsWith('receipt_')) {
+                this.markReceiptAsProcessed(this.receiptPreview.id);
+            }
+        } else {
+            // Add new
+            transactionData.id = transactionData.id || Date.now();
+            this.transactions.unshift(transactionData);
+            
+            // Broadcast creation
+            Broadcaster.recordCreated('income-expenses', {
+                ...transactionData,
+                timestamp: new Date().toISOString(),
+                module: 'income-expenses',
+                action: 'transaction_created'
+            });
+            
+            this.showNotification('Transaction saved successfully!', 'success');
+            
+            // If this was from a pending receipt, mark it as processed
+            if (this.receiptPreview?.id && this.receiptPreview.id.startsWith('receipt_')) {
+                this.markReceiptAsProcessed(this.receiptPreview.id);
+            }
+        }
+        
+        // Save to localStorage
+        this.saveData();
+        
+        // Clear receipt preview after saving
+        this.receiptPreview = null;
+        
+        // Update UI
+        this.updateStats();
+        this.updateTransactionsList();
+        this.updateCategoryBreakdown();
+        
+        // Close modal
+        this.hideTransactionModal();
+    },
+
+    clearReceiptPreview() {
+        const previewContainer = document.getElementById('receipt-preview-container');
+        if (previewContainer) previewContainer.classList.add('hidden');
+        
+        const imagePreview = document.getElementById('image-preview');
+        if (imagePreview) imagePreview.classList.add('hidden');
+        
+        const filename = document.getElementById('receipt-filename');
+        if (filename) filename.textContent = 'receipt.jpg';
+        
+        const filesize = document.getElementById('receipt-size');
+        if (filesize) filesize.textContent = '0 KB';
+        
+        const receiptImage = document.getElementById('receipt-image-preview');
+        if (receiptImage) receiptImage.src = '';
+        
+        // Reset file input
+        const fileInput = document.getElementById('receipt-upload');
+        if (fileInput) fileInput.value = '';
+    },
+
+    // ==================== FIXED: HIDE TRANSACTION MODAL ====================
+    hideTransactionModal() {
+        const modal = document.getElementById('transaction-modal');
+        if (modal) modal.classList.add('hidden');
+        
+        // Reset receipt preview and form
+        this.receiptPreview = null;
+        this.clearReceiptPreview();
+        
+        const ocrResults = document.getElementById('ocr-results');
+        if (ocrResults) ocrResults.classList.add('hidden');
+        
+        const form = document.getElementById('transaction-form');
+        if (form) form.reset();
     },
 
     // ==================== FIREBASE RECEIPT METHODS ====================
@@ -808,7 +1110,7 @@ const IncomeExpensesModule = {
                             </div>
                         </div>
                         <button class="btn btn-sm btn-outline process-btn" data-id="${receipt.id}">
-                            <span class="btn-icon">🔍</span>
+                            🔍 Extract Information from Receipt
                         </button>
                     </div>
                 `).join('')}
@@ -851,9 +1153,6 @@ const IncomeExpensesModule = {
                                    title="${this.isValidReceiptURL(receipt.downloadURL) ? 'View' : 'Receipt unavailable'}" 
                                    style="padding: 6px 12px;"
                                    onclick="${!this.isValidReceiptURL(receipt.downloadURL) ? 'event.preventDefault(); alert(\'Receipt file is no longer available. Please re-upload.\');' : ''}"> 
-                               title="${this.isValidReceiptURL(receipt.downloadURL) ? 'View' : 'Receipt unavailable'}" 
-                               style="padding: 6px 12px;"
-                               onclick="${!this.isValidReceiptURL(receipt.downloadURL) ? 'event.preventDefault(); alert(\'Receipt file is no longer available. Please re-upload.\');' : ''}">
                             <span class="btn-icon">👁️</span>
                             </a>
                             <button class="btn btn-sm btn-primary process-receipt-btn" data-id="${receipt.id}" style="padding: 6px 12px;">
@@ -1731,19 +2030,6 @@ const IncomeExpensesModule = {
         }
     },
 
-    hideTransactionModal() {
-        const modal = document.getElementById('transaction-modal');
-        if (modal) modal.classList.add('hidden');
-        this.receiptPreview = null;
-    },
-
-    clearReceiptPreview() {
-        const previewContainer = document.getElementById('receipt-preview-container');
-        if (previewContainer) previewContainer.classList.add('hidden');
-        const imagePreview = document.getElementById('image-preview');
-        if (imagePreview) imagePreview.classList.add('hidden');
-    },
-
     hideAllModals() {
         this.hideTransactionModal();
         this.hideImportReceiptsModal();
@@ -1811,6 +2097,7 @@ const IncomeExpensesModule = {
                     const amountColor = isIncome ? '#22c55e' : '#ef4444';
                     const icon = isIncome ? '💰' : '💸';
                     const categoryIcon = this.getCategoryIcon(transaction.category);
+                    const hasReceipt = transaction.receipt && this.isValidReceiptURL(transaction.receipt.downloadURL);
                     
                     return `
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
@@ -1834,7 +2121,7 @@ const IncomeExpensesModule = {
                                         ${transaction.paymentMethod || 'No payment method'}
                                     </div>
                                 </div>
-                                ${transaction.receipt ? `
+                                ${hasReceipt ? `
                                     <button class="btn-icon view-receipt" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="View Receipt">
                                         📄
                                     </button>
@@ -2022,130 +2309,6 @@ const IncomeExpensesModule = {
         if (transaction.receipt) {
             this.receiptPreview = transaction.receipt;
             this.showReceiptPreviewInTransactionModal(transaction.receipt);
-        }
-    },
-
-    saveTransaction() {
-        console.log('Saving transaction...');
-        
-        // Get form values
-        const id = document.getElementById('transaction-id')?.value || Date.now();
-        const date = document.getElementById('transaction-date')?.value;
-        const type = document.getElementById('transaction-type')?.value;
-        const category = document.getElementById('transaction-category')?.value;
-        const amount = parseFloat(document.getElementById('transaction-amount')?.value || 0);
-        const description = document.getElementById('transaction-description')?.value || '';
-        const paymentMethod = document.getElementById('transaction-payment')?.value || 'cash';
-        const reference = document.getElementById('transaction-reference')?.value || '';
-        const notes = document.getElementById('transaction-notes')?.value || '';
-        
-        // Validate
-        if (!date || !type || !category || !amount || !description) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
-        }
-        
-        if (amount <= 0) {
-            this.showNotification('Amount must be greater than 0', 'error');
-            return;
-        }
-        
-        const transactionData = {
-            id: parseInt(id),
-            date,
-            type,
-            category,
-            amount,
-            description,
-            paymentMethod,
-            reference,
-            notes,
-            receipt: this.receiptPreview || null
-        };
-        
-        // Check if editing existing transaction
-        const existingIndex = this.transactions.findIndex(t => t.id == id);
-        if (existingIndex > -1) {
-            // Update existing
-            const oldTransaction = this.transactions[existingIndex];
-            this.transactions[existingIndex] = transactionData;
-            
-            // Broadcast update
-            Broadcaster.recordUpdated('income-expenses', {
-                id: transactionData.id,
-                oldData: oldTransaction,
-                newData: transactionData,
-                timestamp: new Date().toISOString()
-            });
-            
-            this.showNotification('Transaction updated successfully!', 'success');
-            
-            // If this was from a pending receipt, mark it as processed
-            if (this.receiptPreview?.id) {
-                this.markReceiptAsProcessed(this.receiptPreview.id);
-            }
-        } else {
-            // Add new
-            transactionData.id = transactionData.id || Date.now();
-            this.transactions.unshift(transactionData);
-            
-            // Broadcast creation
-            Broadcaster.recordCreated('income-expenses', {
-                ...transactionData,
-                timestamp: new Date().toISOString(),
-                module: 'income-expenses',
-                action: 'transaction_created'
-            });
-            
-            this.showNotification('Transaction saved successfully!', 'success');
-            
-            // If this was from a pending receipt, mark it as processed
-            if (this.receiptPreview?.id) {
-                this.markReceiptAsProcessed(this.receiptPreview.id);
-            }
-        }
-        
-        // Save to localStorage
-        this.saveData();
-        
-        // Update UI
-        this.updateStats();
-        this.updateTransactionsList();
-        this.updateCategoryBreakdown();
-        
-        // Close modal
-        this.hideTransactionModal();
-    },
-
-    markReceiptAsProcessed(receiptId) {
-        const receiptIndex = this.receiptQueue.findIndex(r => r.id === receiptId);
-        if (receiptIndex > -1) {
-            // Update status locally
-            const oldReceipt = this.receiptQueue[receiptIndex];
-            this.receiptQueue[receiptIndex].status = 'processed';
-            
-            // Update in Firebase if available
-            if (this.isFirebaseAvailable && window.db) {
-                window.db.collection('receipts').doc(receiptId).update({
-                    status: 'processed',
-                    processedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            }
-            
-            // Broadcast receipt processed
-            Broadcaster.recordUpdated('income-expenses', {
-                id: receiptId,
-                oldData: oldReceipt,
-                newData: this.receiptQueue[receiptIndex],
-                timestamp: new Date().toISOString(),
-                module: 'income-expenses',
-                action: 'receipt_processed'
-            });
-            
-            // Update UI
-            this.updateReceiptQueueUI();
-            
-            this.showNotification('Receipt marked as processed', 'success');
         }
     },
 
@@ -2585,216 +2748,4 @@ if (window.FarmModules) {
     } else {
         console.error('❌ FarmModules framework not found');
     }
-})();
-
-// ==================== GUARANTEED EDIT BUTTON FIX ====================
-(function() {
-    'use strict';
-    
-    console.log('🔧 LOADING GUARANTEED EDIT BUTTON FIX...');
-    
-    // Function to make ALL edit buttons work
-    function fixAllEditButtons() {
-        const editButtons = document.querySelectorAll('.edit-transaction');
-        console.log(`Found ${editButtons.length} edit buttons to fix`);
-        
-        editButtons.forEach((btn, index) => {
-            // Clone button to remove old listeners
-            const newBtn = btn.cloneNode(true);
-            btn.parentNode.replaceChild(newBtn, btn);
-            
-            // Add DIRECT click handler that ALWAYS works
-            newBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-                
-                const transactionId = this.dataset.id;
-                console.log('🎯 EDIT BUTTON CLICKED:', transactionId);
-                
-                // GET TRANSACTION DATA
-                const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
-                const transaction = transactions.find(t => t.id == transactionId);
-                
-                if (!transaction) {
-                    alert('Transaction not found!');
-                    return;
-                }
-                
-                // SHOW MODAL - FORCE IT TO BE VISIBLE
-                const modal = document.getElementById('transaction-modal');
-                if (modal) {
-                    // Remove ALL hidden classes and force display
-                    modal.classList.remove('hidden');
-                    modal.style.display = 'flex';
-                    modal.style.alignItems = 'center';
-                    modal.style.justifyContent = 'center';
-                    modal.style.zIndex = '10000';
-                    modal.style.opacity = '1';
-                    modal.style.visibility = 'visible';
-                    
-                    console.log('✅ Modal forced to show');
-                } else {
-                    console.error('❌ Modal not found!');
-                    return;
-                }
-                
-                // FILL FORM - Wait a tiny bit for modal to render
-                setTimeout(() => {
-                    const form = document.getElementById('transaction-form');
-                    if (!form) {
-                        console.error('❌ Form not found!');
-                        return;
-                    }
-                    
-                    // Fill ALL fields
-                    const fieldsToFill = [
-                        { id: 'transaction-id', value: transaction.id },
-                        { id: 'transaction-date', value: transaction.date },
-                        { id: 'transaction-type', value: transaction.type },
-                        { id: 'transaction-category', value: transaction.category },
-                        { id: 'transaction-amount', value: transaction.amount },
-                        { id: 'transaction-description', value: transaction.description },
-                        { id: 'transaction-payment', value: transaction.paymentMethod || 'cash' },
-                        { id: 'transaction-reference', value: transaction.reference || '' },
-                        { id: 'transaction-notes', value: transaction.notes || '' }
-                    ];
-                    
-                    fieldsToFill.forEach(field => {
-                        const element = document.getElementById(field.id);
-                        if (element) {
-                            element.value = field.value;
-                        } else {
-                            console.warn(`Field not found: ${field.id}`);
-                        }
-                    });
-                    
-                    // Show delete button
-                    const deleteBtn = document.getElementById('delete-transaction');
-                    if (deleteBtn) {
-                        deleteBtn.style.display = 'block';
-                        // Make delete button work
-                        deleteBtn.onclick = function() {
-                            if (confirm('Delete this transaction?')) {
-                                const updatedTransactions = transactions.filter(t => t.id != transactionId);
-                                localStorage.setItem('farm-transactions', JSON.stringify(updatedTransactions));
-                                alert('Transaction deleted!');
-                                modal.classList.add('hidden');
-                                location.reload();
-                            }
-                        };
-                    }
-                    
-                    // Change title
-                    const title = document.getElementById('transaction-modal-title');
-                    if (title) title.textContent = 'Edit Transaction';
-                    
-                    console.log('✅ Form filled successfully');
-                    
-                    // Make save button work
-                    const saveBtn = document.getElementById('save-transaction');
-                    if (saveBtn) {
-                        const newSaveBtn = saveBtn.cloneNode(true);
-                        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
-                        
-                        newSaveBtn.onclick = function() {
-                            // Get updated values
-                            const updatedTransaction = {
-                                id: parseInt(document.getElementById('transaction-id').value),
-                                date: document.getElementById('transaction-date').value,
-                                type: document.getElementById('transaction-type').value,
-                                category: document.getElementById('transaction-category').value,
-                                amount: parseFloat(document.getElementById('transaction-amount').value),
-                                description: document.getElementById('transaction-description').value,
-                                paymentMethod: document.getElementById('transaction-payment').value || 'cash',
-                                reference: document.getElementById('transaction-reference').value || '',
-                                notes: document.getElementById('transaction-notes').value || ''
-                            };
-                            
-                            // Validate
-                            if (!updatedTransaction.date || !updatedTransaction.type || 
-                                !updatedTransaction.category || !updatedTransaction.amount || 
-                                !updatedTransaction.description) {
-                                alert('Please fill all required fields!');
-                                return;
-                            }
-                            
-                            // Update in array
-                            const updatedTransactions = transactions.map(t => 
-                                t.id == transactionId ? updatedTransaction : t
-                            );
-                            
-                            // Save
-                            localStorage.setItem('farm-transactions', JSON.stringify(updatedTransactions));
-                            
-                            // Close modal
-                            modal.classList.add('hidden');
-                            
-                            // Show success and refresh
-                            alert('Transaction updated successfully!');
-                            setTimeout(() => location.reload(), 500);
-                        };
-                    }
-                    
-                    // Make close button work
-                    const closeBtn = document.getElementById('close-transaction-modal');
-                    if (closeBtn) {
-                        closeBtn.onclick = () => modal.classList.add('hidden');
-                    }
-                    
-                }, 100); // Wait 100ms for modal to fully render
-                
-            }, true); // Use capture phase
-            
-            // Style the button to show it's fixed
-            newBtn.style.border = '2px solid #4CAF50';
-            newBtn.style.boxShadow = '0 0 0 2px rgba(76, 175, 80, 0.3)';
-            newBtn.style.transition = 'all 0.2s';
-            
-            // Hover effects
-            newBtn.addEventListener('mouseenter', () => {
-                newBtn.style.transform = 'scale(1.2)';
-                newBtn.style.background = 'rgba(76, 175, 80, 0.1)';
-            });
-            
-            newBtn.addEventListener('mouseleave', () => {
-                newBtn.style.transform = 'scale(1)';
-                newBtn.style.background = '';
-            });
-        });
-        
-        console.log('✅ All edit buttons fixed');
-    }
-    
-    // Run immediately
-    setTimeout(fixAllEditButtons, 1000);
-    
-    // Run again when clicking on income-expenses menu
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('[href*="#income-expenses"]') || 
-            e.target.closest('[onclick*="income-expenses"]')) {
-            setTimeout(fixAllEditButtons, 500);
-        }
-    });
-    
-    // Also fix any new buttons that get added
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.addedNodes.length > 0) {
-                const hasEditButtons = Array.from(mutation.addedNodes).some(node => 
-                    node.querySelector && node.querySelector('.edit-transaction')
-                );
-                if (hasEditButtons) {
-                    setTimeout(fixAllEditButtons, 100);
-                }
-            }
-        });
-    });
-    
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-    
-    console.log('✅ Guaranteed edit button fix loaded');
 })();
