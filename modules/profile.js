@@ -539,14 +539,14 @@ const ProfileModule = {
                         </div>
                     </div>
 
-                    <!-- Profile Information Card -->
+                   <!-- Profile Information Card -->
                     <div class="profile-card glass-card">
                         <div class="profile-header">
                             <div class="profile-avatar">
                                 <span class="avatar-icon">🚜</span>
                             </div>
                             <div class="profile-info">
-                                <!-- FIXED: Placeholders only -->
+                                <!-- PLACEHOLDER TEXT - Will be updated by JavaScript -->
                                 <h2 id="profile-farm-name">My Farm</h2>
                                 <p id="profile-farmer-name">Farm Manager</p>
                                 <p class="profile-email" id="profile-email">No email</p>
@@ -558,7 +558,7 @@ const ProfileModule = {
                             </div>
                         </div>
                     </div>
-
+                    
                     <!-- Farm Information Form -->
                     <div class="profile-details glass-card">
                         <h3>Farm Information</h3>
@@ -566,13 +566,11 @@ const ProfileModule = {
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="farm-name" class="form-label">Farm Name *</label>
-                                    <!-- FIXED: No value attribute -->
                                     <input type="text" id="farm-name" class="form-input" required 
                                            placeholder="Enter farm name">
                                 </div>
                                 <div class="form-group">
                                     <label for="farmer-name" class="form-label">Farmer Name *</label>
-                                    <!-- FIXED: No value attribute -->
                                     <input type="text" id="farmer-name" class="form-input" required 
                                            placeholder="Enter your name">
                                 </div>
@@ -581,7 +579,6 @@ const ProfileModule = {
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="farm-email" class="form-label">Farm Email</label>
-                                    <!-- FIXED: No value attribute -->
                                     <input type="email" id="farm-email" class="form-input" 
                                            placeholder="farm@example.com">
                                 </div>
@@ -602,7 +599,6 @@ const ProfileModule = {
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="farm-location" class="form-label">Farm Location</label>
-                                    <!-- FIXED: No value attribute -->
                                     <input type="text" id="farm-location" class="form-input" 
                                            placeholder="e.g., City, State">
                                 </div>
@@ -1021,49 +1017,68 @@ const ProfileModule = {
     },
 
     async saveProfile() {
-        console.log('🔍 DEBUG - Starting saveProfile()');
+    console.log('🔍 DEBUG - Starting saveProfile()');
+    
+    try {
+        const profile = window.FarmModules.appData.profile;
         
-        try {
-            const profile = window.FarmModules.appData.profile;
-            
-            // Get values from form
-            const farmName = document.getElementById('farm-name')?.value;
-            const farmerName = document.getElementById('farmer-name')?.value;
-            const email = document.getElementById('farm-email')?.value;
-            
-            console.log('🔍 DEBUG - Form values:', {
-                farmName: farmName,
-                farmerName: farmerName,
-                email: email
-            });
-            
-            profile.farmName = farmName || profile.farmName;
-            profile.farmerName = farmerName || profile.farmerName;
-            profile.email = email || profile.email;
-            profile.farmType = document.getElementById('farm-type')?.value || profile.farmType;
-            profile.farmLocation = document.getElementById('farm-location')?.value || profile.farmLocation;
-            profile.rememberUser = document.getElementById('remember-user')?.checked || profile.rememberUser;
-
-            console.log('🔍 DEBUG - Profile after update:', profile);
-
-            // Update app data
-            window.FarmModules.appData.farmName = profile.farmName;
-
-            // Save to local storage
-            this.saveToLocalStorage();
-
-            // Update the profile display
-            this.updateProfileInfo();
-            
-            this.showNotification('Profile saved successfully!', 'success');
-            console.log('✅ DEBUG - Profile saved');
-            
-        } catch (error) {
-            console.error('Error saving profile:', error);
-            this.showNotification('Error saving profile', 'error');
+        // DEBUG: Get the input element and its value
+        const farmNameInput = document.getElementById('farm-name');
+        console.log('🔍 DEBUG - Farm name input element:', farmNameInput);
+        console.log('🔍 DEBUG - Farm name input value:', farmNameInput?.value);
+        console.log('🔍 DEBUG - What was typed (if anything):', farmNameInput?.value || 'NOTHING TYPED');
+        
+        // Get values from form - FIXED: Get them properly
+        const farmName = farmNameInput?.value;
+        const farmerName = document.getElementById('farmer-name')?.value;
+        const email = document.getElementById('farm-email')?.value;
+        
+        console.log('🔍 DEBUG - Form values captured:', {
+            farmName: farmName,
+            farmerName: farmerName,
+            email: email
+        });
+        
+        // Only update if something was actually entered
+        if (farmName && farmName.trim() !== '') {
+            profile.farmName = farmName.trim();
+            console.log('✅ DEBUG - Farm name updated to:', profile.farmName);
+        } else {
+            console.log('⚠️ DEBUG - No farm name entered, keeping:', profile.farmName);
         }
-    },
+        
+        if (farmerName && farmerName.trim() !== '') {
+            profile.farmerName = farmerName.trim();
+        }
+        
+        if (email && email.trim() !== '') {
+            profile.email = email.trim();
+        }
+        
+        profile.farmType = document.getElementById('farm-type')?.value || profile.farmType;
+        profile.farmLocation = document.getElementById('farm-location')?.value || profile.farmLocation;
+        profile.rememberUser = document.getElementById('remember-user')?.checked || profile.rememberUser;
 
+        console.log('🔍 DEBUG - Final profile after update:', profile);
+
+        // Update app data
+        window.FarmModules.appData.farmName = profile.farmName;
+
+        // Save to local storage
+        this.saveToLocalStorage();
+
+        // Update the profile display
+        this.updateProfileInfo();
+        
+        this.showNotification('Profile saved successfully!', 'success');
+        console.log('✅ DEBUG - Profile saved');
+        
+    } catch (error) {
+        console.error('Error saving profile:', error);
+        this.showNotification('Error saving profile', 'error');
+    }
+},
+    
     async saveSetting(setting, value) {
         try {
             window.FarmModules.appData.profile[setting] = value;
@@ -1290,37 +1305,63 @@ const ProfileModule = {
         this.updateDataManagement();
     },
 
-    updateProfileInfo() {
-        console.log('🔍 DEBUG - Updating profile info');
-        
-        const profile = window.FarmModules.appData.profile;
-        
-        // Update profile card
-        document.getElementById('profile-farm-name').textContent = profile.farmName || 'My Farm';
-        document.getElementById('profile-farmer-name').textContent = profile.farmerName || 'Farm Manager';
-        document.getElementById('profile-email').textContent = profile.email || 'No email';
-        
-        // Update form fields
-        document.getElementById('farm-name').value = profile.farmName || '';
-        document.getElementById('farmer-name').value = profile.farmerName || '';
-        document.getElementById('farm-email').value = profile.email || '';
-        document.getElementById('farm-type').value = profile.farmType || '';
-        document.getElementById('farm-location').value = profile.farmLocation || '';
-        
-        const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
-        document.getElementById('member-since').textContent = `Member since: ${memberSince}`;
-        
-        // Update settings
-        document.getElementById('default-currency').value = profile.currency || 'USD';
-        document.getElementById('low-stock-threshold').value = profile.lowStockThreshold || 10;
-        document.getElementById('auto-sync').checked = profile.autoSync !== false;
-        document.getElementById('remember-user').checked = profile.rememberUser !== false;
-        document.getElementById('local-storage').checked = profile.localStorageEnabled !== false;
-        document.getElementById('theme-selector').value = profile.theme || 'auto';
-        
-        console.log('✅ DEBUG - Profile info updated');
-    },
-
+   updateProfileInfo() {
+    console.log('🔍 DEBUG - Updating profile info');
+    
+    const profile = window.FarmModules.appData.profile;
+    
+    console.log('🔍 DEBUG - Current profile data:', {
+        farmName: profile.farmName,
+        farmerName: profile.farmerName,
+        email: profile.email
+    });
+    
+    // Get the DOM elements
+    const farmNameElement = document.getElementById('profile-farm-name');
+    const farmNameInput = document.getElementById('farm-name');
+    
+    console.log('🔍 DEBUG - DOM elements found:', {
+        profileCardElement: !!farmNameElement,
+        formInputElement: !!farmNameInput
+    });
+    
+    if (farmNameElement) {
+        console.log(`🔄 DEBUG - Changing profile card from "${farmNameElement.textContent}" to "${profile.farmName}"`);
+        farmNameElement.textContent = profile.farmName || 'My Farm';
+    }
+    
+    if (farmNameInput) {
+        console.log(`🔄 DEBUG - Setting form input value to "${profile.farmName}"`);
+        farmNameInput.value = profile.farmName || '';
+    }
+    
+    // Update farmer name
+    document.getElementById('profile-farmer-name').textContent = profile.farmerName || 'Farm Manager';
+    document.getElementById('farmer-name').value = profile.farmerName || '';
+    
+    // Update email
+    const displayEmail = profile.email || 'No email';
+    document.getElementById('profile-email').textContent = displayEmail;
+    document.getElementById('farm-email').value = profile.email || '';
+    
+    // Update other fields
+    document.getElementById('farm-type').value = profile.farmType || '';
+    document.getElementById('farm-location').value = profile.farmLocation || '';
+    
+    const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
+    document.getElementById('member-since').textContent = `Member since: ${memberSince}`;
+    
+    // Update settings
+    document.getElementById('default-currency').value = profile.currency || 'USD';
+    document.getElementById('low-stock-threshold').value = profile.lowStockThreshold || 10;
+    document.getElementById('auto-sync').checked = profile.autoSync !== false;
+    document.getElementById('remember-user').checked = profile.rememberUser !== false;
+    document.getElementById('local-storage').checked = profile.localStorageEnabled !== false;
+    document.getElementById('theme-selector').value = profile.theme || 'auto';
+    
+    console.log('✅ DEBUG - Profile info updated');
+},
+    
     updateStatsOverview() {
         const stats = window.FarmModules.appData.profile.dashboardStats || {};
         
