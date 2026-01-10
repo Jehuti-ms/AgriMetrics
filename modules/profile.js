@@ -847,15 +847,28 @@ const ProfileModule = {
 
     // ==================== FIXED EVENT LISTENERS ====================
     setupEventListeners() {
-        console.log('🔍 DEBUG - Setting up profile event listeners');
-        
+    console.log('🔍 DEBUG - Setting up profile event listeners');
+    
+    // Get the form element
+    const profileForm = document.getElementById('profile-form');
+    console.log('🔍 DEBUG - Profile form found:', !!profileForm);
+    
+    if (profileForm) {
         // Profile form - FIXED: Use ProfileModule directly
-        document.getElementById('profile-form')?.addEventListener('submit', (e) => {
+        profileForm.addEventListener('submit', (e) => {
             e.preventDefault();
             console.log('🔍 DEBUG - Profile form submitted');
+            
+            // DEBUG: Check form values right before saving
+            const farmNameValue = document.getElementById('farm-name')?.value;
+            console.log('🔍 DEBUG - Farm name value at submit time:', farmNameValue);
+            
             ProfileModule.saveProfile();
         });
-
+    } else {
+        console.error('❌ ERROR: Profile form not found!');
+    }
+    
         // Sync now button - FIXED
         document.getElementById('sync-now-btn')?.addEventListener('click', () => {
             console.log('🔍 DEBUG - Sync now clicked');
@@ -1032,7 +1045,7 @@ updateProfileCardOnly() {
     console.log('✅ DEBUG - Profile card updated (form inputs preserved)');
 },
 
-    async saveProfile() {
+   async saveProfile() {
     console.log('🔍 DEBUG - Starting saveProfile()');
     
     try {
@@ -1040,14 +1053,32 @@ updateProfileCardOnly() {
         
         // DEBUG: Get the input element and its value
         const farmNameInput = document.getElementById('farm-name');
-        console.log('🔍 DEBUG - Farm name input element:', farmNameInput);
-        console.log('🔍 DEBUG - Farm name input value:', farmNameInput?.value);
-        console.log('🔍 DEBUG - What was typed (if anything):', farmNameInput?.value || 'NOTHING TYPED');
+        const farmerNameInput = document.getElementById('farmer-name');
+        const emailInput = document.getElementById('farm-email');
         
-        // Get values from form - FIXED: Get them properly
-        const farmName = farmNameInput?.value;
-        const farmerName = document.getElementById('farmer-name')?.value;
-        const email = document.getElementById('farm-email')?.value;
+        console.log('🔍 DEBUG - Input elements:', {
+            farmName: farmNameInput,
+            farmerName: farmerNameInput,
+            email: emailInput
+        });
+        
+        console.log('🔍 DEBUG - Input values:', {
+            farmName: farmNameInput?.value,
+            farmerName: farmerNameInput?.value,
+            email: emailInput?.value
+        });
+        
+        // Check if we can actually get the values
+        if (!farmNameInput) {
+            console.error('❌ ERROR: farm-name input not found!');
+            this.showNotification('Error: Farm name field not found', 'error');
+            return;
+        }
+        
+        // Get values from form
+        const farmName = farmNameInput.value;
+        const farmerName = farmerNameInput?.value;
+        const email = emailInput?.value;
         
         console.log('🔍 DEBUG - Form values captured:', {
             farmName: farmName,
@@ -1055,8 +1086,9 @@ updateProfileCardOnly() {
             email: email
         });
         
-        // Only update if something was actually entered
-        if (farmName && farmName.trim() !== '') {
+        // Update profile with form values
+        // Use the form value if provided, otherwise keep existing
+        if (farmName !== undefined && farmName !== null && farmName.trim() !== '') {
             profile.farmName = farmName.trim();
             console.log('✅ DEBUG - Farm name updated to:', profile.farmName);
         } else {
@@ -1083,8 +1115,8 @@ updateProfileCardOnly() {
         // Save to local storage
         this.saveToLocalStorage();
 
-        // Update the profile display
-        this.updateProfileInfo();
+        // Update the profile display (card only, not form inputs)
+        this.updateProfileCardOnly();
         
         this.showNotification('Profile saved successfully!', 'success');
         console.log('✅ DEBUG - Profile saved');
