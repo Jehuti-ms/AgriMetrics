@@ -539,16 +539,19 @@ const ProfileModule = {
                         </div>
                     </div>
 
-                    <!-- Profile Information Form -->
+                    <!-- Profile Information Card -->
                     <div class="profile-card glass-card">
                         <div class="profile-header">
                             <div class="profile-avatar">
                                 <span class="avatar-icon">🚜</span>
                             </div>
                             <div class="profile-info">
-                                <h2 id="profile-farm-name">${window.FarmModules.appData.profile?.farmName || 'My Farm'}</h2>
-                                <p id="profile-farmer-name">${window.FarmModules.appData.profile?.farmerName || 'Farm Manager'}</p>
-                                <p class="profile-email" id="profile-email">${window.FarmModules.appData.profile?.email || 'No email'}</p>
+                                <!-- ✅ Shows actual farm name from data -->
+                                <h2 id="profile-farm-name">${window.FarmModules.appData?.profile?.farmName || 'My Farm'}</h2>
+                                <!-- ✅ Shows actual farmer name from data -->
+                                <p id="profile-farmer-name">${window.FarmModules.appData?.profile?.farmerName || 'Farm Manager'}</p>
+                                <!-- ✅ Shows actual email or "No email" -->
+                                <p class="profile-email" id="profile-email">${window.FarmModules.appData?.profile?.email || 'No email'}</p>
                                 <div class="profile-stats">
                                     <span class="stat-badge" id="member-since">Member since: Today</span>
                                     <span class="stat-badge" id="data-entries">Data entries: 0</span>
@@ -557,6 +560,7 @@ const ProfileModule = {
                             </div>
                         </div>
                     </div>
+                    
                     <!-- Farm Information Form -->
                     <div class="profile-details glass-card">
                         <h3>Farm Information</h3>
@@ -564,11 +568,17 @@ const ProfileModule = {
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="farm-name" class="form-label">Farm Name *</label>
-                                    <input type="text" id="farm-name" class="form-input" required placeholder="Enter farm name">
+                                    <!-- ✅ Shows current farm name in input field -->
+                                    <input type="text" id="farm-name" class="form-input" required 
+                                           value="${window.FarmModules.appData?.profile?.farmName || ''}" 
+                                           placeholder="Enter farm name">
                                 </div>
                                 <div class="form-group">
                                     <label for="farmer-name" class="form-label">Farmer Name *</label>
-                                    <input type="text" id="farmer-name" class="form-input" required placeholder="Enter your name">
+                                    <!-- ✅ Shows current farmer name in input field -->
+                                    <input type="text" id="farmer-name" class="form-input" required 
+                                           value="${window.FarmModules.appData?.profile?.farmerName || ''}" 
+                                           placeholder="Enter your name">
                                 </div>
                             </div>
                             
