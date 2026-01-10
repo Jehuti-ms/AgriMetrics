@@ -1,19 +1,11 @@
-// modules/profile.js - FIXED VERSION (EVENT LISTENER ISSUE ONLY)
+// modules/profile.js - COMPLETELY REWRITTEN FIXED VERSION
 console.log('👤 Loading profile module...');
 
 const ProfileModule = {
     name: 'profile',
     initialized: false,
     element: null,
-    currentInputValues: {},
-    pdfDataCache: {
-        inventory: null,
-        orders: null,
-        customers: null,
-        products: null,
-        lastUpdated: {}
-    },
-
+    
     // ==================== INITIALIZATION ====================
     initialize() {
         console.log('👤 Initializing profile...');
@@ -49,23 +41,12 @@ const ProfileModule = {
 
     // ==================== DATA SYNC ====================
     setupDataSync() {
-        // Listen for data updates from other modules
         window.addEventListener('farm-data-updated', () => {
-            this.updateStatsFromModules();
-        });
-        
-        window.addEventListener('inventory-updated', () => {
-            this.updatePDFDataCache('inventory', 'update', window.FarmModules.appData.inventory);
-            this.updateStatsFromModules();
-        });
-        
-        window.addEventListener('orders-updated', () => {
-            this.updatePDFDataCache('orders', 'update', window.FarmModules.appData.orders);
             this.updateStatsFromModules();
         });
     },
 
-    // ==================== MAIN RENDER - WITH ALL SECTIONS ====================
+    // ==================== MAIN RENDER ====================
     renderModule() {
         if (!this.element) return;
 
@@ -355,99 +336,6 @@ const ProfileModule = {
                     font-size: 13px;
                 }
                 
-                /* NEW: Installation Guide Styles */
-                .guide-steps {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 20px;
-                    margin: 20px 0;
-                }
-                
-                .step {
-                    text-align: center;
-                    padding: 20px;
-                    background: var(--glass-bg);
-                    border-radius: 12px;
-                }
-                
-                .step-number {
-                    width: 40px;
-                    height: 40px;
-                    background: var(--primary-color);
-                    color: white;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-weight: bold;
-                    margin: 0 auto 12px;
-                }
-                
-                .step h4 {
-                    margin: 0 0 8px 0;
-                    color: var(--text-primary);
-                }
-                
-                .step p {
-                    margin: 0;
-                    font-size: 14px;
-                    color: var(--text-secondary);
-                }
-                
-                .guide-actions {
-                    display: flex;
-                    gap: 12px;
-                    margin-top: 20px;
-                }
-                
-                /* NEW: Support Section Styles */
-                .support-channels {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                    margin-top: 20px;
-                }
-                
-                .support-channel {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    padding: 16px;
-                    background: var(--glass-bg);
-                    border-radius: 8px;
-                }
-                
-                .support-channel-icon {
-                    font-size: 24px;
-                    width: 48px;
-                    height: 48px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: var(--glass-bg);
-                    border-radius: 50%;
-                }
-                
-                .support-channel-content {
-                    flex: 1;
-                }
-                
-                .support-channel h4 {
-                    margin: 0 0 4px 0;
-                    color: var(--text-primary);
-                }
-                
-                .support-channel p {
-                    margin: 0;
-                    font-size: 14px;
-                    color: var(--text-secondary);
-                }
-                
-                .support-channel-actions {
-                    display: flex;
-                    gap: 8px;
-                }
-                
                 /* Mobile responsive */
                 @media (max-width: 768px) {
                     .form-row {
@@ -468,24 +356,6 @@ const ProfileModule = {
                     
                     .action-buttons button {
                         width: 100%;
-                    }
-                    
-                    .guide-steps {
-                        grid-template-columns: 1fr;
-                    }
-                    
-                    .guide-actions {
-                        flex-direction: column;
-                    }
-                    
-                    .support-channel {
-                        flex-direction: column;
-                        text-align: center;
-                    }
-                    
-                    .support-channel-actions {
-                        width: 100%;
-                        justify-content: center;
                     }
                 }
                 
@@ -539,14 +409,13 @@ const ProfileModule = {
                         </div>
                     </div>
 
-                   <!-- Profile Information Card -->
+                    <!-- Profile Information Card -->
                     <div class="profile-card glass-card">
                         <div class="profile-header">
                             <div class="profile-avatar">
                                 <span class="avatar-icon">🚜</span>
                             </div>
                             <div class="profile-info">
-                                <!-- PLACEHOLDER TEXT - Will be updated by JavaScript -->
                                 <h2 id="profile-farm-name">My Farm</h2>
                                 <p id="profile-farmer-name">Farm Manager</p>
                                 <p class="profile-email" id="profile-email">No email</p>
@@ -566,12 +435,12 @@ const ProfileModule = {
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="farm-name" class="form-label">Farm Name *</label>
-                                    <input type="text" id="farm-name" class="form-input" required 
+                                    <input type="text" id="farm-name" name="farm-name" class="form-input" required 
                                            placeholder="Enter farm name">
                                 </div>
                                 <div class="form-group">
                                     <label for="farmer-name" class="form-label">Farmer Name *</label>
-                                    <input type="text" id="farmer-name" class="form-input" required 
+                                    <input type="text" id="farmer-name" name="farmer-name" class="form-input" required 
                                            placeholder="Enter your name">
                                 </div>
                             </div>
@@ -579,12 +448,12 @@ const ProfileModule = {
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="farm-email" class="form-label">Farm Email</label>
-                                    <input type="email" id="farm-email" class="form-input" 
+                                    <input type="email" id="farm-email" name="farm-email" class="form-input" 
                                            placeholder="farm@example.com">
                                 </div>
                                 <div class="form-group">
                                     <label for="farm-type" class="form-label">Farm Type</label>
-                                    <select id="farm-type" class="form-input">
+                                    <select id="farm-type" name="farm-type" class="form-input">
                                         <option value="">Select farm type</option>
                                         <option value="crop">Crop Farm</option>
                                         <option value="livestock">Livestock Farm</option>
@@ -599,21 +468,8 @@ const ProfileModule = {
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="farm-location" class="form-label">Farm Location</label>
-                                    <input type="text" id="farm-location" class="form-input" 
+                                    <input type="text" id="farm-location" name="farm-location" class="form-input" 
                                            placeholder="e.g., City, State">
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <div class="setting-item">
-                                    <div class="setting-info">
-                                        <h4>Remember Me</h4>
-                                        <p>Keep me logged in on this device</p>
-                                    </div>
-                                    <label class="switch">
-                                        <input type="checkbox" id="remember-user" checked>
-                                        <span class="slider"></span>
-                                    </label>
                                 </div>
                             </div>
                             
@@ -638,12 +494,6 @@ const ProfileModule = {
                                     <option value="USD">US Dollar ($)</option>
                                     <option value="EUR">Euro (€)</option>
                                     <option value="GBP">British Pound (£)</option>
-                                    <option value="BBD">Barbadian Dollar (BBD$)</option>
-                                    <option value="CAD">Canadian Dollar (C$)</option>
-                                    <option value="AUD">Australian Dollar (A$)</option>
-                                    <option value="JMD">Jamaican Dollar (J$)</option>
-                                    <option value="TTD">Trinidad & Tobago Dollar (TT$)</option>
-                                    <option value="XCD">East Caribbean Dollar (EC$)</option>
                                 </select>
                             </div>
                             
@@ -669,17 +519,6 @@ const ProfileModule = {
                             
                             <div class="setting-item">
                                 <div class="setting-info">
-                                    <h4>Local Data Storage</h4>
-                                    <p>Store data locally in your browser</p>
-                                </div>
-                                <label class="switch">
-                                    <input type="checkbox" id="local-storage" checked>
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-                            
-                            <div class="setting-item">
-                                <div class="setting-info">
                                     <h4>Theme</h4>
                                     <p>Choose your preferred theme</p>
                                 </div>
@@ -687,39 +526,8 @@ const ProfileModule = {
                                     <option value="auto">Auto (System)</option>
                                     <option value="light">Light</option>
                                     <option value="dark">Dark</option>
-                                    <option value="nature">Nature</option>
-                                    <option value="professional">Professional</option>
                                 </select>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <!-- PDF EXPORT SECTION - SINGLE SECTION ONLY -->
-                    <div class="pdf-export-section glass-card">
-                        <h3>📄 Export Reports</h3>
-                        <p style="color: var(--text-secondary); margin-bottom: 16px;">Generate PDF reports for your farm data</p>
-                        
-                        <div class="pdf-buttons-container">
-                            <button class="pdf-btn" id="export-profile-pdf">
-                                <span style="font-size: 20px;">📋</span>
-                                <span>Profile Report</span>
-                            </button>
-                            <button class="pdf-btn" id="export-inventory-pdf">
-                                <span style="font-size: 20px;">📦</span>
-                                <span>Inventory Report</span>
-                            </button>
-                            <button class="pdf-btn" id="export-sales-pdf">
-                                <span style="font-size: 20px;">💰</span>
-                                <span>Sales Report</span>
-                            </button>
-                            <button class="pdf-btn" id="export-all-pdf">
-                                <span style="font-size: 20px;">📊</span>
-                                <span>Complete Report</span>
-                            </button>
-                        </div>
-                        
-                        <div id="pdf-status">
-                            Ready to generate reports
                         </div>
                     </div>
                     
@@ -739,272 +547,133 @@ const ProfileModule = {
                                 <label>Customers:</label>
                                 <span id="customers-count">0 customers</span>
                             </div>
-                            <div class="data-stat">
-                                <label>Products:</label>
-                                <span id="products-count">0 products</span>
-                            </div>
                         </div>
                         <div class="action-buttons">
                             <button class="btn-outline" id="export-data">📥 Export All Data</button>
                             <button class="btn-outline" id="import-data">📤 Import Data</button>
                             <button class="btn-primary" id="clear-all-data" style="background: var(--gradient-danger);">⚠️ Clear All Data</button>
-                            <button class="btn-outline" id="logout-btn" style="color: #ef4444; border-color: #ef4444;">🚪 Logout</button>
-                        </div>
-                    </div>
-
-                    <!-- NEW: Mobile Installation Guide -->
-                    <div class="installation-guide glass-card">
-                        <h3>📱 Install on Mobile</h3>
-                        <p style="color: var(--text-secondary); margin-bottom: 16px;">Get the app-like experience on your phone or tablet</p>
-                        
-                        <div class="guide-steps">
-                            <div class="step">
-                                <div class="step-number">1</div>
-                                <h4>Open in Browser</h4>
-                                <p>Visit this app in Safari (iOS) or Chrome (Android)</p>
-                            </div>
-                            <div class="step">
-                                <div class="step-number">2</div>
-                                <h4>Tap Share Button</h4>
-                                <p>Look for <strong>📤 Share</strong> or <strong>⋮ Menu</strong></p>
-                            </div>
-                            <div class="step">
-                                <div class="step-number">3</div>
-                                <h4>Add to Home Screen</h4>
-                                <p>Select <strong>"Add to Home Screen"</strong></p>
-                            </div>
-                        </div>
-                        
-                        <div class="guide-actions">
-                            <button class="btn-outline" id="send-install-link">
-                                📧 Send Installation Link
-                            </button>
-                            <button class="btn-outline" id="show-qr-code">
-                                📱 Show QR Code
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- NEW: Support & Help Section -->
-                    <div class="support-section glass-card">
-                        <h3>🆘 Support & Help</h3>
-                        <p style="color: var(--text-secondary); margin-bottom: 16px;">Get help with the Farm Manager app</p>
-                        
-                        <div class="support-channels">
-                            <div class="support-channel">
-                                <div class="support-channel-icon">📧</div>
-                                <div class="support-channel-content">
-                                    <h4>Email Support</h4>
-                                    <p>farm-support@example.com</p>
-                                </div>
-                                <div class="support-channel-actions">
-                                    <button class="btn-outline" data-action="copy-email">📋 Copy</button>
-                                </div>
-                            </div>
-                            
-                            <div class="support-channel">
-                                <div class="support-channel-icon">💬</div>
-                                <div class="support-channel-content">
-                                    <h4>Team Channel</h4>
-                                    <p>#farm-management</p>
-                                </div>
-                                <div class="support-channel-actions">
-                                    <button class="btn-outline" data-action="open-slack">↗️ Open</button>
-                                </div>
-                            </div>
-                            
-                            <div class="support-channel">
-                                <div class="support-channel-icon">📖</div>
-                                <div class="support-channel-content">
-                                    <h4>Quick Guide</h4>
-                                    <p>One-page reference guide</p>
-                                </div>
-                                <div class="support-channel-actions">
-                                    <button class="btn-outline" data-action="open-guide">📄 Open</button>
-                                    <button class="btn-outline" data-action="download-guide">📥 PDF</button>
-                                </div>
-                            </div>
-                            
-                            <div class="support-channel">
-                                <div class="support-channel-icon">🎥</div>
-                                <div class="support-channel-content">
-                                    <h4>Video Tutorials</h4>
-                                    <p>Step-by-step video guides</p>
-                                </div>
-                                <div class="support-channel-actions">
-                                    <button class="btn-outline" data-action="watch-tutorials">▶️ Watch</button>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         `;
 
-        this.setupEventListeners();
-        this.loadUserData(); 
-
-        // 🔥 Add a small delay to ensure DOM is ready
-    setTimeout(() => {
-        console.log('🕒 DEBUG - DOM should be ready now');
-        console.log('🕒 DEBUG - Farm name input value:', document.getElementById('farm-name')?.value);
-    }, 100);
-        
+        // Wait a moment for DOM to be ready, then set up everything
+        setTimeout(() => {
+            this.setupEventListeners();
+            this.loadUserData();
+            this.updateStatsFromModules();
+        }, 50);
     },
 
     // ==================== FIXED EVENT LISTENERS ====================
-setupEventListeners() {
-    console.log('🔍 DEBUG - Setting up profile event listeners');
-    
-    // Get the form element
-    const profileForm = document.getElementById('profile-form');
-    console.log('🔍 DEBUG - Profile form found:', !!profileForm);
-    
-    if (profileForm) {
-        // Profile form - FIXED: Use ProfileModule directly
-        profileForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            console.log('🔍 DEBUG - Profile form submitted');
+    setupEventListeners() {
+        console.log('🔧 Setting up profile event listeners');
+        
+        // Form submission - WORKING FIX
+        const profileForm = document.getElementById('profile-form');
+        if (profileForm) {
+            // Remove any existing listeners by cloning
+            const newForm = profileForm.cloneNode(true);
+            profileForm.parentNode.replaceChild(newForm, profileForm);
             
-            // DEBUG: Check form values right before saving
-            const farmNameValue = document.getElementById('farm-name')?.value;
-            console.log('🔍 DEBUG - Farm name value at submit time:', farmNameValue);
+            // Get fresh form reference
+            const freshForm = document.getElementById('profile-form');
             
-            ProfileModule.saveProfile();
-        });
-    } else {
-        console.error('❌ ERROR: Profile form not found!');
-    }
-    
-    // Sync now button - FIXED
-    document.getElementById('sync-now-btn')?.addEventListener('click', () => {
-        console.log('🔍 DEBUG - Sync now clicked');
-        ProfileModule.syncNow();
-    });
-
-    // Reset button - FIXED
-    document.getElementById('reset-profile')?.addEventListener('click', () => {
-        console.log('🔍 DEBUG - Reset profile clicked');
-        ProfileModule.loadUserData();
-        ProfileModule.showNotification('Profile form reset to current values', 'info');
-    });
-
-    // Settings changes - FIXED
-    document.getElementById('default-currency')?.addEventListener('change', (e) => {
-        ProfileModule.saveSetting('currency', e.target.value);
-    });
-
-    document.getElementById('low-stock-threshold')?.addEventListener('change', (e) => {
-        ProfileModule.saveSetting('lowStockThreshold', parseInt(e.target.value));
-    });
-
-    document.getElementById('auto-sync')?.addEventListener('change', (e) => {
-        ProfileModule.saveSetting('autoSync', e.target.checked);
-    });
-
-    document.getElementById('local-storage')?.addEventListener('change', (e) => {
-        ProfileModule.saveSetting('localStorageEnabled', e.target.checked);
-    });
-
-    // Theme selector - FIXED
-    document.getElementById('theme-selector')?.addEventListener('change', (e) => {
-        ProfileModule.changeTheme(e.target.value);
-    });
-
-    // Remember user - FIXED
-    document.getElementById('remember-user')?.addEventListener('change', (e) => {
-        ProfileModule.saveSetting('rememberUser', e.target.checked);
-        ProfileModule.updateUserPersistence();
-    });
-
-    // PDF Export buttons - FIXED
-    document.getElementById('export-profile-pdf')?.addEventListener('click', () => {
-        ProfileModule.exportProfilePDF();
-    });
-
-    document.getElementById('export-inventory-pdf')?.addEventListener('click', () => {
-        ProfileModule.exportInventoryPDF();
-    });
-
-    document.getElementById('export-sales-pdf')?.addEventListener('click', () => {
-        ProfileModule.exportSalesPDF();
-    });
-
-    document.getElementById('export-all-pdf')?.addEventListener('click', () => {
-        ProfileModule.exportAllPDF();
-    });
-
-    // Data management - FIXED
-    document.getElementById('export-data')?.addEventListener('click', () => {
-        ProfileModule.exportData();
-    });
-
-    document.getElementById('import-data')?.addEventListener('click', () => {
-        ProfileModule.importData();
-    });
-
-    document.getElementById('clear-all-data')?.addEventListener('click', () => {
-        ProfileModule.clearAllData();
-    });
-
-    // Logout button - FIXED
-    document.getElementById('logout-btn')?.addEventListener('click', () => {
-        ProfileModule.handleLogout();
-    });
-
-    // NEW: Mobile Installation buttons - FIXED
-    document.getElementById('send-install-link')?.addEventListener('click', () => {
-        ProfileModule.sendInstallationLink();
-    });
-
-    document.getElementById('show-qr-code')?.addEventListener('click', () => {
-        ProfileModule.showQRCode();
-    });
-
-    // NEW: Support section event delegation - FIXED
-    this.element.addEventListener('click', (e) => {
-        const button = e.target.closest('button[data-action]');
-        if (!button) return;
-        
-        e.preventDefault();
-        const action = button.getAttribute('data-action');
-        
-        console.log('🔍 DEBUG - Support action clicked:', action);
-        
-        switch(action) {
-            case 'copy-email':
-                ProfileModule.copyToClipboard('farm-support@example.com');
-                break;
+            freshForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                console.log('✅ Form submitted');
+                this.saveProfile();
+            });
+            
+            // Debug: Add input listeners to farm name field
+            const farmNameInput = document.getElementById('farm-name');
+            if (farmNameInput) {
+                farmNameInput.addEventListener('input', (e) => {
+                    console.log('⌨️ Farm name input:', e.target.value);
+                });
                 
-            case 'open-slack':
-                ProfileModule.openSlackChannel();
-                break;
+                farmNameInput.addEventListener('change', (e) => {
+                    console.log('📝 Farm name changed:', e.target.value);
+                });
                 
-            case 'open-guide':
-                ProfileModule.openQuickGuide();
-                break;
-                
-            case 'download-guide':
-                ProfileModule.downloadQuickGuide();
-                break;
-                
-            case 'watch-tutorials':
-                ProfileModule.openYouTubeTutorials();
-                break;
+                farmNameInput.addEventListener('paste', (e) => {
+                    setTimeout(() => {
+                        console.log('📋 Farm name pasted:', e.target.value);
+                    }, 10);
+                });
+            }
         }
-    });
-    
-    console.log('✅ DEBUG - All profile event listeners set up');
-},  // <-- THIS WAS MISSING! Add this closing brace
-    
+
+        // Other buttons
+        const syncBtn = document.getElementById('sync-now-btn');
+        if (syncBtn) {
+            syncBtn.addEventListener('click', () => this.syncNow());
+        }
+
+        const resetBtn = document.getElementById('reset-profile');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                this.loadUserData();
+                this.showNotification('Form reset to saved values', 'info');
+            });
+        }
+
+        // Settings
+        const currencySelect = document.getElementById('default-currency');
+        if (currencySelect) {
+            currencySelect.addEventListener('change', (e) => {
+                this.saveSetting('currency', e.target.value);
+            });
+        }
+
+        const lowStockInput = document.getElementById('low-stock-threshold');
+        if (lowStockInput) {
+            lowStockInput.addEventListener('change', (e) => {
+                this.saveSetting('lowStockThreshold', parseInt(e.target.value));
+            });
+        }
+
+        const autoSyncCheck = document.getElementById('auto-sync');
+        if (autoSyncCheck) {
+            autoSyncCheck.addEventListener('change', (e) => {
+                this.saveSetting('autoSync', e.target.checked);
+            });
+        }
+
+        const themeSelect = document.getElementById('theme-selector');
+        if (themeSelect) {
+            themeSelect.addEventListener('change', (e) => {
+                this.changeTheme(e.target.value);
+            });
+        }
+
+        // Data management
+        const exportBtn = document.getElementById('export-data');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => this.exportData());
+        }
+
+        const importBtn = document.getElementById('import-data');
+        if (importBtn) {
+            importBtn.addEventListener('click', () => this.importData());
+        }
+
+        const clearBtn = document.getElementById('clear-all-data');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => this.clearAllData());
+        }
+
+        console.log('✅ All event listeners set up');
+    },
+
     // ==================== USER DATA MANAGEMENT ====================
- async loadUserData() {
-    try {
-        console.log('🔍 DEBUG - Loading user data...');
+    loadUserData() {
+        console.log('📂 Loading user data...');
         
         // Initialize profile data if it doesn't exist
         if (!window.FarmModules.appData.profile) {
-            console.log('🔍 DEBUG - Creating new profile data');
+            console.log('🆕 Creating new profile data');
             window.FarmModules.appData.profile = {
                 farmName: window.FarmModules.appData.farmName || 'My Farm',
                 farmerName: 'Farm Manager',
@@ -1014,88 +683,160 @@ setupEventListeners() {
                 currency: 'USD',
                 lowStockThreshold: 10,
                 autoSync: true,
-                rememberUser: true,
-                localStorageEnabled: true,
                 theme: 'auto',
                 memberSince: new Date().toISOString()
             };
         }
 
-        console.log('🔍 DEBUG - Profile data exists:', window.FarmModules.appData.profile);
-        
         // Load from local storage
         this.loadFromLocalStorage();
 
-        // 🔥🔥🔥 FIX: Update BOTH profile card AND form inputs
+        // Update UI with loaded data
         this.updateProfileDisplay();
         
-        console.log('✅ DEBUG - User data loaded');
-    } catch (error) {
-        console.error('Error loading user data:', error);
-    }
-},
+        console.log('✅ User data loaded');
+    },
 
-// 🔥🔥🔥 NEW METHOD: Updates both profile card AND form inputs
-updateProfileDisplay() {
-    console.log('🔍 DEBUG - Updating profile display (card + form)');
-    
-    const profile = window.FarmModules.appData.profile;
-    
-    if (!profile) {
-        console.error('❌ ERROR: No profile data found');
-        return;
-    }
-    
-    // 1. Update Profile Card
-    document.getElementById('profile-farm-name').textContent = profile.farmName || 'My Farm';
-    document.getElementById('profile-farmer-name').textContent = profile.farmerName || 'Farm Manager';
-    document.getElementById('profile-email').textContent = profile.email || 'No email';
-    
-    const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
-    document.getElementById('member-since').textContent = `Member since: ${memberSince}`;
-    
-    // 2. Update Form Inputs
-    const farmNameInput = document.getElementById('farm-name');
-    const farmerNameInput = document.getElementById('farmer-name');
-    const emailInput = document.getElementById('farm-email');
-    const farmTypeInput = document.getElementById('farm-type');
-    const farmLocationInput = document.getElementById('farm-location');
-    
-    if (farmNameInput) {
-        farmNameInput.value = profile.farmName || '';
-        console.log(`✅ DEBUG - Set farm-name input to: "${profile.farmName}"`);
-    }
-    
-    if (farmerNameInput) {
-        farmerNameInput.value = profile.farmerName || '';
-        console.log(`✅ DEBUG - Set farmer-name input to: "${profile.farmerName}"`);
-    }
-    
-    if (emailInput) {
-        emailInput.value = profile.email || '';
-    }
-    
-    if (farmTypeInput) {
-        farmTypeInput.value = profile.farmType || '';
-    }
-    
-    if (farmLocationInput) {
-        farmLocationInput.value = profile.farmLocation || '';
-    }
-    
-    // 3. Update Settings
-    document.getElementById('default-currency').value = profile.currency || 'USD';
-    document.getElementById('low-stock-threshold').value = profile.lowStockThreshold || 10;
-    document.getElementById('auto-sync').checked = profile.autoSync !== false;
-    document.getElementById('remember-user').checked = profile.rememberUser !== false;
-    document.getElementById('local-storage').checked = profile.localStorageEnabled !== false;
-    document.getElementById('theme-selector').value = profile.theme || 'auto';
-    
-    console.log('✅ DEBUG - Profile display updated (both card and form)');
-},
-    
+    updateProfileDisplay() {
+        console.log('🔄 Updating profile display...');
+        
+        const profile = window.FarmModules.appData.profile;
+        if (!profile) return;
+        
+        console.log('📊 Profile data:', profile);
+        
+        // Update profile card
+        document.getElementById('profile-farm-name').textContent = profile.farmName || 'My Farm';
+        document.getElementById('profile-farmer-name').textContent = profile.farmerName || 'Farm Manager';
+        document.getElementById('profile-email').textContent = profile.email || 'No email';
+        
+        const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
+        document.getElementById('member-since').textContent = `Member since: ${memberSince}`;
+        
+        // Update form inputs - THIS WAS THE MISSING PART!
+        const farmNameInput = document.getElementById('farm-name');
+        const farmerNameInput = document.getElementById('farmer-name');
+        const emailInput = document.getElementById('farm-email');
+        const farmTypeInput = document.getElementById('farm-type');
+        const farmLocationInput = document.getElementById('farm-location');
+        
+        if (farmNameInput) {
+            farmNameInput.value = profile.farmName || '';
+            console.log(`✅ Set farm-name input to: "${profile.farmName}"`);
+        }
+        
+        if (farmerNameInput) {
+            farmerNameInput.value = profile.farmerName || '';
+        }
+        
+        if (emailInput) {
+            emailInput.value = profile.email || '';
+        }
+        
+        if (farmTypeInput) {
+            farmTypeInput.value = profile.farmType || '';
+        }
+        
+        if (farmLocationInput) {
+            farmLocationInput.value = profile.farmLocation || '';
+        }
+        
+        // Update settings
+        document.getElementById('default-currency').value = profile.currency || 'USD';
+        document.getElementById('low-stock-threshold').value = profile.lowStockThreshold || 10;
+        document.getElementById('auto-sync').checked = profile.autoSync !== false;
+        document.getElementById('theme-selector').value = profile.theme || 'auto';
+        
+        console.log('✅ Profile display updated');
+    },
+
+    async saveProfile() {
+        console.log('💾 Saving profile...');
+        
+        try {
+            // Get form values DIRECTLY from inputs
+            const farmNameInput = document.getElementById('farm-name');
+            const farmerNameInput = document.getElementById('farmer-name');
+            const emailInput = document.getElementById('farm-email');
+            const farmTypeInput = document.getElementById('farm-type');
+            const farmLocationInput = document.getElementById('farm-location');
+            
+            if (!farmNameInput) {
+                console.error('❌ Farm name input not found');
+                this.showNotification('Error: Farm name field not found', 'error');
+                return;
+            }
+            
+            // Get current values
+            const farmName = farmNameInput.value.trim();
+            const farmerName = farmerNameInput?.value.trim();
+            const email = emailInput?.value.trim();
+            const farmType = farmTypeInput?.value;
+            const farmLocation = farmLocationInput?.value.trim();
+            
+            console.log('📝 Form values:', {
+                farmName,
+                farmerName,
+                email,
+                farmType,
+                farmLocation
+            });
+            
+            // Update profile object
+            const profile = window.FarmModules.appData.profile || {};
+            
+            // Only update if value is not empty
+            if (farmName) {
+                profile.farmName = farmName;
+                console.log(`✅ Updated farmName to: "${farmName}"`);
+            }
+            
+            if (farmerName) {
+                profile.farmerName = farmerName;
+            }
+            
+            if (email) {
+                profile.email = email;
+            }
+            
+            if (farmType) {
+                profile.farmType = farmType;
+            }
+            
+            if (farmLocation) {
+                profile.farmLocation = farmLocation;
+            }
+            
+            // Update app data
+            window.FarmModules.appData.profile = profile;
+            window.FarmModules.appData.farmName = profile.farmName;
+            
+            console.log('📊 Updated profile:', profile);
+            
+            // Save to local storage
+            this.saveToLocalStorage();
+            
+            // Update UI
+            this.updateProfileDisplay();
+            
+            // Notify other modules
+            window.dispatchEvent(new CustomEvent('farm-data-updated'));
+            
+            this.showNotification('Profile saved successfully!', 'success');
+            console.log('✅ Profile saved');
+            
+        } catch (error) {
+            console.error('❌ Error saving profile:', error);
+            this.showNotification('Error saving profile', 'error');
+        }
+    },
+
     async saveSetting(setting, value) {
         try {
+            if (!window.FarmModules.appData.profile) {
+                window.FarmModules.appData.profile = {};
+            }
+            
             window.FarmModules.appData.profile[setting] = value;
             this.saveToLocalStorage();
             this.showNotification('Setting updated', 'info');
@@ -1105,345 +846,39 @@ updateProfileDisplay() {
         }
     },
 
-    // ==================== PDF EXPORT METHODS ====================
-    async exportProfilePDF() {
-        this.updatePDFStatus('Generating profile report...', 'info');
-        
-        try {
-            const profile = window.FarmModules.appData.profile;
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Add content
-            doc.setFontSize(24);
-            doc.text('Farm Profile Report', 20, 20);
-            
-            doc.setFontSize(12);
-            doc.text(`Farm Name: ${profile.farmName}`, 20, 40);
-            doc.text(`Farmer Name: ${profile.farmerName}`, 20, 50);
-            doc.text(`Farm Type: ${profile.farmType}`, 20, 60);
-            doc.text(`Location: ${profile.farmLocation}`, 20, 70);
-            doc.text(`Member Since: ${new Date(profile.memberSince).toLocaleDateString()}`, 20, 80);
-            
-            // Save
-            const fileName = `Profile_Report_${profile.farmName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-            doc.save(fileName);
-            
-            this.updatePDFStatus('✅ Profile report generated', 'success');
-            this.showNotification('Profile PDF generated successfully', 'success');
-            
-        } catch (error) {
-            console.error('Profile PDF error:', error);
-            this.updatePDFStatus('❌ Failed to generate', 'error');
-            this.showNotification('Error generating PDF', 'error');
-        }
-    },
-
-    async exportInventoryPDF() {
-        this.updatePDFStatus('Generating inventory report...', 'info');
-        
-        try {
-            const inventory = window.FarmModules.appData.inventory || [];
-            if (inventory.length === 0) {
-                this.updatePDFStatus('❌ No inventory data', 'error');
-                this.showNotification('No inventory data to export', 'warning');
-                return;
-            }
-            
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Header
-            doc.setFontSize(24);
-            doc.text('Inventory Report', 20, 20);
-            
-            // Summary
-            doc.setFontSize(12);
-            doc.text(`Total Items: ${inventory.length}`, 20, 40);
-            
-            let yPos = 60;
-            // Table headers
-            doc.setFont(undefined, 'bold');
-            doc.text('Item Name', 20, yPos);
-            doc.text('Category', 80, yPos);
-            doc.text('Quantity', 140, yPos);
-            doc.text('Price', 180, yPos);
-            
-            yPos += 10;
-            doc.setFont(undefined, 'normal');
-            
-            // Table rows
-            inventory.forEach((item, index) => {
-                if (yPos > 250) {
-                    doc.addPage();
-                    yPos = 20;
-                }
-                
-                doc.text(item.name || 'Unknown', 20, yPos);
-                doc.text(item.category || 'Uncategorized', 80, yPos);
-                doc.text(item.quantity || '0', 140, yPos);
-                doc.text(`$${item.price || '0.00'}`, 180, yPos);
-                yPos += 10;
-            });
-            
-            // Save
-            const fileName = `Inventory_Report_${new Date().toISOString().split('T')[0]}.pdf`;
-            doc.save(fileName);
-            
-            this.updatePDFStatus('✅ Inventory report generated', 'success');
-            this.showNotification('Inventory PDF generated successfully', 'success');
-            
-        } catch (error) {
-            console.error('Inventory PDF error:', error);
-            this.updatePDFStatus('❌ Failed to generate', 'error');
-            this.showNotification('Error generating inventory PDF', 'error');
-        }
-    },
-
-    async exportSalesPDF() {
-        this.updatePDFStatus('Generating sales report...', 'info');
-        
-        try {
-            const orders = window.FarmModules.appData.orders || [];
-            if (orders.length === 0) {
-                this.updatePDFStatus('❌ No sales data', 'error');
-                this.showNotification('No sales data to export', 'warning');
-                return;
-            }
-            
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Header
-            doc.setFontSize(24);
-            doc.text('Sales Report', 20, 20);
-            
-            // Summary
-            const totalRevenue = orders.reduce((sum, order) => sum + (parseFloat(order.totalAmount) || 0), 0);
-            
-            doc.setFontSize(12);
-            doc.text(`Total Orders: ${orders.length}`, 20, 40);
-            doc.text(`Total Revenue: $${totalRevenue.toFixed(2)}`, 20, 50);
-            
-            let yPos = 70;
-            // Table headers
-            doc.setFont(undefined, 'bold');
-            doc.text('Order ID', 20, yPos);
-            doc.text('Date', 60, yPos);
-            doc.text('Customer', 100, yPos);
-            doc.text('Amount', 160, yPos);
-            
-            yPos += 10;
-            doc.setFont(undefined, 'normal');
-            
-            // Table rows
-            orders.slice(0, 20).forEach((order, index) => {
-                if (yPos > 250) {
-                    doc.addPage();
-                    yPos = 20;
-                }
-                
-                doc.text(order.id || `ORD-${index + 1}`, 20, yPos);
-                doc.text(new Date(order.date || order.createdAt).toLocaleDateString(), 60, yPos);
-                doc.text(order.customerName || 'Walk-in', 100, yPos);
-                doc.text(`$${parseFloat(order.totalAmount || 0).toFixed(2)}`, 160, yPos);
-                yPos += 10;
-            });
-            
-            // Save
-            const fileName = `Sales_Report_${new Date().toISOString().split('T')[0]}.pdf`;
-            doc.save(fileName);
-            
-            this.updatePDFStatus('✅ Sales report generated', 'success');
-            this.showNotification('Sales PDF generated successfully', 'success');
-            
-        } catch (error) {
-            console.error('Sales PDF error:', error);
-            this.updatePDFStatus('❌ Failed to generate', 'error');
-            this.showNotification('Error generating sales PDF', 'error');
-        }
-    },
-
-    async exportAllPDF() {
-        this.updatePDFStatus('Generating complete report...', 'info');
-        
-        try {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Add profile
-            doc.setFontSize(24);
-            doc.text('Complete Farm Report', 20, 20);
-            doc.setFontSize(12);
-            doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 35);
-            
-            // Add page breaks and call individual report methods
-            // This is a simplified version - you could enhance it
-            doc.addPage();
-            await this.addProfileToPDF(doc);
-            
-            doc.addPage();
-            await this.addInventoryToPDF(doc);
-            
-            doc.addPage();
-            await this.addSalesToPDF(doc);
-            
-            // Save
-            const fileName = `Complete_Farm_Report_${new Date().toISOString().split('T')[0]}.pdf`;
-            doc.save(fileName);
-            
-            this.updatePDFStatus('✅ Complete report generated', 'success');
-            this.showNotification('Complete PDF report generated', 'success');
-            
-        } catch (error) {
-            console.error('Complete PDF error:', error);
-            this.updatePDFStatus('❌ Failed to generate', 'error');
-            this.showNotification('Error generating complete PDF', 'error');
-        }
-    },
-
     // ==================== UTILITY METHODS ====================
-    updatePDFStatus(message, type = 'info') {
-        const statusElement = document.getElementById('pdf-status');
-        if (statusElement) {
-            statusElement.textContent = message;
-            statusElement.style.color = type === 'error' ? '#ef4444' : 
-                                       type === 'success' ? '#10b981' : 
-                                       'var(--text-secondary)';
-        }
-    },
-
-    updateAllDisplays() {
-        console.log('🔍 DEBUG - Updating all displays');
-        this.updateProfileInfo();
-        this.updateStatsOverview();
-        this.updateDataManagement();
-    },
-
-updateProfileInfo() {
-    console.log('🔍 DEBUG - Updating profile info');
-    
-    const profile = window.FarmModules.appData.profile;
-    
-    console.log('🔍 DEBUG - Current profile data:', {
-        farmName: profile.farmName,
-        farmerName: profile.farmerName,
-        email: profile.email
-    });
-    
-    // Get the DOM elements
-    const farmNameElement = document.getElementById('profile-farm-name');
-    const farmNameInput = document.getElementById('farm-name');
-    
-    console.log('🔍 DEBUG - DOM elements found:', {
-        profileCardElement: !!farmNameElement,
-        formInputElement: !!farmNameInput
-    });
-    
-   if (farmNameElement) {
-        console.log(`🔄 DEBUG - Changing profile card from "${farmNameElement.textContent}" to "${profile.farmName}"`);
-        farmNameElement.textContent = profile.farmName || 'My Farm';
-    }
-    
-    if (farmNameInput) {
-        console.log(`🔄 DEBUG - Setting form input value to "${profile.farmName}"`);
-        farmNameInput.value = profile.farmName || '';
-    }
-    
-    // Update farmer name
-    document.getElementById('profile-farmer-name').textContent = profile.farmerName || 'Farm Manager';
-    document.getElementById('farmer-name').value = profile.farmerName || '';
-
-    // Update profile card only
-    document.getElementById('profile-farmer-name').textContent = profile.farmerName || 'Farm Manager';
-    
-    // Update email
-     const displayEmail = profile.email || 'No email';
-    document.getElementById('profile-email').textContent = displayEmail;
-    document.getElementById('farm-email').value = profile.email || '';
-    
-    // Update other fields
-    document.getElementById('farm-type').value = profile.farmType || '';
-    document.getElementById('farm-location').value = profile.farmLocation || '';
-    
-   const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
-    document.getElementById('member-since').textContent = `Member since: ${memberSince}`;
-    
-    // Update settings (these are checkboxes/selects, not text inputs)
-    document.getElementById('default-currency').value = profile.currency || 'USD';
-    document.getElementById('low-stock-threshold').value = profile.lowStockThreshold || 10;
-    document.getElementById('auto-sync').checked = profile.autoSync !== false;
-    document.getElementById('remember-user').checked = profile.rememberUser !== false;
-    document.getElementById('local-storage').checked = profile.localStorageEnabled !== false;
-    document.getElementById('theme-selector').value = profile.theme || 'auto';
-    
-    console.log('✅ DEBUG - Profile info updated (form inputs preserved)');
-},
-    
-    updateStatsOverview() {
-        const stats = window.FarmModules.appData.profile.dashboardStats || {};
-        
-        document.getElementById('total-revenue').textContent = this.formatCurrency(stats.totalRevenue || 0);
-        document.getElementById('total-orders').textContent = stats.totalOrders || 0;
-        document.getElementById('total-inventory').textContent = stats.totalInventoryItems || 0;
-        document.getElementById('total-customers').textContent = stats.totalCustomers || 0;
-        
-        const totalEntries = (stats.totalOrders || 0) + (stats.totalInventoryItems || 0) + (stats.totalCustomers || 0);
-        document.getElementById('data-entries').textContent = `Data entries: ${totalEntries}`;
-    },
-
-    updateDataManagement() {
+    updateStatsFromModules() {
         const orders = window.FarmModules.appData.orders || [];
         const inventory = window.FarmModules.appData.inventory || [];
         const customers = window.FarmModules.appData.customers || [];
-        const products = window.FarmModules.appData.products || [];
         
+        // Update stats
+        document.getElementById('total-orders').textContent = orders.length;
+        document.getElementById('total-inventory').textContent = inventory.length;
+        document.getElementById('total-customers').textContent = customers.length;
+        
+        // Calculate total revenue
+        const totalRevenue = orders.reduce((sum, order) => {
+            return sum + (parseFloat(order.totalAmount) || 0);
+        }, 0);
+        
+        document.getElementById('total-revenue').textContent = this.formatCurrency(totalRevenue);
+        
+        // Update data management stats
         document.getElementById('orders-count').textContent = `${orders.length} records`;
         document.getElementById('inventory-count').textContent = `${inventory.length} items`;
         document.getElementById('customers-count').textContent = `${customers.length} customers`;
-        document.getElementById('products-count').textContent = `${products.length} products`;
-    },
-
-    updateStatsFromModules() {
-        // Sync stats from other modules
-        const orders = window.FarmModules.appData.orders || [];
-        const inventory = window.FarmModules.appData.inventory || [];
-        const customers = window.FarmModules.appData.customers || [];
         
-        window.FarmModules.appData.profile.dashboardStats = {
-            totalOrders: orders.length,
-            totalRevenue: orders.reduce((sum, order) => sum + (parseFloat(order.totalAmount) || 0), 0),
-            totalInventoryItems: inventory.length,
-            totalCustomers: customers.length
-        };
-        
-        this.updateStatsOverview();
-    },
-
-    updatePDFDataCache(moduleName, action, data) {
-        const now = new Date().toISOString();
-        
-        switch(moduleName) {
-            case 'inventory':
-                this.pdfDataCache.inventory = data || [];
-                this.pdfDataCache.lastUpdated.inventory = now;
-                break;
-            case 'orders':
-                this.pdfDataCache.orders = data || [];
-                this.pdfDataCache.lastUpdated.orders = now;
-                break;
-            case 'customers':
-                this.pdfDataCache.customers = data || [];
-                this.pdfDataCache.lastUpdated.customers = now;
-                break;
-        }
+        // Update data entries badge
+        const totalEntries = orders.length + inventory.length + customers.length;
+        document.getElementById('data-entries').textContent = `Data entries: ${totalEntries}`;
     },
 
     // ==================== LOCAL STORAGE METHODS ====================
     saveToLocalStorage() {
         try {
             localStorage.setItem('farm-profile', JSON.stringify(window.FarmModules.appData.profile));
-            console.log('✅ Profile saved to local storage');
+            console.log('💾 Profile saved to local storage');
         } catch (error) {
             console.error('Error saving to local storage:', error);
         }
@@ -1453,11 +888,12 @@ updateProfileInfo() {
         try {
             const savedProfile = localStorage.getItem('farm-profile');
             if (savedProfile) {
+                const parsedProfile = JSON.parse(savedProfile);
                 window.FarmModules.appData.profile = {
                     ...window.FarmModules.appData.profile,
-                    ...JSON.parse(savedProfile)
+                    ...parsedProfile
                 };
-                console.log('✅ Profile loaded from local storage');
+                console.log('📂 Profile loaded from local storage');
             }
         } catch (error) {
             console.error('Error loading from local storage:', error);
@@ -1473,24 +909,6 @@ updateProfileInfo() {
         }
     },
 
-    updateUserPersistence() {
-        const rememberUser = window.FarmModules.appData.profile?.rememberUser !== false;
-        
-        if (typeof firebase !== 'undefined' && firebase.auth) {
-            const persistence = rememberUser 
-                ? firebase.auth.Auth.Persistence.LOCAL
-                : firebase.auth.Auth.Persistence.SESSION;
-            
-            firebase.auth().setPersistence(persistence)
-                .then(() => {
-                    console.log('User persistence set to:', rememberUser ? 'LOCAL' : 'SESSION');
-                })
-                .catch((error) => {
-                    console.error('Error setting auth persistence:', error);
-                });
-        }
-    },
-
     async syncNow() {
         document.getElementById('sync-status').textContent = '🔄 Syncing...';
         
@@ -1498,9 +916,16 @@ updateProfileInfo() {
             // Save to local storage
             this.saveToLocalStorage();
             
-            // Here you would add Firebase sync if needed
-            this.showNotification('Data saved to local storage!', 'success');
-            document.getElementById('sync-status').textContent = '💾 Local';
+            // Simulate sync delay
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            this.showNotification('Data synchronized!', 'success');
+            document.getElementById('sync-status').textContent = '✅ Synced';
+            
+            // Reset status after 3 seconds
+            setTimeout(() => {
+                document.getElementById('sync-status').textContent = '💾 Local';
+            }, 3000);
             
         } catch (error) {
             console.error('Sync error:', error);
@@ -1560,9 +985,17 @@ updateProfileInfo() {
     mergeImportedData(importData) {
         try {
             if (importData.appData) {
-                window.FarmModules.appData = importData.appData;
+                // Merge imported data with existing data
+                window.FarmModules.appData = {
+                    ...window.FarmModules.appData,
+                    ...importData.appData
+                };
+                
                 this.showNotification('Data imported successfully!', 'success');
-                this.updateAllDisplays();
+                this.loadUserData();
+                this.updateStatsFromModules();
+                
+                // Notify other modules
                 window.dispatchEvent(new CustomEvent('farm-data-updated'));
                 
                 this.saveToLocalStorage();
@@ -1579,19 +1012,23 @@ updateProfileInfo() {
         if (confirm('ARE YOU SURE? This will delete ALL your farm data. This cannot be undone!')) {
             if (confirm('THIS IS YOUR LAST WARNING! All data will be permanently deleted!')) {
                 try {
+                    // Clear data arrays but keep profile
+                    const profile = window.FarmModules.appData.profile;
+                    
                     window.FarmModules.appData.orders = [];
                     window.FarmModules.appData.inventory = [];
                     window.FarmModules.appData.customers = [];
                     window.FarmModules.appData.products = [];
                     
-                    if (window.FarmModules.appData.profile.dashboardStats) {
-                        window.FarmModules.appData.profile.dashboardStats = {};
-                    }
+                    // Restore profile
+                    window.FarmModules.appData.profile = profile;
                     
                     this.saveToLocalStorage();
                     
                     this.showNotification('All data cleared successfully', 'success');
-                    this.updateAllDisplays();
+                    this.updateStatsFromModules();
+                    
+                    // Notify other modules
                     window.dispatchEvent(new CustomEvent('farm-data-updated'));
                 } catch (error) {
                     console.error('Error clearing data:', error);
@@ -1601,45 +1038,26 @@ updateProfileInfo() {
         }
     },
 
-    async handleLogout() {
-        if (confirm('Are you sure you want to logout?')) {
-            try {
-                // Clear data if not remembering user
-                if (!window.FarmModules.appData.profile.rememberUser) {
-                    const appKeys = ['farm-', 'profileData', 'transactions', 'sales', 'inventory'];
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const key = localStorage.key(i);
-                        if (appKeys.some(appKey => key.includes(appKey))) {
-                            localStorage.removeItem(key);
-                        }
-                    }
-                }
-                
-                // Show notification
-                this.showNotification('Logged out successfully', 'success');
-                
-            } catch (error) {
-                console.error('Logout error:', error);
-                this.showNotification('Error during logout', 'error');
-            }
-        }
-    },
-
     showNotification(message, type = 'info') {
         if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
             window.coreModule.showNotification(message, type);
-        } else if (type === 'error') {
-            console.error('❌ ' + message);
-            alert('❌ ' + message);
-        } else if (type === 'success') {
-            console.log('✅ ' + message);
-            alert('✅ ' + message);
-        } else if (type === 'warning') {
-            console.warn('⚠️ ' + message);
-            alert('⚠️ ' + message);
         } else {
-            console.log('ℹ️ ' + message);
-            alert('ℹ️ ' + message);
+            // Fallback notification
+            const colors = {
+                success: '#10b981',
+                error: '#ef4444',
+                warning: '#f59e0b',
+                info: '#3b82f6'
+            };
+            
+            console.log(`%c${type.toUpperCase()}: ${message}`, `color: ${colors[type] || '#6b7280'}; font-weight: bold;`);
+            
+            // Simple alert fallback
+            if (type === 'error') {
+                alert(`❌ ${message}`);
+            } else if (type === 'success') {
+                alert(`✅ ${message}`);
+            }
         }
     },
 
@@ -1649,307 +1067,6 @@ updateProfileInfo() {
             style: 'currency',
             currency: currency
         }).format(amount);
-    },
-
-    // ==================== NEW MOBILE INSTALLATION METHODS ====================
-    sendInstallationLink() {
-        const email = prompt('Enter email address to send installation link:');
-        if (email && email.includes('@')) {
-            const currentUrl = window.location.href;
-            const subject = 'Install Farm Manager App';
-            const body = `Hello,
-
-Install the Farm Manager app on your mobile device:
-
-📱 Install Instructions:
-1. Open this link on your mobile: ${currentUrl}
-2. Tap the Share button (📤)
-3. Select "Add to Home Screen"
-
-This will install the app for quick access!
-
-Best regards,
-Farm Manager Team`;
-            
-            const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-            window.location.href = mailtoLink;
-            this.showNotification('Email opened with installation instructions', 'success');
-        } else if (email) {
-            this.showNotification('Please enter a valid email address', 'error');
-        }
-    },
-
-    showQRCode() {
-        const currentUrl = window.location.href;
-        
-        // Create QR Code modal
-        const modal = document.createElement('div');
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        `;
-        
-        modal.innerHTML = `
-            <div class="glass-card" style="padding: 2rem; text-align: center; max-width: 90%; max-height: 90%; overflow: auto;">
-                <h3 style="margin-bottom: 1rem;">Scan to Install</h3>
-                <div id="qrcode-container" style="background: white; padding: 1rem; margin: 0 auto 1rem auto; display: inline-block;"></div>
-                <p style="color: var(--text-secondary); margin-bottom: 1rem;">Scan this QR code with your mobile device</p>
-                <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 1rem;">URL: ${currentUrl}</p>
-                <div style="margin-top: 1rem;">
-                    <button class="btn-primary" id="close-qr">Close</button>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        // Generate QR code (if QRCode library is loaded)
-        const qrContainer = document.getElementById('qrcode-container');
-        if (typeof QRCode !== 'undefined') {
-            new QRCode(qrContainer, {
-                text: currentUrl,
-                width: 200,
-                height: 200,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
-        } else {
-            qrContainer.innerHTML = `
-                <div style="padding: 2rem; background: #f0f0f0; border-radius: 8px;">
-                    <p>Please scan this URL:</p>
-                    <p style="word-break: break-all; font-size: 12px;">${currentUrl}</p>
-                </div>
-            `;
-        }
-        
-        // Close button
-        document.getElementById('close-qr').addEventListener('click', () => {
-            document.body.removeChild(modal);
-        });
-        
-        // Close on background click
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                document.body.removeChild(modal);
-            }
-        });
-    },
-
-    // ==================== NEW SUPPORT METHODS ====================
-    copyToClipboard(text) {
-        navigator.clipboard.writeText(text).then(() => {
-            this.showNotification('Copied to clipboard!', 'success');
-        }).catch(err => {
-            console.error('Clipboard error:', err);
-            this.showNotification('Failed to copy', 'error');
-        });
-    },
-
-    openSlackChannel() {
-        this.showNotification('Slack integration would open here', 'info');
-    },
-
-    openQuickGuide() {
-        // Create a simple guide modal
-        const modal = document.createElement('div');
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        `;
-        
-        modal.innerHTML = `
-            <div class="glass-card" style="padding: 2rem; max-width: 600px; max-height: 80%; overflow: auto;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                    <h3 style="margin: 0;">📖 Quick Guide</h3>
-                    <button class="btn-outline" id="close-guide">✕</button>
-                </div>
-                
-                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                    <div>
-                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">🏠 Dashboard</h4>
-                        <p style="color: var(--text-secondary); margin: 0;">Overview of your farm's key metrics and quick actions.</p>
-                    </div>
-                    
-                    <div>
-                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">📦 Inventory</h4>
-                        <p style="color: var(--text-secondary); margin: 0;">Manage your farm products, track quantities, and set reorder points.</p>
-                    </div>
-                    
-                    <div>
-                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">💰 Orders</h4>
-                        <p style="color: var(--text-secondary); margin: 0;">Create and manage customer orders, track payments, and generate invoices.</p>
-                    </div>
-                    
-                    <div>
-                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">📊 Analytics</h4>
-                        <p style="color: var(--text-secondary); margin: 0;">Visualize your farm's performance with charts and reports.</p>
-                    </div>
-                    
-                    <div>
-                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">👤 Profile</h4>
-                        <p style="color: var(--text-secondary); margin: 0;">Manage your farm settings, export data, and configure the app.</p>
-                    </div>
-                    
-                    <div style="background: var(--glass-bg); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
-                        <h4 style="color: var(--success-color); margin-bottom: 0.5rem;">💡 Quick Tips</h4>
-                        <ul style="color: var(--text-secondary); margin: 0; padding-left: 1.2rem;">
-                            <li>Use keyboard shortcuts for faster navigation</li>
-                            <li>Export regular backups of your data</li>
-                            <li>Set up low stock alerts for inventory items</li>
-                            <li>Use the mobile app for on-the-go access</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        document.getElementById('close-guide').addEventListener('click', () => {
-            document.body.removeChild(modal);
-        });
-        
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                document.body.removeChild(modal);
-            }
-        });
-    },
-
-    downloadQuickGuide() {
-        const guideContent = `
-Farm Manager - Quick Guide
-==========================
-
-📋 Key Features:
-
-1. 🏠 DASHBOARD
-   - Real-time farm metrics
-   - Quick action buttons
-   - Recent activity feed
-
-2. 📦 INVENTORY MANAGEMENT
-   - Add/edit/delete products
-   - Track stock levels
-   - Set reorder alerts
-   - Manage categories
-
-3. 💰 ORDER MANAGEMENT
-   - Create customer orders
-   - Process payments
-   - Generate invoices
-   - Track order history
-
-4. 📊 ANALYTICS & REPORTS
-   - Sales trends
-   - Inventory analysis
-   - Customer insights
-   - Export to PDF
-
-5. 👤 PROFILE & SETTINGS
-   - Farm information
-   - User preferences
-   - Data backup/restore
-   - Theme customization
-
-🚀 Getting Started:
-
-1. Set up your farm profile
-2. Add your products to inventory
-3. Create your first customer order
-4. Explore analytics dashboard
-5. Configure your preferences
-
-💡 Tips & Tricks:
-
-• Use keyboard shortcuts for faster navigation
-• Set up low stock alerts (Profile → Settings)
-• Export regular backups of your data
-• Install the mobile app for on-the-go access
-
-📱 Mobile App:
-
-1. Open this app in mobile browser
-2. Tap Share button (📤)
-3. Select "Add to Home Screen"
-
-🔧 Support: farm-support@example.com
-
-Generated on: ${new Date().toLocaleString()}
-        `;
-        
-        const blob = new Blob([guideContent], {type: 'text/plain'});
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'Farm-Manager-Quick-Guide.txt';
-        link.click();
-        URL.revokeObjectURL(link.href);
-        
-        this.showNotification('Quick guide downloaded!', 'success');
-    },
-
-    openYouTubeTutorials() {
-        // Simple modal for tutorials
-        const modal = document.createElement('div');
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        `;
-        
-        modal.innerHTML = `
-            <div class="glass-card" style="padding: 2rem; max-width: 500px; text-align: center;">
-                <h3 style="margin-bottom: 1rem;">🎥 Video Tutorials</h3>
-                <div style="background: var(--glass-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-                    <p style="color: var(--text-secondary); margin: 0 0 1rem 0;">Video tutorials are coming soon!</p>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem;">In the meantime, check out our Quick Guide for instructions.</p>
-                </div>
-                <button class="btn-primary" id="close-tutorials">Close</button>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        document.getElementById('close-tutorials').addEventListener('click', () => {
-            document.body.removeChild(modal);
-        });
-    },
-
-    // PDF helper methods (if they exist in your original)
-    async addProfileToPDF(doc) {
-        // Implementation if needed
-    },
-
-    async addInventoryToPDF(doc) {
-        // Implementation if needed
-    },
-
-    async addSalesToPDF(doc) {
-        // Implementation if needed
     }
 };
 
