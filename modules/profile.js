@@ -546,9 +546,10 @@ const ProfileModule = {
                                 <span class="avatar-icon">🚜</span>
                             </div>
                             <div class="profile-info">
-                                <h2 id="profile-farm-name">My Farm</h2>
-                                <p id="profile-farmer-name">Farm Manager</p>
-                                <p class="profile-email" id="profile-email">No email</p>
+                                <!-- This will show the actual farm name from profile data -->
+                                <h2 id="profile-farm-name">${window.FarmModules.appData.profile?.farmName || 'My Farm'}</h2>
+                                <p id="profile-farmer-name">${window.FarmModules.appData.profile?.farmerName || 'Farm Manager'}</p>
+                                <p class="profile-email" id="profile-email">${window.FarmModules.appData.profile?.email || 'No email'}</p>
                                 <div class="profile-stats">
                                     <span class="stat-badge" id="member-since">Member since: Today</span>
                                     <span class="stat-badge" id="data-entries">Data entries: 0</span>
@@ -557,7 +558,6 @@ const ProfileModule = {
                             </div>
                         </div>
                     </div>
-
                     <!-- Farm Information Form -->
                     <div class="profile-details glass-card">
                         <h3>Farm Information</h3>
