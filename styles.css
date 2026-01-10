@@ -1335,20 +1335,20 @@ main {
     font-size: 11px !important;
 }
 
-/* ===== FIX: NAV BRAND TEXT SAME COLOR ===== */
+/* ===== FIX: NAV BRAND TEXT SAME GRAY COLOR ===== */
 .nav-brand .brand-text,
 .nav-brand .brand-subtitle {
-    color: var(--text-primary) !important;
+    color: #666666 !important; /* Same medium gray for both */
     font-weight: 600;
 }
 
-/* In dark mode, both should be light text */
+/* In dark mode, both should be light gray */
 .dark-mode .nav-brand .brand-text,
 .dark-mode .nav-brand .brand-subtitle {
-    color: var(--dm-text-primary) !important;
+    color: #cbd5e1 !important; /* Same light gray for both */
 }
 
-/* Make subtitle slightly smaller but same color */
+/* Make subtitle slightly smaller */
 .nav-brand .brand-subtitle {
     font-size: 11px;
     opacity: 0.9;
