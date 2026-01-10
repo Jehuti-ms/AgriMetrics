@@ -1,15 +1,15 @@
-// modules/profile.js - COMPLETE DROP-IN FIX
+// modules/profile.js - COMPLETE FIXED VERSION WITH ALL SECTIONS
 console.log('👤 Loading profile module...');
 
 const ProfileModule = {
     name: 'profile',
     initialized: false,
     element: null,
-    isSaving: false,
     
     // ==================== INITIALIZATION ====================
     initialize() {
         console.log('👤 Initializing profile...');
+        
         this.element = document.getElementById('content-area');
         if (!this.element) {
             console.error('Content area element not found');
@@ -24,6 +24,7 @@ const ProfileModule = {
         
         this.renderModule();
         this.initialized = true;
+        
         return true;
     },
 
@@ -40,433 +41,62 @@ const ProfileModule = {
 
         this.element.innerHTML = `
             <style>
-                /* Profile specific styles */
-                .profile-content {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 24px;
-                }
-                
-                .stats-overview {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 16px;
-                    margin-bottom: 16px;
-                }
-                
-                .stat-card {
-                    padding: 20px;
-                    border-radius: 12px;
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                }
-                
-                .stat-icon {
-                    font-size: 32px;
-                    width: 60px;
-                    height: 60px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: var(--glass-bg);
-                    border-radius: 50%;
-                }
-                
-                .stat-content {
-                    flex: 1;
-                }
-                
-                .stat-content h3 {
-                    font-size: 14px;
-                    color: var(--text-secondary);
-                    margin-bottom: 4px;
-                }
-                
-                .stat-value {
-                    font-size: 24px;
-                    font-weight: bold;
-                    color: var(--text-primary);
-                }
-                
-                .profile-card {
-                    padding: 24px;
-                }
-                
-                .profile-header {
-                    display: flex;
-                    align-items: center;
-                    gap: 20px;
-                }
-                
-                .profile-avatar {
-                    width: 80px;
-                    height: 80px;
-                    border-radius: 50%;
-                    background: var(--glass-bg);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 32px;
-                }
-                
-                .profile-info h2 {
-                    margin: 0 0 8px 0;
-                    color: var(--text-primary);
-                }
-                
-                .profile-info p {
-                    margin: 4px 0;
-                    color: var(--text-secondary);
-                }
-                
-                .profile-stats {
-                    display: flex;
-                    gap: 12px;
-                    margin-top: 12px;
-                    flex-wrap: wrap;
-                }
-                
-                .stat-badge {
-                    padding: 4px 8px;
-                    background: var(--glass-bg);
-                    border-radius: 6px;
-                    font-size: 12px;
-                    color: var(--text-secondary);
-                }
-                
-                /* Form Styles */
-                .form-row {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 16px;
-                    margin-bottom: 16px;
-                }
-                
-                .form-group {
-                    margin-bottom: 16px;
-                }
-                
-                .form-label {
-                    display: block;
-                    margin-bottom: 8px;
-                    font-weight: 600;
-                    color: var(--text-primary);
-                }
-                
-                .form-input, .setting-control {
-                    width: 100%;
-                    padding: 10px 12px;
-                    border: 1px solid var(--glass-border);
-                    border-radius: 8px;
-                    background: var(--glass-bg);
-                    color: var(--text-primary);
-                    font-size: 14px;
-                }
-                
-                .form-actions {
-                    display: flex;
-                    gap: 12px;
-                    margin-top: 24px;
-                }
-                
-                /* Settings */
-                .settings-list {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 16px;
-                }
-                
-                .setting-item {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 12px 0;
-                    border-bottom: 1px solid var(--glass-border);
-                }
-                
-                .setting-info h4 {
-                    margin: 0 0 4px 0;
-                    color: var(--text-primary);
-                }
-                
-                .setting-info p {
-                    margin: 0;
-                    font-size: 14px;
-                    color: var(--text-secondary);
-                }
-                
-                .setting-unit {
-                    font-size: 14px;
-                    color: var(--text-secondary);
-                    margin-left: 8px;
-                }
-                
-                /* Switch */
-                .switch {
-                    position: relative;
-                    display: inline-block;
-                    width: 50px;
-                    height: 24px;
-                }
-                
-                .switch input {
-                    opacity: 0;
-                    width: 0;
-                    height: 0;
-                }
-                
-                .slider {
-                    position: absolute;
-                    cursor: pointer;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background-color: var(--glass-border);
-                    transition: .4s;
-                    border-radius: 24px;
-                }
-                
-                .slider:before {
-                    position: absolute;
-                    content: "";
-                    height: 16px;
-                    width: 16px;
-                    left: 4px;
-                    bottom: 4px;
-                    background-color: white;
-                    transition: .4s;
-                    border-radius: 50%;
-                }
-                
-                input:checked + .slider {
-                    background-color: var(--primary-color);
-                }
-                
-                input:checked + .slider:before {
-                    transform: translateX(26px);
-                }
-                
-                /* Data Management */
-                .data-stats {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                    gap: 16px;
-                    margin-bottom: 20px;
-                }
-                
-                .data-stat {
-                    padding: 12px;
-                    background: var(--glass-bg);
-                    border-radius: 8px;
-                }
-                
-                .data-stat label {
-                    display: block;
-                    font-size: 12px;
-                    color: var(--text-secondary);
-                    margin-bottom: 4px;
-                }
-                
-                .data-stat span {
-                    font-size: 16px;
-                    font-weight: bold;
-                    color: var(--text-primary);
-                }
-                
-                .action-buttons {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 12px;
-                }
-                
-                /* PDF Export Section */
-                .pdf-export-section {
-                    padding: 24px;
-                }
-                
-                .pdf-buttons-container {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 12px;
-                    margin-top: 16px;
-                }
-                
-                .pdf-btn {
-                    padding: 16px;
-                    background: var(--glass-bg);
-                    border: 1px solid var(--glass-border);
-                    border-radius: 8px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 8px;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                
-                .pdf-btn:hover {
-                    transform: translateY(-2px);
-                    border-color: var(--primary-color);
-                    background: var(--primary-color)10;
-                }
-                
-                .pdf-btn span:last-child {
-                    font-size: 14px;
-                    font-weight: 600;
-                    color: var(--text-primary);
-                }
-                
-                #pdf-status {
-                    margin-top: 12px;
-                    text-align: center;
-                    font-size: 13px;
-                }
-                
-                /* NEW: Installation Guide Styles */
-                .guide-steps {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 20px;
-                    margin: 20px 0;
-                }
-                
-                .step {
-                    text-align: center;
-                    padding: 20px;
-                    background: var(--glass-bg);
-                    border-radius: 12px;
-                }
-                
-                .step-number {
-                    width: 40px;
-                    height: 40px;
-                    background: var(--primary-color);
-                    color: white;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-weight: bold;
-                    margin: 0 auto 12px;
-                }
-                
-                .step h4 {
-                    margin: 0 0 8px 0;
-                    color: var(--text-primary);
-                }
-                
-                .step p {
-                    margin: 0;
-                    font-size: 14px;
-                    color: var(--text-secondary);
-                }
-                
-                .guide-actions {
-                    display: flex;
-                    gap: 12px;
-                    margin-top: 20px;
-                }
-                
-                /* NEW: Support Section Styles */
-                .support-channels {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                    margin-top: 20px;
-                }
-                
-                .support-channel {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    padding: 16px;
-                    background: var(--glass-bg);
-                    border-radius: 8px;
-                }
-                
-                .support-channel-icon {
-                    font-size: 24px;
-                    width: 48px;
-                    height: 48px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: var(--glass-bg);
-                    border-radius: 50%;
-                }
-                
-                .support-channel-content {
-                    flex: 1;
-                }
-                
-                .support-channel h4 {
-                    margin: 0 0 4px 0;
-                    color: var(--text-primary);
-                }
-                
-                .support-channel p {
-                    margin: 0;
-                    font-size: 14px;
-                    color: var(--text-secondary);
-                }
-                
-                .support-channel-actions {
-                    display: flex;
-                    gap: 8px;
-                }
-                
-                /* Mobile responsive */
-                @media (max-width: 768px) {
-                    .form-row {
-                        grid-template-columns: 1fr;
-                    }
-                    
-                    .stats-overview {
-                        grid-template-columns: repeat(2, 1fr);
-                    }
-                    
-                    .pdf-buttons-container {
-                        grid-template-columns: repeat(2, 1fr);
-                    }
-                    
-                    .action-buttons {
-                        flex-direction: column;
-                    }
-                    
-                    .action-buttons button {
-                        width: 100%;
-                    }
-                    
-                    .guide-steps {
-                        grid-template-columns: 1fr;
-                    }
-                    
-                    .guide-actions {
-                        flex-direction: column;
-                    }
-                    
-                    .support-channel {
-                        flex-direction: column;
-                        text-align: center;
-                    }
-                    
-                    .support-channel-actions {
-                        width: 100%;
-                        justify-content: center;
-                    }
-                }
-                
-                @media (max-width: 480px) {
-                    .stats-overview {
-                        grid-template-columns: 1fr;
-                    }
-                    
-                    .pdf-buttons-container {
-                        grid-template-columns: 1fr;
-                    }
-                }
+                .profile-content { display: flex; flex-direction: column; gap: 24px; }
+                .stats-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px; }
+                .stat-card { padding: 20px; border-radius: 12px; display: flex; align-items: center; gap: 16px; }
+                .stat-icon { font-size: 32px; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; background: var(--glass-bg); border-radius: 50%; }
+                .stat-content { flex: 1; }
+                .stat-content h3 { font-size: 14px; color: var(--text-secondary); margin-bottom: 4px; }
+                .stat-value { font-size: 24px; font-weight: bold; color: var(--text-primary); }
+                .profile-card { padding: 24px; }
+                .profile-header { display: flex; align-items: center; gap: 20px; }
+                .profile-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--glass-bg); display: flex; align-items: center; justify-content: center; font-size: 32px; }
+                .profile-info h2 { margin: 0 0 8px 0; color: var(--text-primary); }
+                .profile-info p { margin: 4px 0; color: var(--text-secondary); }
+                .profile-stats { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+                .stat-badge { padding: 4px 8px; background: var(--glass-bg); border-radius: 6px; font-size: 12px; color: var(--text-secondary); }
+                .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+                .form-group { margin-bottom: 16px; }
+                .form-label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary); }
+                .form-input, .setting-control { width: 100%; padding: 10px 12px; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--glass-bg); color: var(--text-primary); font-size: 14px; }
+                .form-actions { display: flex; gap: 12px; margin-top: 24px; }
+                .settings-list { display: flex; flex-direction: column; gap: 16px; }
+                .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--glass-border); }
+                .setting-info h4 { margin: 0 0 4px 0; color: var(--text-primary); }
+                .setting-info p { margin: 0; font-size: 14px; color: var(--text-secondary); }
+                .setting-unit { font-size: 14px; color: var(--text-secondary); margin-left: 8px; }
+                .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+                .switch input { opacity: 0; width: 0; height: 0; }
+                .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--glass-border); transition: .4s; border-radius: 24px; }
+                .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+                input:checked + .slider { background-color: var(--primary-color); }
+                input:checked + .slider:before { transform: translateX(26px); }
+                .data-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 20px; }
+                .data-stat { padding: 12px; background: var(--glass-bg); border-radius: 8px; }
+                .data-stat label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+                .data-stat span { font-size: 16px; font-weight: bold; color: var(--text-primary); }
+                .action-buttons { display: flex; flex-wrap: wrap; gap: 12px; }
+                .pdf-export-section { padding: 24px; }
+                .pdf-buttons-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 16px; }
+                .pdf-btn { padding: 16px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; }
+                .pdf-btn:hover { transform: translateY(-2px); border-color: var(--primary-color); background: var(--primary-color)10; }
+                .pdf-btn span:last-child { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+                #pdf-status { margin-top: 12px; text-align: center; font-size: 13px; }
+                .guide-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }
+                .step { text-align: center; padding: 20px; background: var(--glass-bg); border-radius: 12px; }
+                .step-number { width: 40px; height: 40px; background: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 0 auto 12px; }
+                .step h4 { margin: 0 0 8px 0; color: var(--text-primary); }
+                .step p { margin: 0; font-size: 14px; color: var(--text-secondary); }
+                .guide-actions { display: flex; gap: 12px; margin-top: 20px; }
+                .support-channels { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+                .support-channel { display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--glass-bg); border-radius: 8px; }
+                .support-channel-icon { font-size: 24px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: var(--glass-bg); border-radius: 50%; }
+                .support-channel-content { flex: 1; }
+                .support-channel h4 { margin: 0 0 4px 0; color: var(--text-primary); }
+                .support-channel p { margin: 0; font-size: 14px; color: var(--text-secondary); }
+                .support-channel-actions { display: flex; gap: 8px; }
+                @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } .stats-overview { grid-template-columns: repeat(2, 1fr); } .pdf-buttons-container { grid-template-columns: repeat(2, 1fr); } .action-buttons { flex-direction: column; } .action-buttons button { width: 100%; } .guide-steps { grid-template-columns: 1fr; } .guide-actions { flex-direction: column; } .support-channel { flex-direction: column; text-align: center; } .support-channel-actions { width: 100%; justify-content: center; } }
+                @media (max-width: 480px) { .stats-overview { grid-template-columns: 1fr; } .pdf-buttons-container { grid-template-columns: 1fr; } }
             </style>
             
             <div class="module-container">
@@ -508,14 +138,13 @@ const ProfileModule = {
                         </div>
                     </div>
 
-                   <!-- Profile Information Card -->
+                    <!-- Profile Information Card -->
                     <div class="profile-card glass-card">
                         <div class="profile-header">
                             <div class="profile-avatar">
                                 <span class="avatar-icon">🚜</span>
                             </div>
                             <div class="profile-info">
-                                <!-- PLACEHOLDER TEXT - Will be updated by JavaScript -->
                                 <h2 id="profile-farm-name">My Farm</h2>
                                 <p id="profile-farmer-name">Farm Manager</p>
                                 <p class="profile-email" id="profile-email">No email</p>
@@ -535,14 +164,12 @@ const ProfileModule = {
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="farm-name" class="form-label">Farm Name *</label>
-                                    <!-- 🔥 CRITICAL FIX: Unique IDs and proper attributes -->
-                                    <input type="text" id="farm-name" name="farm_name" class="form-input" required 
-                                           placeholder="Enter farm name" autocomplete="off">
-                                    <div id="farm-name-debug" style="font-size: 11px; color: #666; margin-top: 4px; display: none;"></div>
+                                    <input type="text" id="farm-name" name="farm-name" class="form-input" required 
+                                           placeholder="Enter farm name">
                                 </div>
                                 <div class="form-group">
                                     <label for="farmer-name" class="form-label">Farmer Name *</label>
-                                    <input type="text" id="farmer-name" name="farmer_name" class="form-input" required 
+                                    <input type="text" id="farmer-name" name="farmer-name" class="form-input" required 
                                            placeholder="Enter your name">
                                 </div>
                             </div>
@@ -550,12 +177,12 @@ const ProfileModule = {
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="farm-email" class="form-label">Farm Email</label>
-                                    <input type="email" id="farm-email" name="farm_email" class="form-input" 
+                                    <input type="email" id="farm-email" name="farm-email" class="form-input" 
                                            placeholder="farm@example.com">
                                 </div>
                                 <div class="form-group">
                                     <label for="farm-type" class="form-label">Farm Type</label>
-                                    <select id="farm-type" name="farm_type" class="form-input">
+                                    <select id="farm-type" name="farm-type" class="form-input">
                                         <option value="">Select farm type</option>
                                         <option value="crop">Crop Farm</option>
                                         <option value="livestock">Livestock Farm</option>
@@ -570,26 +197,14 @@ const ProfileModule = {
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="farm-location" class="form-label">Farm Location</label>
-                                    <input type="text" id="farm-location" name="farm_location" class="form-input" 
+                                    <input type="text" id="farm-location" name="farm-location" class="form-input" 
                                            placeholder="e.g., City, State">
-                                </div>
-                                <div class="form-group">
-                                    <div class="setting-item">
-                                        <div class="setting-info">
-                                            <h4>Remember Me</h4>
-                                            <p>Keep me logged in on this device</p>
-                                        </div>
-                                        <label class="switch">
-                                            <input type="checkbox" id="remember-user" checked>
-                                            <span class="slider"></span>
-                                        </label>
-                                    </div>
                                 </div>
                             </div>
                             
                             <div class="form-actions">
-                                <!-- 🔥 FIX: Simple save button with direct handler -->
-                                <button type="button" class="btn-primary" id="direct-save-btn">💾 Save Profile</button>
+                                <!-- 🔥 FIXED: Changed to type="button" and added id -->
+                                <button type="button" class="btn-primary" id="save-profile-btn">💾 Save Profile</button>
                                 <button type="button" class="btn-secondary" id="sync-now-btn">🔄 Sync Now</button>
                                 <button type="button" class="btn-outline" id="reset-profile">Reset to Current</button>
                             </div>
@@ -665,7 +280,7 @@ const ProfileModule = {
                         </div>
                     </div>
                     
-                    <!-- PDF EXPORT SECTION - SINGLE SECTION ONLY -->
+                    <!-- PDF EXPORT SECTION -->
                     <div class="pdf-export-section glass-card">
                         <h3>📄 Export Reports</h3>
                         <p style="color: var(--text-secondary); margin-bottom: 16px;">Generate PDF reports for your farm data</p>
@@ -723,7 +338,7 @@ const ProfileModule = {
                         </div>
                     </div>
 
-                    <!-- NEW: Mobile Installation Guide -->
+                    <!-- Mobile Installation Guide -->
                     <div class="installation-guide glass-card">
                         <h3>📱 Install on Mobile</h3>
                         <p style="color: var(--text-secondary); margin-bottom: 16px;">Get the app-like experience on your phone or tablet</p>
@@ -756,7 +371,7 @@ const ProfileModule = {
                         </div>
                     </div>
 
-                    <!-- NEW: Support & Help Section -->
+                    <!-- Support & Help Section -->
                     <div class="support-section glass-card">
                         <h3>🆘 Support & Help</h3>
                         <p style="color: var(--text-secondary); margin-bottom: 16px;">Get help with the Farm Manager app</p>
@@ -812,196 +427,100 @@ const ProfileModule = {
             </div>
         `;
 
-        // Setup with delay to ensure DOM is ready
+        // Set up everything
         setTimeout(() => {
             this.setupEventListeners();
             this.loadUserData();
             this.updateStatsFromModules();
-            
-            // 🔥 DEBUG: Log initial state
-            console.log('🔄 Profile module rendered');
-            console.log('🔍 Farm name input exists:', !!document.getElementById('farm-name'));
-            console.log('🔍 Profile card exists:', !!document.getElementById('profile-farm-name'));
         }, 100);
     },
 
-    // ==================== EVENT LISTENERS - COMPLETE FIX ====================
+    // ==================== EVENT LISTENERS - ULTIMATE FIX ====================
     setupEventListeners() {
-        console.log('🔧 Setting up ALL profile event listeners');
+        console.log('🔧 Setting up profile event listeners');
         
-        // 🔥🔥🔥 CRITICAL FIX 1: DIRECT SAVE BUTTON - SIMPLE & RELIABLE
-        const directSaveBtn = document.getElementById('direct-save-btn');
-        if (directSaveBtn) {
+        // 🔥🔥🔥 CRITICAL FIX 1: Direct save button handler
+        const saveBtn = document.getElementById('save-profile-btn');
+        if (saveBtn) {
             // Clone to remove any existing listeners
-            const newBtn = directSaveBtn.cloneNode(true);
-            directSaveBtn.parentNode.replaceChild(newBtn, directSaveBtn);
+            const newSaveBtn = saveBtn.cloneNode(true);
+            saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
             
             // Add fresh click listener
-            document.getElementById('direct-save-btn').addEventListener('click', (e) => {
+            document.getElementById('save-profile-btn').addEventListener('click', (e) => {
                 e.preventDefault();
-                console.log('💾 DIRECT SAVE BUTTON CLICKED');
-                this.handleDirectSave();
+                console.log('💾 Save button clicked - ULTIMATE FIX');
+                this.handleSaveProfile();
             });
         }
         
-        // Also handle form submission (for Enter key)
+        // 🔥 CRITICAL FIX 2: Also handle form submission (for Enter key)
         const profileForm = document.getElementById('profile-form');
         if (profileForm) {
             profileForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 console.log('📋 Form submitted via Enter key');
-                this.handleDirectSave();
+                this.handleSaveProfile();
             });
         }
         
-        // 🔥 Track farm name input for debugging
+        // 🔥 CRITICAL FIX 3: Track farm name input changes
         const farmNameInput = document.getElementById('farm-name');
         if (farmNameInput) {
             farmNameInput.addEventListener('input', (e) => {
-                console.log('⌨️ Farm name typed:', e.target.value);
-                // Show debug info
-                const debugDiv = document.getElementById('farm-name-debug');
-                if (debugDiv) {
-                    debugDiv.textContent = `Typing: ${e.target.value}`;
-                    debugDiv.style.display = 'block';
-                }
-            });
-            
-            farmNameInput.addEventListener('change', (e) => {
-                console.log('📝 Farm name changed:', e.target.value);
+                console.log('⌨️ Farm name TYPED:', e.target.value);
             });
             
             farmNameInput.addEventListener('paste', (e) => {
-                console.log('📋 Farm name paste event');
+                console.log('📋 Farm name PASTE event detected');
+                // Wait for paste to complete
                 setTimeout(() => {
-                    console.log('📋 After paste:', farmNameInput.value);
+                    console.log('📋 After paste, value is:', farmNameInput.value);
                 }, 10);
             });
         }
-        
-        // Sync now button
-        const syncBtn = document.getElementById('sync-now-btn');
-        if (syncBtn) {
-            syncBtn.addEventListener('click', () => {
-                console.log('🔄 Sync now clicked');
-                this.syncNow();
-            });
-        }
 
-        // Reset button
-        const resetBtn = document.getElementById('reset-profile');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', () => {
-                console.log('🔁 Reset profile clicked');
-                this.loadUserData();
-                this.showNotification('Profile form reset to saved values', 'info');
-            });
-        }
+        // Other buttons
+        document.getElementById('sync-now-btn')?.addEventListener('click', () => this.syncNow());
+        document.getElementById('reset-profile')?.addEventListener('click', () => {
+            this.loadUserData();
+            this.showNotification('Form reset to saved values', 'info');
+        });
 
-        // Settings changes
-        const currencySelect = document.getElementById('default-currency');
-        if (currencySelect) {
-            currencySelect.addEventListener('change', (e) => {
-                this.saveSetting('currency', e.target.value);
-            });
-        }
+        // Settings
+        document.getElementById('default-currency')?.addEventListener('change', (e) => {
+            this.saveSetting('currency', e.target.value);
+        });
+        document.getElementById('low-stock-threshold')?.addEventListener('change', (e) => {
+            this.saveSetting('lowStockThreshold', parseInt(e.target.value));
+        });
+        document.getElementById('auto-sync')?.addEventListener('change', (e) => {
+            this.saveSetting('autoSync', e.target.checked);
+        });
+        document.getElementById('local-storage')?.addEventListener('change', (e) => {
+            this.saveSetting('localStorageEnabled', e.target.checked);
+        });
+        document.getElementById('theme-selector')?.addEventListener('change', (e) => {
+            this.changeTheme(e.target.value);
+        });
 
-        const lowStockInput = document.getElementById('low-stock-threshold');
-        if (lowStockInput) {
-            lowStockInput.addEventListener('change', (e) => {
-                this.saveSetting('lowStockThreshold', parseInt(e.target.value));
-            });
-        }
-
-        const autoSyncCheck = document.getElementById('auto-sync');
-        if (autoSyncCheck) {
-            autoSyncCheck.addEventListener('change', (e) => {
-                this.saveSetting('autoSync', e.target.checked);
-            });
-        }
-
-        const localStorageCheck = document.getElementById('local-storage');
-        if (localStorageCheck) {
-            localStorageCheck.addEventListener('change', (e) => {
-                this.saveSetting('localStorageEnabled', e.target.checked);
-            });
-        }
-
-        // Theme selector
-        const themeSelect = document.getElementById('theme-selector');
-        if (themeSelect) {
-            themeSelect.addEventListener('change', (e) => {
-                this.changeTheme(e.target.value);
-            });
-        }
-
-        // Remember user
-        const rememberUserCheck = document.getElementById('remember-user');
-        if (rememberUserCheck) {
-            rememberUserCheck.addEventListener('change', (e) => {
-                this.saveSetting('rememberUser', e.target.checked);
-            });
-        }
-
-        // PDF Export buttons
-        const exportProfileBtn = document.getElementById('export-profile-pdf');
-        if (exportProfileBtn) {
-            exportProfileBtn.addEventListener('click', () => this.exportProfilePDF());
-        }
-
-        const exportInventoryBtn = document.getElementById('export-inventory-pdf');
-        if (exportInventoryBtn) {
-            exportInventoryBtn.addEventListener('click', () => this.exportInventoryPDF());
-        }
-
-        const exportSalesBtn = document.getElementById('export-sales-pdf');
-        if (exportSalesBtn) {
-            exportSalesBtn.addEventListener('click', () => this.exportSalesPDF());
-        }
-
-        const exportAllBtn = document.getElementById('export-all-pdf');
-        if (exportAllBtn) {
-            exportAllBtn.addEventListener('click', () => this.exportAllPDF());
-        }
+        // PDF Export
+        document.getElementById('export-profile-pdf')?.addEventListener('click', () => this.exportProfilePDF());
+        document.getElementById('export-inventory-pdf')?.addEventListener('click', () => this.exportInventoryPDF());
+        document.getElementById('export-sales-pdf')?.addEventListener('click', () => this.exportSalesPDF());
+        document.getElementById('export-all-pdf')?.addEventListener('click', () => this.exportAllPDF());
 
         // Data management
-        const exportDataBtn = document.getElementById('export-data');
-        if (exportDataBtn) {
-            exportDataBtn.addEventListener('click', () => this.exportData());
-        }
+        document.getElementById('export-data')?.addEventListener('click', () => this.exportData());
+        document.getElementById('import-data')?.addEventListener('click', () => this.importData());
+        document.getElementById('clear-all-data')?.addEventListener('click', () => this.clearAllData());
+        document.getElementById('logout-btn')?.addEventListener('click', () => this.handleLogout());
 
-        const importDataBtn = document.getElementById('import-data');
-        if (importDataBtn) {
-            importDataBtn.addEventListener('click', () => this.importData());
-        }
+        // Mobile installation
+        document.getElementById('send-install-link')?.addEventListener('click', () => this.sendInstallationLink());
+        document.getElementById('show-qr-code')?.addEventListener('click', () => this.showQRCode());
 
-        const clearDataBtn = document.getElementById('clear-all-data');
-        if (clearDataBtn) {
-            clearDataBtn.addEventListener('click', () => this.clearAllData());
-        }
-
-        // Logout button - FIXED
-        const logoutBtn = document.getElementById('logout-btn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                console.log('🚪 Logout button clicked');
-                this.handleLogout();
-            });
-        }
-
-        // Mobile Installation buttons
-        const sendInstallBtn = document.getElementById('send-install-link');
-        if (sendInstallBtn) {
-            sendInstallBtn.addEventListener('click', () => this.sendInstallationLink());
-        }
-
-        const showQrBtn = document.getElementById('show-qr-code');
-        if (showQrBtn) {
-            showQrBtn.addEventListener('click', () => this.showQRCode());
-        }
-
-        // Support section event delegation
+        // Support section - event delegation
         this.element.addEventListener('click', (e) => {
             const button = e.target.closest('button[data-action]');
             if (!button) return;
@@ -1009,71 +528,55 @@ const ProfileModule = {
             e.preventDefault();
             const action = button.getAttribute('data-action');
             
-            console.log('🔍 Support action clicked:', action);
-            
             switch(action) {
                 case 'copy-email':
                     this.copyToClipboard('farm-support@example.com');
                     break;
-                    
                 case 'open-slack':
                     this.openSlackChannel();
                     break;
-                    
                 case 'open-guide':
                     this.openQuickGuide();
                     break;
-                    
                 case 'download-guide':
                     this.downloadQuickGuide();
                     break;
-                    
                 case 'watch-tutorials':
                     this.openYouTubeTutorials();
                     break;
             }
         });
-        
-        console.log('✅ ALL event listeners set up');
+
+        console.log('✅ All event listeners set up');
     },
 
-    // ==================== DIRECT SAVE HANDLER - SIMPLE FIX ====================
-    async handleDirectSave() {
-        console.log('💾 Starting ULTIMATE save WITH LOCK...');
-        
-        // 🔥 ADD A LOCK to prevent re-entry
-        if (this.isSaving) {
-            console.log('⏳ Already saving, skipping...');
-            return;
-        }
-        
-        this.isSaving = true;
+    // ==================== SAVE PROFILE - ULTIMATE FIX ====================
+    async handleSaveProfile() {
+        console.log('💾 Starting profile save...');
         
         try {
-            // 🔥 CRITICAL: Small delay to ensure any async updates complete
+            // 🔥 CRITICAL FIX: Small delay to ensure any paste/typing completes
             await new Promise(resolve => setTimeout(resolve, 50));
             
-            // 🔥 GET ABSOLUTELY FRESH references - no caching
+            // 🔥 CRITICAL FIX: Get the FRESH input element and value
             const farmNameInput = document.getElementById('farm-name');
+            const farmerNameInput = document.getElementById('farmer-name');
+            const emailInput = document.getElementById('farm-email');
+            const farmTypeInput = document.getElementById('farm-type');
+            const farmLocationInput = document.getElementById('farm-location');
             
             if (!farmNameInput) {
-                console.error('❌ Farm name input not found!');
-                this.showNotification('Error: Farm name field not found', 'error');
-                this.isSaving = false;
-                return;
+                throw new Error('Farm name input not found');
             }
             
-            // 🔥 GET THE CURRENT VALUE - FORCE FRESH
+            // 🔥 CRITICAL FIX: Get the CURRENT value directly from the input
             const farmName = farmNameInput.value.trim();
-            console.log('🔥 ULTIMATE SAVE - Farm name value:', farmName);
+            const farmerName = farmerNameInput?.value.trim();
+            const email = emailInput?.value.trim();
+            const farmType = farmTypeInput?.value;
+            const farmLocation = farmLocationInput?.value.trim();
             
-            // Also get other values
-            const farmerName = document.getElementById('farmer-name')?.value.trim();
-            const email = document.getElementById('farm-email')?.value.trim();
-            const farmType = document.getElementById('farm-type')?.value;
-            const farmLocation = document.getElementById('farm-location')?.value.trim();
-            
-            console.log('🔥 ULTIMATE SAVE - All values:', {
+            console.log('🔥 CURRENT INPUT VALUES:', {
                 farmName,
                 farmerName,
                 email,
@@ -1081,14 +584,14 @@ const ProfileModule = {
                 farmLocation
             });
             
-            // Update profile object
+            // Ensure profile exists
             if (!window.FarmModules.appData.profile) {
                 window.FarmModules.appData.profile = {};
             }
             
             const profile = window.FarmModules.appData.profile;
             
-            // 🔥 UPDATE WITH CURRENT VALUES
+            // 🔥 CRITICAL FIX: Update profile with CURRENT values
             profile.farmName = farmName || 'My Farm';
             profile.farmerName = farmerName || 'Farm Manager';
             profile.email = email || '';
@@ -1101,69 +604,86 @@ const ProfileModule = {
             profile.autoSync = profile.autoSync !== false;
             profile.localStorageEnabled = profile.localStorageEnabled !== false;
             profile.theme = profile.theme || 'auto';
-            profile.rememberUser = profile.rememberUser !== false;
             profile.memberSince = profile.memberSince || new Date().toISOString();
             
             // Update app data
             window.FarmModules.appData.farmName = profile.farmName;
             
-            console.log('📊 Profile after save:', profile);
+            console.log('📊 PROFILE AFTER UPDATE:', profile);
             
-            // 🔥 SAVE TO LOCAL STORAGE
+            // Save to storage
             this.saveToLocalStorage();
             
-            // 🔥 UPDATE CARD WITHOUT calling updateProfileDisplay()
-            const farmNameCard = document.getElementById('profile-farm-name');
-            const farmerNameCard = document.getElementById('profile-farmer-name');
-            const emailCard = document.getElementById('profile-email');
+            // 🔥 CRITICAL FIX: Force immediate UI update
+            this.updateProfileDisplay(true);
             
-            if (farmNameCard) {
-                farmNameCard.textContent = profile.farmName || 'My Farm';
-                console.log(`✅ Card updated to: "${profile.farmName}"`);
-            }
-            
-            if (farmerNameCard) farmerNameCard.textContent = profile.farmerName || 'Farm Manager';
-            if (emailCard) emailCard.textContent = profile.email || 'No email';
-            
-            // Update member since
-            const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
-            document.getElementById('member-since').textContent = `Member since: ${memberSince}`;
-            
-            // 🔥 DO NOT UPDATE THE INPUTS - leave them as user typed
-            
-            // Show success
+            // Show success with the NEW farm name
             this.showNotification(`✅ Profile saved! Farm: ${profile.farmName}`, 'success');
             
-            // 🔥 DELAY the data-updated event to prevent immediate refresh
-            setTimeout(() => {
-                window.dispatchEvent(new CustomEvent('farm-data-updated'));
-                console.log('✅ Data update event dispatched');
-            }, 1000);
+            // Notify other modules
+            window.dispatchEvent(new CustomEvent('farm-data-updated'));
             
-            console.log('✅ ULTIMATE save WITH LOCK completed');
+            console.log('✅ Profile saved successfully');
             
         } catch (error) {
-            console.error('❌ Error in ultimate save:', error);
+            console.error('❌ Error saving profile:', error);
             this.showNotification('Error saving profile: ' + error.message, 'error');
-        } finally {
-            // 🔥 RELEASE THE LOCK
-            this.isSaving = false;
         }
     },
 
-   updateProfileDisplay() {
+    // ==================== USER DATA MANAGEMENT ====================
+    loadUserData() {
+        console.log('📂 Loading user data...');
+        
+        try {
+            if (!window.FarmModules.appData.profile) {
+                window.FarmModules.appData.profile = {
+                    farmName: window.FarmModules.appData.farmName || 'My Farm',
+                    farmerName: 'Farm Manager',
+                    email: '',
+                    farmType: '',
+                    farmLocation: '',
+                    currency: 'USD',
+                    lowStockThreshold: 10,
+                    autoSync: true,
+                    localStorageEnabled: true,
+                    theme: 'auto',
+                    memberSince: new Date().toISOString()
+                };
+            }
+
+            this.loadFromLocalStorage();
+            this.updateProfileDisplay();
+            
+            console.log('✅ User data loaded');
+        } catch (error) {
+            console.error('Error loading user data:', error);
+        }
+    },
+
+    updateProfileDisplay(forceUpdate = false) {
         console.log('🔄 Updating profile display...');
         
         const profile = window.FarmModules.appData.profile;
-        if (!profile) {
-            console.error('❌ No profile data found');
-            return;
-        }
+        if (!profile) return;
         
-        console.log('📊 Current profile data:', profile);
+        console.log('📊 Displaying profile:', profile);
         
         // Update profile card
-        this.updateProfileCardImmediately(profile);
+        const farmNameCard = document.getElementById('profile-farm-name');
+        const farmerNameCard = document.getElementById('profile-farmer-name');
+        const emailCard = document.getElementById('profile-email');
+        
+        if (farmNameCard) {
+            farmNameCard.textContent = profile.farmName || 'My Farm';
+            console.log(`✅ Updated profile card to: "${profile.farmName}"`);
+        }
+        if (farmerNameCard) farmerNameCard.textContent = profile.farmerName || 'Farm Manager';
+        if (emailCard) emailCard.textContent = profile.email || 'No email';
+        
+        // Update member since
+        const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
+        document.getElementById('member-since').textContent = `Member since: ${memberSince}`;
         
         // Update form inputs
         const farmNameInput = document.getElementById('farm-name');
@@ -1172,11 +692,7 @@ const ProfileModule = {
         const farmTypeInput = document.getElementById('farm-type');
         const farmLocationInput = document.getElementById('farm-location');
         
-        if (farmNameInput) {
-            farmNameInput.value = profile.farmName || '';
-            console.log(`✅ Set farm-name input to: "${profile.farmName}"`);
-        }
-        
+        if (farmNameInput) farmNameInput.value = profile.farmName || '';
         if (farmerNameInput) farmerNameInput.value = profile.farmerName || '';
         if (emailInput) emailInput.value = profile.email || '';
         if (farmTypeInput) farmTypeInput.value = profile.farmType || '';
@@ -1186,7 +702,6 @@ const ProfileModule = {
         document.getElementById('default-currency').value = profile.currency || 'USD';
         document.getElementById('low-stock-threshold').value = profile.lowStockThreshold || 10;
         document.getElementById('auto-sync').checked = profile.autoSync !== false;
-        document.getElementById('remember-user').checked = profile.rememberUser !== false;
         document.getElementById('local-storage').checked = profile.localStorageEnabled !== false;
         document.getElementById('theme-selector').value = profile.theme || 'auto';
         
@@ -1207,10 +722,9 @@ const ProfileModule = {
         try {
             const savedProfile = localStorage.getItem('farm-profile');
             if (savedProfile) {
-                const parsedProfile = JSON.parse(savedProfile);
                 window.FarmModules.appData.profile = {
                     ...window.FarmModules.appData.profile,
-                    ...parsedProfile
+                    ...JSON.parse(savedProfile)
                 };
                 console.log('📂 Profile loaded from local storage');
             }
@@ -1244,16 +758,12 @@ const ProfileModule = {
         document.getElementById('sync-status').textContent = '🔄 Syncing...';
         
         try {
-            // Save to local storage
             this.saveToLocalStorage();
-            
-            // Simulate sync delay
             await new Promise(resolve => setTimeout(resolve, 1000));
             
             this.showNotification('Data synchronized!', 'success');
             document.getElementById('sync-status').textContent = '✅ Synced';
             
-            // Reset status after 3 seconds
             setTimeout(() => {
                 document.getElementById('sync-status').textContent = '💾 Local';
             }, 3000);
@@ -1267,32 +777,32 @@ const ProfileModule = {
 
     // ==================== STATS ====================
     updateStatsFromModules() {
-        const orders = window.FarmModules.appData.orders || [];
-        const inventory = window.FarmModules.appData.inventory || [];
-        const customers = window.FarmModules.appData.customers || [];
-        const products = window.FarmModules.appData.products || [];
-        
-        // Update stats
-        document.getElementById('total-orders').textContent = orders.length;
-        document.getElementById('total-inventory').textContent = inventory.length;
-        document.getElementById('total-customers').textContent = customers.length;
-        
-        // Calculate total revenue
-        const totalRevenue = orders.reduce((sum, order) => {
-            return sum + (parseFloat(order.totalAmount) || 0);
-        }, 0);
-        
-        document.getElementById('total-revenue').textContent = this.formatCurrency(totalRevenue);
-        
-        // Update data management stats
-        document.getElementById('orders-count').textContent = `${orders.length} records`;
-        document.getElementById('inventory-count').textContent = `${inventory.length} items`;
-        document.getElementById('customers-count').textContent = `${customers.length} customers`;
-        document.getElementById('products-count').textContent = `${products.length} products`;
-        
-        // Update data entries badge
-        const totalEntries = orders.length + inventory.length + customers.length + products.length;
-        document.getElementById('data-entries').textContent = `Data entries: ${totalEntries}`;
+        try {
+            const orders = window.FarmModules.appData.orders || [];
+            const inventory = window.FarmModules.appData.inventory || [];
+            const customers = window.FarmModules.appData.customers || [];
+            const products = window.FarmModules.appData.products || [];
+            
+            document.getElementById('total-orders').textContent = orders.length;
+            document.getElementById('total-inventory').textContent = inventory.length;
+            document.getElementById('total-customers').textContent = customers.length;
+            
+            const totalRevenue = orders.reduce((sum, order) => {
+                return sum + (parseFloat(order.totalAmount) || 0);
+            }, 0);
+            document.getElementById('total-revenue').textContent = this.formatCurrency(totalRevenue);
+            
+            document.getElementById('orders-count').textContent = `${orders.length} records`;
+            document.getElementById('inventory-count').textContent = `${inventory.length} items`;
+            document.getElementById('customers-count').textContent = `${customers.length} customers`;
+            document.getElementById('products-count').textContent = `${products.length} products`;
+            
+            const totalEntries = orders.length + inventory.length + customers.length + products.length;
+            document.getElementById('data-entries').textContent = `Data entries: ${totalEntries}`;
+            
+        } catch (error) {
+            console.error('Error updating stats:', error);
+        }
     },
 
     // ==================== PDF EXPORT ====================
@@ -1567,65 +1077,26 @@ const ProfileModule = {
         }
     },
 
-    // ==================== LOGOUT - WORKING ====================
-    handleLogout() {
-        console.log('🚪 Starting logout...');
-        
+    async handleLogout() {
         if (confirm('Are you sure you want to logout?')) {
             try {
-                // Check if Firebase is available
-                if (typeof firebase !== 'undefined' && firebase.auth) {
-                    firebase.auth().signOut().then(() => {
-                        console.log('✅ Firebase user signed out');
-                        this.performLogoutCleanup();
-                    }).catch((error) => {
-                        console.error('Firebase logout error:', error);
-                        this.performLogoutCleanup();
-                    });
-                } else {
-                    // No Firebase, just do cleanup
-                    this.performLogoutCleanup();
+                if (!window.FarmModules.appData.profile.rememberUser) {
+                    const appKeys = ['farm-', 'profileData', 'transactions', 'sales', 'inventory'];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (appKeys.some(appKey => key.includes(appKey))) {
+                            localStorage.removeItem(key);
+                        }
+                    }
                 }
+                
+                this.showNotification('Logged out successfully', 'success');
+                
             } catch (error) {
                 console.error('Logout error:', error);
-                this.performLogoutCleanup();
+                this.showNotification('Error during logout', 'error');
             }
         }
-    },
-
-    performLogoutCleanup() {
-        console.log('🧹 Performing logout cleanup...');
-        
-        const profile = window.FarmModules.appData.profile || {};
-        const rememberUser = profile.rememberUser !== false;
-        
-        if (!rememberUser) {
-            console.log('🗑️ Clearing localStorage (remember user is false)');
-            
-            // Clear specific keys
-            const keysToRemove = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key.startsWith('farm-') || key.includes('profile') || 
-                    key.includes('auth') || key.includes('user')) {
-                    keysToRemove.push(key);
-                }
-            }
-            
-            keysToRemove.forEach(key => {
-                localStorage.removeItem(key);
-            });
-        } else {
-            console.log('💾 Keeping data (remember user is true)');
-        }
-        
-        // Show logout message
-        this.showNotification('Logged out successfully', 'success');
-        
-        // Reload page after delay
-        setTimeout(() => {
-            window.location.reload();
-        }, 1500);
     },
 
     // ==================== MOBILE INSTALLATION ====================
@@ -1916,13 +1387,8 @@ Generated on: ${new Date().toLocaleString()}
             window.coreModule.showNotification(message, type);
         } else {
             console.log(`${type.toUpperCase()}: ${message}`);
-            if (type === 'error') {
-                alert(`❌ ${message}`);
-            } else if (type === 'success') {
-                alert(`✅ ${message}`);
-            } else {
-                alert(`ℹ️ ${message}`);
-            }
+            if (type === 'error') alert(`❌ ${message}`);
+            else if (type === 'success') alert(`✅ ${message}`);
         }
     },
 
