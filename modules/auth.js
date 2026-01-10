@@ -1,4 +1,4 @@
-// modules/auth.js - WITH GOOGLE AND MICROSOFT SOCIAL LOGIN
+// modules/auth.js - WITH GOOGLE AND MICROSOFT SOCIAL LOGIN - CENTERED
 console.log('Loading auth module...');
 
 class AuthModule {
@@ -9,17 +9,189 @@ class AuthModule {
     init() {
         console.log('✅ Auth module initialized');
         this.setupAuthForms();
+        this.addCenteringStyles(); // ADDED: Call centering styles
     }
 
     setupAuthForms() {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 this.attachFormHandlers();
+                this.applyCenteringStyles(); // ADDED: Apply centering after DOM loads
             });
         } else {
             this.attachFormHandlers();
+            this.applyCenteringStyles(); // ADDED: Apply centering immediately
         }
     }
+    
+    // ======== ADDED: CENTERING METHODS ========
+    addCenteringStyles() {
+        // Create and inject centering CSS
+        const style = document.createElement('style');
+        style.id = 'auth-centering-styles';
+        style.textContent = `
+            /* AUTH CENTERING STYLES */
+            #login-container, 
+            #auth-container,
+            .login-container,
+            .auth-container {
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                min-height: 100vh !important;
+                padding: 20px !important;
+                width: 100% !important;
+            }
+            
+            .auth-content {
+                max-width: 400px !important;
+                width: 100% !important;
+                margin: 0 auto !important;
+            }
+            
+            /* Center form elements */
+            .auth-form {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                width: 100% !important;
+            }
+            
+            /* Center form inputs */
+            .form-group {
+                width: 100% !important;
+            }
+            
+            /* Center buttons */
+            .auth-form button[type="submit"],
+            .btn-social {
+                display: block !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+            }
+            
+            /* Center social buttons container */
+            .social-buttons {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                width: 100% !important;
+                gap: 12px !important;
+            }
+            
+            .btn-social {
+                width: 100% !important;
+                max-width: 300px !important;
+            }
+            
+            /* Center text and links */
+            .auth-switch {
+                text-align: center !important;
+                width: 100% !important;
+                margin-top: 20px !important;
+            }
+            
+            /* Responsive adjustments */
+            @media (max-width: 768px) {
+                #login-container,
+                #auth-container,
+                .login-container,
+                .auth-container {
+                    padding: 15px !important;
+                }
+                
+                .auth-content {
+                    max-width: 100% !important;
+                }
+                
+                .btn-social {
+                    max-width: 100% !important;
+                }
+            }
+            
+            /* Animation for centered form */
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            .auth-content {
+                animation: fadeInUp 0.5s ease-out !important;
+            }
+            
+            /* Glass effect for centered card */
+            .auth-glass-card {
+                background: rgba(255, 255, 255, 0.1) !important;
+                backdrop-filter: blur(10px) !important;
+                border-radius: 20px !important;
+                padding: 40px !important;
+                border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+                width: 100% !important;
+            }
+            
+            /* Dark mode support */
+            @media (prefers-color-scheme: dark) {
+                .auth-glass-card {
+                    background: rgba(0, 0, 0, 0.2) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                }
+            }
+        `;
+        
+        document.head.appendChild(style);
+    }
+    
+    applyCenteringStyles() {
+        // Apply centering to existing elements
+        setTimeout(() => {
+            // Find and center auth containers
+            const authContainers = [
+                document.getElementById('login-container'),
+                document.getElementById('auth-container'),
+                document.querySelector('.login-container'),
+                document.querySelector('.auth-container')
+            ].filter(el => el);
+            
+            authContainers.forEach(container => {
+                container.style.display = 'flex';
+                container.style.justifyContent = 'center';
+                container.style.alignItems = 'center';
+                container.style.minHeight = '100vh';
+                container.style.padding = '20px';
+                container.style.width = '100%';
+            });
+            
+            // Find and center auth content
+            const authContents = [
+                document.querySelector('.auth-content'),
+                document.querySelector('.login-content'),
+                document.querySelector('.auth-wrapper')
+            ].filter(el => el);
+            
+            authContents.forEach(content => {
+                content.style.maxWidth = '400px';
+                content.style.width = '100%';
+                content.style.margin = '0 auto';
+            });
+            
+            // Apply glass effect to main card
+            const mainCard = document.querySelector('.auth-card, .login-card, .card');
+            if (mainCard && !mainCard.classList.contains('auth-glass-card')) {
+                mainCard.classList.add('auth-glass-card');
+            }
+            
+            console.log('✅ Auth form centering applied');
+        }, 100);
+    }
+    
+    // ======== EXISTING CODE BELOW (keep everything else as is) ========
     
     attachFormHandlers() {
         console.log('🔧 Attaching form handlers...');
