@@ -1,12 +1,35 @@
 /* styles.css - REMOVING DUPLICATES ONLY */
 /* ===== VARIABLES & BASE (Keep as is) ===== */
 :root {
-    /* Keep all existing variables */
-}
+    /* Light mode (existing) */
+    --primary-color: #22c55e;
+    --primary-dark: #16a34a;
+    --primary-light: #4ade80;
+    --secondary-color: #f59e0b;
+    --background-color: #f8faf9;
+    --surface-color: #ffffff;
+    --text-primary: #1a1a1a;
+    --text-secondary: #666666;
+    --error-color: #ef4444;
+    --success-color: #22c55e;
+    --warning-color: #f59e0b;
+    --border-color: #e5e7eb;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --shadow-hover-color: rgba(0, 0, 0, 0.15);
+    
+    }
 
 /* Dark mode class */
 .dark-mode {
-    /* Keep as is */
+    /* Dark mode */
+    --dm-background: #0f172a;
+    --dm-surface: #1e293b;
+    --dm-surface-light: #334155;
+    --dm-text-primary: #f8fafc;
+    --dm-text-secondary: #cbd5e1;
+    --dm-border: #374151;
+    --dm-shadow: rgba(0, 0, 0, 0.3);
+    --dm-shadow-hover: rgba(0, 0, 0, 0.4);
 }
 
 * {
