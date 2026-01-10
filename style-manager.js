@@ -479,6 +479,120 @@ const StyleManager = {
                 background: rgba(255, 255, 255, 1);
                 box-shadow: var(--shadow-md);
             }
+
+            /* ===== CRITICAL FIXES FROM USER ===== */
+        
+        /* 1. Welcome text always white */
+        .welcome-section,
+        .welcome-section * {
+            color: white !important;
+        }
+        
+        .welcome-section h1,
+        .welcome-section p {
+            color: white !important;
+        }
+        
+        .dark-mode .welcome-section,
+        .dark-mode .welcome-section * {
+            color: white !important;
+        }
+        
+        /* 2. Brand text same gray color */
+        .nav-brand .brand-text,
+        .nav-brand .brand-subtitle {
+            color: #666666 !important;
+            font-weight: 600;
+        }
+        
+        .dark-mode .nav-brand .brand-text,
+        .dark-mode .nav-brand .brand-subtitle {
+            color: #cbd5e1 !important;
+        }
+        
+        .nav-brand .brand-subtitle {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+        
+        .dark-mode .nav-brand .brand-subtitle {
+            opacity: 0.8;
+        }
+        
+        /* 3. Dark mode hover fix (dark gray, not white) */
+        .dark-mode .nav-item:hover {
+            background: rgba(71, 85, 105, 0.3) !important;
+            color: #f8fafc !important;
+        }
+        
+        .dark-mode .nav-item:hover span {
+            color: #f8fafc !important;
+        }
+        
+        .dark-mode .side-menu-item:hover {
+            background: rgba(71, 85, 105, 0.3) !important;
+            color: #f8fafc !important;
+        }
+        
+        .dark-mode .hamburger-menu:hover {
+            background: rgba(71, 85, 105, 0.3) !important;
+            color: #f8fafc !important;
+        }
+        
+        .dark-mode .btn-icon:hover {
+            background: rgba(71, 85, 105, 0.3) !important;
+            color: #f8fafc !important;
+        }
+        
+        /* 4. Navigation button sizes (not too wide) */
+        .nav-items {
+            gap: 4px !important;
+            padding: 0 4px !important;
+        }
+        
+        .nav-item {
+            padding: 6px 8px !important;
+            min-width: 60px !important;
+            max-width: 80px !important;
+            white-space: nowrap;
+        }
+        
+        .nav-label {
+            font-size: 10px !important;
+            margin-top: 2px !important;
+        }
+        
+        /* 5. Profile buttons (horizontal, not stretched) */
+        .profile-module .action-buttons {
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 10px !important;
+            flex-wrap: wrap !important;
+        }
+        
+        .profile-module .btn-primary,
+        .profile-module .btn-outline {
+            width: auto !important;
+            min-width: 120px !important;
+            max-width: 200px !important;
+            flex: 0 1 auto !important;
+        }
+        
+        /* 6. Recent activity text size (smaller) */
+        .activity-list > div div:first-child {
+            font-size: 28px !important;
+            margin-bottom: 8px !important;
+        }
+        
+        .activity-list > div div:nth-child(2) {
+            font-size: 13px !important;
+            margin-bottom: 4px !important;
+        }
+        
+        .activity-list > div div:last-child {
+            font-size: 11px !important;
+        }
+        
         `;
         document.head.appendChild(style);
     },
