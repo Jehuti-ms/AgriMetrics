@@ -85,29 +85,29 @@ class FarmManagementApp {
         this.initializeAppComponents();
     }
     
-    async initializeAppComponents() {
-        console.log('🚀 Initializing app components...');
-        
-        // Initialize modules
-        this.initializeStyleManager();
-        this.initializeFarmModules();
-        
-        // Load user preferences
-        await this.loadUserPreferences();
-        
-        // Setup UI
-        this.createTopNavigation();
-        
-        setTimeout(() => {
-            this.setupHamburgerMenu();
-            this.setupSideMenuEvents();
-            this.setupEventListeners();
-            this.setupDarkMode();
-            this.showSection(this.currentSection);
-            this.hideLoading();
-            console.log('✅ App fully initialized');
-        }, 100);
-    }
+           async initializeAppComponents() {
+            console.log('🚀 Initializing app components...');
+            
+            // Initialize modules
+            this.initializeStyleManager();
+            this.initializeFarmModules();
+            
+            // Load user preferences
+            await this.loadUserPreferences();
+            
+            // Setup UI - CREATE NAVIGATION FIRST
+            this.createTopNavigation();
+            
+            setTimeout(() => {
+                this.setupHamburgerMenu();
+                this.setupSideMenuEvents();
+                this.setupEventListeners();
+                this.setupDarkMode(); // SETUP THEME TOGGLE AFTER NAV IS CREATED
+                this.showSection(this.currentSection);
+                this.hideLoading();
+                console.log('✅ App fully initialized');
+            }, 100);
+        }
     
     handleNoUser() {
         console.log('🔒 No user found, showing auth screen');
@@ -195,29 +195,86 @@ class FarmManagementApp {
     }
 
     applyUserTheme() {
-        const theme = this.userPreferences.theme || 'auto';
-        
-        if (theme === 'dark') {
+    const theme = this.userPreferences.theme || 'auto';
+    
+    if (theme === 'dark') {
+        document.body.classList.add('dark-mode');
+    } else if (theme === 'light') {
+        document.body.classList.remove('dark-mode');
+    } else {
+        // Auto mode - check system preference
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (prefersDark) {
             document.body.classList.add('dark-mode');
-        } else if (theme === 'light') {
-            document.body.classList.remove('dark-mode');
         } else {
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            document.body.classList.toggle('dark-mode', prefersDark);
+            document.body.classList.remove('dark-mode');
         }
     }
+    
+    // Update the theme toggle icon
+    this.updateThemeToggleIcon();
+}
 
     setupDarkMode() {
+    // Wait for navigation to be created
+    setTimeout(() => {
         const darkModeToggle = document.getElementById('dark-mode-toggle');
         if (darkModeToggle) {
-            darkModeToggle.addEventListener('click', () => {
-                document.body.classList.toggle('dark-mode');
-                const isDarkMode = document.body.classList.contains('dark-mode');
-                this.userPreferences.theme = isDarkMode ? 'dark' : 'light';
-                localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
+            // Remove existing listener by cloning
+            const newToggle = darkModeToggle.cloneNode(true);
+            darkModeToggle.parentNode.replaceChild(newToggle, darkModeToggle);
+            
+            // Add click event to the new button
+            newToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleDarkMode();
             });
+            
+            // Update icon based on current theme
+            this.updateThemeToggleIcon();
+            
+            console.log('✅ Theme toggle button initialized');
+        } else {
+            console.error('❌ Theme toggle button not found');
         }
+    }, 200); // Give time for navigation to render
+}
+
+toggleDarkMode() {
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    
+    if (isDarkMode) {
+        // Switch to light mode
+        document.body.classList.remove('dark-mode');
+        this.userPreferences.theme = 'light';
+        console.log('🌞 Switched to light mode');
+    } else {
+        // Switch to dark mode
+        document.body.classList.add('dark-mode');
+        this.userPreferences.theme = 'dark';
+        console.log('🌙 Switched to dark mode');
     }
+    
+    // Save preferences
+    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
+    
+    // Update icon
+    this.updateThemeToggleIcon();
+}
+
+updateThemeToggleIcon() {
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    if (!darkModeToggle) return;
+    
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    const iconSpan = darkModeToggle.querySelector('span');
+    
+    if (iconSpan) {
+        iconSpan.textContent = isDarkMode ? '☀️' : '🌙';
+        darkModeToggle.title = isDarkMode ? 'Switch to light mode' : 'Switch to dark mode';
+    }
+}
   
     setupEventListeners() {
         document.addEventListener('click', (e) => {
