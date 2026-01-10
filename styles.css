@@ -1211,3 +1211,126 @@ main {
         transform: none;
     }
 }
+
+/* ===== CRITICAL FIX: WELCOME TEXT COLOR ===== */
+.welcome-section,
+.welcome-section * {
+    color: white !important;
+}
+
+.welcome-section h1,
+.welcome-section p {
+    color: white !important;
+}
+
+/* Force white text in both modes */
+.welcome-section {
+    color: white !important;
+}
+
+.welcome-section h1 {
+    color: white !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+}
+
+.welcome-section p {
+    color: white !important;
+    opacity: 0.9 !important;
+}
+
+/* Dark mode should also keep it white */
+.dark-mode .welcome-section,
+.dark-mode .welcome-section * {
+    color: white !important;
+}
+
+.dark-mode .welcome-section h1,
+.dark-mode .welcome-section p {
+    color: white !important;
+}
+
+/* ===== CRITICAL FIX: NAVIGATION BRAND TEXT ===== */
+.nav-brand .brand-text {
+    color: var(--text-primary) !important;
+}
+
+.nav-brand .brand-subtitle {
+    color: var(--text-secondary) !important;
+}
+
+.dark-mode .nav-brand .brand-text {
+    color: var(--dm-text-primary) !important;
+}
+
+.dark-mode .nav-brand .brand-subtitle {
+    color: var(--dm-text-secondary) !important;
+}
+
+/* ===== CRITICAL FIX: DARK MODE HOVER BACKGROUNDS ===== */
+.dark-mode .nav-item:hover {
+    background: rgba(71, 85, 105, 0.3) !important; /* slate-700 with transparency */
+    color: #f8fafc !important;
+}
+
+.dark-mode .side-menu-item:hover {
+    background: rgba(71, 85, 105, 0.3) !important;
+    color: #f8fafc !important;
+}
+
+.dark-mode .hamburger-menu:hover {
+    background: rgba(71, 85, 105, 0.3) !important;
+    color: #f8fafc !important;
+}
+
+.dark-mode .btn-icon:hover {
+    background: rgba(71, 85, 105, 0.3) !important;
+    color: #f8fafc !important;
+}
+
+/* ===== CRITICAL FIX: NAVIGATION BUTTON SIZES ===== */
+.nav-items {
+    gap: 4px !important;
+    padding: 0 4px !important;
+}
+
+.nav-item {
+    padding: 6px 8px !important;
+    min-width: 60px !important;
+    max-width: 80px !important;
+}
+
+.nav-label {
+    font-size: 10px !important;
+    margin-top: 2px !important;
+}
+
+/* ===== CRITICAL FIX: PROFILE BUTTONS ===== */
+.profile-module .action-buttons {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+}
+
+.profile-module .btn-primary,
+.profile-module .btn-outline {
+    width: auto !important;
+    min-width: 120px !important;
+    max-width: 200px !important;
+    flex: 0 1 auto !important;
+}
+
+/* ===== CRITICAL FIX: RECENT ACTIVITY TEXT SIZE ===== */
+.activity-list > div div:first-child {
+    font-size: 28px !important;
+    margin-bottom: 8px !important;
+}
+
+.activity-list > div div:nth-child(2) {
+    font-size: 13px !important;
+    margin-bottom: 4px !important;
+}
+
+.activity-list > div div:last-child {
+    font-size: 11px !important;
+}
