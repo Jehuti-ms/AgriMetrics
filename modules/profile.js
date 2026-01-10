@@ -539,14 +539,13 @@ const ProfileModule = {
                         </div>
                     </div>
 
-                    <!-- Profile Information Card -->
+                    <!-- Profile Information Form -->
                     <div class="profile-card glass-card">
                         <div class="profile-header">
                             <div class="profile-avatar">
                                 <span class="avatar-icon">🚜</span>
                             </div>
                             <div class="profile-info">
-                                <!-- This will show the actual farm name from profile data -->
                                 <h2 id="profile-farm-name">${window.FarmModules.appData.profile?.farmName || 'My Farm'}</h2>
                                 <p id="profile-farmer-name">${window.FarmModules.appData.profile?.farmerName || 'Farm Manager'}</p>
                                 <p class="profile-email" id="profile-email">${window.FarmModules.appData.profile?.email || 'No email'}</p>
@@ -1010,11 +1009,29 @@ async saveProfile() {
         profile.farmLocation = document.getElementById('farm-location')?.value || profile.farmLocation;
         profile.rememberUser = document.getElementById('remember-user')?.checked || profile.rememberUser;
 
+        // DEBUG LOG: Show what was entered
+        console.log('📝 DEBUG - Profile data to save:', {
+            farmName: profile.farmName,
+            farmerName: profile.farmerName,
+            email: profile.email,
+            farmType: profile.farmType,
+            farmLocation: profile.farmLocation
+        });
+
         // Update app data
         window.FarmModules.appData.farmName = profile.farmName;
 
+        // DEBUG LOG: Show what's in appData
+        console.log('📝 DEBUG - AppData after update:', {
+            appDataFarmName: window.FarmModules.appData.farmName,
+            profileFarmName: window.FarmModules.appData.profile.farmName
+        });
+
         // Save to local storage
         this.saveToLocalStorage();
+
+        // DEBUG LOG: Show what's being saved
+        console.log('📝 DEBUG - Saving to localStorage:', profile);
 
         // 🔥🔥🔥 FIXED: Update the profile display IMMEDIATELY 🔥🔥🔥
         this.updateProfileInfo();
@@ -1031,13 +1048,40 @@ async saveProfile() {
 updateProfileInfo() {
     const profile = window.FarmModules.appData.profile;
     
+    // DEBUG LOG: Show what's being used to update
+    console.log('🔄 DEBUG - Updating profile info with:', {
+        farmName: profile.farmName,
+        farmerName: profile.farmerName,
+        email: profile.email
+    });
+    
+    // Get the DOM elements
+    const farmNameElement = document.getElementById('profile-farm-name');
+    const farmerNameElement = document.getElementById('profile-farmer-name');
+    const emailElement = document.getElementById('profile-email');
+    
+    // DEBUG LOG: Show if elements exist
+    console.log('🔄 DEBUG - DOM elements found:', {
+        farmNameElement: !!farmNameElement,
+        farmerNameElement: !!farmerNameElement,
+        emailElement: !!emailElement
+    });
+    
     // 🔥🔥🔥 This is what updates the profile card at the top 🔥🔥🔥
-    document.getElementById('profile-farm-name').textContent = profile.farmName;
-    document.getElementById('profile-farmer-name').textContent = profile.farmerName;
+    if (farmNameElement) {
+        console.log(`🔄 DEBUG - Setting farm name to: "${profile.farmName}"`);
+        farmNameElement.textContent = profile.farmName;
+    }
+    
+    if (farmerNameElement) {
+        farmerNameElement.textContent = profile.farmerName;
+    }
     
     // Show email or "No email" if empty
     const displayEmail = profile.email ? profile.email : 'No email';
-    document.getElementById('profile-email').textContent = displayEmail;
+    if (emailElement) {
+        emailElement.textContent = displayEmail;
+    }
     
     // Update form fields
     document.getElementById('farm-name').value = profile.farmName;
@@ -1056,6 +1100,9 @@ updateProfileInfo() {
     document.getElementById('remember-user').checked = profile.rememberUser !== false;
     document.getElementById('local-storage').checked = profile.localStorageEnabled !== false;
     document.getElementById('theme-selector').value = profile.theme || 'auto';
+    
+    // DEBUG LOG: Confirm update completed
+    console.log('✅ DEBUG - Profile update complete');
 },
     
     // ==================== REST OF THE METHODS (UNCHANGED) ====================
