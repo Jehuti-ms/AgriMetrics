@@ -998,7 +998,7 @@ setupEventListeners() {
 },  // <-- THIS WAS MISSING! Add this closing brace
     
     // ==================== USER DATA MANAGEMENT ====================
-   async loadUserData() {
+ async loadUserData() {
     try {
         console.log('🔍 DEBUG - Loading user data...');
         
@@ -1026,8 +1026,8 @@ setupEventListeners() {
         // Load from local storage
         this.loadFromLocalStorage();
 
-        // 🔥🔥🔥 Update the profile card ONCE when loading
-        this.updateProfileCardOnly();
+        // 🔥🔥🔥 FIX: Update BOTH profile card AND form inputs
+        this.updateProfileDisplay();
         
         console.log('✅ DEBUG - User data loaded');
     } catch (error) {
@@ -1035,13 +1035,18 @@ setupEventListeners() {
     }
 },
 
-// 🔥🔥🔥 NEW METHOD: Only updates profile card, not form inputs
-updateProfileCardOnly() {
-    console.log('🔍 DEBUG - Updating profile card only (preserving form inputs)');
+// 🔥🔥🔥 NEW METHOD: Updates both profile card AND form inputs
+updateProfileDisplay() {
+    console.log('🔍 DEBUG - Updating profile display (card + form)');
     
     const profile = window.FarmModules.appData.profile;
     
-    // Update profile card
+    if (!profile) {
+        console.error('❌ ERROR: No profile data found');
+        return;
+    }
+    
+    // 1. Update Profile Card
     document.getElementById('profile-farm-name').textContent = profile.farmName || 'My Farm';
     document.getElementById('profile-farmer-name').textContent = profile.farmerName || 'Farm Manager';
     document.getElementById('profile-email').textContent = profile.email || 'No email';
@@ -1049,85 +1054,44 @@ updateProfileCardOnly() {
     const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
     document.getElementById('member-since').textContent = `Member since: ${memberSince}`;
     
-    console.log('✅ DEBUG - Profile card updated (form inputs preserved)');
-},
-
-  async saveProfile() {
-    console.log('🔍 DEBUG - Starting saveProfile()');
+    // 2. Update Form Inputs
+    const farmNameInput = document.getElementById('farm-name');
+    const farmerNameInput = document.getElementById('farmer-name');
+    const emailInput = document.getElementById('farm-email');
+    const farmTypeInput = document.getElementById('farm-type');
+    const farmLocationInput = document.getElementById('farm-location');
     
-    try {
-        // FIX: Get profile from appData or create new
-        const profile = window.FarmModules.appData.profile || {};
-        
-        // FIX: Get form element fresh
-        const farmNameInput = document.getElementById('farm-name');
-        const farmerNameInput = document.getElementById('farmer-name');
-        const emailInput = document.getElementById('farm-email');
-        
-        if (!farmNameInput) {
-            console.error('❌ ERROR: farm-name input not found!');
-            this.showNotification('Error: Farm name field not found', 'error');
-            return;
-        }
-        
-        // FIX: ALWAYS get the current value directly from input
-        const farmName = farmNameInput.value.trim();
-        const farmerName = farmerNameInput?.value.trim();
-        const email = emailInput?.value.trim();
-        
-        console.log('🔍 DEBUG - Raw form values:', {
-            farmName: farmName,
-            farmerName: farmerName,
-            email: email
-        });
-        
-        // FIX: Update profile object
-        if (farmName) {
-            profile.farmName = farmName;
-        }
-        
-        if (farmerName) {
-            profile.farmerName = farmerName;
-        }
-        
-        if (email) {
-            profile.email = email;
-        }
-        
-        // FIX: Update other fields
-        const farmTypeInput = document.getElementById('farm-type');
-        const farmLocationInput = document.getElementById('farm-location');
-        
-        if (farmTypeInput) {
-            profile.farmType = farmTypeInput.value || profile.farmType;
-        }
-        
-        if (farmLocationInput) {
-            profile.farmLocation = farmLocationInput.value || profile.farmLocation;
-        }
-        
-        // FIX: Update the app data
-        window.FarmModules.appData.profile = profile;
-        window.FarmModules.appData.farmName = profile.farmName;
-        
-        console.log('🔍 DEBUG - Final profile after save:', profile);
-        
-        // FIX: Save to local storage
-        this.saveToLocalStorage();
-        
-        // FIX: Update UI
-        this.updateProfileCardOnly();
-        
-        // FIX: Dispatch event to update other modules
-        window.dispatchEvent(new CustomEvent('farm-data-updated'));
-        
-        this.showNotification('Profile saved successfully!', 'success');
-        console.log('✅ DEBUG - Profile saved');
-        
-    } catch (error) {
-        console.error('Error saving profile:', error);
-        this.showNotification('Error saving profile: ' + error.message, 'error');
+    if (farmNameInput) {
+        farmNameInput.value = profile.farmName || '';
+        console.log(`✅ DEBUG - Set farm-name input to: "${profile.farmName}"`);
     }
+    
+    if (farmerNameInput) {
+        farmerNameInput.value = profile.farmerName || '';
+        console.log(`✅ DEBUG - Set farmer-name input to: "${profile.farmerName}"`);
+    }
+    
+    if (emailInput) {
+        emailInput.value = profile.email || '';
+    }
+    
+    if (farmTypeInput) {
+        farmTypeInput.value = profile.farmType || '';
+    }
+    
+    if (farmLocationInput) {
+        farmLocationInput.value = profile.farmLocation || '';
+    }
+    
+    // 3. Update Settings
+    document.getElementById('default-currency').value = profile.currency || 'USD';
+    document.getElementById('low-stock-threshold').value = profile.lowStockThreshold || 10;
+    document.getElementById('auto-sync').checked = profile.autoSync !== false;
+    document.getElementById('remember-user').checked = profile.rememberUser !== false;
+    document.getElementById('local-storage').checked = profile.localStorageEnabled !== false;
+    document.getElementById('theme-selector').value = profile.theme || 'auto';
+    
+    console.log('✅ DEBUG - Profile display updated (both card and form)');
 },
     
     async saveSetting(setting, value) {
