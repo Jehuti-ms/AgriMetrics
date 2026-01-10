@@ -1,5 +1,5 @@
-// modules/profile.js - COMPLETE FIXED VERSION WITH ALL SECTIONS
-console.log('👤 Loading profile module...');
+// modules/profile.js - COMPLETE FIXED VERSION WITH WORKING LOGOUT
+console.log('👤 Loading profile module with FIXED logout...');
 
 const ProfileModule = {
     name: 'profile',
@@ -95,8 +95,156 @@ const ProfileModule = {
                 .support-channel h4 { margin: 0 0 4px 0; color: var(--text-primary); }
                 .support-channel p { margin: 0; font-size: 14px; color: var(--text-secondary); }
                 .support-channel-actions { display: flex; gap: 8px; }
-                @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } .stats-overview { grid-template-columns: repeat(2, 1fr); } .pdf-buttons-container { grid-template-columns: repeat(2, 1fr); } .action-buttons { flex-direction: column; } .action-buttons button { width: 100%; } .guide-steps { grid-template-columns: 1fr; } .guide-actions { flex-direction: column; } .support-channel { flex-direction: column; text-align: center; } .support-channel-actions { width: 100%; justify-content: center; } }
-                @media (max-width: 480px) { .stats-overview { grid-template-columns: 1fr; } .pdf-buttons-container { grid-template-columns: 1fr; } }
+                
+                /* 🔥 FIXED: Logout button styling */
+                #logout-btn {
+                    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    transition: all 0.3s;
+                    margin-top: 8px;
+                }
+                
+                #logout-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+                    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+                }
+                
+                #logout-btn:active {
+                    transform: translateY(0);
+                }
+                
+                #logout-btn:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                    transform: none;
+                }
+                
+                #logout-btn .logout-spinner {
+                    animation: spin 1s linear infinite;
+                }
+                
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                
+                /* Logout confirmation modal */
+                .logout-modal {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.8);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                    animation: fadeIn 0.3s ease-out;
+                }
+                
+                .logout-modal-content {
+                    background: var(--card-bg);
+                    padding: 32px;
+                    border-radius: 16px;
+                    max-width: 400px;
+                    width: 90%;
+                    text-align: center;
+                    animation: slideUp 0.3s ease-out;
+                    border: 1px solid var(--glass-border);
+                }
+                
+                .logout-modal h3 {
+                    color: var(--text-primary);
+                    margin-bottom: 16px;
+                    font-size: 24px;
+                }
+                
+                .logout-modal p {
+                    color: var(--text-secondary);
+                    margin-bottom: 24px;
+                    line-height: 1.5;
+                }
+                
+                .logout-modal-buttons {
+                    display: flex;
+                    gap: 12px;
+                    justify-content: center;
+                }
+                
+                .logout-confirm-btn {
+                    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    min-width: 120px;
+                }
+                
+                .logout-cancel-btn {
+                    background: var(--glass-bg);
+                    color: var(--text-primary);
+                    border: 1px solid var(--glass-border);
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    min-width: 120px;
+                }
+                
+                .logout-confirm-btn:hover {
+                    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+                }
+                
+                .logout-cancel-btn:hover {
+                    background: var(--glass-bg-hover);
+                }
+                
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                
+                @keyframes slideUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                
+                @media (max-width: 768px) { 
+                    .form-row { grid-template-columns: 1fr; } 
+                    .stats-overview { grid-template-columns: repeat(2, 1fr); } 
+                    .pdf-buttons-container { grid-template-columns: repeat(2, 1fr); } 
+                    .action-buttons { flex-direction: column; } 
+                    .action-buttons button { width: 100%; } 
+                    .guide-steps { grid-template-columns: 1fr; } 
+                    .guide-actions { flex-direction: column; } 
+                    .support-channel { flex-direction: column; text-align: center; } 
+                    .support-channel-actions { width: 100%; justify-content: center; }
+                    .logout-modal-buttons { flex-direction: column; }
+                    .logout-modal-content { padding: 24px; }
+                }
+                
+                @media (max-width: 480px) { 
+                    .stats-overview { grid-template-columns: 1fr; } 
+                    .pdf-buttons-container { grid-template-columns: 1fr; } 
+                }
             </style>
             
             <div class="module-container">
@@ -334,7 +482,10 @@ const ProfileModule = {
                             <button class="btn-outline" id="export-data">📥 Export All Data</button>
                             <button class="btn-outline" id="import-data">📤 Import Data</button>
                             <button class="btn-primary" id="clear-all-data" style="background: var(--gradient-danger);">⚠️ Clear All Data</button>
-                            <button class="btn-outline" id="logout-btn" style="color: #ef4444; border-color: #ef4444;">🚪 Logout</button>
+                            <!-- 🔥 FIXED: Enhanced logout button -->
+                            <button type="button" id="logout-btn">
+                                <i class="fas fa-sign-out-alt"></i> 🚪 Logout
+                            </button>
                         </div>
                     </div>
 
@@ -514,7 +665,17 @@ const ProfileModule = {
         document.getElementById('export-data')?.addEventListener('click', () => this.exportData());
         document.getElementById('import-data')?.addEventListener('click', () => this.importData());
         document.getElementById('clear-all-data')?.addEventListener('click', () => this.clearAllData());
-        document.getElementById('logout-btn')?.addEventListener('click', () => this.handleLogout());
+        
+        // 🔥 FIXED: Enhanced logout button listener
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🚪 Logout button clicked');
+                this.showLogoutConfirmation();
+            });
+        }
 
         // Mobile installation
         document.getElementById('send-install-link')?.addEventListener('click', () => this.sendInstallationLink());
@@ -548,6 +709,169 @@ const ProfileModule = {
         });
 
         console.log('✅ All event listeners set up');
+    },
+
+    // ==================== LOGOUT SYSTEM - FIXED ====================
+    showLogoutConfirmation() {
+        console.log('🔒 Showing logout confirmation...');
+        
+        // Create modal
+        const modal = document.createElement('div');
+        modal.className = 'logout-modal';
+        modal.innerHTML = `
+            <div class="logout-modal-content">
+                <h3>Confirm Logout</h3>
+                <p>Are you sure you want to log out? You will need to sign in again to access your farm data.</p>
+                <div class="logout-modal-buttons">
+                    <button class="logout-cancel-btn" id="logout-cancel">Cancel</button>
+                    <button class="logout-confirm-btn" id="logout-confirm">Log Out</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Add event listeners
+        document.getElementById('logout-cancel').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+        
+        document.getElementById('logout-confirm').addEventListener('click', async () => {
+            await this.performLogout();
+            document.body.removeChild(modal);
+        });
+        
+        // Close on background click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        });
+    },
+
+    async performLogout() {
+        console.log('🚪 Starting logout process...');
+        
+        const logoutBtn = document.getElementById('logout-btn');
+        const originalText = logoutBtn.innerHTML;
+        
+        try {
+            // Disable button and show loading
+            logoutBtn.disabled = true;
+            logoutBtn.innerHTML = '<i class="fas fa-spinner logout-spinner"></i> Logging out...';
+            
+            // 1. Firebase logout
+            if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().signOut) {
+                console.log('🔥 Attempting Firebase logout...');
+                try {
+                    await firebase.auth().signOut();
+                    console.log('✅ Firebase logout successful');
+                } catch (firebaseError) {
+                    console.warn('⚠️ Firebase logout error (continuing with cleanup):', firebaseError.message);
+                }
+            }
+            
+            // 2. Clear all local data
+            console.log('🧹 Clearing local data...');
+            this.clearLocalData();
+            
+            // 3. Show success message
+            this.showNotification('Logged out successfully! Redirecting...', 'success');
+            
+            // 4. Reset button
+            logoutBtn.innerHTML = '<i class="fas fa-check"></i> ✅ Logged out!';
+            
+            // 5. Redirect to home/login page
+            console.log('🔄 Redirecting to login page...');
+            setTimeout(() => {
+                // Force reload to clear any cached state
+                window.location.href = window.location.origin + window.location.pathname;
+                window.location.reload(true);
+            }, 2000);
+            
+        } catch (error) {
+            console.error('❌ Logout process error:', error);
+            
+            // Reset button with error state
+            logoutBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Logout Failed';
+            logoutBtn.style.background = '#6b7280';
+            
+            // Still try to redirect after showing error
+            setTimeout(() => {
+                logoutBtn.innerHTML = originalText;
+                logoutBtn.disabled = false;
+                logoutBtn.style.background = '';
+                
+                this.showNotification('Logout failed, reloading page...', 'error');
+                
+                // Force reload anyway
+                window.location.reload(true);
+            }, 3000);
+        }
+    },
+
+    clearLocalData() {
+        console.log('🗑️ Clearing local storage data...');
+        
+        // List of keys to keep (optional - for remembering some settings)
+        const keysToKeep = [];
+        
+        // Clear all app-related localStorage items
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            
+            // Check if we should keep this key
+            const shouldKeep = keysToKeep.some(keepKey => 
+                key === keepKey || key.startsWith(keepKey)
+            );
+            
+            if (!shouldKeep) {
+                // Clear Firebase auth data
+                if (key.includes('firebase') && key.includes('auth')) {
+                    localStorage.removeItem(key);
+                    console.log(`🔥 Removed Firebase key: ${key}`);
+                }
+                // Clear app data
+                else if (key.startsWith('farm-') || 
+                         key.includes('profile') || 
+                         key.includes('inventory') || 
+                         key.includes('order') || 
+                         key.includes('customer') || 
+                         key.includes('sale') || 
+                         key.includes('transaction')) {
+                    localStorage.removeItem(key);
+                    console.log(`🗑️ Removed app key: ${key}`);
+                }
+            }
+        }
+        
+        // Clear sessionStorage
+        sessionStorage.clear();
+        
+        // Clear app data in memory
+        if (window.FarmModules && window.FarmModules.appData) {
+            // Keep only the profile structure for re-initialization
+            const emptyProfile = {
+                farmName: 'My Farm',
+                farmerName: 'Farm Manager',
+                email: '',
+                farmType: '',
+                farmLocation: '',
+                currency: 'USD',
+                lowStockThreshold: 10,
+                autoSync: true,
+                localStorageEnabled: true,
+                theme: 'auto',
+                memberSince: new Date().toISOString()
+            };
+            
+            window.FarmModules.appData = {
+                profile: emptyProfile,
+                farmName: 'My Farm'
+            };
+        }
+        
+        console.log('✅ Local data cleared');
     },
 
     // ==================== SAVE PROFILE - ULTIMATE FIX ====================
@@ -1073,28 +1397,6 @@ const ProfileModule = {
                     console.error('Error clearing data:', error);
                     this.showNotification('Error clearing data', 'error');
                 }
-            }
-        }
-    },
-
-    async handleLogout() {
-        if (confirm('Are you sure you want to logout?')) {
-            try {
-                if (!window.FarmModules.appData.profile.rememberUser) {
-                    const appKeys = ['farm-', 'profileData', 'transactions', 'sales', 'inventory'];
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const key = localStorage.key(i);
-                        if (appKeys.some(appKey => key.includes(appKey))) {
-                            localStorage.removeItem(key);
-                        }
-                    }
-                }
-                
-                this.showNotification('Logged out successfully', 'success');
-                
-            } catch (error) {
-                console.error('Logout error:', error);
-                this.showNotification('Error during logout', 'error');
             }
         }
     },
