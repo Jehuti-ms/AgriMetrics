@@ -1037,16 +1037,16 @@ const ProfileModule = {
     },
 
     // ==================== DIRECT SAVE HANDLER - SIMPLE FIX ====================
+      // ==================== ULTIMATE SAVE FIX ====================
     async handleDirectSave() {
-        console.log('💾 Starting DIRECT save...');
+        console.log('💾 Starting ULTIMATE save...');
         
         try {
-            // 🔥 Get FRESH references to input elements
+            // 🔥 CRITICAL: Small delay to ensure any async updates complete
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // 🔥 GET ABSOLUTELY FRESH references - no caching
             const farmNameInput = document.getElementById('farm-name');
-            const farmerNameInput = document.getElementById('farmer-name');
-            const emailInput = document.getElementById('farm-email');
-            const farmTypeInput = document.getElementById('farm-type');
-            const farmLocationInput = document.getElementById('farm-location');
             
             if (!farmNameInput) {
                 console.error('❌ Farm name input not found!');
@@ -1054,14 +1054,24 @@ const ProfileModule = {
                 return;
             }
             
-            // 🔥 Get CURRENT values directly from inputs
+            // 🔥 GET THE CURRENT VALUE - FORCE FRESH
             const farmName = farmNameInput.value.trim();
-            const farmerName = farmerNameInput?.value.trim();
-            const email = emailInput?.value.trim();
-            const farmType = farmTypeInput?.value;
-            const farmLocation = farmLocationInput?.value.trim();
+            console.log('🔥 ULTIMATE SAVE - Farm name value:', farmName);
+            console.log('🔥 ULTIMATE SAVE - Input element:', farmNameInput);
+            console.log('🔥 ULTIMATE SAVE - Input attributes:', {
+                id: farmNameInput.id,
+                value: farmNameInput.value,
+                defaultValue: farmNameInput.defaultValue,
+                placeholder: farmNameInput.placeholder
+            });
             
-            console.log('🔥 DIRECT SAVE - Current input values:', {
+            // Also get other values
+            const farmerName = document.getElementById('farmer-name')?.value.trim();
+            const email = document.getElementById('farm-email')?.value.trim();
+            const farmType = document.getElementById('farm-type')?.value;
+            const farmLocation = document.getElementById('farm-location')?.value.trim();
+            
+            console.log('🔥 ULTIMATE SAVE - All values:', {
                 farmName,
                 farmerName,
                 email,
@@ -1069,21 +1079,29 @@ const ProfileModule = {
                 farmLocation
             });
             
-            // Ensure profile exists
+            // 🔥 TEST: Try to update card BEFORE anything else
+            const farmNameCard = document.getElementById('profile-farm-name');
+            if (farmNameCard) {
+                console.log('🔥 BEFORE update - Card text:', farmNameCard.textContent);
+                farmNameCard.textContent = farmName || 'My Farm';
+                console.log('🔥 AFTER update - Card text:', farmNameCard.textContent);
+            }
+            
+            // Update profile object
             if (!window.FarmModules.appData.profile) {
                 window.FarmModules.appData.profile = {};
             }
             
             const profile = window.FarmModules.appData.profile;
             
-            // 🔥 Update ALL fields with current values
+            // Update with current values
             profile.farmName = farmName || 'My Farm';
             profile.farmerName = farmerName || 'Farm Manager';
             profile.email = email || '';
             profile.farmType = farmType || '';
             profile.farmLocation = farmLocation || '';
             
-            // Ensure other fields exist
+            // Ensure other fields
             profile.currency = profile.currency || 'USD';
             profile.lowStockThreshold = profile.lowStockThreshold || 10;
             profile.autoSync = profile.autoSync !== false;
@@ -1095,24 +1113,21 @@ const ProfileModule = {
             // Update app data
             window.FarmModules.appData.farmName = profile.farmName;
             
-            console.log('📊 Profile after direct save:', profile);
+            console.log('📊 Profile after save:', profile);
             
             // Save to local storage
             this.saveToLocalStorage();
             
-            // 🔥 FORCE update the profile card IMMEDIATELY
-            this.updateProfileCardImmediately(profile);
-            
-            // Show success with actual saved name
+            // Show success with the ACTUAL saved name
             this.showNotification(`✅ Profile saved! Farm: ${profile.farmName}`, 'success');
             
             // Notify other modules
             window.dispatchEvent(new CustomEvent('farm-data-updated'));
             
-            console.log('✅ DIRECT save completed successfully');
+            console.log('✅ ULTIMATE save completed');
             
         } catch (error) {
-            console.error('❌ Error in direct save:', error);
+            console.error('❌ Error in ultimate save:', error);
             this.showNotification('Error saving profile: ' + error.message, 'error');
         }
     },
