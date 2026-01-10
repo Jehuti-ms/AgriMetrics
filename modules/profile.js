@@ -863,127 +863,136 @@ const ProfileModule = {
 
     // ==================== EVENT LISTENERS ====================
     setupEventListeners() {
-        // Profile form
-        document.getElementById('profile-form')?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            ProfileModule.saveProfile();
-        });
+    console.log('🔍 DEBUG - Setting up event listeners');
+    
+    // Profile form - FIXED
+    document.getElementById('profile-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        console.log('🔍 DEBUG - Profile form submitted');
+        ProfileModule.saveProfile();  // ✅ Use ProfileModule directly
+    });
 
-        // Sync now button
-        document.getElementById('sync-now-btn')?.addEventListener('click', () => {
-            this.syncNow();
-        });
+    // Sync now button - FIXED
+    document.getElementById('sync-now-btn')?.addEventListener('click', () => {
+        console.log('🔍 DEBUG - Sync now clicked');
+        ProfileModule.syncNow();
+    });
 
-        // Reset button
-        document.getElementById('reset-profile')?.addEventListener('click', () => {
-            this.loadUserData();
-            this.showNotification('Profile form reset to current values', 'info');
-        });
+    // Reset button - FIXED
+    document.getElementById('reset-profile')?.addEventListener('click', () => {
+        console.log('🔍 DEBUG - Reset profile clicked');
+        ProfileModule.loadUserData();
+        ProfileModule.showNotification('Profile form reset to current values', 'info');
+    });
 
-        // Settings changes
-        document.getElementById('default-currency')?.addEventListener('change', (e) => {
-            this.saveSetting('currency', e.target.value);
-        });
+    // Settings changes - FIXED
+    document.getElementById('default-currency')?.addEventListener('change', (e) => {
+        ProfileModule.saveSetting('currency', e.target.value);
+    });
 
-        document.getElementById('low-stock-threshold')?.addEventListener('change', (e) => {
-            this.saveSetting('lowStockThreshold', parseInt(e.target.value));
-        });
+    document.getElementById('low-stock-threshold')?.addEventListener('change', (e) => {
+        ProfileModule.saveSetting('lowStockThreshold', parseInt(e.target.value));
+    });
 
-        document.getElementById('auto-sync')?.addEventListener('change', (e) => {
-            this.saveSetting('autoSync', e.target.checked);
-        });
+    document.getElementById('auto-sync')?.addEventListener('change', (e) => {
+        ProfileModule.saveSetting('autoSync', e.target.checked);
+    });
 
-        document.getElementById('local-storage')?.addEventListener('change', (e) => {
-            this.saveSetting('localStorageEnabled', e.target.checked);
-        });
+    document.getElementById('local-storage')?.addEventListener('change', (e) => {
+        ProfileModule.saveSetting('localStorageEnabled', e.target.checked);
+    });
 
-        // Theme selector
-        document.getElementById('theme-selector')?.addEventListener('change', (e) => {
-            this.changeTheme(e.target.value);
-        });
+    // Theme selector - FIXED
+    document.getElementById('theme-selector')?.addEventListener('change', (e) => {
+        ProfileModule.changeTheme(e.target.value);
+    });
 
-        // Remember user
-        document.getElementById('remember-user')?.addEventListener('change', (e) => {
-            this.saveSetting('rememberUser', e.target.checked);
-            this.updateUserPersistence();
-        });
+    // Remember user - FIXED
+    document.getElementById('remember-user')?.addEventListener('change', (e) => {
+        ProfileModule.saveSetting('rememberUser', e.target.checked);
+        ProfileModule.updateUserPersistence();
+    });
 
-        // PDF Export buttons
-        document.getElementById('export-profile-pdf')?.addEventListener('click', () => {
-            this.exportProfilePDF();
-        });
+    // PDF Export buttons - FIXED
+    document.getElementById('export-profile-pdf')?.addEventListener('click', () => {
+        ProfileModule.exportProfilePDF();
+    });
 
-        document.getElementById('export-inventory-pdf')?.addEventListener('click', () => {
-            this.exportInventoryPDF();
-        });
+    document.getElementById('export-inventory-pdf')?.addEventListener('click', () => {
+        ProfileModule.exportInventoryPDF();
+    });
 
-        document.getElementById('export-sales-pdf')?.addEventListener('click', () => {
-            this.exportSalesPDF();
-        });
+    document.getElementById('export-sales-pdf')?.addEventListener('click', () => {
+        ProfileModule.exportSalesPDF();
+    });
 
-        document.getElementById('export-all-pdf')?.addEventListener('click', () => {
-            this.exportAllPDF();
-        });
+    document.getElementById('export-all-pdf')?.addEventListener('click', () => {
+        ProfileModule.exportAllPDF();
+    });
 
-        // Data management
-        document.getElementById('export-data')?.addEventListener('click', () => {
-            this.exportData();
-        });
+    // Data management - FIXED
+    document.getElementById('export-data')?.addEventListener('click', () => {
+        ProfileModule.exportData();
+    });
 
-        document.getElementById('import-data')?.addEventListener('click', () => {
-            this.importData();
-        });
+    document.getElementById('import-data')?.addEventListener('click', () => {
+        ProfileModule.importData();
+    });
 
-        document.getElementById('clear-all-data')?.addEventListener('click', () => {
-            this.clearAllData();
-        });
+    document.getElementById('clear-all-data')?.addEventListener('click', () => {
+        ProfileModule.clearAllData();
+    });
 
-        // Logout button
-        document.getElementById('logout-btn')?.addEventListener('click', () => {
-            this.handleLogout();
-        });
+    // Logout button - FIXED
+    document.getElementById('logout-btn')?.addEventListener('click', () => {
+        ProfileModule.handleLogout();
+    });
 
-        // NEW: Mobile Installation buttons
-        document.getElementById('send-install-link')?.addEventListener('click', () => {
-            this.sendInstallationLink();
-        });
+    // NEW: Mobile Installation buttons - FIXED
+    document.getElementById('send-install-link')?.addEventListener('click', () => {
+        ProfileModule.sendInstallationLink();
+    });
 
-        document.getElementById('show-qr-code')?.addEventListener('click', () => {
-            this.showQRCode();
-        });
+    document.getElementById('show-qr-code')?.addEventListener('click', () => {
+        ProfileModule.showQRCode();
+    });
 
-        // NEW: Support section event delegation
-        this.element.addEventListener('click', (e) => {
-            const button = e.target.closest('button[data-action]');
-            if (!button) return;
-            
-            e.preventDefault();
-            const action = button.getAttribute('data-action');
-            
-            switch(action) {
-                case 'copy-email':
-                    this.copyToClipboard('farm-support@example.com');
-                    break;
-                    
-                case 'open-slack':
-                    this.openSlackChannel();
-                    break;
-                    
-                case 'open-guide':
-                    this.openQuickGuide();
-                    break;
-                    
-                case 'download-guide':
-                    this.downloadQuickGuide();
-                    break;
-                    
-                case 'watch-tutorials':
-                    this.openYouTubeTutorials();
-                    break;
-            }
-        });
-    },
-
+    // NEW: Support section event delegation - FIXED
+    this.element.addEventListener('click', (e) => {
+        const button = e.target.closest('button[data-action]');
+        if (!button) return;
+        
+        e.preventDefault();
+        const action = button.getAttribute('data-action');
+        
+        console.log('🔍 DEBUG - Support action clicked:', action);
+        
+        switch(action) {
+            case 'copy-email':
+                ProfileModule.copyToClipboard('farm-support@example.com');
+                break;
+                
+            case 'open-slack':
+                ProfileModule.openSlackChannel();
+                break;
+                
+            case 'open-guide':
+                ProfileModule.openQuickGuide();
+                break;
+                
+            case 'download-guide':
+                ProfileModule.downloadQuickGuide();
+                break;
+                
+            case 'watch-tutorials':
+                ProfileModule.openYouTubeTutorials();
+                break;
+        }
+    });
+    
+    console.log('✅ DEBUG - All event listeners set up');
+},
+    
     // ==================== FIXED: USER DATA MANAGEMENT ====================
     async loadUserData() {
         try {
