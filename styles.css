@@ -1119,3 +1119,307 @@ main {
         transform: none;
     }
 }
+
+/* ===== AUTH FORM CENTERING FIX ===== */
+#auth-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    padding: 1rem;
+    position: relative;
+}
+
+.auth-forms {
+    background: var(--surface-color);
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 420px;
+    min-width: 320px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+.auth-form {
+    display: none;
+    width: 100%;
+}
+
+.auth-form.active {
+    display: block;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.auth-form h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--primary-color);
+    font-size: 28px;
+    font-weight: 700;
+}
+
+/* Form Input Improvements */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 16px;
+    transition: all 0.3s;
+    background: var(--surface-color);
+    color: var(--text-primary);
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Auth Links */
+.auth-links {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 1.5rem 0;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.auth-links a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.auth-links a:hover {
+    text-decoration: underline;
+    color: var(--primary-dark);
+}
+
+/* Primary Button Fix */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    width: 100%;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 0.5rem;
+    display: block;
+    text-align: center;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(34, 197, 94, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Social Login Buttons */
+.auth-social {
+    margin-top: 2rem;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    margin: 24px 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-color);
+}
+
+.auth-divider span {
+    padding: 0 16px;
+}
+
+.btn-social {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+    outline: none;
+}
+
+.btn-social.google {
+    background-color: #34A853;
+    color: white;
+    border: none;
+}
+
+.btn-social.google:hover {
+    background-color: #2E8B47;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(52, 168, 83, 0.3);
+}
+
+.btn-social.apple {
+    background-color: #2C3E50;
+    color: white;
+    border: none;
+}
+
+.btn-social.apple:hover {
+    background-color: #1A252F;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(44, 62, 80, 0.3);
+}
+
+/* Demo Mode Notice */
+.demo-notice {
+    text-align: center;
+    margin-top: 2rem;
+    padding: 1rem;
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: 8px;
+    border-left: 4px solid var(--warning-color);
+}
+
+.demo-notice p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.demo-notice strong {
+    color: var(--warning-color);
+}
+
+/* Background Animation */
+#auth-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(52, 168, 83, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(20, 184, 166, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+    animation: pulse 8s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.3; }
+    100% { opacity: 0.6; }
+}
+
+/* Dark Mode Adjustments */
+.dark-mode #auth-container {
+    background: linear-gradient(135deg, #1a472a, #0f2d1d);
+}
+
+.dark-mode .auth-forms {
+    background: var(--dm-surface);
+    border: 1px solid var(--dm-border);
+}
+
+.dark-mode .form-group input {
+    background: var(--dm-surface-light);
+    border-color: var(--dm-border);
+}
+
+.dark-mode .auth-divider::before,
+.dark-mode .auth-divider::after {
+    background: var(--dm-border);
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    #auth-container {
+        padding: 1rem;
+    }
+    
+    .auth-forms {
+        padding: 2rem 1.5rem;
+        margin: 0 1rem;
+    }
+    
+    .auth-form h2 {
+        font-size: 24px;
+    }
+    
+    .form-group input {
+        padding: 12px 14px;
+    }
+    
+    .auth-links {
+        flex-direction: column;
+        gap: 0.75rem;
+        text-align: center;
+    }
+}
+
+/* Loading State */
+.btn-primary.loading {
+    position: relative;
+    color: transparent;
+}
+
+.btn-primary.loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
