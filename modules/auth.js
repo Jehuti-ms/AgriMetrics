@@ -1,4 +1,4 @@
-// modules/auth.js - WITH GOOGLE AND MICROSOFT SOCIAL LOGIN - CENTERED
+// modules/auth.js - WITH GOOGLE AND MICROSOFT SOCIAL LOGIN - CENTERED (FIXED)
 console.log('Loading auth module...');
 
 class AuthModule {
@@ -16,100 +16,63 @@ class AuthModule {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 this.attachFormHandlers();
-                this.applyCenteringStyles(); // ADDED: Apply centering after DOM loads
+                this.ensureSingleFormVisible(); // FIXED: Show only one form
             });
         } else {
             this.attachFormHandlers();
-            this.applyCenteringStyles(); // ADDED: Apply centering immediately
+            this.ensureSingleFormVisible(); // FIXED: Show only one form
         }
     }
     
-    // ======== ADDED: CENTERING METHODS ========
+    // ======== FIXED: CENTERING METHODS ========
     addCenteringStyles() {
-        // Create and inject centering CSS
+        // Create and inject centering CSS that targets only active forms
         const style = document.createElement('style');
         style.id = 'auth-centering-styles';
         style.textContent = `
-            /* AUTH CENTERING STYLES */
-            #login-container, 
-            #auth-container,
-            .login-container,
-            .auth-container {
+            /* AUTH CENTERING STYLES - ONLY APPLY TO AUTH PAGES */
+            body.auth-page,
+            body.login-page,
+            body.signin-page {
                 display: flex !important;
                 justify-content: center !important;
                 align-items: center !important;
                 min-height: 100vh !important;
                 padding: 20px !important;
                 width: 100% !important;
+                margin: 0 !important;
             }
             
-            .auth-content {
+            /* Only center the main auth container, not individual forms */
+            #auth-container,
+            .auth-container {
                 max-width: 400px !important;
                 width: 100% !important;
                 margin: 0 auto !important;
             }
             
-            /* Center form elements */
+            /* HIDE ALL FORMS BY DEFAULT */
             .auth-form {
-                display: flex !important;
-                flex-direction: column !important;
-                align-items: center !important;
-                width: 100% !important;
+                display: none !important;
             }
             
-            /* Center form inputs */
-            .form-group {
-                width: 100% !important;
-            }
-            
-            /* Center buttons */
-            .auth-form button[type="submit"],
-            .btn-social {
+            /* SHOW ONLY ACTIVE FORM */
+            .auth-form.active {
                 display: block !important;
-                margin-left: auto !important;
-                margin-right: auto !important;
             }
             
-            /* Center social buttons container */
-            .social-buttons {
-                display: flex !important;
-                flex-direction: column !important;
-                align-items: center !important;
-                width: 100% !important;
-                gap: 12px !important;
+            /* Glass effect for the main container */
+            .auth-container {
+                background: rgba(255, 255, 255, 0.1) !important;
+                backdrop-filter: blur(10px) !important;
+                border-radius: 20px !important;
+                padding: 40px !important;
+                border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+                animation: fadeInUp 0.5s ease-out !important;
             }
             
-            .btn-social {
-                width: 100% !important;
-                max-width: 300px !important;
-            }
-            
-            /* Center text and links */
-            .auth-switch {
-                text-align: center !important;
-                width: 100% !important;
-                margin-top: 20px !important;
-            }
-            
-            /* Responsive adjustments */
-            @media (max-width: 768px) {
-                #login-container,
-                #auth-container,
-                .login-container,
-                .auth-container {
-                    padding: 15px !important;
-                }
-                
-                .auth-content {
-                    max-width: 100% !important;
-                }
-                
-                .btn-social {
-                    max-width: 100% !important;
-                }
-            }
-            
-            /* Animation for centered form */
+            /* Animation */
             @keyframes fadeInUp {
                 from {
                     opacity: 0;
@@ -121,26 +84,16 @@ class AuthModule {
                 }
             }
             
-            .auth-content {
-                animation: fadeInUp 0.5s ease-out !important;
-            }
-            
-            /* Glass effect for centered card */
-            .auth-glass-card {
-                background: rgba(255, 255, 255, 0.1) !important;
-                backdrop-filter: blur(10px) !important;
-                border-radius: 20px !important;
-                padding: 40px !important;
-                border: 1px solid rgba(255, 255, 255, 0.2) !important;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-                width: 100% !important;
-            }
-            
-            /* Dark mode support */
-            @media (prefers-color-scheme: dark) {
-                .auth-glass-card {
-                    background: rgba(0, 0, 0, 0.2) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            /* Responsive */
+            @media (max-width: 768px) {
+                body.auth-page,
+                body.login-page,
+                body.signin-page {
+                    padding: 15px !important;
+                }
+                
+                .auth-container {
+                    padding: 30px 20px !important;
                 }
             }
         `;
@@ -148,49 +101,31 @@ class AuthModule {
         document.head.appendChild(style);
     }
     
-    applyCenteringStyles() {
-        // Apply centering to existing elements
-        setTimeout(() => {
-            // Find and center auth containers
-            const authContainers = [
-                document.getElementById('login-container'),
-                document.getElementById('auth-container'),
-                document.querySelector('.login-container'),
-                document.querySelector('.auth-container')
-            ].filter(el => el);
-            
-            authContainers.forEach(container => {
-                container.style.display = 'flex';
-                container.style.justifyContent = 'center';
-                container.style.alignItems = 'center';
-                container.style.minHeight = '100vh';
-                container.style.padding = '20px';
-                container.style.width = '100%';
-            });
-            
-            // Find and center auth content
-            const authContents = [
-                document.querySelector('.auth-content'),
-                document.querySelector('.login-content'),
-                document.querySelector('.auth-wrapper')
-            ].filter(el => el);
-            
-            authContents.forEach(content => {
-                content.style.maxWidth = '400px';
-                content.style.width = '100%';
-                content.style.margin = '0 auto';
-            });
-            
-            // Apply glass effect to main card
-            const mainCard = document.querySelector('.auth-card, .login-card, .card');
-            if (mainCard && !mainCard.classList.contains('auth-glass-card')) {
-                mainCard.classList.add('auth-glass-card');
-            }
-            
-            console.log('✅ Auth form centering applied');
-        }, 100);
+    // ======== FIXED: ENSURE ONLY ONE FORM IS VISIBLE ========
+    ensureSingleFormVisible() {
+        // Hide all forms first
+        document.querySelectorAll('.auth-form').forEach(form => {
+            form.style.display = 'none';
+            form.classList.remove('active');
+        });
+        
+        // Show only the signin form by default
+        const defaultForm = document.getElementById('signin-form') || 
+                           document.querySelector('.auth-form');
+        
+        if (defaultForm) {
+            defaultForm.style.display = 'block';
+            defaultForm.classList.add('active');
+        }
+        
+        // Add auth-page class to body to trigger centering
+        if (window.location.hash.includes('auth') || 
+            window.location.hash.includes('login') ||
+            window.location.hash.includes('signin')) {
+            document.body.classList.add('auth-page');
+        }
     }
-    
+ 
     // ======== EXISTING CODE BELOW (keep everything else as is) ========
     
     attachFormHandlers() {
@@ -280,6 +215,33 @@ class AuthModule {
         }
     }
 
+     // ======== FIXED: SHOW AUTH FORM METHOD ========
+    showAuthForm(formName) {
+        console.log(`🔄 Showing ${formName} form`);
+        
+        // Hide all forms first
+        document.querySelectorAll('.auth-form').forEach(form => {
+            form.style.display = 'none';
+            form.classList.remove('active');
+        });
+        
+        // Show the requested form
+        const targetForm = document.getElementById(`${formName}-form`);
+        if (targetForm) {
+            targetForm.style.display = 'block';
+            targetForm.classList.add('active');
+            console.log(`✅ ${formName} form shown`);
+            
+            // Focus on first input field
+            setTimeout(() => {
+                const firstInput = targetForm.querySelector('input');
+                if (firstInput) firstInput.focus();
+            }, 100);
+        } else {
+            console.error(`❌ ${formName} form not found`);
+        }
+    }
+    
     // ======== SOCIAL LOGIN METHODS ========
    // In the renderSocialLoginButtons() method:
 renderSocialLoginButtons() {
