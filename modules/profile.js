@@ -487,6 +487,21 @@ const ProfileModule = {
             this.showNotification('Form reset to saved values', 'info');
         });
 
+        // Logout button - 🔥 THIS IS WHAT YOU NEED
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('🚪 Logout button clicked');
+                this.handleLogout();
+            });
+        }
+        
+        // Clear data button
+        document.getElementById('clear-data')?.addEventListener('click', () => {
+            this.clearAllData();
+        });
+        
         // Settings
         document.getElementById('default-currency')?.addEventListener('change', (e) => {
             this.saveSetting('currency', e.target.value);
@@ -504,6 +519,7 @@ const ProfileModule = {
             this.changeTheme(e.target.value);
         });
 
+        
         // PDF Export
         document.getElementById('export-profile-pdf')?.addEventListener('click', () => this.exportProfilePDF());
         document.getElementById('export-inventory-pdf')?.addEventListener('click', () => this.exportInventoryPDF());
