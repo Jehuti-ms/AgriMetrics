@@ -5,6 +5,7 @@ const ProfileModule = {
     name: 'profile',
     initialized: false,
     element: null,
+    isSaving: false,
     
     // ==================== INITIALIZATION ====================
     initialize() {
@@ -1038,12 +1039,21 @@ const ProfileModule = {
 
     // ==================== DIRECT SAVE HANDLER - SIMPLE FIX ====================
       // ==================== ULTIMATE SAVE FIX ====================
+       // ==================== ULTIMATE SAVE FIX - WITH LOCK ====================
     async handleDirectSave() {
-        console.log('💾 Starting ULTIMATE save...');
+        console.log('💾 Starting ULTIMATE save WITH LOCK...');
+        
+        // 🔥 ADD A LOCK to prevent re-entry
+        if (this.isSaving) {
+            console.log('⏳ Already saving, skipping...');
+            return;
+        }
+        
+        this.isSaving = true;
         
         try {
             // 🔥 CRITICAL: Small delay to ensure any async updates complete
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 50));
             
             // 🔥 GET ABSOLUTELY FRESH references - no caching
             const farmNameInput = document.getElementById('farm-name');
@@ -1051,19 +1061,13 @@ const ProfileModule = {
             if (!farmNameInput) {
                 console.error('❌ Farm name input not found!');
                 this.showNotification('Error: Farm name field not found', 'error');
+                this.isSaving = false;
                 return;
             }
             
             // 🔥 GET THE CURRENT VALUE - FORCE FRESH
             const farmName = farmNameInput.value.trim();
             console.log('🔥 ULTIMATE SAVE - Farm name value:', farmName);
-            console.log('🔥 ULTIMATE SAVE - Input element:', farmNameInput);
-            console.log('🔥 ULTIMATE SAVE - Input attributes:', {
-                id: farmNameInput.id,
-                value: farmNameInput.value,
-                defaultValue: farmNameInput.defaultValue,
-                placeholder: farmNameInput.placeholder
-            });
             
             // Also get other values
             const farmerName = document.getElementById('farmer-name')?.value.trim();
@@ -1079,14 +1083,6 @@ const ProfileModule = {
                 farmLocation
             });
             
-            // 🔥 TEST: Try to update card BEFORE anything else
-            const farmNameCard = document.getElementById('profile-farm-name');
-            if (farmNameCard) {
-                console.log('🔥 BEFORE update - Card text:', farmNameCard.textContent);
-                farmNameCard.textContent = farmName || 'My Farm';
-                console.log('🔥 AFTER update - Card text:', farmNameCard.textContent);
-            }
-            
             // Update profile object
             if (!window.FarmModules.appData.profile) {
                 window.FarmModules.appData.profile = {};
@@ -1094,7 +1090,7 @@ const ProfileModule = {
             
             const profile = window.FarmModules.appData.profile;
             
-            // Update with current values
+            // 🔥 UPDATE WITH CURRENT VALUES
             profile.farmName = farmName || 'My Farm';
             profile.farmerName = farmerName || 'Farm Manager';
             profile.email = email || '';
@@ -1115,20 +1111,45 @@ const ProfileModule = {
             
             console.log('📊 Profile after save:', profile);
             
-            // Save to local storage
+            // 🔥 SAVE TO LOCAL STORAGE
             this.saveToLocalStorage();
             
-            // Show success with the ACTUAL saved name
+            // 🔥 UPDATE CARD WITHOUT calling updateProfileDisplay()
+            const farmNameCard = document.getElementById('profile-farm-name');
+            const farmerNameCard = document.getElementById('profile-farmer-name');
+            const emailCard = document.getElementById('profile-email');
+            
+            if (farmNameCard) {
+                farmNameCard.textContent = profile.farmName || 'My Farm';
+                console.log(`✅ Card updated to: "${profile.farmName}"`);
+            }
+            
+            if (farmerNameCard) farmerNameCard.textContent = profile.farmerName || 'Farm Manager';
+            if (emailCard) emailCard.textContent = profile.email || 'No email';
+            
+            // Update member since
+            const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
+            document.getElementById('member-since').textContent = `Member since: ${memberSince}`;
+            
+            // 🔥 DO NOT UPDATE THE INPUTS - leave them as user typed
+            
+            // Show success
             this.showNotification(`✅ Profile saved! Farm: ${profile.farmName}`, 'success');
             
-            // Notify other modules
-            window.dispatchEvent(new CustomEvent('farm-data-updated'));
+            // 🔥 DELAY the data-updated event to prevent immediate refresh
+            setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('farm-data-updated'));
+                console.log('✅ Data update event dispatched');
+            }, 1000);
             
-            console.log('✅ ULTIMATE save completed');
+            console.log('✅ ULTIMATE save WITH LOCK completed');
             
         } catch (error) {
             console.error('❌ Error in ultimate save:', error);
             this.showNotification('Error saving profile: ' + error.message, 'error');
+        } finally {
+            // 🔥 RELEASE THE LOCK
+            this.isSaving = false;
         }
     },
     
@@ -1162,6 +1183,12 @@ const ProfileModule = {
 
     // ==================== USER DATA MANAGEMENT ====================
     loadUserData() {
+       // 🔥 DON'T LOAD if we're in the middle of saving
+        if (this.isSaving) {
+            console.log('⏳ Skipping loadUserData during save');
+            return;
+        }
+        
         console.log('📂 Loading user data...');
         
         try {
