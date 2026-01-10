@@ -546,12 +546,10 @@ const ProfileModule = {
                                 <span class="avatar-icon">🚜</span>
                             </div>
                             <div class="profile-info">
-                                <!-- ✅ Shows actual farm name from data -->
-                                <h2 id="profile-farm-name">${window.FarmModules.appData?.profile?.farmName || 'My Farm'}</h2>
-                                <!-- ✅ Shows actual farmer name from data -->
-                                <p id="profile-farmer-name">${window.FarmModules.appData?.profile?.farmerName || 'Farm Manager'}</p>
-                                <!-- ✅ Shows actual email or "No email" -->
-                                <p class="profile-email" id="profile-email">${window.FarmModules.appData?.profile?.email || 'No email'}</p>
+                                <!-- FIXED: Placeholders only -->
+                                <h2 id="profile-farm-name">My Farm</h2>
+                                <p id="profile-farmer-name">Farm Manager</p>
+                                <p class="profile-email" id="profile-email">No email</p>
                                 <div class="profile-stats">
                                     <span class="stat-badge" id="member-since">Member since: Today</span>
                                     <span class="stat-badge" id="data-entries">Data entries: 0</span>
@@ -568,25 +566,24 @@ const ProfileModule = {
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="farm-name" class="form-label">Farm Name *</label>
-                                    <!-- ✅ Shows current farm name in input field -->
+                                    <!-- FIXED: No value attribute -->
                                     <input type="text" id="farm-name" class="form-input" required 
-                                           value="${window.FarmModules.appData?.profile?.farmName || ''}" 
                                            placeholder="Enter farm name">
                                 </div>
                                 <div class="form-group">
                                     <label for="farmer-name" class="form-label">Farmer Name *</label>
-                                    <!-- ✅ Shows current farmer name in input field -->
+                                    <!-- FIXED: No value attribute -->
                                     <input type="text" id="farmer-name" class="form-input" required 
-                                           value="${window.FarmModules.appData?.profile?.farmerName || ''}" 
                                            placeholder="Enter your name">
                                 </div>
                             </div>
                             
-                            <!-- FIXED: Added email field here -->
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="farm-email" class="form-label">Farm Email</label>
-                                    <input type="email" id="farm-email" class="form-input" placeholder="farm@example.com">
+                                    <!-- FIXED: No value attribute -->
+                                    <input type="email" id="farm-email" class="form-input" 
+                                           placeholder="farm@example.com">
                                 </div>
                                 <div class="form-group">
                                     <label for="farm-type" class="form-label">Farm Type</label>
@@ -605,7 +602,9 @@ const ProfileModule = {
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="farm-location" class="form-label">Farm Location</label>
-                                    <input type="text" id="farm-location" class="form-input" placeholder="e.g., City, State">
+                                    <!-- FIXED: No value attribute -->
+                                    <input type="text" id="farm-location" class="form-input" 
+                                           placeholder="e.g., City, State">
                                 </div>
                             </div>
                             
