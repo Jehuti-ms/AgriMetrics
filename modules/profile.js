@@ -1,11 +1,10 @@
-// modules/profile.js - COMPLETE FIXED VERSION (DROP-IN READY)
+// modules/profile.js - COMPLETE FIXED VERSION WITH ALL SECTIONS
 console.log('👤 Loading profile module...');
 
 const ProfileModule = {
     name: 'profile',
     initialized: false,
     element: null,
-    isSaving: false,
     
     // ==================== INITIALIZATION ====================
     initialize() {
@@ -83,7 +82,20 @@ const ProfileModule = {
                 .pdf-btn:hover { transform: translateY(-2px); border-color: var(--primary-color); background: var(--primary-color)10; }
                 .pdf-btn span:last-child { font-size: 14px; font-weight: 600; color: var(--text-primary); }
                 #pdf-status { margin-top: 12px; text-align: center; font-size: 13px; }
-                @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } .stats-overview { grid-template-columns: repeat(2, 1fr); } .pdf-buttons-container { grid-template-columns: repeat(2, 1fr); } .action-buttons { flex-direction: column; } .action-buttons button { width: 100%; } }
+                .guide-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }
+                .step { text-align: center; padding: 20px; background: var(--glass-bg); border-radius: 12px; }
+                .step-number { width: 40px; height: 40px; background: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 0 auto 12px; }
+                .step h4 { margin: 0 0 8px 0; color: var(--text-primary); }
+                .step p { margin: 0; font-size: 14px; color: var(--text-secondary); }
+                .guide-actions { display: flex; gap: 12px; margin-top: 20px; }
+                .support-channels { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+                .support-channel { display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--glass-bg); border-radius: 8px; }
+                .support-channel-icon { font-size: 24px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: var(--glass-bg); border-radius: 50%; }
+                .support-channel-content { flex: 1; }
+                .support-channel h4 { margin: 0 0 4px 0; color: var(--text-primary); }
+                .support-channel p { margin: 0; font-size: 14px; color: var(--text-secondary); }
+                .support-channel-actions { display: flex; gap: 8px; }
+                @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } .stats-overview { grid-template-columns: repeat(2, 1fr); } .pdf-buttons-container { grid-template-columns: repeat(2, 1fr); } .action-buttons { flex-direction: column; } .action-buttons button { width: 100%; } .guide-steps { grid-template-columns: 1fr; } .guide-actions { flex-direction: column; } .support-channel { flex-direction: column; text-align: center; } .support-channel-actions { width: 100%; justify-content: center; } }
                 @media (max-width: 480px) { .stats-overview { grid-template-columns: 1fr; } .pdf-buttons-container { grid-template-columns: 1fr; } }
             </style>
             
@@ -191,7 +203,8 @@ const ProfileModule = {
                             </div>
                             
                             <div class="form-actions">
-                                <button type="submit" class="btn-primary" id="save-profile-btn">💾 Save Profile</button>
+                                <!-- 🔥 FIXED: Changed to type="button" and added id -->
+                                <button type="button" class="btn-primary" id="save-profile-btn">💾 Save Profile</button>
                                 <button type="button" class="btn-secondary" id="sync-now-btn">🔄 Sync Now</button>
                                 <button type="button" class="btn-outline" id="reset-profile">Reset to Current</button>
                             </div>
@@ -324,6 +337,92 @@ const ProfileModule = {
                             <button class="btn-outline" id="logout-btn" style="color: #ef4444; border-color: #ef4444;">🚪 Logout</button>
                         </div>
                     </div>
+
+                    <!-- Mobile Installation Guide -->
+                    <div class="installation-guide glass-card">
+                        <h3>📱 Install on Mobile</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 16px;">Get the app-like experience on your phone or tablet</p>
+                        
+                        <div class="guide-steps">
+                            <div class="step">
+                                <div class="step-number">1</div>
+                                <h4>Open in Browser</h4>
+                                <p>Visit this app in Safari (iOS) or Chrome (Android)</p>
+                            </div>
+                            <div class="step">
+                                <div class="step-number">2</div>
+                                <h4>Tap Share Button</h4>
+                                <p>Look for <strong>📤 Share</strong> or <strong>⋮ Menu</strong></p>
+                            </div>
+                            <div class="step">
+                                <div class="step-number">3</div>
+                                <h4>Add to Home Screen</h4>
+                                <p>Select <strong>"Add to Home Screen"</strong></p>
+                            </div>
+                        </div>
+                        
+                        <div class="guide-actions">
+                            <button class="btn-outline" id="send-install-link">
+                                📧 Send Installation Link
+                            </button>
+                            <button class="btn-outline" id="show-qr-code">
+                                📱 Show QR Code
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Support & Help Section -->
+                    <div class="support-section glass-card">
+                        <h3>🆘 Support & Help</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 16px;">Get help with the Farm Manager app</p>
+                        
+                        <div class="support-channels">
+                            <div class="support-channel">
+                                <div class="support-channel-icon">📧</div>
+                                <div class="support-channel-content">
+                                    <h4>Email Support</h4>
+                                    <p>farm-support@example.com</p>
+                                </div>
+                                <div class="support-channel-actions">
+                                    <button class="btn-outline" data-action="copy-email">📋 Copy</button>
+                                </div>
+                            </div>
+                            
+                            <div class="support-channel">
+                                <div class="support-channel-icon">💬</div>
+                                <div class="support-channel-content">
+                                    <h4>Team Channel</h4>
+                                    <p>#farm-management</p>
+                                </div>
+                                <div class="support-channel-actions">
+                                    <button class="btn-outline" data-action="open-slack">↗️ Open</button>
+                                </div>
+                            </div>
+                            
+                            <div class="support-channel">
+                                <div class="support-channel-icon">📖</div>
+                                <div class="support-channel-content">
+                                    <h4>Quick Guide</h4>
+                                    <p>One-page reference guide</p>
+                                </div>
+                                <div class="support-channel-actions">
+                                    <button class="btn-outline" data-action="open-guide">📄 Open</button>
+                                    <button class="btn-outline" data-action="download-guide">📥 PDF</button>
+                                </div>
+                            </div>
+                            
+                            <div class="support-channel">
+                                <div class="support-channel-icon">🎥</div>
+                                <div class="support-channel-content">
+                                    <h4>Video Tutorials</h4>
+                                    <p>Step-by-step video guides</p>
+                                </div>
+                                <div class="support-channel-actions">
+                                    <button class="btn-outline" data-action="watch-tutorials">▶️ Watch</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -336,149 +435,130 @@ const ProfileModule = {
         }, 100);
     },
 
-    // ==================== EVENT LISTENERS - COMPLETE FIX ====================
+    // ==================== EVENT LISTENERS - ULTIMATE FIX ====================
     setupEventListeners() {
         console.log('🔧 Setting up profile event listeners');
         
-        // 🔥 FIX 1: Direct button click handler for Save button
-        const saveButton = document.getElementById('save-profile-btn');
-        if (saveButton) {
-            // Remove any existing listeners
-            const newSaveButton = saveButton.cloneNode(true);
-            saveButton.parentNode.replaceChild(newSaveButton, saveButton);
+        // 🔥🔥🔥 CRITICAL FIX 1: Direct save button handler
+        const saveBtn = document.getElementById('save-profile-btn');
+        if (saveBtn) {
+            // Clone to remove any existing listeners
+            const newSaveBtn = saveBtn.cloneNode(true);
+            saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
             
-            // Add fresh listener
+            // Add fresh click listener
             document.getElementById('save-profile-btn').addEventListener('click', (e) => {
                 e.preventDefault();
-                console.log('💾 Save button clicked directly');
+                console.log('💾 Save button clicked - ULTIMATE FIX');
                 this.handleSaveProfile();
             });
         }
         
-        // 🔥 FIX 2: Form submit handler with paste protection
+        // 🔥 CRITICAL FIX 2: Also handle form submission (for Enter key)
         const profileForm = document.getElementById('profile-form');
         if (profileForm) {
             profileForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                console.log('📋 Form submitted');
+                console.log('📋 Form submitted via Enter key');
                 this.handleSaveProfile();
             });
         }
         
-        // 🔥 FIX 3: Direct input tracking for farm name
+        // 🔥 CRITICAL FIX 3: Track farm name input changes
         const farmNameInput = document.getElementById('farm-name');
         if (farmNameInput) {
-            // Track typing
             farmNameInput.addEventListener('input', (e) => {
-                console.log('⌨️ Farm name typed:', e.target.value);
+                console.log('⌨️ Farm name TYPED:', e.target.value);
             });
             
-            // Track paste events
             farmNameInput.addEventListener('paste', (e) => {
-                console.log('📋 Paste event detected');
-                
-                // Get pasted text immediately
-                const pastedText = (e.clipboardData || window.clipboardData).getData('text');
-                console.log('📋 Pasted text:', pastedText);
-                
+                console.log('📋 Farm name PASTE event detected');
                 // Wait for paste to complete
                 setTimeout(() => {
-                    console.log('📋 After paste, input value:', farmNameInput.value);
+                    console.log('📋 After paste, value is:', farmNameInput.value);
                 }, 10);
-            });
-            
-            // Track changes
-            farmNameInput.addEventListener('change', (e) => {
-                console.log('📝 Farm name changed:', e.target.value);
             });
         }
 
-        // Sync now button
-        document.getElementById('sync-now-btn')?.addEventListener('click', () => {
-            this.syncNow();
-        });
-
-        // Reset button
+        // Other buttons
+        document.getElementById('sync-now-btn')?.addEventListener('click', () => this.syncNow());
         document.getElementById('reset-profile')?.addEventListener('click', () => {
             this.loadUserData();
             this.showNotification('Form reset to saved values', 'info');
         });
 
-        // Settings changes
+        // Settings
         document.getElementById('default-currency')?.addEventListener('change', (e) => {
             this.saveSetting('currency', e.target.value);
         });
-
         document.getElementById('low-stock-threshold')?.addEventListener('change', (e) => {
             this.saveSetting('lowStockThreshold', parseInt(e.target.value));
         });
-
         document.getElementById('auto-sync')?.addEventListener('change', (e) => {
             this.saveSetting('autoSync', e.target.checked);
         });
-
         document.getElementById('local-storage')?.addEventListener('change', (e) => {
             this.saveSetting('localStorageEnabled', e.target.checked);
         });
-
-        // Theme selector
         document.getElementById('theme-selector')?.addEventListener('change', (e) => {
             this.changeTheme(e.target.value);
         });
 
-        // PDF Export buttons
-        document.getElementById('export-profile-pdf')?.addEventListener('click', () => {
-            this.exportProfilePDF();
-        });
-
-        document.getElementById('export-inventory-pdf')?.addEventListener('click', () => {
-            this.exportInventoryPDF();
-        });
-
-        document.getElementById('export-sales-pdf')?.addEventListener('click', () => {
-            this.exportSalesPDF();
-        });
-
-        document.getElementById('export-all-pdf')?.addEventListener('click', () => {
-            this.exportAllPDF();
-        });
+        // PDF Export
+        document.getElementById('export-profile-pdf')?.addEventListener('click', () => this.exportProfilePDF());
+        document.getElementById('export-inventory-pdf')?.addEventListener('click', () => this.exportInventoryPDF());
+        document.getElementById('export-sales-pdf')?.addEventListener('click', () => this.exportSalesPDF());
+        document.getElementById('export-all-pdf')?.addEventListener('click', () => this.exportAllPDF());
 
         // Data management
-        document.getElementById('export-data')?.addEventListener('click', () => {
-            this.exportData();
-        });
+        document.getElementById('export-data')?.addEventListener('click', () => this.exportData());
+        document.getElementById('import-data')?.addEventListener('click', () => this.importData());
+        document.getElementById('clear-all-data')?.addEventListener('click', () => this.clearAllData());
+        document.getElementById('logout-btn')?.addEventListener('click', () => this.handleLogout());
 
-        document.getElementById('import-data')?.addEventListener('click', () => {
-            this.importData();
-        });
+        // Mobile installation
+        document.getElementById('send-install-link')?.addEventListener('click', () => this.sendInstallationLink());
+        document.getElementById('show-qr-code')?.addEventListener('click', () => this.showQRCode());
 
-        document.getElementById('clear-all-data')?.addEventListener('click', () => {
-            this.clearAllData();
-        });
-
-        // Logout button
-        document.getElementById('logout-btn')?.addEventListener('click', () => {
-            this.handleLogout();
+        // Support section - event delegation
+        this.element.addEventListener('click', (e) => {
+            const button = e.target.closest('button[data-action]');
+            if (!button) return;
+            
+            e.preventDefault();
+            const action = button.getAttribute('data-action');
+            
+            switch(action) {
+                case 'copy-email':
+                    this.copyToClipboard('farm-support@example.com');
+                    break;
+                case 'open-slack':
+                    this.openSlackChannel();
+                    break;
+                case 'open-guide':
+                    this.openQuickGuide();
+                    break;
+                case 'download-guide':
+                    this.downloadQuickGuide();
+                    break;
+                case 'watch-tutorials':
+                    this.openYouTubeTutorials();
+                    break;
+            }
         });
 
         console.log('✅ All event listeners set up');
     },
 
-    // ==================== SAVE PROFILE - COMPLETE FIX ====================
+    // ==================== SAVE PROFILE - ULTIMATE FIX ====================
     async handleSaveProfile() {
-        if (this.isSaving) {
-            console.log('⏳ Already saving, skipping...');
-            return;
-        }
-        
-        this.isSaving = true;
         console.log('💾 Starting profile save...');
         
         try {
-            // 🔥 CRITICAL FIX: Get form values with delay for paste completion
+            // 🔥 CRITICAL FIX: Small delay to ensure any paste/typing completes
             await new Promise(resolve => setTimeout(resolve, 50));
             
-            // Get all form inputs
+            // 🔥 CRITICAL FIX: Get the FRESH input element and value
             const farmNameInput = document.getElementById('farm-name');
             const farmerNameInput = document.getElementById('farmer-name');
             const emailInput = document.getElementById('farm-email');
@@ -489,14 +569,14 @@ const ProfileModule = {
                 throw new Error('Farm name input not found');
             }
             
-            // Get current values
+            // 🔥 CRITICAL FIX: Get the CURRENT value directly from the input
             const farmName = farmNameInput.value.trim();
             const farmerName = farmerNameInput?.value.trim();
             const email = emailInput?.value.trim();
             const farmType = farmTypeInput?.value;
             const farmLocation = farmLocationInput?.value.trim();
             
-            console.log('📝 Saving form values:', {
+            console.log('🔥 CURRENT INPUT VALUES:', {
                 farmName,
                 farmerName,
                 email,
@@ -504,22 +584,21 @@ const ProfileModule = {
                 farmLocation
             });
             
-            // Ensure we have a profile object
+            // Ensure profile exists
             if (!window.FarmModules.appData.profile) {
                 window.FarmModules.appData.profile = {};
             }
             
-            // Update profile
             const profile = window.FarmModules.appData.profile;
             
-            // Always update all fields
+            // 🔥 CRITICAL FIX: Update profile with CURRENT values
             profile.farmName = farmName || 'My Farm';
             profile.farmerName = farmerName || 'Farm Manager';
             profile.email = email || '';
             profile.farmType = farmType || '';
             profile.farmLocation = farmLocation || '';
             
-            // Ensure other required fields exist
+            // Ensure other fields
             profile.currency = profile.currency || 'USD';
             profile.lowStockThreshold = profile.lowStockThreshold || 10;
             profile.autoSync = profile.autoSync !== false;
@@ -527,19 +606,19 @@ const ProfileModule = {
             profile.theme = profile.theme || 'auto';
             profile.memberSince = profile.memberSince || new Date().toISOString();
             
-            // Update app-wide farm name
+            // Update app data
             window.FarmModules.appData.farmName = profile.farmName;
             
-            console.log('📊 Updated profile:', profile);
+            console.log('📊 PROFILE AFTER UPDATE:', profile);
             
-            // Save to local storage
+            // Save to storage
             this.saveToLocalStorage();
             
-            // 🔥 CRITICAL FIX: Update UI immediately
+            // 🔥 CRITICAL FIX: Force immediate UI update
             this.updateProfileDisplay(true);
             
-            // Show success message with the new farm name
-            this.showNotification(`Profile saved! Farm: ${profile.farmName}`, 'success');
+            // Show success with the NEW farm name
+            this.showNotification(`✅ Profile saved! Farm: ${profile.farmName}`, 'success');
             
             // Notify other modules
             window.dispatchEvent(new CustomEvent('farm-data-updated'));
@@ -549,8 +628,6 @@ const ProfileModule = {
         } catch (error) {
             console.error('❌ Error saving profile:', error);
             this.showNotification('Error saving profile: ' + error.message, 'error');
-        } finally {
-            this.isSaving = false;
         }
     },
 
@@ -559,9 +636,7 @@ const ProfileModule = {
         console.log('📂 Loading user data...');
         
         try {
-            // Initialize profile data if it doesn't exist
             if (!window.FarmModules.appData.profile) {
-                console.log('🆕 Creating new profile data');
                 window.FarmModules.appData.profile = {
                     farmName: window.FarmModules.appData.farmName || 'My Farm',
                     farmerName: 'Farm Manager',
@@ -577,10 +652,7 @@ const ProfileModule = {
                 };
             }
 
-            // Load from local storage
             this.loadFromLocalStorage();
-
-            // Update UI
             this.updateProfileDisplay();
             
             console.log('✅ User data loaded');
@@ -593,12 +665,9 @@ const ProfileModule = {
         console.log('🔄 Updating profile display...');
         
         const profile = window.FarmModules.appData.profile;
-        if (!profile) {
-            console.error('❌ No profile data found');
-            return;
-        }
+        if (!profile) return;
         
-        console.log('📊 Current profile:', profile);
+        console.log('📊 Displaying profile:', profile);
         
         // Update profile card
         const farmNameCard = document.getElementById('profile-farm-name');
@@ -606,13 +675,9 @@ const ProfileModule = {
         const emailCard = document.getElementById('profile-email');
         
         if (farmNameCard) {
-            const newFarmName = profile.farmName || 'My Farm';
-            if (forceUpdate || farmNameCard.textContent !== newFarmName) {
-                farmNameCard.textContent = newFarmName;
-                console.log(`✅ Updated profile card to: "${newFarmName}"`);
-            }
+            farmNameCard.textContent = profile.farmName || 'My Farm';
+            console.log(`✅ Updated profile card to: "${profile.farmName}"`);
         }
-        
         if (farmerNameCard) farmerNameCard.textContent = profile.farmerName || 'Farm Manager';
         if (emailCard) emailCard.textContent = profile.email || 'No email';
         
@@ -627,9 +692,7 @@ const ProfileModule = {
         const farmTypeInput = document.getElementById('farm-type');
         const farmLocationInput = document.getElementById('farm-location');
         
-        if (farmNameInput && farmNameInput.value !== profile.farmName) {
-            farmNameInput.value = profile.farmName || '';
-        }
+        if (farmNameInput) farmNameInput.value = profile.farmName || '';
         if (farmerNameInput) farmerNameInput.value = profile.farmerName || '';
         if (emailInput) emailInput.value = profile.email || '';
         if (farmTypeInput) farmTypeInput.value = profile.farmType || '';
@@ -659,10 +722,9 @@ const ProfileModule = {
         try {
             const savedProfile = localStorage.getItem('farm-profile');
             if (savedProfile) {
-                const parsedProfile = JSON.parse(savedProfile);
                 window.FarmModules.appData.profile = {
                     ...window.FarmModules.appData.profile,
-                    ...parsedProfile
+                    ...JSON.parse(savedProfile)
                 };
                 console.log('📂 Profile loaded from local storage');
             }
@@ -721,24 +783,20 @@ const ProfileModule = {
             const customers = window.FarmModules.appData.customers || [];
             const products = window.FarmModules.appData.products || [];
             
-            // Update main stats
             document.getElementById('total-orders').textContent = orders.length;
             document.getElementById('total-inventory').textContent = inventory.length;
             document.getElementById('total-customers').textContent = customers.length;
             
-            // Calculate total revenue
             const totalRevenue = orders.reduce((sum, order) => {
                 return sum + (parseFloat(order.totalAmount) || 0);
             }, 0);
             document.getElementById('total-revenue').textContent = this.formatCurrency(totalRevenue);
             
-            // Update data management stats
             document.getElementById('orders-count').textContent = `${orders.length} records`;
             document.getElementById('inventory-count').textContent = `${inventory.length} items`;
             document.getElementById('customers-count').textContent = `${customers.length} customers`;
             document.getElementById('products-count').textContent = `${products.length} products`;
             
-            // Update data entries badge
             const totalEntries = orders.length + inventory.length + customers.length + products.length;
             document.getElementById('data-entries').textContent = `Data entries: ${totalEntries}`;
             
@@ -866,7 +924,7 @@ const ProfileModule = {
             yPos += 10;
             doc.setFont(undefined, 'normal');
             
-            orders.slice(0, 20).forEach((order) => {
+            orders.slice(0, 20).forEach((order, index) => {
                 if (yPos > 250) {
                     doc.addPage();
                     yPos = 20;
@@ -1041,6 +1099,288 @@ const ProfileModule = {
         }
     },
 
+    // ==================== MOBILE INSTALLATION ====================
+    sendInstallationLink() {
+        const email = prompt('Enter email address to send installation link:');
+        if (email && email.includes('@')) {
+            const currentUrl = window.location.href;
+            const subject = 'Install Farm Manager App';
+            const body = `Hello,
+
+Install the Farm Manager app on your mobile device:
+
+📱 Install Instructions:
+1. Open this link on your mobile: ${currentUrl}
+2. Tap the Share button (📤)
+3. Select "Add to Home Screen"
+
+This will install the app for quick access!
+
+Best regards,
+Farm Manager Team`;
+            
+            const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailtoLink;
+            this.showNotification('Email opened with installation instructions', 'success');
+        } else if (email) {
+            this.showNotification('Please enter a valid email address', 'error');
+        }
+    },
+
+    showQRCode() {
+        const currentUrl = window.location.href;
+        
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        `;
+        
+        modal.innerHTML = `
+            <div class="glass-card" style="padding: 2rem; text-align: center; max-width: 90%; max-height: 90%; overflow: auto;">
+                <h3 style="margin-bottom: 1rem;">Scan to Install</h3>
+                <div id="qrcode-container" style="background: white; padding: 1rem; margin: 0 auto 1rem auto; display: inline-block;"></div>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">Scan this QR code with your mobile device</p>
+                <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 1rem;">URL: ${currentUrl}</p>
+                <div style="margin-top: 1rem;">
+                    <button class="btn-primary" id="close-qr">Close</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        const qrContainer = document.getElementById('qrcode-container');
+        if (typeof QRCode !== 'undefined') {
+            new QRCode(qrContainer, {
+                text: currentUrl,
+                width: 200,
+                height: 200,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        } else {
+            qrContainer.innerHTML = `
+                <div style="padding: 2rem; background: #f0f0f0; border-radius: 8px;">
+                    <p>Please scan this URL:</p>
+                    <p style="word-break: break-all; font-size: 12px;">${currentUrl}</p>
+                </div>
+            `;
+        }
+        
+        document.getElementById('close-qr').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        });
+    },
+
+    // ==================== SUPPORT METHODS ====================
+    copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            this.showNotification('Copied to clipboard!', 'success');
+        }).catch(err => {
+            console.error('Clipboard error:', err);
+            this.showNotification('Failed to copy', 'error');
+        });
+    },
+
+    openSlackChannel() {
+        this.showNotification('Slack integration would open here', 'info');
+    },
+
+    openQuickGuide() {
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        `;
+        
+        modal.innerHTML = `
+            <div class="glass-card" style="padding: 2rem; max-width: 600px; max-height: 80%; overflow: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="margin: 0;">📖 Quick Guide</h3>
+                    <button class="btn-outline" id="close-guide">✕</button>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div>
+                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">🏠 Dashboard</h4>
+                        <p style="color: var(--text-secondary); margin: 0;">Overview of your farm's key metrics and quick actions.</p>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">📦 Inventory</h4>
+                        <p style="color: var(--text-secondary); margin: 0;">Manage your farm products, track quantities, and set reorder points.</p>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">💰 Orders</h4>
+                        <p style="color: var(--text-secondary); margin: 0;">Create and manage customer orders, track payments, and generate invoices.</p>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">📊 Analytics</h4>
+                        <p style="color: var(--text-secondary); margin: 0;">Visualize your farm's performance with charts and reports.</p>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">👤 Profile</h4>
+                        <p style="color: var(--text-secondary); margin: 0;">Manage your farm settings, export data, and configure the app.</p>
+                    </div>
+                    
+                    <div style="background: var(--glass-bg); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                        <h4 style="color: var(--success-color); margin-bottom: 0.5rem;">💡 Quick Tips</h4>
+                        <ul style="color: var(--text-secondary); margin: 0; padding-left: 1.2rem;">
+                            <li>Use keyboard shortcuts for faster navigation</li>
+                            <li>Export regular backups of your data</li>
+                            <li>Set up low stock alerts for inventory items</li>
+                            <li>Use the mobile app for on-the-go access</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        document.getElementById('close-guide').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        });
+    },
+
+    downloadQuickGuide() {
+        const guideContent = `
+Farm Manager - Quick Guide
+==========================
+
+📋 Key Features:
+
+1. 🏠 DASHBOARD
+   - Real-time farm metrics
+   - Quick action buttons
+   - Recent activity feed
+
+2. 📦 INVENTORY MANAGEMENT
+   - Add/edit/delete products
+   - Track stock levels
+   - Set reorder alerts
+   - Manage categories
+
+3. 💰 ORDER MANAGEMENT
+   - Create customer orders
+   - Process payments
+   - Generate invoices
+   - Track order history
+
+4. 📊 ANALYTICS & REPORTS
+   - Sales trends
+   - Inventory analysis
+   - Customer insights
+   - Export to PDF
+
+5. 👤 PROFILE & SETTINGS
+   - Farm information
+   - User preferences
+   - Data backup/restore
+   - Theme customization
+
+🚀 Getting Started:
+
+1. Set up your farm profile
+2. Add your products to inventory
+3. Create your first customer order
+4. Explore analytics dashboard
+5. Configure your preferences
+
+💡 Tips & Tricks:
+
+• Use keyboard shortcuts for faster navigation
+• Set up low stock alerts (Profile → Settings)
+• Export regular backups of your data
+• Install the mobile app for on-the-go access
+
+📱 Mobile App:
+
+1. Open this app in mobile browser
+2. Tap Share button (📤)
+3. Select "Add to Home Screen"
+
+🔧 Support: farm-support@example.com
+
+Generated on: ${new Date().toLocaleString()}
+        `;
+        
+        const blob = new Blob([guideContent], {type: 'text/plain'});
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'Farm-Manager-Quick-Guide.txt';
+        link.click();
+        URL.revokeObjectURL(link.href);
+        
+        this.showNotification('Quick guide downloaded!', 'success');
+    },
+
+    openYouTubeTutorials() {
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        `;
+        
+        modal.innerHTML = `
+            <div class="glass-card" style="padding: 2rem; max-width: 500px; text-align: center;">
+                <h3 style="margin-bottom: 1rem;">🎥 Video Tutorials</h3>
+                <div style="background: var(--glass-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                    <p style="color: var(--text-secondary); margin: 0 0 1rem 0;">Video tutorials are coming soon!</p>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">In the meantime, check out our Quick Guide for instructions.</p>
+                </div>
+                <button class="btn-primary" id="close-tutorials">Close</button>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        document.getElementById('close-tutorials').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+    },
+
     // ==================== UTILITIES ====================
     showNotification(message, type = 'info') {
         if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
@@ -1049,7 +1389,6 @@ const ProfileModule = {
             console.log(`${type.toUpperCase()}: ${message}`);
             if (type === 'error') alert(`❌ ${message}`);
             else if (type === 'success') alert(`✅ ${message}`);
-            else alert(`ℹ️ ${message}`);
         }
     },
 
