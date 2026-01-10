@@ -853,7 +853,7 @@ const ProfileModule = {
     },
 
     // ==================== FIXED EVENT LISTENERS ====================
-    setupEventListeners() {
+setupEventListeners() {
     console.log('🔍 DEBUG - Setting up profile event listeners');
     
     // Get the form element
@@ -876,127 +876,127 @@ const ProfileModule = {
         console.error('❌ ERROR: Profile form not found!');
     }
     
-        // Sync now button - FIXED
-        document.getElementById('sync-now-btn')?.addEventListener('click', () => {
-            console.log('🔍 DEBUG - Sync now clicked');
-            ProfileModule.syncNow();
-        });
+    // Sync now button - FIXED
+    document.getElementById('sync-now-btn')?.addEventListener('click', () => {
+        console.log('🔍 DEBUG - Sync now clicked');
+        ProfileModule.syncNow();
+    });
 
-        // Reset button - FIXED
-        document.getElementById('reset-profile')?.addEventListener('click', () => {
-            console.log('🔍 DEBUG - Reset profile clicked');
-            ProfileModule.loadUserData();
-            ProfileModule.showNotification('Profile form reset to current values', 'info');
-        });
+    // Reset button - FIXED
+    document.getElementById('reset-profile')?.addEventListener('click', () => {
+        console.log('🔍 DEBUG - Reset profile clicked');
+        ProfileModule.loadUserData();
+        ProfileModule.showNotification('Profile form reset to current values', 'info');
+    });
 
-        // Settings changes - FIXED
-        document.getElementById('default-currency')?.addEventListener('change', (e) => {
-            ProfileModule.saveSetting('currency', e.target.value);
-        });
+    // Settings changes - FIXED
+    document.getElementById('default-currency')?.addEventListener('change', (e) => {
+        ProfileModule.saveSetting('currency', e.target.value);
+    });
 
-        document.getElementById('low-stock-threshold')?.addEventListener('change', (e) => {
-            ProfileModule.saveSetting('lowStockThreshold', parseInt(e.target.value));
-        });
+    document.getElementById('low-stock-threshold')?.addEventListener('change', (e) => {
+        ProfileModule.saveSetting('lowStockThreshold', parseInt(e.target.value));
+    });
 
-        document.getElementById('auto-sync')?.addEventListener('change', (e) => {
-            ProfileModule.saveSetting('autoSync', e.target.checked);
-        });
+    document.getElementById('auto-sync')?.addEventListener('change', (e) => {
+        ProfileModule.saveSetting('autoSync', e.target.checked);
+    });
 
-        document.getElementById('local-storage')?.addEventListener('change', (e) => {
-            ProfileModule.saveSetting('localStorageEnabled', e.target.checked);
-        });
+    document.getElementById('local-storage')?.addEventListener('change', (e) => {
+        ProfileModule.saveSetting('localStorageEnabled', e.target.checked);
+    });
 
-        // Theme selector - FIXED
-        document.getElementById('theme-selector')?.addEventListener('change', (e) => {
-            ProfileModule.changeTheme(e.target.value);
-        });
+    // Theme selector - FIXED
+    document.getElementById('theme-selector')?.addEventListener('change', (e) => {
+        ProfileModule.changeTheme(e.target.value);
+    });
 
-        // Remember user - FIXED
-        document.getElementById('remember-user')?.addEventListener('change', (e) => {
-            ProfileModule.saveSetting('rememberUser', e.target.checked);
-            ProfileModule.updateUserPersistence();
-        });
+    // Remember user - FIXED
+    document.getElementById('remember-user')?.addEventListener('change', (e) => {
+        ProfileModule.saveSetting('rememberUser', e.target.checked);
+        ProfileModule.updateUserPersistence();
+    });
 
-        // PDF Export buttons - FIXED
-        document.getElementById('export-profile-pdf')?.addEventListener('click', () => {
-            ProfileModule.exportProfilePDF();
-        });
+    // PDF Export buttons - FIXED
+    document.getElementById('export-profile-pdf')?.addEventListener('click', () => {
+        ProfileModule.exportProfilePDF();
+    });
 
-        document.getElementById('export-inventory-pdf')?.addEventListener('click', () => {
-            ProfileModule.exportInventoryPDF();
-        });
+    document.getElementById('export-inventory-pdf')?.addEventListener('click', () => {
+        ProfileModule.exportInventoryPDF();
+    });
 
-        document.getElementById('export-sales-pdf')?.addEventListener('click', () => {
-            ProfileModule.exportSalesPDF();
-        });
+    document.getElementById('export-sales-pdf')?.addEventListener('click', () => {
+        ProfileModule.exportSalesPDF();
+    });
 
-        document.getElementById('export-all-pdf')?.addEventListener('click', () => {
-            ProfileModule.exportAllPDF();
-        });
+    document.getElementById('export-all-pdf')?.addEventListener('click', () => {
+        ProfileModule.exportAllPDF();
+    });
 
-        // Data management - FIXED
-        document.getElementById('export-data')?.addEventListener('click', () => {
-            ProfileModule.exportData();
-        });
+    // Data management - FIXED
+    document.getElementById('export-data')?.addEventListener('click', () => {
+        ProfileModule.exportData();
+    });
 
-        document.getElementById('import-data')?.addEventListener('click', () => {
-            ProfileModule.importData();
-        });
+    document.getElementById('import-data')?.addEventListener('click', () => {
+        ProfileModule.importData();
+    });
 
-        document.getElementById('clear-all-data')?.addEventListener('click', () => {
-            ProfileModule.clearAllData();
-        });
+    document.getElementById('clear-all-data')?.addEventListener('click', () => {
+        ProfileModule.clearAllData();
+    });
 
-        // Logout button - FIXED
-        document.getElementById('logout-btn')?.addEventListener('click', () => {
-            ProfileModule.handleLogout();
-        });
+    // Logout button - FIXED
+    document.getElementById('logout-btn')?.addEventListener('click', () => {
+        ProfileModule.handleLogout();
+    });
 
-        // NEW: Mobile Installation buttons - FIXED
-        document.getElementById('send-install-link')?.addEventListener('click', () => {
-            ProfileModule.sendInstallationLink();
-        });
+    // NEW: Mobile Installation buttons - FIXED
+    document.getElementById('send-install-link')?.addEventListener('click', () => {
+        ProfileModule.sendInstallationLink();
+    });
 
-        document.getElementById('show-qr-code')?.addEventListener('click', () => {
-            ProfileModule.showQRCode();
-        });
+    document.getElementById('show-qr-code')?.addEventListener('click', () => {
+        ProfileModule.showQRCode();
+    });
 
-        // NEW: Support section event delegation - FIXED
-        this.element.addEventListener('click', (e) => {
-            const button = e.target.closest('button[data-action]');
-            if (!button) return;
-            
-            e.preventDefault();
-            const action = button.getAttribute('data-action');
-            
-            console.log('🔍 DEBUG - Support action clicked:', action);
-            
-            switch(action) {
-                case 'copy-email':
-                    ProfileModule.copyToClipboard('farm-support@example.com');
-                    break;
-                    
-                case 'open-slack':
-                    ProfileModule.openSlackChannel();
-                    break;
-                    
-                case 'open-guide':
-                    ProfileModule.openQuickGuide();
-                    break;
-                    
-                case 'download-guide':
-                    ProfileModule.downloadQuickGuide();
-                    break;
-                    
-                case 'watch-tutorials':
-                    ProfileModule.openYouTubeTutorials();
-                    break;
-            }
-        });
+    // NEW: Support section event delegation - FIXED
+    this.element.addEventListener('click', (e) => {
+        const button = e.target.closest('button[data-action]');
+        if (!button) return;
         
-        console.log('✅ DEBUG - All profile event listeners set up');
-    },
-
+        e.preventDefault();
+        const action = button.getAttribute('data-action');
+        
+        console.log('🔍 DEBUG - Support action clicked:', action);
+        
+        switch(action) {
+            case 'copy-email':
+                ProfileModule.copyToClipboard('farm-support@example.com');
+                break;
+                
+            case 'open-slack':
+                ProfileModule.openSlackChannel();
+                break;
+                
+            case 'open-guide':
+                ProfileModule.openQuickGuide();
+                break;
+                
+            case 'download-guide':
+                ProfileModule.downloadQuickGuide();
+                break;
+                
+            case 'watch-tutorials':
+                ProfileModule.openYouTubeTutorials();
+                break;
+        }
+    });
+    
+    console.log('✅ DEBUG - All profile event listeners set up');
+}  // <-- THIS WAS MISSING! Add this closing brace
+    
     // ==================== USER DATA MANAGEMENT ====================
    async loadUserData() {
     try {
@@ -1052,85 +1052,81 @@ updateProfileCardOnly() {
     console.log('✅ DEBUG - Profile card updated (form inputs preserved)');
 },
 
-   async saveProfile() {
+  async saveProfile() {
     console.log('🔍 DEBUG - Starting saveProfile()');
     
     try {
-        const profile = window.FarmModules.appData.profile;
+        // FIX: Get profile from appData or create new
+        const profile = window.FarmModules.appData.profile || {};
         
-        // DEBUG: Get the input element and its value
+        // FIX: Get form element fresh
         const farmNameInput = document.getElementById('farm-name');
         const farmerNameInput = document.getElementById('farmer-name');
         const emailInput = document.getElementById('farm-email');
         
-        console.log('🔍 DEBUG - Input elements:', {
-            farmName: farmNameInput,
-            farmerName: farmerNameInput,
-            email: emailInput
-        });
-        
-        console.log('🔍 DEBUG - Input values:', {
-            farmName: farmNameInput?.value,
-            farmerName: farmerNameInput?.value,
-            email: emailInput?.value
-        });
-        
-        // Check if we can actually get the values
         if (!farmNameInput) {
             console.error('❌ ERROR: farm-name input not found!');
             this.showNotification('Error: Farm name field not found', 'error');
             return;
         }
         
-        // Get values from form
-        const farmName = farmNameInput.value;
-        const farmerName = farmerNameInput?.value;
-        const email = emailInput?.value;
+        // FIX: ALWAYS get the current value directly from input
+        const farmName = farmNameInput.value.trim();
+        const farmerName = farmerNameInput?.value.trim();
+        const email = emailInput?.value.trim();
         
-        console.log('🔍 DEBUG - Form values captured:', {
+        console.log('🔍 DEBUG - Raw form values:', {
             farmName: farmName,
             farmerName: farmerName,
             email: email
         });
         
-        // Update profile with form values
-        // Use the form value if provided, otherwise keep existing
-        if (farmName !== undefined && farmName !== null && farmName.trim() !== '') {
-            profile.farmName = farmName.trim();
-            console.log('✅ DEBUG - Farm name updated to:', profile.farmName);
-        } else {
-            console.log('⚠️ DEBUG - No farm name entered, keeping:', profile.farmName);
+        // FIX: Update profile object
+        if (farmName) {
+            profile.farmName = farmName;
         }
         
-        if (farmerName && farmerName.trim() !== '') {
-            profile.farmerName = farmerName.trim();
+        if (farmerName) {
+            profile.farmerName = farmerName;
         }
         
-        if (email && email.trim() !== '') {
-            profile.email = email.trim();
+        if (email) {
+            profile.email = email;
         }
         
-        profile.farmType = document.getElementById('farm-type')?.value || profile.farmType;
-        profile.farmLocation = document.getElementById('farm-location')?.value || profile.farmLocation;
-        profile.rememberUser = document.getElementById('remember-user')?.checked || profile.rememberUser;
-
-        console.log('🔍 DEBUG - Final profile after update:', profile);
-
-        // Update app data
+        // FIX: Update other fields
+        const farmTypeInput = document.getElementById('farm-type');
+        const farmLocationInput = document.getElementById('farm-location');
+        
+        if (farmTypeInput) {
+            profile.farmType = farmTypeInput.value || profile.farmType;
+        }
+        
+        if (farmLocationInput) {
+            profile.farmLocation = farmLocationInput.value || profile.farmLocation;
+        }
+        
+        // FIX: Update the app data
+        window.FarmModules.appData.profile = profile;
         window.FarmModules.appData.farmName = profile.farmName;
-
-        // Save to local storage
+        
+        console.log('🔍 DEBUG - Final profile after save:', profile);
+        
+        // FIX: Save to local storage
         this.saveToLocalStorage();
-
-        // Update the profile display (card only, not form inputs)
+        
+        // FIX: Update UI
         this.updateProfileCardOnly();
+        
+        // FIX: Dispatch event to update other modules
+        window.dispatchEvent(new CustomEvent('farm-data-updated'));
         
         this.showNotification('Profile saved successfully!', 'success');
         console.log('✅ DEBUG - Profile saved');
         
     } catch (error) {
         console.error('Error saving profile:', error);
-        this.showNotification('Error saving profile', 'error');
+        this.showNotification('Error saving profile: ' + error.message, 'error');
     }
 },
     
