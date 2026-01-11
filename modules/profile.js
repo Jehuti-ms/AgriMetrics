@@ -872,74 +872,191 @@ const ProfileModule = {
         }, 50);
     },
 
-    async performLogout() {
-        console.log('🚪 Starting logout process...');
-        
-        const logoutBtn = document.getElementById('logout-btn');
-        const originalHTML = logoutBtn?.innerHTML || '';
-        
-        try {
-            // Disable button and show loading
-            if (logoutBtn) {
-                logoutBtn.disabled = true;
-                logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
-            }
-            
-            // 1. Firebase logout
-            if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().signOut) {
-                console.log('🔥 Attempting Firebase logout...');
-                try {
-                    await firebase.auth().signOut();
-                    console.log('✅ Firebase logout successful');
-                } catch (firebaseError) {
-                    console.warn('⚠️ Firebase logout error:', firebaseError.message);
-                }
-            }
-            
-            // 🔥 FIX: REINSTATE USER PERSISTENCE
-            // Save current profile data before clearing
-            const currentProfile = window.FarmModules.appData?.profile || {};
-            console.log('💾 Saving profile for persistence:', currentProfile.farmName);
-            
-            // Save to localStorage with user email as key for persistence
-            if (currentProfile.email) {
-                const userKey = `farm-profile-${currentProfile.email}`;
-                localStorage.setItem(userKey, JSON.stringify(currentProfile));
-                console.log('✅ Profile saved for user:', currentProfile.email);
-            }
-            
-            // 2. Clear session data (keep profile data)
-            console.log('🧹 Clearing session data...');
-            this.clearSessionData();
-            
-            // 3. Show success message
-            this.showNotification('Logged out successfully! Redirecting...', 'success');
-            
-            // 4. Reset button
-            if (logoutBtn) {
-                logoutBtn.innerHTML = '<i class="fas fa-check"></i> Logged out!';
-                logoutBtn.style.background = '#10b981';
-            }
-            
-            // 5. Redirect to home/login page
-            console.log('🔄 Redirecting...');
-            setTimeout(() => {
-                window.location.href = window.location.origin + window.location.pathname;
-                window.location.reload(true);
-            }, 2000);
-            
-        } catch (error) {
-            console.error('❌ Logout process error:', error);
-            
-            // Reset button
-            if (logoutBtn) {
-                logoutBtn.innerHTML = originalHTML;
-                logoutBtn.disabled = false;
-            }
-            
-            this.showNotification('Logout failed: ' + error.message, 'error');
+   // ==================== LOGOUT SYSTEM - WITH PERSISTENCE ====================
+async performLogout() {
+    console.log('🚪 Starting logout process WITH PERSISTENCE...');
+    
+    const logoutBtn = document.getElementById('logout-btn');
+    const originalHTML = logoutBtn?.innerHTML || '';
+    
+    try {
+        // Disable button and show loading
+        if (logoutBtn) {
+            logoutBtn.disabled = true;
+            logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
         }
-    },
+        
+        // 🔥 CRITICAL: SAVE PROFILE DATA BEFORE LOGOUT
+        console.log('💾 Backing up profile data before logout...');
+        const currentProfile = this.getCurrentProfileForPersistence();
+        
+        if (currentProfile) {
+            // Save profile to multiple locations for persistence
+            this.backupProfileForPersistence(currentProfile);
+        }
+        
+        // 1. Firebase logout (optional - doesn't affect local data)
+        if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().signOut) {
+            console.log('🔥 Attempting Firebase logout...');
+            try {
+                await firebase.auth().signOut();
+                console.log('✅ Firebase logout successful');
+            } catch (firebaseError) {
+                console.warn('⚠️ Firebase logout error:', firebaseError.message);
+            }
+        }
+        
+        // 2. Clear ONLY authentication/session data, NOT profile data
+        console.log('🧹 Clearing authentication data ONLY...');
+        this.clearAuthenticationDataOnly();
+        
+        // 3. Show success message
+        this.showNotification('Logged out successfully! Redirecting...', 'success');
+        
+        // 4. Reset button
+        if (logoutBtn) {
+            logoutBtn.innerHTML = '<i class="fas fa-check"></i> Logged out!';
+            logoutBtn.style.background = '#10b981';
+        }
+        
+        // 5. Redirect to home/login page
+        console.log('🔄 Redirecting...');
+        setTimeout(() => {
+            window.location.href = window.location.origin + window.location.pathname;
+            window.location.reload(true);
+        }, 1500);
+        
+    } catch (error) {
+        console.error('❌ Logout process error:', error);
+        
+        // Reset button
+        if (logoutBtn) {
+            logoutBtn.innerHTML = originalHTML;
+            logoutBtn.disabled = false;
+        }
+        
+        this.showNotification('Logout failed: ' + error.message, 'error');
+    }
+},
+
+// 🔥 NEW: Get current profile for persistence
+getCurrentProfileForPersistence() {
+    try {
+        // Get current profile from app data
+        const profile = window.FarmModules.appData?.profile;
+        
+        if (!profile) {
+            console.log('⚠️ No profile found in app data');
+            
+            // Try to load from localStorage
+            const savedProfile = localStorage.getItem('farm-profile');
+            if (savedProfile) {
+                return JSON.parse(savedProfile);
+            }
+            return null;
+        }
+        
+        console.log('📋 Current profile for backup:', {
+            farmName: profile.farmName,
+            email: profile.email,
+            lastUpdated: profile.lastUpdated
+        });
+        
+        return profile;
+        
+    } catch (error) {
+        console.error('❌ Error getting profile for persistence:', error);
+        return null;
+    }
+},
+
+// 🔥 NEW: Backup profile to multiple locations
+backupProfileForPersistence(profile) {
+    if (!profile) {
+        console.warn('⚠️ No profile to backup');
+        return;
+    }
+    
+    console.log('💾 Backing up profile for persistence...');
+    
+    try {
+        // 1. Save to general farm-profile (main storage)
+        localStorage.setItem('farm-profile', JSON.stringify(profile));
+        console.log('✅ Saved to farm-profile');
+        
+        // 2. Save with user email as key
+        if (profile.email) {
+            const userKey = `farm-profile-${profile.email}`;
+            localStorage.setItem(userKey, JSON.stringify(profile));
+            console.log('✅ Saved to user-specific key:', userKey);
+        }
+        
+        // 3. Save as last-known-profile
+        localStorage.setItem('farm-last-known-profile', JSON.stringify(profile));
+        console.log('✅ Saved as last-known-profile');
+        
+        // 4. Save farm name separately for quick access
+        if (profile.farmName) {
+            localStorage.setItem('farm-last-name', profile.farmName);
+            console.log('✅ Saved farm name separately:', profile.farmName);
+        }
+        
+        // 5. Create a timestamped backup
+        const backupKey = `farm-profile-backup-${Date.now()}`;
+        localStorage.setItem(backupKey, JSON.stringify({
+            ...profile,
+            backupTimestamp: new Date().toISOString()
+        }));
+        console.log('✅ Created timestamped backup');
+        
+    } catch (error) {
+        console.error('❌ Error backing up profile:', error);
+    }
+},
+
+// 🔥 NEW: Clear ONLY authentication data
+clearAuthenticationDataOnly() {
+    console.log('🔐 Clearing authentication data only...');
+    
+    const keysToRemove = [];
+    const keysToKeep = [];
+    
+    // Scan localStorage and categorize keys
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        
+        // Keys to REMOVE (authentication/session data)
+        if (key.includes('firebase') && key.includes('auth')) {
+            keysToRemove.push(key);
+        } else if (key.includes('session') || key.includes('token')) {
+            keysToRemove.push(key);
+        } else if (key === 'farm-current-user' || key === 'firebase-auth-token') {
+            keysToRemove.push(key);
+        }
+        
+        // Keys to KEEP (profile/data)
+        if (key.startsWith('farm-profile') || 
+            key.includes('farm-data') ||
+            key.includes('farm-last') ||
+            key.includes('profile') && !key.includes('token')) {
+            keysToKeep.push(key);
+        }
+    }
+    
+    console.log('🗑️ Removing authentication keys:', keysToRemove);
+    console.log('💾 Keeping data keys:', keysToKeep);
+    
+    // Remove only authentication keys
+    keysToRemove.forEach(key => {
+        localStorage.removeItem(key);
+        console.log(`❌ Removed: ${key}`);
+    });
+    
+    // Clear sessionStorage (session data only)
+    sessionStorage.clear();
+    
+    console.log('✅ Authentication cleared, profile data preserved');
+},
     
     // 🔥 FIX: Clear only session data, keep profile
     clearSessionData() {
@@ -1048,79 +1165,120 @@ const ProfileModule = {
     },
 
     // ==================== USER DATA MANAGEMENT - WITH PERSISTENCE ====================
-    loadUserData() {
-        console.log('📂 Loading user data with persistence...');
+    // ==================== USER DATA MANAGEMENT - ENHANCED PERSISTENCE ====================
+loadUserData() {
+    console.log('📂 Loading user data with ENHANCED persistence...');
+    
+    try {
+        let loadedProfile = null;
+        let source = '';
         
-        try {
-            // 🔥 FIX: Try multiple storage locations for persistence
-            let loadedProfile = null;
-            
-            // 1. First try user-specific storage (by email)
-            const currentUserEmail = this.getCurrentUserEmail();
-            if (currentUserEmail) {
-                const userKey = `farm-profile-${currentUserEmail}`;
-                const userProfile = localStorage.getItem(userKey);
-                if (userProfile) {
-                    try {
-                        loadedProfile = JSON.parse(userProfile);
-                        console.log('✅ Loaded user-specific profile:', userKey);
-                    } catch (e) {
-                        console.error('Error parsing user profile:', e);
+        // 🔥 ENHANCED: Try multiple persistence methods in order
+        const loadAttempts = [
+            // 1. Try user-specific storage (by email)
+            () => {
+                const email = this.getCurrentUserEmail();
+                if (email) {
+                    const userKey = `farm-profile-${email}`;
+                    const data = localStorage.getItem(userKey);
+                    if (data) {
+                        return { data: JSON.parse(data), source: `user-key: ${userKey}` };
                     }
                 }
-            }
+                return null;
+            },
             
-            // 2. Try general profile storage
-            if (!loadedProfile) {
-                const generalProfile = localStorage.getItem('farm-profile');
-                if (generalProfile) {
-                    try {
-                        loadedProfile = JSON.parse(generalProfile);
-                        console.log('✅ Loaded general profile');
-                    } catch (e) {
-                        console.error('Error parsing general profile:', e);
+            // 2. Try general farm-profile
+            () => {
+                const data = localStorage.getItem('farm-profile');
+                if (data) {
+                    return { data: JSON.parse(data), source: 'farm-profile' };
+                }
+                return null;
+            },
+            
+            // 3. Try last-known-profile
+            () => {
+                const data = localStorage.getItem('farm-last-known-profile');
+                if (data) {
+                    return { data: JSON.parse(data), source: 'last-known-profile' };
+                }
+                return null;
+            },
+            
+            // 4. Try any backup
+            () => {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('farm-profile-backup-')) {
+                        const data = localStorage.getItem(key);
+                        if (data) {
+                            return { data: JSON.parse(data), source: `backup: ${key}` };
+                        }
                     }
                 }
+                return null;
             }
-            
-            // 3. Create default if none found
-            if (!loadedProfile) {
-                console.log('🆕 Creating new profile');
-                loadedProfile = {
-                    farmName: window.FarmModules.appData.farmName || 'My Farm',
-                    farmerName: 'Farm Manager',
-                    email: currentUserEmail || '',
-                    farmType: '',
-                    farmLocation: '',
-                    currency: 'USD',
-                    lowStockThreshold: 10,
-                    autoSync: true,
-                    localStorageEnabled: true,
-                    theme: 'light', // 🔥 Default to light
-                    memberSince: new Date().toISOString(),
-                    lastUpdated: new Date().toISOString()
-                };
+        ];
+        
+        // Try each method
+        for (const attempt of loadAttempts) {
+            const result = attempt();
+            if (result) {
+                loadedProfile = result.data;
+                source = result.source;
+                console.log(`✅ Loaded profile from ${source}`);
+                break;
             }
-            
-            // Ensure theme is light (prevent dark mode)
-            if (loadedProfile.theme === 'dark' || loadedProfile.theme === 'auto') {
-                loadedProfile.theme = 'light';
-                console.log('🌞 Forced light theme');
-            }
-            
-            // Update app data
-            window.FarmModules.appData.profile = loadedProfile;
-            window.FarmModules.appData.farmName = loadedProfile.farmName;
-            
-            // Update UI
-            this.updateProfileDisplay();
-            
-            console.log('✅ User data loaded with persistence');
-            
-        } catch (error) {
-            console.error('Error loading user data:', error);
         }
-    },
+        
+        // 5. Create default if none found
+        if (!loadedProfile) {
+            console.log('🆕 Creating new profile');
+            loadedProfile = {
+                farmName: 'My Farm',
+                farmerName: 'Farm Manager',
+                email: this.getCurrentUserEmail() || '',
+                farmType: '',
+                farmLocation: '',
+                currency: 'USD',
+                lowStockThreshold: 10,
+                autoSync: true,
+                localStorageEnabled: true,
+                theme: 'light',
+                memberSince: new Date().toISOString(),
+                lastUpdated: new Date().toISOString()
+            };
+            source = 'new-default';
+        }
+        
+        // 🔥 CRITICAL: Restore farm name from separate storage if available
+        const savedFarmName = localStorage.getItem('farm-last-name');
+        if (savedFarmName && savedFarmName !== 'My Farm') {
+            console.log(`🏷️ Restoring farm name from backup: "${savedFarmName}"`);
+            loadedProfile.farmName = savedFarmName;
+        }
+        
+        // Ensure theme is light
+        if (loadedProfile.theme === 'dark' || loadedProfile.theme === 'auto') {
+            loadedProfile.theme = 'light';
+            console.log('🌞 Forced light theme');
+        }
+        
+        // Update app data
+        window.FarmModules.appData.profile = loadedProfile;
+        window.FarmModules.appData.farmName = loadedProfile.farmName;
+        
+        // Update UI
+        this.updateProfileDisplay();
+        
+        console.log(`✅ User data loaded from: ${source}`);
+        console.log(`🏷️ Farm name: "${loadedProfile.farmName}"`);
+        
+    } catch (error) {
+        console.error('❌ Error loading user data:', error);
+    }
+},
     
     // 🔥 NEW: Get current user email for persistence
     getCurrentUserEmail() {
