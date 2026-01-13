@@ -8415,17 +8415,56 @@ body {
     overflow-x: hidden !important;
 }
 
-/* ===== ULTRA MINIMAL FIX ===== */
-/* Just these 3 lines */
+/* ===== EXACT FIX FOR HEADER UNDER NAVBAR ===== */
 
-.module-header,
-.welcome-section {
+/* Target the FIRST element inside #content-area */
+#content-area > *:first-child {
     margin-top: 0 !important;
 }
 
+/* Specifically target welcome-section which is likely first */
+#content-area > .welcome-section {
+    margin-top: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    margin-bottom: 20px !important;
+}
+
+/* Fix any module-header that might appear */
+#content-area > .module-header {
+    margin-top: 0 !important;
+}
+
+/* Also fix any container that might have margin */
+#content-area > .module-container,
+#content-area > .dashboard-container,
+#content-area > [class*="module"] {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Ensure #content-area itself has proper spacing */
 #content-area {
     padding-top: 80px !important;
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+    padding-bottom: 20px !important;
 }
+
+/* Mobile */
+@media (max-width: 768px) {
+    #content-area {
+        padding-top: 60px !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    
+    #content-area > .welcome-section {
+        border-radius: 0 !important;
+    }
+}
+
+
 
 
 
