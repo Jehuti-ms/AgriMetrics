@@ -7780,30 +7780,6 @@ header {
     }
 }
 
-/* ===== EMERGENCY OVERRIDE: Force visibility ===== */
-/* If nothing else works, these rules will force visibility */
-header * {
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-.nav-list * {
-    visibility: visible !important;
-    opacity: 1 !important;
-    display: flex !important;
-}
-
-/* Debug helper - add outline to see elements */
-@media (max-width: 768px) {
-    header {
-        outline: 1px solid red !important; /* Remove after confirming fix */
-    }
-    
-    .nav-item {
-        outline: 1px solid blue !important; /* Remove after confirming fix */
-    }
-}
-
 /* ===== FIX FOR HAMBURGER MENU NOT OPENING ===== */
 
 /* 1. Ensure the hamburger button is clickable and has proper cursor */
@@ -7880,56 +7856,7 @@ header * {
     border-left-color: var(--dm-border) !important;
 }
 
-/* ===== DEBUG/DIAGNOSTIC STYLES ===== */
-/* Add these temporarily to check if click events are firing */
 
-/* Visual feedback when hamburger is clicked */
-.hamburger-menu:active,
-#menu-toggle:active {
-    background: rgba(0, 0, 0, 0.1) !important;
-    transform: scale(0.95) !important;
-    transition: transform 0.1s !important;
-}
-
-/* Show a visual indicator when menu should be open */
-.side-menu.active::before {
-    content: 'Menu Open' !important;
-    position: absolute !important;
-    top: 10px !important;
-    left: 10px !important;
-    background: #22c55e !important;
-    color: white !important;
-    padding: 4px 8px !important;
-    border-radius: 4px !important;
-    font-size: 12px !important;
-    z-index: 10000 !important;
-}
-
-/* Remove the above debug styles once menu is working */
-
-/* ===== EMERGENCY FIX: If JavaScript isn't working ===== */
-/* Add this as a pure CSS fallback (requires checkbox hack) */
-
-/* Only use if you can add HTML structure */
-/*
-.hamburger-checkbox {
-    display: none !important;
-}
-
-.hamburger-label {
-    cursor: pointer !important;
-}
-
-.hamburger-checkbox:checked ~ .side-menu {
-    transform: translateX(0) !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-.hamburger-checkbox:checked ~ .side-menu-overlay {
-    display: block !important;
-}
-*/
 
 /* ===== ENSURE NO CONFLICTING STYLES ===== */
 /* Remove any styles that might be hiding or disabling the menu */
