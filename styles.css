@@ -8415,57 +8415,75 @@ body {
     overflow-x: hidden !important;
 }
 
-/* ===== EXACT FIX FOR HEADER UNDER NAVBAR ===== */
+/* ===== REMOVE ALL PADDING - CONTENT FLUSH WITH NAVBAR ===== */
 
-/* Target the FIRST element inside #content-area */
+/* 1. Remove ALL padding from content area */
+#content-area {
+    padding-top: 0 !important; /* REMOVE this */
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+    padding-bottom: 20px !important;
+    min-height: calc(100vh - 80px) !important;
+}
+
+/* 2. Remove padding from app container */
+#app-container,
+.app-container {
+    padding-top: 0 !important;
+}
+
+/* 3. Body should NOT have padding either */
+body {
+    padding-top: 0 !important;
+}
+
+/* 4. Target the FIRST element in content area - make it flush */
 #content-area > *:first-child {
-    margin-top: 0 !important;
-}
-
-/* Specifically target welcome-section which is likely first */
-#content-area > .welcome-section {
-    margin-top: 0 !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    margin-bottom: 20px !important;
-}
-
-/* Fix any module-header that might appear */
-#content-area > .module-header {
-    margin-top: 0 !important;
-}
-
-/* Also fix any container that might have margin */
-#content-area > .module-container,
-#content-area > .dashboard-container,
-#content-area > [class*="module"] {
     margin-top: 0 !important;
     padding-top: 0 !important;
 }
 
-/* Ensure #content-area itself has proper spacing */
-#content-area {
-    padding-top: 80px !important;
-    padding-left: 20px !important;
-    padding-right: 20px !important;
-    padding-bottom: 20px !important;
+/* 5. Specifically fix welcome-section to be at very top */
+#content-area > .welcome-section {
+    margin: 0 0 20px 0 !important; /* Top margin = 0 */
+    border-radius: 0 0 12px 12px !important; /* Keep bottom rounded */
 }
 
-/* Mobile */
+/* 6. Fix module headers too */
+#content-area > .module-header,
+#content-area > [class*="header-pwa"] {
+    margin: 0 0 20px 0 !important;
+}
+
+/* 7. Ensure navbar stays on top */
+header,
+.top-nav {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
+    background: white !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+}
+
+/* 8. Mobile */
 @media (max-width: 768px) {
     #content-area {
-        padding-top: 60px !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
     }
     
     #content-area > .welcome-section {
-        border-radius: 0 !important;
+        border-radius: 0 !important; /* Full width on mobile */
+    }
+    
+    header,
+    .top-nav {
+        height: 60px !important;
+    }
+    
+    #content-area {
+        min-height: calc(100vh - 60px) !important;
     }
 }
-
-
-
-
-
-
