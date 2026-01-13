@@ -7953,10 +7953,4 @@ header {
     position: relative !important;
 }
 
-/* ============ Force menu open to test =========== */
-.side-menu {
-    transform: translateX(0) !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    background: red !important; /* Make it obvious */
-}
+
