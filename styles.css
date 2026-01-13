@@ -8306,6 +8306,7 @@ nav,
 }
 
 /* Overlay for right-side menu */
+/* FIXED overlay - simpler approach */
 .side-menu-overlay {
     position: fixed;
     top: 0;
@@ -8314,8 +8315,6 @@ nav,
     height: 100vh;
     background: rgba(0,0,0,0.5);
     display: none;
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
     z-index: 1000;
 }
 
