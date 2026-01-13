@@ -7931,3 +7931,55 @@ header {
         max-width: 300px !important;
     }
 }
+
+/* ===== CRITICAL FIX: MENU MUST BE ON TOP ===== */
+#side-menu {
+    z-index: 2147483647 !important; /* Maximum possible z-index */
+    position: fixed !important;
+    top: 80px !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 280px !important;
+    background: white !important;
+    border-left: 3px solid #22c55e !important;
+    transform: translateX(100%) !important;
+    transition: transform 0.3s ease !important;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.3) !important;
+}
+
+/* When active, ensure it's visible */
+#side-menu.active {
+    transform: translateX(0) !important;
+}
+
+/* Overlay - just below menu */
+.side-menu-overlay {
+    z-index: 2147483646 !important; /* One less than menu */
+    background: rgba(0,0,0,0.5) !important;
+}
+
+/* DEMOTE other high z-index elements */
+#content-area,
+header,
+.top-nav,
+nav,
+.main-content {
+    z-index: 1 !important; /* Force these to be lower */
+    position: relative !important; /* Don't use fixed/absolute unless needed */
+}
+
+/* Ensure nothing can be above menu */
+* {
+    z-index: auto !important;
+    max-z-index: 2147483646 !important; /* Not a real property, but concept */
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    #side-menu {
+        top: 60px !important;
+        width: 85% !important;
+        max-width: 300px !important;
+    }
+}
+
