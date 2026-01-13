@@ -595,5 +595,13 @@ setupHamburgerMenu() {
     }
 }
 
+// Force re-initialization after everything else loads
+setTimeout(() => {
+    if (typeof this.setupHamburgerMenu === 'function') {
+        console.log('🔄 Forcing hamburger menu re-initialization...');
+        this.setupHamburgerMenu();
+    }
+}, 2000);
+
 // Initialize the app
 window.app = new FarmManagementApp();
