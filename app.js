@@ -100,7 +100,7 @@ class FarmManagementApp {
             
             setTimeout(() => {
                 this.setupHamburgerMenu();
-                this.setupSideMenuEvents();
+                this.setupEventListeners(); 
                 this.setupEventListeners();
                 this.setupDarkMode(); // SETUP THEME TOGGLE AFTER NAV IS CREATED
                 this.showSection(this.currentSection);
