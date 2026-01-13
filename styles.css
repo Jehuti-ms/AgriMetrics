@@ -7528,3 +7528,278 @@ header, .top-nav {
     color: #ff4757;
 }
 
+/* ===== FIX FOR NAVBAR VISIBILITY ON SMALL SCREENS ===== */
+
+/* 1. Ensure the entire header is visible and properly positioned */
+header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    z-index: 10000 !important;
+    background: var(--surface-color) !important;
+    box-shadow: var(--shadow) !important;
+    overflow: visible !important;
+    max-width: 100vw !important;
+}
+
+/* 2. Force the main nav container to be visible and scrollable */
+#main-nav {
+    max-width: 100vw !important;
+    width: 100% !important;
+    overflow: visible !important;
+    padding: 0 8px !important; /* Reduced padding on mobile */
+    margin: 0 !important;
+    position: relative !important;
+    display: flex !important;
+}
+
+/* 3. Fix the nav list - ensure all items are visible */
+.nav-list {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    padding: 0.75rem 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    flex-wrap: nowrap !important;
+    gap: 4px !important; /* Reduced gap on mobile */
+}
+
+/* 4. Ensure each nav item is visible and clickable */
+.nav-item {
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important; /* Don't shrink items */
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-width: auto !important;
+}
+
+/* 5. Nav links - ensure they're visible and touch-friendly */
+.nav-link {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 6px 8px !important;
+    min-height: 44px !important; /* Apple touch target minimum */
+    min-width: 44px !important;  /* Apple touch target minimum */
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* 6. User info section - ensure it stays visible */
+.user-info {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+    visibility: visible !important;
+    margin-left: auto !important; /* Push to the right */
+}
+
+/* ===== MOBILE-SPECIFIC FIXES ===== */
+@media (max-width: 768px) {
+    /* Ensure the header doesn't get cut off */
+    header {
+        height: auto !important;
+        min-height: 60px !important;
+        padding: 0 !important;
+    }
+    
+    /* Make nav items more compact but VISIBLE */
+    .nav-list {
+        justify-content: flex-start !important;
+        overflow-x: auto !important;
+        overflow-y: visible !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important; /* Firefox */
+        padding: 8px 0 !important;
+    }
+    
+    .nav-list::-webkit-scrollbar {
+        display: none !important; /* Chrome/Safari */
+    }
+    
+    /* Each nav item - visible with touch-friendly size */
+    .nav-item {
+        flex: 0 0 auto !important; /* Don't grow or shrink */
+        margin: 0 2px !important;
+    }
+    
+    /* Nav links - icons only on mobile */
+    .nav-link {
+        padding: 6px !important;
+        min-width: 50px !important;
+        min-height: 50px !important;
+    }
+    
+    /* Hide text labels on mobile, show only icons */
+    .nav-link span:not(.material-icons, .material-symbols-outlined) {
+        display: none !important; /* Hide text labels */
+    }
+    
+    /* Ensure icons are visible */
+    .nav-link i,
+    .nav-link .material-icons,
+    .nav-link .material-symbols-outlined {
+        display: block !important;
+        font-size: 20px !important;
+        margin-bottom: 2px !important;
+        visibility: visible !important;
+    }
+    
+    /* User info - make it more compact */
+    .user-info {
+        gap: 4px !important;
+        padding-left: 8px !important;
+        border-left: 1px solid var(--border-color) !important;
+    }
+    
+    .demo-badge {
+        font-size: 0.7rem !important;
+        padding: 0.2rem 0.4rem !important;
+    }
+    
+    /* Adjust content area */
+    #content-area {
+        padding-top: 70px !important; /* Adjust for smaller header */
+        min-height: calc(100vh - 70px) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Extra small screens - ensure everything fits */
+    header {
+        min-height: 56px !important;
+    }
+    
+    #main-nav {
+        padding: 0 4px !important;
+    }
+    
+    .nav-link {
+        min-width: 44px !important;
+        min-height: 44px !important;
+        padding: 5px !important;
+    }
+    
+    .nav-link i,
+    .nav-link .material-icons,
+    .nav-link .material-symbols-outlined {
+        font-size: 18px !important;
+    }
+    
+    /* Hide brand subtitle on very small screens */
+    .brand-subtitle {
+        display: none !important;
+    }
+    
+    /* Adjust content area */
+    #content-area {
+        padding-top: 65px !important;
+        min-height: calc(100vh - 65px) !important;
+    }
+}
+
+/* ===== CRITICAL: Ensure hamburger menu is ALWAYS visible ===== */
+/* Target the hamburger/menu toggle button specifically */
+.hamburger-menu,
+#menu-toggle,
+[data-view="more"],
+.nav-item[data-view="more"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    z-index: 10001 !important;
+    background: none !important;
+    border: none !important;
+    cursor: pointer !important;
+    padding: 8px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important; /* Don't shrink! */
+}
+
+/* Ensure hamburger icon is visible */
+.hamburger-menu i,
+#menu-toggle i,
+[data-view="more"] i {
+    font-size: 24px !important;
+    display: block !important;
+    visibility: visible !important;
+    color: inherit !important;
+}
+
+/* ===== FIX FOR TOP NAV SPECIFICALLY ===== */
+@media (max-width: 768px) {
+    .top-nav {
+        height: auto !important;
+        min-height: 60px !important;
+        padding: 0 8px !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 10000 !important;
+    }
+    
+    .nav-items {
+        display: flex !important;
+        gap: 2px !important;
+        overflow-x: auto !important;
+        overflow-y: visible !important;
+        padding: 8px 0 !important;
+        width: 100% !important;
+    }
+    
+    .nav-item {
+        flex: 0 0 auto !important;
+        padding: 6px 8px !important;
+        min-width: 50px !important;
+    }
+    
+    /* Hide labels, show only icons */
+    .nav-label {
+        display: none !important;
+    }
+    
+    /* Brand adjustments */
+    .brand-text {
+        font-size: 16px !important;
+    }
+    
+    .brand-subtitle {
+        display: none !important;
+    }
+}
+
+/* ===== EMERGENCY OVERRIDE: Force visibility ===== */
+/* If nothing else works, these rules will force visibility */
+header * {
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.nav-list * {
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: flex !important;
+}
+
+/* Debug helper - add outline to see elements */
+@media (max-width: 768px) {
+    header {
+        outline: 1px solid red !important; /* Remove after confirming fix */
+    }
+    
+    .nav-item {
+        outline: 1px solid blue !important; /* Remove after confirming fix */
+    }
+}
