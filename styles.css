@@ -8415,4 +8415,19 @@ body {
     overflow-x: hidden !important;
 }
 
+/* MINIMAL FIX - Add to styles.css */
+.module-header,
+.welcome-section {
+    margin-top: 0 !important;
+}
+
+#content-area {
+    padding-top: 80px !important;
+}
+
+.module-container {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
 
