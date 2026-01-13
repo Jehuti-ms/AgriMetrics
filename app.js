@@ -390,89 +390,71 @@ updateThemeToggleIcon() {
     }
     
 setupHamburgerMenu() {
-    console.log('🎯 Setting up hamburger menu...');
+    console.log('🎯 Setting up side menu (slide from right)');
     
     const hamburger = document.getElementById('hamburger-menu');
     const sideMenu = document.getElementById('side-menu');
     
-    if (!hamburger || !sideMenu) {
-        console.log('❌ Hamburger or side menu not found');
-        return;
-    }
+    if (!hamburger || !sideMenu) return;
     
-    // Mark as already setup to prevent duplicates
-    if (hamburger.dataset.menuSetup === 'true') {
-        console.log('⚠️ Menu already setup');
-        return;
-    }
+    // Skip if already setup
+    if (hamburger.dataset.menuSetup === 'true') return;
     hamburger.dataset.menuSetup = 'true';
     
-    // 1. Remove any existing overlay
-    const oldOverlay = document.querySelector('.side-menu-overlay');
-    if (oldOverlay) oldOverlay.remove();
+    // Clean up
+    document.querySelectorAll('.side-menu-overlay').forEach(el => el.remove());
     
-    // 2. Create new overlay
+    // Create overlay
     const overlay = document.createElement('div');
     overlay.className = 'side-menu-overlay';
     document.body.appendChild(overlay);
     
-    // 3. Ensure side menu is properly positioned
+    // Ensure menu is in body
     if (sideMenu.parentElement !== document.body) {
         document.body.appendChild(sideMenu);
     }
     
-    // 4. Set initial state (menu closed)
+    // Set initial state (OFF-SCREEN to the right)
     sideMenu.style.transform = 'translateX(100%)';
     sideMenu.style.transition = 'transform 0.3s ease';
     
-    // 5. Create fresh hamburger (removes old listeners)
-    console.log('🔄 Creating fresh hamburger button...');
+    // Clone hamburger
     const newHamburger = hamburger.cloneNode(true);
     hamburger.parentNode.replaceChild(newHamburger, hamburger);
     
-    // 6. SINGLE SIMPLE click handler
+    // Click handler - SLIDE from right
     newHamburger.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         
-        console.log('🎯 Hamburger clicked!');
-        
-        const isOpen = sideMenu.style.transform === 'translateX(0px)' || 
-                      sideMenu.style.transform === 'matrix(1, 0, 0, 1, 0, 0)';
+        const isOpen = sideMenu.style.transform === 'translateX(0px)';
         
         if (!isOpen) {
-            // OPEN MENU
+            // SLIDE IN from right
             sideMenu.style.transform = 'translateX(0)';
             overlay.style.display = 'block';
-            console.log('✅ Menu opened');
         } else {
-            // CLOSE MENU
+            // SLIDE OUT to right
             sideMenu.style.transform = 'translateX(100%)';
             overlay.style.display = 'none';
-            console.log('✅ Menu closed');
         }
     });
     
-    // 7. Overlay click closes menu
+    // Overlay click
     overlay.addEventListener('click', () => {
         sideMenu.style.transform = 'translateX(100%)';
         overlay.style.display = 'none';
-        console.log('✅ Menu closed via overlay');
     });
     
-    // 8. ESC key closes menu
+    // ESC key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && overlay.style.display === 'block') {
             sideMenu.style.transform = 'translateX(100%)';
             overlay.style.display = 'none';
-            console.log('✅ Menu closed with ESC');
         }
     });
     
-    console.log('✅ Hamburger menu setup complete');
-    
-    // Return the new hamburger for reference
-    return newHamburger;
+    console.log('✅ Side menu setup to slide from right edge');
 }
       
     showSection(sectionId) {
