@@ -750,7 +750,12 @@ setupHamburgerMenu() {
     console.log('✅ Hamburger menu setup complete');
     console.log('📱 Menu will slide from right edge using translateX(280px) → translateX(0px)');
 }
-      
+    
+      // Call it when modules load and on window resize
+    window.addEventListener('resize', () => {
+    setTimeout(() => this.fixOverflowingForms(), 100);
+});
+
     showSection(sectionId) {
         console.log(`🔄 Switching to section: ${sectionId}`);
         
@@ -783,6 +788,11 @@ setupHamburgerMenu() {
                 this.loadFallbackContent(cleanSectionId);
             }
         }, 100);
+
+        // Fix forms after section loads
+        setTimeout(() => {
+            this.fixOverflowingForms();
+        }, 300);
     }
     
     setActiveMenuItem(sectionId) {
@@ -833,6 +843,38 @@ setupHamburgerMenu() {
             </div>
         `;
     }
+}
+
+// Add this method to your App class
+fixOverflowingForms() {
+    console.log('🔧 Checking for overflowing forms...');
+    
+    // Check all forms and form containers
+    const forms = document.querySelectorAll('form, .form-container, .glass-card, .popout-modal-content');
+    
+    forms.forEach(form => {
+        const rect = form.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        
+        // If form is wider than viewport
+        if (rect.width > viewportWidth) {
+            console.log('Form overflowing:', form.className);
+            
+            // Apply fixes
+            form.style.width = '100%';
+            form.style.maxWidth = '100%';
+            form.style.overflowX = 'hidden';
+            form.style.boxSizing = 'border-box';
+            
+            // Also fix all child inputs
+            const inputs = form.querySelectorAll('input, select, textarea, .form-group');
+            inputs.forEach(input => {
+                input.style.width = '100%';
+                input.style.maxWidth = '100%';
+                input.style.boxSizing = 'border-box';
+            });
+        }
+    });
 }
 
 // Force re-initialization after everything else loads
