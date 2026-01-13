@@ -8122,3 +8122,52 @@ nav,
     }
 }
 
+/* ===== FORCE MENU TO BE ON TOP OF EVERYTHING ===== */
+
+/* 1. Menu gets MAXIMUM z-index */
+#side-menu {
+    z-index: 2147483647 !important; /* Maximum possible */
+    position: fixed !important;
+}
+
+/* 2. App container and content should be BELOW */
+#app-container,
+#content-area,
+.app-container,
+.content-area,
+main,
+.container {
+    z-index: 1 !important;
+    position: relative !important; /* Don't create stacking context */
+}
+
+/* 3. Header should be below menu */
+header,
+.top-nav,
+nav,
+.navbar {
+    z-index: 1000 !important;
+}
+
+/* 4. Overlay just below menu */
+.side-menu-overlay {
+    z-index: 2147483646 !important; /* One less than menu */
+}
+
+/* 5. Ensure no other elements can be above menu */
+* {
+    max-z-index: 2147483646 !important; /* Conceptual */
+}
+
+/* 6. If using fixed/absolute for main content, adjust */
+#app-container[style*="position: fixed"],
+#app-container[style*="position: absolute"] {
+    z-index: 1 !important;
+}
+
+/* 7. Debug: Add visible border when menu is active */
+#side-menu.active {
+    border-left: 3px solid #22c55e !important;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.3) !important;
+}
+
