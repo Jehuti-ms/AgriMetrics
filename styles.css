@@ -8286,47 +8286,133 @@ nav,
   display: block;
 }
 
-/* Right-side menu positioning */
-#side-menu {
-    position: fixed;
-    top: 0;
-    right: 0; /* Changed from left: 0 to right: 0 */
-    width: 280px;
-    height: 100vh;
-    background: white;
-    transform: translateX(100%); /* Start off-screen to the right */
-    transition: transform 0.3s ease-in-out;
-    z-index: 1001;
-    box-shadow: -2px 0 10px rgba(0,0,0,0.1); /* Shadow on left side */
+
+
+/* ===== FIXED SIDE MENU - OVERRIDE ALL CONFLICTS ===== */
+
+/* 1. Reset and use ONE consistent selector */
+#side-menu,
+.side-menu.js-side-menu {
+    /* Position */
+    position: fixed !important;
+    top: 80px !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 280px !important;
+    height: calc(100vh - 80px) !important;
+    
+    /* Start HIDDEN - COMPLETELY off-screen */
+    transform: translateX(280px) !important; /* Use pixels, not percentage */
+    
+    /* Transition */
+    transition: transform 0.3s ease-in-out !important;
+    
+    /* Appearance */
+    background: white !important;
+    border-left: 1px solid #e9ecef !important;
+    box-shadow: -5px 0 15px rgba(0,0,0,0.1) !important;
+    
+    /* Stacking */
+    z-index: 10001 !important;
+    
+    /* Scrolling */
+    overflow-y: auto !important;
+    
+    /* Ensure it's rendered */
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
-/* When open, slide in from right */
-#side-menu.open {
-    transform: translateX(0);
+/* 2. When open - slide in */
+#side-menu.open,
+.side-menu.js-side-menu.open,
+#side-menu.active,
+.side-menu.js-side-menu.active {
+    transform: translateX(0) !important;
 }
 
-/* Overlay for right-side menu */
-/* FIXED overlay - simpler approach */
+/* 3. When closed - FORCE it to stay hidden */
+#side-menu:not(.open):not(.active),
+.side-menu.js-side-menu:not(.open):not(.active) {
+    transform: translateX(280px) !important;
+    pointer-events: none !important;
+}
+
+/* 4. Overlay - fix positioning */
 .side-menu-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0,0,0,0.5);
-    display: none;
-    z-index: 1000;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0,0,0,0.5) !important;
+    z-index: 10000 !important;
+    display: none !important;
+    backdrop-filter: blur(2px) !important;
 }
 
-/* Ensure menu is fully off-screen when closed */
-body:not(.menu-open) #side-menu {
-    transform: translateX(100%) !important;
+.side-menu-overlay.active {
+    display: block !important;
 }
 
-/* Add this to ensure it's completely hidden when closed */
-#side-menu:not(.open) {
-    visibility: hidden;
-    transform: translateX(100%) !important;
+/* 5. Header positioning fix - Add space for fixed header */
+#content-area {
+    padding-top: 80px !important;
+    min-height: calc(100vh - 80px) !important;
+}
+
+/* 6. Ensure main content doesn't overlap */
+.app-container,
+.main-content {
+    padding-top: 80px !important;
+}
+
+/* 7. Dark mode support */
+.dark-mode #side-menu,
+.dark-mode .side-menu.js-side-menu {
+    background: var(--dm-surface) !important;
+    border-left-color: var(--dm-border) !important;
+}
+
+.dark-mode .side-menu-overlay {
+    background: rgba(0,0,0,0.7) !important;
+}
+
+/* 8. Mobile responsive */
+@media (max-width: 768px) {
+    #side-menu,
+    .side-menu.js-side-menu {
+        top: 60px !important;
+        height: calc(100vh - 60px) !important;
+        width: 85% !important;
+        max-width: 300px !important;
+        transform: translateX(100vw) !important; /* Use viewport width */
+    }
+    
+    #side-menu.open,
+    .side-menu.js-side-menu.open {
+        transform: translateX(0) !important;
+    }
+    
+    #content-area {
+        padding-top: 60px !important;
+        min-height: calc(100vh - 60px) !important;
+    }
+}
+
+/* 9. CRITICAL: Override ALL previous conflicting rules */
+.side-menu:not(.js-side-menu):not(#side-menu) {
+    display: none !important;
+}
+
+/* 10. Ensure no other elements interfere */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    overflow-x: hidden !important;
 }
 
 
