@@ -276,7 +276,7 @@ updateThemeToggleIcon() {
     }
 }
   
-  setupEventListeners() {
+ setupEventListeners() {
     document.addEventListener('click', (e) => {
         // Handle side menu items
         if (e.target.closest('.side-menu-item')) {
@@ -286,20 +286,20 @@ updateThemeToggleIcon() {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                // Close menu immediately
+                // Close menu properly
                 this.closeSideMenu();
                 
-                // Small delay to ensure smooth transition
+                // Show section after menu animation completes
                 setTimeout(() => {
                     this.showSection(section);
-                }, 300); // Match your CSS transition duration
+                }, 300);
                 
                 console.log(`📱 Navigated to ${section}, menu closed`);
-                return; // Exit early to prevent other handlers
+                return; // Prevent other handlers
             }
         }
         
-        // Handle nav items (unchanged)
+        // Handle nav items
         if (e.target.closest('.nav-item')) {
             const navItem = e.target.closest('.nav-item');
             const view = navItem.getAttribute('data-view');
@@ -308,9 +308,56 @@ updateThemeToggleIcon() {
                 this.showSection(view);
             }
         }
+        
+        // Handle overlay click
+        if (e.target.closest('.side-menu-overlay')) {
+            e.preventDefault();
+            this.closeSideMenu();
+        }
     });
 }
 
+// Make sure these methods exist
+closeSideMenu() {
+    const sideMenu = document.getElementById('side-menu');
+    const overlay = document.querySelector('.side-menu-overlay');
+    
+    if (sideMenu) {
+        sideMenu.classList.remove('open');
+        // Force the transform to ensure it's hidden
+        sideMenu.style.transform = 'translateX(100%)';
+    }
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
+}
+
+openSideMenu() {
+    const sideMenu = document.getElementById('side-menu');
+    const overlay = document.querySelector('.side-menu-overlay');
+    
+    if (sideMenu) {
+        sideMenu.classList.add('open');
+        sideMenu.style.transform = 'translateX(0)';
+    }
+    if (overlay) {
+        overlay.style.display = 'block';
+    }
+}
+
+// Add this to initialize the menu in the correct state
+initializeMenu() {
+    const sideMenu = document.getElementById('side-menu');
+    if (sideMenu) {
+        // Ensure it starts hidden
+        sideMenu.classList.remove('open');
+        sideMenu.style.transform = 'translateX(100%)';
+        // Remove any conflicting inline styles
+        sideMenu.style.left = '';
+        sideMenu.style.right = '0';
+    }
+}
+    
 // Add this method to properly close the menu
 closeSideMenu() {
     const sideMenu = document.getElementById('side-menu');
