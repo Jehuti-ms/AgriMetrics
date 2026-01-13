@@ -822,11 +822,6 @@ fixOverflowingForms() {
     });
 }
 
-  // Call it when modules load and on window resize
-    window.addEventListener('resize', () => {
-    setTimeout(() => this.fixOverflowingForms(), 100);
-});
-
     setActiveMenuItem(sectionId) {
         document.querySelectorAll('.nav-item, .side-menu-item').forEach(item => {
             item.classList.remove('active');
