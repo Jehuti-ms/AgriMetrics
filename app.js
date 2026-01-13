@@ -751,11 +751,6 @@ setupHamburgerMenu() {
     console.log('📱 Menu will slide from right edge using translateX(280px) → translateX(0px)');
 }
     
-      // Call it when modules load and on window resize
-    window.addEventListener('resize', () => {
-    setTimeout(() => this.fixOverflowingForms(), 100);
-});
-
     showSection(sectionId) {
         console.log(`🔄 Switching to section: ${sectionId}`);
         
@@ -876,6 +871,11 @@ fixOverflowingForms() {
         }
     });
 }
+
+  // Call it when modules load and on window resize
+    window.addEventListener('resize', () => {
+    setTimeout(() => this.fixOverflowingForms(), 100);
+});
 
 // Force re-initialization after everything else loads
 setTimeout(() => {
