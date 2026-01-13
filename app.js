@@ -424,21 +424,30 @@ setupHamburgerMenu() {
     
     // Click handler - SLIDE from right
     newHamburger.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const isOpen = sideMenu.style.transform === 'translateX(0px)';
+    
+    if (!isOpen) {
+        // 1. FIRST bring menu to front
+        sideMenu.style.zIndex = '2147483647';
         
-        const isOpen = sideMenu.style.transform === 'translateX(0px)';
+        // 2. THEN slide it in
+        sideMenu.style.transform = 'translateX(0)';
+        overlay.style.display = 'block';
         
-        if (!isOpen) {
-            // SLIDE IN from right
-            sideMenu.style.transform = 'translateX(0)';
-            overlay.style.display = 'block';
-        } else {
-            // SLIDE OUT to right
-            sideMenu.style.transform = 'translateX(100%)';
-            overlay.style.display = 'none';
-        }
-    });
+        // 3. Force all other content lower
+        document.querySelectorAll('#app-container, #content-area, main').forEach(el => {
+            el.style.zIndex = '1';
+        });
+        
+        console.log('✅ Menu brought to front and opened');
+    } else {
+        sideMenu.style.transform = 'translateX(100%)';
+        overlay.style.display = 'none';
+    }
+});
     
     // Overlay click
     overlay.addEventListener('click', () => {
