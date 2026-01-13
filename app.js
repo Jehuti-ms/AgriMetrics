@@ -789,7 +789,44 @@ setupHamburgerMenu() {
             this.fixOverflowingForms();
         }, 300);
     }
+
+    // Add this method to your App class
+fixOverflowingForms() {
+    console.log('🔧 Checking for overflowing forms...');
     
+    // Check all forms and form containers
+    const forms = document.querySelectorAll('form, .form-container, .glass-card, .popout-modal-content');
+    
+    forms.forEach(form => {
+        const rect = form.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        
+        // If form is wider than viewport
+        if (rect.width > viewportWidth) {
+            console.log('Form overflowing:', form.className);
+            
+            // Apply fixes
+            form.style.width = '100%';
+            form.style.maxWidth = '100%';
+            form.style.overflowX = 'hidden';
+            form.style.boxSizing = 'border-box';
+            
+            // Also fix all child inputs
+            const inputs = form.querySelectorAll('input, select, textarea, .form-group');
+            inputs.forEach(input => {
+                input.style.width = '100%';
+                input.style.maxWidth = '100%';
+                input.style.boxSizing = 'border-box';
+            });
+        }
+    });
+}
+
+  // Call it when modules load and on window resize
+    window.addEventListener('resize', () => {
+    setTimeout(() => this.fixOverflowingForms(), 100);
+});
+
     setActiveMenuItem(sectionId) {
         document.querySelectorAll('.nav-item, .side-menu-item').forEach(item => {
             item.classList.remove('active');
@@ -839,43 +876,6 @@ setupHamburgerMenu() {
         `;
     }
 }
-
-// Add this method to your App class
-fixOverflowingForms() {
-    console.log('🔧 Checking for overflowing forms...');
-    
-    // Check all forms and form containers
-    const forms = document.querySelectorAll('form, .form-container, .glass-card, .popout-modal-content');
-    
-    forms.forEach(form => {
-        const rect = form.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        
-        // If form is wider than viewport
-        if (rect.width > viewportWidth) {
-            console.log('Form overflowing:', form.className);
-            
-            // Apply fixes
-            form.style.width = '100%';
-            form.style.maxWidth = '100%';
-            form.style.overflowX = 'hidden';
-            form.style.boxSizing = 'border-box';
-            
-            // Also fix all child inputs
-            const inputs = form.querySelectorAll('input, select, textarea, .form-group');
-            inputs.forEach(input => {
-                input.style.width = '100%';
-                input.style.maxWidth = '100%';
-                input.style.boxSizing = 'border-box';
-            });
-        }
-    });
-}
-
-  // Call it when modules load and on window resize
-    window.addEventListener('resize', () => {
-    setTimeout(() => this.fixOverflowingForms(), 100);
-});
 
 // Force re-initialization after everything else loads
 setTimeout(() => {
