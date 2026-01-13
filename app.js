@@ -390,80 +390,147 @@ updateThemeToggleIcon() {
     }
     
 setupHamburgerMenu() {
-    console.log('🎯 Setting up side menu (slide from right)');
+    console.log('🎯 Setting up hamburger menu (FINAL WORKING VERSION)');
     
     const hamburger = document.getElementById('hamburger-menu');
     const sideMenu = document.getElementById('side-menu');
     
-    if (!hamburger || !sideMenu) return;
+    if (!hamburger || !sideMenu) {
+        console.log('❌ Hamburger or side menu not found');
+        return;
+    }
     
     // Skip if already setup
-    if (hamburger.dataset.menuSetup === 'true') return;
+    if (hamburger.dataset.menuSetup === 'true') {
+        console.log('⚠️ Menu already setup, skipping...');
+        return;
+    }
     hamburger.dataset.menuSetup = 'true';
     
-    // Clean up
-    document.querySelectorAll('.side-menu-overlay').forEach(el => el.remove());
+    // 1. Clean up
+    sideMenu.removeAttribute('style');
+    sideMenu.removeAttribute('class');
     
-    // Create overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'side-menu-overlay';
-    document.body.appendChild(overlay);
+    // 2. Add our control class
+    sideMenu.classList.add('js-side-menu');
     
-    // Ensure menu is in body
+    // 3. Apply initial styles (menu CLOSED - off-screen)
+    sideMenu.style.cssText = `
+        /* Position - fixed to right edge */
+        position: fixed !important;
+        top: 80px !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 280px !important;
+        
+        /* Start OFF-SCREEN (280px = menu width) */
+        transform: translateX(280px) !important;
+        
+        /* Smooth slide animation */
+        transition: transform 0.3s ease !important;
+        
+        /* Appearance */
+        background: white !important;
+        border-left: 3px solid #22c55e !important;
+        box-shadow: -10px 0 30px rgba(0,0,0,0.3) !important;
+        
+        /* Stacking */
+        z-index: 10001 !important;
+        
+        /* Scrolling */
+        overflow-y: auto !important;
+        
+        /* Visibility */
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    `;
+    
+    // 4. Ensure menu is in body (not nested)
     if (sideMenu.parentElement !== document.body) {
         document.body.appendChild(sideMenu);
     }
     
-    // Set initial state (OFF-SCREEN to the right)
-    sideMenu.style.transform = 'translateX(100%)';
-    sideMenu.style.transition = 'transform 0.3s ease';
+    // 5. Create overlay
+    document.querySelectorAll('.side-menu-overlay').forEach(el => el.remove());
     
-    // Clone hamburger
+    const overlay = document.createElement('div');
+    overlay.className = 'side-menu-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 10000;
+        display: none;
+        backdrop-filter: blur(2px);
+    `;
+    document.body.appendChild(overlay);
+    
+    // 6. Clone hamburger to remove old listeners
     const newHamburger = hamburger.cloneNode(true);
     hamburger.parentNode.replaceChild(newHamburger, hamburger);
     
-    // Click handler - SLIDE from right
+    // 7. State
+    let isMenuOpen = false;
+    
+    // 8. Click handler - USE setProperty with 'important'
     newHamburger.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const isOpen = sideMenu.style.transform === 'translateX(0px)';
-    
-    if (!isOpen) {
-        // 1. FIRST bring menu to front
-        sideMenu.style.zIndex = '2147483647';
+        e.preventDefault();
+        e.stopPropagation();
         
-        // 2. THEN slide it in
-        sideMenu.style.transform = 'translateX(0)';
-        overlay.style.display = 'block';
+        console.log('🍔 Hamburger clicked');
         
-        // 3. Force all other content lower
-        document.querySelectorAll('#app-container, #content-area, main').forEach(el => {
-            el.style.zIndex = '1';
-        });
-        
-        console.log('✅ Menu brought to front and opened');
-    } else {
-        sideMenu.style.transform = 'translateX(100%)';
-        overlay.style.display = 'none';
-    }
-});
-    
-    // Overlay click
-    overlay.addEventListener('click', () => {
-        sideMenu.style.transform = 'translateX(100%)';
-        overlay.style.display = 'none';
-    });
-    
-    // ESC key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && overlay.style.display === 'block') {
-            sideMenu.style.transform = 'translateX(100%)';
+        if (!isMenuOpen) {
+            // OPEN menu
+            sideMenu.style.setProperty('transform', 'translateX(0px)', 'important');
+            overlay.style.display = 'block';
+            isMenuOpen = true;
+            console.log('✅ Menu opened (translateX(0px))');
+        } else {
+            // CLOSE menu
+            sideMenu.style.setProperty('transform', 'translateX(280px)', 'important');
             overlay.style.display = 'none';
+            isMenuOpen = false;
+            console.log('✅ Menu closed (translateX(280px))');
         }
     });
     
-    console.log('✅ Side menu setup to slide from right edge');
+    // 9. Overlay click closes menu
+    overlay.addEventListener('click', () => {
+        sideMenu.style.setProperty('transform', 'translateX(280px)', 'important');
+        overlay.style.display = 'none';
+        isMenuOpen = false;
+        console.log('✅ Menu closed via overlay');
+    });
+    
+    // 10. ESC key closes menu
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isMenuOpen) {
+            sideMenu.style.setProperty('transform', 'translateX(280px)', 'important');
+            overlay.style.display = 'none';
+            isMenuOpen = false;
+            console.log('✅ Menu closed with ESC key');
+        }
+    });
+    
+    // 11. Close when clicking outside (optional)
+    document.addEventListener('click', (e) => {
+        if (isMenuOpen && 
+            !sideMenu.contains(e.target) && 
+            !newHamburger.contains(e.target) && 
+            e.target !== overlay) {
+            sideMenu.style.setProperty('transform', 'translateX(280px)', 'important');
+            overlay.style.display = 'none';
+            isMenuOpen = false;
+            console.log('✅ Menu closed (clicked outside)');
+        }
+    });
+    
+    console.log('✅ Hamburger menu setup complete');
+    console.log('📱 Menu will slide from right edge using translateX(280px) → translateX(0px)');
 }
       
     showSection(sectionId) {
