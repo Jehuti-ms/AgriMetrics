@@ -8,6 +8,7 @@ class FarmManagementApp {
         this.userPreferences = {};
         this.authInitialized = false;
         this.setupInit();
+        this.initializeMenu();
     }
 
     setupInit() {
