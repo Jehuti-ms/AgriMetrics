@@ -8415,19 +8415,54 @@ body {
     overflow-x: hidden !important;
 }
 
-/* MINIMAL FIX - Add to styles.css */
+/* ===== MINIMAL HEADER POSITION FIX ===== */
+/* Add this to the END of your styles.css file */
+
+/* 1. Remove top negative margins that pull header up */
 .module-header,
-.welcome-section {
+.welcome-section,
+.orders-header-pwa,
+.module-header-pwa,
+.production-header-pwa,
+.profile-header-pwa,
+.orders-header-pwa {
     margin-top: 0 !important;
 }
 
+/* 2. Keep content area spacing for navbar */
 #content-area {
     padding-top: 80px !important;
 }
 
-.module-container {
+/* 3. Ensure modules start at the top of content area */
+.module-container,
+.dashboard-container,
+.income-expenses-module,
+.inventory-module,
+.orders-module,
+.feed-module,
+.production-module,
+.sales-module,
+.profile-module {
     margin-top: 0 !important;
     padding-top: 0 !important;
 }
+
+/* 4. Keep navbar fixed at top */
+header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
+}
+
+/* 5. Mobile responsive */
+@media (max-width: 768px) {
+    #content-area {
+        padding-top: 60px !important;
+    }
+}
+
 
 
