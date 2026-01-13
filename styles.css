@@ -8305,3 +8305,40 @@ nav,
   display: block;
 }
 
+/* Right-side menu positioning */
+#side-menu {
+    position: fixed;
+    top: 0;
+    right: 0; /* Changed from left: 0 to right: 0 */
+    width: 280px;
+    height: 100vh;
+    background: white;
+    transform: translateX(100%); /* Start off-screen to the right */
+    transition: transform 0.3s ease-in-out;
+    z-index: 1001;
+    box-shadow: -2px 0 10px rgba(0,0,0,0.1); /* Shadow on left side */
+}
+
+/* When open, slide in from right */
+#side-menu.open {
+    transform: translateX(0);
+}
+
+/* Overlay for right-side menu */
+.side-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    z-index: 1000;
+}
+
+/* Ensure menu is fully off-screen when closed */
+body:not(.menu-open) #side-menu {
+    transform: translateX(100%) !important;
+}
