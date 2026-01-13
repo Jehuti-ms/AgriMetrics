@@ -8171,3 +8171,29 @@ nav,
     box-shadow: -10px 0 30px rgba(0,0,0,0.3) !important;
 }
 
+/* ===== OVERRIDE ALL SIDE MENU TRANSFORMS ===== */
+#side-menu {
+    transform: none !important;
+    transition: none !important;
+}
+
+/* Then apply our own */
+#side-menu.slide-menu {
+    position: fixed !important;
+    top: 80px !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 280px !important;
+    transform: translateX(280px) !important; /* PIXELS, not percentage */
+    transition: transform 0.3s ease !important;
+    z-index: 2147483647 !important;
+    background: white !important;
+    border-left: 3px solid #22c55e !important;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.3) !important;
+    overflow-y: auto !important;
+}
+
+#side-menu.slide-menu.open {
+    transform: translateX(0px) !important;
+}
+
