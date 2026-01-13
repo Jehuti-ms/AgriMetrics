@@ -8323,3 +8323,11 @@ nav,
 body:not(.menu-open) #side-menu {
     transform: translateX(100%) !important;
 }
+
+/* Add this to ensure it's completely hidden when closed */
+#side-menu:not(.open) {
+    visibility: hidden;
+    transform: translateX(100%) !important;
+}
+
+
