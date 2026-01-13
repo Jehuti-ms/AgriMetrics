@@ -276,9 +276,30 @@ updateThemeToggleIcon() {
     }
 }
   
-   setupEventListeners() {
+  setupEventListeners() {
     document.addEventListener('click', (e) => {
-        // Handle nav items
+        // Handle side menu items
+        if (e.target.closest('.side-menu-item')) {
+            const menuItem = e.target.closest('.side-menu-item');
+            const section = menuItem.getAttribute('data-section');
+            if (section) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Close menu immediately
+                this.closeSideMenu();
+                
+                // Small delay to ensure smooth transition
+                setTimeout(() => {
+                    this.showSection(section);
+                }, 300); // Match your CSS transition duration
+                
+                console.log(`📱 Navigated to ${section}, menu closed`);
+                return; // Exit early to prevent other handlers
+            }
+        }
+        
+        // Handle nav items (unchanged)
         if (e.target.closest('.nav-item')) {
             const navItem = e.target.closest('.nav-item');
             const view = navItem.getAttribute('data-view');
@@ -287,30 +308,42 @@ updateThemeToggleIcon() {
                 this.showSection(view);
             }
         }
-        
-        // Handle side menu items
-        if (e.target.closest('.side-menu-item')) {
-            const menuItem = e.target.closest('.side-menu-item');
-            const section = menuItem.getAttribute('data-section');
-            if (section) {
-                e.preventDefault();
-                this.showSection(section);
-                
-                // Close the menu
-                const sideMenu = document.getElementById('side-menu');
-                const overlay = document.querySelector('.side-menu-overlay');
-                
-                if (sideMenu) {
-                    sideMenu.style.transform = 'translateX(100%)';
-                }
-                if (overlay) {
-                    overlay.style.display = 'none';
-                }
-                
-                console.log(`📱 Navigated to ${section}, menu closed`);
-            }
-        }
     });
+}
+
+// Add this method to properly close the menu
+closeSideMenu() {
+    const sideMenu = document.getElementById('side-menu');
+    const overlay = document.querySelector('.side-menu-overlay');
+    
+    if (sideMenu) {
+        // For right-side menu, translate to 100% to hide off-screen to the right
+        sideMenu.style.transform = 'translateX(100%)';
+        
+        // Also hide the overlay
+        if (overlay) {
+            overlay.style.display = 'none';
+            overlay.style.opacity = '0';
+        }
+    }
+}
+
+// Also add openSideMenu method for consistency
+openSideMenu() {
+    const sideMenu = document.getElementById('side-menu');
+    const overlay = document.querySelector('.side-menu-overlay');
+    
+    if (sideMenu) {
+        sideMenu.style.transform = 'translateX(0)';
+        
+        if (overlay) {
+            overlay.style.display = 'block';
+            // Small delay to allow display to take effect before opacity transition
+            setTimeout(() => {
+                overlay.style.opacity = '1';
+            }, 10);
+        }
+    }
 }
 
     showApp() {
