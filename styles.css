@@ -7803,3 +7803,153 @@ header * {
         outline: 1px solid blue !important; /* Remove after confirming fix */
     }
 }
+
+/* ===== FIX FOR HAMBURGER MENU NOT OPENING ===== */
+
+/* 1. Ensure the hamburger button is clickable and has proper cursor */
+.hamburger-menu,
+#menu-toggle,
+.nav-item[data-view="more"] {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    user-select: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+/* 2. Fix side menu positioning and visibility */
+.side-menu {
+    position: fixed !important;
+    top: 60px !important; /* Adjust based on your navbar height */
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 280px !important;
+    background: white !important;
+    border-left: 1px solid #e9ecef !important;
+    transform: translateX(100%) !important;
+    transition: transform 0.3s ease !important;
+    z-index: 9999 !important;
+    overflow-y: auto !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* Active state - when menu should be open */
+.side-menu.active {
+    transform: translateX(0) !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* 3. Add overlay when menu is open */
+.side-menu-overlay {
+    display: none !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    z-index: 9998 !important;
+    backdrop-filter: blur(2px) !important;
+}
+
+.side-menu-overlay.active {
+    display: block !important;
+}
+
+/* 4. Ensure menu items are clickable */
+.side-menu-item {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    user-select: none !important;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 5. Fix for mobile responsiveness */
+@media (max-width: 768px) {
+    .side-menu {
+        top: 56px !important; /* Adjust for mobile header height */
+        width: 85% !important;
+        max-width: 300px !important;
+    }
+}
+
+/* 6. If using dark mode, ensure proper colors */
+.dark-mode .side-menu {
+    background: var(--dm-surface) !important;
+    border-left-color: var(--dm-border) !important;
+}
+
+/* ===== DEBUG/DIAGNOSTIC STYLES ===== */
+/* Add these temporarily to check if click events are firing */
+
+/* Visual feedback when hamburger is clicked */
+.hamburger-menu:active,
+#menu-toggle:active {
+    background: rgba(0, 0, 0, 0.1) !important;
+    transform: scale(0.95) !important;
+    transition: transform 0.1s !important;
+}
+
+/* Show a visual indicator when menu should be open */
+.side-menu.active::before {
+    content: 'Menu Open' !important;
+    position: absolute !important;
+    top: 10px !important;
+    left: 10px !important;
+    background: #22c55e !important;
+    color: white !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+    font-size: 12px !important;
+    z-index: 10000 !important;
+}
+
+/* Remove the above debug styles once menu is working */
+
+/* ===== EMERGENCY FIX: If JavaScript isn't working ===== */
+/* Add this as a pure CSS fallback (requires checkbox hack) */
+
+/* Only use if you can add HTML structure */
+/*
+.hamburger-checkbox {
+    display: none !important;
+}
+
+.hamburger-label {
+    cursor: pointer !important;
+}
+
+.hamburger-checkbox:checked ~ .side-menu {
+    transform: translateX(0) !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.hamburger-checkbox:checked ~ .side-menu-overlay {
+    display: block !important;
+}
+*/
+
+/* ===== ENSURE NO CONFLICTING STYLES ===== */
+/* Remove any styles that might be hiding or disabling the menu */
+.side-menu.hidden {
+    display: block !important; /* Override any hidden classes */
+    transform: translateX(100%) !important; /* Keep it off-screen when not active */
+}
+
+/* Make sure nothing is covering the hamburger button */
+header * {
+    pointer-events: auto !important;
+}
+
+/* Ensure proper stacking context */
+header {
+    isolation: isolate !important;
+}
+
+.nav-item[data-view="more"] {
+    z-index: 10001 !important;
+    position: relative !important;
+}
+
