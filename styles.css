@@ -8184,7 +8184,7 @@ nav,
     right: 0 !important;
     bottom: 0 !important;
     width: 280px !important;
-    transform: translateX(280px) !important; /* PIXELS, not percentage */
+    transform: translateX(300px) !important; /* PIXELS, not percentage */
     transition: transform 0.3s ease !important;
     z-index: 2147483647 !important;
     background: white !important;
