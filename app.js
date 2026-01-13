@@ -390,125 +390,89 @@ updateThemeToggleIcon() {
     }
     
 setupHamburgerMenu() {
-    console.log('🔧 Setting up BULLETPROOF hamburger menu...');
+    console.log('🎯 Setting up hamburger menu...');
     
-    // Get or create elements
-    let hamburger = document.getElementById('hamburger-menu');
+    const hamburger = document.getElementById('hamburger-menu');
     const sideMenu = document.getElementById('side-menu');
     
     if (!hamburger || !sideMenu) {
-        console.log('❌ Missing hamburger or side menu');
+        console.log('❌ Hamburger or side menu not found');
         return;
     }
     
-    // Remove ALL existing overlays
-    document.querySelectorAll('.side-menu-overlay').forEach(el => el.remove());
+    // Mark as already setup to prevent duplicates
+    if (hamburger.dataset.menuSetup === 'true') {
+        console.log('⚠️ Menu already setup');
+        return;
+    }
+    hamburger.dataset.menuSetup = 'true';
     
-    // Create fresh overlay
+    // 1. Remove any existing overlay
+    const oldOverlay = document.querySelector('.side-menu-overlay');
+    if (oldOverlay) oldOverlay.remove();
+    
+    // 2. Create new overlay
     const overlay = document.createElement('div');
     overlay.className = 'side-menu-overlay';
-    overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.5);
-        z-index: 2147483646;
-        display: none;
-    `;
     document.body.appendChild(overlay);
     
-    // Ensure menu is in body and has max z-index
+    // 3. Ensure side menu is properly positioned
     if (sideMenu.parentElement !== document.body) {
         document.body.appendChild(sideMenu);
     }
-    sideMenu.style.cssText = `
-        position: fixed;
-        top: 80px;
-        right: 0;
-        bottom: 0;
-        width: 280px;
-        background: white;
-        border-left: 3px solid #22c55e;
-        transform: translateX(100%);
-        transition: transform 0.3s ease;
-        z-index: 2147483647;
-        overflow-y: auto;
-        box-shadow: -10px 0 30px rgba(0,0,0,0.3);
-    `;
     
-    // CLONE the hamburger to remove ALL existing listeners
-    console.log('🔄 Cloning hamburger to remove old listeners...');
+    // 4. Set initial state (menu closed)
+    sideMenu.style.transform = 'translateX(100%)';
+    sideMenu.style.transition = 'transform 0.3s ease';
+    
+    // 5. Create fresh hamburger (removes old listeners)
+    console.log('🔄 Creating fresh hamburger button...');
     const newHamburger = hamburger.cloneNode(true);
     hamburger.parentNode.replaceChild(newHamburger, hamburger);
-    hamburger = newHamburger; // Update reference
     
-    // Add SUPER SIMPLE click handler
-    hamburger.onclick = function(e) {
-        console.log('🎯 HAMBURGER CLICKED (onclick handler)');
+    // 6. SINGLE SIMPLE click handler
+    newHamburger.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        e.stopImmediatePropagation();
+        
+        console.log('🎯 Hamburger clicked!');
         
         const isOpen = sideMenu.style.transform === 'translateX(0px)' || 
                       sideMenu.style.transform === 'matrix(1, 0, 0, 1, 0, 0)';
         
-        console.log('Menu currently open?', isOpen);
-        
         if (!isOpen) {
-            // OPEN
+            // OPEN MENU
             sideMenu.style.transform = 'translateX(0)';
             overlay.style.display = 'block';
-            console.log('✅ Menu OPENED');
+            console.log('✅ Menu opened');
         } else {
-            // CLOSE
+            // CLOSE MENU
             sideMenu.style.transform = 'translateX(100%)';
             overlay.style.display = 'none';
-            console.log('✅ Menu CLOSED');
+            console.log('✅ Menu closed');
         }
-        
-        return false; // Additional prevention
-    };
-    
-    // Also add event listener as backup
-    hamburger.addEventListener('click', function(e) {
-        console.log('🎯 HAMBURGER CLICKED (addEventListener)');
-    }, true); // Capture phase
-    
-    // Overlay click
-    overlay.onclick = function() {
-        sideMenu.style.transform = 'translateX(100%)';
-        this.style.display = 'none';
-        console.log('✅ Menu closed via overlay');
-    };
-    
-    // Monitor for hamburger being recreated
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.type === 'childList') {
-                mutation.addedNodes.forEach((node) => {
-                    if (node.nodeType === 1 && node.id === 'hamburger-menu') {
-                        console.log('🔄 Hamburger recreated! Re-initializing...');
-                        setTimeout(() => this.setupHamburgerMenu(), 100);
-                    }
-                });
-            }
-        });
     });
     
-    observer.observe(document.body, { childList: true, subtree: true });
+    // 7. Overlay click closes menu
+    overlay.addEventListener('click', () => {
+        sideMenu.style.transform = 'translateX(100%)';
+        overlay.style.display = 'none';
+        console.log('✅ Menu closed via overlay');
+    });
     
-    console.log('✅ Bulletproof hamburger menu setup complete');
-    console.log('Hamburger onclick handler:', hamburger.onclick);
+    // 8. ESC key closes menu
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && overlay.style.display === 'block') {
+            sideMenu.style.transform = 'translateX(100%)';
+            overlay.style.display = 'none';
+            console.log('✅ Menu closed with ESC');
+        }
+    });
     
-    // Test: Force a visual indicator on hamburger
-    hamburger.style.border = '2px solid #FF0000';
-    hamburger.style.boxShadow = '0 0 10px #FF0000';
-    setTimeout(() => {
-        hamburger.style.border = '';
-        hamburger.style.boxShadow = '';
-    }, 3000);
+    console.log('✅ Hamburger menu setup complete');
+    
+    // Return the new hamburger for reference
+    return newHamburger;
 }
       
     showSection(sectionId) {
