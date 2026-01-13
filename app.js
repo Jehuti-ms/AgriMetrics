@@ -389,19 +389,22 @@ updateThemeToggleIcon() {
         `;
     }
     
- setupHamburgerMenu() {
-    const hamburger = document.getElementById('hamburger-menu');
+setupHamburgerMenu() {
+    console.log('🔧 Setting up BULLETPROOF hamburger menu...');
+    
+    // Get or create elements
+    let hamburger = document.getElementById('hamburger-menu');
     const sideMenu = document.getElementById('side-menu');
     
-    if (!hamburger || !sideMenu) return;
+    if (!hamburger || !sideMenu) {
+        console.log('❌ Missing hamburger or side menu');
+        return;
+    }
     
-    console.log('🔧 Setting up hamburger menu...');
+    // Remove ALL existing overlays
+    document.querySelectorAll('.side-menu-overlay').forEach(el => el.remove());
     
-    // Clean up any existing overlays (remove duplicates)
-    const existingOverlay = document.querySelector('.side-menu-overlay');
-    if (existingOverlay) existingOverlay.remove();
-    
-    // Create overlay element
+    // Create fresh overlay
     const overlay = document.createElement('div');
     overlay.className = 'side-menu-overlay';
     overlay.style.cssText = `
@@ -411,84 +414,102 @@ updateThemeToggleIcon() {
         right: 0;
         bottom: 0;
         background: rgba(0,0,0,0.5);
-        z-index: 10000;
+        z-index: 2147483646;
         display: none;
-        backdrop-filter: blur(2px);
-        pointer-events: auto;
     `;
     document.body.appendChild(overlay);
     
-    // Ensure side menu has proper styles
-    sideMenu.style.position = 'fixed';
-    sideMenu.style.top = '80px';
-    sideMenu.style.right = '0';
-    sideMenu.style.bottom = '0';
-    sideMenu.style.width = '280px';
-    sideMenu.style.transform = 'translateX(100%)';
-    sideMenu.style.transition = 'transform 0.3s ease';
-    sideMenu.style.zIndex = '10001';
-    sideMenu.style.background = 'white';
-    sideMenu.style.borderLeft = '1px solid #e9ecef';
-    sideMenu.style.overflowY = 'auto';
-    sideMenu.style.boxShadow = '-5px 0 20px rgba(0,0,0,0.1)';
+    // Ensure menu is in body and has max z-index
+    if (sideMenu.parentElement !== document.body) {
+        document.body.appendChild(sideMenu);
+    }
+    sideMenu.style.cssText = `
+        position: fixed;
+        top: 80px;
+        right: 0;
+        bottom: 0;
+        width: 280px;
+        background: white;
+        border-left: 3px solid #22c55e;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+        z-index: 2147483647;
+        overflow-y: auto;
+        box-shadow: -10px 0 30px rgba(0,0,0,0.3);
+    `;
     
-    // Remove any existing listeners by cloning
+    // CLONE the hamburger to remove ALL existing listeners
+    console.log('🔄 Cloning hamburger to remove old listeners...');
     const newHamburger = hamburger.cloneNode(true);
     hamburger.parentNode.replaceChild(newHamburger, hamburger);
+    hamburger = newHamburger; // Update reference
     
-    // Single click handler for hamburger
-    newHamburger.addEventListener('click', (e) => {
+    // Add SUPER SIMPLE click handler
+    hamburger.onclick = function(e) {
+        console.log('🎯 HAMBURGER CLICKED (onclick handler)');
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
         
         const isOpen = sideMenu.style.transform === 'translateX(0px)' || 
                       sideMenu.style.transform === 'matrix(1, 0, 0, 1, 0, 0)';
         
+        console.log('Menu currently open?', isOpen);
+        
         if (!isOpen) {
-            // OPEN MENU
+            // OPEN
             sideMenu.style.transform = 'translateX(0)';
             overlay.style.display = 'block';
-            console.log('📱 Menu opened');
+            console.log('✅ Menu OPENED');
         } else {
-            // CLOSE MENU
+            // CLOSE
             sideMenu.style.transform = 'translateX(100%)';
             overlay.style.display = 'none';
-            console.log('📱 Menu closed');
+            console.log('✅ Menu CLOSED');
         }
-    });
+        
+        return false; // Additional prevention
+    };
     
-    // Overlay click closes menu
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-            sideMenu.style.transform = 'translateX(100%)';
-            overlay.style.display = 'none';
-            console.log('📱 Menu closed via overlay');
-        }
-    });
+    // Also add event listener as backup
+    hamburger.addEventListener('click', function(e) {
+        console.log('🎯 HAMBURGER CLICKED (addEventListener)');
+    }, true); // Capture phase
     
-    // ESC key closes menu
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && overlay.style.display === 'block') {
-            sideMenu.style.transform = 'translateX(100%)';
-            overlay.style.display = 'none';
-            console.log('📱 Menu closed with ESC key');
-        }
-    });
+    // Overlay click
+    overlay.onclick = function() {
+        sideMenu.style.transform = 'translateX(100%)';
+        this.style.display = 'none';
+        console.log('✅ Menu closed via overlay');
+    };
     
-    // Close when clicking outside (keep existing functionality)
-    document.addEventListener('click', (e) => {
-        if (overlay.style.display === 'block' && sideMenu) {
-            if (!sideMenu.contains(e.target) && !newHamburger.contains(e.target) && e.target !== overlay) {
-                sideMenu.style.transform = 'translateX(100%)';
-                overlay.style.display = 'none';
-                console.log('📱 Menu closed (clicked outside)');
+    // Monitor for hamburger being recreated
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'childList') {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1 && node.id === 'hamburger-menu') {
+                        console.log('🔄 Hamburger recreated! Re-initializing...');
+                        setTimeout(() => this.setupHamburgerMenu(), 100);
+                    }
+                });
             }
-        }
+        });
     });
     
-    console.log('✅ Hamburger menu setup complete');
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    console.log('✅ Bulletproof hamburger menu setup complete');
+    console.log('Hamburger onclick handler:', hamburger.onclick);
+    
+    // Test: Force a visual indicator on hamburger
+    hamburger.style.border = '2px solid #FF0000';
+    hamburger.style.boxShadow = '0 0 10px #FF0000';
+    setTimeout(() => {
+        hamburger.style.border = '';
+        hamburger.style.boxShadow = '';
+    }, 3000);
 }
-
       
     showSection(sectionId) {
         console.log(`🔄 Switching to section: ${sectionId}`);
