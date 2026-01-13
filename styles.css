@@ -7880,4 +7880,54 @@ header {
     position: relative !important;
 }
 
+/* ===== PERMANENT SIDE MENU FIX ===== */
+#side-menu {
+    position: fixed !important;
+    top: 80px !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 280px !important;
+    background: white !important;
+    border-left: 1px solid #e9ecef !important;
+    transform: translateX(100%) !important;
+    transition: transform 0.3s ease !important;
+    z-index: 10001 !important; /* CRITICAL: Higher than overlay */
+    overflow-y: auto !important;
+    box-shadow: -5px 0 20px rgba(0,0,0,0.1) !important;
+}
 
+#side-menu.active {
+    transform: translateX(0) !important;
+}
+
+/* Overlay - MUST be below menu */
+.side-menu-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0,0,0,0.5) !important;
+    z-index: 10000 !important; /* CRITICAL: Lower than menu */
+    display: none !important;
+    backdrop-filter: blur(2px) !important;
+}
+
+/* Dark mode support */
+.dark-mode #side-menu {
+    background: var(--dm-surface) !important;
+    border-left-color: var(--dm-border) !important;
+}
+
+.dark-mode .side-menu-overlay {
+    background: rgba(0,0,0,0.7) !important;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    #side-menu {
+        top: 60px !important;
+        width: 85% !important;
+        max-width: 300px !important;
+    }
+}
