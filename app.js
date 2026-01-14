@@ -71,7 +71,40 @@ fixContentPosition() {
     
     console.log('✅ Content position fixed');
 }
-
+    
+ 
+    // Add this method to your App class
+fixOverflowingForms() {
+    console.log('🔧 Checking for overflowing forms...');
+    
+    // Check all forms and form containers
+    const forms = document.querySelectorAll('form, .form-container, .glass-card, .popout-modal-content');
+    
+    forms.forEach(form => {
+        const rect = form.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        
+        // If form is wider than viewport
+        if (rect.width > viewportWidth) {
+            console.log('Form overflowing:', form.className);
+            
+            // Apply fixes
+            form.style.width = '100%';
+            form.style.maxWidth = '100%';
+            form.style.overflowX = 'hidden';
+            form.style.boxSizing = 'border-box';
+            
+            // Also fix all child inputs
+            const inputs = form.querySelectorAll('input, select, textarea, .form-group');
+            inputs.forEach(input => {
+                input.style.width = '100%';
+                input.style.maxWidth = '100%';
+                input.style.boxSizing = 'border-box';
+            });
+        }
+    });
+}
+    
 initializeMenuPosition() {
     try {
         const sideMenu = document.getElementById('side-menu');
@@ -752,76 +785,46 @@ setupHamburgerMenu() {
 }
     
     showSection(sectionId) {
-        console.log(`🔄 Switching to section: ${sectionId}`);
+    console.log(`🔄 Switching to section: ${sectionId}`);
+    
+    const contentArea = document.getElementById('content-area');
+    if (!contentArea) return;
+    
+    const cleanSectionId = sectionId.replace('.js', '');
+    this.currentSection = cleanSectionId;
+    this.setActiveMenuItem(cleanSectionId);
+    
+    contentArea.innerHTML = `
+        <div style="padding: 40px; text-align: center;">
+            <div style="
+                width: 40px;
+                height: 40px;
+                border: 4px solid #f3f3f3;
+                border-top: 4px solid #4CAF50;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 20px;
+            "></div>
+            <p>Loading ${cleanSectionId}...</p>
+        </div>
+    `;
+   
+    // Load module
+    setTimeout(() => {
+        if (FarmModules && FarmModules.renderModule) {
+            FarmModules.renderModule(cleanSectionId, contentArea);
+        } else {
+            this.loadFallbackContent(cleanSectionId);
+        }
         
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
-        
-        const cleanSectionId = sectionId.replace('.js', '');
-        this.currentSection = cleanSectionId;
-        this.setActiveMenuItem(cleanSectionId);
-        
-        contentArea.innerHTML = `
-            <div style="padding: 40px; text-align: center;">
-                <div style="
-                    width: 40px;
-                    height: 40px;
-                    border: 4px solid #f3f3f3;
-                    border-top: 4px solid #4CAF50;
-                    border-radius: 50%;
-                    animation: spin 1s linear infinite;
-                    margin: 0 auto 20px;
-                "></div>
-                <p>Loading ${cleanSectionId}...</p>
-            </div>
-        `;
-        
+        // After module loads, fix positions
         setTimeout(() => {
-            if (FarmModules && FarmModules.renderModule) {
-                FarmModules.renderModule(cleanSectionId, contentArea);
-            } else {
-                this.loadFallbackContent(cleanSectionId);
-            }
-        }, 100);
-
-        // Fix forms after section loads
-        setTimeout(() => {
+            this.fixContentPosition();
             this.fixOverflowingForms();
         }, 300);
-    }
-
-    // Add this method to your App class
-fixOverflowingForms() {
-    console.log('🔧 Checking for overflowing forms...');
-    
-    // Check all forms and form containers
-    const forms = document.querySelectorAll('form, .form-container, .glass-card, .popout-modal-content');
-    
-    forms.forEach(form => {
-        const rect = form.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        
-        // If form is wider than viewport
-        if (rect.width > viewportWidth) {
-            console.log('Form overflowing:', form.className);
-            
-            // Apply fixes
-            form.style.width = '100%';
-            form.style.maxWidth = '100%';
-            form.style.overflowX = 'hidden';
-            form.style.boxSizing = 'border-box';
-            
-            // Also fix all child inputs
-            const inputs = form.querySelectorAll('input, select, textarea, .form-group');
-            inputs.forEach(input => {
-                input.style.width = '100%';
-                input.style.maxWidth = '100%';
-                input.style.boxSizing = 'border-box';
-            });
-        }
-    });
+    }, 100);
 }
-
+   
     setActiveMenuItem(sectionId) {
         document.querySelectorAll('.nav-item, .side-menu-item').forEach(item => {
             item.classList.remove('active');
