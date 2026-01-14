@@ -592,7 +592,51 @@ const StyleManager = {
         .activity-list > div div:last-child {
             font-size: 11px !important;
         }
+
+        /* Navbar anchored at top, white background */
+        header,
+        .top-nav {
+          position: fixed;       /* lock at top */
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 60px;          /* adjust to your design */
+          background: #ffffff;   /* solid white */
+          z-index: 1000;         /* high enough, not extreme */
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 16px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08); /* subtle shadow */
+        }
         
+        /* Nav items: icon + label aligned */
+        .nav-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 6px 8px;
+          min-width: 60px;
+          max-width: 80px;
+        }
+        
+        .nav-item span:first-child {
+          font-size: 20px;
+          margin-bottom: 4px;
+        }
+        
+        .nav-label {
+          font-size: 10px;
+          margin-top: 2px;
+        }
+        
+        /* Content offset so it doesn’t hide under navbar */
+        #app-container main,
+        #content-area {
+          padding-top: 60px; /* match navbar height */
+        }
+
         `;
         document.head.appendChild(style);
     },
