@@ -622,50 +622,7 @@ const StyleManager = {
             z-index: 9999;
         }
 
-        /* ===== DARK MODE CARD VISIBILITY FIX ===== */
-
-        /* Ensure card text is light in dark mode */
-        .dark-mode .card,
-        .dark-mode .glass-card,
-        .dark-mode .activity-list .list-item,
-        .dark-mode .activity-list > div {
-            color: var(--dm-text-primary) !important;
-        }
-        
-        /* Titles and descriptions inside cards */
-        .dark-mode .card h4,
-        .dark-mode .card p,
-        .dark-mode .glass-card h4,
-        .dark-mode .glass-card p,
-        .dark-mode .activity-list h4,
-        .dark-mode .activity-list p {
-            color: var(--dm-text-primary) !important;
-        }
-        
-        /* Buttons inside cards */
-        .dark-mode .card .btn,
-        .dark-mode .glass-card .btn,
-        .dark-mode .activity-list .btn {
-            font-weight: 600 !important;
-        }
-        
-        /* Primary buttons: keep green gradient with white text */
-        .dark-mode .card .btn-primary,
-        .dark-mode .glass-card .btn-primary,
-        .dark-mode .activity-list .btn-primary {
-            background: var(--gradient-primary) !important;
-            color: white !important;
-        }
-        
-        /* Secondary buttons: dark card background with light text */
-        .dark-mode .card .btn-secondary,
-        .dark-mode .glass-card .btn-secondary,
-        .dark-mode .activity-list .btn-secondary {
-            background: var(--card-bg) !important;
-            color: var(--dm-text-primary) !important;
-            border: 1px solid var(--card-border) !important;
-        }
-
+      
         
         `;
         document.head.appendChild(style);
