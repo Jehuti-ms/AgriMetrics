@@ -593,10 +593,12 @@ const StyleManager = {
             font-size: 11px !important;
         }
 
-        /* Navbar anchored at top, white background */
+        /* ==============================================================
+           Top Navigation (StyleManager owns this now)
+           ============================================================== */
         header,
         .top-nav {
-          position: fixed;       /* lock at top */
+          position: fixed;       /* anchored at top */
           top: 0;
           left: 0;
           right: 0;
@@ -607,7 +609,7 @@ const StyleManager = {
           align-items: center;
           justify-content: space-between;
           padding: 0 16px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.08); /* subtle shadow */
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
         
         /* Nav items: icon + label aligned */
@@ -633,35 +635,12 @@ const StyleManager = {
         
         /* Content offset so it doesn’t hide under navbar */
         #app-container main,
-        #content-area {
-          padding-top: 60px; /* match navbar height */
-        }
-
-        #app-container main,
-        #content-area {
+        #content-area,
+        .module-container {
           padding-top: 60px; /* equal to navbar height */
         }
-
-        .nav-item {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 6px 8px;
-          min-width: 60px;
-          max-width: 80px;
-        }
         
-        .nav-item span:first-child {
-          font-size: 20px;
-          margin-bottom: 4px;
-        }
-        
-        .nav-label {
-          font-size: 10px;
-          margin-top: 2px;
-        }
-
+        /* Module header (green gradient section below navbar) */
         .module-header {
           margin-top: 0; /* no extra gap */
           background: var(--header-gradient, var(--gradient-primary));
@@ -669,7 +648,7 @@ const StyleManager = {
           padding: 25px 20px;
           border-radius: 0 0 20px 20px;
         }
-
+       
         `;
         document.head.appendChild(style);
     },
