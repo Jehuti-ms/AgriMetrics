@@ -596,58 +596,53 @@ const StyleManager = {
         /* ==============================================================
            Top Navigation (StyleManager owns this now)
            ============================================================== */
-        header,
-        .top-nav {
-          position: fixed;       /* anchored at top */
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 60px;          /* adjust to your design */
-          background: #ffffff;   /* solid white */
-          z-index: 1000;         /* high enough, not extreme */
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0 16px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        
-        /* Nav items: icon + label aligned */
-        .nav-item {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 6px 8px;
-          min-width: 60px;
-          max-width: 80px;
-        }
-        
-        .nav-item span:first-child {
-          font-size: 20px;
-          margin-bottom: 4px;
-        }
-        
-        .nav-label {
-          font-size: 10px;
-          margin-top: 2px;
-        }
-        
-        /* Content offset so it doesn’t hide under navbar */
-        #app-container main,
-        #content-area,
-        .module-container {
-          padding-top: 60px; /* equal to navbar height */
-        }
-        
-        /* Module header (green gradient section below navbar) */
-        .module-header {
-          margin-top: 0; /* no extra gap */
-          background: var(--header-gradient, var(--gradient-primary));
-          color: #fff;
-          padding: 25px 20px;
-          border-radius: 0 0 20px 20px;
-        }
+      /* Navbar container */
+header,
+.top-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #ffffff;
+  z-index: 1000;
+  display: flex;
+  align-items: center;       /* vertically center items */
+  justify-content: flex-start; /* align items in a row */
+  padding: 0 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* Nav list wrapper */
+.nav-items {
+  display: flex;
+  gap: 12px;                 /* space between items */
+  height: 100%;              /* match navbar height */
+  align-items: center;       /* center vertically */
+}
+
+/* Individual nav items */
+.nav-item {
+  flex: 0 0 auto;            /* don’t stretch */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;              /* anchor to navbar height */
+  padding: 6px 8px;
+}
+
+.nav-item span:first-child {
+  font-size: 20px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.nav-label {
+  font-size: 10px;
+  line-height: 1;
+}
+
        
         `;
         document.head.appendChild(style);
