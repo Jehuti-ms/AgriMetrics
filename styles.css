@@ -8184,7 +8184,7 @@ nav,
     right: 0 !important;
     bottom: 0 !important;
     width: 280px !important;
-    transform: translateX(300px) !important; /* PIXELS, not percentage */
+    transform: translateX(280px) !important; /* PIXELS, not percentage */
     transition: transform 0.3s ease !important;
     z-index: 2147483647 !important;
     background: white !important;
@@ -8215,7 +8215,7 @@ nav,
     width: 280px !important;
     
     /* Transform - PIXELS not percentages */
-    transform: translateX(300px) !important; /* Menu width = 280px */
+    transform: translateX(280px) !important; /* Menu width = 280px */
     
     /* Animation */
     transition: transform 0.3s ease !important;
@@ -8302,7 +8302,7 @@ nav,
     height: calc(100vh - 80px) !important;
     
     /* Start HIDDEN - COMPLETELY off-screen */
-    transform: translateX(300px) !important; /* Use pixels, not percentage */
+    transform: translateX(280px) !important; /* Use pixels, not percentage */
     
     /* Transition */
     transition: transform 0.3s ease-in-out !important;
@@ -8335,7 +8335,7 @@ nav,
 /* 3. When closed - FORCE it to stay hidden */
 #side-menu:not(.open):not(.active),
 .side-menu.js-side-menu:not(.open):not(.active) {
-    transform: translateX(300px) !important;
+    transform: translateX(280px) !important;
     pointer-events: none !important;
 }
 
