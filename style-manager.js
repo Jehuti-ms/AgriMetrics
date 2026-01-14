@@ -602,11 +602,24 @@ const StyleManager = {
             text-align: center; /* ensures title and subtitle are centered */
         }
 
+        /* Side menu fully hidden state */
         .side-menu.hidden {
-          transform: translateX(-100%);
-          visibility: hidden;
-          opacity: 0;
-          pointer-events: none;
+            transform: translateX(-100%);   /* push it completely off-screen */
+            visibility: hidden;             /* remove from visual flow */
+            opacity: 0;                     /* fade out */
+            pointer-events: none;           /* prevent accidental clicks */
+            background: none !important;    /* remove green background when hidden */
+        }
+
+        .side-menu {
+            width: 240px;                   /* or whatever your menu width is */
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            background: var(--gradient-primary); /* green when visible */
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 9999;
         }
 
         
