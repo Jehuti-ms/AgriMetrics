@@ -8809,3 +8809,36 @@ input[type="tel"] {
 select {
     max-width: 100% !important;
 }
+
+/* ===== FIX SIDE MENU HEIGHT ===== */
+
+/* Make side menu NOT full height */
+#side-menu {
+    height: auto !important; /* NOT 100vh */
+    max-height: calc(100vh - 80px) !important; /* Subtract navbar height */
+    top: 80px !important; /* Start below navbar */
+    bottom: auto !important; /* Don't stretch to bottom */
+    overflow-y: auto !important; /* Scroll if needed */
+}
+
+/* Alternatively, if you want it to fill available space but not more: */
+#side-menu {
+    height: calc(100vh - 80px) !important; /* Viewport minus navbar */
+    max-height: calc(100vh - 80px) !important;
+    top: 80px !important;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    #side-menu {
+        top: 60px !important;
+        height: calc(100vh - 60px) !important;
+        max-height: calc(100vh - 60px) !important;
+    }
+}
+
+/* Ensure menu items don't overflow */
+.side-menu-items {
+    max-height: none !important;
+    overflow-y: visible !important;
+}
