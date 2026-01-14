@@ -230,21 +230,16 @@ const StyleManager = {
                 background: var(--module-bg);
             }
 
-            /* Navbar reset */
-header,
-.top-nav {
-    position: sticky;   /* instead of fixed */
-    top: 0;
-    z-index: 100;       /* not 10000 */
-    background: var(--primary-color); /* or your gradient */
-}
-
-/* Content area spacing */
-#app-container main,
-#content-area {
-    padding-top: 40px;  /* smaller gap so content sits close */
-}
-
+            .module-header {
+                background: var(--header-gradient, var(--gradient-primary));
+                margin: -20px -20px 20px -20px;
+                padding: 25px 20px;
+                border-radius: 0 0 20px 20px;
+                color: white;
+                position: relative;
+                overflow: hidden;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            }
 
             .module-header::before {
                 content: '';
@@ -597,18 +592,6 @@ header,
         .activity-list > div div:last-child {
             font-size: 11px !important;
         }
-
-        .module-header {
-            text-align: center; /* centers all text inside header */
-        }
-
-        .module-title,
-        .module-subtitle {
-            text-align: center; /* ensures title and subtitle are centered */
-        }
-
-      
-      
         
         `;
         document.head.appendChild(style);
