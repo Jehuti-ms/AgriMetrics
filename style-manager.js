@@ -230,16 +230,21 @@ const StyleManager = {
                 background: var(--module-bg);
             }
 
-            .module-header {
-                background: var(--header-gradient, var(--gradient-primary));
-                margin: -20px -20px 20px -20px;
-                padding: 25px 20px;
-                border-radius: 0 0 20px 20px;
-                color: white;
-                position: relative;
-                overflow: hidden;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            }
+            /* Navbar reset */
+header,
+.top-nav {
+    position: sticky;   /* instead of fixed */
+    top: 0;
+    z-index: 100;       /* not 10000 */
+    background: var(--primary-color); /* or your gradient */
+}
+
+/* Content area spacing */
+#app-container main,
+#content-area {
+    padding-top: 40px;  /* smaller gap so content sits close */
+}
+
 
             .module-header::before {
                 content: '';
