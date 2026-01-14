@@ -40,6 +40,11 @@ class FarmManagementApp {
     setTimeout(() => {
         this.fixContentPosition();
     }, 150);
+
+    // Setup responsive form fixes on resize
+    window.addEventListener('resize', () => {
+        setTimeout(() => this.fixOverflowingForms(), 100);
+    });
 }
 
 // This should be a separate method, NOT inside initializeApp()
