@@ -637,6 +637,39 @@ const StyleManager = {
           padding-top: 60px; /* match navbar height */
         }
 
+        #app-container main,
+        #content-area {
+          padding-top: 60px; /* equal to navbar height */
+        }
+
+        .nav-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 6px 8px;
+          min-width: 60px;
+          max-width: 80px;
+        }
+        
+        .nav-item span:first-child {
+          font-size: 20px;
+          margin-bottom: 4px;
+        }
+        
+        .nav-label {
+          font-size: 10px;
+          margin-top: 2px;
+        }
+
+        .module-header {
+          margin-top: 0; /* no extra gap */
+          background: var(--header-gradient, var(--gradient-primary));
+          color: #fff;
+          padding: 25px 20px;
+          border-radius: 0 0 20px 20px;
+        }
+
         `;
         document.head.appendChild(style);
     },
