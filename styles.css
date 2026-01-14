@@ -85,64 +85,6 @@ body {
 /* ... (auth, buttons, app container, header, nav, main, sections, stats, summary, charts, tables, inventory, reports, notifications remain unchanged) ... */
 
 /* ==============================================================
-   Top Navigation
-   ============================================================== */
-/* Header forced visible */
-/*   header,
-   .top-nav {
-     position: sticky;
-     top: 0;
-     z-index: 100; /* not 10000 */
-  /*   background: var(--primary-color); /* or your gradient */
-   /*}
-   
-   /* Nav items aligned */
- /*  .nav-item {
-     display: flex;
-     flex-direction: column;
-     align-items: center;
-     justify-content: center;
-     padding: 6px 8px;
-     min-width: 60px;
-     max-width: 80px;
-   }
-   
-   .nav-item span:first-child {
-     font-size: 20px;
-     margin-bottom: 4px;
-   }
-   
-   .nav-label {
-     font-size: 10px;
-     margin-top: 2px;
-   }  */
-
-
-/*header {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 10000 !important;
-    background: white !important;
-    transform: none !important;
-} */
-
-
-/* Nav item hover */
-.nav-item:hover,
-.more-menu-item:hover {
-    background-color: rgba(59, 130, 246, 0.1) !important;
-    color: #3b82f6 !important;
-}
-
-/* Active state */
-.nav-item.active {
-    background: rgba(59, 130, 246, 0.1) !important;
-    color: #3b82f6 !important;
-}
-
-/* ==============================================================
    Responsive Design
    ============================================================== */
 @media (max-width: 768px) {
@@ -151,7 +93,7 @@ body {
         display: none;
     }
     .nav-item {
-        padding: 12px !important;
+        padding: 12px;
     }
     .top-nav {
         padding: 0 16px;
