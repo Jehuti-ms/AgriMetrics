@@ -87,15 +87,6 @@ body {
 /* ==============================================================
    Top Navigation
    ============================================================== */
-.top-nav {
-    padding-top: env(safe-area-inset-top);
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    z-index: 10000 !important;
-    position: fixed !important;
-    top: 0 !important;
-}
-
 /* Header forced visible */
    header,
    .top-nav {
