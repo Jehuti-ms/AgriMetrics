@@ -592,6 +592,16 @@ const StyleManager = {
         .activity-list > div div:last-child {
             font-size: 11px !important;
         }
+
+        .module-header {
+            text-align: center; /* centers all text inside header */
+        }
+
+        .module-title,
+        .module-subtitle {
+            text-align: center; /* ensures title and subtitle are centered */
+        }
+
         
         `;
         document.head.appendChild(style);
