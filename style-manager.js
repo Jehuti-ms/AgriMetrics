@@ -602,6 +602,13 @@ const StyleManager = {
             text-align: center; /* ensures title and subtitle are centered */
         }
 
+        .side-menu.hidden {
+          transform: translateX(-100%);
+          visibility: hidden;
+          opacity: 0;
+          pointer-events: none;
+        }
+
         
         `;
         document.head.appendChild(style);
