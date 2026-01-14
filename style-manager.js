@@ -612,7 +612,7 @@ const StyleManager = {
         }
 
         .side-menu {
-            width: 240px;                   /* or whatever your menu width is */
+            width: 280px;                   /* or whatever your menu width is */
             transition: transform 0.3s ease, opacity 0.3s ease;
             background: var(--gradient-primary); /* green when visible */
             position: fixed;
