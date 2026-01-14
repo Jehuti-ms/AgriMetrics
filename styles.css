@@ -8842,3 +8842,10 @@ select {
     max-height: none !important;
     overflow-y: visible !important;
 }
+
+/* 1. Fix side menu height - remove bottom stretching */
+#side-menu {
+    bottom: auto !important;
+    height: auto !important;
+}
+
