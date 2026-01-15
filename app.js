@@ -672,33 +672,21 @@ setupHamburgerMenu() {
     
     // 3. Apply initial styles (menu CLOSED - off-screen)
     sideMenu.style.cssText = `
-    position: fixed !important;
-    top: 80px !important;
-    right: 0 !important;
-    width: 280px !important;
-    height: calc(100vh - 80px) !important;
-
-    /* Start OFF-SCREEN (280px = menu width) */
-    transform: translateX(280px) !important;
-
-    /* Smooth slide animation */
-    transition: transform 0.3s ease !important;
-
-    /* Appearance */
-    background: var(--surface-color) !important;
-    border-left: 3px solid var(--primary-color) !important;
-    box-shadow: -10px 0 30px var(--shadow-lg) !important;
-
-    /* Stacking */
-    z-index: 10001 !important;
-
-    /* Scrolling */
-    overflow-y: auto !important;
-
-    /* Visibility */
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+    position: fixed;
+    top: 80px;
+    right: 0;
+    width: 280px;
+    height: calc(100vh - 80px); /* cap height */
+    transform: translateX(280px);
+    transition: transform 0.3s ease;
+    background: var(--surface-color);
+    border-left: 3px solid var(--primary-color);
+    box-shadow: -10px 0 30px var(--shadow-lg);
+    z-index: 10001;
+    overflow-y: auto;
+    display: block;
+    visibility: visible;
+    opacity: 1;
 `;
 
     // 4. Ensure menu is in body (not nested)
