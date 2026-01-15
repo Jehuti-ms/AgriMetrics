@@ -213,29 +213,33 @@ initializeMenuPosition() {
             }, 100);
         }
     
-       handleNoUser() {
-        console.log('🔒 No user found, showing auth screen');
-        this.authInitialized = true;
-        this.showAuth();
-        this.hideLoading();
-    
-        // 🔎 Splash transition logic
-        const splash = document.getElementById('splash-screen');
-        const signin = document.getElementById('signin-form');
-    
-        if (splash && signin) {
-            // Start with splash visible, sign-in hidden
-            signin.classList.remove('active');
-            splash.classList.add('active');
-    
-            // After 2 seconds, hide splash and show sign-in
-            setTimeout(() => {
-                splash.classList.remove('active');
-                signin.classList.add('active');
-                console.log('✅ Splash finished, showing sign-in form');
-            }, 2000);
+      handleNoUser() {
+            console.log('🔒 No user found, showing splash then auth');
+            this.authInitialized = true;
+            this.hideLoading();
+        
+            const splash = document.getElementById('splash-screen');
+            const authContainer = document.getElementById('auth-container');
+            const signin = document.getElementById('signin-form');
+        
+            if (splash && authContainer && signin) {
+                // Show splash only
+                splash.style.display = 'block';
+                authContainer.style.display = 'none';
+        
+                // After 2 seconds, hide splash and show auth
+                setTimeout(() => {
+                    splash.style.display = 'none';
+                    authContainer.style.display = 'block';
+                    signin.classList.add('active');
+                    console.log('✅ Splash finished, showing sign-in form');
+                }, 2000);
+            } else {
+                // fallback if splash not found
+                this.showAuth();
+            }
         }
-    }
+
 
     showLoading() {
         if (!document.getElementById('app-loading')) {
