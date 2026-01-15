@@ -213,32 +213,33 @@ initializeMenuPosition() {
             }, 100);
         }
     
-      handleNoUser() {
-            console.log('🔒 No user found, showing splash then auth');
-            this.authInitialized = true;
-            this.hideLoading();
-        
-            const splash = document.getElementById('splash-screen');
-            const authContainer = document.getElementById('auth-container');
-            const signin = document.getElementById('signin-form');
-        
-            if (splash && authContainer && signin) {
-                // Show splash only
-                splash.style.display = 'block';
-                authContainer.style.display = 'none';
-        
-                // After 2 seconds, hide splash and show auth
-                setTimeout(() => {
-                    splash.style.display = 'none';
-                    authContainer.style.display = 'block';
-                    signin.classList.add('active');
-                    console.log('✅ Splash finished, showing sign-in form');
-                }, 2000);
-            } else {
-                // fallback if splash not found
-                this.showAuth();
-            }
-        }
+     handleNoUser() {
+  console.log('🔒 No user found, showing splash then auth');
+  this.authInitialized = true;
+  this.hideLoading();
+
+  const splash = document.getElementById('splash-screen');
+  const authContainer = document.getElementById('auth-container');
+  const signin = document.getElementById('signin-form');
+
+  if (splash && authContainer && signin) {
+    // Show splash only
+    splash.style.display = 'block';
+    authContainer.style.display = 'none';
+
+    // After 2 seconds, fade splash out and fade sign-in in
+    setTimeout(() => {
+      splash.classList.remove('active'); // fades out
+      splash.style.display = 'none';
+
+      authContainer.style.display = 'block';
+      signin.classList.add('active'); // fades in
+      console.log('✅ Splash finished, showing sign-in form');
+    }, 2000);
+  } else {
+    this.showAuth();
+  }
+}
 
 
     showLoading() {
