@@ -678,11 +678,12 @@ header,
   color: var(--primary-dark);
 }
 
+/* ============== Header Fix ============= */
 /* Content offset so sections don’t hide under navbar */
-/*#app-container main,
-/*#content-area {
- /* padding-top: 60px; /* equal to navbar height */
-}*/
+#app-container main,
+#content-area {
+ padding-top: 60px; /* equal to navbar height */
+}
 
 /* Ensure ALL module headers sit just below the navbar */
 .module-header,
