@@ -219,16 +219,19 @@ initializeMenuPosition() {
 
   const splash = document.getElementById('splash-screen');
   const authContainer = document.getElementById('auth-container');
+  const signin = document.getElementById('signin-form');
 
-  if (splash && authContainer) {
+  if (splash && authContainer && signin) {
     // Show splash only
-    splash.style.display = 'flex';   // or block, depending on your CSS
-    authContainer.style.display = 'none'; // hide all auth forms
+    splash.style.display = 'flex';   // full-screen splash
+    authContainer.style.display = 'none';
 
-    // After 2 seconds, hide splash and show auth
+    // After 2 seconds, hide splash, show auth, and hide loader
     setTimeout(() => {
       splash.style.display = 'none';
-      authContainer.style.display = 'block'; // now reveal the real login
+      authContainer.style.display = 'block';
+      signin.classList.add('active');
+      this.hideLoading(); // ✅ hide loader here
       console.log('✅ Splash finished, showing sign-in form');
     }, 2000);
   } else {
