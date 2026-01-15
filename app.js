@@ -424,45 +424,30 @@ setupEventListeners() {
 }
 
 // Add this method to your App class
-closeSideMenu() {
-    const sideMenu = document.getElementById('side-menu');
-    const overlay = document.querySelector('.side-menu-overlay');
-    
-    if (sideMenu) {
-        sideMenu.style.transform = 'translateX(280px)';
-        sideMenu.classList.remove('open', 'active');
-    }
-    if (overlay) {
-        overlay.style.display = 'none';
-        overlay.classList.remove('active');
-    }
+openSideMenu() {
+  const sideMenu = document.getElementById('side-menu');
+  const overlay = document.querySelector('.side-menu-overlay');
+  
+  if (sideMenu) {
+    sideMenu.classList.remove('closed');
+    sideMenu.classList.add('open');
+  }
+  if (overlay) {
+    overlay.classList.add('active');
+  }
 }
 
-openSideMenu() {
-    const sideMenu = document.getElementById('side-menu');
-    const overlay = document.querySelector('.side-menu-overlay');
-    
-    if (sideMenu) {
-        sideMenu.style.transform = 'translateX(0px)';
-        sideMenu.classList.add('open', 'active');
-    }
-    if (overlay) {
-        overlay.style.display = 'block';
-        overlay.classList.add('active');
-    }
-}
-    
-openSideMenu() {
-    const sideMenu = document.getElementById('side-menu');
-    const overlay = document.querySelector('.side-menu-overlay');
-    
-    if (sideMenu) {
-        sideMenu.classList.add('open');
-        sideMenu.style.transform = 'translateX(0)';
-    }
-    if (overlay) {
-        overlay.style.display = 'block';
-    }
+closeSideMenu() {
+  const sideMenu = document.getElementById('side-menu');
+  const overlay = document.querySelector('.side-menu-overlay');
+  
+  if (sideMenu) {
+    sideMenu.classList.remove('open');
+    sideMenu.classList.add('closed');
+  }
+  if (overlay) {
+    overlay.classList.remove('active');
+  }
 }
 
 // Add this to initialize the menu in the correct state
@@ -478,40 +463,6 @@ initializeMenu() {
     }
 }
     
-// Add this method to properly close the menu
-closeSideMenu() {
-    const sideMenu = document.getElementById('side-menu');
-    const overlay = document.querySelector('.side-menu-overlay');
-    
-    if (sideMenu) {
-        // For right-side menu, translate to 100% to hide off-screen to the right
-        sideMenu.style.transform = 'translateX(100%)';
-        
-        // Also hide the overlay
-        if (overlay) {
-            overlay.style.display = 'none';
-            overlay.style.opacity = '0';
-        }
-    }
-}
-
-// Also add openSideMenu method for consistency
-openSideMenu() {
-    const sideMenu = document.getElementById('side-menu');
-    const overlay = document.querySelector('.side-menu-overlay');
-    
-    if (sideMenu) {
-        sideMenu.style.transform = 'translateX(0)';
-        
-        if (overlay) {
-            overlay.style.display = 'block';
-            // Small delay to allow display to take effect before opacity transition
-            setTimeout(() => {
-                overlay.style.opacity = '1';
-            }, 10);
-        }
-    }
-}
 
     showApp() {
         const authContainer = document.getElementById('auth-container');
