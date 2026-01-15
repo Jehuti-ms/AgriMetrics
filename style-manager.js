@@ -684,6 +684,12 @@ header,
   padding-top: 60px; /* equal to navbar height */
 }
 
+/* Green module header aligned directly under navbar */ 
+.module-header-pwa, 
+.welcome-section { 
+margin-top: 0; /* remove negative margins */ 
+position: relative; 
+top: 60px; /* equal to navbar height */ }
 
        
         `;
