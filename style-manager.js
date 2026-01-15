@@ -698,43 +698,68 @@ header,
 /* ============ Side Menu ==============*/
 /* Side menu container */
 #side-menu {
-  width: 240px;                  /* fixed width */
-  background: #ffffff;           /* same as navbar background */
-  color: #1f2937;                /* same text color as navbar */
+  width: 280px;
+  background: #ffffff; /* same as navbar */
+  border-left: 3px solid #22c55e; /* green accent */
+  box-shadow: -10px 0 30px rgba(0,0,0,0.3);
   position: fixed;
-  top: 60px;                     /* start just below navbar */
+  top: 80px; /* below navbar */
+  right: 0;
   bottom: 0;
-  overflow-y: auto;              /* scroll if too long */
-  box-shadow: 2px 0 8px rgba(0,0,0,0.1);
-  padding: 20px 0;
+  overflow-y: auto;
+  z-index: 10001;
+  transition: transform 0.3s ease;
 }
 
-/* Side menu headings */
-#side-menu h2 {
+/* Header area */
+.side-menu-header {
+  padding: 20px;
+  border-bottom: 1px solid #e5e7eb; /* subtle divider */
+}
+.side-menu-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937; /* same as navbar text */
+}
+.side-menu-subtitle {
   font-size: 14px;
+  color: #6b7280; /* muted gray */
+  margin-top: 4px;
+}
+
+/* Section blocks */
+.side-menu-section {
+  margin-top: 20px;
+  border-top: 1px solid #e5e7eb; /* divider between sections */
+  padding-top: 10px;
+}
+.side-menu-section-title {
+  font-size: 13px;
   font-weight: 600;
   text-transform: uppercase;
-  color: #6b7280;                /* muted gray for headings */
-  padding: 10px 20px;
-  margin: 0;
+  color: #6b7280;
+  padding: 0 20px 8px;
 }
 
-/* Side menu links */
-#side-menu a {
-  display: block;
-  padding: 12px 20px;
-  color: #1f2937;                /* same as navbar text */
+/* Menu items */
+.side-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  color: #1f2937;
   text-decoration: none;
   transition: background 0.2s, color 0.2s;
 }
-
-/* Hover/active states */
-#side-menu a:hover,
-#side-menu a.active {
-  background: #22c55e;           /* green highlight */
-  color: #fff;                   /* white text */
-  border-radius: 8px;
+.side-menu-item:hover {
+  background: #22c55e;
+  color: #fff;
+  border-radius: 6px;
 }
+.side-menu-icon {
+  margin-right: 10px;
+  font-size: 16px;
+}
+
 
        
         `;
