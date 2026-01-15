@@ -679,10 +679,10 @@ header,
 }
 
 /* Content offset so sections don’t hide under navbar */
-#app-container main,
-#content-area {
-  padding-top: 60px; /* equal to navbar height */
-}
+/*#app-container main,
+/*#content-area {
+ /* padding-top: 60px; /* equal to navbar height */
+}*/
 
 /* Ensure ALL module headers sit just below the navbar */
 .module-header,
@@ -694,9 +694,36 @@ header,
   position: relative;
 }
 
+/* ============ Side Menu ==============*/
+/* Side menu container */
+#side-menu {
+  width: 240px;                  /* fixed width */
+  background: #1f2937;           /* dark gray background */
+  color: #fff;                   /* white text */
+  position: fixed;               /* stays in place */
+  top: 60px;                     /* below navbar */
+  bottom: 0;                     /* full height */
+  overflow-y: auto;              /* scroll if too long */
+  box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+  padding: 20px 0;
+}
 
+/* Side menu links */
+#side-menu a {
+  display: block;
+  padding: 12px 20px;
+  color: #d1d5db;                /* light gray text */
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
 
-
+/* Hover/active states */
+#side-menu a:hover,
+#side-menu a.active {
+  background: #22c55e;           /* green highlight */
+  color: #fff;                   /* white text */
+  border-radius: 8px;
+}
 
        
         `;
