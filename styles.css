@@ -1053,5 +1053,22 @@ body {
   color: #666;
 }
 
+/* ========== Splash Screen ========== */
+#splash-screen.auth-form {
+  text-align: center;
+  box-shadow: none;
+  border: none;
+  background: transparent;
+}
+
+#splash-screen h1 {
+  font-size: 28px;
+  color: var(--primary-color);
+}
+
+#splash-screen p {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
 
 
