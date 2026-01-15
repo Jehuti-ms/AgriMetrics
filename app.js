@@ -688,6 +688,7 @@ setupHamburgerMenu() {
     visibility: visible;
     opacity: 1;
 `; */
+    sideMenu.classList.add("closed");
     
     // 4. Ensure menu is in body (not nested)
     if (sideMenu.parentElement !== document.body) {
