@@ -699,65 +699,60 @@ header,
 /* Side menu container */
 #side-menu {
   width: 280px;
-  background: #ffffff;
-  border-left: 3px solid #22c55e;
-  box-shadow: -10px 0 30px rgba(0,0,0,0.3);
+  background: var(--surface-color);
+  border-left: 3px solid var(--primary-color);
+  box-shadow: -10px 0 30px var(--dm-shadow);
   position: fixed;
   top: 80px; /* below navbar */
   right: 0;
   overflow-y: auto;
   z-index: 10001;
-  transition: transform 0.3s ease;
+  transition: var(--transition-normal);
 
-  /* This is the key line */
-  height: calc(100vh - 80px); /* strictly limit to viewport height minus navbar */
+  /* Strict height cap */
+  height: calc(100vh - 80px);
 }
 
-
-
-/* Header area */
 .side-menu-header {
   padding: 20px;
-  border-bottom: 1px solid #e5e7eb; /* subtle divider */
+  border-bottom: 1px solid var(--border-color);
 }
 .side-menu-title {
   font-size: 18px;
   font-weight: 700;
-  color: #1f2937; /* same as navbar text */
+  color: var(--text-primary);
 }
 .side-menu-subtitle {
   font-size: 14px;
-  color: #6b7280; /* muted gray */
+  color: var(--text-secondary);
   margin-top: 4px;
 }
 
-/* Section blocks */
 .side-menu-section {
   margin-top: 20px;
-  border-top: 1px solid #e5e7eb; /* divider between sections */
+  border-top: 1px solid var(--border-color);
   padding-top: 10px;
 }
 .side-menu-section-title {
   font-size: 13px;
   font-weight: 600;
   text-transform: uppercase;
-  color: #6b7280;
+  color: var(--text-secondary);
   padding: 0 20px 8px;
 }
 
-/* Menu items */
 .side-menu-item {
   display: flex;
   align-items: center;
   padding: 10px 20px;
-  color: #1f2937;
+  color: var(--text-primary);
   text-decoration: none;
-  transition: background 0.2s, color 0.2s;
+  transition: var(--transition-fast);
 }
 .side-menu-item:hover {
-  background: #22c55e;
+  background: var(--primary-color);
   color: #fff;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 .side-menu-icon {
   margin-right: 10px;
