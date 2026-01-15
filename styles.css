@@ -848,7 +848,8 @@ body {
   top: 80px;              /* below navbar */
   right: 0;
   width: 280px;
-  height: calc(100vh - 80px);
+  /*height: calc(100vh - 80px); */
+   height: calc(100vh - 80px - 60px); /* 60px = footer height */
   background: var(--surface-color);
   border-left: 3px solid var(--primary-color);
   box-shadow: -10px 0 30px var(--dm-shadow);
