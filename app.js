@@ -213,7 +213,7 @@ initializeMenuPosition() {
             }, 100);
         }
     
-   handleNoUser() {
+  handleNoUser() {
   console.log('🔒 No user found, showing splash then auth');
   this.authInitialized = true;
 
@@ -226,12 +226,14 @@ initializeMenuPosition() {
     splash.style.display = 'flex';   // full-screen splash
     authContainer.style.display = 'none';
 
-    // After 2 seconds, hide splash, show auth, and hide loader
+    // ✅ Hide loader immediately so it doesn’t freeze
+    this.hideLoading();
+
+    // After 2 seconds, hide splash and show auth
     setTimeout(() => {
       splash.style.display = 'none';
       authContainer.style.display = 'block';
       signin.classList.add('active');
-      this.hideLoading(); // ✅ hide loader here
       console.log('✅ Splash finished, showing sign-in form');
     }, 2000);
   } else {
