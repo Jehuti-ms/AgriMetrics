@@ -841,19 +841,4 @@ body {
   }
 }
 
-/* ====== fix ======= */
-/* Ensure content starts below navbar */
-#app-container main,
-#content-area,
-.module-container {
-  padding-top: 60px; /* equal to navbar height */
-}
-
-/* Normalize all module headers */
-.module-header-pwa,
-.welcome-section {
-  margin-top: 0;        /* remove negative margins */
-  padding-top: 8px;     /* slight breathing room */
-  position: relative;   /* no extra top offset */
-}
 
