@@ -111,31 +111,29 @@ fixOverflowingForms() {
 }
     
 initializeMenuPosition() {
-    try {
-        const sideMenu = document.getElementById('side-menu');
-        const overlay = document.querySelector('.side-menu-overlay');
-        
-        console.log('📐 Initializing menu position...');
-        console.log('Menu element found:', !!sideMenu);
-        console.log('Overlay element found:', !!overlay);
-        
-        if (sideMenu) {
-            // Start with menu completely off-screen
-            sideMenu.style.transform = 'translateX(280px)';
-            sideMenu.classList.remove('open', 'active');
-            
-            // Debug: Log the computed transform
-            console.log('Menu transform set to:', sideMenu.style.transform);
-            console.log('Menu classes:', sideMenu.className);
-        }
-        if (overlay) {
-            overlay.style.display = 'none';
-            overlay.classList.remove('active');
-        }
-    } catch (error) {
-        console.error('❌ Error initializing menu position:', error);
+  try {
+    const sideMenu = document.getElementById('side-menu');
+    const overlay = document.querySelector('.side-menu-overlay');
+
+    console.log('📐 Initializing menu position...');
+    console.log('Menu element found:', !!sideMenu);
+    console.log('Overlay element found:', !!overlay);
+
+    if (sideMenu) {
+      // Start with menu hidden by class
+      sideMenu.classList.remove('open');
+      sideMenu.classList.add('closed');
+      sideMenu.style.transform = ''; // clear inline transform
     }
+    if (overlay) {
+      overlay.classList.remove('active');
+      overlay.style.display = '';
+    }
+  } catch (error) {
+    console.error('❌ Error initializing menu position:', error);
+  }
 }
+
     
     async setupAuthListener() {
         if (typeof firebase === 'undefined' || !firebase.auth) {
