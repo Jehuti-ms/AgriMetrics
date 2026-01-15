@@ -596,16 +596,14 @@ const StyleManager = {
         /* ==============================================================
            Top Navigation (StyleManager owns this now)
            ============================================================== */
-    /* ==============================================================
-   Top Navigation (StyleManager owns this now)
-   ============================================================== */
+   /* Top navigation bar */
 header,
 .top-nav {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 60px;              /* fixed height */
+  height: 60px;
   background: #ffffff;
   z-index: 1000;
   display: flex;
@@ -615,29 +613,53 @@ header,
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
-/* Wrapper for nav items */
-.nav-items {
+/* Brand section */
+.nav-brand {
   display: flex;
-  align-items: center;        /* center vertically */
-  gap: 12px;
-  height: 100%;               /* match navbar height */
+  align-items: center;
+  gap: 8px;
 }
 
-/* Individual nav items */
+.nav-brand img {
+  height: 32px;
+  width: 32px;
+}
+
+.brand-text {
+  font-weight: 700;
+  font-size: 16px;
+  color: #1a1a1a;
+}
+
+.brand-subtitle {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Nav items container */
+.nav-items {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+}
+
+/* Individual nav item */
 .nav-item {
-  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;               /* lock to navbar height */
+  height: 100%;
   padding: 6px 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
 }
 
 .nav-item span:first-child {
   font-size: 20px;
   line-height: 1;
-  margin-bottom: 2px;
 }
 
 .nav-label {
@@ -645,9 +667,8 @@ header,
   line-height: 1;
 }
 
-/* Hover/active states in green theme */
-.nav-item:hover,
-.more-menu-item:hover {
+/* Hover/active states */
+.nav-item:hover {
   background-color: rgba(34, 197, 94, 0.1);
   color: var(--primary-dark);
 }
@@ -657,10 +678,9 @@ header,
   color: var(--primary-dark);
 }
 
-/* Content offset so modules don’t hide under navbar */
+/* Content offset so sections don’t hide under navbar */
 #app-container main,
-#content-area,
-.module-container {
+#content-area {
   padding-top: 60px; /* equal to navbar height */
 }
 
