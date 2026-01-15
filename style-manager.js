@@ -684,13 +684,6 @@ header,
   padding-top: 60px; /* equal to navbar height */
 }
 
-/* Ensure content starts below navbar */
-#app-container main,
-#content-area,
-.module-container {
-  padding-top: 60px; /* equal to navbar height */
-}
-
 /* Ensure ALL module headers sit just below the navbar */
 .module-header-pwa,
 .welcome-section {
