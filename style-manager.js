@@ -691,13 +691,15 @@ header,
   padding-top: 60px; /* equal to navbar height */
 }
 
-/* Normalize all module headers */
+/* Ensure ALL module headers sit just below the navbar */
 .module-header-pwa,
 .welcome-section {
-  margin-top: 0;        /* remove negative margins */
-  padding-top: 8px;     /* slight breathing room */
-  position: relative;   /* no extra top offset */
+  margin-top: 68px;   /* 60px navbar height + 8px breathing room */
+  padding: 12px 20px; /* consistent internal spacing */
+  border-radius: 0 0 20px 20px; /* rounded only at bottom */
+  position: relative;
 }
+
 
 
 
