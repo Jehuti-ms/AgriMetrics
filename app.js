@@ -216,7 +216,6 @@ initializeMenuPosition() {
      handleNoUser() {
   console.log('🔒 No user found, showing splash then auth');
   this.authInitialized = true;
-  this.hideLoading();
 
   const splash = document.getElementById('splash-screen');
   const authContainer = document.getElementById('auth-container');
@@ -227,17 +226,20 @@ initializeMenuPosition() {
     splash.style.display = 'block';
     authContainer.style.display = 'none';
 
-    // After 2 seconds, fade splash out and fade sign-in in
-    setTimeout(() => {
-      splash.classList.remove('active'); // fades out
-      splash.style.display = 'none';
+    // Keep loading hidden while splash is up
+    this.hideLoading();
 
+    // After 2 seconds, hide splash and show auth
+    setTimeout(() => {
+      splash.style.display = 'none';
       authContainer.style.display = 'block';
-      signin.classList.add('active'); // fades in
+      signin.classList.add('active');
       console.log('✅ Splash finished, showing sign-in form');
     }, 2000);
   } else {
+    // fallback if splash not found
     this.showAuth();
+    this.hideLoading();
   }
 }
 
