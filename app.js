@@ -382,101 +382,45 @@ updateThemeToggleIcon() {
     }
 }
   
- setupEventListeners() {
-    document.addEventListener('click', (e) => {
-        // Handle nav items
-        if (e.target.closest('.nav-item')) {
-            const navItem = e.target.closest('.nav-item');
-            const view = navItem.getAttribute('data-view');
-            if (view) {
-                e.preventDefault();
-                this.showSection(view);
-            }
+setupEventListeners() {
+  document.addEventListener('click', (e) => {
+    // Handle nav items
+    if (e.target.closest('.nav-item')) {
+      const navItem = e.target.closest('.nav-item');
+      const view = navItem.getAttribute('data-view');
+      if (view) {
+        e.preventDefault();
+        this.showSection(view);
+      }
+    }
+
+    // Handle side menu items
+    if (e.target.closest('.side-menu-item')) {
+      const menuItem = e.target.closest('.side-menu-item');
+      const section = menuItem.getAttribute('data-section');
+      if (section) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const sideMenu = document.getElementById('side-menu');
+        const overlay = document.querySelector('.side-menu-overlay');
+
+        if (sideMenu) {
+          sideMenu.classList.remove('open');
+          sideMenu.classList.add('closed');
         }
-        
-        // Handle side menu items
-        if (e.target.closest('.side-menu-item')) {
-            const menuItem = e.target.closest('.side-menu-item');
-            const section = menuItem.getAttribute('data-section');
-            if (section) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Close the menu with PIXEL-BASED transform
-                const sideMenu = document.getElementById('side-menu');
-                const overlay = document.querySelector('.side-menu-overlay');
-                
-                if (sideMenu) {
-                    sideMenu.style.transform = 'translateX(280px)'; // Use pixels, not percentage
-                    sideMenu.classList.remove('open', 'active');
-                }
-                if (overlay) {
-                    overlay.style.display = 'none';
-                    overlay.classList.remove('active');
-                }
-                
-                // Show section after menu animation completes
-                setTimeout(() => {
-                    this.showSection(section);
-                }, 300);
-                
-                console.log(`📱 Navigated to ${section}, menu closed`);
-            }
+        if (overlay) {
+          overlay.classList.remove('active');
         }
-        
-        // Handle hamburger/menu toggle button
-        if (e.target.closest('#hamburger-menu') || e.target.closest('.hamburger-btn') || 
-            e.target.closest('[data-view="more"]') || e.target.closest('.menu-toggle')) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const sideMenu = document.getElementById('side-menu');
-            const overlay = document.querySelector('.side-menu-overlay');
-            
-            if (sideMenu) {
-                const isOpen = sideMenu.style.transform === 'translateX(0px)' || 
-                              sideMenu.style.transform === '' ||
-                              sideMenu.classList.contains('open') ||
-                              sideMenu.classList.contains('active');
-                
-                if (isOpen) {
-                    // Close menu
-                    sideMenu.style.transform = 'translateX(280px)';
-                    sideMenu.classList.remove('open', 'active');
-                    if (overlay) {
-                        overlay.style.display = 'none';
-                        overlay.classList.remove('active');
-                    }
-                } else {
-                    // Open menu
-                    sideMenu.style.transform = 'translateX(0px)';
-                    sideMenu.classList.add('open', 'active');
-                    if (overlay) {
-                        overlay.style.display = 'block';
-                        overlay.classList.add('active');
-                    }
-                }
-            }
-        }
-        
-        // Handle overlay click to close menu
-        if (e.target.closest('.side-menu-overlay')) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const sideMenu = document.getElementById('side-menu');
-            const overlay = document.querySelector('.side-menu-overlay');
-            
-            if (sideMenu) {
-                sideMenu.style.transform = 'translateX(280px)';
-                sideMenu.classList.remove('open', 'active');
-            }
-            if (overlay) {
-                overlay.style.display = 'none';
-                overlay.classList.remove('active');
-            }
-        }
-    });
+
+        setTimeout(() => {
+          this.showSection(section);
+        }, 300);
+
+        console.log(`📱 Navigated to ${section}, menu closed`);
+      }
+    }
+  });
 }
 
 // Add this method to your App class
@@ -646,135 +590,80 @@ openSideMenu() {
     }
     
 setupHamburgerMenu() {
-    console.log('🎯 Setting up hamburger menu (FINAL WORKING VERSION)');
-    
-    const hamburger = document.getElementById('hamburger-menu');
-    const sideMenu = document.getElementById('side-menu');
-    
-    if (!hamburger || !sideMenu) {
-        console.log('❌ Hamburger or side menu not found');
-        return;
-    }
-    
-    // Skip if already setup
-    if (hamburger.dataset.menuSetup === 'true') {
-        console.log('⚠️ Menu already setup, skipping...');
-        return;
-    }
-    hamburger.dataset.menuSetup = 'true';
-    
-    // 1. Clean up
-    sideMenu.removeAttribute('style');
-    sideMenu.removeAttribute('class');
-    
-    // 2. Add our control class
-    sideMenu.classList.add('js-side-menu');
-    
-    // 3. Apply initial styles (menu CLOSED - off-screen)
-   /*sideMenu.style.cssText = `
-    position: fixed;
-    top: 80px;
-    right: 0;
-    width: 280px;
-    height: calc(100vh - 80px); /* cap height */
-   /* transform: translateX(280px);
-    transition: transform 0.3s ease;
-    background: var(--surface-color);
-    border-left: 3px solid var(--primary-color);
-    box-shadow: -10px 0 30px var(--shadow-lg);
-    z-index: 10001;
-    overflow-y: auto;
-    display: block;
-    visibility: visible;
-    opacity: 1;
-`; */
-    sideMenu.classList.add("closed");
-    
-    // 4. Ensure menu is in body (not nested)
-    if (sideMenu.parentElement !== document.body) {
-        document.body.appendChild(sideMenu);
-    }
-    
-    // 5. Create overlay
-    document.querySelectorAll('.side-menu-overlay').forEach(el => el.remove());
-    
-    const overlay = document.createElement('div');
+  console.log('🎯 Setting up hamburger menu (class-based version)');
+
+  const hamburger = document.getElementById('hamburger-menu');
+  const sideMenu = document.getElementById('side-menu');
+
+  if (!hamburger || !sideMenu) {
+    console.log('❌ Hamburger or side menu not found');
+    return;
+  }
+
+  // Skip if already setup
+  if (hamburger.dataset.menuSetup === 'true') {
+    console.log('⚠️ Menu already setup, skipping...');
+    return;
+  }
+  hamburger.dataset.menuSetup = 'true';
+
+  // Ensure menu starts closed
+  sideMenu.classList.add('closed');
+
+  // Create overlay if missing
+  let overlay = document.querySelector('.side-menu-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
     overlay.className = 'side-menu-overlay';
-    overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.5);
-        z-index: 10000;
-        display: none;
-        backdrop-filter: blur(2px);
-    `;
     document.body.appendChild(overlay);
-    
-    // 6. Clone hamburger to remove old listeners
-    const newHamburger = hamburger.cloneNode(true);
-    hamburger.parentNode.replaceChild(newHamburger, hamburger);
-    
-    // 7. State
-    let isMenuOpen = false;
-    
-    // 8. Click handler - USE setProperty with 'important'
-    newHamburger.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        console.log('🍔 Hamburger clicked');
-        
-        if (!isMenuOpen) {
-            // OPEN menu
-            sideMenu.style.setProperty('transform', 'translateX(0px)', 'important');
-            overlay.style.display = 'block';
-            isMenuOpen = true;
-            console.log('✅ Menu opened (translateX(0px))');
-        } else {
-            // CLOSE menu
-            sideMenu.style.setProperty('transform', 'translateX(280px)', 'important');
-            overlay.style.display = 'none';
-            isMenuOpen = false;
-            console.log('✅ Menu closed (translateX(280px))');
-        }
-    });
-    
-    // 9. Overlay click closes menu
-    overlay.addEventListener('click', () => {
-        sideMenu.style.setProperty('transform', 'translateX(280px)', 'important');
-        overlay.style.display = 'none';
-        isMenuOpen = false;
-        console.log('✅ Menu closed via overlay');
-    });
-    
-    // 10. ESC key closes menu
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && isMenuOpen) {
-            sideMenu.style.setProperty('transform', 'translateX(280px)', 'important');
-            overlay.style.display = 'none';
-            isMenuOpen = false;
-            console.log('✅ Menu closed with ESC key');
-        }
-    });
-    
-    // 11. Close when clicking outside (optional)
-    document.addEventListener('click', (e) => {
-        if (isMenuOpen && 
-            !sideMenu.contains(e.target) && 
-            !newHamburger.contains(e.target) && 
-            e.target !== overlay) {
-            sideMenu.style.setProperty('transform', 'translateX(280px)', 'important');
-            overlay.style.display = 'none';
-            isMenuOpen = false;
-            console.log('✅ Menu closed (clicked outside)');
-        }
-    });
-    
-    console.log('✅ Hamburger menu setup complete');
-    console.log('📱 Menu will slide from right edge using translateX(280px) → translateX(0px)');
+  }
+
+  // Clone hamburger to remove old listeners
+  const newHamburger = hamburger.cloneNode(true);
+  hamburger.parentNode.replaceChild(newHamburger, hamburger);
+
+  // State
+  let isMenuOpen = false;
+
+  // Click handler
+  newHamburger.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isMenuOpen) {
+      sideMenu.classList.remove('closed');
+      sideMenu.classList.add('open');
+      overlay.classList.add('active');
+      isMenuOpen = true;
+      console.log('✅ Menu opened');
+    } else {
+      sideMenu.classList.remove('open');
+      sideMenu.classList.add('closed');
+      overlay.classList.remove('active');
+      isMenuOpen = false;
+      console.log('✅ Menu closed');
+    }
+  });
+
+  // Overlay click closes menu
+  overlay.addEventListener('click', () => {
+    sideMenu.classList.remove('open');
+    sideMenu.classList.add('closed');
+    overlay.classList.remove('active');
+    isMenuOpen = false;
+    console.log('✅ Menu closed via overlay');
+  });
+
+  // ESC key closes menu
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isMenuOpen) {
+      sideMenu.classList.remove('open');
+      sideMenu.classList.add('closed');
+      overlay.classList.remove('active');
+      isMenuOpen = false;
+      console.log('✅ Menu closed with ESC key');
+    }
+  });
 }
     
     showSection(sectionId) {
