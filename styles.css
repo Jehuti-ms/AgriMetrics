@@ -73,6 +73,53 @@ body {
     padding: 1rem;
 }
 
+/* ========== Splash Screen ========== */
+#splash-screen.auth-form {
+  text-align: center;
+  box-shadow: none;
+  border: none;
+  background: transparent;
+}
+
+#splash-screen h1 {
+  font-size: 28px;
+  color: var(--primary-color);
+}
+
+#splash-screen p {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Base state for auth forms */
+.auth-form {
+  opacity: 0;
+  transition: opacity 0.6s ease; /* smooth fade */
+}
+
+/* Active state */
+.auth-form.active {
+  opacity: 1;
+}
+
+/* Splash screen styling */
+#splash-screen.auth-form {
+  text-align: center;
+  box-shadow: none;
+  border: none;
+  background: transparent;
+}
+
+#splash-screen h1 {
+  font-size: 28px;
+  color: var(--primary-color);
+}
+
+#splash-screen p {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
 .auth-forms {
     background: var(--surface-color);
     padding: 2rem;
@@ -1053,22 +1100,5 @@ body {
   color: #666;
 }
 
-/* ========== Splash Screen ========== */
-#splash-screen.auth-form {
-  text-align: center;
-  box-shadow: none;
-  border: none;
-  background: transparent;
-}
-
-#splash-screen h1 {
-  font-size: 28px;
-  color: var(--primary-color);
-}
-
-#splash-screen p {
-  font-size: 14px;
-  color: var(--text-secondary);
-}
 
 
