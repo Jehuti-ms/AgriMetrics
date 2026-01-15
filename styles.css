@@ -841,4 +841,27 @@ body {
   }
 }
 
+/* =========== Sidde Menu ============= */
+#side-menu {
+  position: fixed;
+  top: 80px;
+  right: 0;
+  width: 280px;
+  height: calc(100vh - 80px);
+  background: var(--surface-color);
+  border-left: 3px solid var(--primary-color);
+  box-shadow: -10px 0 30px var(--shadow-lg);
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+  z-index: 10001;
+}
+
+#side-menu.closed {
+  transform: translateX(280px);
+}
+
+#side-menu.open {
+  transform: translateX(0);
+}
+
 
