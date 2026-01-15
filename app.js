@@ -672,36 +672,35 @@ setupHamburgerMenu() {
     
     // 3. Apply initial styles (menu CLOSED - off-screen)
     sideMenu.style.cssText = `
-        /* Position - fixed to right edge */
-        position: fixed !important;
-        top: 80px !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        width: 280px !important;
-        
-        /* Start OFF-SCREEN (280px = menu width) */
-        transform: translateX(280px) !important;
-        
-        /* Smooth slide animation */
-        transition: transform 0.3s ease !important;
-        
-        /* Appearance */
-        background: white !important;
-        border-left: 3px solid #22c55e !important;
-        box-shadow: -10px 0 30px rgba(0,0,0,0.3) !important;
-        
-        /* Stacking */
-        z-index: 10001 !important;
-        
-        /* Scrolling */
-        overflow-y: auto !important;
-        
-        /* Visibility */
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-    `;
-    
+    position: fixed !important;
+    top: 80px !important;
+    right: 0 !important;
+    width: 280px !important;
+    height: calc(100vh - 80px) !important;
+
+    /* Start OFF-SCREEN (280px = menu width) */
+    transform: translateX(280px) !important;
+
+    /* Smooth slide animation */
+    transition: transform 0.3s ease !important;
+
+    /* Appearance */
+    background: var(--surface-color) !important;
+    border-left: 3px solid var(--primary-color) !important;
+    box-shadow: -10px 0 30px var(--shadow-lg) !important;
+
+    /* Stacking */
+    z-index: 10001 !important;
+
+    /* Scrolling */
+    overflow-y: auto !important;
+
+    /* Visibility */
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+`;
+
     // 4. Ensure menu is in body (not nested)
     if (sideMenu.parentElement !== document.body) {
         document.body.appendChild(sideMenu);
