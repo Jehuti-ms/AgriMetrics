@@ -452,16 +452,26 @@ closeSideMenu() {
 
 // Add this to initialize the menu in the correct state
 initializeMenu() {
-    const sideMenu = document.getElementById('side-menu');
-    if (sideMenu) {
-        // Ensure it starts hidden
-        sideMenu.classList.remove('open');
-        sideMenu.style.transform = 'translateX(100%)';
-        // Remove any conflicting inline styles
-        sideMenu.style.left = '';
-        sideMenu.style.right = '0';
-    }
+  const sideMenu = document.getElementById('side-menu');
+  const overlay = document.querySelector('.side-menu-overlay');
+
+  if (sideMenu) {
+    // Ensure it starts hidden by class only
+    sideMenu.classList.remove('open');
+    sideMenu.classList.add('closed');
+
+    // Clear any leftover inline styles
+    sideMenu.style.transform = '';
+    sideMenu.style.left = '';
+    sideMenu.style.right = '0';
+  }
+
+  if (overlay) {
+    overlay.classList.remove('active');
+    overlay.style.display = '';
+  }
 }
+
     
 
     showApp() {
