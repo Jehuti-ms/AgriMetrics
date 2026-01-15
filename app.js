@@ -580,7 +580,8 @@ setupHamburgerMenu() {
   newHamburger.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-
+    console.log('Before click:', sideMenu.className, overlay.className);
+      
     if (!isMenuOpen) {
       sideMenu.classList.remove('closed');
       sideMenu.classList.add('open');
@@ -594,6 +595,7 @@ setupHamburgerMenu() {
       isMenuOpen = false;
       console.log('✅ Menu closed');
     }
+      console.log('After click:', sideMenu.className, overlay.className);
   });
 
   // Overlay click closes menu
