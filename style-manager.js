@@ -696,17 +696,23 @@ header,
 }
 
 // ======== Side Menu ==========
-// Default state
+const sideMenu = document.getElementById("side-menu");
+
+// Initial state on refresh
 sideMenu.classList.add("closed");
 
-// Open
-sideMenu.classList.replace("closed", "open");
+// Open handler
+function openMenu() {
+  sideMenu.classList.remove("closed");
+  sideMenu.classList.add("open");
+}
 
-// Close
-sideMenu.classList.replace("open", "closed");
-
-
-       
+// Close handler
+function closeMenu() {
+  sideMenu.classList.remove("open");
+  sideMenu.classList.add("closed");
+}
+      
         `;
         document.head.appendChild(style);
     },
