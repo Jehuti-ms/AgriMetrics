@@ -859,6 +859,15 @@ body {
   height: calc(100vh - 80px);
 }
 
+/* Closed state */ 
+#side-menu.closed { 
+   transform: translateX(280px); 
+} 
+
+/* Open state */ 
+#side-menu.open { 
+   transform: translateX(0); }
+
 .side-menu-header {
   padding: 20px;
   border-bottom: 1px solid var(--border-color);
@@ -904,5 +913,7 @@ body {
   margin-right: 10px;
   font-size: 16px;
 }
+
+
 
 
