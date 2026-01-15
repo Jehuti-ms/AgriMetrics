@@ -213,25 +213,22 @@ initializeMenuPosition() {
             }, 100);
         }
     
-    handleNoUser() {
+   handleNoUser() {
   console.log('🔒 No user found, showing splash then auth');
   this.authInitialized = true;
 
   const splash = document.getElementById('splash-screen');
   const authContainer = document.getElementById('auth-container');
-  const signin = document.getElementById('signin-form');
 
-  if (splash && authContainer && signin) {
+  if (splash && authContainer) {
     // Show splash only
-    splash.style.display = 'block';
-    authContainer.style.display = 'none';
+    splash.style.display = 'flex';   // or block, depending on your CSS
+    authContainer.style.display = 'none'; // hide all auth forms
 
     // After 2 seconds, hide splash and show auth
     setTimeout(() => {
       splash.style.display = 'none';
-      authContainer.style.display = 'block';
-      signin.classList.add('active');
-      this.hideLoading(); // ✅ hide loading AFTER splash finishes
+      authContainer.style.display = 'block'; // now reveal the real login
       console.log('✅ Splash finished, showing sign-in form');
     }, 2000);
   } else {
