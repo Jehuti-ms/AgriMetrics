@@ -843,30 +843,41 @@ body {
 
 /* ============ Side Menu ==============*/
 /* Side menu container */
-#side-menu {
+.side-menu {
+  position: fixed;
+  top: 80px;              /* below navbar */
+  right: 0;
   width: 280px;
+  height: calc(100vh - 80px);
   background: var(--surface-color);
   border-left: 3px solid var(--primary-color);
   box-shadow: -10px 0 30px var(--dm-shadow);
-  position: fixed;
-  top: 80px; /* below navbar */
-  right: 0;
-  overflow-y: auto;
   z-index: 10001;
-  transition: var(--transition-normal);
-
-  /* Strict height cap */
-  height: calc(100vh - 80px);
+  transition: transform 0.3s ease;
+  overflow-y: auto;
 }
 
-/* Closed state */ 
-#side-menu.closed { 
-   transform: translateX(280px); 
-} 
+/* Closed state */
+.side-menu.closed {
+  transform: translateX(280px);
+}
 
-/* Open state */ 
-#side-menu.open { 
-   transform: translateX(0); }
+/* Open state */
+.side-menu.open {
+  transform: translateX(0);
+}
+
+/* Overlay */
+.side-menu-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 10000;
+  display: none;
+}
+.side-menu-overlay.active {
+  display: block;
+}
 
 .side-menu-header {
   padding: 20px;
