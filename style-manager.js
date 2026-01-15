@@ -689,7 +689,19 @@ header,
 .welcome-section { 
 margin-top: 0; /* remove negative margins */ 
 position: relative; 
-top: 60px; /* equal to navbar height */ }
+top: 60px; /* equal to navbar height */ 
+}
+
+/* Apply to ALL module headers so they align consistently under navbar */
+.module-header-pwa,
+.welcome-section {
+  margin-top: 0;          /* remove inconsistent spacing */
+  padding-top: 8px;       /* slight breathing room under navbar */
+  position: relative;
+  top: 60px;              /* equal to navbar height */
+}
+
+
 
        
         `;
