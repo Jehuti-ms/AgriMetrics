@@ -685,6 +685,7 @@ header,
 }
 
 /* Ensure ALL module headers sit just below the navbar */
+.module-header,
 .module-header-pwa,
 .welcome-section {
   margin-top: 68px;   /* 60px navbar height + 8px breathing room */
@@ -692,6 +693,7 @@ header,
   border-radius: 0 0 20px 20px; /* rounded only at bottom */
   position: relative;
 }
+
 
 
 
