@@ -213,11 +213,28 @@ initializeMenuPosition() {
             }, 100);
         }
     
-    handleNoUser() {
+       handleNoUser() {
         console.log('🔒 No user found, showing auth screen');
         this.authInitialized = true;
         this.showAuth();
         this.hideLoading();
+    
+        // 🔎 Splash transition logic
+        const splash = document.getElementById('splash-screen');
+        const signin = document.getElementById('signin-form');
+    
+        if (splash && signin) {
+            // Start with splash visible, sign-in hidden
+            signin.classList.remove('active');
+            splash.classList.add('active');
+    
+            // After 2 seconds, hide splash and show sign-in
+            setTimeout(() => {
+                splash.classList.remove('active');
+                signin.classList.add('active');
+                console.log('✅ Splash finished, showing sign-in form');
+            }, 2000);
+        }
     }
 
     showLoading() {
