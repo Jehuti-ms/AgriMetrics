@@ -671,13 +671,13 @@ setupHamburgerMenu() {
     sideMenu.classList.add('js-side-menu');
     
     // 3. Apply initial styles (menu CLOSED - off-screen)
-   sideMenu.style.cssText = `
+   /*sideMenu.style.cssText = `
     position: fixed;
     top: 80px;
     right: 0;
     width: 280px;
     height: calc(100vh - 80px); /* cap height */
-    transform: translateX(280px);
+   /* transform: translateX(280px);
     transition: transform 0.3s ease;
     background: var(--surface-color);
     border-left: 3px solid var(--primary-color);
@@ -687,7 +687,13 @@ setupHamburgerMenu() {
     display: block;
     visibility: visible;
     opacity: 1;
-`; 
+`; */
+    sideMenu.classList.add("side-menu-closed"); // default
+    // When opening:
+    sideMenu.classList.replace("side-menu-closed", "side-menu-open");
+    // When closing:
+    sideMenu.classList.replace("side-menu-open", "side-menu-closed");
+
 
     // 4. Ensure menu is in body (not nested)
     if (sideMenu.parentElement !== document.body) {
