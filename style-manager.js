@@ -695,69 +695,15 @@ header,
   position: relative;
 }
 
-/* ============ Side Menu ==============*/
-/* Side menu container */
-#side-menu {
-  width: 280px;
-  background: var(--surface-color);
-  border-left: 3px solid var(--primary-color);
-  box-shadow: -10px 0 30px var(--dm-shadow);
-  position: fixed;
-  top: 80px; /* below navbar */
-  right: 0;
-  overflow-y: auto;
-  z-index: 10001;
-  transition: var(--transition-normal);
+// ======== Side Menu ==========
+// Default state
+sideMenu.classList.add("closed");
 
-  /* Strict height cap */
-  height: calc(100vh - 80px);
-}
+// Open
+sideMenu.classList.replace("closed", "open");
 
-.side-menu-header {
-  padding: 20px;
-  border-bottom: 1px solid var(--border-color);
-}
-.side-menu-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-.side-menu-subtitle {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin-top: 4px;
-}
-
-.side-menu-section {
-  margin-top: 20px;
-  border-top: 1px solid var(--border-color);
-  padding-top: 10px;
-}
-.side-menu-section-title {
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  padding: 0 20px 8px;
-}
-
-.side-menu-item {
-  display: flex;
-  align-items: center;
-  padding: 10px 20px;
-  color: var(--text-primary);
-  text-decoration: none;
-  transition: var(--transition-fast);
-}
-.side-menu-item:hover {
-  background: var(--primary-color);
-  color: #fff;
-  border-radius: var(--radius-sm);
-}
-.side-menu-icon {
-  margin-right: 10px;
-  font-size: 16px;
-}
+// Close
+sideMenu.classList.replace("open", "closed");
 
 
        
