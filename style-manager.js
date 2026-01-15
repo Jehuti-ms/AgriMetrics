@@ -709,6 +709,9 @@ header,
   overflow-y: auto;
   z-index: 10001;
   transition: transform 0.3s ease;
+  
+  /* NEW: cap the height so you always see the bottom */
+  max-height: calc(100vh - 80px);
 }
 
 /* Header area */
