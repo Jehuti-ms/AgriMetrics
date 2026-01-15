@@ -843,21 +843,19 @@ body {
 
 /* ============ Side Menu ==============*/
 /* Side menu container */
-
 #side-menu {
   position: fixed;
-  top: 80px;              /* below navbar */
+  top: 80px;
   right: 0;
   width: 280px;
-  max-height: calc(100vh - 80px); /* cap height */
+  height: calc(100vh - 80px); /* always fills viewport minus navbar */
   background: var(--surface-color);
   border-left: 3px solid var(--primary-color);
   box-shadow: -10px 0 30px var(--dm-shadow);
   z-index: 10001;
   transition: var(--transition-normal);
-  overflow-y: auto;       /* scroll if content exceeds cap */
+  overflow-y: auto;
 }
-
 
 /* Closed state */ 
 #side-menu.closed { 
