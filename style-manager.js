@@ -699,21 +699,31 @@ header,
 /* Side menu container */
 #side-menu {
   width: 240px;                  /* fixed width */
-  background: #1f2937;           /* dark gray background */
-  color: #fff;                   /* white text */
-  position: fixed;               /* stays in place */
-  top: 60px;                     /* below navbar */
-  bottom: 0;                     /* full height */
+  background: #ffffff;           /* same as navbar background */
+  color: #1f2937;                /* same text color as navbar */
+  position: fixed;
+  top: 60px;                     /* start just below navbar */
+  bottom: 0;
   overflow-y: auto;              /* scroll if too long */
-  box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+  box-shadow: 2px 0 8px rgba(0,0,0,0.1);
   padding: 20px 0;
+}
+
+/* Side menu headings */
+#side-menu h2 {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #6b7280;                /* muted gray for headings */
+  padding: 10px 20px;
+  margin: 0;
 }
 
 /* Side menu links */
 #side-menu a {
   display: block;
   padding: 12px 20px;
-  color: #d1d5db;                /* light gray text */
+  color: #1f2937;                /* same as navbar text */
   text-decoration: none;
   transition: background 0.2s, color 0.2s;
 }
