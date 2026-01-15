@@ -688,13 +688,7 @@ setupHamburgerMenu() {
     visibility: visible;
     opacity: 1;
 `; */
-    sideMenu.classList.add("side-menu-closed"); // default
-    // When opening:
-    sideMenu.classList.replace("side-menu-closed", "side-menu-open");
-    // When closing:
-    sideMenu.classList.replace("side-menu-open", "side-menu-closed");
-
-
+    
     // 4. Ensure menu is in body (not nested)
     if (sideMenu.parentElement !== document.body) {
         document.body.appendChild(sideMenu);
