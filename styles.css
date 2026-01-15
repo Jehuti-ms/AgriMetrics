@@ -849,7 +849,7 @@ body {
   right: 0;
   width: 280px;
   /*height: calc(100vh - 80px); */
-  height: calc(100vh - 80px - 60px); /* 60px = footer height */
+  /*height: calc(100vh - 80px - 60px); /* 60px = footer height */
   max-height: calc(100vh - 80px); overflow-y: auto;
   background: var(--surface-color);
   border-left: 3px solid var(--primary-color);
