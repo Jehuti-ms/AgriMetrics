@@ -709,9 +709,10 @@ header,
   z-index: 10001;
   transition: transform 0.3s ease;
 
-  /* Strict height cap */
-  max-height: calc(100vh - 80px);
+  /* This is the key line */
+  height: calc(100vh - 80px); /* strictly limit to viewport height minus navbar */
 }
+
 
 
 /* Header area */
