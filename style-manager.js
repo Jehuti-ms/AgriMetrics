@@ -695,23 +695,7 @@ header,
   position: relative;
 }
 
-// ======== Side Menu ==========
-const sideMenu = document.getElementById("side-menu");
 
-// Initial state on refresh
-sideMenu.classList.add("closed");
-
-// Open handler
-function openMenu() {
-  sideMenu.classList.remove("closed");
-  sideMenu.classList.add("open");
-}
-
-// Close handler
-function closeMenu() {
-  sideMenu.classList.remove("open");
-  sideMenu.classList.add("closed");
-}
       
         `;
         document.head.appendChild(style);
