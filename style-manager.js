@@ -699,20 +699,20 @@ header,
 /* Side menu container */
 #side-menu {
   width: 280px;
-  background: #ffffff; /* same as navbar */
-  border-left: 3px solid #22c55e; /* green accent */
+  background: #ffffff;
+  border-left: 3px solid #22c55e;
   box-shadow: -10px 0 30px rgba(0,0,0,0.3);
   position: fixed;
   top: 80px; /* below navbar */
   right: 0;
-  bottom: 0;
   overflow-y: auto;
   z-index: 10001;
   transition: transform 0.3s ease;
-  
-  /* NEW: cap the height so you always see the bottom */
+
+  /* Strict height cap */
   max-height: calc(100vh - 80px);
 }
+
 
 /* Header area */
 .side-menu-header {
