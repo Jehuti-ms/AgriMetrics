@@ -461,16 +461,15 @@ initializeMenu() {
     // Clear any leftover inline styles
     sideMenu.style.transform = '';
     sideMenu.style.left = '';
-    sideMenu.style.right = '0';
+    sideMenu.style.right = ''; // let CSS handle positioning
   }
 
   if (overlay) {
     overlay.classList.remove('active');
-    overlay.style.display = '';
+    overlay.style.display = ''; // let CSS handle display
   }
 }
-
-    
+   
 
     showApp() {
         const authContainer = document.getElementById('auth-container');
