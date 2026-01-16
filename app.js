@@ -199,6 +199,8 @@ initializeMenuPosition() {
             
             // Load user preferences
             await this.loadUserPreferences();
+
+            this.applyUserTheme();
             
             // Setup UI - CREATE NAVIGATION FIRST
             this.createTopNavigation();
