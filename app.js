@@ -368,6 +368,7 @@ initializeMenuPosition() {
     }, 200); // Give time for navigation to render
 }
 
+    
 toggleDarkMode() {
     const isDarkMode = document.body.classList.contains('dark-mode');
     
@@ -580,7 +581,26 @@ initializeMenu() {
             </nav>
         `;
     }
-    
+
+    // Run this after your navbar is rendered
+document.addEventListener("DOMContentLoaded", () => {
+  const logoutBtn = document.getElementById("logout-btn");
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await firebase.auth().signOut();   // or your auth library’s sign-out
+        console.log("User signed out");
+        // Redirect back to splash or sign-in
+        window.location.href = "/signin.html";
+      } catch (error) {
+        console.error("Logout failed:", error);
+      }
+    });
+  }
+});
+}
+
 setupHamburgerMenu() {
   console.log('🎯 Setting up hamburger menu (class-based version)');
 
