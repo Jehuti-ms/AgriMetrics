@@ -616,38 +616,20 @@ const StyleManager = {
   display: flex;
   align-items: center;
 }
-.nav-brand img {
-  height: 40px;
-  margin-right: 8px;
-}
-.brand-text {
-  font-weight: bold;
-  margin-right: 6px;
-}
-.brand-subtitle {
-  font-size: 12px;
-  color: #666;
-}
 
 /* Scrollable middle section */
 .nav-items-scroll {
   flex: 1 1 auto;
-  display: flex;
-  align-items: center;
   overflow-x: auto;
   white-space: nowrap;
   -webkit-overflow-scrolling: touch;
   position: relative;
 }
-
-/* Hide scrollbar visuals */
 .nav-items-scroll::-webkit-scrollbar { display: none; }
 .nav-items-scroll { scrollbar-width: none; -ms-overflow-style: none; }
 
-/* Icons row */
 .nav-items {
   display: flex;
-  flex: 1 1 auto;
 }
 .nav-item {
   flex: 0 0 auto;
@@ -660,19 +642,17 @@ const StyleManager = {
   flex-direction: column;
   align-items: center;
 }
-.nav-label {
-  font-size: 12px;
-  margin-top: 2px;
-}
+.nav-label { font-size: 12px; margin-top: 2px; }
 
-/* Logout + Hamburger pinned right */
-#logout-btn,
-#hamburger-menu {
+/* Fixed right controls */
+.nav-actions {
   flex: 0 0 auto;
-  margin-left: 8px;
+  display: flex;
+  align-items: center;
 }
+.nav-actions .nav-item { margin-left: 8px; }
 
-/* Subtle fade hints */
+/* Subtle fade hints for scroll */
 .nav-items-scroll::before,
 .nav-items-scroll::after {
   content: "";
@@ -691,7 +671,6 @@ const StyleManager = {
   right: 0;
   background: linear-gradient(to left, #fff, transparent);
 }
-
 
 /* Brand section */
 .nav-brand {
