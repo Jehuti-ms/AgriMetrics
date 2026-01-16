@@ -1139,9 +1139,9 @@ body {
 }
 
 .auth-divider {
-  display: flex;              /* use flexbox */
-  align-items: center;        /* vertical centering */
-  justify-content: center;    /* horizontal centering */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin: 20px 0;
   width: 100%;
 }
@@ -1149,15 +1149,16 @@ body {
 .auth-divider::before,
 .auth-divider::after {
   content: "";
-  flex: 1;                    /* take up equal space */
-  border-top: 1px solid #ccc; /* divider line */
+  flex: 1;
+  border-top: 1px solid #4CAF50; /* green line */
   margin: 0 8px;
 }
 
 .auth-divider span {
-  background: #fff;           /* match form background */
+  background: #fff;   /* match form background */
   padding: 0 8px;
-  color: #666;
+  color: #4CAF50;     /* green text */
   font-size: 13px;
+  font-weight: bold;
 }
 
