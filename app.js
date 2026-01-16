@@ -201,7 +201,9 @@ initializeMenuPosition() {
             await this.loadUserPreferences();
 
             this.applyUserTheme();
-            
+
+            this.setupSystemThemeListener();
+               
             // Setup UI - CREATE NAVIGATION FIRST
             this.createTopNavigation();
                
@@ -406,7 +408,19 @@ updateThemeToggleIcon() {
         darkModeToggle.title = isDarkMode ? 'Switch to light mode' : 'Switch to dark mode';
     }
 }
-  
+
+    setupSystemThemeListener() {
+  // Listen for OS theme changes
+  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  mediaQuery.addEventListener('change', e => {
+    if (this.userPreferences.theme === 'auto') {
+      document.body.classList.toggle('dark-mode', e.matches);
+      this.updateThemeToggleIcon();
+      console.log('🔄 System theme changed, auto mode updated');
+    }
+  });
+}
+
 setupEventListeners() {
   document.addEventListener('click', (e) => {
     // Handle nav items
