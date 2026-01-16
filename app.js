@@ -417,7 +417,8 @@ setupEventListeners() {
         e.preventDefault();
         this.showSection(view);
       }
-
+    }
+      
     // Handle side menu items
     if (e.target.closest('.side-menu-item')) {
       const menuItem = e.target.closest('.side-menu-item');
