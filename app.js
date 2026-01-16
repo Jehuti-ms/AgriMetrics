@@ -172,7 +172,21 @@ initializeMenuPosition() {
             }
         }
     }
-    
+
+    firebase.auth().onAuthStateChanged(user => {
+  if (user) {
+    // Logged in → show dashboard
+    document.getElementById("dashboard-container").style.display = "block";
+    document.getElementById("auth-container").style.display = "none";
+    console.log("🎉 User authenticated, showing app...");
+  } else {
+    // Logged out → show sign-in
+    document.getElementById("dashboard-container").style.display = "none";
+    document.getElementById("auth-container").style.display = "block";
+    console.log("🔒 No user, showing sign-in form...");
+  }
+});
+
     handleUserAuthenticated(user) {
         console.log('🎉 User authenticated, showing app...');
         this.currentUser = user;
@@ -757,19 +771,14 @@ function setupLogoutButtons() {
   logoutButtons.forEach(btn => {
     btn.addEventListener("click", async () => {
       try {
-        await firebase.auth().signOut();   // or your logout logic
-        console.log("User signed out");
-
-        // Show the sign-in form again
-        document.getElementById("auth-container").style.display = "block";
-        document.getElementById("signin-form").classList.add("active");
-
-        // Hide your dashboard container
-        const dashboard = document.getElementById("dashboard-container");
-        if (dashboard) dashboard.style.display = "none";
-
+        await firebase.auth().signOut();
+        console.log("🚪 User signed out");
+        // No redirect needed — onAuthStateChanged will handle UI
       } catch (error) {
         console.error("Logout failed:", error);
+        // Fallback: force UI reset
+        document.getElementById("dashboard-container").style.display = "none";
+        document.getElementById("auth-container").style.display = "block";
       }
     });
   });
