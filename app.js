@@ -525,6 +525,8 @@ initializeMenu() {
                     <span class="brand-subtitle">Farm Management System</span>
                 </div>
                 
+                    <!-- Scrollable icons section -->
+                <div class="nav-items-scroll">
                 <div class="nav-items">
                     <button class="nav-item" data-view="dashboard" title="Dashboard">
                         <span>📊</span>
@@ -560,7 +562,7 @@ initializeMenu() {
                         <span>🌙</span>
                         <span class="nav-label">Theme</span>
                     </button>
-
+                </div>
                    <button class="nav-item" id="logout-btn" title="Logout"> 
                         <span>⇦</span> 
                         <span class="nav-label">Logout</span> 
