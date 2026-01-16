@@ -1191,3 +1191,82 @@ body {
   font-weight: bold;
 }
 
+/* =========== Profile Logout Button ============== */
+/* Style the PROFILE logout button only */
+#profile-logout-btn,
+button.logout-btn:not(.nav-item) {
+    /* Layout & Positioning */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 30px auto 15px;
+    width: 100%;
+    max-width: 220px;
+    
+    /* Appearance */
+    background: linear-gradient(135deg, #ff4757, #ff3838);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 13px 25px;
+    
+    /* Typography */
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    font-family: inherit;
+    
+    /* Effects */
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 14px rgba(255, 71, 87, 0.3);
+    
+    /* Icon styling */
+    line-height: 1;
+}
+
+/* Hover state */
+#profile-logout-btn:hover,
+button.logout-btn:not(.nav-item):hover {
+    background: linear-gradient(135deg, #ff5a68, #ff4d4d);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 71, 87, 0.4);
+}
+
+/* Active/Clicked state */
+#profile-logout-btn:active,
+button.logout-btn:not(.nav-item):active {
+    transform: translateY(0);
+    box-shadow: 0 3px 10px rgba(255, 71, 87, 0.25);
+}
+
+/* Focus state */
+#profile-logout-btn:focus,
+button.logout-btn:not(.nav-item):focus {
+    outline: 2px solid rgba(255, 71, 87, 0.5);
+    outline-offset: 3px;
+}
+
+/* Icon styling */
+#profile-logout-btn i,
+button.logout-btn:not(.nav-item) i {
+    font-size: 16px;
+    width: 18px;
+    text-align: center;
+}
+
+/* Dark mode */
+.dark-mode #profile-logout-btn,
+.dark-mode button.logout-btn:not(.nav-item) {
+    background: linear-gradient(135deg, #e84141, #c23636);
+    box-shadow: 0 4px 14px rgba(232, 65, 65, 0.35);
+}
+
+.dark-mode #profile-logout-btn:hover,
+.dark-mode button.logout-btn:not(.nav-item):hover {
+    background: linear-gradient(135deg, #ff4d4d, #d63031);
+    box-shadow: 0 6px 20px rgba(232, 65, 65, 0.45);
+}
+
+
