@@ -64,15 +64,6 @@ body {
 /* ==============================================================
    Auth Container
    ============================================================== */
-/*#auth-container {
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-    padding: 1rem;
-}*/
-
 /* Green background container */
 #auth-container {
   background-color: #4CAF50;
