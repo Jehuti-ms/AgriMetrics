@@ -546,71 +546,95 @@ const StyleManager = {
         }
 
         /* Base body background */
-body.dark-mode {
-  background-color: #121212; /* subtle dark, not pure black */
-  color: #f0f0f0;
-}
-
-/* Main app containers */
-body.dark-mode #app-container,
-body.dark-mode #content-area {
-  background-color: #1e1e1e; /* dark gray */
-  color: #f0f0f0;
-}
-
-/* Cards, modals, forms */
-body.dark-mode .glass-card,
-body.dark-mode .form-container,
-body.dark-mode .popout-modal-content {
-  background-color: #2a2a2a; /* slightly lighter dark */
-  color: #f0f0f0;
-  border: 1px solid #333; /* subtle separation */
-}
-
-/* Navigation bar */
-body.dark-mode nav.top-nav {
-  background-color: #1c1c1c;
-  border-bottom: 1px solid #333;
-}
-
-/* Side menu */
-body.dark-mode #side-menu {
-  background-color: #1c1c1c;
-  color: #f0f0f0;
-}
-
-/* Welcome section (already styled for text, add background) */
-body.dark-mode .welcome-section {
-  background-color: #1a1a1a;
-}
-
-/* Buttons (keep your logout gradient overrides, add general dark buttons) */
-body.dark-mode button,
-body.dark-mode .btn {
-  background-color: #2a2a2a;
-  color: #f0f0f0;
-}
-
-/* Inputs */
-body.dark-mode input,
-body.dark-mode select,
-body.dark-mode textarea {
-  background-color: #2a2a2a;
-  color: #f0f0f0;
-  border: 1px solid #444;
-}
-
-/* Tables */
-body.dark-mode table {
-  background-color: #1e1e1e;
-  color: #f0f0f0;
-}
-body.dark-mode th {
-  background-color: #2a2a2a;
-}
-body.dark-mode td {
-  border-color: #333;
-}
+        body.dark-mode {
+          background-color: #121212; /* subtle dark, not pure black */
+          color: #f0f0f0;
+        }
+        
+        /* Main app containers */
+        body.dark-mode #app-container,
+        body.dark-mode #content-area {
+          background-color: #1e1e1e; /* dark gray */
+          color: #f0f0f0;
+        }
+        
+        /* Cards, modals, forms */
+        body.dark-mode .glass-card,
+        body.dark-mode .form-container,
+        body.dark-mode .popout-modal-content {
+          background-color: #2a2a2a; /* slightly lighter dark */
+          color: #f0f0f0;
+          border: 1px solid #333; /* subtle separation */
+        }
+        
+        /* Navigation bar */
+        body.dark-mode nav.top-nav {
+          background-color: #1c1c1c;
+          border-bottom: 1px solid #333;
+        }
+        
+        /* Side menu */
+        body.dark-mode #side-menu {
+          background-color: #1c1c1c;
+          color: #f0f0f0;
+        }
+        
+        /* Welcome section (already styled for text, add background) */
+        body.dark-mode .welcome-section {
+          background-color: #1a1a1a;
+        }
+        
+        /* Buttons (keep your logout gradient overrides, add general dark buttons) */
+        body.dark-mode button,
+        body.dark-mode .btn {
+          background-color: #2a2a2a;
+          color: #f0f0f0;
+        }
+        
+        /* Inputs */
+        body.dark-mode input,
+        body.dark-mode select,
+        body.dark-mode textarea {
+          background-color: #2a2a2a;
+          color: #f0f0f0;
+          border: 1px solid #444;
+        }
+        
+        /* Tables */
+        body.dark-mode table {
+          background-color: #1e1e1e;
+          color: #f0f0f0;
+        }
+        body.dark-mode th {
+          background-color: #2a2a2a;
+        }
+        body.dark-mode td {
+          border-color: #333;
+        }
+        
+        /* Auth inputs */
+        body.dark-mode #signin-email,
+        body.dark-mode #signin-password,
+        body.dark-mode #signup-email,
+        body.dark-mode #signup-password {
+          background-color: #2a2a2a !important;
+          color: #f0f0f0 !important;
+          border: 1px solid #444 !important;
+        }
+        
+        /* Sync button */
+        body.dark-mode #sync-now-btn {
+          background-color: #333 !important;
+          color: #f0f0f0 !important;
+        }
+        
+        /* Generic white/light gray blocks */
+        body.dark-mode .glass-card,
+        body.dark-mode .form-container,
+        body.dark-mode .card {
+          background-color: #1e1e1e !important;
+          color: #f0f0f0 !important;
+        }
 
         /* =========== Navigation =========== */
         /* 4. Navigation button sizes (not too wide) */
