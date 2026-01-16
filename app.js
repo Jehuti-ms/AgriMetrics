@@ -750,6 +750,26 @@ setupHamburgerMenu() {
     }
 }
 
+// Ensures side menu starts hidden and overlay reset
+function initializeMenu() {
+  const sideMenu = document.getElementById('side-menu');
+  const overlay = document.querySelector('.side-menu-overlay');
+
+  if (sideMenu) {
+    sideMenu.classList.remove('open');
+    sideMenu.classList.add('closed');
+    sideMenu.style.transform = '';
+    sideMenu.style.left = '';
+    sideMenu.style.right = '';
+  }
+
+  if (overlay) {
+    overlay.classList.remove('active');
+    overlay.style.display = '';
+  }
+}
+
+
 function setupLogoutButtons() {
   const logoutButtons = document.querySelectorAll(".logout-btn");
 
@@ -770,6 +790,24 @@ function setupLogoutButtons() {
 }
 
 document.addEventListener("DOMContentLoaded", setupLogoutButtons);
+
+// Reacts to Firebase auth state changes
+firebase.auth().onAuthStateChanged(user => {
+  if (user) {
+    // Logged in → show dashboard
+    document.getElementById("dashboard-container").style.display = "block";
+    document.getElementById("auth-container").style.display = "none";
+    initializeMenu(); // optional: reset menu when user logs in
+    console.log("🎉 User authenticated, showing app...");
+  } else {
+    // Logged out → show sign-in
+    document.getElementById("dashboard-container").style.display = "none";
+    document.getElementById("auth-container").style.display = "block";
+    initializeMenu(); // reset menu when user logs out
+    console.log("🔒 No user, showing sign-in form...");
+  }
+});
+
 
  // Force re-initialization after everything else loads
 setTimeout(() => {
