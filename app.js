@@ -750,25 +750,26 @@ setupHamburgerMenu() {
     }
 }
 
- // Run this after your navbar is rendered
-document.addEventListener("DOMContentLoaded", () => {
-  const logoutBtn = document.getElementById("logout-btn");
+function setupLogoutButtons() {
+  // Select all buttons with the shared class
+  const logoutButtons = document.querySelectorAll(".logout-btn");
 
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
+  logoutButtons.forEach(btn => {
+    btn.addEventListener("click", async () => {
       try {
-        await firebase.auth().signOut();   // or your auth library’s sign-out
+        await firebase.auth().signOut();   // or your logout logic
         console.log("User signed out");
-        // Redirect back to splash or sign-in
         window.location.href = "/signin.html";
       } catch (error) {
         console.error("Logout failed:", error);
       }
     });
-  }
-});
+  });
+}
 
-// Force re-initialization after everything else loads
+document.addEventListener("DOMContentLoaded", setupLogoutButtons);
+
+ // Force re-initialization after everything else loads
 setTimeout(() => {
     if (typeof this.setupHamburgerMenu === 'function') {
         console.log('🔄 Forcing hamburger menu re-initialization...');
