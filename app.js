@@ -326,53 +326,49 @@ initializeMenuPosition() {
         };
     }
 
-    applyUserTheme() {
-    const theme = this.userPreferences.theme || 'auto';
-    
-    if (theme === 'dark') {
-        document.body.classList.add('dark-mode');
-    } else if (theme === 'light') {
-        document.body.classList.remove('dark-mode');
-    } else {
-        // Auto mode - check system preference
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (prefersDark) {
-            document.body.classList.add('dark-mode');
-        } else {
-            document.body.classList.remove('dark-mode');
-        }
+   applyUserTheme() {
+  const theme = this.userPreferences.theme || 'auto';
+
+  if (theme === 'dark') {
+    document.body.classList.add('dark-mode');
+  } else if (theme === 'light') {
+    document.body.classList.remove('dark-mode');
+  } else {
+    // Auto mode: follow system preference
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.body.classList.toggle('dark-mode', prefersDark);
+  }
+
+  this.updateThemeToggleIcon();
+}
+
+   setupDarkMode() {
+  // Wait for navigation to be created
+  setTimeout(() => {
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    if (!darkModeToggle) {
+      console.error('❌ Dark mode toggle button not found');
+      return;
     }
-    
-    // Update the theme toggle icon
+
+    // Remove existing listeners safely
+    const newToggle = darkModeToggle.cloneNode(true);
+    darkModeToggle.parentNode.replaceChild(newToggle, darkModeToggle);
+
+    // Attach click handler
+    newToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.toggleDarkMode();
+    });
+
+    // Apply current theme and update icon
+    this.applyUserTheme();   // ensures body class matches saved preference
     this.updateThemeToggleIcon();
-}
 
-    setupDarkMode() {
-    // Wait for navigation to be created
-    setTimeout(() => {
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
-        if (darkModeToggle) {
-            // Remove existing listener by cloning
-            const newToggle = darkModeToggle.cloneNode(true);
-            darkModeToggle.parentNode.replaceChild(newToggle, darkModeToggle);
-            
-            // Add click event to the new button
-            newToggle.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.toggleDarkMode();
-            });
-            
-            // Update icon based on current theme
-            this.updateThemeToggleIcon();
-            
-            console.log('✅ Theme toggle button initialized');
-        } else {
-            console.error('❌ Theme toggle button not found');
-        }
-    }, 200); // Give time for navigation to render
+    console.log('✅ Theme toggle button initialized');
+  }, 200); // Give time for navigation to render
 }
-
     
 toggleDarkMode() {
     const isDarkMode = document.body.classList.contains('dark-mode');
@@ -420,6 +416,16 @@ setupEventListeners() {
         this.showSection(view);
       }
     }
+
+      setupSystemThemeListener() {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (this.userPreferences.theme === 'auto') {
+      document.body.classList.toggle('dark-mode', e.matches);
+      this.updateThemeToggleIcon();
+      console.log('🔄 System theme changed, auto mode updated');
+    }
+  });
+}
 
     // Handle side menu items
     if (e.target.closest('.side-menu-item')) {
