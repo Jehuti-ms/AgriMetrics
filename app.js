@@ -769,6 +769,23 @@ function initializeMenu() {
   }
 }
 
+// Reacts to Firebase auth state changes
+firebase.auth().onAuthStateChanged(user => {
+  const dashboard = document.getElementById("dashboard-container");
+  const authContainer = document.getElementById("auth-container");
+
+  if (user) {
+    if (dashboard) dashboard.style.display = "block";
+    if (authContainer) authContainer.style.display = "none";
+    initializeMenu();
+    console.log("🎉 User authenticated, showing app...");
+  } else {
+    if (dashboard) dashboard.style.display = "none";
+    if (authContainer) authContainer.style.display = "block";
+    initializeMenu();
+    console.log("🔒 No user, showing sign-in form...");
+  }
+});
 
 // Attach logout handler to all buttons with .logout-btn class
 document.addEventListener("DOMContentLoaded", () => {
@@ -789,24 +806,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 document.addEventListener("DOMContentLoaded", setupLogoutButtons);
-
-// Reacts to Firebase auth state changes
-firebase.auth().onAuthStateChanged(user => {
-  if (user) {
-    // Logged in → show dashboard
-    document.getElementById("dashboard-container").style.display = "block";
-    document.getElementById("auth-container").style.display = "none";
-    initializeMenu(); // optional: reset menu when user logs in
-    console.log("🎉 User authenticated, showing app...");
-  } else {
-    // Logged out → show sign-in
-    document.getElementById("dashboard-container").style.display = "none";
-    document.getElementById("auth-container").style.display = "block";
-    initializeMenu(); // reset menu when user logs out
-    console.log("🔒 No user, showing sign-in form...");
-  }
-});
-
 
  // Force re-initialization after everything else loads
 setTimeout(() => {
