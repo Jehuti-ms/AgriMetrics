@@ -560,6 +560,11 @@ initializeMenu() {
                         <span>🌙</span>
                         <span class="nav-label">Theme</span>
                     </button>
+
+                    <button class="nav-item logout-btn" id="logout-btn" title="Logout"> 
+                        <span>⇦</span> 
+                        <span class="nav-label">Logout</span> 
+                    </button>
                     
                     <button class="nav-item hamburger-menu" id="hamburger-menu" title="Farm Operations">
                         <span>☰</span>
