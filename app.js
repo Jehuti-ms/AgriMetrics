@@ -415,7 +415,7 @@ setupEventListeners() {
         e.preventDefault();
         this.showSection(view);
       }
-    }
+    
 
       setupSystemThemeListener() {
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
