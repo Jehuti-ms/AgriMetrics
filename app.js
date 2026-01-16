@@ -205,6 +205,9 @@ initializeMenuPosition() {
                
             // Setup logout handlers AFTER creating navigation
             this.setupLogoutHandlers();
+
+            // Fix responsiveness
+            this.fixResponsiveIssues();
             
             setTimeout(() => {
                 this.setupHamburgerMenu();
@@ -476,7 +479,7 @@ closeSideMenu() {
   }
 }
 
-// Add this to initialize the menu in the correct state
+// Add this to initialize the menu in the correct state 
 initializeMenu() {
   const sideMenu = document.getElementById('side-menu');
   const overlay = document.querySelector('.side-menu-overlay');
@@ -906,6 +909,74 @@ async performLogout() {
         
         return button;
     }
+
+    // Add to FarmManagementApp class
+fixResponsiveIssues() {
+    console.log('📱 Fixing responsive issues...');
+    
+    // Function to fix overflowing elements
+    const fixOverflow = () => {
+        // Fix all containers
+        document.querySelectorAll('.form-container, .glass-card, .module-container, .popout-modal-content').forEach(container => {
+            const rect = container.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            
+            if (rect.width > viewportWidth * 0.95) {
+                container.style.width = '95%';
+                container.style.maxWidth = '95%';
+                container.style.marginLeft = 'auto';
+                container.style.marginRight = 'auto';
+            }
+        });
+        
+        // Fix all form inputs
+        document.querySelectorAll('input, select, textarea').forEach(input => {
+            const container = input.closest('.form-group, .form-container');
+            if (container) {
+                const containerWidth = container.getBoundingClientRect().width;
+                input.style.maxWidth = `${containerWidth}px`;
+            }
+        });
+        
+        // Fix buttons in forms
+        document.querySelectorAll('.form-actions, .button-group').forEach(buttonGroup => {
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile) {
+                buttonGroup.style.flexDirection = 'column';
+                buttonGroup.style.gap = '10px';
+                
+                buttonGroup.querySelectorAll('button').forEach(button => {
+                    button.style.width = '100%';
+                    button.style.maxWidth = '100%';
+                });
+            }
+        });
+    };
+    
+    // Run on load
+    fixOverflow();
+    
+    // Run on resize with debounce
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(fixOverflow, 100);
+    });
+    
+    // Run after content changes
+    const observer = new MutationObserver(() => {
+        setTimeout(fixOverflow, 100);
+    });
+    
+    observer.observe(document.getElementById('content-area'), {
+        childList: true,
+        subtree: true
+    });
+    
+    console.log('✅ Responsive fixes applied');
+}
+    
 }
 
 // Ensures side menu starts hidden and overlay reset
