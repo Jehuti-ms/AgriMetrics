@@ -606,11 +606,23 @@ header,
   height: 60px;
   background: #ffffff;
   z-index: 1000;
+
   display: flex;
-  align-items: center;        /* vertical centering */
-  justify-content: space-between;
+  align-items: center;
+  /* remove space-between so items don’t stretch apart */
+  justify-content: flex-start;
+
   padding: 0 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+
+  overflow-x: auto;           /* allow horizontal scroll */
+  white-space: nowrap;        /* prevent wrapping */
+  -webkit-overflow-scrolling: touch; /* smooth scroll on mobile */
+}
+
+.nav-item {
+  flex: 0 0 auto;             /* prevent shrinking */
+  margin-right: 12px;         /* spacing between items */
 }
 
 /* Brand section */
