@@ -770,24 +770,23 @@ function initializeMenu() {
 }
 
 
-function setupLogoutButtons() {
-  const logoutButtons = document.querySelectorAll(".logout-btn");
-
-  logoutButtons.forEach(btn => {
+// Attach logout handler to all buttons with .logout-btn class
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".logout-btn").forEach(btn => {
     btn.addEventListener("click", async () => {
       try {
         await firebase.auth().signOut();
         console.log("🚪 User signed out");
-        // No redirect needed — onAuthStateChanged will handle UI
+        // No manual UI toggle needed — onAuthStateChanged will handle it
       } catch (error) {
         console.error("Logout failed:", error);
-        // Fallback: force UI reset
+        // Fallback: force sign-in form
         document.getElementById("dashboard-container").style.display = "none";
         document.getElementById("auth-container").style.display = "block";
       }
     });
   });
-}
+});
 
 document.addEventListener("DOMContentLoaded", setupLogoutButtons);
 
