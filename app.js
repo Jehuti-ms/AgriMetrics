@@ -202,6 +202,9 @@ initializeMenuPosition() {
             
             // Setup UI - CREATE NAVIGATION FIRST
             this.createTopNavigation();
+               
+            // Setup logout handlers AFTER creating navigation
+            this.setupLogoutHandlers();
             
             setTimeout(() => {
                 this.setupHamburgerMenu();
@@ -748,6 +751,73 @@ setupHamburgerMenu() {
             </div>
         `;
     }
+
+     setupLogoutHandlers() {
+        console.log('🔄 Setting up logout handlers...');
+        
+        document.addEventListener('click', async (e) => {
+            const logoutBtn = e.target.closest('.logout-btn');
+            if (!logoutBtn) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🚪 Logout button clicked:', logoutBtn.id || 'profile logout');
+            await this.performLogout();
+        });
+        
+        document.addEventListener('user-logout', () => {
+            console.log('📢 Custom logout event received');
+            this.performLogout();
+        });
+    }
+    
+    async performLogout() {
+        console.log('🔐 Performing logout...');
+        
+        try {
+            this.showLoading();
+            this.currentUser = null;
+            this.authInitialized = false;
+            
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userAuthenticated');
+            
+            if (typeof firebase !== 'undefined' && firebase.auth) {
+                await firebase.auth().signOut();
+                console.log('✅ Firebase signout successful');
+            }
+            
+            this.closeSideMenu();
+            
+            setTimeout(() => {
+                this.hideLoading();
+                this.showAuth();
+                console.log('✅ App reset to auth state');
+            }, 500);
+            
+        } catch (error) {
+            console.error('❌ Logout failed:', error);
+            this.hideLoading();
+            this.showAuth();
+        }
+    }
+    
+    // Optional helper method
+    createLogoutButton(options = {}) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'logout-btn ' + (options.className || '');
+        button.innerHTML = `
+            <span>${options.icon || '🚪'}</span>
+            <span>${options.text || 'Logout'}</span>
+        `;
+        
+        if (options.id) button.id = options.id;
+        if (options.title) button.title = options.title;
+        
+        return button;
+    }
 }
 
 // Ensures side menu starts hidden and overlay reset
@@ -786,53 +856,6 @@ firebase.auth().onAuthStateChanged(user => {
     console.log("🔒 No user, showing sign-in form...");
   }
 });
-
-// Define the function
-function setupLogoutButtons() {
-  const logoutButtons = document.querySelectorAll(".logout-btn");
-
-  logoutButtons.forEach(btn => {
-    btn.addEventListener("click", async () => {
-      try {
-        await firebase.auth().signOut();
-        console.log("🚪 User signed out");
-        // onAuthStateChanged will handle UI swap
-      } catch (error) {
-        console.error("Logout failed:", error);
-        // Fallback: force sign-in form
-        const dashboard = document.getElementById("dashboard-container");
-        const authContainer = document.getElementById("auth-container");
-        if (dashboard) dashboard.style.display = "none";
-        if (authContainer) authContainer.style.display = "block";
-      }
-    });
-  });
-}
-
-// Call it after DOM is ready
-document.addEventListener("DOMContentLoaded", () => {
-  setupLogoutButtons();
-});
-
-// Attach logout handler to all buttons with .logout-btn class
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".logout-btn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      try {
-        await firebase.auth().signOut();
-        console.log("🚪 User signed out");
-        // No manual UI toggle needed — onAuthStateChanged will handle it
-      } catch (error) {
-        console.error("Logout failed:", error);
-        // Fallback: force sign-in form
-        document.getElementById("dashboard-container").style.display = "none";
-        document.getElementById("auth-container").style.display = "block";
-      }
-    });
-  });
-});
-
-document.addEventListener("DOMContentLoaded", setupLogoutButtons);
 
  // Force re-initialization after everything else loads
 setTimeout(() => {
