@@ -417,17 +417,6 @@ setupEventListeners() {
         e.preventDefault();
         this.showSection(view);
       }
-    
-
-      setupSystemThemeListener() {
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-    if (this.userPreferences.theme === 'auto') {
-      document.body.classList.toggle('dark-mode', e.matches);
-      this.updateThemeToggleIcon();
-      console.log('🔄 System theme changed, auto mode updated');
-    }
-  });
-}
 
     // Handle side menu items
     if (e.target.closest('.side-menu-item')) {
