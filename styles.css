@@ -1269,4 +1269,335 @@ button.logout-btn:not(.nav-item) i {
     box-shadow: 0 6px 20px rgba(232, 65, 65, 0.45);
 }
 
+/* ==================== */
+/* RESPONSIVE OVERHAUL */
+/* ==================== */
+
+/* Base responsive fixes */
+@media (max-width: 1200px) {
+    .glass-card,
+    .form-container,
+    .popout-modal-content {
+        width: 95% !important;
+        max-width: 95% !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+}
+
+/* Tablet & Small Desktop */
+@media (max-width: 992px) {
+    /* Fix content positioning */
+    #content-area {
+        padding: 15px !important;
+        margin-top: 0 !important;
+    }
+    
+    /* Fix form containers */
+    .form-container,
+    .glass-card,
+    .module-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 20px 15px !important;
+        margin: 10px 0 !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Fix form elements */
+    .form-group {
+        width: 100% !important;
+        flex-direction: column !important;
+    }
+    
+    .form-group label {
+        width: 100% !important;
+        margin-bottom: 8px !important;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Fix buttons in forms */
+    .form-actions,
+    .button-group {
+        flex-wrap: wrap !important;
+        gap: 10px !important;
+    }
+    
+    .form-actions button,
+    .button-group button {
+        flex: 1 1 calc(50% - 10px) !important;
+        min-width: 120px !important;
+        max-width: none !important;
+    }
+}
+
+/* Mobile Landscape & Small Tablets */
+@media (max-width: 768px) {
+    /* Fix navbar for mobile */
+    .top-nav {
+        flex-wrap: wrap !important;
+        padding: 10px 15px !important;
+    }
+    
+    .nav-brand {
+        width: 100% !important;
+        margin-bottom: 10px !important;
+        justify-content: center !important;
+    }
+    
+    .nav-items-scroll {
+        width: 100% !important;
+        order: 3 !important;
+        margin-top: 10px !important;
+    }
+    
+    .nav-actions {
+        position: absolute !important;
+        top: 10px !important;
+        right: 10px !important;
+    }
+    
+    /* Fix nav items */
+    .nav-items {
+        overflow-x: auto !important;
+        padding-bottom: 5px !important;
+        flex-wrap: nowrap !important;
+    }
+    
+    .nav-item {
+        min-width: 60px !important;
+        padding: 8px 12px !important;
+        font-size: 12px !important;
+    }
+    
+    .nav-label {
+        font-size: 11px !important;
+    }
+    
+    /* Fix content area */
+    #content-area {
+        padding: 10px !important;
+    }
+    
+    /* Fix all forms */
+    form,
+    .form-container,
+    .glass-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 15px 12px !important;
+        margin: 0 !important;
+        border-radius: 8px !important;
+    }
+    
+    /* Fix form layouts */
+    .form-row,
+    .form-columns {
+        flex-direction: column !important;
+    }
+    
+    .form-column {
+        width: 100% !important;
+        margin-bottom: 15px !important;
+    }
+    
+    /* Fix input fields */
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    input[type="password"],
+    input[type="date"],
+    input[type="tel"],
+    select,
+    textarea {
+        width: 100% !important;
+        max-width: 100% !important;
+        font-size: 16px !important; /* Prevents zoom on iOS */
+        padding: 12px 10px !important;
+    }
+    
+    /* Fix buttons */
+    button,
+    .btn,
+    .primary-btn,
+    .secondary-btn {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 5px 0 !important;
+        padding: 14px 16px !important;
+        font-size: 16px !important;
+        min-height: 48px !important; /* Better touch target */
+    }
+    
+    /* Fix button groups */
+    .form-actions,
+    .button-group {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    
+    .form-actions button,
+    .button-group button {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+    }
+    
+    /* Fix tables */
+    .responsive-table {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    table {
+        min-width: 600px !important; /* Forces horizontal scroll */
+        font-size: 14px !important;
+    }
+    
+    /* Fix modals */
+    .modal-content {
+        width: 95% !important;
+        max-width: 95% !important;
+        margin: 10px auto !important;
+        padding: 15px !important;
+    }
+    
+    /* Fix side menu */
+    #side-menu {
+        width: 85% !important;
+        max-width: 300px !important;
+    }
+}
+
+/* Small Mobile Devices */
+@media (max-width: 480px) {
+    /* Extra small screen fixes */
+    body {
+        font-size: 14px !important;
+    }
+    
+    h1 {
+        font-size: 22px !important;
+    }
+    
+    h2 {
+        font-size: 20px !important;
+    }
+    
+    h3 {
+        font-size: 18px !important;
+    }
+    
+    /* Fix navbar for very small screens */
+    .nav-item {
+        min-width: 50px !important;
+        padding: 6px 8px !important;
+    }
+    
+    .nav-item span:first-child {
+        font-size: 16px !important;
+    }
+    
+    /* Fix form spacing */
+    .form-group {
+        margin-bottom: 15px !important;
+    }
+    
+    /* Fix all containers */
+    .container,
+    .content-container,
+    .module-content {
+        padding: 8px !important;
+        margin: 0 !important;
+    }
+    
+    /* Fix buttons */
+    button,
+    .btn {
+        padding: 12px 10px !important;
+        font-size: 15px !important;
+    }
+    
+    /* Fix profile logout button specifically */
+    #profile-logout-btn,
+    button.logout-btn:not(.nav-item) {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 20px 0 10px !important;
+        padding: 14px !important;
+    }
+}
+
+/* Very Small Phones */
+@media (max-width: 320px) {
+    .nav-item {
+        min-width: 45px !important;
+        padding: 4px 6px !important;
+        font-size: 10px !important;
+    }
+    
+    .nav-item span:first-child {
+        font-size: 14px !important;
+    }
+    
+    .brand-text {
+        font-size: 16px !important;
+    }
+    
+    .brand-subtitle {
+        display: none !important;
+    }
+}
+
+/* Fix for iOS Safari */
+@supports (-webkit-touch-callout: none) {
+    /* Prevent padding issues on iOS */
+    body {
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) 
+                env(safe-area-inset-bottom) env(safe-area-inset-left) !important;
+    }
+    
+    /* Fix fixed/absolute elements on iOS */
+    .top-nav {
+        padding-top: max(10px, env(safe-area-inset-top)) !important;
+    }
+    
+    /* Ensure inputs are readable */
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+}
+
+/* Prevent horizontal scrolling */
+html, body {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+/* Ensure all containers don't overflow */
+.container, .content, .form-container, .glass-card {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+/* Fix for touch devices */
+@media (hover: none) and (pointer: coarse) {
+    /* Better touch targets */
+    button, .btn, .nav-item {
+        min-height: 44px !important;
+        min-width: 44px !important;
+    }
+    
+    /* Increase spacing for touch */
+    .form-group {
+        margin-bottom: 20px !important;
+    }
+}
+
 
