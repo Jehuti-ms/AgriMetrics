@@ -1138,19 +1138,29 @@ body {
   text-align: left;
 }
 
-.social-login-section .separator {
+/* Separator line */
+.firebaseui-separator {
+  display: flex;              /* use flexbox */
+  align-items: center;        /* vertically center */
+  justify-content: center;    /* horizontally center */
   margin: 20px 0;
-  text-align: center;
   position: relative;
 }
 
-.social-login-section .separator span {
-  background: #fff;   /* match form background */
+/* The "or" text */
+.firebaseui-separator span {
+  background: #fff;           /* match form background */
   padding: 0 8px;
   color: #666;
   font-size: 13px;
+  z-index: 1;
 }
 
-
-
+/* Optional: add a line behind "or" */
+.firebaseui-separator::before {
+  content: "";
+  flex: 1;
+  border-top: 1px solid #ccc;
+  margin: 0 8px;
+}
 
