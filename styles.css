@@ -1138,20 +1138,24 @@ body {
   text-align: left;
 }
 
-/* Force the separator container to full width */
-.firebaseui-separator {
-  width: 100%;
+.auth-divider {
+  display: flex;              /* use flexbox */
+  align-items: center;        /* vertical centering */
+  justify-content: center;    /* horizontal centering */
   margin: 20px 0;
-  text-align: center;   /* center child text */
-  position: relative;
+  width: 100%;
 }
 
-/* Force the "or" text to center */
-.firebaseui-separator span {
-  display: inline-block;
-  text-align: center;
-  margin: 0 auto;       /* auto margins center inline-block */
-  background: #fff;     /* match form background */
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;                    /* take up equal space */
+  border-top: 1px solid #ccc; /* divider line */
+  margin: 0 8px;
+}
+
+.auth-divider span {
+  background: #fff;           /* match form background */
   padding: 0 8px;
   color: #666;
   font-size: 13px;
