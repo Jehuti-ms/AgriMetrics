@@ -561,7 +561,7 @@ initializeMenu() {
                         <span class="nav-label">Theme</span>
                     </button>
 
-                    <button class="nav-item logout-btn" id="logout-btn" title="Logout"> 
+                   <button class="nav-item" id="logout-btn" title="Logout"> 
                         <span>⇦</span> 
                         <span class="nav-label">Logout</span> 
                     </button>
