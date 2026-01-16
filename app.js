@@ -519,6 +519,7 @@ initializeMenu() {
 
         header.innerHTML = `
             <nav class="top-nav">
+                <!-- Brand/logo -->
                 <div class="nav-brand">
                     <img src="icons/icon-96x96_a.png" alt="AgriMetrics">
                     <span class="brand-text">AgriMetrics</span>
@@ -563,8 +564,11 @@ initializeMenu() {
                         <span class="nav-label">Theme</span>
                     </button>
                 </div>
+            </div> 
+                <!-- Fixed right controls --> 
+                 <div class="nav-actions">
                    <button class="nav-item" id="logout-btn" title="Logout"> 
-                        <span>⇦</span> 
+                        <span>🚪</span> 
                         <span class="nav-label">Logout</span> 
                     </button>
                     
