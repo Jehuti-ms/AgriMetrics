@@ -64,13 +64,42 @@ body {
 /* ==============================================================
    Auth Container
    ============================================================== */
-#auth-container {
+/*#auth-container {
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
     background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     padding: 1rem;
+}*/
+
+/* Green background container */
+#auth-container {
+  background-color: #4CAF50;
+  min-height: 100vh;          /* full screen height */
+  display: flex;
+  align-items: center;        /* vertical centering */
+  justify-content: center;    /* horizontal centering */
+}
+
+/* Forms wrapper */
+.auth-forms {
+  width: 100%;
+  max-width: 400px;
+}
+
+/* White card for each form */
+.auth-form {
+  background: #fff;
+  padding: 24px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  text-align: center;
+  display: none;              /* hide by default */
+}
+
+.auth-form.active {
+  display: block;             /* show only the active form */
 }
 
 /* ========== Splash Screen ========== */
