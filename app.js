@@ -581,6 +581,9 @@ initializeMenu() {
                 </div>
             </nav>
         `;
+         
+        // ADD THIS DEBUG LOG
+        console.log('🔍 Navbar logout button created:', document.getElementById('navbar-logout-btn'));
     }
 
 setupHamburgerMenu() {
@@ -752,56 +755,141 @@ setupHamburgerMenu() {
         `;
     }
 
-     setupLogoutHandlers() {
-        console.log('🔄 Setting up logout handlers...');
-        
-        document.addEventListener('click', async (e) => {
-            const logoutBtn = e.target.closest('.logout-btn');
-            if (!logoutBtn) return;
-            
+    setupLogoutHandlers() {
+    console.log('🔧 Setting up logout handlers for all buttons...');
+    
+    // Method 1: Direct attachment for navbar button (when it exists)
+    const attachNavbarLogout = () => {
+        const navbarLogout = document.getElementById('navbar-logout-btn');
+        if (navbarLogout && !navbarLogout.dataset.listenerAttached) {
+            console.log('✅ Attaching direct listener to navbar logout button');
+            navbarLogout.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🖱️ Navbar logout button clicked directly');
+                this.performLogout();
+            });
+            navbarLogout.dataset.listenerAttached = 'true';
+        }
+    };
+    
+    // Method 2: Event delegation for any logout button
+    document.addEventListener('click', (e) => {
+        const logoutBtn = e.target.closest('.logout-btn');
+        if (logoutBtn) {
+            console.log('🎯 Event delegation caught logout click:', {
+                id: logoutBtn.id,
+                className: logoutBtn.className,
+                tagName: logoutBtn.tagName
+            });
             e.preventDefault();
             e.stopPropagation();
-            console.log('🚪 Logout button clicked:', logoutBtn.id || 'profile logout');
-            await this.performLogout();
-        });
-        
-        document.addEventListener('user-logout', () => {
-            console.log('📢 Custom logout event received');
             this.performLogout();
-        });
-    }
+        }
+    });
     
-    async performLogout() {
-        console.log('🔐 Performing logout...');
+    // Method 3: Listen for custom logout events
+    document.addEventListener('user-logout', () => {
+        console.log('📢 Received custom logout event');
+        this.performLogout();
+    });
+    
+    // Try attaching to navbar button immediately and periodically
+    attachNavbarLogout();
+    
+    // Keep trying to attach for a few seconds (in case nav loads later)
+    let attempts = 0;
+    const maxAttempts = 10;
+    const interval = setInterval(() => {
+        attempts++;
+        attachNavbarLogout();
         
-        try {
-            this.showLoading();
-            this.currentUser = null;
-            this.authInitialized = false;
+        if (attempts >= maxAttempts) {
+            clearInterval(interval);
+            console.log('⏱️ Stopped trying to attach navbar listener');
+        }
+    }, 300);
+}
+
+async performLogout() {
+    console.log('🔐 PERFORMING LOGOUT SEQUENCE...');
+    
+    try {
+        // Show loading immediately
+        this.showLoading();
+        
+        // 1. Close side menu if open
+        this.closeSideMenu();
+        
+        // 2. Clear local storage
+        localStorage.clear();
+        console.log('🧹 Local storage cleared');
+        
+        // 3. Sign out from Firebase
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            console.log('🔥 Signing out from Firebase...');
+            await firebase.auth().signOut();
+            console.log('✅ Firebase signout successful');
+        } else {
+            console.log('⚠️ Firebase not available, proceeding anyway');
+        }
+        
+        // 4. Reset app state
+        this.currentUser = null;
+        this.authInitialized = false;
+        
+        // 5. Force UI update
+        setTimeout(() => {
+            console.log('🔄 Forcing UI to auth screen...');
             
-            localStorage.removeItem('userEmail');
-            localStorage.removeItem('userId');
-            localStorage.removeItem('userAuthenticated');
+            // Hide everything app-related
+            const appContainer = document.getElementById('app-container');
+            const authContainer = document.getElementById('auth-container');
+            const splash = document.getElementById('splash-screen');
             
-            if (typeof firebase !== 'undefined' && firebase.auth) {
-                await firebase.auth().signOut();
-                console.log('✅ Firebase signout successful');
+            if (appContainer) {
+                appContainer.style.display = 'none';
+                console.log('📦 App container hidden');
             }
             
-            this.closeSideMenu();
+            if (splash) {
+                splash.style.display = 'none';
+            }
             
-            setTimeout(() => {
-                this.hideLoading();
-                this.showAuth();
-                console.log('✅ App reset to auth state');
-            }, 500);
+            if (authContainer) {
+                authContainer.style.display = 'block';
+                // Reset to signin form
+                const signin = document.getElementById('signin-form');
+                const signup = document.getElementById('signup-form');
+                if (signin) signin.classList.add('active');
+                if (signup) signup.classList.remove('active');
+                console.log('🔐 Auth container shown');
+            }
             
-        } catch (error) {
-            console.error('❌ Logout failed:', error);
+            // Clear content area
+            const contentArea = document.getElementById('content-area');
+            if (contentArea) {
+                contentArea.innerHTML = '';
+            }
+            
+            // Hide loading
             this.hideLoading();
-            this.showAuth();
-        }
+            
+            console.log('🎉 Logout sequence complete!');
+            
+        }, 500);
+        
+    } catch (error) {
+        console.error('❌ Logout error:', error);
+        this.hideLoading();
+        
+        // Fallback: force auth screen
+        const appContainer = document.getElementById('app-container');
+        const authContainer = document.getElementById('auth-container');
+        if (appContainer) appContainer.style.display = 'none';
+        if (authContainer) authContainer.style.display = 'block';
     }
+}
     
     // Optional helper method
     createLogoutButton(options = {}) {
