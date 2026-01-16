@@ -751,7 +751,6 @@ setupHamburgerMenu() {
 }
 
 function setupLogoutButtons() {
-  // Select all buttons with the shared class
   const logoutButtons = document.querySelectorAll(".logout-btn");
 
   logoutButtons.forEach(btn => {
@@ -759,7 +758,15 @@ function setupLogoutButtons() {
       try {
         await firebase.auth().signOut();   // or your logout logic
         console.log("User signed out");
-        window.location.href = "/signin.html";
+
+        // Show the sign-in form again
+        document.getElementById("auth-container").style.display = "block";
+        document.getElementById("signin-form").classList.add("active");
+
+        // Hide your dashboard container
+        const dashboard = document.getElementById("dashboard-container");
+        if (dashboard) dashboard.style.display = "none";
+
       } catch (error) {
         console.error("Logout failed:", error);
       }
