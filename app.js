@@ -599,7 +599,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
-}
 
 setupHamburgerMenu() {
   console.log('🎯 Setting up hamburger menu (class-based version)');
