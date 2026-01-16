@@ -596,34 +596,66 @@ const StyleManager = {
         /* ==============================================================
            Top Navigation (StyleManager owns this now)
            ============================================================== */
-   /* Top navigation bar */
-header,
-.top-nav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background: #ffffff;
-  z-index: 1000;
-
-  display: flex;
-  align-items: center;
-  /* remove space-between so items don’t stretch apart */
-  justify-content: flex-start;
-
-  padding: 0 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-
-  overflow-x: auto;           /* allow horizontal scroll */
-  white-space: nowrap;        /* prevent wrapping */
-  -webkit-overflow-scrolling: touch; /* smooth scroll on mobile */
-}
-
-.nav-item {
-  flex: 0 0 auto;             /* prevent shrinking */
-  margin-right: 12px;         /* spacing between items */
-}
+  /* Top navigation bar */
+        header,
+        .top-nav {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 60px;
+          background: #ffffff;
+          z-index: 1000;
+        
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;   /* align items left */
+          padding: 0 16px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        
+          overflow-x: auto;              /* allow horizontal scroll */
+          white-space: nowrap;           /* keep items in one row */
+          -webkit-overflow-scrolling: touch; /* smooth scroll on mobile */
+        
+          position: relative;            /* needed for fade overlays */
+        }
+        
+        /* Hide scrollbar visuals */
+        .top-nav::-webkit-scrollbar {
+          display: none;
+        }
+        .top-nav {
+          scrollbar-width: none;         /* Firefox */
+          -ms-overflow-style: none;      /* IE/Edge */
+        }
+        
+        /* Navbar items */
+        .nav-item {
+          flex: 0 0 auto;                /* prevent shrinking */
+          margin-right: 12px;
+        }
+        
+        /* Subtle fade hints */
+        .top-nav::before,
+        .top-nav::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          width: 30px;
+          height: 100%;
+          pointer-events: none;          /* don’t block clicks */
+          z-index: 2;
+        }
+        
+        .top-nav::before {
+          left: 0;
+          background: linear-gradient(to right, #ffffff, transparent);
+        }
+        
+        .top-nav::after {
+          right: 0;
+          background: linear-gradient(to left, #ffffff, transparent);
+        }
 
 /* Brand section */
 .nav-brand {
