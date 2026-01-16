@@ -535,9 +535,9 @@ const ProfileModule = {
                             <button class="btn-primary" id="clear-all-data" style="background: var(--gradient-danger);">
                                 <i class="fas fa-exclamation-triangle"></i> Clear All Data
                             </button>
-                            <!-- 🔥 FIXED: Centered logout button with icon -->
-                            <button type="button" id="logout-btn">
-                                <i class="fas fa-sign-out-alt"></i> Logout
+                            <!-- Profile logout --> 
+                              <button type="button" id="profile-logout-btn" class="logout-btn" title="Logout"> 
+                              <i class="fas fa-sign-out-alt"></i> Logout 
                             </button>
                         </div>
                     </div>
