@@ -173,20 +173,6 @@ initializeMenuPosition() {
         }
     }
 
-    firebase.auth().onAuthStateChanged(user => {
-  if (user) {
-    // Logged in → show dashboard
-    document.getElementById("dashboard-container").style.display = "block";
-    document.getElementById("auth-container").style.display = "none";
-    console.log("🎉 User authenticated, showing app...");
-  } else {
-    // Logged out → show sign-in
-    document.getElementById("dashboard-container").style.display = "none";
-    document.getElementById("auth-container").style.display = "block";
-    console.log("🔒 No user, showing sign-in form...");
-  }
-});
-
     handleUserAuthenticated(user) {
         console.log('🎉 User authenticated, showing app...');
         this.currentUser = user;
@@ -508,7 +494,21 @@ initializeMenu() {
     overlay.style.display = ''; // let CSS handle display
   }
 }
-   
+
+     firebase.auth().onAuthStateChanged(user => {
+  if (user) {
+    // Logged in → show dashboard
+    document.getElementById("dashboard-container").style.display = "block";
+    document.getElementById("auth-container").style.display = "none";
+    console.log("🎉 User authenticated, showing app...");
+  } else {
+    // Logged out → show sign-in
+    document.getElementById("dashboard-container").style.display = "none";
+    document.getElementById("auth-container").style.display = "block";
+    console.log("🔒 No user, showing sign-in form...");
+  }
+});
+
 
     showApp() {
         const authContainer = document.getElementById('auth-container');
