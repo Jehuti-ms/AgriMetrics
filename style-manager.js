@@ -657,6 +657,22 @@ header,
   cursor: pointer;
 }
 
+/* ========= Logout Button ========= */
+.nav-item.logout-btn {
+  background-color: #4CAF50;   /* match your theme */
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  margin: 0 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.nav-item.logout-btn:hover {
+  background-color: #45a049;
+}
+
 .nav-item span:first-child {
   font-size: 20px;
   line-height: 1;
@@ -695,21 +711,6 @@ header,
   position: relative;
 }
 
-/* ========= Logout Button ========= */
-.nav-item.logout-btn {
-  background-color: #4CAF50;   /* match your theme */
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  padding: 6px 12px;
-  margin: 0 8px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.nav-item.logout-btn:hover {
-  background-color: #45a049;
-}
 
 
       
