@@ -596,66 +596,102 @@ const StyleManager = {
         /* ==============================================================
            Top Navigation (StyleManager owns this now)
            ============================================================== */
-  /* Top navigation bar */
-        header,
-        .top-nav {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 60px;
-          background: #ffffff;
-          z-index: 1000;
-        
-          display: flex;
-          align-items: center;
-          justify-content: flex-start;   /* align items left */
-          padding: 0 16px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        
-          overflow-x: auto;              /* allow horizontal scroll */
-          white-space: nowrap;           /* keep items in one row */
-          -webkit-overflow-scrolling: touch; /* smooth scroll on mobile */
-        
-          position: relative;            /* needed for fade overlays */
-        }
-        
-        /* Hide scrollbar visuals */
-        .top-nav::-webkit-scrollbar {
-          display: none;
-        }
-        .top-nav {
-          scrollbar-width: none;         /* Firefox */
-          -ms-overflow-style: none;      /* IE/Edge */
-        }
-        
-        /* Navbar items */
-        .nav-item {
-          flex: 0 0 auto;                /* prevent shrinking */
-          margin-right: 12px;
-        }
-        
-        /* Subtle fade hints */
-        .top-nav::before,
-        .top-nav::after {
-          content: "";
-          position: absolute;
-          top: 0;
-          width: 30px;
-          height: 100%;
-          pointer-events: none;          /* don’t block clicks */
-          z-index: 2;
-        }
-        
-        .top-nav::before {
-          left: 0;
-          background: linear-gradient(to right, #ffffff, transparent);
-        }
-        
-        .top-nav::after {
-          right: 0;
-          background: linear-gradient(to left, #ffffff, transparent);
-        }
+ /* Top navigation bar */
+.top-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 60px;
+  background: #fff;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* Brand pinned left */
+.nav-brand {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+.nav-brand img {
+  height: 40px;
+  margin-right: 8px;
+}
+.brand-text {
+  font-weight: bold;
+  margin-right: 6px;
+}
+.brand-subtitle {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Scrollable middle section */
+.nav-items-scroll {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+
+/* Hide scrollbar visuals */
+.nav-items-scroll::-webkit-scrollbar { display: none; }
+.nav-items-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+
+/* Icons row */
+.nav-items {
+  display: flex;
+  flex: 1 1 auto;
+}
+.nav-item {
+  flex: 0 0 auto;
+  margin: 0 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.nav-label {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+/* Logout + Hamburger pinned right */
+#logout-btn,
+#hamburger-menu {
+  flex: 0 0 auto;
+  margin-left: 8px;
+}
+
+/* Subtle fade hints */
+.nav-items-scroll::before,
+.nav-items-scroll::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 24px;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+.nav-items-scroll::before {
+  left: 0;
+  background: linear-gradient(to right, #fff, transparent);
+}
+.nav-items-scroll::after {
+  right: 0;
+  background: linear-gradient(to left, #fff, transparent);
+}
+
 
 /* Brand section */
 .nav-brand {
