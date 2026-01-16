@@ -907,7 +907,7 @@ async performLogout() {
         
         return button;
     }
-
+}
    
 // Ensures side menu starts hidden and overlay reset
 function initializeMenu() {
