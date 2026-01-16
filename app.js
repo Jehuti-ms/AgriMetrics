@@ -787,6 +787,33 @@ firebase.auth().onAuthStateChanged(user => {
   }
 });
 
+// Define the function
+function setupLogoutButtons() {
+  const logoutButtons = document.querySelectorAll(".logout-btn");
+
+  logoutButtons.forEach(btn => {
+    btn.addEventListener("click", async () => {
+      try {
+        await firebase.auth().signOut();
+        console.log("🚪 User signed out");
+        // onAuthStateChanged will handle UI swap
+      } catch (error) {
+        console.error("Logout failed:", error);
+        // Fallback: force sign-in form
+        const dashboard = document.getElementById("dashboard-container");
+        const authContainer = document.getElementById("auth-container");
+        if (dashboard) dashboard.style.display = "none";
+        if (authContainer) authContainer.style.display = "block";
+      }
+    });
+  });
+}
+
+// Call it after DOM is ready
+document.addEventListener("DOMContentLoaded", () => {
+  setupLogoutButtons();
+});
+
 // Attach logout handler to all buttons with .logout-btn class
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".logout-btn").forEach(btn => {
