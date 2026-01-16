@@ -701,8 +701,8 @@ const StyleManager = {
 }
 
 .nav-brand img {
-  height: 32px;
-  width: 32px;
+  height: 40px;
+  width: 40px;
 }
 
 .brand-text {
