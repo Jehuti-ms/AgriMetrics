@@ -151,6 +151,7 @@ initializeMenuPosition() {
             } else {
                 this.handleNoUser();
             }
+            
         });
     }
     
