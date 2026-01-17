@@ -1032,6 +1032,41 @@ body.dark-mode [id$="-section"] button {
   }
 }
 
+/* Tables inside modals */
+@media (max-width: 768px) {
+  .report-modal .data-table,
+  .popout-modal-content .data-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .report-modal .data-table th,
+  .report-modal .data-table td {
+    white-space: nowrap; /* prevent text wrapping that breaks layout */
+    font-size: 0.9rem;
+    padding: 0.5rem;
+  }
+}
+
+/* Charts inside modals */
+@media (max-width: 768px) {
+  .report-modal .chart-container,
+  .popout-modal-content .chart-container {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 300px; /* keep charts visible without overflowing */
+  }
+
+  .report-modal canvas,
+  .popout-modal-content canvas,
+  .report-modal svg,
+  .popout-modal-content svg {
+    width: 100% !important;
+    height: auto !important;
+  }
+}
 
       
         `;
