@@ -493,138 +493,122 @@ const StyleManager = {
             color: white !important;
         }
 
-       /* ===========================
-       Unified Theme Styles
-       =========================== */
+      /* ===========================
+   Unified Theme Styles
+   =========================== */
 
-    /* Light Mode */
-    body.light-mode {
-      background-color: #ffffff;
-      color: #111827;
-    }
+/* Light Mode */
+body.light-mode {
+  background-color: #ffffff;
+  color: #111827;
+}
 
-    body.light-mode #app-container,
-    body.light-mode #content-area,
-    body.light-mode main,
-    body.light-mode .module-container {
-      background-color: #f8faf9;
-      color: #111827;
-      border: 1px solid #e5e7eb;
-    }
+body.light-mode #app-container,
+body.light-mode #content-area,
+body.light-mode main,
+body.light-mode .module-container {
+  background-color: #f8faf9 !important;
+  color: #111827 !important;
+  border: 1px solid #e5e7eb !important;
+}
 
-    body.light-mode nav.top-nav,
-    body.light-mode #side-menu {
-      background-color: #ffffff;
-      color: #111827;
-      border-bottom: 1px solid #e5e7eb;
-    }
+/* Cards, modals, forms */
+body.light-mode .card,
+body.light-mode .glass-card,
+body.light-mode .form-container,
+body.light-mode .popout-modal-content,
+body.light-mode .stat-card {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #e5e7eb !important;
+}
 
-    body.light-mode .card,
-    body.light-mode .glass-card,
-    body.light-mode .form-container,
-    body.light-mode .popout-modal-content,
-    body.light-mode .stat-card {
-      background-color: #ffffff !important;
-      color: #111827 !important;
-      border: 1px solid #e5e7eb !important;
-    }
+/* Inputs & buttons */
+body.light-mode input,
+body.light-mode select,
+body.light-mode textarea {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #d1d5db !important;
+}
+body.light-mode button,
+body.light-mode .btn {
+  background-color: #f9fafb !important;
+  color: #111827 !important;
+  border: 1px solid #d1d5db !important;
+}
 
-    body.light-mode input,
-    body.light-mode select,
-    body.light-mode textarea {
-      background-color: #ffffff !important;
-      color: #111827 !important;
-      border: 1px solid #d1d5db !important;
-    }
+/* Tables */
+body.light-mode table,
+body.light-mode th,
+body.light-mode td {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #e5e7eb !important;
+}
 
-    body.light-mode button,
-    body.light-mode .btn {
-      background-color: #f9fafb !important;
-      color: #111827 !important;
-      border: 1px solid #d1d5db !important;
-    }
+/* Dark Mode */
+body.dark-mode {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
 
-    body.light-mode table,
-    body.light-mode th,
-    body.light-mode td {
-      background-color: #ffffff !important;
-      color: #111827 !important;
-      border-color: #e5e7eb !important;
-    }
+body.dark-mode #app-container,
+body.dark-mode #content-area,
+body.dark-mode main,
+body.dark-mode .module-container {
+  background-color: #0f172a !important;   /* ✅ restored dark container */
+  color: #f8fafc !important;
+  border: 1px solid #333 !important;
+}
 
-    /* Dark Mode */
-    body.dark-mode {
-      background-color: #0f172a !important;
-      color: #f8fafc !important;
-    }
+/* Cards, modals, forms */
+body.dark-mode .card,
+body.dark-mode .glass-card,
+body.dark-mode .form-container,
+body.dark-mode .popout-modal-content,
+body.dark-mode .stat-card {
+  background-color: #1e1e1e !important;
+  color: #f0f0f0 !important;
+  border: 1px solid #333 !important;
+}
 
-    body.dark-mode #app-container,
-    body.dark-mode #content-area,
-    body.dark-mode main,
-    body.dark-mode .module-container {
-      background-color: #0f172a !important;
-      color: #f8fafc !important;
-      border: 1px solid #333;
-    }
+/* Inputs & buttons */
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+  background-color: #2a2a2a !important;
+  color: #f0f0f0 !important;
+  border: 1px solid #444 !important;
+}
+body.dark-mode button,
+body.dark-mode .btn {
+  background-color: #2a2a2a !important;
+  color: #f0f0f0 !important;
+  border: 1px solid #444 !important;
+}
 
-    body.dark-mode nav.top-nav,
-    body.dark-mode #side-menu {
-      background-color: #1c1c1c !important;
-      color: #f0f0f0 !important;
-      border-bottom: 1px solid #333;
-    }
+/* Tables */
+body.dark-mode table,
+body.dark-mode th,
+body.dark-mode td {
+  background-color: #1e1e1e !important;
+  color: #f0f0f0 !important;
+  border-color: #333 !important;
+}
 
-    body.dark-mode .nav-brand .brand-text,
-    body.dark-mode .nav-brand .brand-subtitle {
-      color: #cbd5e1 !important;
-    }
-
-    body.dark-mode .card,
-    body.dark-mode .glass-card,
-    body.dark-mode .form-container,
-    body.dark-mode .popout-modal-content,
-    body.dark-mode .stat-card {
-      background-color: #1e1e1e !important;
-      color: #f0f0f0 !important;
-      border: 1px solid #333;
-    }
-
-    body.dark-mode input,
-    body.dark-mode select,
-    body.dark-mode textarea {
-      background-color: #2a2a2a !important;
-      color: #f0f0f0 !important;
-      border: 1px solid #444 !important;
-    }
-
-    body.dark-mode button,
-    body.dark-mode .btn {
-      background-color: #2a2a2a !important;
-      color: #f0f0f0 !important;
-      border: 1px solid #444 !important;
-    }
-
-    body.dark-mode table,
-    body.dark-mode th,
-    body.dark-mode td {
-      background-color: #1e1e1e !important;
-      color: #f0f0f0 !important;
-      border-color: #333 !important;
-    }
-
-    body.dark-mode .activity-list,
-    body.dark-mode .activity-item {
-      background-color: #1e1e1e !important;
-      color: #f0f0f0 !important;
-      border: 1px solid #333;
-    }
-
-    body.dark-mode .activity-title,
-    body.dark-mode .activity-description,
-    body.dark-mode .activity-meta {
-      color: #cbd5e1 !important;
-    }
-
+/* Activity lists/items */
+body.dark-mode .activity-list,
+body.dark-mode .activity-item {
+  background-color: #1e1e1e !important;
+  color: #f0f0f0 !important;
+  border: 1px solid #333 !important;
+}
+body.dark-mode .activity-title,
+body.dark-mode .activity-description,
+body.dark-mode .activity-meta {
+  color: #cbd5e1 !important;
+}
 
       /* ==============================================================
            Top Navigation (StyleManager owns this now)
