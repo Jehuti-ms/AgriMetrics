@@ -636,6 +636,46 @@ const StyleManager = {
           color: #f0f0f0 !important;
         }
 
+        /* Social icons */
+body.dark-mode .social-icon,
+body.dark-mode span {
+  background-color: transparent !important; /* icons usually shouldn't have a white box */
+  color: #f0f0f0 !important;
+}
+
+/* Auth inputs */
+body.dark-mode #signin-email,
+body.dark-mode #signin-password,
+body.dark-mode #signup-email,
+body.dark-mode #signup-password {
+  background-color: #2a2a2a !important;
+  color: #f0f0f0 !important;
+  border: 1px solid #444 !important;
+}
+
+/* Password strength bar */
+body.dark-mode #password-strength-bar {
+  background-color: #444 !important;
+}
+
+/* Stat cards */
+body.dark-mode .stat-card {
+  background-color: #1e1e1e !important;
+  color: #f0f0f0 !important;
+  border: 1px solid #333;
+}
+
+/* OCR results */
+body.dark-mode #ocr-results {
+  background-color: #1e293b !important; /* dark slate */
+  color: #f0f0f0 !important;
+}
+
+/* Generic divs (catch‑all for leftover white blocks) */
+body.dark-mode div {
+  background-color: transparent; /* don’t force all divs dark, but prevent pure white */
+}
+
         /* =========== Navigation =========== */
         /* 4. Navigation button sizes (not too wide) */
         .nav-items {
