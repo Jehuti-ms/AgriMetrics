@@ -1098,6 +1098,31 @@ body.dark-mode [id$="-section"] button {
   }
 }
 
+/* Modal form text fixes */
+body.dark-mode .form-label,
+body.dark-mode .form-hint,
+body.dark-mode .form-input,
+body.dark-mode .form-select,
+body.dark-mode .form-input::placeholder,
+body.dark-mode .form-select option {
+  color: var(--dm-text-primary) !important;
+}
+
+/* Secondary text (hints, unit labels) */
+body.dark-mode .form-hint,
+body.dark-mode .form-label,
+body.dark-mode #standard-price-unit-label {
+  color: var(--dm-text-secondary) !important;
+}
+
+/* Inputs background + border */
+body.dark-mode .form-input,
+body.dark-mode .form-select,
+body.dark-mode textarea {
+  background-color: var(--dm-surface-light) !important;
+  border: 1px solid var(--dm-border) !important;
+}
+
      
         `;
         document.head.appendChild(style);
