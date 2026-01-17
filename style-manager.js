@@ -1091,25 +1091,10 @@ body.dark-mode [id$="-section"] button {
   }
 }
 
-/* Force report modal buttons to stack on small screens */
 @media (max-width: 768px) {
-  #print-report-btn,
-  #export-report-btn,
-  #email-report-btn,
-  #pdf-report-btn,
-  #close-report-btn {
-    display: block !important;
-    width: 100% !important;
-    margin-bottom: 12px !important;
-  }
-
-  /* Target the parent flex container directly */
-  #print-report-btn,
-  #export-report-btn,
-  #email-report-btn,
-  #pdf-report-btn,
-  #close-report-btn {
-    flex: none !important;
+  div[style*="display: flex"] {
+    flex-direction: column !important;
+    align-items: stretch !important;
   }
 }
 
