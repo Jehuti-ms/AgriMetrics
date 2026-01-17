@@ -493,154 +493,57 @@ const StyleManager = {
             color: white !important;
         }
 
-        /* ========== Dark Mode ============ */
-        .dark-mode .welcome-section,
-        .dark-mode .welcome-section * {
-            color: white !important;
-        }
-        
-        /* 2. Brand text same gray color */
-        .nav-brand .brand-text,
-        .nav-brand .brand-subtitle {
-            color: #666666 !important;
-            font-weight: 600;
-        }
-        
-        .dark-mode .nav-brand .brand-text,
-        .dark-mode .nav-brand .brand-subtitle {
-            color: #cbd5e1 !important;
-        }
-        
-        .nav-brand .brand-subtitle {
-            font-size: 11px;
-            opacity: 0.9;
-        }
-        
-        .dark-mode .nav-brand .brand-subtitle {
-            opacity: 0.8;
-        }
-        
-        /* 3. Dark mode hover fix (dark gray, not white) */
-        .dark-mode .nav-item:hover {
-            background: rgba(71, 85, 105, 0.3) !important;
-            color: #f8fafc !important;
-        }
-        
-        .dark-mode .nav-item:hover span {
-            color: #f8fafc !important;
-        }
-        
-        .dark-mode .side-menu-item:hover {
-            background: rgba(71, 85, 105, 0.3) !important;
-            color: #f8fafc !important;
-        }
-        
-        .dark-mode .hamburger-menu:hover {
-            background: rgba(71, 85, 105, 0.3) !important;
-            color: #f8fafc !important;
-        }
-        
-        .dark-mode .btn-icon:hover {
-            background: rgba(71, 85, 105, 0.3) !important;
-            color: #f8fafc !important;
-        }
+      /* ========== Dark Mode ============ */
 
-        /* Base body background */
-        body.dark-mode {
-          background-color: #121212; /* subtle dark, not pure black */
-          color: #f0f0f0;
-        }
-        
-        /* Main app containers */
-        body.dark-mode #app-container,
-        body.dark-mode #content-area {
-          background-color: #1e1e1e; /* dark gray */
-          color: #f0f0f0;
-        }
-        
-        /* Cards, modals, forms */
-        body.dark-mode .glass-card,
-        body.dark-mode .form-container,
-        body.dark-mode .popout-modal-content {
-          background-color: #2a2a2a; /* slightly lighter dark */
-          color: #f0f0f0;
-          border: 1px solid #333; /* subtle separation */
-        }
-        
-        /* Navigation bar */
-        body.dark-mode nav.top-nav {
-          background-color: #1c1c1c;
-          border-bottom: 1px solid #333;
-        }
-        
-        /* Side menu */
-        body.dark-mode #side-menu {
-          background-color: #1c1c1c;
-          color: #f0f0f0;
-        }
-        
-        /* Welcome section (already styled for text, add background) */
-        body.dark-mode .welcome-section {
-          background-color: #1a1a1a;
-        }
-        
-        /* Buttons (keep your logout gradient overrides, add general dark buttons) */
-        body.dark-mode button,
-        body.dark-mode .btn {
-          background-color: #2a2a2a;
-          color: #f0f0f0;
-        }
-        
-        /* Inputs */
-        body.dark-mode input,
-        body.dark-mode select,
-        body.dark-mode textarea {
-          background-color: #2a2a2a;
-          color: #f0f0f0;
-          border: 1px solid #444;
-        }
-        
-        /* Tables */
-        body.dark-mode table {
-          background-color: #1e1e1e;
-          color: #f0f0f0;
-        }
-        body.dark-mode th {
-          background-color: #2a2a2a;
-        }
-        body.dark-mode td {
-          border-color: #333;
-        }
-        
-        /* Auth inputs */
-        body.dark-mode #signin-email,
-        body.dark-mode #signin-password,
-        body.dark-mode #signup-email,
-        body.dark-mode #signup-password {
-          background-color: #2a2a2a !important;
-          color: #f0f0f0 !important;
-          border: 1px solid #444 !important;
-        }
-        
-        /* Sync button */
-        body.dark-mode #sync-now-btn {
-          background-color: #333 !important;
-          color: #f0f0f0 !important;
-        }
-        
-        /* Generic white/light gray blocks */
-        body.dark-mode .glass-card,
-        body.dark-mode .form-container,
-        body.dark-mode .card {
-          background-color: #1e1e1e !important;
-          color: #f0f0f0 !important;
-        }
+/* Base body */
+body.dark-mode {
+  background-color: #121212;
+  color: #f0f0f0;
+}
 
-        /* Social icons */
-body.dark-mode .social-icon,
-body.dark-mode span {
-  background-color: transparent !important; /* icons usually shouldn't have a white box */
+/* Containers */
+body.dark-mode #app-container,
+body.dark-mode #content-area {
+  background-color: #1e1e1e;
+  color: #f0f0f0;
+}
+
+/* Navigation */
+body.dark-mode nav.top-nav {
+  background-color: #1c1c1c;
+  border-bottom: 1px solid #333;
+}
+body.dark-mode #side-menu {
+  background-color: #1c1c1c;
+  color: #f0f0f0;
+}
+.dark-mode .nav-brand .brand-text,
+.dark-mode .nav-brand .brand-subtitle {
+  color: #cbd5e1 !important;
+}
+.dark-mode .nav-item:hover,
+.dark-mode .side-menu-item:hover,
+.dark-mode .hamburger-menu:hover,
+.dark-mode .btn-icon:hover {
+  background: rgba(71, 85, 105, 0.3) !important;
+  color: #f8fafc !important;
+}
+
+/* Welcome section */
+body.dark-mode .welcome-section {
+  background-color: #1a1a1a;
   color: #f0f0f0 !important;
+}
+
+/* Cards & modules */
+body.dark-mode .glass-card,
+body.dark-mode .form-container,
+body.dark-mode .popout-modal-content,
+body.dark-mode .stat-card,
+body.dark-mode .card {
+  background-color: #1e1e1e !important;
+  color: #f0f0f0 !important;
+  border: 1px solid #333;
 }
 
 /* Auth inputs */
@@ -653,28 +556,49 @@ body.dark-mode #signup-password {
   border: 1px solid #444 !important;
 }
 
-/* Password strength bar */
+/* Inputs & buttons */
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+  background-color: #2a2a2a;
+  color: #f0f0f0;
+  border: 1px solid #444;
+}
+body.dark-mode button,
+body.dark-mode .btn {
+  background-color: #2a2a2a;
+  color: #f0f0f0;
+}
+
+/* Tables */
+body.dark-mode table {
+  background-color: #1e1e1e;
+  color: #f0f0f0;
+}
+body.dark-mode th {
+  background-color: #2a2a2a;
+}
+body.dark-mode td {
+  border-color: #333;
+}
+
+/* Misc */
+body.dark-mode #sync-now-btn {
+  background-color: #333 !important;
+  color: #f0f0f0 !important;
+}
 body.dark-mode #password-strength-bar {
   background-color: #444 !important;
 }
-
-/* Stat cards */
-body.dark-mode .stat-card {
-  background-color: #1e1e1e !important;
-  color: #f0f0f0 !important;
-  border: 1px solid #333;
-}
-
-/* OCR results */
 body.dark-mode #ocr-results {
-  background-color: #1e293b !important; /* dark slate */
+  background-color: #1e293b !important;
   color: #f0f0f0 !important;
 }
-
-/* Generic divs (catch‑all for leftover white blocks) */
-body.dark-mode div {
-  background-color: transparent; /* don’t force all divs dark, but prevent pure white */
+body.dark-mode .social-icon {
+  color: #f0f0f0 !important;
+  background: transparent !important;
 }
+
 
         /* =========== Navigation =========== */
         /* 4. Navigation button sizes (not too wide) */
