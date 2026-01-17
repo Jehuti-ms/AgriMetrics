@@ -599,6 +599,60 @@ body.dark-mode .social-icon {
   background: transparent !important;
 }
 
+/* Master dark-mode background overrides */
+
+/* Global body */
+body.dark-mode {
+  background-color: #0f172a !important; /* deep slate */
+  color: #f8fafc !important;
+}
+
+/* Main app containers */
+body.dark-mode #app-container,
+body.dark-mode #content-area,
+body.dark-mode main {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+/* Dashboard + Income/Expenses modules */
+body.dark-mode .dashboard-container,
+body.dark-mode .income-expenses-module {
+  background: var(--dm-background) !important;
+}
+
+/* Cards (stats, summary, reports, inventory, profile) */
+body.dark-mode .stat-card,
+body.dark-mode .stat-card-pwa,
+body.dark-mode .summary-card,
+body.dark-mode .report-type-card,
+body.dark-mode .report-output,
+body.dark-mode .inventory-item,
+body.dark-mode .profile-card,
+body.dark-mode .form-container-pwa,
+body.dark-mode .transactions-section-pwa,
+body.dark-mode .transaction-item-pwa {
+  background-color: var(--dm-surface) !important;
+  color: var(--dm-text-primary) !important;
+  border: 1px solid var(--dm-border);
+}
+
+/* Quick actions */
+body.dark-mode .quick-action-btn,
+body.dark-mode .quick-action-btn-pwa {
+  background-color: var(--dm-surface-light) !important;
+  color: var(--dm-text-primary) !important;
+  border: 1px solid var(--dm-border);
+}
+
+/* Tables */
+body.dark-mode .table-section,
+body.dark-mode .data-table th,
+body.dark-mode .data-table td {
+  background-color: var(--dm-surface) !important;
+  color: var(--dm-text-primary) !important;
+  border-color: var(--dm-border);
+}
 
         /* =========== Navigation =========== */
         /* 4. Navigation button sizes (not too wide) */
