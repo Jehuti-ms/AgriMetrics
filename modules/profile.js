@@ -7,55 +7,34 @@ const ProfileModule = {
     element: null,
     isDarkMode: false, // Track dark mode state
     
-    // ==================== INITIALIZATION ====================
-    initialize() {
-        console.log('👤 Initializing profile...');
-        
-        this.element = document.getElementById('content-area');
-        if (!this.element) {
-            console.error('Content area element not found');
-            return false;
-        }
-        
-        // 🔥 FIX: Prevent dark mode on login
-        this.preventDarkMode();
-        
-        if (window.StyleManager) {
-            window.StyleManager.registerModule(this.name, this.element, {
-                onThemeChange: (theme) => this.onThemeChange(theme)
-            });
-        }
-        
+   // ==================== INITIALIZATION ====================
+initialize() {
+    console.log('👤 Initializing profile...');
+    
+    this.element = document.getElementById('content-area');
+    if (!this.element) {
+        console.error('Content area element not found');
+        return false;
+    }
+    
+    if (window.StyleManager) {
+        window.StyleManager.registerModule(this.name, this.element, {
+            onThemeChange: (theme) => this.onThemeChange(theme)
+        });
+    }
+    
+    this.renderModule();
+    this.initialized = true;
+    
+    return true;
+},
+
+onThemeChange(theme) {
+    console.log(`Profile module: Theme changed to ${theme}`);
+    if (this.initialized) {
         this.renderModule();
-        this.initialized = true;
-        
-        return true;
-    },
-
-    onThemeChange(theme) {
-        console.log(`Profile module: Theme changed to ${theme}`);
-        if (this.initialized) {
-            this.renderModule();
-        }
-    },
-
-    // 🔥 FIX: Prevent dark mode
-    preventDarkMode() {
-        console.log('🌞 Preventing dark mode...');
-        
-        // Remove dark mode classes from body
-        document.body.classList.remove('dark-mode', 'dark');
-        
-        // Set light theme in localStorage
-        localStorage.setItem('farm-theme', 'light');
-        
-        // Update app data
-        if (window.FarmModules.appData.profile) {
-            window.FarmModules.appData.profile.theme = 'light';
-        }
-        
-        this.isDarkMode = false;
-    },
+    }
+},
 
     // ==================== MAIN RENDER ====================
     renderModule() {
