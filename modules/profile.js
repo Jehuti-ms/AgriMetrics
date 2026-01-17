@@ -25,6 +25,11 @@ initialize() {
     
     this.renderModule();
     this.initialized = true;
+
+    // ✅ Listen for global theme changes
+    document.addEventListener('theme-changed', (e) => {
+        this.onThemeChange(e.detail.theme);
+    });
     
     return true;
 },
@@ -35,6 +40,7 @@ onThemeChange(theme) {
         this.renderModule();
     }
 },
+
 
     // ==================== MAIN RENDER ====================
     renderModule() {
