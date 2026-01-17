@@ -1147,7 +1147,23 @@ body.dark-mode .popout-modal-content .form-label {
   color: var(--dm-text-secondary) !important;
 }
 
-     
+ /* Force text boxes in modals to show text clearly */
+body.dark-mode input.form-input[type="text"],
+body.dark-mode input.form-input[type="number"],
+body.dark-mode input.form-input[type="date"],
+body.dark-mode select.form-input,
+body.dark-mode textarea.form-input {
+  background-color: #1e293b !important;   /* dark slate background */
+  color: #f8fafc !important;              /* bright text */
+  border: 1px solid #374151 !important;   /* subtle border */
+}
+
+/* Placeholder text */
+body.dark-mode input.form-input::placeholder,
+body.dark-mode textarea.form-input::placeholder {
+  color: #cbd5e1 !important;              /* softer gray placeholder */
+}
+    
         `;
         document.head.appendChild(style);
     },
