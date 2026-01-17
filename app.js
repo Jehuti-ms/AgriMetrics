@@ -330,7 +330,7 @@ initializeMenuPosition() {
         };
     }
 
-   applyUserTheme() {
+applyUserTheme() {
   const theme = this.userPreferences.theme || 'auto';
 
   // Clear both classes first
@@ -343,39 +343,19 @@ initializeMenuPosition() {
   } else {
     // Auto mode: follow system preference
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    document.body.classList.add(prefersDark ? 'dark-mode' : 'light-mode');
+
+    // ✅ Force light mode on first run if no saved preference
+    const hasSavedPrefs = localStorage.getItem('farm-user-preferences');
+    if (!hasSavedPrefs) {
+      document.body.classList.add('light-mode');
+    } else {
+      document.body.classList.add(prefersDark ? 'dark-mode' : 'light-mode');
+    }
   }
 
   this.updateThemeToggleIcon();
 }
 
-    setupDarkMode() {
-  // Wait for navigation to be created
-  setTimeout(() => {
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-    if (!darkModeToggle) {
-      console.error('❌ Dark mode toggle button not found');
-      return;
-    }
-
-    // Remove existing listeners safely
-    const newToggle = darkModeToggle.cloneNode(true);
-    darkModeToggle.parentNode.replaceChild(newToggle, darkModeToggle);
-
-    // Attach click handler
-    newToggle.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      this.toggleDarkMode();
-    });
-
-    // Apply current theme and update icon
-    this.applyUserTheme();   // ensures body class matches saved preference
-    this.updateThemeToggleIcon();
-
-    console.log('✅ Theme toggle button initialized');
-  }, 200); // Give time for navigation to render
-}
     
 toggleDarkMode() {
   // Flip between dark and light explicitly
