@@ -704,6 +704,25 @@ body.dark-mode .data-table td {
             font-size: 11px !important;
         }
 
+/* Master module container override */
+body.dark-mode .module-container {
+  background-color: var(--dm-background) !important;
+  color: var(--dm-text-primary) !important;
+  border: 1px solid var(--dm-border);
+}
+
+/* Cards inside modules */
+body.dark-mode .module-container .stat-card,
+body.dark-mode .module-container .glass-card,
+body.dark-mode .module-container .quick-action-btn,
+body.dark-mode .module-container .form-input,
+body.dark-mode .module-container .form-select,
+body.dark-mode .module-container .transaction-item-pwa {
+  background-color: var(--dm-surface) !important;
+  color: var(--dm-text-primary) !important;
+  border: 1px solid var(--dm-border);
+}
+
         /* ==============================================================
            Top Navigation (StyleManager owns this now)
            ============================================================== */
