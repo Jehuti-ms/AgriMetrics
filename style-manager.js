@@ -1127,6 +1127,26 @@ body.dark-mode #standard-price-unit-label {
   color: #cbd5e1 !important;
 }
 
+/* Inputs and selects inside modals */
+body.dark-mode .popout-modal-content .form-input,
+body.dark-mode .popout-modal-content select,
+body.dark-mode .popout-modal-content textarea {
+  background-color: var(--dm-surface-light) !important;
+  color: var(--dm-text-primary) !important;
+  border: 1px solid var(--dm-border) !important;
+}
+
+/* Placeholders */
+body.dark-mode .popout-modal-content .form-input::placeholder,
+body.dark-mode .popout-modal-content textarea::placeholder {
+  color: var(--dm-text-secondary) !important;
+}
+
+/* Labels */
+body.dark-mode .popout-modal-content .form-label {
+  color: var(--dm-text-secondary) !important;
+}
+
      
         `;
         document.head.appendChild(style);
