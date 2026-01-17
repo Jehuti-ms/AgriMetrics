@@ -757,7 +757,31 @@ body.dark-mode .module-container .transaction-item-pwa {
   border: 1px solid var(--dm-border);
 }
 
-        /* ==============================================================
+  /* Reset module + card backgrounds in dark mode */
+body.dark-mode .module-container,
+body.dark-mode #content-area {
+  --module-bg: var(--dm-background) !important;
+  --card-bg: var(--dm-surface) !important;
+  --card-bg-hover: var(--dm-surface-light) !important;
+  --card-border: var(--dm-border) !important;
+  background: var(--dm-background) !important;
+  color: var(--dm-text-primary) !important;
+}
+
+/* Ensure cards inside modules flip */
+body.dark-mode .module-container .stat-card,
+body.dark-mode .module-container .glass-card,
+body.dark-mode .module-container .quick-action-btn,
+body.dark-mode .module-container .form-input,
+body.dark-mode .module-container .form-select,
+body.dark-mode .module-container .transaction-item-pwa,
+body.dark-mode .module-container .activity-item {
+  background: var(--dm-surface) !important;
+  color: var(--dm-text-primary) !important;
+  border: 1px solid var(--dm-border);
+}
+
+      /* ==============================================================
            Top Navigation (StyleManager owns this now)
            ============================================================== */
  /* Top navigation bar */
