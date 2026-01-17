@@ -979,6 +979,58 @@ body.dark-mode [id$="-section"] button {
   position: relative;
 }
 
+/* Base modal responsiveness */
+@media (max-width: 768px) {
+  .report-modal,
+  .popout-modal-content {
+    width: 95% !important;
+    max-width: none !important;
+    margin: 0 auto !important;
+    border-radius: 12px;
+    padding: 16px !important;
+  }
+
+  /* Modal header */
+  .report-modal h2,
+  .report-modal h3 {
+    font-size: 1.2rem !important;
+    text-align: center;
+  }
+
+  /* Action buttons stack vertically */
+  .report-modal .action-buttons,
+  .report-modal .report-actions {
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100%;
+  }
+
+  .report-modal .action-buttons button,
+  .report-modal .report-actions button {
+    width: 100% !important;
+  }
+
+  /* Scrollable content */
+  .report-modal .report-content,
+  .report-modal .output-content {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .report-modal,
+  .popout-modal-content {
+    padding: 12px !important;
+    border-radius: 8px;
+  }
+
+  .report-modal h2,
+  .report-modal h3 {
+    font-size: 1rem !important;
+  }
+}
 
 
       
