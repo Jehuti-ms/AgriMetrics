@@ -1207,6 +1207,45 @@ body.dark-mode .popout-modal-content textarea::placeholder {
   color: #cbd5e1 !important;
 }
 
+/* Light mode modals inherit light palette */
+body.light-mode .popout-modal-content {
+  --module-bg: var(--module-bg, #ffffff);
+  --card-bg: var(--card-bg, #ffffff);
+  --text-primary: #111827;   /* dark text */
+  --text-secondary: #374151; /* softer gray */
+  background: var(--module-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Dark mode modals inherit dark palette */
+body.dark-mode .popout-modal-content {
+  --module-bg: var(--dm-background);
+  --card-bg: var(--dm-surface);
+  --text-primary: var(--dm-text-primary);
+  --text-secondary: var(--dm-text-secondary);
+  background: var(--module-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Inputs inside modals */
+body.light-mode .popout-modal-content .form-input,
+body.dark-mode .popout-modal-content .form-input,
+body.light-mode .popout-modal-content select,
+body.dark-mode .popout-modal-content select,
+body.light-mode .popout-modal-content textarea,
+body.dark-mode .popout-modal-content textarea {
+  background: var(--card-bg) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--dm-border, #d1d5db) !important;
+}
+
+body.light-mode .popout-modal-content .form-input::placeholder,
+body.dark-mode .popout-modal-content .form-input::placeholder,
+body.light-mode .popout-modal-content textarea::placeholder,
+body.dark-mode .popout-modal-content textarea::placeholder {
+  color: var(--text-secondary) !important;
+}
+
         `;
         document.head.appendChild(style);
     },
