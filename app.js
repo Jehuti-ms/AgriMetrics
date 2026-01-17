@@ -349,6 +349,34 @@ initializeMenuPosition() {
   this.updateThemeToggleIcon();
 }
 
+    setupDarkMode() {
+  // Wait for navigation to be created
+  setTimeout(() => {
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    if (!darkModeToggle) {
+      console.error('❌ Dark mode toggle button not found');
+      return;
+    }
+
+    // Remove existing listeners safely
+    const newToggle = darkModeToggle.cloneNode(true);
+    darkModeToggle.parentNode.replaceChild(newToggle, darkModeToggle);
+
+    // Attach click handler
+    newToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.toggleDarkMode();
+    });
+
+    // Apply current theme and update icon
+    this.applyUserTheme();   // ensures body class matches saved preference
+    this.updateThemeToggleIcon();
+
+    console.log('✅ Theme toggle button initialized');
+  }, 200); // Give time for navigation to render
+}
+    
 toggleDarkMode() {
   // Flip between dark and light explicitly
   if (document.body.classList.contains('dark-mode')) {
