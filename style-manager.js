@@ -493,330 +493,138 @@ const StyleManager = {
             color: white !important;
         }
 
-      /* ========== Dark Mode ============ */
+       /* ===========================
+       Unified Theme Styles
+       =========================== */
 
-/* Base body */
-body.dark-mode {
-  background-color: #121212;
-  color: #f0f0f0;
-}
+    /* Light Mode */
+    body.light-mode {
+      background-color: #ffffff;
+      color: #111827;
+    }
 
-/* Containers */
-body.dark-mode #app-container,
-body.dark-mode #content-area {
-  background-color: #1e1e1e;
-  color: #f0f0f0;
-}
+    body.light-mode #app-container,
+    body.light-mode #content-area,
+    body.light-mode main,
+    body.light-mode .module-container {
+      background-color: #f8faf9;
+      color: #111827;
+      border: 1px solid #e5e7eb;
+    }
 
-/* Navigation */
-body.dark-mode nav.top-nav {
-  background-color: #1c1c1c;
-  border-bottom: 1px solid #333;
-}
-body.dark-mode #side-menu {
-  background-color: #1c1c1c;
-  color: #f0f0f0;
-}
-.dark-mode .nav-brand .brand-text,
-.dark-mode .nav-brand .brand-subtitle {
-  color: #cbd5e1 !important;
-}
-.dark-mode .nav-item:hover,
-.dark-mode .side-menu-item:hover,
-.dark-mode .hamburger-menu:hover,
-.dark-mode .btn-icon:hover {
-  background: rgba(71, 85, 105, 0.3) !important;
-  color: #f8fafc !important;
-}
+    body.light-mode nav.top-nav,
+    body.light-mode #side-menu {
+      background-color: #ffffff;
+      color: #111827;
+      border-bottom: 1px solid #e5e7eb;
+    }
 
-/* Welcome section */
-body.dark-mode .welcome-section {
-  background-color: #1a1a1a;
-  color: #f0f0f0 !important;
-}
+    body.light-mode .card,
+    body.light-mode .glass-card,
+    body.light-mode .form-container,
+    body.light-mode .popout-modal-content,
+    body.light-mode .stat-card {
+      background-color: #ffffff !important;
+      color: #111827 !important;
+      border: 1px solid #e5e7eb !important;
+    }
 
-/* Cards & modules */
-body.dark-mode .glass-card,
-body.dark-mode .form-container,
-body.dark-mode .popout-modal-content,
-body.dark-mode .stat-card,
-body.dark-mode .card {
-  background-color: #1e1e1e !important;
-  color: #f0f0f0 !important;
-  border: 1px solid #333;
-}
+    body.light-mode input,
+    body.light-mode select,
+    body.light-mode textarea {
+      background-color: #ffffff !important;
+      color: #111827 !important;
+      border: 1px solid #d1d5db !important;
+    }
 
-/* Auth inputs */
-body.dark-mode #signin-email,
-body.dark-mode #signin-password,
-body.dark-mode #signup-email,
-body.dark-mode #signup-password {
-  background-color: #2a2a2a !important;
-  color: #f0f0f0 !important;
-  border: 1px solid #444 !important;
-}
+    body.light-mode button,
+    body.light-mode .btn {
+      background-color: #f9fafb !important;
+      color: #111827 !important;
+      border: 1px solid #d1d5db !important;
+    }
 
-/* Inputs & buttons */
-body.dark-mode input,
-body.dark-mode select,
-body.dark-mode textarea {
-  background-color: #2a2a2a;
-  color: #f0f0f0;
-  border: 1px solid #444;
-}
-body.dark-mode button,
-body.dark-mode .btn {
-  background-color: #2a2a2a;
-  color: #f0f0f0;
-}
+    body.light-mode table,
+    body.light-mode th,
+    body.light-mode td {
+      background-color: #ffffff !important;
+      color: #111827 !important;
+      border-color: #e5e7eb !important;
+    }
 
-/* Tables */
-body.dark-mode table {
-  background-color: #1e1e1e;
-  color: #f0f0f0;
-}
-body.dark-mode th {
-  background-color: #2a2a2a;
-}
-body.dark-mode td {
-  border-color: #333;
-}
+    /* Dark Mode */
+    body.dark-mode {
+      background-color: #0f172a !important;
+      color: #f8fafc !important;
+    }
 
-/* Misc */
-body.dark-mode #sync-now-btn {
-  background-color: #333 !important;
-  color: #f0f0f0 !important;
-}
-body.dark-mode #password-strength-bar {
-  background-color: #444 !important;
-}
-body.dark-mode #ocr-results {
-  background-color: #1e293b !important;
-  color: #f0f0f0 !important;
-}
-body.dark-mode .social-icon {
-  color: #f0f0f0 !important;
-  background: transparent !important;
-}
+    body.dark-mode #app-container,
+    body.dark-mode #content-area,
+    body.dark-mode main,
+    body.dark-mode .module-container {
+      background-color: #0f172a !important;
+      color: #f8fafc !important;
+      border: 1px solid #333;
+    }
 
-/* Master dark-mode background overrides */
+    body.dark-mode nav.top-nav,
+    body.dark-mode #side-menu {
+      background-color: #1c1c1c !important;
+      color: #f0f0f0 !important;
+      border-bottom: 1px solid #333;
+    }
 
-/* Global body */
-body.dark-mode {
-  background-color: #0f172a !important; /* deep slate */
-  color: #f8fafc !important;
-}
+    body.dark-mode .nav-brand .brand-text,
+    body.dark-mode .nav-brand .brand-subtitle {
+      color: #cbd5e1 !important;
+    }
 
-/* Main app containers */
-body.dark-mode #app-container,
-body.dark-mode #content-area,
-body.dark-mode main {
-  background-color: #0f172a !important;
-  color: #f8fafc !important;
-}
+    body.dark-mode .card,
+    body.dark-mode .glass-card,
+    body.dark-mode .form-container,
+    body.dark-mode .popout-modal-content,
+    body.dark-mode .stat-card {
+      background-color: #1e1e1e !important;
+      color: #f0f0f0 !important;
+      border: 1px solid #333;
+    }
 
-/* Dashboard + Income/Expenses modules */
-body.dark-mode .dashboard-container,
-body.dark-mode .income-expenses-module {
-  background: var(--dm-background) !important;
-}
+    body.dark-mode input,
+    body.dark-mode select,
+    body.dark-mode textarea {
+      background-color: #2a2a2a !important;
+      color: #f0f0f0 !important;
+      border: 1px solid #444 !important;
+    }
 
-/* Cards (stats, summary, reports, inventory, profile) */
-body.dark-mode .stat-card,
-body.dark-mode .stat-card-pwa,
-body.dark-mode .summary-card,
-body.dark-mode .report-type-card,
-body.dark-mode .report-output,
-body.dark-mode .inventory-item,
-body.dark-mode .profile-card,
-body.dark-mode .form-container-pwa,
-body.dark-mode .transactions-section-pwa,
-body.dark-mode .transaction-item-pwa {
-  background-color: var(--dm-surface) !important;
-  color: var(--dm-text-primary) !important;
-  border: 1px solid var(--dm-border);
-}
+    body.dark-mode button,
+    body.dark-mode .btn {
+      background-color: #2a2a2a !important;
+      color: #f0f0f0 !important;
+      border: 1px solid #444 !important;
+    }
 
-/* Quick actions */
-body.dark-mode .quick-action-btn,
-body.dark-mode .quick-action-btn-pwa {
-  background-color: var(--dm-surface-light) !important;
-  color: var(--dm-text-primary) !important;
-  border: 1px solid var(--dm-border);
-}
+    body.dark-mode table,
+    body.dark-mode th,
+    body.dark-mode td {
+      background-color: #1e1e1e !important;
+      color: #f0f0f0 !important;
+      border-color: #333 !important;
+    }
 
-/* Tables */
-body.dark-mode .table-section,
-body.dark-mode .data-table th,
-body.dark-mode .data-table td {
-  background-color: var(--dm-surface) !important;
-  color: var(--dm-text-primary) !important;
-  border-color: var(--dm-border);
-}
+    body.dark-mode .activity-list,
+    body.dark-mode .activity-item {
+      background-color: #1e1e1e !important;
+      color: #f0f0f0 !important;
+      border: 1px solid #333;
+    }
 
- /* Activity list + items */
-body.dark-mode .activity-list,
-body.dark-mode .activity-item {
-  background-color: var(--dm-surface) !important;
-  color: var(--dm-text-primary) !important;
-  border: 1px solid var(--dm-border);
-}
+    body.dark-mode .activity-title,
+    body.dark-mode .activity-description,
+    body.dark-mode .activity-meta {
+      color: #cbd5e1 !important;
+    }
 
-body.dark-mode .activity-title,
-body.dark-mode .activity-description,
-body.dark-mode .activity-meta,
-body.dark-mode .activity-time,
-body.dark-mode .activity-module {
-  color: var(--dm-text-secondary) !important;
-}
-
-/* Activity icons */
-body.dark-mode .activity-icon,
-body.dark-mode .time-icon {
-  color: var(--dm-text-primary) !important;
-}
-
-/* Refresh button */
-body.dark-mode #refresh-stats-btn {
-  background-color: var(--dm-surface-light) !important;
-  color: var(--dm-text-primary) !important;
-  border: 1px solid var(--dm-border);
-}
-
-body.dark-mode #refresh-stats-btn:hover {
-  background-color: var(--dm-surface) !important;
-  box-shadow: 0 0 6px var(--dm-shadow-hover);
-}
-
-       /* =========== Navigation =========== */
-        /* 4. Navigation button sizes (not too wide) */
-        .nav-items {
-            gap: 4px !important;
-            padding: 0 4px !important;
-        }
-        
-        .nav-item {
-            padding: 6px 8px !important;
-            min-width: 60px !important;
-            max-width: 80px !important;
-            white-space: nowrap;
-        }
-        
-        .nav-label {
-            font-size: 10px !important;
-            margin-top: 2px !important;
-        }
-        
-        /* 5. Profile buttons (horizontal, not stretched) */
-        .profile-module .action-buttons {
-            display: flex !important;
-            flex-direction: row !important;
-            gap: 10px !important;
-            flex-wrap: wrap !important;
-        }
-        
-        .profile-module .btn-primary,
-        .profile-module .btn-outline {
-            width: auto !important;
-            min-width: 120px !important;
-            max-width: 200px !important;
-            flex: 0 1 auto !important;
-        }
-        
-        /* 6. Recent activity text size (smaller) */
-        .activity-list > div div:first-child {
-            font-size: 28px !important;
-            margin-bottom: 8px !important;
-        }
-        
-        .activity-list > div div:nth-child(2) {
-            font-size: 13px !important;
-            margin-bottom: 4px !important;
-        }
-        
-        .activity-list > div div:last-child {
-            font-size: 11px !important;
-        }
-
-/* Master module container override */
-body.dark-mode .module-container {
-  background-color: var(--dm-background) !important;
-  color: var(--dm-text-primary) !important;
-  border: 1px solid var(--dm-border);
-}
-
-/* Cards inside modules */
-body.dark-mode .module-container .stat-card,
-body.dark-mode .module-container .glass-card,
-body.dark-mode .module-container .quick-action-btn,
-body.dark-mode .module-container .form-input,
-body.dark-mode .module-container .form-select,
-body.dark-mode .module-container .transaction-item-pwa {
-  background-color: var(--dm-surface) !important;
-  color: var(--dm-text-primary) !important;
-  border: 1px solid var(--dm-border);
-}
-
-  /* Reset module + card backgrounds in dark mode */
-body.dark-mode .module-container,
-body.dark-mode #content-area {
-  --module-bg: var(--dm-background) !important;
-  --card-bg: var(--dm-surface) !important;
-  --card-bg-hover: var(--dm-surface-light) !important;
-  --card-border: var(--dm-border) !important;
-  background: var(--dm-background) !important;
-  color: var(--dm-text-primary) !important;
-}
-
-/* Ensure cards inside modules flip */
-body.dark-mode .module-container .stat-card,
-body.dark-mode .module-container .glass-card,
-body.dark-mode .module-container .quick-action-btn,
-body.dark-mode .module-container .form-input,
-body.dark-mode .module-container .form-select,
-body.dark-mode .module-container .transaction-item-pwa,
-body.dark-mode .module-container .activity-item {
-  background: var(--dm-surface) !important;
-  color: var(--dm-text-primary) !important;
-  border: 1px solid var(--dm-border);
-}
-
-
-/* Transaction / Sale sections */
-body.dark-mode [id$="-section"],
-body.dark-mode .transaction-item-pwa,
-body.dark-mode .form-container-pwa {
-  background-color: var(--dm-surface) !important;
-  border: 1px solid var(--dm-border) !important;
-  color: var(--dm-text-primary) !important;
-}
-
-/* Titles + labels inside sections */
-body.dark-mode [id$="-section"] h3,
-body.dark-mode [id$="-section"] .form-label,
-body.dark-mode [id$="-section"] .form-hint,
-body.dark-mode [id$="-section"] div,
-body.dark-mode [id$="-section"] span {
-  color: var(--dm-text-secondary) !important;
-}
-
-/* Inputs inside sections */
-body.dark-mode [id$="-section"] .form-input,
-body.dark-mode [id$="-section"] input,
-body.dark-mode [id$="-section"] select,
-body.dark-mode [id$="-section"] textarea {
-  background-color: var(--dm-surface-light) !important;
-  color: var(--dm-text-primary) !important;
-  border: 1px solid var(--dm-border) !important;
-}
-
-/* Buttons inside sections */
-body.dark-mode [id$="-section"] .btn,
-body.dark-mode [id$="-section"] button {
-  background-color: var(--dm-surface-light) !important;
-  color: var(--dm-text-primary) !important;
-  border: 1px solid var(--dm-border);
-}
 
       /* ==============================================================
            Top Navigation (StyleManager owns this now)
