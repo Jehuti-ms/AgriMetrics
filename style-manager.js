@@ -1163,7 +1163,50 @@ body.dark-mode input.form-input::placeholder,
 body.dark-mode textarea.form-input::placeholder {
   color: #cbd5e1 !important;              /* softer gray placeholder */
 }
-    
+
+    /* Modal header + title */
+body.dark-mode .popout-modal-header,
+body.dark-mode .popout-modal-title {
+  color: #f8fafc !important; /* bright white */
+}
+
+/* Close button */
+body.dark-mode .popout-modal-close {
+  color: #f8fafc !important;
+}
+
+/* Labels and field titles */
+body.dark-mode .popout-modal-content .form-label {
+  color: #f8fafc !important;
+  font-weight: 600;
+}
+
+/* Inline helper text, unit labels, secondary info */
+body.dark-mode .popout-modal-content .form-hint,
+body.dark-mode .popout-modal-content [id$="-unit-label"],
+body.dark-mode .popout-modal-content div[style*="color:#374151"],
+body.dark-mode .popout-modal-content div[style*="color:#0369a1"],
+body.dark-mode .popout-modal-content div[style*="color:#1e40af"],
+body.dark-mode .popout-modal-content span[style*="color:#374151"],
+body.dark-mode .popout-modal-content span[style*="color:#0369a1"],
+body.dark-mode .popout-modal-content span[style*="color:#1e40af"] {
+  color: #cbd5e1 !important; /* softer gray for secondary text */
+}
+
+/* Input text + placeholders */
+body.dark-mode .popout-modal-content input,
+body.dark-mode .popout-modal-content select,
+body.dark-mode .popout-modal-content textarea {
+  color: #f8fafc !important;
+  background-color: #1e293b !important;
+  border: 1px solid #374151 !important;
+}
+
+body.dark-mode .popout-modal-content input::placeholder,
+body.dark-mode .popout-modal-content textarea::placeholder {
+  color: #cbd5e1 !important;
+}
+
         `;
         document.head.appendChild(style);
     },
