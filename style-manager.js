@@ -493,7 +493,7 @@ const StyleManager = {
             color: white !important;
         }
 
-      /* ===========================
+     /* ===========================
    Unified Theme Styles
    =========================== */
 
@@ -507,7 +507,7 @@ body.light-mode #app-container,
 body.light-mode #content-area,
 body.light-mode main,
 body.light-mode .module-container {
-  background-color: #f8faf9 !important;
+  background-color: #f8faf9 !important;   /* ✅ light container */
   color: #111827 !important;
   border: 1px solid #e5e7eb !important;
 }
@@ -609,6 +609,7 @@ body.dark-mode .activity-description,
 body.dark-mode .activity-meta {
   color: #cbd5e1 !important;
 }
+
 
       /* ==============================================================
            Top Navigation (StyleManager owns this now)
