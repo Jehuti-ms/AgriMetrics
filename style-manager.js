@@ -654,7 +654,41 @@ body.dark-mode .data-table td {
   border-color: var(--dm-border);
 }
 
-        /* =========== Navigation =========== */
+ /* Activity list + items */
+body.dark-mode .activity-list,
+body.dark-mode .activity-item {
+  background-color: var(--dm-surface) !important;
+  color: var(--dm-text-primary) !important;
+  border: 1px solid var(--dm-border);
+}
+
+body.dark-mode .activity-title,
+body.dark-mode .activity-description,
+body.dark-mode .activity-meta,
+body.dark-mode .activity-time,
+body.dark-mode .activity-module {
+  color: var(--dm-text-secondary) !important;
+}
+
+/* Activity icons */
+body.dark-mode .activity-icon,
+body.dark-mode .time-icon {
+  color: var(--dm-text-primary) !important;
+}
+
+/* Refresh button */
+body.dark-mode #refresh-stats-btn {
+  background-color: var(--dm-surface-light) !important;
+  color: var(--dm-text-primary) !important;
+  border: 1px solid var(--dm-border);
+}
+
+body.dark-mode #refresh-stats-btn:hover {
+  background-color: var(--dm-surface) !important;
+  box-shadow: 0 0 6px var(--dm-shadow-hover);
+}
+
+       /* =========== Navigation =========== */
         /* 4. Navigation button sizes (not too wide) */
         .nav-items {
             gap: 4px !important;
