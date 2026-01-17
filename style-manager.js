@@ -781,6 +781,43 @@ body.dark-mode .module-container .activity-item {
   border: 1px solid var(--dm-border);
 }
 
+
+/* Transaction / Sale sections */
+body.dark-mode [id$="-section"],
+body.dark-mode .transaction-item-pwa,
+body.dark-mode .form-container-pwa {
+  background-color: var(--dm-surface) !important;
+  border: 1px solid var(--dm-border) !important;
+  color: var(--dm-text-primary) !important;
+}
+
+/* Titles + labels inside sections */
+body.dark-mode [id$="-section"] h3,
+body.dark-mode [id$="-section"] .form-label,
+body.dark-mode [id$="-section"] .form-hint,
+body.dark-mode [id$="-section"] div,
+body.dark-mode [id$="-section"] span {
+  color: var(--dm-text-secondary) !important;
+}
+
+/* Inputs inside sections */
+body.dark-mode [id$="-section"] .form-input,
+body.dark-mode [id$="-section"] input,
+body.dark-mode [id$="-section"] select,
+body.dark-mode [id$="-section"] textarea {
+  background-color: var(--dm-surface-light) !important;
+  color: var(--dm-text-primary) !important;
+  border: 1px solid var(--dm-border) !important;
+}
+
+/* Buttons inside sections */
+body.dark-mode [id$="-section"] .btn,
+body.dark-mode [id$="-section"] button {
+  background-color: var(--dm-surface-light) !important;
+  color: var(--dm-text-primary) !important;
+  border: 1px solid var(--dm-border);
+}
+
       /* ==============================================================
            Top Navigation (StyleManager owns this now)
            ============================================================== */
