@@ -333,67 +333,31 @@ initializeMenuPosition() {
    applyUserTheme() {
   const theme = this.userPreferences.theme || 'auto';
 
+  // Clear both classes first
+  document.body.classList.remove('dark-mode', 'light-mode');
+
   if (theme === 'dark') {
     document.body.classList.add('dark-mode');
   } else if (theme === 'light') {
-    document.body.classList.remove('dark-mode');
+    document.body.classList.add('light-mode');
   } else {
     // Auto mode: follow system preference
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    document.body.classList.toggle('dark-mode', prefersDark);
+    document.body.classList.add(prefersDark ? 'dark-mode' : 'light-mode');
   }
 
   this.updateThemeToggleIcon();
 }
 
-   setupDarkMode() {
-  // Wait for navigation to be created
-  setTimeout(() => {
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-    if (!darkModeToggle) {
-      console.error('❌ Dark mode toggle button not found');
-      return;
-    }
-
-    // Remove existing listeners safely
-    const newToggle = darkModeToggle.cloneNode(true);
-    darkModeToggle.parentNode.replaceChild(newToggle, darkModeToggle);
-
-    // Attach click handler
-    newToggle.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      this.toggleDarkMode();
-    });
-
-    // Apply current theme and update icon
-    this.applyUserTheme();   // ensures body class matches saved preference
-    this.updateThemeToggleIcon();
-
-    console.log('✅ Theme toggle button initialized');
-  }, 200); // Give time for navigation to render
-}
-    
 toggleDarkMode() {
-    const isDarkMode = document.body.classList.contains('dark-mode');
-    
-    if (isDarkMode) {
-        // Switch to light mode
-        document.body.classList.remove('dark-mode');
-        this.userPreferences.theme = 'light';
-        console.log('🌞 Switched to light mode');
-    } else {
-        // Switch to dark mode
-        document.body.classList.add('dark-mode');
-        this.userPreferences.theme = 'dark';
-        console.log('🌙 Switched to dark mode');
-    }
-    
-    // Save preferences
-    localStorage.setItem('farm-user-preferences', JSON.stringify(this.userPreferences));
-    
-    // Update icon
-    this.updateThemeToggleIcon();
+  // Flip between dark and light explicitly
+  if (document.body.classList.contains('dark-mode')) {
+    this.userPreferences.theme = 'light';
+  } else {
+    this.userPreferences.theme = 'dark';
+  }
+
+  this.applyUserTheme();
 }
 
 updateThemeToggleIcon() {
