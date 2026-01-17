@@ -1246,6 +1246,22 @@ body.dark-mode .popout-modal-content textarea::placeholder {
   color: var(--text-secondary) !important;
 }
 
+body.light-mode {
+  --module-bg: #ffffff;
+  --card-bg: #ffffff;
+  --text-primary: #111827;
+  --text-secondary: #374151;
+  --dm-border: #e5e7eb;
+}
+
+body.dark-mode {
+  --module-bg: #1e293b;
+  --card-bg: #0f172a;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --dm-border: #374151;
+}
+
         `;
         document.head.appendChild(style);
     },
