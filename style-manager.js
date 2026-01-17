@@ -1068,7 +1068,29 @@ body.dark-mode [id$="-section"] button {
   }
 }
 
-      
+ /* Responsive report modal buttons */
+@media (max-width: 768px) {
+  /* Target any flex container directly inside report modals */
+  .report-modal div[style*="display: flex"],
+  .popout-modal-content div[style*="display: flex"] {
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  /* Make buttons full width */
+  .report-modal .btn-outline,
+  .popout-modal-content .btn-outline,
+  #print-report-btn,
+  #export-report-btn,
+  #email-report-btn,
+  #pdf-report-btn,
+  #close-report-btn {
+    width: 100% !important;
+    text-align: center;
+  }
+}
+     
         `;
         document.head.appendChild(style);
     },
