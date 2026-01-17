@@ -1098,29 +1098,33 @@ body.dark-mode [id$="-section"] button {
   }
 }
 
-/* Modal form text fixes */
-body.dark-mode .form-label,
-body.dark-mode .form-hint,
-body.dark-mode .form-input,
-body.dark-mode .form-select,
-body.dark-mode .form-input::placeholder,
-body.dark-mode .form-select option {
-  color: var(--dm-text-primary) !important;
-}
-
-/* Secondary text (hints, unit labels) */
-body.dark-mode .form-hint,
-body.dark-mode .form-label,
-body.dark-mode #standard-price-unit-label {
-  color: var(--dm-text-secondary) !important;
-}
-
-/* Inputs background + border */
-body.dark-mode .form-input,
-body.dark-mode .form-select,
+/* Force input text and placeholders */
+body.dark-mode input,
+body.dark-mode select,
 body.dark-mode textarea {
-  background-color: var(--dm-surface-light) !important;
-  border: 1px solid var(--dm-border) !important;
+  color: #f8fafc !important; /* bright text */
+  background-color: #1e293b !important; /* dark surface */
+  border: 1px solid #374151 !important;
+}
+
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+  color: #cbd5e1 !important; /* softer gray for placeholder */
+}
+
+/* Labels and hints */
+body.dark-mode label,
+body.dark-mode .form-label,
+body.dark-mode .form-hint,
+body.dark-mode span,
+body.dark-mode div {
+  color: #f8fafc !important;
+}
+
+/* Secondary info (unit labels, helper text) */
+body.dark-mode .form-hint,
+body.dark-mode #standard-price-unit-label {
+  color: #cbd5e1 !important;
 }
 
      
