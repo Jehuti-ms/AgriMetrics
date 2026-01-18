@@ -49,176 +49,238 @@
 </head>
 <body>
    
-    <!-- Splash Screen -->
-        <div id="splash-screen" class="auth-form active">
-          <div class="splash-logo">
-           <img src="icons/agrimetrics-splash-white.png" alt="AgriMetrics Logo" style="width:400px; height:auto;">
+   <!-- Splash Screen - SEPARATE from auth container -->
+<div id="splash-screen">
+  <div class="splash-content">
+    <div class="splash-logo">
+      <img src="icons/agrimetrics-splash-white.png" alt="AgriMetrics Logo">
+    </div>
+    <div class="splash-text">
+      <h1 class="splash-title">AgriMetrics</h1>
+      <p class="splash-subtitle">Smart Farming Management System</p>
+    </div>
+    <div class="splash-loader"></div>
+  </div>
+</div>
+
+<!-- Auth Container - SEPARATE from splash -->
+<div id="auth-container" class="hidden">
+  <!-- Brand Header -->
+  <div class="auth-brand-header">
+    <div class="auth-brand-logo">
+      <img src="icons/agrimetrics-splash-white.png" alt="AgriMetrics Logo">
+    </div>
+    <div class="auth-brand-text">
+      <h1 class="auth-brand-title">AgriMetrics</h1>
+      <p class="auth-brand-subtitle">Smart Farming Management System</p>
+    </div>
+  </div>
+
+  <!-- Main Forms Container -->
+  <div class="auth-main-container">
+    <div class="auth-forms">
+      
+      <!-- Form Tabs Navigation -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-form="signin-form">Sign In</button>
+        <button class="auth-tab" data-form="signup-form">Sign Up</button>
+      </div>
+
+      <!-- Sign In Form -->
+      <div id="signin-form" class="auth-form active">
+        <div class="auth-form-header">
+          <h2 class="auth-form-title">Welcome Back</h2>
+          <p class="auth-form-description">Sign in to access your farm management dashboard</p>
+        </div>
+
+        <form id="signin-form-element" class="auth-form-content">
+          <!-- Social Login Section -->
+          <div class="social-login-section">
+            <span class="social-login-label">Continue with</span>
+            <div class="social-buttons-grid">
+              <button type="button" class="btn-social google">
+                <i class="social-icon">G</i>
+                <span>Google</span>
+              </button>
+              <button type="button" class="btn-social apple">
+                <i class="social-icon">A</i>
+                <span>Apple</span>
+              </button>
+            </div>
           </div>
+
+          <div class="auth-divider">
+            <span>or continue with email</span>
+          </div>
+
+          <!-- Email/Password Form -->
+          <div class="auth-form-group">
+            <label>
+              <i class="material-icons form-label-icon">email</i>
+              Email Address
+            </label>
+            <input type="email" id="signin-email" placeholder="Enter your email" required>
+          </div>
+
+          <div class="auth-form-group">
+            <label>
+              <i class="material-icons form-label-icon">lock</i>
+              Password
+            </label>
+            <input type="password" id="signin-password" placeholder="Enter your password" required>
+          </div>
+
+          <div class="form-options">
+            <div class="remember-me">
+              <input type="checkbox" id="remember-me">
+              <label for="remember-me">Remember me</label>
+            </div>
+            <a href="#" class="forgot-password" id="show-forgot-password">Forgot Password?</a>
+          </div>
+
+          <button type="submit" class="auth-submit-btn">
+            <i class="material-icons">login</i>
+            <span>Sign In</span>
+          </button>
+
+          <div class="form-switch">
+            <span>Don't have an account?</span>
+            <a href="#" id="show-signup">Sign Up</a>
+          </div>
+        </form>
+      </div>
+
+      <!-- Sign Up Form -->
+      <div id="signup-form" class="auth-form">
+        <div class="auth-form-header">
+          <h2 class="auth-form-title">Create Account</h2>
+          <p class="auth-form-description">Join AgriMetrics to manage your farm efficiently</p>
         </div>
 
-        <!-- Auth Container -->
-<div id="auth-container">
-    <!-- Brand Header -->
-    <div class="auth-brand-header">
-        <div class="auth-brand-logo">🌾</div>
-        <div class="auth-brand-text">
-            <div class="auth-brand-title">AgriMetrics</div>
-            <div class="auth-brand-subtitle">Farm Management System</div>
-        </div>
-    </div>
-    
-    <!-- Main Forms Container -->
-    <div class="auth-main-container">
-        <div class="auth-forms">
-            <!-- Form Tabs (Optional) -->
-            <div class="auth-tabs">
-                <button type="button" class="auth-tab active" data-form="signin">Sign In</button>
-                <button type="button" class="auth-tab" data-form="signup">Sign Up</button>
-            </div>
-            
-            <!-- Sign In Form -->
-                <div id="signin-form" class="auth-form active">
-                  <div class="auth-form-header">
-                    <h2 class="auth-form-title">Welcome Back</h2>
-                    <p class="auth-form-description">Sign in to access your farm management dashboard</p>
-                  </div>
-                
-                  <form id="signin-form-element" class="auth-form-content">
-                    <!-- Social Login Section FIRST -->
-                    <div class="social-login-section">
-                      <div class="social-login-label">Continue with</div>
-                      <div class="social-buttons-grid" id="social-login-container">
-                        <!-- Social buttons will be added here -->
-                      </div>
-                    </div>
-                
-                    <!-- Divider -->
-                    <div class="auth-divider"><span>or</span></div>
-                
-                    <!-- Email/Password Fields -->
-                    <div class="auth-form-group">
-                      <label>
-                        <span class="form-label-icon">✉️</span>
-                        Email Address
-                      </label>
-                      <input type="email" id="signin-email" required placeholder="you@example.com">
-                    </div>
-                
-                    <div class="auth-form-group">
-                      <label>
-                        <span class="form-label-icon">🔒</span>
-                        Password
-                      </label>
-                      <input type="password" id="signin-password" required placeholder="Enter your password">
-                    </div>
-                
-                    <!-- Options -->
-                    <div class="form-options">
-                      <div class="remember-me">
-                        <input type="checkbox" id="remember-me">
-                        <label for="remember-me">Remember me</label>
-                      </div>
-                      <a href="#" id="show-forgot-password" class="forgot-password">Forgot Password?</a>
-                    </div>
-                
-                    <!-- Submit Button BELOW email fields -->
-                    <button type="submit" class="auth-submit-btn">
-                      <span>→</span>
-                      Sign In
-                    </button>
-                
-                    <!-- Switch to Sign Up -->
-                    <div class="form-switch">
-                      Don't have an account?
-                      <a href="#" id="show-signup">Sign Up</a>
-                    </div>
-                  </form>
-                </div>
+        <form id="signup-form-element" class="auth-form-content">
+          <div class="auth-form-group">
+            <label>
+              <i class="material-icons form-label-icon">person</i>
+              Full Name
+            </label>
+            <input type="text" id="signup-name" placeholder="Enter your full name" required>
+          </div>
 
+          <div class="auth-form-group">
+            <label>
+              <i class="material-icons form-label-icon">email</i>
+              Email Address
+            </label>
+            <input type="email" id="signup-email" placeholder="Enter your email" required>
+          </div>
+
+          <div class="auth-form-group">
+            <label>
+              <i class="material-icons form-label-icon">lock</i>
+              Password
+            </label>
+            <input type="password" id="signup-password" placeholder="Create a strong password" required>
             
-            <!-- Sign Up Form -->
-            <div id="signup-form" class="auth-form">
-                <div class="auth-form-header">
-                    <h2 class="auth-form-title">Create Account</h2>
-                    <p class="auth-form-description">Join thousands of farmers managing their operations</p>
-                </div>
-                
-                <form id="signup-form-element" class="auth-form-content">
-                    <div class="auth-form-group">
-                        <label>Full Name</label>
-                        <input type="text" id="signup-name" required placeholder="John Smith">
-                    </div>
-                    
-                    <div class="auth-form-group">
-                        <label>Email Address</label>
-                        <input type="email" id="signup-email" required placeholder="you@example.com">
-                    </div>
-                    
-                    <div class="auth-form-group">
-                        <label>Password</label>
-                        <input type="password" id="signup-password" required placeholder="Create a strong password">
-                        <div class="password-strength-container">
-                            <div class="password-strength-bar">
-                                <div class="strength-progress"></div>
-                            </div>
-                            <div class="strength-text"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="auth-form-group">
-                        <label>Confirm Password</label>
-                        <input type="password" id="signup-confirm-password" required placeholder="Confirm your password">
-                        <div class="password-match-indicator"></div>
-                    </div>
-                    
-                    <div class="auth-form-group">
-                        <label>Farm Name</label>
-                        <input type="text" id="farm-name" required placeholder="Smith Family Farm">
-                    </div>
-                    
-                    <button type="submit" class="auth-submit-btn">
-                        <span>✓</span>
-                        Create Account
-                    </button>
-                    
-                    <div class="form-switch">
-                        Already have an account?
-                        <a href="#" id="show-signin">Sign In</a>
-                    </div>
-                </form>
+            <div class="password-strength-container">
+              <div class="password-strength-bar">
+                <div class="strength-progress"></div>
+              </div>
+              <div class="strength-text"></div>
+              <div class="password-requirements">
+                <p>Password must contain:</p>
+                <ul>
+                  <li class="requirement-length">At least 8 characters</li>
+                  <li class="requirement-uppercase">One uppercase letter</li>
+                  <li class="requirement-lowercase">One lowercase letter</li>
+                  <li class="requirement-number">One number</li>
+                  <li class="requirement-special">One special character</li>
+                </ul>
+              </div>
             </div>
-            
-            <!-- Forgot Password Form -->
-            <div id="forgot-password-form" class="auth-form">
-                <div class="auth-form-header">
-                    <h2 class="auth-form-title">Reset Password</h2>
-                    <p class="auth-form-description">Enter your email to receive a password reset link</p>
-                </div>
-                
-                <form id="forgot-password-form-element" class="auth-form-content">
-                    <div class="auth-form-group">
-                        <label>Email Address</label>
-                        <input type="email" id="forgot-email" required placeholder="you@example.com">
-                    </div>
-                    
-                    <button type="submit" class="auth-submit-btn">
-                        <span>↻</span>
-                        Send Reset Link
-                    </button>
-                    
-                    <div class="form-switch">
-                        Remember your password?
-                        <a href="#" id="show-signin-from-forgot">Back to Sign In</a>
-                    </div>
-                </form>
+          </div>
+
+          <div class="auth-form-group">
+            <label>
+              <i class="material-icons form-label-icon">lock_reset</i>
+              Confirm Password
+            </label>
+            <input type="password" id="signup-confirm-password" placeholder="Confirm your password" required>
+            <div class="password-match-indicator"></div>
+          </div>
+
+          <div class="auth-form-group">
+            <label>
+              <i class="material-icons form-label-icon">agriculture</i>
+              Farm Name
+            </label>
+            <input type="text" id="farm-name" placeholder="Enter your farm name" required>
+          </div>
+
+          <div class="form-options">
+            <div class="remember-me">
+              <input type="checkbox" id="terms-agreement" required>
+              <label for="terms-agreement">I agree to Terms & Privacy Policy</label>
             </div>
+          </div>
+
+          <button type="submit" class="auth-submit-btn">
+            <i class="material-icons">person_add</i>
+            <span>Create Account</span>
+          </button>
+
+          <div class="form-switch">
+            <span>Already have an account?</span>
+            <a href="#" id="show-signin">Sign In</a>
+          </div>
+        </form>
+      </div>
+
+      <!-- Forgot Password Form -->
+      <div id="forgot-password-form" class="auth-form">
+        <button class="auth-form-back" id="show-signin-from-forgot">
+          <i class="material-icons">arrow_back</i>
+          <span>Back to Sign In</span>
+        </button>
+
+        <div class="auth-form-header">
+          <h2 class="auth-form-title">Reset Password</h2>
+          <p class="auth-form-description">Enter your email to receive a password reset link</p>
         </div>
+
+        <form id="forgot-password-form-element" class="auth-form-content">
+          <div class="auth-form-group">
+            <label>
+              <i class="material-icons form-label-icon">email</i>
+              Email Address
+            </label>
+            <input type="email" id="forgot-email" placeholder="Enter your email address" required>
+          </div>
+
+          <button type="submit" class="auth-submit-btn">
+            <i class="material-icons">send</i>
+            <span>Send Reset Link</span>
+          </button>
+
+          <div class="email-sent-confirmation hidden">
+            <div class="email-sent-icon">
+              <i class="material-icons">check_circle</i>
+            </div>
+            <h3 class="email-sent-title">Check Your Email</h3>
+            <p class="email-sent-message">We've sent a password reset link to your email address. Please check your inbox and follow the instructions.</p>
+            <div class="email-sent-actions">
+              <button type="button" class="btn btn-outline" id="resend-email">Resend Email</button>
+              <button type="button" class="btn btn-primary" id="back-to-signin">Back to Sign In</button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
-    
-    <!-- Footer Message -->
-    <div class="auth-footer">
-        © 2025 AgriMetrics. All rights reserved.
-    </div>
+  </div>
+
+  <!-- Footer Message -->
+  <div class="auth-footer">
+    <p>&copy; 2024 AgriMetrics. All rights reserved.</p>
+  </div>
 </div>
     
     <!-- App Container -->
