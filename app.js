@@ -939,6 +939,127 @@ function initializeMenu() {
   }
 }
 
+// Add this to your main.js or auth.js file
+document.addEventListener('DOMContentLoaded', function() {
+    // Show splash screen
+    const splashScreen = document.getElementById('splash-screen');
+    const authContainer = document.getElementById('auth-container');
+    
+    // Add splash-active class to body
+    document.body.classList.add('splash-active');
+    
+    // After 2 seconds, hide splash and show auth
+    setTimeout(function() {
+        splashScreen.classList.add('hidden');
+        document.body.classList.remove('splash-active');
+        
+        // Add animation to auth container
+        authContainer.style.animation = 'authFadeIn 0.8s ease';
+        
+        // Remove animation after it completes
+        setTimeout(function() {
+            authContainer.style.animation = '';
+        }, 800);
+    }, 2000);
+    
+    // Form switching functionality
+    const authTabs = document.querySelectorAll('.auth-tab');
+    const authForms = document.querySelectorAll('.auth-form');
+    
+    // Tab switching
+    authTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const formId = this.getAttribute('data-form');
+            
+            // Update active tab
+            authTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Show corresponding form
+            authForms.forEach(form => {
+                form.classList.remove('active');
+                if (form.id === formId) {
+                    form.classList.add('active');
+                }
+            });
+        });
+    });
+    
+    // Forgot password link
+    const showForgotPassword = document.getElementById('show-forgot-password');
+    const showSigninFromForgot = document.getElementById('show-signin-from-forgot');
+    
+    if (showForgotPassword) {
+        showForgotPassword.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Switch to forgot password form
+            authForms.forEach(form => form.classList.remove('active'));
+            document.getElementById('forgot-password-form').classList.add('active');
+            
+            // Update tabs
+            authTabs.forEach(tab => tab.classList.remove('active'));
+        });
+    }
+    
+    if (showSigninFromForgot) {
+        showSigninFromForgot.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Switch back to sign in form
+            authForms.forEach(form => form.classList.remove('active'));
+            document.getElementById('signin-form').classList.add('active');
+            
+            // Update tabs
+            authTabs.forEach(tab => {
+                if (tab.getAttribute('data-form') === 'signin-form') {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+        });
+    }
+    
+    // Sign up link
+    const showSignup = document.getElementById('show-signup');
+    const showSignin = document.getElementById('show-signin');
+    
+    if (showSignup) {
+        showSignup.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Switch to sign up form
+            authForms.forEach(form => form.classList.remove('active'));
+            document.getElementById('signup-form').classList.add('active');
+            
+            // Update tabs
+            authTabs.forEach(tab => {
+                if (tab.getAttribute('data-form') === 'signup-form') {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+        });
+    }
+    
+    if (showSignin) {
+        showSignin.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Switch to sign in form
+            authForms.forEach(form => form.classList.remove('active'));
+            document.getElementById('signin-form').classList.add('active');
+            
+            // Update tabs
+            authTabs.forEach(tab => {
+                if (tab.getAttribute('data-form') === 'signin-form') {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+        });
+    }
+});
+
 // Reacts to Firebase auth state changes
 firebase.auth().onAuthStateChanged(user => {
   const dashboard = document.getElementById("dashboard-container");
