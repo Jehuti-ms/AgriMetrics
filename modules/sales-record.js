@@ -649,77 +649,81 @@ const SalesRecordModule = {
 
     // ==================== FIXED: CSP COMPLIANT RENDER METHODS ====================
 
-   renderProductionItems() {
-    // Get production data
-    const productionRecords = JSON.parse(localStorage.getItem('farm-production') || '[]');
-    const sales = window.FarmModules.appData.sales || [];
-
-    if (productionRecords.length === 0) {
+    renderProductionItems() {
+        // Get production data
+        const productionRecords = JSON.parse(localStorage.getItem('farm-production') || '[]');
+        const sales = window.FarmModules.appData.sales || [];
+        
+        if (productionRecords.length === 0) {
+            return `
+                <div class="glass-card" style="padding: 24px; margin-bottom: 24px; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border: 2px solid #cbd5e1;">
+                    <div style="text-align: center; padding: 16px;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
+                        <h3 style="color: #475569; margin-bottom: 8px;">No Production Items</h3>
+                        <p style="color: #64748b; margin-bottom: 16px;">Add production records to sell them here</p>
+                        <button class="btn-primary production-nav-btn" data-action="navigate-to-production" 
+                                style="background: #0ea5e9; border: none; padding: 10px 20px; border-radius: 8px; color: white; font-weight: 500; cursor: pointer;">
+                            ➕ Go to Production Module
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Calculate available items
+        const productCount = new Set(productionRecords.map(r => r.product)).size;
+        const totalProduced = productionRecords.reduce((sum, r) => sum + (r.quantity || 0), 0);
+        
+        // Calculate sold from production
+        const soldFromProduction = sales.filter(s => s.productionSource).length;
+        
         return `
-            <div class="glass-card production-empty">
-                <div class="empty-state">
-                    <div class="empty-icon">📦</div>
-                    <h3 class="empty-title">No Production Items</h3>
-                    <p class="empty-desc">Add production records to sell them here</p>
-                    <button class="btn-primary production-nav-btn" data-action="navigate-to-production">
-                        ➕ Go to Production Module
+            <div class="glass-card" style="padding: 24px; margin-bottom: 24px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #bae6fd;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div>
+                        <h3 style="color: #0369a1; margin: 0; font-size: 18px;">🔄 Available Production Items</h3>
+                        <p style="color: #0c4a6e; margin: 4px 0 0 0; font-size: 14px;">Sell directly from production records</p>
+                    </div>
+                    <button class="btn-primary production-nav-btn" data-action="show-production-items"
+                            style="background: #0ea5e9;">
+                        Sell from Production
                     </button>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 16px;">
+                    <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #bae6fd; text-align: center;">
+                        <div style="font-size: 24px; color: #0c4a6e;">${productCount}</div>
+                        <div style="font-size: 12px; color: #475569;">Product Types</div>
+                    </div>
+                    <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #bae6fd; text-align: center;">
+                        <div style="font-size: 24px; color: #0c4a6e;">${totalProduced}</div>
+                        <div style="font-size: 12px; color: #475569;">Total Produced</div>
+                    </div>
+                    <div style="padding: 12px; background: white; border-radius: 8px; border: 1px solid #bae6fd; text-align: center;">
+                        <div style="font-size: 24px; color: #0c4a6e;">${soldFromProduction}</div>
+                        <div style="font-size: 12px; color: #475569;">Sold from Production</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 16px; padding: 12px; background: #f0f9ff; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="color: #0ea5e9;">💡</span>
+                        <div style="font-size: 13px; color: #0369a1;">
+                            Selling from production helps track inventory and source of goods. 
+                            <a href="#" class="production-nav-btn" data-action="show-production-items" 
+                               style="color: #0ea5e9; text-decoration: none; font-weight: 500;">Browse available items →</a>
+                        </div>
+                    </div>
+                    <div style="margin-top: 8px; display: flex; justify-content: flex-end;">
+                        <button class="btn-outline production-nav-btn" data-action="navigate-to-production"
+                                style="background: white; color: #0ea5e9; border: 1px solid #0ea5e9; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                            ➕ Add New Production
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
-    }
-
-    // Calculate available items
-    const productCount = new Set(productionRecords.map(r => r.product)).size;
-    const totalProduced = productionRecords.reduce((sum, r) => sum + (r.quantity || 0), 0);
-
-    // Calculate sold from production
-    const soldFromProduction = sales.filter(s => s.productionSource).length;
-
-    return `
-        <div class="glass-card production-overview">
-            <div class="overview-header">
-                <div class="overview-text">
-                    <h3 class="overview-title">🔄 Available Production Items</h3>
-                    <p class="overview-subtitle">Sell directly from production records</p>
-                </div>
-                <button class="btn-primary production-nav-btn" data-action="show-production-items">
-                    Sell from Production
-                </button>
-            </div>
-
-            <div class="overview-stats-grid">
-                <div class="overview-stat">
-                    <div class="overview-value">${productCount}</div>
-                    <div class="overview-label">Product Types</div>
-                </div>
-                <div class="overview-stat">
-                    <div class="overview-value">${totalProduced}</div>
-                    <div class="overview-label">Total Produced</div>
-                </div>
-                <div class="overview-stat">
-                    <div class="overview-value">${soldFromProduction}</div>
-                    <div class="overview-label">Sold from Production</div>
-                </div>
-            </div>
-
-            <div class="overview-footer">
-                <div class="overview-tip">
-                    <span class="tip-icon">💡</span>
-                    <div class="tip-text">
-                        Selling from production helps track inventory and source of goods. 
-                        <a href="#" class="production-nav-btn" data-action="show-production-items">Browse available items →</a>
-                    </div>
-                </div>
-                <div class="overview-actions">
-                    <button class="btn-outline production-nav-btn" data-action="navigate-to-production">
-                        ➕ Add New Production
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-},
+    },
     
     selectProductionItem(itemId) {
         console.log('🔄 Selecting production item:', itemId);
@@ -806,286 +810,525 @@ const SalesRecordModule = {
             filteredSales = sales.filter(sale => new Date(sale.date) >= cutoffDate);
         }
 
-        renderSalesList(filteredSales) {
-    if (filteredSales.length === 0) {
+        if (filteredSales.length === 0) {
+            return `
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">💰</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No sales recorded</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Record your first sale to get started</div>
+                </div>
+            `;
+        }
+
+        const sortedSales = filteredSales.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+
         return `
-            <div class="no-records sales-empty">
-                <div class="no-records-icon">💰</div>
-                <div class="no-records-title">No sales recorded</div>
-                <div class="no-records-desc">Record your first sale to get started</div>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--glass-border);">
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Date</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Product</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Customer</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Animals/Quantity</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Unit Price</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Total</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Source</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sortedSales.map(sale => {
+                            const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+                            const isMeat = meatProducts.includes(sale.product);
+                            
+                            let quantityInfo = `${sale.quantity} ${sale.unit}`;
+                            if (isMeat && sale.weight && sale.weight > 0) {
+                                quantityInfo = `${sale.animalCount || sale.quantity} animal${(sale.animalCount || sale.quantity) !== 1 ? 's' : ''}`;
+                                if (sale.weight) {
+                                    const weightUnit = sale.weightUnit || 'kg';
+                                    quantityInfo += ` • ${sale.weight} ${weightUnit}`;
+                                }
+                            }
+                            
+                            const sourceBadge = sale.productionSource 
+                                ? '<span style="background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 10px; font-size: 10px; margin-left: 4px;">PROD</span>'
+                                : '';
+                            
+                            return `
+                                <tr style="border-bottom: 1px solid var(--glass-border);">
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">${this.formatDate(sale.date)}</td>
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span style="font-size: 18px;">${this.getProductIcon(sale.product)}</span>
+                                            <span style="font-weight: 500;">${this.formatProductName(sale.product)}</span>
+                                            ${sourceBadge}
+                                        </div>
+                                    </td>
+                                    <td style="padding: 12px 8px; color: var(--text-secondary);">${sale.customer || 'Walk-in'}</td>
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">${quantityInfo}</td>
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">
+                                        ${this.formatCurrency(sale.unitPrice)}
+                                        ${sale.weightUnit === 'lbs' ? '/lb' : sale.weightUnit ? `/${sale.weightUnit}` : sale.priceUnit === 'per-lb' ? '/lb' : '/kg'}
+                                    </td>
+                                    <td style="padding: 12px 8px; color: var(--text-primary); font-weight: 600;">${this.formatCurrency(sale.totalAmount)}</td>
+                                    <td style="padding: 12px 8px; color: var(--text-secondary); font-size: 12px;">
+                                        ${sale.productionSource ? 'Production' : 'Direct'}
+                                    </td>
+                                    <td style="padding: 12px 8px;">
+                                        <div style="display: flex; gap: 4px;">
+                                            <button class="btn-icon edit-sale-btn" data-id="${sale.id}" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary);" title="Edit">✏️</button>
+                                            <button class="btn-icon delete-sale-btn" data-id="${sale.id}" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary);" title="Delete">🗑️</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
             </div>
         `;
-    }
+    },
 
-    const sortedSales = filteredSales.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+    renderModule() {
+        if (!this.element) return;
 
-    return `
-        <div class="sales-table-wrapper">
-            <table class="sales-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Product</th>
-                        <th>Customer</th>
-                        <th>Animals/Quantity</th>
-                        <th>Unit Price</th>
-                        <th>Total</th>
-                        <th>Source</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${sortedSales.map(sale => {
-                        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
-                        const isMeat = meatProducts.includes(sale.product);
+        const today = this.getCurrentDate();
+        const sales = window.FarmModules.appData.sales || [];
+        
+        // Use our own areDatesEqual method
+        const todaySales = sales.filter(sale => this.areDatesEqual(sale.date, today))
+                               .reduce((sum, sale) => sum + sale.totalAmount, 0);
+        
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        const meatSales = sales.filter(sale => meatProducts.includes(sale.product));
+        const totalMeatWeight = meatSales.reduce((sum, sale) => sum + (sale.weight || 0), 0);
+        const totalAnimalsSold = meatSales.reduce((sum, sale) => sum + (sale.animalCount || sale.quantity || 0), 0);
 
-                        let quantityInfo = `${sale.quantity} ${sale.unit}`;
-                        if (isMeat && sale.weight && sale.weight > 0) {
-                            quantityInfo = `${sale.animalCount || sale.quantity} animal${(sale.animalCount || sale.quantity) !== 1 ? 's' : ''}`;
-                            if (sale.weight) {
-                                const weightUnit = sale.weightUnit || 'kg';
-                                quantityInfo += ` • ${sale.weight} ${weightUnit}`;
-                            }
-                        }
-
-                        const sourceBadge = sale.productionSource 
-                            ? '<span class="badge badge-prod">PROD</span>'
-                            : '';
-
-                        return `
-                            <tr>
-                                <td>${this.formatDate(sale.date)}</td>
-                                <td>
-                                    <div class="product-cell">
-                                        <span class="product-icon">${this.getProductIcon(sale.product)}</span>
-                                        <span class="product-name">${this.formatProductName(sale.product)}</span>
-                                        ${sourceBadge}
-                                    </div>
-                                </td>
-                                <td class="customer-cell">${sale.customer || 'Walk-in'}</td>
-                                <td>${quantityInfo}</td>
-                                <td>
-                                    ${this.formatCurrency(sale.unitPrice)}
-                                    ${sale.weightUnit === 'lbs' ? '/lb' : sale.weightUnit ? `/${sale.weightUnit}` : sale.priceUnit === 'per-lb' ? '/lb' : '/kg'}
-                                </td>
-                                <td class="total-cell">${this.formatCurrency(sale.totalAmount)}</td>
-                                <td class="source-cell">${sale.productionSource ? 'Production' : 'Direct'}</td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <button class="btn-icon edit-sale-btn" data-id="${sale.id}" title="Edit">✏️</button>
-                                        <button class="btn-icon delete-sale-btn" data-id="${sale.id}" title="Delete">🗑️</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
-        </div>
-    `;
-},
-
-   renderModule() {
-    if (!this.element) return;
-
-    const today = this.getCurrentDate();
-    const sales = window.FarmModules.appData.sales || [];
-
-    const todaySales = sales.filter(sale => this.areDatesEqual(sale.date, today))
-                            .reduce((sum, sale) => sum + sale.totalAmount, 0);
-
-    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
-    const meatSales = sales.filter(sale => meatProducts.includes(sale.product));
-    const totalMeatWeight = meatSales.reduce((sum, sale) => sum + (sale.weight || 0), 0);
-    const totalAnimalsSold = meatSales.reduce((sum, sale) => sum + (sale.animalCount || sale.quantity || 0), 0);
-
-    this.element.innerHTML = `
-        <div class="sales-module module-container">
-            <!-- Header -->
-            <div class="module-header">
-                <h1 class="module-title">Sales Records</h1>
-                <p class="module-subtitle">Track product sales, revenue, and weight (for meat)</p>
-                <div class="header-actions">
-                    <button class="btn-primary" id="add-sale">➕ Record Sale</button>
-                </div>
-            </div>
-
-            <!-- Sales Summary -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon">💰</div>
-                    <div class="stat-value" id="today-sales">${this.formatCurrency(todaySales)}</div>
-                    <div class="stat-label">Today's Revenue</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">⚖️</div>
-                    <div class="stat-value" id="total-meat-weight">${totalMeatWeight.toFixed(2)}</div>
-                    <div class="stat-label">Meat Weight Sold</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">🐄</div>
-                    <div class="stat-value" id="total-animals">${totalAnimalsSold}</div>
-                    <div class="stat-label">Animals Sold</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📈</div>
-                    <div class="stat-value" id="total-sales">${sales.length}</div>
-                    <div class="stat-label">Total Sales Records</div>
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="quick-action-grid">
-                <button class="quick-action-btn" id="add-sale-btn">
-                    <div class="action-icon">➕</div>
-                    <span class="action-title">Record Sale</span>
-                    <span class="action-desc">Add new sale record</span>
-                </button>
-                <button class="quick-action-btn" id="from-production-btn">
-                    <div class="action-icon">🔄</div>
-                    <span class="action-title">From Production</span>
-                    <span class="action-desc">Sell from production items</span>
-                </button>
-                <button class="quick-action-btn" id="meat-sales-btn">
-                    <div class="action-icon">🍗</div>
-                    <span class="action-title">Meat Sales</span>
-                    <span class="action-desc">Weight-based sales report</span>
-                </button>
-                <button class="quick-action-btn" id="daily-report-btn">
-                    <div class="action-icon">📊</div>
-                    <span class="action-title">Daily Report</span>
-                    <span class="action-desc">Today's sales summary</span>
-                </button>
-            </div>
-
-            <!-- Production Items Available -->
-            ${this.renderProductionItems()}
-
-            <!-- Quick Sale Form -->
-            <div class="glass-card quick-sale">
-                <h3 class="section-title">⚡ Quick Sale</h3>
-                <form id="quick-sale-form">
-                    <div class="form-grid">
-                        <div>
-                            <label class="form-label">Product *</label>
-                            <select id="quick-product" required class="form-input">
-                                <!-- product options -->
-                            </select>
-                        </div>
-                        <div>
-                            <label class="form-label">Quantity *</label>
-                            <input type="number" id="quick-quantity" placeholder="0" required class="form-input" min="1">
-                        </div>
-                        <div>
-                            <label class="form-label">Unit</label>
-                            <select id="quick-unit" class="form-input">
-                                <!-- unit options -->
-                            </select>
-                        </div>
-                        <div>
-                            <label class="form-label" id="quick-price-label">Price *</label>
-                            <input type="number" id="quick-price" placeholder="0.00" step="0.01" required class="form-input" min="0">
-                        </div>
-                        <div>
-                            <button type="submit" class="btn-primary">Record Sale</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Sales Records Table -->
-            <div class="glass-card sales-records">
-                <div class="section-header">
-                    <h3 class="section-title">📋 Recent Sales</h3>
-                    <div class="section-actions">
-                        <select id="period-filter" class="form-input">
-                            <option value="today">Today</option>
-                            <option value="week">This Week</option>
-                            <option value="month">This Month</option>
-                            <option value="all">All Time</option>
-                            <option value="meat">Meat Sales Only</option>
-                            <option value="production">From Production</option>
-                        </select>
+        this.element.innerHTML = `
+            <div class="module-container">
+                <!-- Header -->
+                <div class="module-header">
+                    <h1 class="module-title">Sales Records</h1>
+                    <p class="module-subtitle">Track product sales, revenue, and weight (for meat)</p>
+                    <div class="header-actions">
+                        <button class="btn-primary" id="add-sale">
+                            ➕ Record Sale
+                        </button>
                     </div>
                 </div>
-                <div id="sales-table">
-                    ${this.renderSalesTable('today')}
+
+                <!-- Sales Summary -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="today-sales">${this.formatCurrency(todaySales)}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Today's Revenue</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">⚖️</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-meat-weight">${totalMeatWeight.toFixed(2)}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Meat Weight Sold</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">🐄</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-animals">${totalAnimalsSold}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Animals Sold</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📈</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-sales">${sales.length}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Sales Records</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-action-grid">
+                    <button class="quick-action-btn" id="add-sale-btn">
+                        <div style="font-size: 32px;">➕</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Record Sale</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Add new sale record</span>
+                    </button>
+                    <button class="quick-action-btn" id="from-production-btn">
+                        <div style="font-size: 32px;">🔄</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">From Production</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Sell from production items</span>
+                    </button>
+                    <button class="quick-action-btn" id="meat-sales-btn">
+                        <div style="font-size: 32px;">🍗</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Meat Sales</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Weight-based sales report</span>
+                    </button>
+                    <button class="quick-action-btn" id="daily-report-btn">
+                        <div style="font-size: 32px;">📊</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Daily Report</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Today's sales summary</span>
+                    </button>
+                </div>
+
+                <!-- Production Items Available -->
+                ${this.renderProductionItems()}
+
+                <!-- Quick Sale Form -->
+                <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 16px;">⚡ Quick Sale</h3>
+                    <form id="quick-sale-form">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end;">
+                            <div>
+                                <label class="form-label">Product *</label>
+                                <select id="quick-product" required class="form-input">
+                                    <option value="">Select Product</option>
+                                    <optgroup label="Livestock (Meat)">
+                                        <option value="broilers-dressed">Broilers (Dressed)</option>
+                                        <option value="pork">Pork</option>
+                                        <option value="beef">Beef</option>
+                                        <option value="chicken-parts">Chicken Parts</option>
+                                        <option value="goat">Goat</option>
+                                        <option value="lamb">Lamb</option>
+                                    </optgroup>
+                                    <optgroup label="Poultry">
+                                        <option value="broilers-live">Broilers (Live)</option>
+                                        <option value="layers">Layers (Egg-laying)</option>
+                                        <option value="eggs">Eggs</option>
+                                        <option value="chicks">Baby Chicks</option>
+                                    </optgroup>
+                                    <optgroup label="Produce">
+                                        <option value="tomatoes">Tomatoes</option>
+                                        <option value="peppers">Peppers</option>
+                                        <option value="cucumbers">Cucumbers</option>
+                                        <option value="lettuce">Lettuce</option>
+                                        <option value="carrots">Carrots</option>
+                                        <option value="potatoes">Potatoes</option>
+                                    </optgroup>
+                                    <optgroup label="Other">
+                                        <option value="honey">Honey</option>
+                                        <option value="milk">Milk</option>
+                                        <option value="other">Other</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Quantity *</label>
+                                <input type="number" id="quick-quantity" placeholder="0" required class="form-input" min="1">
+                            </div>
+                            <div>
+                                <label class="form-label">Unit</label>
+                                <select id="quick-unit" class="form-input">
+                                    <option value="kg">kg</option>
+                                    <option value="lbs">lbs</option>
+                                    <option value="birds">Birds</option>
+                                    <option value="animals">Animals</option>
+                                    <option value="pieces">Pieces</option>
+                                    <option value="dozen">Dozen</option>
+                                    <option value="case">Case</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label" id="quick-price-label">Price *</label>
+                                <input type="number" id="quick-price" placeholder="0.00" step="0.01" required class="form-input" min="0">
+                            </div>
+                            <div>
+                                <button type="submit" class="btn-primary" style="height: 42px;">Record Sale</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Sales Records Table -->
+                <div class="glass-card" style="padding: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: var(--text-primary); font-size: 20px;">📋 Recent Sales</h3>
+                        <div style="display: flex; gap: 12px;">
+                            <select id="period-filter" class="form-input" style="width: auto;">
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="all">All Time</option>
+                                <option value="meat">Meat Sales Only</option>
+                                <option value="production">From Production</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="sales-table">
+                        ${this.renderSalesTable('today')}
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- ==================== POPOUT MODALS ==================== -->
-        <!-- Sales Record Modal -->
-        <div id="sale-modal" class="popout-modal hidden">
-            <div class="popout-modal-content">
-                <div class="popout-modal-header">
-                    <h3 class="popout-modal-title" id="sale-modal-title">Record Sale</h3>
-                    <button class="popout-modal-close" id="close-sale-modal">&times;</button>
-                </div>
-                <div class="popout-modal-body">
-                    ${this.renderSaleForm()}
-                </div>
-                <div class="popout-modal-footer">
-                    <button type="button" class="btn-outline" id="cancel-sale">Cancel</button>
-                    <button type="button" class="btn-danger" id="delete-sale" style="display: none;">Delete</button>
-                    <button type="button" class="btn-primary" id="save-sale">Save Sale</button>
+            <!-- POPOUT MODALS -->
+            <!-- Sales Record Modal -->
+            <div id="sale-modal" class="popout-modal hidden">
+                <div class="popout-modal-content" style="max-width: 700px;">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title" id="sale-modal-title">Record Sale</h3>
+                        <button class="popout-modal-close" id="close-sale-modal">&times;</button>
+                    </div>
+                    <div class="popout-modal-body">
+                        <form id="sale-form">
+                            <input type="hidden" id="sale-id" value="">
+                            <input type="hidden" id="production-source-id" value="">
+                            
+                            <div id="production-source-notice" style="padding: 12px; background: #dbeafe; border-radius: 8px; margin-bottom: 16px; display: none;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 18px;">🔄</span>
+                                    <div>
+                                        <div style="font-weight: 600; color: #1e40af;">Selling from Production</div>
+                                        <div style="font-size: 14px; color: #4b5563;" id="production-source-info"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Sale Date *</label>
+                                    <input type="date" id="sale-date" class="form-input" required value="${this.getCurrentDate()}">
+                                </div>
+                                <div>
+                                    <label class="form-label">Customer Name</label>
+                                    <input type="text" id="sale-customer" class="form-input" placeholder="Customer name (optional)">
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Product *</label>
+                                    <select id="sale-product" class="form-input" required>
+                                        <option value="">Select Product</option>
+                                        <optgroup label="Livestock (Meat - Weight Required)">
+                                            <option value="broilers-dressed">Broilers (Dressed)</option>
+                                            <option value="pork">Pork</option>
+                                            <option value="beef">Beef</option>
+                                            <option value="chicken-parts">Chicken Parts</option>
+                                            <option value="goat">Goat</option>
+                                            <option value="lamb">Lamb</option>
+                                        </optgroup>
+                                        <optgroup label="Poultry (Count)">
+                                            <option value="broilers-live">Broilers (Live)</option>
+                                            <option value="layers">Layers (Egg-laying)</option>
+                                            <option value="chicks">Baby Chicks</option>
+                                        </optgroup>
+                                        <optgroup label="Eggs & Dairy">
+                                            <option value="eggs">Eggs</option>
+                                            <option value="milk">Milk</option>
+                                            <option value="cheese">Cheese</option>
+                                            <option value="yogurt">Yogurt</option>
+                                            <option value="butter">Butter</option>
+                                        </optgroup>
+                                        <optgroup label="Vegetables">
+                                            <option value="tomatoes">Tomatoes</option>
+                                            <option value="peppers">Peppers</option>
+                                            <option value="cucumbers">Cucumbers</option>
+                                            <option value="lettuce">Lettuce</option>
+                                            <option value="carrots">Carrots</option>
+                                            <option value="potatoes">Potatoes</option>
+                                        </optgroup>
+                                        <optgroup label="Other">
+                                            <option value="honey">Honey</option>
+                                            <option value="jam">Jam/Preserves</option>
+                                            <option value="bread">Bread</option>
+                                            <option value="other">Other</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">Unit *</label>
+                                    <select id="sale-unit" class="form-input" required>
+                                        <option value="">Select Unit</option>
+                                        <option value="kg">Kilograms (kg)</option>
+                                        <option value="lbs">Pounds (lbs)</option>
+                                        <option value="birds">Birds</option>
+                                        <option value="animals">Animals</option>
+                                        <option value="pieces">Pieces</option>
+                                        <option value="dozen">Dozen</option>
+                                        <option value="case">Case</option>
+                                        <option value="crate">Crate</option>
+                                        <option value="bag">Bag</option>
+                                        <option value="bottle">Bottle</option>
+                                        <option value="jar">Jar</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- MEAT SALES SECTION -->
+                            <div id="meat-section" style="display: none; margin-bottom: 16px;">
+                                <div style="background: #fef3f3; padding: 16px; border-radius: 8px; border: 1px solid #fed7d7; margin-bottom: 16px;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                                        <span style="font-size: 20px; color: #dc2626;">🍗</span>
+                                        <div style="font-weight: 600; color: #7c2d12;">Meat Sale Details</div>
+                                    </div>
+                                    
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                        <div>
+                                            <label class="form-label">Number of Animals *</label>
+                                            <input type="number" id="meat-animal-count" class="form-input" min="1" placeholder="0">
+                                            <div class="form-hint">Number of birds/carcasses being sold</div>
+                                        </div>
+                                        <div>
+                                            <label class="form-label">Total Weight *</label>
+                                            <div style="display: flex; gap: 8px;">
+                                                <input type="number" id="meat-weight" class="form-input" min="0.1" step="0.1" placeholder="0.0">
+                                                <select id="meat-weight-unit" class="form-input" style="min-width: 100px;">
+                                                    <option value="kg">kg</option>
+                                                    <option value="lbs">lbs</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-hint">Total weight of all animals</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px;">
+                                        <div>
+                                            <label class="form-label" id="meat-price-label">Price per kg *</label>
+                                            <div style="display: flex; align-items: center; gap: 4px;">
+                                                <span style="color: var(--text-secondary);">$</span>
+                                                <input type="number" id="meat-price" class="form-input" step="0.01" min="0" placeholder="0.00">
+                                                <span id="meat-price-unit-label" style="color: var(--text-secondary); font-size: 14px; white-space: nowrap;">per kg</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="form-label" id="meat-avg-label">Average per Animal</label>
+                                            <div style="padding: 8px; background: #f3f4f6; border-radius: 6px; text-align: center;">
+                                                <div id="meat-avg-weight" style="font-weight: 600; color: #dc2626;">0.00 kg</div>
+                                                <div id="meat-avg-value" style="font-size: 12px; color: #6b7280;">$0.00</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- STANDARD QUANTITY SECTION -->
+                            <div id="standard-section" style="margin-bottom: 16px;">
+                                <div style="background: #f0f9ff; padding: 16px; border-radius: 8px; border: 1px solid #bae6fd;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                                        <span style="font-size: 20px; color: #0ea5e9;">📦</span>
+                                        <div style="font-weight: 600; color: #0369a1;">Standard Product Sale</div>
+                                    </div>
+                                    
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                        <div>
+                                            <label class="form-label">Quantity *</label>
+                                            <input type="number" id="standard-quantity" class="form-input" min="0.01" step="0.01" placeholder="0.00">
+                                            <div class="form-hint">Amount to sell</div>
+                                        </div>
+                                        <div>
+                                            <label class="form-label">Unit Price *</label>
+                                            <div style="display: flex; align-items: center; gap: 4px;">
+                                                <span style="color: var(--text-secondary);">$</span>
+                                                <input type="number" id="standard-price" class="form-input" step="0.01" min="0" placeholder="0.00">
+                                                <span id="standard-price-unit-label" style="color: var(--text-secondary); font-size: 14px; white-space: nowrap;">per unit</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Payment Method *</label>
+                                    <select id="sale-payment" class="form-input" required>
+                                        <option value="cash">Cash</option>
+                                        <option value="card">Credit/Debit Card</option>
+                                        <option value="transfer">Bank Transfer</option>
+                                        <option value="check">Check</option>
+                                        <option value="mobile">Mobile Payment</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">Payment Status</label>
+                                    <select id="sale-status" class="form-input">
+                                        <option value="paid">Paid</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="partial">Partial Payment</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 16px;">
+                                <label class="form-label">Notes (Optional)</label>
+                                <textarea id="sale-notes" class="form-input" placeholder="Sale notes, customer details, etc." rows="3"></textarea>
+                            </div>
+
+                            <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border); margin-bottom: 16px;">
+                                <h4 style="color: var(--text-primary); margin: 0; text-align: center;">
+                                    Sale Total: <span id="sale-total-amount" style="color: var(--primary-color);">$0.00</span>
+                                </h4>
+                                <div id="meat-summary" style="display: none; text-align: center; margin-top: 8px; font-size: 14px; color: var(--text-secondary);">
+                                    <div id="meat-summary-info">0 animals • 0 kg total • $0.00/animal average</div>
+                                </div>
+                                <div id="standard-summary" style="display: none; text-align: center; margin-top: 8px; font-size: 14px; color: var(--text-secondary);">
+                                    <div id="standard-summary-info">0 units at $0.00/unit</div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="popout-modal-footer">
+                        <button type="button" class="btn-outline" id="cancel-sale">Cancel</button>
+                        <button type="button" class="btn-danger" id="delete-sale" style="display: none;">Delete</button>
+                        <button type="button" class="btn-primary" id="save-sale">Save Sale</button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Daily Report Modal -->
-        <div id="daily-report-modal" class="popout-modal hidden">
-            <div class="popout-modal-content">
-                <div class="popout-modal-header">
-                    <h3 class="popout-modal-title" id="daily-report-title">Daily Sales Report</h3>
-                    <button class="popout-modal-close" id="close-daily-report">&times;</button>
-                </div>
-                <div class="popout-modal-body">
-                    <div id="daily-report-content"></div>
-                </div>
-                <div class="popout-modal-footer">
-                    <button class="btn-outline" id="print-daily-report">🖨️ Print</button>
-                    <button class="btn-primary" id="close-daily-report-btn">Close</button>
+            <!-- Daily Report Modal -->
+            <div id="daily-report-modal" class="popout-modal hidden">
+                <div class="popout-modal-content" style="max-width: 800px;">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title" id="daily-report-title">Daily Sales Report</h3>
+                        <button class="popout-modal-close" id="close-daily-report">&times;</button>
+                    </div>
+                    <div class="popout-modal-body">
+                        <div id="daily-report-content">
+                            <!-- Report content will be inserted here -->
+                        </div>
+                    </div>
+                    <div class="popout-modal-footer">
+                        <button class="btn-outline" id="print-daily-report">🖨️ Print</button>
+                        <button class="btn-primary" id="close-daily-report-btn">Close</button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Meat Sales Report Modal -->
-        <div id="meat-sales-modal" class="popout-modal hidden">
-            <div class="popout-modal-content">
-                <div class="popout-modal-header">
-                    <h3 class="popout-modal-title" id="meat-sales-title">Meat Sales Report</h3>
-                    <button class="popout-modal-close" id="close-meat-sales">&times;</button>
-                </div>
-                <div class="popout-modal-body">
-                    <div id="meat-sales-content"></div>
-                </div>
-                <div class="popout-modal-footer">
-                    <button class="btn-outline" id="print-meat-sales">🖨️ Print</button>
-                    <button class="btn-primary" id="close-meat-sales-btn">Close</button>
+            <!-- Meat Sales Report Modal -->
+            <div id="meat-sales-modal" class="popout-modal hidden">
+                <div class="popout-modal-content" style="max-width: 800px;">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title" id="meat-sales-title">Meat Sales Report</h3>
+                        <button class="popout-modal-close" id="close-meat-sales">&times;</button>
+                    </div>
+                    <div class="popout-modal-body">
+                        <div id="meat-sales-content">
+                            <!-- Report content will be inserted here -->
+                        </div>
+                    </div>
+                    <div class="popout-modal-footer">
+                        <button class="btn-outline" id="print-meat-sales">🖨️ Print</button>
+                        <button class="btn-primary" id="close-meat-sales-btn">Close</button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-                <!-- Production Items Modal -->
-        <div id="production-items-modal" class="popout-modal hidden">
-            <div class="popout-modal-content">
-                <div class="popout-modal-header">
-                    <h3 class="popout-modal-title">Available Production Items</h3>
-                    <button class="popout-modal-close" id="close-production-items">&times;</button>
-                </div>
-                <div class="popout-modal-body">
-                    <div id="production-items-content"></div>
-                </div>
-                <div class="popout-modal-footer">
-                    <button class="btn-outline" id="close-production-items-btn">Close</button>
+            <!-- Production Items Modal -->
+            <div id="production-items-modal" class="popout-modal hidden">
+                <div class="popout-modal-content" style="max-width: 800px;">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title">Available Production Items</h3>
+                        <button class="popout-modal-close" id="close-production-items">&times;</button>
+                    </div>
+                    <div class="popout-modal-body">
+                        <div id="production-items-content">
+                            <!-- Production items will be inserted here -->
+                        </div>
+                    </div>
+                    <div class="popout-modal-footer">
+                        <button class="btn-outline" id="close-production-items-btn">Close</button>
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
+        `;
 
-    this.setupEventListeners();
-},
+        this.setupEventListeners();
+    },
 
     // ==================== FIXED: CSP COMPLIANT EVENT LISTENERS ====================
 
@@ -1355,94 +1598,103 @@ const SalesRecordModule = {
         });
         
         // Create modal content
-let content = '<div class="production-items-list">';
-
-if (availableProducts.length === 0) {
-    content += `
-        <div class="production-empty">
-            <div class="empty-icon">📦</div>
-            <h4 class="empty-title">No production items available for sale</h4>
-            <p class="empty-desc">
-                All production items have been sold or no production records exist.
-            </p>
-            <div class="empty-actions">
-                <button class="btn-primary production-nav-btn" data-action="navigate-to-production">
-                    ➕ Go to Production Module
-                </button>
-            </div>
-            <p class="empty-hint">
-                Add new production records to sell them here
-            </p>
-        </div>
-    `;
-} else {
-    content += `
-        <div class="production-intro">
-            <p>Select a production item to create a sale from:</p>
-        </div>
-
-        <div class="production-grid">
-    `;
-
-    availableProducts.forEach((item) => {
-        const icon = this.getProductIcon(item.product);
-        const formattedDate = this.formatDate(item.date);
-        const productName = this.formatProductName(item.product);
-
-        content += `
-            <div class="production-card">
-                <div class="production-card-header">
-                    <div class="product-icon">${icon}</div>
-                    <div class="product-info">
-                        <div class="product-name">${productName}</div>
-                        <div class="product-date">Produced: ${formattedDate}</div>
+        let content = '<div class="production-items-list">';
+        
+        if (availableProducts.length === 0) {
+            content += `
+                <div style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
+                    <h4 style="color: #374151; margin-bottom: 8px;">No production items available for sale</h4>
+                    <p style="color: var(--text-secondary);">All production items have been sold or no production records exist.</p>
+                    <div style="margin-top: 20px;">
+                        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                            <button class="btn-primary production-nav-btn" data-action="navigate-to-production"
+                                    style="background: #0ea5e9; border: none; padding: 10px 20px; border-radius: 8px; color: white; font-weight: 500; cursor: pointer;">
+                                ➕ Go to Production Module
+                            </button>
+                        </div>
                     </div>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-top: 12px;">
+                        Add new production records to sell them here
+                    </p>
                 </div>
-
-                <div class="production-stats">
-                    <div class="stat total-produced">
-                        <div class="stat-label">Total Produced</div>
-                        <div class="stat-value">${item.totalQuantity} ${item.unit}</div>
-                    </div>
-                    <div class="stat available">
-                        <div class="stat-label">Available</div>
-                        <div class="stat-value">${item.availableQuantity} ${item.unit}</div>
-                    </div>
+            `;
+        } else {
+            content += `
+                <div style="margin-bottom: 16px;">
+                    <p style="color: var(--text-secondary); font-size: 14px; margin: 0;">
+                        Select a production item to create a sale from:
+                    </p>
                 </div>
-
-                ${item.notes ? `
-                    <div class="production-notes">
-                        <div class="notes-label">Notes</div>
-                        <div class="notes-text">${item.notes}</div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
+            `;
+            
+            availableProducts.forEach((item, index) => {
+                const icon = this.getProductIcon(item.product);
+                const formattedDate = this.formatDate(item.date);
+                const productName = this.formatProductName(item.product);
+                
+                content += `
+                    <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                            <div style="font-size: 24px; background: #e0f2fe; padding: 8px; border-radius: 8px;">
+                                ${icon}
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: var(--text-primary);">${productName}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">Produced: ${formattedDate}</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;">
+                            <div style="padding: 8px; background: #f0f9ff; border-radius: 6px; text-align: center;">
+                                <div style="font-size: 11px; color: #0c4a6e; margin-bottom: 4px;">Total Produced</div>
+                                <div style="font-weight: 600; color: #0369a1;">${item.totalQuantity} ${item.unit}</div>
+                            </div>
+                            <div style="padding: 8px; background: #f0fdf4; border-radius: 6px; text-align: center;">
+                                <div style="font-size: 11px; color: #166534; margin-bottom: 4px;">Available</div>
+                                <div style="font-weight: 600; color: #16a34a;">${item.availableQuantity} ${item.unit}</div>
+                            </div>
+                        </div>
+                        
+                        ${item.notes ? `
+                            <div style="margin-bottom: 12px; padding: 8px; background: #f8fafc; border-radius: 6px;">
+                                <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">Notes</div>
+                                <div style="font-size: 12px; color: #475569;">${item.notes}</div>
+                            </div>
+                        ` : ''}
+                        
+                        <div style="display: flex; gap: 8px;">
+                            <button class="sell-production-item-btn" data-item-id="${item.id}"
+                                    style="flex: 1; padding: 8px 12px; background: var(--primary-color); color: white; 
+                                    border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px;">
+                                Sell This Item
+                            </button>
+                        </div>
                     </div>
-                ` : ''}
-
-                <div class="production-actions">
-                    <button class="btn-primary sell-production-item-btn" data-item-id="${item.id}">
-                        Sell This Item
+                `;
+            });
+            
+            content += `
+                </div>
+                
+                <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="color: #0ea5e9; font-size: 16px;">💡</span>
+                        <div style="font-size: 13px; color: #475569;">
+                            Need more products? Add new production records.
+                        </div>
+                    </div>
+                    <button class="btn-outline production-nav-btn" data-action="navigate-to-production"
+                            style="background: white; color: #0ea5e9; border: 1px solid #0ea5e9; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                        ➕ Add Production
                     </button>
                 </div>
-            </div>
-        `;
-    });
-
-    content += `
-        </div>
-
-        <div class="production-footer">
-            <div class="footer-tip">
-                <span class="tip-icon">💡</span>
-                <div class="tip-text">Need more products? Add new production records.</div>
-            </div>
-            <button class="btn-outline production-nav-btn" data-action="navigate-to-production">
-                ➕ Add Production
-            </button>
-        </div>
-    `;
-}
-
-content += '</div>';
-
+            `;
+        }
+        
+        content += '</div>';
         
         // Update modal content
         const contentElement = document.getElementById('production-items-content');
@@ -2389,96 +2641,98 @@ content += '</div>';
             });
         }
         
-       let content = `
-    <div class="daily-report-card">
-        <div class="daily-report-header">
-            <h2 class="report-title">📊 Daily Sales Report</h2>
-            <p class="report-date">${this.formatDate(today)}</p>
-        </div>
-
-        <div class="report-stats-grid">
-            <div class="report-stat revenue">
-                <div class="stat-icon">💰</div>
-                <div class="stat-value">${this.formatCurrency(totalRevenue)}</div>
-                <div class="stat-label">Total Revenue</div>
+        let content = `
+            <div style="background: white; padding: 24px; border-radius: 12px;">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <h2 style="color: var(--text-primary); margin-bottom: 8px;">📊 Daily Sales Report</h2>
+                    <p style="color: var(--text-secondary); font-size: 16px;">${this.formatDate(today)}</p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
+                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px;">
+                        <div style="font-size: 32px; margin-bottom: 8px;">💰</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(totalRevenue)}</div>
+                        <div style="color: var(--text-secondary); font-size: 14px;">Total Revenue</div>
+                    </div>
+                    
+                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #fef3f3 0%, #fed7d7 100%); border-radius: 8px;">
+                        <div style="font-size: 32px; margin-bottom: 8px;">📈</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${totalTransactions}</div>
+                        <div style="color: var(--text-secondary); font-size: 14px;">Transactions</div>
+                    </div>
+                    
+                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px;">
+                        <div style="font-size: 32px; margin-bottom: 8px;">📦</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${Object.keys(productsSold).length}</div>
+                        <div style="color: var(--text-secondary); font-size: 14px;">Products Sold</div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 32px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--glass-border); padding-bottom: 8px;">📋 Products Sold Today</h3>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #e5e7eb;">
+                                    <th style="padding: 12px; text-align: left; color: #374151;">Product</th>
+                                    <th style="padding: 12px; text-align: left; color: #374151;">Quantity</th>
+                                    <th style="padding: 12px; text-align: left; color: #374151;">Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+        `;
+        
+        Object.entries(productsSold).forEach(([product, quantity]) => {
+            const productSales = todaySales.filter(s => this.formatProductName(s.product) === product);
+            const productRevenue = productSales.reduce((sum, s) => sum + s.totalAmount, 0);
+            
+            content += `
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px; color: var(--text-primary);">${product}</td>
+                    <td style="padding: 12px; color: var(--text-primary);">${quantity}</td>
+                    <td style="padding: 12px; color: var(--text-primary); font-weight: 600;">${this.formatCurrency(productRevenue)}</td>
+                </tr>
+            `;
+        });
+        
+        content += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--glass-border); padding-bottom: 8px;">💳 Payment Methods</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+        `;
+        
+        Object.entries(paymentMethods).forEach(([method, amount]) => {
+            const percentage = totalRevenue > 0 ? ((amount / totalRevenue) * 100).toFixed(1) : 0;
+            
+            content += `
+                <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${method.charAt(0).toUpperCase() + method.slice(1)}</div>
+                    <div style="font-size: 20px; font-weight: bold; color: var(--primary-color);">${this.formatCurrency(amount)}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">${percentage}% of total</div>
+                </div>
+            `;
+        });
+        
+        content += `
+                    </div>
+                </div>
+                
+                ${todaySales.length > 0 ? `
+                    <div style="margin-top: 32px; padding: 20px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+                        <h4 style="color: var(--text-primary); margin-bottom: 12px;">📝 Summary</h4>
+                        <p style="color: var(--text-secondary); line-height: 1.6;">
+                            Today's sales show ${totalTransactions} transaction${totalTransactions !== 1 ? 's' : ''} totaling ${this.formatCurrency(totalRevenue)}. 
+                            The most popular payment method was ${Object.keys(paymentMethods).reduce((a, b) => paymentMethods[a] > paymentMethods[b] ? a : b)}.
+                        </p>
+                    </div>
+                ` : ''}
             </div>
-            <div class="report-stat transactions">
-                <div class="stat-icon">📈</div>
-                <div class="stat-value">${totalTransactions}</div>
-                <div class="stat-label">Transactions</div>
-            </div>
-            <div class="report-stat products">
-                <div class="stat-icon">📦</div>
-                <div class="stat-value">${Object.keys(productsSold).length}</div>
-                <div class="stat-label">Products Sold</div>
-            </div>
-        </div>
-
-        <div class="report-section products-sold">
-            <h3 class="section-title">📋 Products Sold Today</h3>
-            <div class="table-wrapper">
-                <table class="report-table">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Quantity</th>
-                            <th>Revenue</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-`;
-
-Object.entries(productsSold).forEach(([product, quantity]) => {
-    const productSales = todaySales.filter(s => this.formatProductName(s.product) === product);
-    const productRevenue = productSales.reduce((sum, s) => sum + s.totalAmount, 0);
-
-    content += `
-        <tr>
-            <td>${product}</td>
-            <td>${quantity}</td>
-            <td class="revenue-cell">${this.formatCurrency(productRevenue)}</td>
-        </tr>
-    `;
-});
-
-content += `
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="report-section payment-methods">
-            <h3 class="section-title">💳 Payment Methods</h3>
-            <div class="payment-grid">
-`;
-
-Object.entries(paymentMethods).forEach(([method, amount]) => {
-    const percentage = totalRevenue > 0 ? ((amount / totalRevenue) * 100).toFixed(1) : 0;
-
-    content += `
-        <div class="payment-card">
-            <div class="payment-method">${method.charAt(0).toUpperCase() + method.slice(1)}</div>
-            <div class="payment-amount">${this.formatCurrency(amount)}</div>
-            <div class="payment-percentage">${percentage}% of total</div>
-        </div>
-    `;
-});
-
-content += `
-            </div>
-        </div>
-
-        ${todaySales.length > 0 ? `
-            <div class="report-summary">
-                <h4 class="summary-title">📝 Summary</h4>
-                <p class="summary-text">
-                    Today's sales show ${totalTransactions} transaction${totalTransactions !== 1 ? 's' : ''} totaling ${this.formatCurrency(totalRevenue)}. 
-                    The most popular payment method was ${Object.keys(paymentMethods).reduce((a, b) => paymentMethods[a] > paymentMethods[b] ? a : b)}.
-                </p>
-            </div>
-        ` : ''}
-    </div>
-`;
+        `;
         
         const contentElement = document.getElementById('daily-report-content');
         if (contentElement) {
@@ -2542,96 +2796,99 @@ content += `
             });
         }
         
-       let content = `
-    <div class="meat-report-card">
-        <div class="meat-report-header">
-            <h2 class="report-title">🍗 Meat Sales Report</h2>
-            <p class="report-subtitle">Weight-based meat sales analysis</p>
-        </div>
-
-        <div class="report-stats-grid">
-            <div class="report-stat animals">
-                <div class="stat-icon">🍖</div>
-                <div class="stat-value">${totalAnimals}</div>
-                <div class="stat-label">Total Animals</div>
-            </div>
-            <div class="report-stat weight">
-                <div class="stat-icon">⚖️</div>
-                <div class="stat-value">${totalWeight.toFixed(2)} kg</div>
-                <div class="stat-label">Total Weight</div>
-            </div>
-            <div class="report-stat revenue">
-                <div class="stat-icon">💰</div>
-                <div class="stat-value">${this.formatCurrency(totalRevenue)}</div>
-                <div class="stat-label">Total Revenue</div>
-            </div>
-            <div class="report-stat transactions">
-                <div class="stat-icon">📊</div>
-                <div class="stat-value">${meatSales.length}</div>
-                <div class="stat-label">Transactions</div>
-            </div>
-        </div>
-
-        <div class="report-section product-breakdown">
-            <h3 class="section-title">📋 Product Breakdown</h3>
-            <div class="table-wrapper">
-                <table class="report-table">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Animals</th>
-                            <th>Weight (kg)</th>
-                            <th>Avg Weight</th>
-                            <th>Revenue</th>
-                            <th>Avg Price/kg</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-`;
-
-Object.entries(productBreakdown).forEach(([product, data]) => {
-    const avgWeight = data.animals > 0 ? (data.weight / data.animals).toFixed(2) : 0;
-    const avgPricePerKg = data.weight > 0 ? (data.revenue / data.weight).toFixed(2) : 0;
-
-    content += `
-        <tr>
-            <td class="product-cell">${product}</td>
-            <td>${data.animals}</td>
-            <td>${data.weight.toFixed(2)} kg</td>
-            <td>${avgWeight} kg/animal</td>
-            <td class="revenue-cell">${this.formatCurrency(data.revenue)}</td>
-            <td>${this.formatCurrency(parseFloat(avgPricePerKg))}/kg</td>
-        </tr>
-    `;
-});
-
-content += `
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        ${totalWeight > 0 ? `
-            <div class="report-section key-metrics">
-                <h4 class="section-title">📊 Key Metrics</h4>
-                <div class="metrics-grid">
-                    <div class="metric">
-                        <div class="metric-label">Average Weight per Animal</div>
-                        <div class="metric-value">${(totalWeight / totalAnimals).toFixed(2)} kg</div>
+        let content = `
+            <div style="background: white; padding: 24px; border-radius: 12px;">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <h2 style="color: var(--text-primary); margin-bottom: 8px;">🍗 Meat Sales Report</h2>
+                    <p style="color: var(--text-secondary); font-size: 16px;">Weight-based meat sales analysis</p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
+                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #fef3f3 0%, #fed7d7 100%); border-radius: 8px;">
+                        <div style="font-size: 32px; margin-bottom: 8px;">🍖</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${totalAnimals}</div>
+                        <div style="color: var(--text-secondary); font-size: 14px;">Total Animals</div>
                     </div>
-                    <div class="metric">
-                        <div class="metric-label">Average Price per kg</div>
-                        <div class="metric-value">${this.formatCurrency(totalRevenue / totalWeight)}/kg</div>
+                    
+                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #fef9c3 0%, #fde047 100%); border-radius: 8px;">
+                        <div style="font-size: 32px; margin-bottom: 8px;">⚖️</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${totalWeight.toFixed(2)} kg</div>
+                        <div style="color: var(--text-secondary); font-size: 14px;">Total Weight</div>
                     </div>
-                    <div class="metric">
-                        <div class="metric-label">Average Sale Value</div>
-                        <div class="metric-value">${this.formatCurrency(totalRevenue / meatSales.length)}</div>
+                    
+                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-radius: 8px;">
+                        <div style="font-size: 32px; margin-bottom: 8px;">💰</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(totalRevenue)}</div>
+                        <div style="color: var(--text-secondary); font-size: 14px;">Total Revenue</div>
+                    </div>
+                    
+                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); border-radius: 8px;">
+                        <div style="font-size: 32px; margin-bottom: 8px;">📊</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary);">${meatSales.length}</div>
+                        <div style="color: var(--text-secondary); font-size: 14px;">Transactions</div>
                     </div>
                 </div>
+                
+                <div style="margin-bottom: 32px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--glass-border); padding-bottom: 8px;">📋 Product Breakdown</h3>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #e5e7eb;">
+                                    <th style="padding: 12px; text-align: left; color: #374151;">Product</th>
+                                    <th style="padding: 12px; text-align: left; color: #374151;">Animals</th>
+                                    <th style="padding: 12px; text-align: left; color: #374151;">Weight (kg)</th>
+                                    <th style="padding: 12px; text-align: left; color: #374151;">Avg Weight</th>
+                                    <th style="padding: 12px; text-align: left; color: #374151;">Revenue</th>
+                                    <th style="padding: 12px; text-align: left; color: #374151;">Avg Price/kg</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+        `;
+        
+        Object.entries(productBreakdown).forEach(([product, data]) => {
+            const avgWeight = data.animals > 0 ? (data.weight / data.animals).toFixed(2) : 0;
+            const avgPricePerKg = data.weight > 0 ? (data.revenue / data.weight).toFixed(2) : 0;
+            
+            content += `
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px; color: var(--text-primary); font-weight: 600;">${product}</td>
+                    <td style="padding: 12px; color: var(--text-primary);">${data.animals}</td>
+                    <td style="padding: 12px; color: var(--text-primary);">${data.weight.toFixed(2)} kg</td>
+                    <td style="padding: 12px; color: var(--text-primary);">${avgWeight} kg/animal</td>
+                    <td style="padding: 12px; color: var(--text-primary); font-weight: 600;">${this.formatCurrency(data.revenue)}</td>
+                    <td style="padding: 12px; color: var(--text-primary);">${this.formatCurrency(parseFloat(avgPricePerKg))}/kg</td>
+                </tr>
+            `;
+        });
+        
+        content += `
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        ` : ''}
-    </div>
-`;
+            
+            ${totalWeight > 0 ? `
+                <div style="margin-top: 32px; padding: 20px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+                    <h4 style="color: var(--text-primary); margin-bottom: 12px;">📊 Key Metrics</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 14px; color: var(--text-secondary);">Average Weight per Animal</div>
+                            <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${(totalWeight / totalAnimals).toFixed(2)} kg</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 14px; color: var(--text-secondary);">Average Price per kg</div>
+                            <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(totalRevenue / totalWeight)}/kg</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 14px; color: var(--text-secondary);">Average Sale Value</div>
+                            <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(totalRevenue / meatSales.length)}</div>
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+        `;
         
         const contentElement = document.getElementById('meat-sales-content');
         if (contentElement) {
@@ -2651,64 +2908,88 @@ content += `
         const printContent = contentElement.innerHTML;
         const originalContent = document.body.innerHTML;
         
-    document.body.innerHTML = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Daily Sales Report - ${this.getCurrentDate()}</title>
-            <link rel="stylesheet" href="print-report.css">
-        </head>
-        <body>
-            <div class="report-header">
-                <h1>Daily Sales Report</h1>
-                <h3>${this.formatDate(this.getCurrentDate())}</h3>
-            </div>
-            ${printContent}
-            <div class="report-actions no-print">
-                <button onclick="window.print()" class="btn-print">Print Report</button>
-                <button onclick="window.location.reload()" class="btn-close">Close</button>
-            </div>
-        </body>
-        </html>
-    `;
+        document.body.innerHTML = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Daily Sales Report - ${this.getCurrentDate()}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
+                    h1 { color: #2d3748; border-bottom: 2px solid #4a5568; padding-bottom: 10px; }
+                    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+                    th { background-color: #f8f9fa; font-weight: bold; }
+                    .total { font-weight: bold; color: #2d3748; }
+                    .header { text-align: center; margin-bottom: 30px; }
+                    @media print {
+                        body { padding: 0; }
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>Daily Sales Report</h1>
+                    <h3>${this.formatDate(this.getCurrentDate())}</h3>
+                </div>
+                ${printContent}
+                <div class="no-print" style="margin-top: 40px; text-align: center;">
+                    <button onclick="window.print()" style="padding: 10px 20px; background: #4a5568; color: white; border: none; border-radius: 5px; cursor: pointer;">Print Report</button>
+                    <button onclick="window.location.reload()" style="padding: 10px 20px; background: #718096; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">Close</button>
+                </div>
+            </body>
+            </html>
+        `;
+        
+        window.print();
+        document.body.innerHTML = originalContent;
+        this.renderModule();
+    },
 
-    window.print();
-    document.body.innerHTML = originalContent;
-    this.renderModule();
-},
-
-printMeatSalesReport() {
-    const contentElement = document.getElementById('meat-sales-content');
-    if (!contentElement) return;
-
-    const printContent = contentElement.innerHTML;
-    const originalContent = document.body.innerHTML;
-
-    document.body.innerHTML = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Meat Sales Report - ${this.getCurrentDate()}</title>
-            <link rel="stylesheet" href="print-report.css">
-        </head>
-        <body>
-            <div class="report-header">
-                <h1>Meat Sales Report</h1>
-                <h3>Generated on ${this.formatDate(this.getCurrentDate())}</h3>
-            </div>
-            ${printContent}
-            <div class="report-actions no-print">
-                <button onclick="window.print()" class="btn-print">Print Report</button>
-                <button onclick="window.location.reload()" class="btn-close">Close</button>
-            </div>
-        </body>
-        </html>
-    `;
-
-    window.print();
-    document.body.innerHTML = originalContent;
-    this.renderModule();
-},
+    printMeatSalesReport() {
+        const contentElement = document.getElementById('meat-sales-content');
+        if (!contentElement) return;
+        
+        const printContent = contentElement.innerHTML;
+        const originalContent = document.body.innerHTML;
+        
+        document.body.innerHTML = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Meat Sales Report - ${this.getCurrentDate()}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
+                    h1 { color: #2d3748; border-bottom: 2px solid #4a5568; padding-bottom: 10px; }
+                    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+                    th { background-color: #f8f9fa; font-weight: bold; }
+                    .total { font-weight: bold; color: #2d3748; }
+                    .header { text-align: center; margin-bottom: 30px; }
+                    @media print {
+                        body { padding: 0; }
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>Meat Sales Report</h1>
+                    <h3>Generated on ${this.formatDate(this.getCurrentDate())}</h3>
+                </div>
+                ${printContent}
+                <div class="no-print" style="margin-top: 40px; text-align: center;">
+                    <button onclick="window.print()" style="padding: 10px 20px; background: #4a5568; color: white; border: none; border-radius: 5px; cursor: pointer;">Print Report</button>
+                    <button onclick="window.location.reload()" style="padding: 10px 20px; background: #718096; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">Close</button>
+                </div>
+            </body>
+            </html>
+        `;
+        
+        window.print();
+        document.body.innerHTML = originalContent;
+        this.renderModule();
+    },
 
     // Utility methods
     getProductIcon(product) {
