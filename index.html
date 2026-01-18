@@ -77,55 +77,64 @@
             </div>
             
             <!-- Sign In Form -->
-            <div id="signin-form" class="auth-form active">
-                <div class="auth-form-header">
+                <div id="signin-form" class="auth-form active">
+                  <div class="auth-form-header">
                     <h2 class="auth-form-title">Welcome Back</h2>
                     <p class="auth-form-description">Sign in to access your farm management dashboard</p>
-                </div>
+                  </div>
                 
-                <form id="signin-form-element" class="auth-form-content">
-                    <div class="auth-form-group">
-                        <label>
-                            <span class="form-label-icon">✉️</span>
-                            Email Address
-                        </label>
-                        <input type="email" id="signin-email" required placeholder="you@example.com">
-                    </div>
-                    
-                    <div class="auth-form-group">
-                        <label>
-                            <span class="form-label-icon">🔒</span>
-                            Password
-                        </label>
-                        <input type="password" id="signin-password" required placeholder="Enter your password">
-                    </div>
-                    
-                    <div class="form-options">
-                        <div class="remember-me">
-                            <input type="checkbox" id="remember-me">
-                            <label for="remember-me">Remember me</label>
-                        </div>
-                        <a href="#" id="show-forgot-password" class="forgot-password">Forgot Password?</a>
-                    </div>
-                    
-                    <button type="submit" class="auth-submit-btn">
-                        <span>→</span>
-                        Sign In
-                    </button>
-                    
+                  <form id="signin-form-element" class="auth-form-content">
+                    <!-- Social Login Section FIRST -->
                     <div class="social-login-section">
-                        <div class="social-login-label">Or continue with</div>
-                        <div class="social-buttons-grid" id="social-login-container">
-                            <!-- Social buttons will be added here -->
-                        </div>
+                      <div class="social-login-label">Continue with</div>
+                      <div class="social-buttons-grid" id="social-login-container">
+                        <!-- Social buttons will be added here -->
+                      </div>
                     </div>
-                    
+                
+                    <!-- Divider -->
+                    <div class="auth-divider"><span>or</span></div>
+                
+                    <!-- Email/Password Fields -->
+                    <div class="auth-form-group">
+                      <label>
+                        <span class="form-label-icon">✉️</span>
+                        Email Address
+                      </label>
+                      <input type="email" id="signin-email" required placeholder="you@example.com">
+                    </div>
+                
+                    <div class="auth-form-group">
+                      <label>
+                        <span class="form-label-icon">🔒</span>
+                        Password
+                      </label>
+                      <input type="password" id="signin-password" required placeholder="Enter your password">
+                    </div>
+                
+                    <!-- Options -->
+                    <div class="form-options">
+                      <div class="remember-me">
+                        <input type="checkbox" id="remember-me">
+                        <label for="remember-me">Remember me</label>
+                      </div>
+                      <a href="#" id="show-forgot-password" class="forgot-password">Forgot Password?</a>
+                    </div>
+                
+                    <!-- Submit Button BELOW email fields -->
+                    <button type="submit" class="auth-submit-btn">
+                      <span>→</span>
+                      Sign In
+                    </button>
+                
+                    <!-- Switch to Sign Up -->
                     <div class="form-switch">
-                        Don't have an account?
-                        <a href="#" id="show-signup">Sign Up</a>
+                      Don't have an account?
+                      <a href="#" id="show-signup">Sign Up</a>
                     </div>
-                </form>
-            </div>
+                  </form>
+                </div>
+
             
             <!-- Sign Up Form -->
             <div id="signup-form" class="auth-form">
