@@ -1,4 +1,4 @@
-// modules/reports.js - UPDATED WITH DATA BROADCASTER INTEGRATION (CLEANED CSS)
+// modules/reports.js - UPDATED WITH DATA BROADCASTER INTEGRATION
 console.log('📊 Loading reports module...');
 
 const ReportsModule = {
@@ -50,22 +50,37 @@ const ReportsModule = {
         return true;
     },
 
-    // ==================== PDF CAPABILITIES ====================
+        // ==================== PDF CAPABILITIES ====================
     
     // ✅ ADDED: Initialize PDF capabilities
-    initializePDFCapabilities() {
-        console.log('📄 Initializing PDF capabilities for reports...');
-        
-        // Check if jsPDF is available
-        if (typeof jspdf === 'undefined') {
-            console.error('jsPDF not loaded. Check index.html');
-            this.pdfReady = false;
-        } else {
-            console.log('✅ jsPDF is ready');
-            this.pdfReady = true;
-        }
-    },
+initializePDFCapabilities() {
+    console.log('📄 Initializing PDF capabilities for reports...');
+    
+    // Check if jsPDF is available
+    if (typeof jspdf === 'undefined') {
+        console.error('jsPDF not loaded. Check index.html');
+        this.pdfReady = false;
+    } else {
+        console.log('✅ jsPDF is ready');
+        this.pdfReady = true;
+    }
+},
 
+    // ✅ ADDED: Load jsPDF from CDN
+// In reports.js, update or remove loadJSPDF()
+/* loadJSPDF() {
+    return new Promise((resolve, reject) => {
+        // jsPDF should already be loaded from HTML
+        if (typeof jspdf !== 'undefined') {
+            this.pdfReady = true;
+            resolve();
+        } else {
+            console.error('jsPDF not loaded. Check index.html');
+            reject(new Error('jsPDF library not available'));
+        }
+    });
+}, */
+    
     // ✅ ADDED: Setup broadcaster listeners
     setupBroadcasterListeners() {
         if (!this.broadcaster) return;
@@ -295,9 +310,9 @@ const ReportsModule = {
                 </div>
 
                 <!-- Quick Stats Overview -->
-                <div class="glass-card quick-stats-card">
-                    <h3>Quick Stats Overview</h3>
-                    <div class="quick-stats-grid">
+                <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Quick Stats Overview</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
                         ${this.renderQuickStats()}
                     </div>
                 </div>
@@ -305,84 +320,84 @@ const ReportsModule = {
                 <!-- Report Categories Grid -->
                 <div class="reports-grid">
                     <!-- Financial Reports -->
-                    <div class="report-type-card glass-card">
-                        <div class="report-icon">💰</div>
+                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
+                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">💰</div>
                         <div class="report-content">
-                            <h3>Financial Reports</h3>
-                            <p>Income, expenses, profit analysis and financial performance</p>
-                            <button class="btn-primary generate-financial-report">
+                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Financial Reports</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Income, expenses, profit analysis and financial performance</p>
+                            <button class="btn-primary generate-financial-report" style="width: 100%;">
                                 Generate Report
                             </button>
                         </div>
                     </div>
 
                     <!-- Production Reports -->
-                    <div class="report-type-card glass-card">
-                        <div class="report-icon">🚜</div>
+                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
+                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">🚜</div>
                         <div class="report-content">
-                            <h3>Production Reports</h3>
-                            <p>Egg production, poultry output, and productivity metrics</p>
-                            <button class="btn-primary generate-production-report">
+                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Production Reports</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Egg production, poultry output, and productivity metrics</p>
+                            <button class="btn-primary generate-production-report" style="width: 100%;">
                                 Generate Report
                             </button>
                         </div>
                     </div>
 
                     <!-- Inventory Reports -->
-                    <div class="report-type-card glass-card">
-                        <div class="report-icon">📦</div>
+                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
+                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">📦</div>
                         <div class="report-content">
-                            <h3>Inventory Reports</h3>
-                            <p>Stock levels, consumption patterns, and reorder analysis</p>
-                            <button class="btn-primary generate-inventory-report">
+                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Inventory Reports</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Stock levels, consumption patterns, and reorder analysis</p>
+                            <button class="btn-primary generate-inventory-report" style="width: 100%;">
                                 Generate Report
                             </button>
                         </div>
                     </div>
 
                     <!-- Sales Reports -->
-                    <div class="report-type-card glass-card">
-                        <div class="report-icon">📊</div>
+                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
+                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">📊</div>
                         <div class="report-content">
-                            <h3>Sales Reports</h3>
-                            <p>Revenue, customer analysis, and sales performance</p>
-                            <button class="btn-primary generate-sales-report">
+                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Sales Reports</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Revenue, customer analysis, and sales performance</p>
+                            <button class="btn-primary generate-sales-report" style="width: 100%;">
                                 Generate Report
                             </button>
                         </div>
                     </div>
 
                     <!-- Health & Mortality Reports -->
-                    <div class="report-type-card glass-card">
-                        <div class="report-icon">🐔</div>
+                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
+                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">🐔</div>
                         <div class="report-content">
-                            <h3>Health Reports</h3>
-                            <p>Mortality rates, health trends, and flock management</p>
-                            <button class="btn-primary generate-health-report">
+                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Health Reports</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Mortality rates, health trends, and flock management</p>
+                            <button class="btn-primary generate-health-report" style="width: 100%;">
                                 Generate Report
                             </button>
                         </div>
                     </div>
 
                     <!-- Feed Consumption Reports -->
-                    <div class="report-type-card glass-card">
-                        <div class="report-icon">🌾</div>
+                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center;">
+                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">🌾</div>
                         <div class="report-content">
-                            <h3>Feed Reports</h3>
-                            <p>Feed usage, cost analysis, and consumption patterns</p>
-                            <button class="btn-primary generate-feed-report">
+                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Feed Reports</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Feed usage, cost analysis, and consumption patterns</p>
+                            <button class="btn-primary generate-feed-report" style="width: 100%;">
                                 Generate Report
                             </button>
                         </div>
                     </div>
 
                     <!-- Comprehensive Farm Report -->
-                    <div class="report-type-card glass-card comprehensive-report-card">
-                        <div class="report-icon">🏆</div>
+                    <div class="report-type-card glass-card" style="padding: 24px; text-align: center; grid-column: 1 / -1;">
+                        <div class="report-icon" style="font-size: 48px; margin-bottom: 16px;">🏆</div>
                         <div class="report-content">
-                            <h3>Comprehensive Farm Report</h3>
-                            <p>Complete overview of all farm operations and performance metrics</p>
-                            <button class="btn-primary generate-comprehensive-report">
+                            <h3 style="color: var(--text-primary); margin-bottom: 8px;">Comprehensive Farm Report</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 16px;">Complete overview of all farm operations and performance metrics</p>
+                            <button class="btn-primary generate-comprehensive-report" style="width: 100%; background: linear-gradient(135deg, #22c55e, #3b82f6);">
                                 Generate Full Report
                             </button>
                         </div>
@@ -390,10 +405,10 @@ const ReportsModule = {
                 </div>
 
                 <!-- Report Output Section -->
-                <div id="report-output" class="report-output glass-card hidden">
-                    <div class="output-header">
-                        <h3 id="report-title">Report Output</h3>
-                        <div class="report-actions">
+                <div id="report-output" class="report-output glass-card hidden" style="margin-top: 32px;">
+                    <div class="output-header" style="display: flex; justify-content: space-between; align-items: center; padding: 24px; border-bottom: 1px solid var(--glass-border);">
+                        <h3 style="color: var(--text-primary); margin: 0;" id="report-title">Report Output</h3>
+                        <div style="display: flex; gap: 12px;">
                             <button class="btn-outline" id="print-report-btn">
                                 🖨️ Print
                             </button>
@@ -408,7 +423,7 @@ const ReportsModule = {
                             </button>
                         </div>
                     </div>
-                    <div class="output-content">
+                    <div class="output-content" style="padding: 24px;">
                         <div id="report-content">
                             <!-- Report content will be generated here -->
                         </div>
@@ -416,8 +431,8 @@ const ReportsModule = {
                 </div>
 
                 <!-- Recent Activity -->
-                <div class="glass-card recent-activity-card">
-                    <h3>Recent Farm Activity</h3>
+                <div class="glass-card" style="padding: 24px; margin-top: 24px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Recent Farm Activity</h3>
                     <div id="recent-activity">
                         ${this.renderRecentActivity()}
                     </div>
@@ -588,29 +603,29 @@ const ReportsModule = {
         }
         
         return `
-            <div class="quick-stat-item">
-                <div class="quick-stat-label">Total Revenue</div>
-                <div class="quick-stat-value income" id="total-expenses">${this.formatCurrency(stats.totalRevenue)}</div>
+            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Total Revenue</div>
+                <div style="font-size: 20px; font-weight: bold; color: #22c55e;" id="total-expenses">${this.formatCurrency(stats.totalRevenue)}</div>
             </div>
-            <div class="quick-stat-item">
-                <div class="quick-stat-label">Net Profit</div>
-                <div class="quick-stat-value ${stats.netProfit >= 0 ? 'profit' : 'expense'}" id="net-profit">${this.formatCurrency(stats.netProfit)}</div>
+            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Net Profit</div>
+                <div style="font-size: 20px; font-weight: bold; color: ${stats.netProfit >= 0 ? '#22c55e' : '#ef4444'};" id="net-profit">${this.formatCurrency(stats.netProfit)}</div>
             </div>
-            <div class="quick-stat-item">
-                <div class="quick-stat-label">Total Birds</div>
-                <div class="quick-stat-value" id="total-birds">${stats.totalBirds}</div>
+            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Total Birds</div>
+                <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);" id="total-birds">${stats.totalBirds}</div>
             </div>
-            <div class="quick-stat-item">
-                <div class="quick-stat-label">Production</div>
-                <div class="quick-stat-value" id="total-production">${stats.totalProduction}</div>
+            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Production</div>
+                <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);" id="total-production">${stats.totalProduction}</div>
             </div>
-            <div class="quick-stat-item">
-                <div class="quick-stat-label">Low Stock Items</div>
-                <div class="quick-stat-value ${stats.lowStockItems > 0 ? 'warning' : 'good'}" id="low-stock-items">${stats.lowStockItems}</div>
+            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Low Stock Items</div>
+                <div style="font-size: 20px; font-weight: bold; color: ${stats.lowStockItems > 0 ? '#f59e0b' : '#22c55e'};" id="low-stock-items">${stats.lowStockItems}</div>
             </div>
-            <div class="quick-stat-item">
-                <div class="quick-stat-label">Feed Used</div>
-                <div class="quick-stat-value" id="total-feed-used">${stats.totalFeedUsed} kg</div>
+            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Feed Used</div>
+                <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);" id="total-feed-used">${stats.totalFeedUsed} kg</div>
             </div>
         `;
     },
@@ -671,25 +686,27 @@ const ReportsModule = {
 
         if (activities.length === 0) {
             return `
-                <div class="empty-state">
-                    <div class="empty-state-icon">📊</div>
-                    <div class="empty-state-title">No recent activity</div>
-                    <div class="empty-state-subtitle">Start using the app to see activity here</div>
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No recent activity</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Start using the app to see activity here</div>
                 </div>
             `;
         }
 
         return `
-            <div class="activity-list">
+            <div style="display: flex; flex-direction: column; gap: 12px;">
                 ${activities.map(activity => `
-                    <div class="activity-item">
-                        <div class="activity-icon">${activity.icon}</div>
-                        <div class="activity-details">
-                            <div class="activity-title">${activity.description}</div>
-                            <div class="activity-date">${activity.date}</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="font-size: 20px;">${activity.icon}</div>
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary);">${activity.description}</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">${activity.date}</div>
+                            </div>
                         </div>
                         ${activity.amount !== null ? `
-                            <div class="activity-amount">
+                            <div style="font-weight: bold; color: var(--text-primary);">
                                 ${this.formatCurrency(activity.amount)}
                             </div>
                         ` : ''}
@@ -860,7 +877,7 @@ const ReportsModule = {
             <div class="report-section">
                 <h4>💼 Income Breakdown</h4>
                 ${incomeTransactions.length > 0 ? `
-                    <div class="report-data-table">
+                    <div style="max-height: 300px; overflow-y: auto;">
                         ${incomeTransactions.map(transaction => `
                             <div class="metric-row">
                                 <span class="metric-label">${transaction.description}</span>
@@ -868,13 +885,13 @@ const ReportsModule = {
                             </div>
                         `).join('')}
                     </div>
-                ` : '<p class="no-data-message">No income records found</p>'}
+                ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No income records found</p>'}
             </div>
 
             <div class="report-section">
                 <h4>📉 Expense Breakdown</h4>
                 ${expenseTransactions.length > 0 ? `
-                    <div class="report-data-table">
+                    <div style="max-height: 300px; overflow-y: auto;">
                         ${expenseTransactions.map(transaction => `
                             <div class="metric-row">
                                 <span class="metric-label">${transaction.description}</span>
@@ -882,13 +899,13 @@ const ReportsModule = {
                             </div>
                         `).join('')}
                     </div>
-                ` : '<p class="no-data-message">No expense records found</p>'}
+                ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No expense records found</p>'}
             </div>
 
             <div class="report-section">
                 <h4>📈 Sales Revenue</h4>
                 ${sales.length > 0 ? `
-                    <div class="report-data-table">
+                    <div style="max-height: 300px; overflow-y: auto;">
                         ${sales.map(sale => `
                             <div class="metric-row">
                                 <span class="metric-label">Sale ${sale.date}</span>
@@ -896,20 +913,22 @@ const ReportsModule = {
                             </div>
                         `).join('')}
                     </div>
-                ` : '<p class="no-data-message">No sales records found</p>'}
+                ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No sales records found</p>'}
             </div>
 
             <div class="report-section">
                 <h4>💡 Financial Insights</h4>
-                <div class="insight-box">
-                    <p>${this.getFinancialInsights(totalIncome, totalExpenses, netProfit, profitMargin)}</p>
+                <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                    <p style="margin: 0; color: var(--text-primary);">
+                        ${this.getFinancialInsights(totalIncome, totalExpenses, netProfit, profitMargin)}
+                    </p>
                 </div>
             </div>
 
             <div class="report-section">
-                <div class="recommendation-box">
-                    <h4>Recommendations</h4>
-                    <div class="recommendation-content">
+                <div style="text-align: center; padding: 16px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(34, 197, 94, 0.1)); border-radius: 12px;">
+                    <h4 style="margin-bottom: 8px; color: var(--text-primary);">Recommendations</h4>
+                    <div style="color: var(--text-secondary); font-size: 14px;">
                         <p>1. ${netProfit < 0 ? 'Focus on reducing expenses and increasing revenue streams.' : 'Maintain current financial discipline.'}</p>
                         <p>2. ${profitMargin < 10 ? 'Explore premium products and optimize operational costs.' : 'Good profit margin, consider reinvestment opportunities.'}</p>
                         <p>3. Monitor expense categories for cost-saving opportunities.</p>
@@ -996,7 +1015,7 @@ const ReportsModule = {
             <div class="report-section">
                 <h4>📦 Product Breakdown</h4>
                 ${Object.keys(productGroups).length > 0 ? `
-                    <div class="report-data-table">
+                    <div style="max-height: 300px; overflow-y: auto;">
                         ${Object.entries(productGroups).map(([product, data]) => `
                             <div class="metric-row">
                                 <span class="metric-label">${this.formatProductName(product)}</span>
@@ -1004,12 +1023,12 @@ const ReportsModule = {
                             </div>
                         `).join('')}
                     </div>
-                ` : '<p class="no-data-message">No production records found</p>'}
+                ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No production records found</p>'}
             </div>
 
             <div class="report-section">
                 <h4>⭐ Quality Distribution</h4>
-                <div class="report-data-table">
+                <div style="max-height: 300px; overflow-y: auto;">
                     ${Object.entries(qualityDistribution).map(([quality, count]) => `
                         <div class="metric-row">
                             <span class="metric-label">${this.formatQuality(quality)}</span>
@@ -1022,7 +1041,7 @@ const ReportsModule = {
             <div class="report-section">
                 <h4>📋 Recent Production Records</h4>
                 ${production.slice(-5).length > 0 ? `
-                    <div class="report-data-table">
+                    <div style="max-height: 300px; overflow-y: auto;">
                         ${production.slice(-5).reverse().map(record => `
                             <div class="metric-row">
                                 <span class="metric-label">${record.date}: ${this.formatProductName(record.product)}</span>
@@ -1030,13 +1049,15 @@ const ReportsModule = {
                             </div>
                         `).join('')}
                     </div>
-                ` : '<p class="no-data-message">No recent production records</p>'}
+                ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No recent production records</p>'}
             </div>
 
             <div class="report-section">
                 <h4>💡 Production Insights</h4>
-                <div class="insight-box production-insight">
-                    <p>${this.getProductionInsights(totalProduction, 0, qualityDistribution)}</p>
+                <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; border-left: 4px solid #22c55e;">
+                    <p style="margin: 0; color: var(--text-primary);">
+                        ${this.getProductionInsights(totalProduction, 0, qualityDistribution)}
+                    </p>
                 </div>
             </div>
         `;
@@ -1105,7 +1126,7 @@ const ReportsModule = {
             <div class="report-section">
                 <h4>⚠️ Low Stock Items</h4>
                 ${lowStockItems.length > 0 ? `
-                    <div class="report-data-table">
+                    <div style="max-height: 300px; overflow-y: auto;">
                         ${lowStockItems.map(item => `
                             <div class="metric-row">
                                 <span class="metric-label">${item.name}</span>
@@ -1113,39 +1134,41 @@ const ReportsModule = {
                             </div>
                         `).join('')}
                     </div>
-                ` : '<p class="no-data-message">No low stock items 👍</p>'}
+                ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No low stock items 👍</p>'}
             </div>
 
             <div class="report-section">
                 <h4>📦 Complete Inventory List</h4>
                 ${inventory.length > 0 ? `
-                    <div class="inventory-table">
+                    <div style="max-height: 400px; overflow-y: auto;">
                         ${inventory.map(item => `
-                            <div class="inventory-item">
-                                <div class="inventory-details">
-                                    <div class="inventory-name">${item.name}</div>
-                                    <div class="inventory-category">${item.category || 'Uncategorized'}</div>
+                            <div class="metric-row">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 500; color: var(--text-primary);">${item.name}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">${item.category || 'Uncategorized'}</div>
                                 </div>
-                                <div class="inventory-values">
-                                    <div class="inventory-quantity">${item.currentStock} ${item.unit || 'units'}</div>
-                                    <div class="inventory-value">Value: ${this.formatCurrency(item.currentStock * (item.unitCost || 0))}</div>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 600; color: var(--text-primary);">${item.currentStock} ${item.unit || 'units'}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">Value: ${this.formatCurrency(item.currentStock * (item.unitCost || 0))}</div>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
-                ` : '<p class="no-data-message">No inventory items found</p>'}
+                ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No inventory items found</p>'}
             </div>
 
             <div class="report-section">
                 <h4>💡 Inventory Management Insights</h4>
-                <div class="insight-box inventory-insight">
-                    <p>${lowStockItems.length > 0 
-                        ? `⚠️ Attention needed for ${lowStockItems.length} low stock items. Consider reordering soon.`
-                        : '✅ Inventory levels are healthy. Maintain current stock levels.'}
+                <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                    <p style="margin: 0; color: var(--text-primary);">
+                        ${lowStockItems.length > 0 
+                            ? `⚠️ Attention needed for ${lowStockItems.length} low stock items. Consider reordering soon.`
+                            : '✅ Inventory levels are healthy. Maintain current stock levels.'}
                     </p>
                 </div>
-                <div class="recommendation-list">
-                    <ul>
+                <div style="margin-top: 12px; color: var(--text-secondary); font-size: 14px;">
+                    <p>Recommendations:</p>
+                    <ul style="margin: 8px 0 0 0; padding-left: 20px;">
                         <li>${lowStockItems.length > 0 ? 'Place orders for low stock items immediately.' : 'Continue regular inventory monitoring.'}</li>
                         <li>Set up automatic reorder alerts for critical items</li>
                         <li>Review seasonal demand patterns for better inventory planning</li>
@@ -1226,7 +1249,7 @@ const ReportsModule = {
             <div class="report-section">
                 <h4>📅 Monthly Sales Trend</h4>
                 ${Object.keys(monthlySales).length > 0 ? `
-                    <div class="report-data-table">
+                    <div style="max-height: 300px; overflow-y: auto;">
                         ${Object.entries(monthlySales).map(([month, data]) => `
                             <div class="metric-row">
                                 <span class="metric-label">${month}</span>
@@ -1234,13 +1257,13 @@ const ReportsModule = {
                             </div>
                         `).join('')}
                     </div>
-                ` : '<p class="no-data-message">No sales data by month</p>'}
+                ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No sales data by month</p>'}
             </div>
 
             <div class="report-section">
                 <h4>📋 Recent Sales</h4>
                 ${sales.slice(-5).length > 0 ? `
-                    <div class="report-data-table">
+                    <div style="max-height: 300px; overflow-y: auto;">
                         ${sales.slice(-5).reverse().map(sale => `
                             <div class="metric-row">
                                 <span class="metric-label">${sale.date}</span>
@@ -1248,20 +1271,22 @@ const ReportsModule = {
                             </div>
                         `).join('')}
                     </div>
-                ` : '<p class="no-data-message">No recent sales found</p>'}
+                ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No recent sales found</p>'}
             </div>
 
             <div class="report-section">
                 <h4>💡 Sales Insights</h4>
-                <div class="insight-box sales-insight">
-                    <p>${this.getSalesInsights(sales.length, totalSales)}</p>
+                <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                    <p style="margin: 0; color: var(--text-primary);">
+                        ${this.getSalesInsights(sales.length, totalSales)}
+                    </p>
                 </div>
             </div>
 
             <div class="report-section">
-                <div class="recommendation-box">
-                    <h4>Sales Strategies</h4>
-                    <div class="recommendation-content">
+                <div style="text-align: center; padding: 16px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(34, 197, 94, 0.1)); border-radius: 12px;">
+                    <h4 style="margin-bottom: 8px; color: var(--text-primary);">Sales Strategies</h4>
+                    <div style="color: var(--text-secondary); font-size: 14px;">
                         <p>1. ${sales.length < 10 ? 'Focus on increasing sales volume through marketing.' : 'Expand customer base and explore bulk sales.'}</p>
                         <p>2. ${averageSale < 100 ? 'Bundle products to increase average sale value.' : 'Maintain product quality and customer relationships.'}</p>
                         <p>3. Analyze monthly trends to plan for seasonal demand</p>
@@ -1338,7 +1363,7 @@ const ReportsModule = {
             <div class="report-section">
                 <h4>⚕️ Cause Analysis</h4>
                 ${Object.keys(causeBreakdown).length > 0 ? `
-                    <div class="report-data-table">
+                    <div style="max-height: 300px; overflow-y: auto;">
                         ${Object.entries(causeBreakdown).map(([cause, count]) => `
                             <div class="metric-row">
                                 <span class="metric-label">${this.formatCause(cause)}</span>
@@ -1346,13 +1371,13 @@ const ReportsModule = {
                             </div>
                         `).join('')}
                     </div>
-                ` : '<p class="no-data-message">No cause data available</p>'}
+                ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No cause data available</p>'}
             </div>
 
             <div class="report-section">
                 <h4>📋 Recent Health Records</h4>
                 ${mortalityRecords.slice(-5).length > 0 ? `
-                    <div class="report-data-table">
+                    <div style="max-height: 300px; overflow-y: auto;">
                         ${mortalityRecords.slice(-5).reverse().map(record => `
                             <div class="metric-row">
                                 <span class="metric-label">${record.date}: ${this.formatCause(record.cause)}</span>
@@ -1360,20 +1385,22 @@ const ReportsModule = {
                             </div>
                         `).join('')}
                     </div>
-                ` : '<p class="no-data-message">No recent health records</p>'}
+                ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No recent health records</p>'}
             </div>
 
             <div class="report-section">
                 <h4>💡 Health Insights</h4>
-                <div class="insight-box health-insight">
-                    <p>${this.getHealthRecommendations(mortalityRate, causeBreakdown)}</p>
+                <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; border-left: 4px solid #ef4444;">
+                    <p style="margin: 0; color: var(--text-primary);">
+                        ${this.getHealthRecommendations(mortalityRate, causeBreakdown)}
+                    </p>
                 </div>
             </div>
 
             <div class="report-section">
-                <div class="recommendation-box">
-                    <h4>Prevention Strategies</h4>
-                    <div class="recommendation-content">
+                <div style="text-align: center; padding: 16px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(245, 158, 11, 0.1)); border-radius: 12px;">
+                    <h4 style="margin-bottom: 8px; color: var(--text-primary);">Prevention Strategies</h4>
+                    <div style="color: var(--text-secondary); font-size: 14px;">
                         <p>1. ${mortalityRate > 5 ? 'Implement strict biosecurity measures and regular health checks.' : 'Maintain current health monitoring protocols.'}</p>
                         <p>2. ${Object.keys(causeBreakdown).includes('disease') ? 'Schedule veterinary consultations and consider vaccination programs.' : 'Focus on preventive care and proper nutrition.'}</p>
                         <p>3. Monitor environmental conditions (temperature, ventilation, cleanliness)</p>
@@ -1404,7 +1431,7 @@ const ReportsModule = {
         }
     },
 
-    generateFeedReport() {
+   generateFeedReport() {
         console.log('🌾 Generating feed report...');
         
         // ✅ Broadcast report generation started
@@ -1461,41 +1488,41 @@ const ReportsModule = {
             <div class="report-section">
                 <h4>📊 Feed Type Analysis</h4>
                 ${Object.keys(feedTypeBreakdown).length > 0 ? `
-                    <div class="feed-type-table">
+                    <div style="max-height: 300px; overflow-y: auto;">
                         ${Object.entries(feedTypeBreakdown).map(([feedType, data]) => `
-                            <div class="feed-type-item">
-                                <span class="feed-type-name">${this.formatFeedType(feedType)}</span>
-                                <div class="feed-type-values">
-                                    <div class="feed-type-quantity">${data.quantity} kg</div>
-                                    <div class="feed-type-cost">Cost: ${this.formatCurrency(data.cost)}</div>
+                            <div class="metric-row">
+                                <span class="metric-label">${this.formatFeedType(feedType)}</span>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 600; color: var(--text-primary);">${data.quantity} kg</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">Cost: ${this.formatCurrency(data.cost)}</div>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
-                ` : '<p class="no-data-message">No feed type data available</p>'}
+                ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No feed type data available</p>'}
             </div>
 
             <div class="report-section">
                 <h4>📋 Recent Feed Records</h4>
                 ${feedRecords.slice(-5).length > 0 ? `
-                    <div class="feed-records-table">
+                    <div style="max-height: 300px; overflow-y: auto;">
                         ${feedRecords.slice(-5).reverse().map(record => `
-                            <div class="feed-record-item">
-                                <div class="feed-record-details">
-                                    <div class="feed-record-date">${record.date}: ${this.formatFeedType(record.feedType)}</div>
-                                    <div class="feed-record-quantity">${record.quantity} kg</div>
+                            <div class="metric-row">
+                                <span class="metric-label">${record.date}: ${this.formatFeedType(record.feedType)}</span>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 600; color: var(--text-primary);">${record.quantity} kg</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">${this.formatCurrency(record.cost)}</div>
                                 </div>
-                                <div class="feed-record-cost">${this.formatCurrency(record.cost)}</div>
                             </div>
                         `).join('')}
                     </div>
-                ` : '<p class="no-data-message">No recent feed records</p>'}
+                ` : '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No recent feed records</p>'}
             </div>
 
             <div class="report-section">
-                <div class="recommendation-box feed-recommendations">
-                    <h4>Feed Management Insights</h4>
-                    <div class="recommendation-content">
+                <div style="text-align: center; padding: 16px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(34, 197, 94, 0.1)); border-radius: 12px;">
+                    <h4 style="margin-bottom: 8px; color: var(--text-primary);">Feed Management Insights</h4>
+                    <div style="color: var(--text-secondary); font-size: 14px;">
                         <p>1. Feed represents ${totalFeedCost > 0 ? Math.round((totalFeedCost / (totalFeedCost + 1000)) * 100) + '%' : 'a significant portion'} of operational costs</p>
                         <p>2. ${totalBirds > 0 && totalFeedUsed / totalBirds > 0.1 ? 'Feed efficiency is within normal range' : 'Monitor feed consumption rates'}</p>
                         <p>3. Consider bulk purchasing for commonly used feed types</p>
@@ -1553,48 +1580,56 @@ const ReportsModule = {
         });
         
         const content = `
-            <div class="comprehensive-header">
-                <h2>Farm Comprehensive Report</h2>
-                <p class="report-date">Generated on ${formattedDate}</p>
-                <div class="farm-score-display" style="border-color: ${farmStatusColor};">
-                    <div class="farm-score-value" style="color: ${farmStatusColor};">${farmScore}/100</div>
-                    <div class="farm-score-status">${farmStatus}</div>
-                    <div class="farm-score-label">Overall Farm Performance Score</div>
+            <div style="text-align: center; margin-bottom: 32px;">
+                <h2 style="color: var(--text-primary); margin-bottom: 8px;">Farm Comprehensive Report</h2>
+                <p style="color: var(--text-secondary);">Generated on ${formattedDate}</p>
+                <div style="margin: 24px 0; padding: 20px; background: var(--glass-bg); border-radius: 16px; border: 2px solid ${farmStatusColor};">
+                    <div style="font-size: 48px; font-weight: bold; color: ${farmStatusColor}; margin-bottom: 8px;">
+                        ${farmScore}/100
+                    </div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 8px;">
+                        ${farmStatus}
+                    </div>
+                    <div style="color: var(--text-secondary); font-size: 14px;">
+                        Overall Farm Performance Score
+                    </div>
                 </div>
             </div>
 
             <div class="report-section">
                 <h4>📊 Executive Summary</h4>
-                <div class="executive-summary">
-                    <p>${this.getOverallAssessment(stats)}</p>
+                <div style="background: var(--glass-bg); padding: 20px; border-radius: 12px; margin: 16px 0;">
+                    <p style="color: var(--text-primary); margin: 0; line-height: 1.6;">
+                        ${this.getOverallAssessment(stats)}
+                    </p>
                 </div>
             </div>
 
             <div class="report-section">
                 <h4>🏆 Farm Performance Metrics</h4>
-                <div class="performance-metrics-grid">
-                    <div class="performance-metric">
-                        <div class="metric-label">Financial Score</div>
-                        <div class="metric-value ${stats.netProfit >= 0 ? 'good' : 'needs-review'}">${stats.netProfit >= 0 ? 'Good' : 'Needs Review'}</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin: 16px 0;">
+                    <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Financial Score</div>
+                        <div style="font-size: 24px; font-weight: bold; color: ${stats.netProfit >= 0 ? '#22c55e' : '#ef4444'};">${stats.netProfit >= 0 ? 'Good' : 'Needs Review'}</div>
                     </div>
-                    <div class="performance-metric">
-                        <div class="metric-label">Production Score</div>
-                        <div class="metric-value ${stats.totalProduction > 500 ? 'good' : 'fair'}">${stats.totalProduction > 500 ? 'Good' : 'Fair'}</div>
+                    <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Production Score</div>
+                        <div style="font-size: 24px; font-weight: bold; color: ${stats.totalProduction > 500 ? '#22c55e' : '#f59e0b'};">${stats.totalProduction > 500 ? 'Good' : 'Fair'}</div>
                     </div>
-                    <div class="performance-metric">
-                        <div class="metric-label">Inventory Score</div>
-                        <div class="metric-value ${stats.lowStockItems === 0 ? 'good' : 'needs-attention'}">${stats.lowStockItems === 0 ? 'Good' : 'Needs Attention'}</div>
+                    <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Inventory Score</div>
+                        <div style="font-size: 24px; font-weight: bold; color: ${stats.lowStockItems === 0 ? '#22c55e' : '#f59e0b'};">${stats.lowStockItems === 0 ? 'Good' : 'Needs Attention'}</div>
                     </div>
-                    <div class="performance-metric">
-                        <div class="metric-label">Health Score</div>
-                        <div class="metric-value monitored">Monitored</div>
+                    <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Health Score</div>
+                        <div style="font-size: 24px; font-weight: bold; color: '#3b82f6';">Monitored</div>
                     </div>
                 </div>
             </div>
 
             <div class="report-section">
                 <h4>📈 Key Statistics</h4>
-                <div class="key-statistics">
+                <div style="max-height: 300px; overflow-y: auto;">
                     <div class="metric-row">
                         <span class="metric-label">Total Revenue:</span>
                         <span class="metric-value income">${this.formatCurrency(stats.totalRevenue)}</span>
@@ -1624,42 +1659,44 @@ const ReportsModule = {
 
             <div class="report-section">
                 <h4>🎯 Priority Actions</h4>
-                <div class="priority-actions">
-                    <ul>
-                        ${stats.netProfit < 0 ? '<li class="high-priority"><strong>🔴 High Priority:</strong> Address negative profitability immediately</li>' : ''}
-                        ${stats.lowStockItems > 0 ? '<li class="medium-priority"><strong>🟡 Medium Priority:</strong> Replenish low stock inventory items</li>' : ''}
-                        <li class="ongoing"><strong>🟢 Ongoing:</strong> Maintain production quality standards</li>
-                        <li class="ongoing"><strong>🟢 Ongoing:</strong> Continue regular health monitoring</li>
+                <div style="background: var(--glass-bg); padding: 20px; border-radius: 12px; margin: 16px 0;">
+                    <ul style="margin: 0; padding-left: 20px; color: var(--text-primary);">
+                        ${stats.netProfit < 0 ? '<li style="margin-bottom: 8px;"><strong>🔴 High Priority:</strong> Address negative profitability immediately</li>' : ''}
+                        ${stats.lowStockItems > 0 ? '<li style="margin-bottom: 8px;"><strong>🟡 Medium Priority:</strong> Replenish low stock inventory items</li>' : ''}
+                        <li style="margin-bottom: 8px;"><strong>🟢 Ongoing:</strong> Maintain production quality standards</li>
+                        <li><strong>🟢 Ongoing:</strong> Continue regular health monitoring</li>
                     </ul>
                 </div>
             </div>
 
             <div class="report-section">
                 <h4>📅 Next Quarter Goals</h4>
-                <div class="quarter-goals-grid">
-                    <div class="quarter-goal">
-                        <div class="goal-label">Revenue Target</div>
-                        <div class="goal-value">${this.formatCurrency(stats.totalRevenue * 1.1)}</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 16px 0;">
+                    <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Revenue Target</div>
+                        <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${this.formatCurrency(stats.totalRevenue * 1.1)}</div>
                     </div>
-                    <div class="quarter-goal">
-                        <div class="goal-label">Production Goal</div>
-                        <div class="goal-value">${Math.round(stats.totalProduction * 1.05)} units</div>
+                    <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Production Goal</div>
+                        <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${Math.round(stats.totalProduction * 1.05)} units</div>
                     </div>
-                    <div class="quarter-goal">
-                        <div class="goal-label">Cost Reduction</div>
-                        <div class="goal-value">5% Target</div>
+                    <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Cost Reduction</div>
+                        <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">5% Target</div>
                     </div>
-                    <div class="quarter-goal">
-                        <div class="goal-label">Farm Score Goal</div>
-                        <div class="goal-value">${Math.min(100, farmScore + 10)}/100</div>
+                    <div style="background: var(--glass-bg); padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Farm Score Goal</div>
+                        <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${Math.min(100, farmScore + 10)}/100</div>
                     </div>
                 </div>
             </div>
 
-            <div class="report-footer">
-                <p>Report ID: FARM-COMP-${Date.now().toString().slice(-8)}</p>
-                <p>Generated by Farm Management System</p>
-                <p>© ${currentDate.getFullYear()} All rights reserved</p>
+            <div style="text-align: center; padding-top: 24px; border-top: 2px solid var(--glass-border); margin-top: 32px;">
+                <p style="color: var(--text-secondary); font-size: 12px;">
+                    Report ID: FARM-COMP-${Date.now().toString().slice(-8)}<br>
+                    Generated by Farm Management System<br>
+                    © ${currentDate.getFullYear()} All rights reserved
+                </p>
             </div>
         `;
         
@@ -2404,708 +2441,202 @@ const ReportsModule = {
 
     // ==================== REPORT DISPLAY METHODS (UPDATED WITH BROADCASTING) ====================
     showReport(title, content) {
-        this.addReportStyles();
-        
-        const reportTitle = document.getElementById('report-title');
-        const reportContent = document.getElementById('report-content');
-        const outputSection = document.getElementById('report-output');
-        
-        if (reportTitle && reportContent && outputSection) {
-            reportTitle.textContent = title;
-            reportContent.innerHTML = content;
-            outputSection.classList.remove('hidden');
-            outputSection.scrollIntoView({ behavior: 'smooth' });
-            
-            // ✅ ADDED: Add PDF export button to report actions
-            this.addPDFExportButton();
-            
-            // Broadcast report displayed
-            if (this.broadcaster) {
-                this.broadcaster.broadcast('report-displayed', {
-                    module: 'reports',
-                    timestamp: new Date().toISOString(),
-                    reportTitle: title,
-                    contentLength: content.length,
-                    reportType: this.currentReport?.type || 'unknown'
-                });
-            }
-        }
-    },
-
-    // ✅ ADDED: Add PDF export button to report actions
-    addPDFExportButton() {
-        const reportActions = document.querySelector('.output-header .report-actions');
-        if (!reportActions) return;
-        
-        // Check if PDF button already exists
-        if (document.getElementById('pdf-report-btn')) return;
-        
-        const pdfButton = document.createElement('button');
-        pdfButton.id = 'pdf-report-btn';
-        pdfButton.className = 'btn-outline';
-        pdfButton.innerHTML = '📄 PDF';
-        pdfButton.addEventListener('click', () => this.exportReportAsPDF());
-        
-        // Insert before the close button
-        const closeBtn = document.getElementById('close-report-btn');
-        if (closeBtn && closeBtn.parentNode === reportActions) {
-            reportActions.insertBefore(pdfButton, closeBtn);
-        } else {
-            reportActions.appendChild(pdfButton);
-        }
-    },
+    this.addReportStyles();
     
-    addReportStyles() {
-        if (!document.getElementById('report-styles')) {
-            const styles = document.createElement('style');
-            styles.id = 'report-styles';
-            styles.textContent = `
-                /* Report Container */
-                .report-output {
-                    margin-top: 32px;
-                }
-                
+    const reportTitle = document.getElementById('report-title');
+    const reportContent = document.getElementById('report-content');
+    const outputSection = document.getElementById('report-output');
+    
+    if (reportTitle && reportContent && outputSection) {
+        reportTitle.textContent = title;
+        reportContent.innerHTML = content;
+        outputSection.classList.remove('hidden');
+        outputSection.scrollIntoView({ behavior: 'smooth' });
+        
+        // ✅ ADDED: Add PDF export button to report actions
+        this.addPDFExportButton();
+        
+        // Broadcast report displayed
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('report-displayed', {
+                module: 'reports',
+                timestamp: new Date().toISOString(),
+                reportTitle: title,
+                contentLength: content.length,
+                reportType: this.currentReport?.type || 'unknown'
+            });
+        }
+    }
+},
+
+// ✅ ADDED: Add PDF export button to report actions
+addPDFExportButton() {
+    const reportActions = document.querySelector('.output-header > div');
+    if (!reportActions) return;
+    
+    // Check if PDF button already exists
+    if (document.getElementById('pdf-report-btn')) return;
+    
+    const pdfButton = document.createElement('button');
+    pdfButton.id = 'pdf-report-btn';
+    pdfButton.className = 'btn-outline';
+    pdfButton.innerHTML = '📄 PDF';
+    pdfButton.addEventListener('click', () => this.exportReportAsPDF());
+    
+    // Insert before the close button
+    const closeBtn = document.getElementById('close-report-btn');
+    if (closeBtn && closeBtn.parentNode === reportActions) {
+        reportActions.insertBefore(pdfButton, closeBtn);
+    } else {
+        reportActions.appendChild(pdfButton);
+    }
+},
+    
+   addReportStyles() {
+    if (!document.getElementById('report-styles')) {
+        const styles = document.createElement('style');
+        styles.id = 'report-styles';
+        styles.textContent = `
+            .report-section {
+                margin-bottom: 32px;
+                padding-bottom: 24px;
+                border-bottom: 1px solid var(--glass-border);
+            }
+            .report-section:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }
+            .report-section h4 {
+                color: var(--text-primary);
+                margin-bottom: 16px;
+                font-size: 18px;
+                font-weight: 600;
+            }
+            .metric-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 0;
+                border-bottom: 1px solid rgba(0,0,0,0.05);
+            }
+            .metric-row:last-child {
+                border-bottom: none;
+            }
+            .metric-label {
+                color: var(--text-secondary);
+                font-size: 14px;
+            }
+            .metric-value {
+                font-weight: 600;
+                font-size: 14px;
+            }
+            .metric-value.income {
+                color: #22c55e;
+            }
+            .metric-value.expense {
+                color: #ef4444;
+            }
+            .metric-value.profit {
+                color: #22c55e;
+            }
+            .metric-value.warning {
+                color: #f59e0b;
+            }
+            
+            /* NEW: Responsive report output styles */
+            .output-header {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+                padding: 24px;
+                border-bottom: 1px solid var(--glass-border);
+            }
+            
+            .output-header > div:first-child {
+                flex: 1;
+                min-width: 0; /* Prevent text overflow */
+            }
+            
+            .output-header h3 {
+                color: var(--text-primary);
+                margin: 0 0 8px 0;
+                font-size: clamp(1.25rem, 4vw, 1.5rem);
+                line-height: 1.2;
+            }
+            
+            .output-header .report-date {
+                color: var(--text-secondary);
+                margin: 0;
+                font-size: 0.9rem;
+            }
+            
+            .report-actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                align-items: center;
+                justify-content: flex-start;
+                width: 100%;
+            }
+            
+            .report-actions button {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+                white-space: nowrap;
+                flex: 1;
+                min-width: 100px;
+                max-width: 120px;
+            }
+            
+            .report-actions #close-report-btn {
+                background: var(--danger-color, #ef4444);
+                color: white;
+                border-color: var(--danger-color, #ef4444);
+            }
+            
+            .report-actions #close-report-btn:hover {
+                background: #dc2626;
+                border-color: #dc2626;
+            }
+            
+            /* Responsive adjustments */
+            @media (max-width: 768px) {
                 .output-header {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 16px;
-                    padding: 24px;
-                    border-bottom: 1px solid var(--glass-border);
-                }
-                
-                .output-header h3 {
-                    color: var(--text-primary);
-                    margin: 0 0 8px 0;
-                    font-size: clamp(1.25rem, 4vw, 1.5rem);
-                    line-height: 1.2;
-                }
-                
-                .report-date {
-                    color: var(--text-secondary);
-                    margin: 0;
-                    font-size: 0.9rem;
+                    padding: 20px;
                 }
                 
                 .report-actions {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 10px;
-                    align-items: center;
-                    justify-content: flex-start;
-                    width: 100%;
+                    gap: 8px;
                 }
                 
                 .report-actions button {
-                    padding: 10px 16px;
-                    font-size: 0.9rem;
-                    white-space: nowrap;
-                    flex: 1;
-                    min-width: 100px;
-                    max-width: 120px;
+                    min-width: 90px;
+                    padding: 8px 12px;
+                    font-size: 0.85rem;
                 }
-                
-                .report-actions #close-report-btn {
-                    background: var(--danger-color, #ef4444);
-                    color: white;
-                    border-color: var(--danger-color, #ef4444);
-                }
-                
-                .report-actions #close-report-btn:hover {
-                    background: #dc2626;
-                    border-color: #dc2626;
-                }
-                
-                .output-content {
-                    padding: 24px;
-                }
-                
-                /* Report Sections */
-                .report-section {
-                    margin-bottom: 32px;
-                    padding-bottom: 24px;
-                    border-bottom: 1px solid var(--glass-border);
-                }
-                
-                .report-section:last-child {
-                    border-bottom: none;
-                    margin-bottom: 0;
-                    padding-bottom: 0;
-                }
-                
-                .report-section h4 {
-                    color: var(--text-primary);
-                    margin-bottom: 16px;
-                    font-size: 18px;
-                    font-weight: 600;
-                }
-                
-                /* Metric Rows */
-                .metric-row {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 12px 0;
-                    border-bottom: 1px solid rgba(0,0,0,0.05);
-                }
-                
-                .metric-row:last-child {
-                    border-bottom: none;
-                }
-                
-                .metric-label {
-                    color: var(--text-secondary);
-                    font-size: 14px;
-                }
-                
-                .metric-value {
-                    font-weight: 600;
-                    font-size: 14px;
-                }
-                
-                .metric-value.income {
-                    color: #22c55e;
-                }
-                
-                .metric-value.expense {
-                    color: #ef4444;
-                }
-                
-                .metric-value.profit {
-                    color: #22c55e;
-                }
-                
-                .metric-value.warning {
-                    color: #f59e0b;
-                }
-                
-                /* Report Data Tables */
-                .report-data-table {
-                    max-height: 300px;
-                    overflow-y: auto;
-                }
-                
-                .no-data-message {
-                    color: var(--text-secondary);
-                    text-align: center;
-                    padding: 20px;
-                }
-                
-                /* Insight Boxes */
-                .insight-box {
-                    background: var(--glass-bg);
+            }
+            
+            @media (max-width: 480px) {
+                .output-header {
                     padding: 16px;
-                    border-radius: 8px;
-                    border-left: 4px solid #3b82f6;
                 }
                 
-                .insight-box p {
-                    margin: 0;
-                    color: var(--text-primary);
-                }
-                
-                .production-insight {
-                    border-left-color: #22c55e;
-                }
-                
-                .inventory-insight {
-                    border-left-color: #f59e0b;
-                }
-                
-                .sales-insight {
-                    border-left-color: #3b82f6;
-                }
-                
-                .health-insight {
-                    border-left-color: #ef4444;
-                }
-                
-                /* Recommendation Boxes */
-                .recommendation-box {
-                    text-align: center;
-                    padding: 16px;
-                    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(34, 197, 94, 0.1));
-                    border-radius: 12px;
-                }
-                
-                .recommendation-box h4 {
-                    margin-bottom: 8px;
-                    color: var(--text-primary);
-                }
-                
-                .recommendation-content {
-                    color: var(--text-secondary);
-                    font-size: 14px;
-                }
-                
-                .recommendation-list ul {
-                    margin: 8px 0 0 0;
-                    padding-left: 20px;
-                }
-                
-                /* Inventory Table */
-                .inventory-table {
-                    max-height: 400px;
-                    overflow-y: auto;
-                }
-                
-                .inventory-item {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 12px 0;
-                    border-bottom: 1px solid rgba(0,0,0,0.05);
-                }
-                
-                .inventory-details {
-                    flex: 1;
-                }
-                
-                .inventory-name {
-                    font-weight: 500;
-                    color: var(--text-primary);
-                }
-                
-                .inventory-category {
-                    font-size: 12px;
-                    color: var(--text-secondary);
-                }
-                
-                .inventory-values {
-                    text-align: right;
-                }
-                
-                .inventory-quantity {
-                    font-weight: 600;
-                    color: var(--text-primary);
-                }
-                
-                .inventory-value {
-                    font-size: 12px;
-                    color: var(--text-secondary);
-                }
-                
-                /* Feed Reports */
-                .feed-type-table {
-                    max-height: 300px;
-                    overflow-y: auto;
-                }
-                
-                .feed-type-item {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 12px 0;
-                    border-bottom: 1px solid rgba(0,0,0,0.05);
-                }
-                
-                .feed-type-name {
-                    font-weight: 500;
-                    color: var(--text-primary);
-                }
-                
-                .feed-type-values {
-                    text-align: right;
-                }
-                
-                .feed-type-quantity {
-                    font-weight: 600;
-                    color: var(--text-primary);
-                }
-                
-                .feed-type-cost {
-                    font-size: 12px;
-                    color: var(--text-secondary);
-                }
-                
-                .feed-records-table {
-                    max-height: 300px;
-                    overflow-y: auto;
-                }
-                
-                .feed-record-item {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 12px 0;
-                    border-bottom: 1px solid rgba(0,0,0,0.05);
-                }
-                
-                .feed-record-details {
-                    flex: 1;
-                }
-                
-                .feed-record-date {
-                    font-weight: 500;
-                    color: var(--text-primary);
-                }
-                
-                .feed-record-quantity {
-                    font-size: 12px;
-                    color: var(--text-secondary);
-                }
-                
-                .feed-record-cost {
-                    font-weight: 600;
-                    color: var(--text-primary);
-                }
-                
-                /* Comprehensive Report Styles */
-                .comprehensive-header {
-                    text-align: center;
-                    margin-bottom: 32px;
-                }
-                
-                .farm-score-display {
-                    margin: 24px 0;
-                    padding: 20px;
-                    background: var(--glass-bg);
-                    border-radius: 16px;
-                    border: 2px solid currentColor;
-                }
-                
-                .farm-score-value {
-                    font-size: 48px;
-                    font-weight: bold;
-                    margin-bottom: 8px;
-                }
-                
-                .farm-score-status {
-                    font-size: 24px;
-                    font-weight: bold;
-                    color: var(--text-primary);
-                    margin-bottom: 8px;
-                }
-                
-                .farm-score-label {
-                    color: var(--text-secondary);
-                    font-size: 14px;
-                }
-                
-                .executive-summary {
-                    background: var(--glass-bg);
-                    padding: 20px;
-                    border-radius: 12px;
-                    margin: 16px 0;
-                }
-                
-                .executive-summary p {
-                    color: var(--text-primary);
-                    margin: 0;
-                    line-height: 1.6;
-                }
-                
-                .performance-metrics-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                    gap: 16px;
-                    margin: 16px 0;
-                }
-                
-                .performance-metric {
-                    background: var(--glass-bg);
-                    padding: 16px;
-                    border-radius: 8px;
-                    text-align: center;
-                }
-                
-                .performance-metric .metric-label {
-                    font-size: 14px;
-                    color: var(--text-secondary);
-                    margin-bottom: 8px;
-                }
-                
-                .performance-metric .metric-value {
-                    font-size: 24px;
-                    font-weight: bold;
-                }
-                
-                .metric-value.good { color: #22c55e; }
-                .metric-value.fair { color: #f59e0b; }
-                .metric-value.needs-review { color: #ef4444; }
-                .metric-value.needs-attention { color: #f59e0b; }
-                .metric-value.monitored { color: #3b82f6; }
-                
-                .key-statistics {
-                    max-height: 300px;
-                    overflow-y: auto;
-                }
-                
-                .priority-actions {
-                    background: var(--glass-bg);
-                    padding: 20px;
-                    border-radius: 12px;
-                    margin: 16px 0;
-                }
-                
-                .priority-actions ul {
-                    margin: 0;
-                    padding-left: 20px;
-                    color: var(--text-primary);
-                }
-                
-                .high-priority { color: #ef4444; }
-                .medium-priority { color: #f59e0b; }
-                .ongoing { color: #22c55e; }
-                
-                .quarter-goals-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 16px;
-                    margin: 16px 0;
-                }
-                
-                .quarter-goal {
-                    background: var(--glass-bg);
-                    padding: 16px;
-                    border-radius: 8px;
-                    text-align: center;
-                }
-                
-                .goal-label {
-                    font-size: 14px;
-                    color: var(--text-secondary);
-                    margin-bottom: 8px;
-                }
-                
-                .goal-value {
-                    font-size: 18px;
-                    font-weight: bold;
-                    color: var(--text-primary);
-                }
-                
-                .report-footer {
-                    text-align: center;
-                    padding-top: 24px;
-                    border-top: 2px solid var(--glass-border);
-                    margin-top: 32px;
-                }
-                
-                .report-footer p {
-                    color: var(--text-secondary);
-                    font-size: 12px;
-                    margin: 4px 0;
-                }
-                
-                /* Quick Stats Card */
-                .quick-stats-card {
-                    padding: 24px;
-                    margin-bottom: 24px;
-                }
-                
-                .quick-stats-card h3 {
-                    color: var(--text-primary);
-                    margin-bottom: 20px;
-                    font-size: 20px;
-                }
-                
-                .quick-stats-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 16px;
-                }
-                
-                .quick-stat-item {
-                    text-align: center;
-                    padding: 16px;
-                    background: var(--glass-bg);
-                    border-radius: 8px;
-                }
-                
-                .quick-stat-label {
-                    font-size: 14px;
-                    color: var(--text-secondary);
-                    margin-bottom: 8px;
-                }
-                
-                .quick-stat-value {
-                    font-size: 20px;
-                    font-weight: bold;
-                }
-                
-                .quick-stat-value.income {
-                    color: #22c55e;
-                }
-                
-                .quick-stat-value.profit {
-                    color: #22c55e;
-                }
-                
-                .quick-stat-value.expense {
-                    color: #ef4444;
-                }
-                
-                .quick-stat-value.warning {
-                    color: #f59e0b;
-                }
-                
-                .quick-stat-value.good {
-                    color: #22c55e;
-                }
-                
-                /* Reports Grid */
-                .reports-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-                    gap: 24px;
-                }
-                
-                .report-type-card {
-                    padding: 24px;
-                    text-align: center;
-                }
-                
-                .report-icon {
-                    font-size: 48px;
-                    margin-bottom: 16px;
-                }
-                
-                .report-content h3 {
-                    color: var(--text-primary);
-                    margin-bottom: 8px;
-                }
-                
-                .report-content p {
-                    color: var(--text-secondary);
-                    margin-bottom: 16px;
-                }
-                
-                .comprehensive-report-card {
-                    grid-column: 1 / -1;
-                }
-                
-                .comprehensive-report-card button {
-                    background: linear-gradient(135deg, #22c55e, #3b82f6);
-                }
-                
-                /* Recent Activity Card */
-                .recent-activity-card {
-                    padding: 24px;
-                    margin-top: 24px;
-                }
-                
-                .recent-activity-card h3 {
-                    color: var(--text-primary);
-                    margin-bottom: 20px;
-                    font-size: 20px;
-                }
-                
-                /* Activity List */
-                .activity-list {
-                    display: flex;
+                .report-actions {
                     flex-direction: column;
-                    gap: 12px;
+                    align-items: stretch;
                 }
                 
-                .activity-item {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 12px;
-                    background: var(--glass-bg);
-                    border-radius: 8px;
-                    border: 1px solid var(--glass-border);
+                .report-actions button {
+                    min-width: 100%;
+                    max-width: 100%;
+                    width: 100%;
                 }
-                
-                .activity-icon {
-                    font-size: 20px;
-                    margin-right: 12px;
-                }
-                
-                .activity-details {
-                    flex: 1;
-                }
-                
-                .activity-title {
-                    font-weight: 600;
-                    color: var(--text-primary);
-                }
-                
-                .activity-date {
-                    font-size: 14px;
-                    color: var(--text-secondary);
-                }
-                
-                .activity-amount {
-                    font-weight: bold;
-                    color: var(--text-primary);
-                }
-                
-                /* Empty State */
-                .empty-state {
-                    text-align: center;
-                    color: var(--text-secondary);
-                    padding: 40px 20px;
-                }
-                
-                .empty-state-icon {
-                    font-size: 48px;
-                    margin-bottom: 16px;
-                }
-                
-                .empty-state-title {
-                    font-size: 16px;
-                    margin-bottom: 8px;
-                }
-                
-                .empty-state-subtitle {
-                    font-size: 14px;
-                    color: var(--text-secondary);
-                }
-                
-                /* Responsive adjustments */
-                @media (max-width: 768px) {
-                    .output-header {
-                        padding: 20px;
-                    }
-                    
-                    .report-actions {
-                        gap: 8px;
-                    }
-                    
-                    .report-actions button {
-                        min-width: 90px;
-                        padding: 8px 12px;
-                        font-size: 0.85rem;
-                    }
-                    
-                    .quick-stats-grid {
-                        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                    }
-                    
-                    .reports-grid {
-                        grid-template-columns: 1fr;
-                    }
-                }
-                
-                @media (max-width: 480px) {
-                    .output-header {
-                        padding: 16px;
-                    }
-                    
-                    .report-actions {
-                        flex-direction: column;
-                        align-items: stretch;
-                    }
-                    
-                    .report-actions button {
-                        min-width: 100%;
-                        max-width: 100%;
-                        width: 100%;
-                    }
-                    
-                    .quick-stats-grid {
-                        grid-template-columns: 1fr 1fr;
-                    }
-                    
-                    .performance-metrics-grid,
-                    .quarter-goals-grid {
-                        grid-template-columns: 1fr;
-                    }
-                }
-            `;
-            document.head.appendChild(styles);
-        }
-    },
+            }
+        `;
+        document.head.appendChild(styles);
+    }
+},
 
     closeReport() {
         const outputSection = document.getElementById('report-output');
@@ -3123,205 +2654,205 @@ const ReportsModule = {
         }
     },
 
-    printReport() {
-        if (!this.currentReport) return;
-        
-        console.log('🖨️ Printing report...');
-        
-        // First, create a hidden iframe for printing
-        const printFrame = document.createElement('iframe');
-        printFrame.style.position = 'absolute';
-        printFrame.style.width = '0';
-        printFrame.style.height = '0';
-        printFrame.style.border = 'none';
-        printFrame.style.display = 'none';
-        document.body.appendChild(printFrame);
-        
-        // Create print content WITHOUT inline script
-        const printContent = `
-            <html>
-                <head>
-                    <title>${this.currentReport.title}</title>
-                    <style>
-                        body { 
-                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
-                            padding: 20px; 
-                            color: #333;
-                            line-height: 1.6;
-                        }
-                        .print-header { 
-                            text-align: center; 
-                            margin-bottom: 30px;
-                            padding-bottom: 20px;
-                            border-bottom: 2px solid #1e40af;
-                        }
-                        .print-title { 
-                            color: #1e40af; 
-                            font-size: 24px;
-                            margin: 0 0 10px 0;
-                        }
-                        .print-meta { 
-                            color: #666; 
-                            font-size: 14px;
-                            margin: 5px 0;
-                        }
-                        .section { 
-                            margin-bottom: 25px;
-                            page-break-inside: avoid;
-                        }
-                        .section-title { 
-                            color: #1e40af;
-                            font-size: 18px;
-                            margin: 0 0 15px 0;
-                            padding-bottom: 8px;
-                            border-bottom: 1px solid #e5e7eb;
-                        }
-                        .metric-row { 
-                            display: flex; 
-                            justify-content: space-between; 
-                            padding: 8px 0;
-                            border-bottom: 1px solid #f3f4f6;
-                        }
-                        .metric-label { 
-                            color: #4b5563;
-                            font-weight: 500;
-                        }
-                        .metric-value { 
-                            font-weight: 600;
-                        }
-                        .metric-value.income { color: #059669; }
-                        .metric-value.expense { color: #dc2626; }
-                        .metric-value.profit { color: #059669; }
-                        .metric-value.warning { color: #d97706; }
-                        .print-footer { 
-                            margin-top: 40px; 
-                            padding-top: 20px; 
-                            border-top: 1px solid #d1d5db; 
-                            font-size: 12px; 
-                            color: #6b7280;
-                            text-align: center;
-                        }
-                        @media print {
-                            body { padding: 0; }
-                            .print-header { border-bottom-color: #000; }
-                            .section { margin-bottom: 20px; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="print-header">
-                        <h1 class="print-title">${this.currentReport.title}</h1>
-                        <div class="print-meta">Farm Management System</div>
-                        <div class="print-meta">Generated: ${new Date().toLocaleString()}</div>
-                        <div class="print-meta">Report ID: FARM-${Date.now().toString().slice(-8)}</div>
-                    </div>
-                    
-                    <div id="print-content">
-                        ${this.cleanContentForPrint(this.currentReport.content)}
-                    </div>
-                    
-                    <div class="print-footer">
-                        <p>Confidential Farm Report - Generated by Farm Management System</p>
-                        <p>© ${new Date().getFullYear()} All rights reserved</p>
-                    </div>
-                </body>
-            </html>
-        `;
-        
-        try {
-            // Write content to iframe
-            printFrame.contentDocument.open();
-            printFrame.contentDocument.write(printContent);
-            printFrame.contentDocument.close();
-            
-            // Wait for iframe to load
-            printFrame.onload = () => {
-                // Clean up content in iframe (no inline script needed)
-                this.cleanIframeContent(printFrame);
-                
-                // Give it a moment for styles to apply
-                setTimeout(() => {
-                    try {
-                        // Focus and print
-                        printFrame.contentWindow.focus();
-                        printFrame.contentWindow.print();
-                        
-                        // Clean up after printing
-                        setTimeout(() => {
-                            document.body.removeChild(printFrame);
-                        }, 1000);
-                        
-                        // Show success notification
-                        this.showNotification('Report sent to printer', 'success');
-                        
-                        // ✅ Broadcast report printed
-                        if (this.broadcaster) {
-                            this.broadcastReportExported(this.currentReport.type, 'print');
-                        }
-                        
-                    } catch (printError) {
-                        console.error('Print error:', printError);
-                        this.showNotification('Failed to print. Please use browser print (Ctrl+P).', 'error');
-                        document.body.removeChild(printFrame);
+   printReport() {
+    if (!this.currentReport) return;
+    
+    console.log('🖨️ Printing report...');
+    
+    // First, create a hidden iframe for printing
+    const printFrame = document.createElement('iframe');
+    printFrame.style.position = 'absolute';
+    printFrame.style.width = '0';
+    printFrame.style.height = '0';
+    printFrame.style.border = 'none';
+    printFrame.style.display = 'none';
+    document.body.appendChild(printFrame);
+    
+    // Create print content WITHOUT inline script
+    const printContent = `
+        <html>
+            <head>
+                <title>${this.currentReport.title}</title>
+                <style>
+                    body { 
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
+                        padding: 20px; 
+                        color: #333;
+                        line-height: 1.6;
                     }
-                }, 500);
-            };
+                    .print-header { 
+                        text-align: center; 
+                        margin-bottom: 30px;
+                        padding-bottom: 20px;
+                        border-bottom: 2px solid #1e40af;
+                    }
+                    .print-title { 
+                        color: #1e40af; 
+                        font-size: 24px;
+                        margin: 0 0 10px 0;
+                    }
+                    .print-meta { 
+                        color: #666; 
+                        font-size: 14px;
+                        margin: 5px 0;
+                    }
+                    .section { 
+                        margin-bottom: 25px;
+                        page-break-inside: avoid;
+                    }
+                    .section-title { 
+                        color: #1e40af;
+                        font-size: 18px;
+                        margin: 0 0 15px 0;
+                        padding-bottom: 8px;
+                        border-bottom: 1px solid #e5e7eb;
+                    }
+                    .metric-row { 
+                        display: flex; 
+                        justify-content: space-between; 
+                        padding: 8px 0;
+                        border-bottom: 1px solid #f3f4f6;
+                    }
+                    .metric-label { 
+                        color: #4b5563;
+                        font-weight: 500;
+                    }
+                    .metric-value { 
+                        font-weight: 600;
+                    }
+                    .metric-value.income { color: #059669; }
+                    .metric-value.expense { color: #dc2626; }
+                    .metric-value.profit { color: #059669; }
+                    .metric-value.warning { color: #d97706; }
+                    .print-footer { 
+                        margin-top: 40px; 
+                        padding-top: 20px; 
+                        border-top: 1px solid #d1d5db; 
+                        font-size: 12px; 
+                        color: #6b7280;
+                        text-align: center;
+                    }
+                    @media print {
+                        body { padding: 0; }
+                        .print-header { border-bottom-color: #000; }
+                        .section { margin-bottom: 20px; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="print-header">
+                    <h1 class="print-title">${this.currentReport.title}</h1>
+                    <div class="print-meta">Farm Management System</div>
+                    <div class="print-meta">Generated: ${new Date().toLocaleString()}</div>
+                    <div class="print-meta">Report ID: FARM-${Date.now().toString().slice(-8)}</div>
+                </div>
+                
+                <div id="print-content">
+                    ${this.cleanContentForPrint(this.currentReport.content)}
+                </div>
+                
+                <div class="print-footer">
+                    <p>Confidential Farm Report - Generated by Farm Management System</p>
+                    <p>© ${new Date().getFullYear()} All rights reserved</p>
+                </div>
+            </body>
+        </html>
+    `;
+    
+    try {
+        // Write content to iframe
+        printFrame.contentDocument.open();
+        printFrame.contentDocument.write(printContent);
+        printFrame.contentDocument.close();
+        
+        // Wait for iframe to load
+        printFrame.onload = () => {
+            // Clean up content in iframe (no inline script needed)
+            this.cleanIframeContent(printFrame);
             
-        } catch (error) {
-            console.error('Print setup error:', error);
-            this.showNotification('Print setup failed. Please try again.', 'error');
-            if (document.body.contains(printFrame)) {
-                document.body.removeChild(printFrame);
-            }
+            // Give it a moment for styles to apply
+            setTimeout(() => {
+                try {
+                    // Focus and print
+                    printFrame.contentWindow.focus();
+                    printFrame.contentWindow.print();
+                    
+                    // Clean up after printing
+                    setTimeout(() => {
+                        document.body.removeChild(printFrame);
+                    }, 1000);
+                    
+                    // Show success notification
+                    this.showNotification('Report sent to printer', 'success');
+                    
+                    // ✅ Broadcast report printed
+                    if (this.broadcaster) {
+                        this.broadcastReportExported(this.currentReport.type, 'print');
+                    }
+                    
+                } catch (printError) {
+                    console.error('Print error:', printError);
+                    this.showNotification('Failed to print. Please use browser print (Ctrl+P).', 'error');
+                    document.body.removeChild(printFrame);
+                }
+            }, 500);
+        };
+        
+    } catch (error) {
+        console.error('Print setup error:', error);
+        this.showNotification('Print setup failed. Please try again.', 'error');
+        if (document.body.contains(printFrame)) {
+            document.body.removeChild(printFrame);
         }
-    },
+    }
+},
 
-    // ✅ ADDED: Clean content before putting it in iframe
-    cleanContentForPrint(htmlContent) {
-        // Create temporary div to parse HTML
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = htmlContent;
+// ✅ ADDED: Clean content before putting it in iframe
+cleanContentForPrint(htmlContent) {
+    // Create temporary div to parse HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+    
+    // Remove buttons and interactive elements
+    const unwanted = tempDiv.querySelectorAll('button, .btn, .action-btn, [onclick]');
+    unwanted.forEach(el => el.remove());
+    
+    // Clean up inline styles
+    const styledElements = tempDiv.querySelectorAll('[style]');
+    styledElements.forEach(el => {
+        let style = el.getAttribute('style');
+        if (style && style.includes('var(--')) {
+            // Replace CSS variables with actual colors
+            style = style.replace(/var\(--[^)]+\)/g, '#000000');
+            el.setAttribute('style', style);
+        }
+    });
+    
+    return tempDiv.innerHTML;
+},
+
+// ✅ ADDED: Clean iframe content after load
+cleanIframeContent(iframe) {
+    try {
+        const doc = iframe.contentDocument;
+        if (!doc) return;
         
-        // Remove buttons and interactive elements
-        const unwanted = tempDiv.querySelectorAll('button, .btn, .action-btn, [onclick]');
-        unwanted.forEach(el => el.remove());
+        // Remove any remaining buttons
+        const buttons = doc.querySelectorAll('button, .btn, .action-btn');
+        buttons.forEach(btn => btn.remove());
         
-        // Clean up inline styles
-        const styledElements = tempDiv.querySelectorAll('[style]');
-        styledElements.forEach(el => {
-            let style = el.getAttribute('style');
+        // Ensure colors are print-friendly
+        const coloredElements = doc.querySelectorAll('[style*="color"]');
+        coloredElements.forEach(el => {
+            const style = el.getAttribute('style');
             if (style && style.includes('var(--')) {
-                // Replace CSS variables with actual colors
-                style = style.replace(/var\(--[^)]+\)/g, '#000000');
-                el.setAttribute('style', style);
+                el.style.color = '#000000';
             }
         });
-        
-        return tempDiv.innerHTML;
-    },
-
-    // ✅ ADDED: Clean iframe content after load
-    cleanIframeContent(iframe) {
-        try {
-            const doc = iframe.contentDocument;
-            if (!doc) return;
-            
-            // Remove any remaining buttons
-            const buttons = doc.querySelectorAll('button, .btn, .action-btn');
-            buttons.forEach(btn => btn.remove());
-            
-            // Ensure colors are print-friendly
-            const coloredElements = doc.querySelectorAll('[style*="color"]');
-            coloredElements.forEach(el => {
-                const style = el.getAttribute('style');
-                if (style && style.includes('var(--')) {
-                    el.style.color = '#000000';
-                }
-            });
-        } catch (e) {
-            console.warn('Could not clean iframe content:', e);
-        }
-    },
+    } catch (e) {
+        console.warn('Could not clean iframe content:', e);
+    }
+},
     
     exportReport() {
         if (!this.currentReport) return;
@@ -3355,83 +2886,1624 @@ const ReportsModule = {
     },
 
     // ✅ ADDED: Export current report as PDF
-    async exportReportAsPDF() {
-        if (!this.currentReport) {
-            this.showNotification('No report to export', 'error');
+async exportReportAsPDF() {
+    if (!this.currentReport) {
+        this.showNotification('No report to export', 'error');
+        return;
+    }
+    
+    if (!this.pdfReady) {
+        this.showNotification('PDF service loading...', 'info');
+        try {
+            await this.loadJSPDF();
+        } catch (error) {
+            this.showNotification('Failed to load PDF service', 'error');
             return;
         }
+    }
+    
+    const button = document.getElementById('pdf-report-btn');
+    const originalText = button?.innerHTML || '📄 PDF';
+    
+    if (button) {
+        button.innerHTML = '⏳ Generating...';
+        button.disabled = true;
+    }
+    
+    try {
+        // Generate PDF based on report type
+        let result;
+        switch(this.currentReport.type) {
+            case 'financial':
+                result = await this.generateFinancialPDF();
+                break;
+            case 'production':
+                result = await this.generateProductionPDF();
+                break;
+            case 'inventory':
+                result = await this.generateInventoryPDF();
+                break;
+            case 'sales':
+                result = await this.generateSalesPDF();
+                break;
+            case 'health':
+                result = await this.generateHealthPDF();
+                break;
+            case 'feed':
+                result = await this.generateFeedPDF();
+                break;
+            case 'comprehensive':
+                result = await this.generateComprehensivePDF();
+                break;
+            default:
+                result = await this.generateGenericPDF();
+        }
         
-        if (!this.pdfReady) {
-            this.showNotification('PDF service loading...', 'info');
-            try {
-                await this.loadJSPDF();
-            } catch (error) {
-                this.showNotification('Failed to load PDF service', 'error');
-                return;
+        if (result.success) {
+            this.showNotification(`PDF exported: ${result.fileName}`, 'success');
+            
+            // Broadcast PDF export
+            if (this.broadcaster) {
+                this.broadcastReportExported(this.currentReport.type, 'pdf');
             }
+        } else {
+            this.showNotification(`PDF export failed: ${result.error}`, 'error');
         }
         
-        const button = document.getElementById('pdf-report-btn');
-        const originalText = button?.innerHTML || '📄 PDF';
-        
+    } catch (error) {
+        console.error('PDF export error:', error);
+        this.showNotification('Error generating PDF', 'error');
+    } finally {
         if (button) {
-            button.innerHTML = '⏳ Generating...';
-            button.disabled = true;
+            button.innerHTML = originalText;
+            button.disabled = false;
         }
+    }
+},
+
+    // ✅ ADDED: Generate Financial PDF Report
+async generateFinancialPDF() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
         
-        try {
-            // Generate PDF based on report type
-            let result;
-            switch(this.currentReport.type) {
-                case 'financial':
-                    result = await this.generateFinancialPDF();
-                    break;
-                case 'production':
-                    result = await this.generateProductionPDF();
-                    break;
-                case 'inventory':
-                    result = await this.generateInventoryPDF();
-                    break;
-                case 'sales':
-                    result = await this.generateSalesPDF();
-                    break;
-                case 'health':
-                    result = await this.generateHealthPDF();
-                    break;
-                case 'feed':
-                    result = await this.generateFeedPDF();
-                    break;
-                case 'comprehensive':
-                    result = await this.generateComprehensivePDF();
-                    break;
-                default:
-                    result = await this.generateGenericPDF();
+        // Get data
+        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
+        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
+        const incomeTransactions = transactions.filter(t => t.type === 'income');
+        const expenseTransactions = transactions.filter(t => t.type === 'expense');
+        const totalIncome = incomeTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+        const totalExpenses = expenseTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+        const totalSalesRevenue = sales.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+        const netProfit = totalIncome + totalSalesRevenue - totalExpenses;
+        const profitMargin = totalIncome > 0 ? (netProfit / (totalIncome + totalSalesRevenue)) * 100 : 0;
+        
+        // Header
+        doc.setFontSize(24);
+        doc.setTextColor(46, 125, 50);
+        doc.text('FINANCIAL REPORT', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Farm Management System', 105, 30, { align: 'center' });
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 37, { align: 'center' });
+        
+        // Summary Section
+        let yPos = 50;
+        doc.setFontSize(16);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Financial Overview', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        const summaryData = [
+            ['Total Income:', this.formatCurrency(totalIncome), 'income'],
+            ['Sales Revenue:', this.formatCurrency(totalSalesRevenue), 'income'],
+            ['Total Expenses:', this.formatCurrency(totalExpenses), 'expense'],
+            ['Net Profit:', this.formatCurrency(netProfit), netProfit >= 0 ? 'profit' : 'expense'],
+            ['Profit Margin:', `${profitMargin.toFixed(1)}%`, profitMargin >= 0 ? 'profit' : 'expense']
+        ];
+        
+        summaryData.forEach(([label, value, type]) => {
+            if (type === 'income' || type === 'profit') {
+                doc.setTextColor(46, 125, 50); // Green
+            } else if (type === 'expense') {
+                doc.setTextColor(220, 38, 38); // Red
+            } else {
+                doc.setTextColor(0, 0, 0); // Black
             }
             
-            if (result.success) {
-                this.showNotification(`PDF exported: ${result.fileName}`, 'success');
-                
-                // Broadcast PDF export
-                if (this.broadcaster) {
-                    this.broadcastReportExported(this.currentReport.type, 'pdf');
+            doc.text(label, 20, yPos);
+            doc.text(value, 150, yPos, { align: 'right' });
+            yPos += 8;
+        });
+        
+        // Income Breakdown
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Income Breakdown', 20, yPos);
+        yPos += 10;
+        
+        if (incomeTransactions.length > 0) {
+            doc.setFontSize(10);
+            incomeTransactions.forEach((transaction, index) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                doc.setTextColor(46, 125, 50);
+                doc.text(transaction.description || 'Unnamed', 25, yPos);
+                doc.text(this.formatCurrency(transaction.amount), 180, yPos, { align: 'right' });
+                yPos += 6;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No income records', 25, yPos);
+            yPos += 6;
+        }
+        
+        // Expense Breakdown
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Expense Breakdown', 20, yPos);
+        yPos += 10;
+        
+        if (expenseTransactions.length > 0) {
+            doc.setFontSize(10);
+            expenseTransactions.forEach((transaction, index) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                doc.setTextColor(220, 38, 38);
+                doc.text(transaction.description || 'Unnamed', 25, yPos);
+                doc.text(this.formatCurrency(transaction.amount), 180, yPos, { align: 'right' });
+                yPos += 6;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No expense records', 25, yPos);
+            yPos += 6;
+        }
+        
+        // Financial Insights
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Financial Insights', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        const insights = this.getFinancialInsights(totalIncome, totalExpenses, netProfit, profitMargin)
+            .split('.').filter(i => i.trim());
+        
+        insights.forEach(insight => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.text(`• ${insight.trim()}.`, 25, yPos);
+            yPos += 6;
+        });
+        
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+            doc.text('Confidential Financial Report', 20, 290);
+            doc.text(new Date().toLocaleDateString(), 190, 290, { align: 'right' });
+        }
+        
+        // Save PDF
+        const fileName = `Financial_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        console.error('Financial PDF error:', error);
+        return { success: false, error: error.message };
+    }
+},
+
+// ✅ ADDED: Generate Comprehensive PDF Report
+async generateComprehensivePDF() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Get all data
+        const stats = this.getFarmStats();
+        const farmScore = this.calculateFarmScore(stats);
+        const farmStatus = this.getFarmStatus(stats);
+        const farmStatusColor = this.getFarmStatusColor(stats);
+        
+        // Convert RGB to PDF color
+        const getPDFColor = (rgb) => {
+            const [r, g, b] = rgb.match(/\d+/g).map(Number);
+            return [r, g, b];
+        };
+        
+        // Cover Page
+        doc.setFillColor(240, 248, 255);
+        doc.rect(0, 0, 210, 297, 'F');
+        
+        doc.setFontSize(36);
+        doc.setTextColor(46, 125, 50);
+        doc.text('FARM COMPREHENSIVE', 105, 80, { align: 'center' });
+        doc.text('REPORT', 105, 95, { align: 'center' });
+        
+        doc.setFontSize(20);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Farm Management System', 105, 120, { align: 'center' });
+        
+        // Farm Score Circle
+        doc.setLineWidth(2);
+        doc.setDrawColor(...getPDFColor(farmStatusColor));
+        doc.circle(105, 170, 30, 'D');
+        
+        doc.setFontSize(24);
+        doc.setTextColor(...getPDFColor(farmStatusColor));
+        doc.text(farmScore.toString(), 105, 172, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.text('/100', 105, 185, { align: 'center' });
+        doc.text(farmStatus, 105, 200, { align: 'center' });
+        
+        doc.setFontSize(14);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 230, { align: 'center' });
+        doc.text('Confidential Document', 105, 240, { align: 'center' });
+        
+        // Page 2: Executive Summary
+        doc.addPage();
+        let yPos = 20;
+        
+        doc.setFontSize(20);
+        doc.setTextColor(46, 125, 50);
+        doc.text('Executive Summary', 20, yPos);
+        yPos += 15;
+        
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        const assessment = this.getOverallAssessment(stats);
+        const lines = doc.splitTextToSize(assessment, 170);
+        doc.text(lines, 20, yPos);
+        yPos += (lines.length * 7) + 10;
+        
+        // Key Metrics
+        doc.setFontSize(16);
+        doc.setTextColor(46, 125, 50);
+        doc.text('Key Performance Metrics', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        const metrics = [
+            ['Total Revenue:', this.formatCurrency(stats.totalRevenue), 'income'],
+            ['Net Profit:', this.formatCurrency(stats.netProfit), stats.netProfit >= 0 ? 'profit' : 'expense'],
+            ['Total Birds:', stats.totalBirds.toString(), 'neutral'],
+            ['Total Production:', `${stats.totalProduction} units`, 'neutral'],
+            ['Low Stock Items:', stats.lowStockItems.toString(), stats.lowStockItems > 0 ? 'warning' : 'neutral'],
+            ['Feed Used:', `${stats.totalFeedUsed} kg`, 'neutral']
+        ];
+        
+        metrics.forEach(([label, value, type]) => {
+            if (type === 'income' || type === 'profit') {
+                doc.setTextColor(46, 125, 50);
+            } else if (type === 'expense' || type === 'warning') {
+                doc.setTextColor(220, 38, 38);
+            } else {
+                doc.setTextColor(0, 0, 0);
+            }
+            
+            doc.text(label, 25, yPos);
+            doc.text(value, 180, yPos, { align: 'right' });
+            yPos += 8;
+        });
+        
+        // Page 3: Performance Analysis
+        doc.addPage();
+        yPos = 20;
+        
+        doc.setFontSize(20);
+        doc.setTextColor(46, 125, 50);
+        doc.text('Performance Analysis', 20, yPos);
+        yPos += 15;
+        
+        // Financial Performance
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Financial Performance', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        const financialData = stats.netProfit >= 0 ? 
+            `✅ Operating profitably with ${this.formatCurrency(stats.netProfit)} net profit.` :
+            `⚠️ Operating at a loss of ${this.formatCurrency(Math.abs(stats.netProfit))}.`;
+        
+        const financialLines = doc.splitTextToSize(financialData, 170);
+        doc.text(financialLines, 25, yPos);
+        yPos += (financialLines.length * 7) + 10;
+        
+        // Production Performance
+        doc.setFontSize(14);
+        doc.text('Production Performance', 20, yPos);
+        yPos += 10;
+        
+        const productionData = stats.totalProduction > 500 ?
+            `✅ Strong production output of ${stats.totalProduction} units.` :
+            `📈 Production at ${stats.totalProduction} units, room for growth.`;
+        
+        const productionLines = doc.splitTextToSize(productionData, 170);
+        doc.text(productionLines, 25, yPos);
+        yPos += (productionLines.length * 7) + 10;
+        
+        // Inventory Status
+        doc.setFontSize(14);
+        doc.text('Inventory Status', 20, yPos);
+        yPos += 10;
+        
+        const inventoryData = stats.lowStockItems === 0 ?
+            `✅ All inventory items are adequately stocked.` :
+            `⚠️ ${stats.lowStockItems} items are below minimum stock levels.`;
+        
+        const inventoryLines = doc.splitTextToSize(inventoryData, 170);
+        doc.text(inventoryLines, 25, yPos);
+        yPos += (inventoryLines.length * 7) + 10;
+        
+        // Page 4: Recommendations
+        doc.addPage();
+        yPos = 20;
+        
+        doc.setFontSize(20);
+        doc.setTextColor(46, 125, 50);
+        doc.text('Strategic Recommendations', 20, yPos);
+        yPos += 15;
+        
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        
+        const recommendations = [
+            stats.netProfit < 0 ? '1. Review expenses and explore new revenue streams to achieve profitability.' : '1. Maintain current financial discipline and explore expansion opportunities.',
+            stats.totalProduction < 1000 ? '2. Implement production optimization strategies to increase output.' : '2. Maintain production quality and consider scaling operations.',
+            stats.lowStockItems > 0 ? '3. Reorder low stock items and implement automated inventory alerts.' : '3. Continue regular inventory monitoring and maintain optimal stock levels.',
+            '4. Schedule regular veterinary consultations for flock health management.',
+            '5. Analyze feed efficiency and consider bulk purchasing for cost savings.'
+        ];
+        
+        recommendations.forEach(rec => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            const lines = doc.splitTextToSize(rec, 170);
+            doc.text(lines, 25, yPos);
+            yPos += (lines.length * 7) + 5;
+        });
+        
+        // Page 5: Next Quarter Goals
+        doc.addPage();
+        yPos = 20;
+        
+        doc.setFontSize(20);
+        doc.setTextColor(46, 125, 50);
+        doc.text('Next Quarter Goals', 20, yPos);
+        yPos += 15;
+        
+        doc.setFontSize(11);
+        const goals = [
+            [`Revenue Target:`, this.formatCurrency(stats.totalRevenue * 1.1)],
+            [`Production Goal:`, `${Math.round(stats.totalProduction * 1.05)} units`],
+            [`Cost Reduction:`, `5% target`],
+            [`Farm Score Goal:`, `${Math.min(100, farmScore + 10)}/100`],
+            [`Low Stock Items:`, `${Math.max(0, stats.lowStockItems - 3)} maximum`]
+        ];
+        
+        goals.forEach(([label, value]) => {
+            doc.setTextColor(0, 0, 0);
+            doc.text(label, 25, yPos);
+            doc.setTextColor(46, 125, 50);
+            doc.text(value, 180, yPos, { align: 'right' });
+            yPos += 8;
+        });
+        
+        yPos += 10;
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text('These goals are based on current performance and industry benchmarks.', 20, yPos);
+        
+        // Footer on all pages
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${totalPages}`, 105, 290, { align: 'center' });
+            doc.text('Farm Comprehensive Report', 20, 290);
+            doc.text(`Score: ${farmScore}/100`, 190, 290, { align: 'right' });
+        }
+        
+        // Save PDF
+        const fileName = `Farm_Comprehensive_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        console.error('Comprehensive PDF error:', error);
+        return { success: false, error: error.message };
+    }
+},
+
+// ✅ ADDED: Generate other report PDFs (similar pattern)
+async generateInventoryPDF() {
+    try {
+        // You can adapt your existing inventory PDF code here
+        // or create a simplified version
+        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // ... inventory PDF generation code similar to profile module
+        
+        const fileName = `Inventory_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+},
+
+// ✅ ADDED: Generic PDF for other report types
+// ✅ ADDED: Generate Generic PDF for other report types
+async generateGenericPDF() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Header
+        doc.setFontSize(24);
+        doc.setTextColor(46, 125, 50);
+        doc.text(this.currentReport.title.toUpperCase(), 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Farm Management System', 105, 30, { align: 'center' });
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 37, { align: 'center' });
+        
+        // Convert HTML content to text for PDF
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = this.currentReport.content;
+        
+        // Remove unnecessary elements
+        const unwantedElements = tempDiv.querySelectorAll('style, script, .btn, button');
+        unwantedElements.forEach(el => el.remove());
+        
+        // Get text content
+        const textContent = tempDiv.textContent || tempDiv.innerText || '';
+        
+        // Start content
+        let yPos = 50;
+        doc.setFontSize(11);
+        doc.setTextColor(0, 0, 0);
+        
+        // Split text into lines that fit PDF width
+        const lines = doc.splitTextToSize(textContent, 170);
+        
+        for (let line of lines) {
+            if (yPos > 270) {
+                doc.addPage();
+                yPos = 20;
+            }
+            
+            // Handle bullet points and formatting
+            if (line.includes('•') || line.trim().match(/^\d+\./)) {
+                doc.setFont(undefined, 'bold');
+                doc.text(line, 20, yPos);
+                doc.setFont(undefined, 'normal');
+            } else if (line.includes(':')) {
+                const parts = line.split(':');
+                if (parts.length >= 2) {
+                    doc.setFont(undefined, 'bold');
+                    doc.text(parts[0] + ':', 20, yPos);
+                    doc.setFont(undefined, 'normal');
+                    doc.text(parts.slice(1).join(':'), 20 + doc.getTextWidth(parts[0] + ': ') + 5, yPos);
+                } else {
+                    doc.text(line, 20, yPos);
                 }
             } else {
-                this.showNotification(`PDF export failed: ${result.error}`, 'error');
+                doc.text(line, 20, yPos);
             }
             
-        } catch (error) {
-            console.error('PDF export error:', error);
-            this.showNotification('Error generating PDF', 'error');
-        } finally {
-            if (button) {
-                button.innerHTML = originalText;
-                button.disabled = false;
-            }
+            yPos += 7;
         }
-    },
+        
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+            doc.text('Confidential Farm Report', 20, 290);
+            doc.text(new Date().toLocaleDateString(), 190, 290, { align: 'right' });
+        }
+        
+        // Save PDF
+        const fileName = `${this.currentReport.type}_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        console.error('Generic PDF error:', error);
+        return { success: false, error: error.message };
+    }
+},
 
-    // All the PDF generation methods (generateFinancialPDF, generateComprehensivePDF, etc.)
-    // have been kept as-is since they already use jsPDF properly
+    // ==================== PDF GENERATION METHODS ====================
+
+// ✅ ADDED: Generate Production PDF Report
+async generateProductionPDF() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Get data
+        const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
+        const totalProduction = production.reduce((sum, record) => sum + (record.quantity || 0), 0);
+        
+        // Group by product
+        const productGroups = {};
+        production.forEach(record => {
+            const product = record.product || 'Unknown';
+            if (!productGroups[product]) {
+                productGroups[product] = {
+                    total: 0,
+                    records: []
+                };
+            }
+            productGroups[product].total += record.quantity || 0;
+            productGroups[product].records.push(record);
+        });
+        
+        // Quality distribution
+        const qualityDistribution = { excellent: 0, good: 0, poor: 0, unknown: 0 };
+        production.forEach(record => {
+            const quality = record.quality || 'unknown';
+            qualityDistribution[quality] = (qualityDistribution[quality] || 0) + 1;
+        });
+        
+        // Header
+        doc.setFontSize(24);
+        doc.setTextColor(46, 125, 50);
+        doc.text('PRODUCTION REPORT', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Farm Management System', 105, 30, { align: 'center' });
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 37, { align: 'center' });
+        
+        // Summary Section
+        let yPos = 50;
+        doc.setFontSize(16);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Production Overview', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        const summaryData = [
+            ['Total Production:', `${totalProduction} units`, 'neutral'],
+            ['Production Records:', production.length.toString(), 'neutral'],
+            ['Products Tracked:', Object.keys(productGroups).length.toString(), 'neutral'],
+            ['Average Daily:', `${production.length > 0 ? Math.round(totalProduction / production.length) : 0} units`, 'neutral']
+        ];
+        
+        summaryData.forEach(([label, value, type]) => {
+            doc.setTextColor(0, 0, 0);
+            doc.text(label, 20, yPos);
+            doc.text(value, 150, yPos, { align: 'right' });
+            yPos += 8;
+        });
+        
+        // Quality Distribution
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.text('Quality Distribution', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        Object.entries(qualityDistribution).forEach(([quality, count]) => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            
+            // Color code quality
+            if (quality === 'excellent') doc.setTextColor(34, 197, 94); // Green
+            else if (quality === 'good') doc.setTextColor(59, 130, 246); // Blue
+            else if (quality === 'poor') doc.setTextColor(239, 68, 68); // Red
+            else doc.setTextColor(100, 100, 100); // Gray
+            
+            const qualityLabel = quality.charAt(0).toUpperCase() + quality.slice(1);
+            doc.text(qualityLabel, 25, yPos);
+            doc.text(count.toString(), 180, yPos, { align: 'right' });
+            yPos += 8;
+        });
+        
+        // Product Breakdown
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Product Breakdown', 20, yPos);
+        yPos += 10;
+        
+        if (Object.keys(productGroups).length > 0) {
+            doc.setFontSize(11);
+            Object.entries(productGroups).forEach(([product, data]) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                doc.setTextColor(46, 125, 50);
+                doc.text(this.formatProductName(product), 25, yPos);
+                doc.setTextColor(0, 0, 0);
+                doc.text(`${data.total} units`, 180, yPos, { align: 'right' });
+                yPos += 8;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No product data available', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Recent Production
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Recent Production Records', 20, yPos);
+        yPos += 10;
+        
+        if (production.slice(-5).length > 0) {
+            doc.setFontSize(10);
+            production.slice(-5).reverse().forEach(record => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                const date = record.date ? new Date(record.date).toLocaleDateString() : 'Unknown date';
+                const productName = this.formatProductName(record.product);
+                const quantity = `${record.quantity || 0} ${record.unit || 'units'}`;
+                
+                doc.text(`${date}: ${productName}`, 25, yPos);
+                doc.text(quantity, 180, yPos, { align: 'right' });
+                yPos += 8;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No recent production records', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Production Insights
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Production Insights', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        const insights = this.getProductionInsights(totalProduction, 0, qualityDistribution)
+            .split('.').filter(i => i.trim());
+        
+        insights.forEach(insight => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.setTextColor(59, 130, 246);
+            doc.text(`• ${insight.trim()}.`, 25, yPos);
+            yPos += 6;
+        });
+        
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+            doc.text('Confidential Production Report', 20, 290);
+            doc.text(new Date().toLocaleDateString(), 190, 290, { align: 'right' });
+        }
+        
+        // Save PDF
+        const fileName = `Production_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        console.error('Production PDF error:', error);
+        return { success: false, error: error.message };
+    }
+},
+
+// ✅ ADDED: Generate Sales PDF Report
+async generateSalesPDF() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Get data
+        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
+        const totalSales = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
+        const averageSale = sales.length > 0 ? totalSales / sales.length : 0;
+        
+        // Group by month
+        const monthlySales = {};
+        sales.forEach(sale => {
+            const date = new Date(sale.date || sale.createdAt || Date.now());
+            const monthYear = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+            if (!monthlySales[monthYear]) {
+                monthlySales[monthYear] = {
+                    total: 0,
+                    count: 0,
+                    sales: []
+                };
+            }
+            monthlySales[monthYear].total += sale.totalAmount || 0;
+            monthlySales[monthYear].count += 1;
+            monthlySales[monthYear].sales.push(sale);
+        });
+        
+        // Header
+        doc.setFontSize(24);
+        doc.setTextColor(46, 125, 50);
+        doc.text('SALES REPORT', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Farm Management System', 105, 30, { align: 'center' });
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 37, { align: 'center' });
+        
+        // Summary Section
+        let yPos = 50;
+        doc.setFontSize(16);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Sales Overview', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        const summaryData = [
+            ['Total Revenue:', this.formatCurrency(totalSales), 'income'],
+            ['Number of Sales:', sales.length.toString(), 'neutral'],
+            ['Average Sale:', this.formatCurrency(averageSale), 'income'],
+            ['Months Tracked:', Object.keys(monthlySales).length.toString(), 'neutral']
+        ];
+        
+        summaryData.forEach(([label, value, type]) => {
+            if (type === 'income') {
+                doc.setTextColor(46, 125, 50);
+            } else {
+                doc.setTextColor(0, 0, 0);
+            }
+            doc.text(label, 20, yPos);
+            doc.text(value, 150, yPos, { align: 'right' });
+            yPos += 8;
+        });
+        
+        // Monthly Sales Trend
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Monthly Sales Trend', 20, yPos);
+        yPos += 10;
+        
+        if (Object.keys(monthlySales).length > 0) {
+            doc.setFontSize(11);
+            Object.entries(monthlySales).sort().forEach(([month, data]) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                const [year, monthNum] = month.split('-');
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const monthName = monthNames[parseInt(monthNum) - 1];
+                
+                doc.setTextColor(0, 0, 0);
+                doc.text(`${monthName} ${year}`, 25, yPos);
+                doc.setTextColor(46, 125, 50);
+                doc.text(this.formatCurrency(data.total), 180, yPos, { align: 'right' });
+                
+                doc.setFontSize(9);
+                doc.setTextColor(100, 100, 100);
+                doc.text(`(${data.count} sales)`, 180, yPos + 4, { align: 'right' });
+                doc.setFontSize(11);
+                
+                yPos += 12;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No monthly sales data', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Recent Sales
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Recent Sales', 20, yPos);
+        yPos += 10;
+        
+        if (sales.slice(-5).length > 0) {
+            doc.setFontSize(10);
+            sales.slice(-5).reverse().forEach(sale => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                const date = sale.date ? new Date(sale.date).toLocaleDateString() : 'Unknown date';
+                const customer = sale.customerName || 'Walk-in Customer';
+                const amount = this.formatCurrency(sale.totalAmount || 0);
+                
+                doc.text(`${date}: ${customer}`, 25, yPos);
+                doc.setTextColor(46, 125, 50);
+                doc.text(amount, 180, yPos, { align: 'right' });
+                doc.setTextColor(0, 0, 0);
+                
+                yPos += 8;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No recent sales', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Sales Insights
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Sales Insights', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        const insights = this.getSalesInsights(sales.length, totalSales)
+            .split('.').filter(i => i.trim());
+        
+        insights.forEach(insight => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.setTextColor(59, 130, 246);
+            doc.text(`• ${insight.trim()}.`, 25, yPos);
+            yPos += 6;
+        });
+        
+        // Recommendations
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Sales Strategies', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        const strategies = [
+            sales.length < 10 ? 'Focus on increasing sales volume through targeted marketing.' : 'Expand customer base and explore bulk sales opportunities.',
+            averageSale < 100 ? 'Bundle products to increase average sale value and customer spend.' : 'Maintain product quality and strengthen customer relationships.',
+            'Analyze monthly trends to plan for seasonal demand fluctuations.',
+            'Implement customer loyalty programs to encourage repeat business.'
+        ];
+        
+        strategies.forEach(strategy => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.setTextColor(46, 125, 50);
+            doc.text(`• ${strategy}`, 25, yPos);
+            yPos += 6;
+        });
+        
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+            doc.text('Confidential Sales Report', 20, 290);
+            doc.text(new Date().toLocaleDateString(), 190, 290, { align: 'right' });
+        }
+        
+        // Save PDF
+        const fileName = `Sales_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        console.error('Sales PDF error:', error);
+        return { success: false, error: error.message };
+    }
+},
+
+// ✅ ADDED: Generate Inventory PDF Report
+async generateInventoryPDF() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Get data
+        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+        const lowStockThreshold = 10; // Default threshold
+        const lowStockItems = inventory.filter(item => (item.quantity || 0) <= lowStockThreshold);
+        const outOfStockItems = inventory.filter(item => (item.quantity || 0) === 0);
+        
+        const totalValue = inventory.reduce((sum, item) => {
+            return sum + ((item.quantity || 0) * (parseFloat(item.price) || 0));
+        }, 0);
+        
+        // Group by category
+        const categoryGroups = {};
+        inventory.forEach(item => {
+            const category = item.category || 'Uncategorized';
+            if (!categoryGroups[category]) {
+                categoryGroups[category] = {
+                    items: [],
+                    totalValue: 0,
+                    totalQuantity: 0
+                };
+            }
+            categoryGroups[category].items.push(item);
+            categoryGroups[category].totalValue += (item.quantity || 0) * (parseFloat(item.price) || 0);
+            categoryGroups[category].totalQuantity += item.quantity || 0;
+        });
+        
+        // Header
+        doc.setFontSize(24);
+        doc.setTextColor(46, 125, 50);
+        doc.text('INVENTORY REPORT', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Farm Management System', 105, 30, { align: 'center' });
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 37, { align: 'center' });
+        
+        // Summary Section
+        let yPos = 50;
+        doc.setFontSize(16);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Inventory Overview', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        const summaryData = [
+            ['Total Items:', inventory.length.toString(), 'neutral'],
+            ['Total Value:', this.formatCurrency(totalValue), 'income'],
+            ['Low Stock Items:', lowStockItems.length.toString(), lowStockItems.length > 0 ? 'warning' : 'neutral'],
+            ['Out of Stock:', outOfStockItems.length.toString(), outOfStockItems.length > 0 ? 'warning' : 'neutral'],
+            ['Categories:', Object.keys(categoryGroups).length.toString(), 'neutral']
+        ];
+        
+        summaryData.forEach(([label, value, type]) => {
+            if (type === 'income') {
+                doc.setTextColor(46, 125, 50);
+            } else if (type === 'warning') {
+                doc.setTextColor(239, 68, 68);
+            } else {
+                doc.setTextColor(0, 0, 0);
+            }
+            doc.text(label, 20, yPos);
+            doc.text(value, 150, yPos, { align: 'right' });
+            yPos += 8;
+        });
+        
+        // Low Stock Warning
+        if (lowStockItems.length > 0) {
+            yPos += 10;
+            doc.setFontSize(14);
+            doc.setTextColor(239, 68, 68);
+            doc.text('⚠️ Low Stock Items', 20, yPos);
+            yPos += 10;
+            
+            doc.setFontSize(10);
+            lowStockItems.forEach(item => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                const currentStock = item.quantity || 0;
+                const minStock = item.minStock || lowStockThreshold;
+                
+                doc.setTextColor(239, 68, 68);
+                doc.text(item.name || 'Unnamed Item', 25, yPos);
+                doc.text(`${currentStock} / ${minStock}`, 180, yPos, { align: 'right' });
+                yPos += 8;
+            });
+        }
+        
+        // Category Breakdown
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Category Breakdown', 20, yPos);
+        yPos += 10;
+        
+        if (Object.keys(categoryGroups).length > 0) {
+            doc.setFontSize(11);
+            Object.entries(categoryGroups).forEach(([category, data]) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                doc.setTextColor(46, 125, 50);
+                doc.text(this.formatCategory(category), 25, yPos);
+                doc.setTextColor(0, 0, 0);
+                doc.text(`${data.items.length} items`, 120, yPos);
+                doc.text(this.formatCurrency(data.totalValue), 180, yPos, { align: 'right' });
+                yPos += 8;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No category data', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Complete Inventory List
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Complete Inventory List', 20, yPos);
+        yPos += 10;
+        
+        if (inventory.length > 0) {
+            // Create table headers
+            const startY = yPos;
+            const headers = [['Item', 'Category', 'Qty', 'Unit Price', 'Total Value', 'Status']];
+            
+            // Prepare table data
+            const tableData = inventory.map(item => {
+                const quantity = item.quantity || 0;
+                const unitPrice = parseFloat(item.price) || 0;
+                const totalValue = quantity * unitPrice;
+                
+                let status = 'Normal';
+                if (quantity === 0) status = 'Out of Stock';
+                else if (quantity <= lowStockThreshold) status = 'Low Stock';
+                
+                return [
+                    item.name || 'Unnamed',
+                    this.formatCategory(item.category || 'Uncategorized'),
+                    quantity.toString(),
+                    this.formatCurrency(unitPrice),
+                    this.formatCurrency(totalValue),
+                    status
+                ];
+            });
+            
+            // Use autoTable if available
+            if (typeof doc.autoTable !== 'undefined') {
+                doc.autoTable({
+                    startY: startY,
+                    head: headers,
+                    body: tableData,
+                    theme: 'grid',
+                    headStyles: { fillColor: [46, 125, 50], textColor: [255, 255, 255], fontStyle: 'bold' },
+                    alternateRowStyles: { fillColor: [245, 245, 245] },
+                    styles: { fontSize: 9, cellPadding: 3 },
+                    columnStyles: {
+                        0: { cellWidth: 40 },
+                        1: { cellWidth: 30 },
+                        2: { cellWidth: 20 },
+                        3: { cellWidth: 25 },
+                        4: { cellWidth: 25 },
+                        5: { cellWidth: 30 }
+                    }
+                });
+                
+                // Update yPos based on autoTable
+                yPos = doc.lastAutoTable.finalY + 10;
+            } else {
+                // Manual table if autoTable not available
+                doc.setFontSize(9);
+                tableData.forEach((row, index) => {
+                    if (yPos > 250) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+                    
+                    // Status color coding
+                    if (row[5] === 'Out of Stock') doc.setTextColor(239, 68, 68);
+                    else if (row[5] === 'Low Stock') doc.setTextColor(245, 158, 11);
+                    else doc.setTextColor(0, 0, 0);
+                    
+                    doc.text(row[0], 20, yPos);
+                    doc.text(row[1], 70, yPos);
+                    doc.text(row[2], 110, yPos);
+                    doc.text(row[3], 130, yPos);
+                    doc.text(row[4], 160, yPos);
+                    doc.text(row[5], 190, yPos, { align: 'right' });
+                    yPos += 6;
+                });
+            }
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No inventory items', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Inventory Insights
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Inventory Management Insights', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        const insights = lowStockItems.length > 0 
+            ? `⚠️ Attention needed for ${lowStockItems.length} low stock items. Consider reordering soon to avoid stockouts.`
+            : '✅ Inventory levels are healthy. Maintain current stock levels and continue regular monitoring.';
+        
+        const insightLines = doc.splitTextToSize(insights, 170);
+        doc.setTextColor(59, 130, 246);
+        doc.text(insightLines, 25, yPos);
+        yPos += (insightLines.length * 6) + 10;
+        
+        // Recommendations
+        doc.setFontSize(11);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Recommendations:', 20, yPos);
+        yPos += 8;
+        
+        const recommendations = [
+            lowStockItems.length > 0 ? '1. Place orders for low stock items immediately to prevent stockouts.' : '1. Continue regular inventory monitoring and maintain optimal stock levels.',
+            '2. Set up automatic reorder alerts for critical inventory items.',
+            '3. Review seasonal demand patterns for better inventory planning.',
+            '4. Consider just-in-time inventory for non-essential items to reduce holding costs.',
+            '5. Conduct regular inventory audits to ensure accuracy.'
+        ];
+        
+        doc.setFontSize(10);
+        recommendations.forEach(rec => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.setTextColor(46, 125, 50);
+            doc.text(`• ${rec}`, 25, yPos);
+            yPos += 6;
+        });
+        
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+            doc.text('Confidential Inventory Report', 20, 290);
+            doc.text(new Date().toLocaleDateString(), 190, 290, { align: 'right' });
+        }
+        
+        // Save PDF
+        const fileName = `Inventory_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        console.error('Inventory PDF error:', error);
+        return { success: false, error: error.message };
+    }
+},
+
+// ✅ ADDED: Generate Health PDF Report
+async generateHealthPDF() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Get data
+        const mortalityRecords = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
+        const totalMortality = mortalityRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
+        const totalBirds = parseInt(localStorage.getItem('farm-current-stock') || '1000');
+        const mortalityRate = totalBirds > 0 ? (totalMortality / totalBirds) * 100 : 0;
+        
+        // Group by cause
+        const causeBreakdown = {};
+        mortalityRecords.forEach(record => {
+            const cause = record.cause || 'unknown';
+            causeBreakdown[cause] = (causeBreakdown[cause] || 0) + (record.quantity || 0);
+        });
+        
+        // Header
+        doc.setFontSize(24);
+        doc.setTextColor(46, 125, 50);
+        doc.text('HEALTH & MORTALITY REPORT', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Farm Management System', 105, 30, { align: 'center' });
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 37, { align: 'center' });
+        
+        // Summary Section
+        let yPos = 50;
+        doc.setFontSize(16);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Health Overview', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        const summaryData = [
+            ['Total Mortality:', `${totalMortality} birds`, mortalityRate > 5 ? 'warning' : 'neutral'],
+            ['Mortality Rate:', `${mortalityRate.toFixed(2)}%`, mortalityRate > 5 ? 'warning' : 'neutral'],
+            ['Current Flock Size:', `${totalBirds} birds`, 'neutral'],
+            ['Health Records:', mortalityRecords.length.toString(), 'neutral']
+        ];
+        
+        summaryData.forEach(([label, value, type]) => {
+            if (type === 'warning') {
+                doc.setTextColor(239, 68, 68);
+            } else {
+                doc.setTextColor(0, 0, 0);
+            }
+            doc.text(label, 20, yPos);
+            doc.text(value, 150, yPos, { align: 'right' });
+            yPos += 8;
+        });
+        
+        // Cause Analysis
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Cause Analysis', 20, yPos);
+        yPos += 10;
+        
+        if (Object.keys(causeBreakdown).length > 0) {
+            doc.setFontSize(11);
+            Object.entries(causeBreakdown).forEach(([cause, count]) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                doc.setTextColor(0, 0, 0);
+                doc.text(this.formatCause(cause), 25, yPos);
+                doc.text(`${count} birds`, 180, yPos, { align: 'right' });
+                yPos += 8;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No cause data available', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Recent Health Records
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Recent Health Records', 20, yPos);
+        yPos += 10;
+        
+        if (mortalityRecords.slice(-5).length > 0) {
+            doc.setFontSize(10);
+            mortalityRecords.slice(-5).reverse().forEach(record => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                const date = record.date ? new Date(record.date).toLocaleDateString() : 'Unknown date';
+                const cause = this.formatCause(record.cause);
+                const quantity = `${record.quantity || 0} birds`;
+                
+                doc.text(`${date}: ${cause}`, 25, yPos);
+                doc.text(quantity, 180, yPos, { align: 'right' });
+                yPos += 8;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No recent health records', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Health Insights
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Health Insights', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        const insights = this.getHealthRecommendations(mortalityRate, causeBreakdown)
+            .split('.').filter(i => i.trim());
+        
+        insights.forEach(insight => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.setTextColor(59, 130, 246);
+            doc.text(`• ${insight.trim()}.`, 25, yPos);
+            yPos += 6;
+        });
+        
+        // Prevention Strategies
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Prevention Strategies', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        const strategies = [
+            mortalityRate > 5 ? 'Implement strict biosecurity measures and schedule regular veterinary health checks.' : 'Maintain current health monitoring protocols and biosecurity measures.',
+            Object.keys(causeBreakdown).includes('disease') ? 'Schedule immediate veterinary consultations and implement vaccination programs for common diseases.' : 'Focus on preventive care through proper nutrition and environmental management.',
+            'Monitor environmental conditions including temperature, ventilation, and cleanliness regularly.',
+            'Keep detailed health records for early detection of health issues and trend analysis.',
+            'Implement quarantine procedures for new birds and sick individuals.',
+            'Train staff on proper handling techniques and early symptom recognition.'
+        ];
+        
+        strategies.forEach(strategy => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.setTextColor(46, 125, 50);
+            doc.text(`• ${strategy}`, 25, yPos);
+            yPos += 6;
+        });
+        
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+            doc.text('Confidential Health Report', 20, 290);
+            doc.text(new Date().toLocaleDateString(), 190, 290, { align: 'right' });
+        }
+        
+        // Save PDF
+        const fileName = `Health_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        console.error('Health PDF error:', error);
+        return { success: false, error: error.message };
+    }
+},
+
+// ✅ ADDED: Generate Feed PDF Report
+async generateFeedPDF() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Get data
+        const feedRecords = JSON.parse(localStorage.getItem('farm-feed-records') || '[]');
+        const totalFeedUsed = feedRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
+        const totalFeedCost = feedRecords.reduce((sum, record) => sum + (record.cost || 0), 0);
+        const totalBirds = parseInt(localStorage.getItem('farm-current-stock') || '1000');
+        const averageCostPerKg = totalFeedUsed > 0 ? totalFeedCost / totalFeedUsed : 0;
+        
+        // Group by feed type
+        const feedTypeBreakdown = {};
+        feedRecords.forEach(record => {
+            const feedType = record.feedType || 'unknown';
+            if (!feedTypeBreakdown[feedType]) {
+                feedTypeBreakdown[feedType] = {
+                    quantity: 0,
+                    cost: 0,
+                    records: []
+                };
+            }
+            feedTypeBreakdown[feedType].quantity += record.quantity || 0;
+            feedTypeBreakdown[feedType].cost += record.cost || 0;
+            feedTypeBreakdown[feedType].records.push(record);
+        });
+        
+        // Header
+        doc.setFontSize(24);
+        doc.setTextColor(46, 125, 50);
+        doc.text('FEED CONSUMPTION REPORT', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Farm Management System', 105, 30, { align: 'center' });
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 37, { align: 'center' });
+        
+        // Summary Section
+        let yPos = 50;
+        doc.setFontSize(16);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Feed Consumption Overview', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(11);
+        const summaryData = [
+            ['Total Feed Used:', `${totalFeedUsed} kg`, 'neutral'],
+            ['Total Feed Cost:', this.formatCurrency(totalFeedCost), 'expense'],
+            ['Average Cost per Kg:', this.formatCurrency(averageCostPerKg), 'neutral'],
+            ['Feed Records:', feedRecords.length.toString(), 'neutral'],
+            ['Feed per Bird:', `${totalBirds > 0 ? (totalFeedUsed / totalBirds).toFixed(2) : 0} kg`, 'neutral']
+        ];
+        
+        summaryData.forEach(([label, value, type]) => {
+            if (type === 'expense') {
+                doc.setTextColor(239, 68, 68);
+            } else {
+                doc.setTextColor(0, 0, 0);
+            }
+            doc.text(label, 20, yPos);
+            doc.text(value, 150, yPos, { align: 'right' });
+            yPos += 8;
+        });
+        
+        // Feed Type Analysis
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Feed Type Analysis', 20, yPos);
+        yPos += 10;
+        
+        if (Object.keys(feedTypeBreakdown).length > 0) {
+            doc.setFontSize(11);
+            Object.entries(feedTypeBreakdown).forEach(([feedType, data]) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                doc.setTextColor(0, 0, 0);
+                doc.text(this.formatFeedType(feedType), 25, yPos);
+                
+                doc.setFontSize(10);
+                doc.text(`${data.quantity} kg`, 120, yPos);
+                doc.text(this.formatCurrency(data.cost), 180, yPos, { align: 'right' });
+                
+                doc.setFontSize(9);
+                doc.setTextColor(100, 100, 100);
+                const avgCost = data.quantity > 0 ? this.formatCurrency(data.cost / data.quantity) : '$0.00';
+                doc.text(`(${avgCost}/kg)`, 180, yPos + 4, { align: 'right' });
+                
+                doc.setFontSize(11);
+                yPos += 12;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No feed type data available', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Recent Feed Records
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Recent Feed Records', 20, yPos);
+        yPos += 10;
+        
+        if (feedRecords.slice(-5).length > 0) {
+            doc.setFontSize(10);
+            feedRecords.slice(-5).reverse().forEach(record => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                const date = record.date ? new Date(record.date).toLocaleDateString() : 'Unknown date';
+                const feedType = this.formatFeedType(record.feedType);
+                const quantity = `${record.quantity || 0} kg`;
+                const cost = this.formatCurrency(record.cost || 0);
+                
+                doc.text(`${date}: ${feedType}`, 25, yPos);
+                doc.text(quantity, 120, yPos);
+                doc.text(cost, 180, yPos, { align: 'right' });
+                yPos += 8;
+            });
+        } else {
+            doc.setTextColor(100, 100, 100);
+            doc.text('No recent feed records', 25, yPos);
+            yPos += 8;
+        }
+        
+        // Feed Management Insights
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Feed Management Insights', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        const feedEfficiency = totalBirds > 0 ? totalFeedUsed / totalBirds : 0;
+        const insights = [
+            `Feed represents approximately ${totalFeedCost > 0 ? Math.round((totalFeedCost / (totalFeedCost + 1000)) * 100) : 0}% of operational costs.`,
+            feedEfficiency > 0.1 ? 'Feed efficiency is within normal range for poultry operations.' : 'Monitor feed consumption rates to ensure optimal efficiency.',
+            averageCostPerKg > 1.5 ? 'Feed costs are higher than industry average. Consider bulk purchasing or alternative suppliers.' : 'Feed costs are reasonable. Continue current purchasing strategy.',
+            'Regularly assess feed conversion ratios to track efficiency improvements.'
+        ];
+        
+        insights.forEach(insight => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.setTextColor(59, 130, 246);
+            doc.text(`• ${insight}`, 25, yPos);
+            yPos += 6;
+        });
+        
+        // Recommendations
+        yPos += 10;
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Optimization Strategies', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        const strategies = [
+            'Consider bulk purchasing for commonly used feed types to reduce per-unit costs.',
+            'Track feed-to-weight conversion ratios weekly to identify efficiency opportunities.',
+            'Implement feeding schedules based on bird age and production stage.',
+            'Monitor feed wastage and implement measures to reduce spillage.',
+            'Regularly compare feed prices from multiple suppliers.',
+            'Consider formulating custom feed mixes for specific nutritional requirements.',
+            'Implement feed storage best practices to prevent spoilage and contamination.'
+        ];
+        
+        strategies.forEach(strategy => {
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.setTextColor(46, 125, 50);
+            doc.text(`• ${strategy}`, 25, yPos);
+            yPos += 6;
+        });
+        
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+            doc.text('Confidential Feed Report', 20, 290);
+            doc.text(new Date().toLocaleDateString(), 190, 290, { align: 'right' });
+        }
+        
+        // Save PDF
+        const fileName = `Feed_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+        return { success: true, fileName: fileName };
+        
+    } catch (error) {
+        console.error('Feed PDF error:', error);
+        return { success: false, error: error.message };
+    }
+},
     
     showNotification(message, type = 'success') {
         // Create notification element
