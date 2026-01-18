@@ -117,7 +117,7 @@ body {
     flex-direction: column !important;
 }
 
-/* ===== SPLASH SCREEN - IMPROVED LAYOUT ===== */
+/* ===== SPLASH SCREEN - FIXED HIDING ===== */
 #splash-screen {
     position: fixed;
     top: 0;
@@ -129,7 +129,16 @@ body {
     justify-content: center;
     align-items: center;
     z-index: 10002;
-    animation: fadeOut 0.5s ease 2s forwards;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+#splash-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: -1;
 }
 
 .splash-content {
@@ -224,11 +233,12 @@ body {
     }
 }
 
-/* ===== AUTH CONTAINER - IMPROVED LAYOUT ===== */
-#auth-container.hidden {
-    display: none;
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
+/* ===== AUTH CONTAINER - ALWAYS VISIBLE ===== */
 #auth-container {
     min-height: 100vh;
     display: flex;
@@ -241,6 +251,32 @@ body {
     padding: 2rem;
     position: relative;
     overflow: hidden;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.5s ease;
+}
+
+/* Initially hide auth container content until splash disappears */
+body.splash-active #auth-container {
+    opacity: 0;
+    pointer-events: none;
+}
+
+body:not(.splash-active) #auth-container {
+    opacity: 1;
+    pointer-events: all;
+    animation: authFadeIn 0.8s ease;
+}
+
+@keyframes authFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Brand Header */
@@ -719,6 +755,15 @@ body {
 
 .auth-submit-btn i {
     font-size: 20px;
+}
+
+/* Ensure proper stacking */
+#splash-screen {
+    z-index: 10002;
+}
+
+#auth-container {
+    z-index: 10001;
 }
 
 /* Form Switch */
