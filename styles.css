@@ -117,14 +117,14 @@ body {
     flex-direction: column !important;
 }
 
-/* ===== SPLASH SCREEN ===== */
+/* ===== SPLASH SCREEN - DISTINCT STYLE ===== */
 #splash-screen {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #22c55e 0%, #14b8a6 50%, #0ea5e9 100%);
+    background: linear-gradient(135deg, #166534 0%, #0f766e 50%, #075985 100%);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -137,39 +137,69 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 24px;
+    gap: 32px;
     text-align: center;
-    padding: 20px;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    margin: 20px;
 }
 
-.splash-logo {
-    width: 120px;
-    height: 120px;
-    border-radius: 24px;
+.splash-logo-container {
+    width: 150px;
+    height: 150px;
+    border-radius: 30px;
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    border: 3px solid rgba(255, 255, 255, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    padding: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    padding: 25px;
+    animation: logoPulse 2s ease-in-out infinite alternate;
 }
 
-.splash-logo img {
+@keyframes logoPulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    100% {
+        transform: scale(1.05);
+        box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+    }
+}
+
+.splash-logo-container img {
     width: 100%;
     height: 100%;
     object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.splash-text-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .splash-title {
-    font-size: 36px;
-    font-weight: 800;
+    font-size: 42px;
+    font-weight: 900;
     color: white;
     line-height: 1.1;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    letter-spacing: -0.5px;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    letter-spacing: -1px;
+    background: linear-gradient(to right, #ffffff, #e2e8f0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .splash-subtitle {
@@ -178,46 +208,41 @@ body {
     font-weight: 500;
     max-width: 300px;
     line-height: 1.4;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.splash-loader {
-    width: 60px;
-    height: 60px;
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    border-top-color: white;
-    animation: spin 1s linear infinite;
+.splash-loader-container {
     margin-top: 20px;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+.splash-loader {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-@keyframes fadeOut {
-    0% { opacity: 1; }
-    100% { 
-        opacity: 0; 
-        visibility: hidden;
-        z-index: -1;
-    }
-}
-
-/* ===== AUTH CONTAINER FIXES ===== */
+/* ===== AUTH CONTAINER - UPDATED TO BE DIFFERENT ===== */
 #auth-container {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(135deg, #22c55e 0%, #14b8a6 50%, #0ea5e9 100%);
+    background: linear-gradient(135deg, 
+        #22c55e 0%, 
+        #14b8a6 33%, 
+        #0ea5e9 66%, 
+        #a855f7 100%);
     padding: 2rem;
     position: relative;
     overflow: hidden;
 }
 
-/* Animated background pattern */
+/* More vibrant animated background pattern */
 #auth-container::before {
     content: '';
     position: absolute;
@@ -226,14 +251,32 @@ body {
     width: 200%;
     height: 200%;
     background: 
-        radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px),
-        radial-gradient(circle, rgba(255,255,255,0.05) 2px, transparent 2px);
-    background-size: 60px 60px, 120px 120px;
-    animation: floatPattern 40s linear infinite;
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15) 1px, transparent 2px),
+        radial-gradient(circle at 70% 70%, rgba(255,255,255,0.1) 2px, transparent 3px),
+        radial-gradient(circle at 40% 80%, rgba(255,255,255,0.08) 3px, transparent 4px);
+    background-size: 80px 80px, 120px 120px, 160px 160px;
+    animation: floatPattern 30s linear infinite;
     z-index: 1;
+    opacity: 0.6;
 }
 
-/* Brand Header - FIXED POSITIONING */
+/* Different animation for auth background */
+@keyframes floatPattern {
+    0% {
+        transform: translate(0, 0) rotate(0deg) scale(1);
+    }
+    33% {
+        transform: translate(-40px, -40px) rotate(120deg) scale(1.1);
+    }
+    66% {
+        transform: translate(40px, 40px) rotate(240deg) scale(0.9);
+    }
+    100% {
+        transform: translate(0, 0) rotate(360deg) scale(1);
+    }
+}
+
+/* Make brand header more distinct */
 .auth-brand-header {
     position: absolute;
     top: 30px;
@@ -249,19 +292,19 @@ body {
 }
 
 .auth-brand-logo {
-    width: 70px;
-    height: 70px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(15px);
+    border: 2px solid rgba(255, 255, 255, 0.4);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    margin-bottom: 8px;
-    padding: 15px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
+    margin-bottom: 12px;
+    padding: 18px;
 }
 
 .auth-brand-logo img {
@@ -274,7 +317,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
 }
 
 .auth-brand-title {
@@ -282,177 +325,174 @@ body {
     font-weight: 800;
     color: white;
     line-height: 1.1;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
     letter-spacing: -0.5px;
+    background: linear-gradient(to right, #ffffff, #e2e8f0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .auth-brand-subtitle {
     font-size: 16px;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.95);
     font-weight: 500;
     max-width: 300px;
     line-height: 1.4;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
 
-/* Main Forms Container - ADJUSTED MARGIN */
+/* ===== HIDE AUTH DURING SPLASH - IMPROVED ===== */
+body.splash-active #auth-container {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+}
+
+body:not(.splash-active) #auth-container {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+    transform: translateY(0);
+    transition: all 0.5s ease 0.3s; /* Delay to match splash fade out */
+}
+
+/* Add subtle fade-in for auth after splash */
+@keyframes authFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .auth-main-container {
-    position: relative;
-    z-index: 20;
-    width: 100%;
-    max-width: 440px;
-    margin: 140px auto 60px; /* Increased top margin to avoid overlap with brand header */
-    animation: slideUpFade 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: authFadeIn 0.8s ease 0.3s both;
 }
 
-/* Auth Forms - Ensure it doesn't overlap */
+/* ===== RESPONSIVE FIXES FOR SPLASH ===== */
+@media (max-width: 768px) {
+    .splash-content {
+        gap: 24px;
+        padding: 24px;
+        margin: 16px;
+    }
+    
+    .splash-logo-container {
+        width: 120px;
+        height: 120px;
+        border-radius: 24px;
+        padding: 20px;
+    }
+    
+    .splash-title {
+        font-size: 32px;
+    }
+    
+    .splash-subtitle {
+        font-size: 16px;
+    }
+    
+    .splash-loader {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+@media (max-width: 480px) {
+    .splash-content {
+        gap: 20px;
+        padding: 20px;
+        margin: 12px;
+        border-radius: 20px;
+    }
+    
+    .splash-logo-container {
+        width: 100px;
+        height: 100px;
+        border-radius: 20px;
+        padding: 18px;
+    }
+    
+    .splash-title {
+        font-size: 28px;
+    }
+    
+    .splash-subtitle {
+        font-size: 14px;
+        max-width: 250px;
+    }
+    
+    .splash-loader {
+        width: 35px;
+        height: 35px;
+    }
+}
+
+/* ===== ENSURE CLEAR DISTINCTION ===== */
+/* Make sure auth forms are visually different from splash */
 .auth-forms {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 2px solid rgba(255, 255, 255, 0.9);
     padding: 2.5rem;
-    border-radius: 24px;
+    border-radius: 28px;
     box-shadow: 
-        0 20px 60px rgba(0, 0, 0, 0.15),
-        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        0 25px 80px rgba(0, 0, 0, 0.25),
+        0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+        0 0 60px rgba(34, 197, 94, 0.2);
     width: 100%;
     position: relative;
     overflow: hidden;
 }
 
-/* Decorative top border */
+/* More prominent decorative top border */
 .auth-forms::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 5px;
+    height: 6px;
     background: linear-gradient(90deg, 
         #22c55e 0%, 
-        #14b8a6 25%, 
-        #0ea5e9 50%, 
-        #a855f7 75%, 
+        #14b8a6 20%, 
+        #0ea5e9 40%, 
+        #a855f7 60%, 
+        #ec4899 80%, 
         #22c55e 100%);
-    background-size: 200% 100%;
-    animation: shimmer 3s linear infinite;
+    background-size: 300% 100%;
+    animation: shimmer 2.5s linear infinite;
+    border-radius: 3px 3px 0 0;
 }
 
-/* Social Login Section - CENTERED FIX */
-.social-login-section {
-    margin-top: 2.5rem;
-    padding-top: 2rem;
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
+/* ===== LOADING STATES - DISTINCT ===== */
+.auth-submit-btn.loading {
+    background: linear-gradient(135deg, #16a34a, #0d9488);
 }
 
-.social-login-label {
+.auth-submit-btn.loading span {
+    visibility: hidden;
+}
+
+.auth-submit-btn.loading::after {
+    content: '';
     position: absolute;
-    top: -10px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
-    background: rgba(255, 255, 255, 0.95);
-    padding: 0 20px;
-    color: #666;
-    font-size: 14px;
-    font-weight: 500;
-    z-index: 1;
-    white-space: nowrap;
-}
-
-/* Social Buttons Grid - CENTERED */
-.social-buttons-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-top: 1rem;
-    width: 100%;
-    max-width: 100%;
-}
-
-/* Footer Message - FIXED POSITIONING */
-.auth-footer {
-    position: absolute;
-    bottom: 20px;
-    left: 0;
-    right: 0;
-    text-align: center;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 14px;
-    z-index: 10;
-    padding: 0 20px;
-}
-
-/* ===== FORGOT PASSWORD FORM ===== */
-#forgot-password-form {
-    display: none;
-}
-
-#forgot-password-form.active {
-    display: block;
-}
-
-.auth-form-back {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 1.5rem;
-    color: var(--primary-color);
-    background: none;
-    border: none;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    padding: 8px 12px;
-    border-radius: 8px;
-    transition: all 0.2s;
-}
-
-.auth-form-back:hover {
-    background: rgba(34, 197, 94, 0.1);
-    transform: translateX(-4px);
-}
-
-.auth-form-back i {
-    font-size: 18px;
-}
-
-.forgot-password-instructions {
-    text-align: center;
-    color: var(--text-secondary);
-    font-size: 14px;
-    line-height: 1.5;
-    margin-bottom: 1.5rem;
-    padding: 0 10px;
-}
-
-/* Reset Password Form Specific */
-.reset-success {
-    text-align: center;
-    padding: 20px;
-}
-
-.reset-success-icon {
-    font-size: 48px;
-    color: var(--success-color);
-    margin-bottom: 16px;
-}
-
-.reset-success h3 {
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 8px;
-    color: var(--text-primary);
-}
-
-.reset-success p {
-    color: var(--text-secondary);
-    font-size: 15px;
-    line-height: 1.5;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
 }
 
 /* ===== FORM SWITCH - IMPROVED ===== */
