@@ -985,6 +985,54 @@ renderSocialLoginButtons() {
     }
 }
 
+// Add tab switching functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Tab switching
+    const tabs = document.querySelectorAll('.auth-tab');
+    const forms = document.querySelectorAll('.auth-form');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const formId = this.getAttribute('data-form');
+            
+            // Update active tab
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Show corresponding form
+            forms.forEach(form => {
+                form.classList.remove('active');
+                if (form.id === `${formId}-form`) {
+                    form.classList.add('active');
+                }
+            });
+        });
+    });
+    
+    // Keep existing show/hide functionality for compatibility
+    document.getElementById('show-signup')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.querySelector('.auth-tab[data-form="signup"]')?.click();
+    });
+    
+    document.getElementById('show-signin')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.querySelector('.auth-tab[data-form="signin"]')?.click();
+    });
+    
+    document.getElementById('show-forgot-password')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        // Show forgot password form
+        forms.forEach(form => form.classList.remove('active'));
+        document.getElementById('forgot-password-form').classList.add('active');
+    });
+    
+    document.getElementById('show-signin-from-forgot')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.querySelector('.auth-tab[data-form="signin"]')?.click();
+    });
+});
+
 // Initialize the auth module
 document.addEventListener('DOMContentLoaded', () => {
     window.authModule = new AuthModule();
