@@ -106,381 +106,110 @@ const IncomeExpensesModule = {
     },
 
     // ==================== MAIN RENDER ====================
-    renderModule() {
-        if (!this.element) return;
+   renderModule() {
+    if (!this.element) return;
 
-        const stats = this.calculateStats();
-        const recentTransactions = this.getRecentTransactions(10);
-        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+    const stats = this.calculateStats();
+    const recentTransactions = this.getRecentTransactions(10);
+    const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
 
-        this.element.innerHTML = `
-            <style>
-                /* Firebase Receipt Styles */
-                .import-receipts-container { padding: 20px; }
-                .section-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; }
-                .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px; }
-                .card-button { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-                .card-button:hover { transform: translateY(-2px); border-color: var(--primary-color); background: var(--primary-color)10; }
-                .card-button:disabled { opacity: 0.5; cursor: not-allowed; }
-                .card-button:disabled:hover { transform: none; border-color: var(--glass-border); background: var(--glass-bg); }
-                .card-icon { font-size: 32px; margin-bottom: 4px; }
-                .card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
-                .card-subtitle { font-size: 12px; color: var(--text-secondary); }
-                
-                .camera-section .glass-card { margin-bottom: 24px; }
-                .camera-preview { width: 100%; height: 300px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
-                .camera-preview video { width: 100%; height: 100%; object-fit: cover; }
-                .camera-controls { display: flex; gap: 12px; justify-content: center; }
-                
-                .upload-area { border: 2px dashed var(--glass-border); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 24px; }
-                .upload-area.drag-over { border-color: var(--primary-color); background: var(--primary-color)10; }
-                .upload-icon { font-size: 48px; margin-bottom: 16px; }
-                .upload-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; }
-                .upload-formats { color: var(--text-secondary); font-size: 12px; margin-bottom: 20px; }
-                
-                .upload-progress { background: var(--glass-bg); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-                .progress-info h4 { font-size: 14px; color: var(--text-primary); margin-bottom: 12px; }
-                .progress-container { width: 100%; height: 8px; background: var(--glass-border); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
-                .progress-bar { height: 100%; background: var(--primary-color); width: 0%; transition: width 0.3s; }
-                .progress-details { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); }
-                
-                .receipts-grid { display: flex; flex-direction: column; gap: 12px; }
-                .receipt-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; }
-                .receipt-preview img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
-                .receipt-info { flex: 1; }
-                .receipt-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-                .receipt-meta { display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary); }
-                .receipt-status { font-weight: 600; }
-                .status-pending { color: #f59e0b; }
-                .status-processed { color: #10b981; }
-                .status-error { color: #ef4444; }
-                
-                .empty-state { text-align: center; padding: 40px 20px; }
-                .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
-                .header-flex { display: flex; justify-content: space-between; align-items: center; }
-                
-                .receipt-queue-badge { background: #ef4444; color: white; border-radius: 10px; padding: 2px 6px; font-size: 12px; margin-left: 8px; }
-                .firebase-badge { background: #ffa000; color: white; border-radius: 10px; padding: 2px 6px; font-size: 10px; margin-left: 4px; }
-                
-                /* Spinner Animation */
-                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                .spinner { width: 40px; height: 40px; border: 4px solid var(--glass-border); border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; }
-                
-                /* Make button children not interfere with clicks */
-                #upload-receipt-btn * { pointer-events: none; }
-                .firebase-badge, .receipt-queue-badge { pointer-events: none; }
-                
-                /* RECEIPT ATTACHMENT FIXES */
-                #receipt-upload-area:hover {
-                    border-color: var(--primary-color);
-                    background: var(--primary-color)10;
-                }
-                
-                #receipt-preview-container {
-                    transition: all 0.3s ease;
-                }
-                
-                #receipt-preview-container.hidden {
-                    display: none !important;
-                }
-                
-                #image-preview.hidden {
-                    display: none !important;
-                }
-                
-                /* Fix modal z-index */
-                .popout-modal {
-                    z-index: 9999;
-                }
-                
-                /* Receipt preview styling */
-                .receipt-preview-item {
-                    background: var(--glass-bg);
-                    border-radius: 8px;
-                    padding: 12px;
-                    margin-top: 8px;
-                    border: 1px solid var(--glass-border);
-                }
-            </style>
-
-            <div class="module-container">
-                <!-- Module Header -->
-                <div class="module-header">
-                    <h1 class="module-title">Income & Expenses</h1>
-                    <p class="module-subtitle">Track farm finances and cash flow</p>
-                    <div class="header-actions">
-                       <button class="btn btn-primary" id="add-transaction">
-                            ➕ Add Transaction
-                        </button>
-                        <button class="btn btn-primary" id="upload-receipt-btn" style="display: flex; align-items: center; gap: 8px;">
-                            📄 Import Receipts
-                             ${this.isFirebaseAvailable ? '<span class="firebase-badge">Firebase</span>' : ''}
-                            ${pendingReceipts.length > 0 ? `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingReceipts.length}</span>` : ''}
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Pending Receipts Section -->
-                ${pendingReceipts.length > 0 ? `
-                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;" id="pending-receipts-section">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                            <h3 style="color: var(--text-primary); font-size: 20px;">📋 Pending Receipts (${pendingReceipts.length})</h3>
-                            <div style="display: flex; gap: 12px;">
-                                <button class="btn btn-outline" id="refresh-receipts-btn">
-                                    <span class="btn-icon">🔄</span>
-                                    <span class="btn-text">Refresh</span>
-                                </button>
-                                <button class="btn btn-primary" id="process-all-receipts">
-                                    ⚡ Process All
-                                </button>
-                            </div>
-                        </div>
-                        <div id="pending-receipts-list">
-                            ${this.renderPendingReceiptsList(pendingReceipts)}
-                        </div>
-                    </div>
-                ` : ''}
-
-                <!-- Financial Overview -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-income">${this.formatCurrency(stats.totalIncome)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Total Income</div>
-                    </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-expenses">${this.formatCurrency(stats.totalExpenses)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Total Expenses</div>
-                    </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">📈</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="net-income">${this.formatCurrency(stats.netIncome)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Net Income</div>
-                    </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">💳</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.transactionCount}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Transactions</div>
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="quick-action-grid">
-                    <button class="quick-action-btn" id="add-income-btn">
-                        <div style="font-size: 32px;">💰</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Income</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record farm income</span>
+    this.element.innerHTML = `
+        <div class="income-expenses-module module-container">
+            <!-- Header -->
+            <div class="module-header-pwa">
+                <h1 class="module-title-pwa">Income & Expenses</h1>
+                <p class="module-subtitle-pwa">Track farm finances and cash flow</p>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="add-transaction">➕ Add Transaction</button>
+                    <button class="btn btn-primary" id="upload-receipt-btn">
+                        📄 Import Receipts
+                        ${this.isFirebaseAvailable ? '<span class="firebase-badge">Firebase</span>' : ''}
+                        ${pendingReceipts.length > 0 ? `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingReceipts.length}</span>` : ''}
                     </button>
-                    <button class="quick-action-btn" id="add-expense-btn">
-                        <div style="font-size: 32px;">💸</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Expense</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record farm expenses</span>
-                    </button>
-                    <button class="quick-action-btn" id="financial-report-btn">
-                        <div style="font-size: 32px;">📊</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Financial Report</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View financial summary</span>
-                    </button>
-                    <button class="quick-action-btn" id="category-analysis-btn">
-                        <div style="font-size: 32px;">📋</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Category Analysis</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Breakdown by category</span>
-                    </button>
-                </div>
-
-                <!-- Recent Transactions -->
-                <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="color: var(--text-primary); font-size: 20px;">📋 Recent Transactions</h3>
-                        <div style="display: flex; gap: 12px;">
-                            <select id="transaction-filter" class="form-input" style="width: auto;">
-                                <option value="all">All Transactions</option>
-                                <option value="income">Income Only</option>
-                                <option value="expense">Expenses Only</option>
-                            </select>
-                            <button class="btn-outline" id="export-transactions">Export</button>
-                        </div>
-                    </div>
-                    <div id="transactions-list">
-                        ${this.renderTransactionsList(recentTransactions)}
-                    </div>
-                </div>
-
-                <!-- Category Breakdown -->
-                <div class="glass-card" style="padding: 24px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">📊 Category Breakdown</h3>
-                    <div id="category-breakdown">
-                        ${this.renderCategoryBreakdown()}
-                    </div>
                 </div>
             </div>
 
-            <!-- ==================== MODALS ==================== -->
-            <!-- Import Receipts Modal -->
-            <div id="import-receipts-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 800px;">
-                    <div class="popout-modal-header">
-                        <h3 class="popout-modal-title">📥 Import Receipts ${this.isFirebaseAvailable ? '(Firebase)' : '(Local)'}</h3>
-                        <button class="popout-modal-close" id="close-import-receipts">&times;</button>
-                    </div>
-                    <div class="popout-modal-body">
-                        <div id="import-receipts-content">
-                            <!-- Content loaded dynamically -->
-                        </div>
-                    </div>
-                    <div class="popout-modal-footer">
-                        <button class="btn btn-outline" id="cancel-import-receipts">Cancel</button>
-                        <button class="btn btn-primary" id="process-receipts-btn" style="display: none;">
-                            <span class="btn-icon">⚡</span>
-                            <span class="btn-text">Process Receipts</span>
-                        </button>
-                    </div>
+            <!-- Stats -->
+            <div class="stats-grid-pwa">
+                <div class="stat-card-pwa">
+                    <div class="stat-icon-pwa">💰</div>
+                    <div class="stat-value-pwa" id="total-income">${this.formatCurrency(stats.totalIncome)}</div>
+                    <div class="stat-label-pwa">Total Income</div>
+                </div>
+                <div class="stat-card-pwa">
+                    <div class="stat-icon-pwa">📊</div>
+                    <div class="stat-value-pwa" id="total-expenses">${this.formatCurrency(stats.totalExpenses)}</div>
+                    <div class="stat-label-pwa">Total Expenses</div>
+                </div>
+                <div class="stat-card-pwa">
+                    <div class="stat-icon-pwa">📈</div>
+                    <div class="stat-value-pwa" id="net-income">${this.formatCurrency(stats.netIncome)}</div>
+                    <div class="stat-label-pwa">Net Income</div>
+                </div>
+                <div class="stat-card-pwa">
+                    <div class="stat-icon-pwa">💳</div>
+                    <div class="stat-value-pwa">${stats.transactionCount}</div>
+                    <div class="stat-label-pwa">Transactions</div>
                 </div>
             </div>
 
-            <!-- Transaction Modal -->
-            <div id="transaction-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 600px;">
-                    <div class="popout-modal-header">
-                        <h3 class="popout-modal-title" id="transaction-modal-title">Add Transaction</h3>
-                        <button class="popout-modal-close" id="close-transaction-modal">&times;</button>
-                    </div>
-                    <div class="popout-modal-body">
-                        <form id="transaction-form">
-                            <input type="hidden" id="transaction-id" value="">
-                            
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Date *</label>
-                                    <input type="date" id="transaction-date" class="form-input" required>
-                                </div>
-                                <div>
-                                    <label class="form-label">Type *</label>
-                                    <select id="transaction-type" class="form-input" required>
-                                        <option value="income">💰 Income</option>
-                                        <option value="expense">💸 Expense</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Category *</label>
-                                    <select id="transaction-category" class="form-input" required>
-                                        <option value="">Select Category</option>
-                                        <optgroup label="Income">
-                                            <option value="sales">Sales</option>
-                                            <option value="services">Services</option>
-                                            <option value="grants">Grants/Subsidies</option>
-                                            <option value="other-income">Other Income</option>
-                                        </optgroup>
-                                        <optgroup label="Expenses">
-                                            <option value="feed">Feed</option>
-                                            <option value="medical">Medical/Vet</option>
-                                            <option value="equipment">Equipment</option>
-                                            <option value="labor">Labor</option>
-                                            <option value="utilities">Utilities</option>
-                                            <option value="maintenance">Maintenance</option>
-                                            <option value="transport">Transport</option>
-                                            <option value="marketing">Marketing</option>
-                                            <option value="other-expense">Other Expenses</option>
-                                        </optgroup>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="form-label">Amount ($) *</label>
-                                    <input type="number" id="transaction-amount" class="form-input" step="0.01" min="0" required placeholder="0.00">
-                                </div>
-                            </div>
-
-                            <div style="margin-bottom: 16px;">
-                                <label class="form-label">Description *</label>
-                                <input type="text" id="transaction-description" class="form-input" required placeholder="Enter transaction description">
-                            </div>
-
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Payment Method</label>
-                                    <select id="transaction-payment" class="form-input">
-                                        <option value="cash">Cash</option>
-                                        <option value="card">Card</option>
-                                        <option value="transfer">Bank Transfer</option>
-                                        <option value="check">Check</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="form-label">Reference Number</label>
-                                    <input type="text" id="transaction-reference" class="form-input" placeholder="Invoice/Receipt #">
-                                </div>
-                            </div>
-
-                            <div style="margin-bottom: 16px;">
-                                <label class="form-label">Notes (Optional)</label>
-                                <textarea id="transaction-notes" class="form-input" placeholder="Additional notes about this transaction" rows="3"></textarea>
-                            </div>
-
-                            <!-- Receipt Section -->
-                            <div style="margin-bottom: 16px;">
-                                <label class="form-label">Receipt (Optional)</label>
-                                <div id="receipt-upload-area" style="border: 2px dashed var(--glass-border); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; margin-bottom: 12px;">
-                                    <div style="font-size: 48px; margin-bottom: 8px;">📄</div>
-                                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Attach Receipt</div>
-                                    <div style="color: var(--text-secondary); font-size: 14px;">Click to upload or drag & drop</div>
-                                    <div style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">Supports JPG, PNG, PDF (Max 10MB)</div>
-                                    <input type="file" id="receipt-upload" accept="image/*,.pdf" style="display: none;">
-                                </div>
-                                
-                                <!-- Receipt Preview -->
-                                <div id="receipt-preview-container" class="hidden">
-                                    <div style="display: flex; align-items: center; justify-content: space-between; background: var(--glass-bg); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
-                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                            <div style="font-size: 24px;">📄</div>
-                                            <div>
-                                                <div style="font-weight: 600; color: var(--text-primary);" id="receipt-filename">receipt.jpg</div>
-                                                <div style="font-size: 12px; color: var(--text-secondary);" id="receipt-size">2.5 MB</div>
-                                            </div>
-                                        </div>
-                                        <button type="button" id="remove-receipt" class="btn-icon" style="color: var(--text-secondary);">🗑️</button>
-                                    </div>
-                                    
-                                    <!-- Image Preview -->
-                                    <div id="image-preview" class="hidden" style="margin-bottom: 12px;">
-                                        <img id="receipt-image-preview" src="" alt="Receipt preview" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid var(--glass-border);">
-                                    </div>
-                                    
-                                    <!-- Process Button -->
-                                    <button type="button" id="process-receipt-btn" class="btn-outline" style="width: 100%; margin-top: 8px;">
-                                        🔍 Extract Information from Receipt
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- OCR Results -->
-                            <div id="ocr-results" class="hidden" style="background: #f0f9ff; border-radius: 8px; padding: 16px; margin-bottom: 16px; border: 1px solid #bfdbfe;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                                    <h4 style="color: #1e40af; margin: 0;">📄 Extracted from Receipt</h4>
-                                    <button type="button" id="use-ocr-data" class="btn-primary" style="font-size: 12px; padding: 4px 8px;">Apply</button>
-                                </div>
-                                <div id="ocr-details" style="font-size: 14px; color: #374151;">
-                                    <!-- OCR extracted details will appear here -->
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="popout-modal-footer">
-                        <button type="button" class="btn-outline" id="cancel-transaction">Cancel</button>
-                        <button type="button" class="btn-danger" id="delete-transaction" style="display: none;">Delete</button>
-                        <button type="button" class="btn-primary" id="save-transaction">Save Transaction</button>
-                    </div>
+            <!-- Quick Actions -->
+            <div class="quick-actions-pwa">
+                <div class="quick-grid-pwa">
+                    <button class="quick-action-btn-pwa" id="add-income-btn">
+                        <div class="quick-icon-pwa">💰</div>
+                        <span class="quick-title-pwa">Add Income</span>
+                        <span class="quick-desc-pwa">Record farm income</span>
+                    </button>
+                    <button class="quick-action-btn-pwa" id="add-expense-btn">
+                        <div class="quick-icon-pwa">💸</div>
+                        <span class="quick-title-pwa">Add Expense</span>
+                        <span class="quick-desc-pwa">Record farm expenses</span>
+                    </button>
+                    <button class="quick-action-btn-pwa" id="financial-report-btn">
+                        <div class="quick-icon-pwa">📊</div>
+                        <span class="quick-title-pwa">Financial Report</span>
+                        <span class="quick-desc-pwa">View financial summary</span>
+                    </button>
+                    <button class="quick-action-btn-pwa" id="category-analysis-btn">
+                        <div class="quick-icon-pwa">📋</div>
+                        <span class="quick-title-pwa">Category Analysis</span>
+                        <span class="quick-desc-pwa">Breakdown by category</span>
+                    </button>
                 </div>
             </div>
-        `;
 
-        this.setupEventListeners();
-        this.setupReceiptFormHandlers(); // ADDED: Setup receipt handlers immediately
-    },
+            <!-- Recent Transactions -->
+            <div class="transactions-section-pwa">
+                <div class="section-header-pwa">
+                    <h3 class="section-title-pwa">📋 Recent Transactions</h3>
+                    <div class="section-actions-pwa">
+                        <select id="transaction-filter" class="form-input-pwa">
+                            <option value="all">All Transactions</option>
+                            <option value="income">Income Only</option>
+                            <option value="expense">Expenses Only</option>
+                        </select>
+                        <button class="btn-outline" id="export-transactions">Export</button>
+                    </div>
+                </div>
+                <div id="transactions-list">
+                    ${this.renderTransactionsList(recentTransactions)}
+                </div>
+            </div>
+
+            <!-- Category Breakdown -->
+            <div class="transactions-section-pwa">
+                <h3 class="section-title-pwa">📊 Category Breakdown</h3>
+                <div id="category-breakdown">
+                    ${this.renderCategoryBreakdown()}
+                </div>
+            </div>
+        </div>
+    `;
+
+    this.setupEventListeners();
+    this.setupReceiptFormHandlers();
+},
 
     // ==================== EVENT LISTENERS ====================
     setupEventListeners() {
