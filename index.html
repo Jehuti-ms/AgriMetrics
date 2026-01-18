@@ -57,106 +57,161 @@
         </div>
 
         <!-- Auth Container -->
-            <div id="auth-container">
-              <div class="auth-forms">
+<div id="auth-container">
+    <!-- Brand Header -->
+    <div class="auth-brand-header">
+        <div class="auth-brand-logo">🌾</div>
+        <div class="auth-brand-text">
+            <div class="auth-brand-title">AgriMetrics</div>
+            <div class="auth-brand-subtitle">Farm Management System</div>
+        </div>
+    </div>
+    
+    <!-- Main Forms Container -->
+    <div class="auth-main-container">
+        <div class="auth-forms">
+            <!-- Form Tabs (Optional) -->
+            <div class="auth-tabs">
+                <button type="button" class="auth-tab active" data-form="signin">Sign In</button>
+                <button type="button" class="auth-tab" data-form="signup">Sign Up</button>
+            </div>
             
-                <!-- Sign In Form -->
-                <div id="signin-form" class="auth-form active">
-                  <h2>Sign In</h2>
-            
-                  <!-- Social Login Section -->
-                  <div id="social-login-container" class="social-login-section">
-                    <!-- Google button will be automatically rendered here -->
-                  </div>
-            
-                  <div class="auth-divider">
-                    <span>or</span>
-                  </div>
-            
-                  <!-- Email/Password Form -->
-                  <form id="signin-form-element">
-                    <div class="form-group">
-                      <label>Email:</label>
-                      <input type="email" id="signin-email" required>
-                    </div>
-                    <div class="form-group">
-                      <label>Password:</label>
-                      <input type="password" id="signin-password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Sign In</button>
-                    <div class="auth-links">
-                      <a href="#" id="show-forgot-password">Forgot Password?</a>
-                      <a href="#" id="show-signup">Sign Up</a>
-                    </div>
-                  </form>
+            <!-- Sign In Form -->
+            <div id="signin-form" class="auth-form active">
+                <div class="auth-form-header">
+                    <h2 class="auth-form-title">Welcome Back</h2>
+                    <p class="auth-form-description">Sign in to access your farm management dashboard</p>
                 </div>
-            
-              <!-- Sign Up Form -->
-            <div id="signup-form" class="auth-form">
-                <h2>Sign Up</h2>
-                <form id="signup-form-element">
-                    <div class="form-group">
-                        <label>Full Name:</label>
-                        <input type="text" id="signup-name" required>
+                
+                <form id="signin-form-element" class="auth-form-content">
+                    <div class="auth-form-group">
+                        <label>
+                            <span class="form-label-icon">✉️</span>
+                            Email Address
+                        </label>
+                        <input type="email" id="signin-email" required placeholder="you@example.com">
                     </div>
                     
-                    <div class="form-group">
-                        <label>Email:</label>
-                        <input type="email" id="signup-email" required>
+                    <div class="auth-form-group">
+                        <label>
+                            <span class="form-label-icon">🔒</span>
+                            Password
+                        </label>
+                        <input type="password" id="signin-password" required placeholder="Enter your password">
                     </div>
                     
-                    <!-- PASSWORD FIELD WITH STRENGTH INDICATOR -->
-                    <div class="form-group">
-                        <label>Password:</label>
-                        <input type="password" id="signup-password" required>
-                        
-                        <div class="password-strength-container" style="margin-top: 8px;">
-                            <div class="password-strength-bar" style="width: 100%; height: 6px; background-color: #eee; border-radius: 3px; overflow: hidden;">
-                                <div class="strength-progress" style="width: 0%; height: 100%; border-radius: 3px; transition: width 0.3s ease, background-color 0.3s ease;"></div>
-                            </div>
-                            <div class="strength-text" style="font-size: 12px; margin-top: 4px; color: #666;"></div>
+                    <div class="form-options">
+                        <div class="remember-me">
+                            <input type="checkbox" id="remember-me">
+                            <label for="remember-me">Remember me</label>
+                        </div>
+                        <a href="#" id="show-forgot-password" class="forgot-password">Forgot Password?</a>
+                    </div>
+                    
+                    <button type="submit" class="auth-submit-btn">
+                        <span>→</span>
+                        Sign In
+                    </button>
+                    
+                    <div class="social-login-section">
+                        <div class="social-login-label">Or continue with</div>
+                        <div class="social-buttons-grid" id="social-login-container">
+                            <!-- Social buttons will be added here -->
                         </div>
                     </div>
                     
-                    <!-- CONFIRM PASSWORD FIELD WITH MATCH INDICATOR -->
-                    <div class="form-group">
-                        <label>Confirm Password:</label>
-                        <input type="password" id="signup-confirm-password" required>
-                        
-                        <div class="password-match-indicator" style="font-size: 12px; margin-top: 4px;"></div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Farm Name:</label>
-                        <input type="text" id="farm-name" required>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary">Create Account</button>
-                    
-                    <div class="auth-links">
-                        <a href="#" id="show-signin">Already have an account?</a>
+                    <div class="form-switch">
+                        Don't have an account?
+                        <a href="#" id="show-signup">Sign Up</a>
                     </div>
                 </form>
             </div>
             
-            <!-- Forgot Password Form - Still inside auth-forms div -->
-            <div id="forgot-password-form" class="auth-form">
-                <h2>Reset Password</h2>
-                <form id="forgot-password-form-element">
-                    <div class="form-group">
-                        <label>Email:</label>
-                        <input type="email" id="forgot-email" required placeholder="Enter your email address">
+            <!-- Sign Up Form -->
+            <div id="signup-form" class="auth-form">
+                <div class="auth-form-header">
+                    <h2 class="auth-form-title">Create Account</h2>
+                    <p class="auth-form-description">Join thousands of farmers managing their operations</p>
+                </div>
+                
+                <form id="signup-form-element" class="auth-form-content">
+                    <div class="auth-form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="signup-name" required placeholder="John Smith">
                     </div>
-                    <button type="submit" class="btn btn-primary">Send Reset Link</button>
-                    <div class="auth-links">
+                    
+                    <div class="auth-form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="signup-email" required placeholder="you@example.com">
+                    </div>
+                    
+                    <div class="auth-form-group">
+                        <label>Password</label>
+                        <input type="password" id="signup-password" required placeholder="Create a strong password">
+                        <div class="password-strength-container">
+                            <div class="password-strength-bar">
+                                <div class="strength-progress"></div>
+                            </div>
+                            <div class="strength-text"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="auth-form-group">
+                        <label>Confirm Password</label>
+                        <input type="password" id="signup-confirm-password" required placeholder="Confirm your password">
+                        <div class="password-match-indicator"></div>
+                    </div>
+                    
+                    <div class="auth-form-group">
+                        <label>Farm Name</label>
+                        <input type="text" id="farm-name" required placeholder="Smith Family Farm">
+                    </div>
+                    
+                    <button type="submit" class="auth-submit-btn">
+                        <span>✓</span>
+                        Create Account
+                    </button>
+                    
+                    <div class="form-switch">
+                        Already have an account?
+                        <a href="#" id="show-signin">Sign In</a>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Forgot Password Form -->
+            <div id="forgot-password-form" class="auth-form">
+                <div class="auth-form-header">
+                    <h2 class="auth-form-title">Reset Password</h2>
+                    <p class="auth-form-description">Enter your email to receive a password reset link</p>
+                </div>
+                
+                <form id="forgot-password-form-element" class="auth-form-content">
+                    <div class="auth-form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="forgot-email" required placeholder="you@example.com">
+                    </div>
+                    
+                    <button type="submit" class="auth-submit-btn">
+                        <span>↻</span>
+                        Send Reset Link
+                    </button>
+                    
+                    <div class="form-switch">
+                        Remember your password?
                         <a href="#" id="show-signin-from-forgot">Back to Sign In</a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
- </div>
+    
+    <!-- Footer Message -->
+    <div class="auth-footer">
+        © 2025 AgriMetrics. All rights reserved.
+    </div>
 </div>
+    
     <!-- App Container -->
     <div id="app-container" class="hidden">
     <!-- Navigation will be dynamically created by app.js -->
