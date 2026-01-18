@@ -102,6 +102,326 @@ const BroilerMortalityModule = {
     if (!this.element) return;
 
     this.element.innerHTML = `
+        <style>
+            /* ===== CAUSE SUMMARY STYLES ===== */
+            .cause-summary-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 20px;
+                margin-top: 20px;
+            }
+            
+            .cause-item {
+                padding: 20px;
+                background: var(--glass-bg);
+                border-radius: 16px;
+                border: 1px solid var(--glass-border);
+                transition: all 0.3s ease;
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .cause-item:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+                border-color: var(--primary-color);
+            }
+            
+            .cause-header {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 16px;
+                padding-bottom: 12px;
+                border-bottom: 1px solid var(--glass-border);
+            }
+            
+            .cause-icon {
+                font-size: 24px;
+                flex-shrink: 0;
+            }
+            
+            .cause-title {
+                font-weight: 600;
+                font-size: 16px;
+                color: var(--text-primary);
+                flex-grow: 1;
+            }
+            
+            .cause-stats {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                margin-bottom: 20px;
+                flex-grow: 1;
+            }
+            
+            .cause-stat {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 4px 0;
+            }
+            
+            .cause-stat-label {
+                font-size: 14px;
+                color: var(--text-secondary);
+            }
+            
+            .cause-stat-value {
+                font-weight: 600;
+                font-size: 14px;
+                color: var(--text-primary);
+            }
+            
+            .cause-stat-percentage {
+                font-weight: 700;
+                font-size: 16px;
+                color: var(--primary-color);
+            }
+            
+            /* ===== CAUSE ACTIONS (BUTTONS) ===== */
+            .cause-actions {
+                display: flex;
+                gap: 10px;
+                margin-top: auto; /* Pushes buttons to bottom */
+                padding-top: 16px;
+                border-top: 1px solid var(--glass-border);
+            }
+            
+            .delete-cause-records {
+                flex: 1;
+                background: rgba(239, 68, 68, 0.1);
+                border: 1px solid #ef4444;
+                color: #ef4444;
+                padding: 10px 12px;
+                border-radius: 8px;
+                font-size: 13px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                min-height: 40px;
+            }
+            
+            .delete-cause-records:hover {
+                background: #ef4444;
+                color: white;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+            }
+            
+            .view-cause-details {
+                flex: 1;
+                background: rgba(59, 130, 246, 0.1);
+                border: 1px solid #3b82f6;
+                color: #3b82f6;
+                padding: 10px 12px;
+                border-radius: 8px;
+                font-size: 13px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                min-height: 40px;
+            }
+            
+            .view-cause-details:hover {
+                background: #3b82f6;
+                color: white;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            }
+            
+            /* ===== MORTALITY TABLE BUTTONS ===== */
+            .btn-icon {
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: none;
+                border: none;
+                cursor: pointer;
+                border-radius: 6px;
+                transition: all 0.2s;
+            }
+            
+            .edit-mortality:hover {
+                background: rgba(59, 130, 246, 0.1);
+                color: #3b82f6;
+            }
+            
+            .delete-mortality:hover {
+                background: rgba(239, 68, 68, 0.1);
+                color: #ef4444;
+            }
+            
+            /* ===== QUICK ACTIONS ===== */
+            .quick-action-btn {
+                background: var(--card-bg);
+                border: 2px solid var(--border-color);
+                border-radius: 16px;
+                padding: 20px 16px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .quick-action-btn:hover {
+                border-color: var(--primary-color);
+                transform: translateY(-4px);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            }
+            
+            /* ===== MODERN MORTALITY CAUSE BUTTONS ===== */
+            .mortality-cause-buttons {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 12px;
+                margin: 20px 0;
+            }
+            
+            .mortality-cause-btn {
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                border: 2px solid #dee2e6;
+                border-radius: 12px;
+                padding: 16px 12px;
+                cursor: pointer;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .mortality-cause-btn:hover {
+                transform: translateY(-2px);
+                border-color: #6c757d;
+                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            }
+            
+            .mortality-cause-btn.active {
+                background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+                border-color: #2196f3;
+                box-shadow: 0 4px 8px rgba(33, 150, 243, 0.2);
+            }
+            
+            .mortality-cause-btn.critical {
+                background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+                border-color: #f44336;
+            }
+            
+            .mortality-cause-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 8px;
+            }
+            
+            .mortality-cause-label {
+                font-weight: 600;
+                color: #2d3436;
+                font-size: 0.95rem;
+            }
+            
+            .mortality-cause-percentage {
+                font-weight: 700;
+                font-size: 1rem;
+                color: #2196f3;
+            }
+            
+            .mortality-cause-btn.critical .mortality-cause-percentage {
+                color: #f44336;
+            }
+            
+            .mortality-cause-count {
+                color: #6c757d;
+                font-size: 0.85rem;
+                margin-top: 4px;
+            }
+            
+            .mortality-cause-btn::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #2196f3, #4fc3f7);
+                transform: scaleX(0);
+                transition: transform 0.3s ease;
+            }
+            
+            .mortality-cause-btn:hover::before {
+                transform: scaleX(1);
+            }
+            
+            .mortality-cause-btn.active::before {
+                transform: scaleX(1);
+            }
+            
+            /* ===== RESPONSIVE DESIGN ===== */
+            @media (max-width: 768px) {
+                .cause-summary-grid {
+                    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                    gap: 16px;
+                }
+                
+                .cause-actions {
+                    flex-direction: column;
+                    gap: 8px;
+                }
+                
+                .delete-cause-records,
+                .view-cause-details {
+                    width: 100%;
+                }
+            }
+            
+            @media (max-width: 480px) {
+                .cause-summary-grid {
+                    grid-template-columns: 1fr;
+                }
+                
+                .cause-item {
+                    padding: 16px;
+                }
+            }
+
+            /* Add to your CSS section */
+                .glass-card.highlighted {
+                    animation: pulse-highlight 2s ease;
+                    border-color: #3b82f6 !important;
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3), 
+                                0 8px 32px rgba(59, 130, 246, 0.15) !important;
+                }
+                
+                @keyframes pulse-highlight {
+                    0%, 100% {
+                        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3), 
+                                    0 8px 32px rgba(59, 130, 246, 0.15);
+                    }
+                    50% {
+                        box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.4), 
+                                    0 12px 40px rgba(59, 130, 246, 0.25);
+                    }
+                }
+                
+                /* Smooth scrolling for the whole page */
+                html {
+                    scroll-behavior: smooth;
+                }
+                </style>
+                
         <div class="module-container">
             <!-- Module Header -->
             <div class="module-header">
@@ -112,56 +432,56 @@ const BroilerMortalityModule = {
             <!-- Mortality Overview Stats -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon">😔</div>
-                    <div class="stat-value" id="total-losses">0</div>
-                    <div class="stat-label">Total Losses</div>
+                    <div style="font-size: 24px; margin-bottom: 8px;">😔</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-losses">0</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Total Losses</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">📊</div>
-                    <div class="stat-value" id="mortality-rate">0%</div>
-                    <div class="stat-label">Mortality Rate</div>
+                    <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="mortality-rate">0%</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Mortality Rate</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">🐔</div>
-                    <div class="stat-value" id="current-birds">0</div>
-                    <div class="stat-label">Current Birds</div>
+                    <div style="font-size: 24px; margin-bottom: 8px;">🐔</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="current-birds">0</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Current Birds</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">📈</div>
-                    <div class="stat-value" id="records-count">0</div>
-                    <div class="stat-label">Records</div>
+                    <div style="font-size: 24px; margin-bottom: 8px;">📈</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="records-count">0</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Records</div>
                 </div>
             </div>
 
             <!-- Quick Actions -->
             <div class="quick-action-grid">
                 <button class="quick-action-btn" id="record-mortality-btn">
-                    <div class="action-icon">📝</div>
-                    <span class="action-title">Record Loss</span>
-                    <span class="action-desc">Log bird losses and causes</span>
+                    <div style="font-size: 32px;">📝</div>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Record Loss</span>
+                    <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Log bird losses and causes</span>
                 </button>
                 <button class="quick-action-btn" id="trend-analysis-btn">
-                    <div class="action-icon">📊</div>
-                    <span class="action-title">Trend Analysis</span>
-                    <span class="action-desc">View mortality patterns</span>
+                    <div style="font-size: 32px;">📊</div>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Trend Analysis</span>
+                    <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View mortality patterns</span>
                 </button>
                 <button class="quick-action-btn" id="cause-analysis-btn">
-                    <div class="action-icon">🔍</div>
-                    <span class="action-title">Cause Analysis</span>
-                    <span class="action-desc">Analyze death causes</span>
+                    <div style="font-size: 32px;">🔍</div>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Cause Analysis</span>
+                    <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Analyze death causes</span>
                 </button>
                 <button class="quick-action-btn" id="health-report-btn">
-                    <div class="action-icon">💡</div>
-                    <span class="action-title">Health Report</span>
-                    <span class="action-desc">Detailed health analysis</span>
+                    <div style="font-size: 32px;">💡</div>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Health Report</span>
+                    <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Detailed health analysis</span>
                 </button>
             </div>
 
             <!-- Quick Mortality Form -->
-            <div class="glass-card quick-mortality">
-                <h3 class="section-title">📝 Quick Mortality Entry</h3>
+            <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                <h3 style="color: var(--text-primary); margin-bottom: 16px;">📝 Quick Mortality Entry</h3>
                 <form id="quick-mortality-form">
-                    <div class="form-grid">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end;">
                         <div>
                             <label class="form-label">Qty *</label>
                             <input type="number" id="quick-quantity" placeholder="0" required class="form-input" min="1">
@@ -184,18 +504,18 @@ const BroilerMortalityModule = {
                             <input type="number" id="quick-age" placeholder="Optional" class="form-input" min="1" max="70">
                         </div>
                         <div>
-                            <button type="submit" class="btn-primary">Record Loss</button>
+                            <button type="submit" class="btn-primary" style="height: 42px;">Record Loss</button>
                         </div>
                     </div>
                 </form>
             </div>
 
             <!-- Recent Mortality Records -->
-            <div class="glass-card mortality-records">
-                <div class="section-header">
-                    <h3 class="section-title">📊 Recent Mortality Records</h3>
-                    <div class="section-actions">
-                        <select id="mortality-filter" class="form-input">
+            <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="color: var(--text-primary); font-size: 20px;">📊 Recent Mortality Records</h3>
+                    <div style="display: flex; gap: 12px;">
+                        <select id="mortality-filter" class="form-input" style="width: auto;">
                             <option value="all">All Causes</option>
                             <option value="disease">Disease</option>
                             <option value="predator">Predator</option>
@@ -213,18 +533,18 @@ const BroilerMortalityModule = {
             </div>
 
             <!-- Cause Distribution -->
-            <div class="glass-card cause-distribution">
-                <h3 class="section-title">🔍 Mortality by Cause</h3>
+            <div class="glass-card" style="padding: 24px;">
+                <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">🔍 Mortality by Cause</h3>
                 <div id="cause-summary">
                     ${this.renderCauseSummary()}
                 </div>
             </div>
         </div>
 
-        <!-- POPOUT MODALS -->
+        <!-- POPOUT MODALS - Added at the end to overlay content -->
         <!-- Mortality Record Modal -->
         <div id="mortality-modal" class="popout-modal hidden">
-            <div class="popout-modal-content">
+            <div class="popout-modal-content" style="max-width: 600px;">
                 <div class="popout-modal-header">
                     <h3 class="popout-modal-title" id="mortality-modal-title">Record Mortality</h3>
                     <button class="popout-modal-close" id="close-mortality-modal">&times;</button>
@@ -232,7 +552,8 @@ const BroilerMortalityModule = {
                 <div class="popout-modal-body">
                     <form id="mortality-form">
                         <input type="hidden" id="mortality-id" value="">
-                        <div class="form-grid">
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                             <div>
                                 <label class="form-label">Date *</label>
                                 <input type="date" id="mortality-date" class="form-input" required>
@@ -242,7 +563,8 @@ const BroilerMortalityModule = {
                                 <input type="number" id="mortality-quantity" class="form-input" min="1" required placeholder="0">
                             </div>
                         </div>
-                        <div class="form-grid">
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                             <div>
                                 <label class="form-label">Cause of Death *</label>
                                 <select id="mortality-cause" class="form-input" required>
@@ -262,10 +584,10 @@ const BroilerMortalityModule = {
                                 <input type="number" id="mortality-age" class="form-input" min="1" max="70" placeholder="Optional">
                             </div>
                         </div>
-                        <div>
+
+                        <div style="margin-bottom: 16px;">
                             <label class="form-label">Observations & Notes</label>
-                            <textarea id="mortality-notes" class="form-input" rows="3"
-                                placeholder="Symptoms, location, time of discovery, environmental conditions..."></textarea>
+                            <textarea id="mortality-notes" class="form-input" placeholder="Symptoms, location, time of discovery, environmental conditions..." rows="3"></textarea>
                         </div>
                     </form>
                 </div>
@@ -277,15 +599,17 @@ const BroilerMortalityModule = {
             </div>
         </div>
 
-                <!-- Health Report Modal -->
+        <!-- Health Report Modal -->
         <div id="health-report-modal" class="popout-modal hidden">
-            <div class="popout-modal-content">
+            <div class="popout-modal-content" style="max-width: 800px;">
                 <div class="popout-modal-header">
                     <h3 class="popout-modal-title" id="health-report-title">Health Report</h3>
                     <button class="popout-modal-close" id="close-health-report">&times;</button>
                 </div>
                 <div class="popout-modal-body">
-                    <div id="health-report-content"></div>
+                    <div id="health-report-content">
+                        <!-- Report content will be inserted here -->
+                    </div>
                 </div>
                 <div class="popout-modal-footer">
                     <button class="btn-outline" id="print-health-report">🖨️ Print</button>
@@ -296,13 +620,15 @@ const BroilerMortalityModule = {
 
         <!-- Trend Analysis Modal -->
         <div id="trend-analysis-modal" class="popout-modal hidden">
-            <div class="popout-modal-content">
+            <div class="popout-modal-content" style="max-width: 800px;">
                 <div class="popout-modal-header">
                     <h3 class="popout-modal-title" id="trend-analysis-title">Mortality Trend Analysis</h3>
                     <button class="popout-modal-close" id="close-trend-analysis">&times;</button>
                 </div>
                 <div class="popout-modal-body">
-                    <div id="trend-analysis-content"></div>
+                    <div id="trend-analysis-content">
+                        <!-- Trend analysis content will be inserted here -->
+                    </div>
                 </div>
                 <div class="popout-modal-footer">
                     <button class="btn-outline" id="print-trend-analysis">🖨️ Print</button>
@@ -313,13 +639,15 @@ const BroilerMortalityModule = {
 
         <!-- Cause Analysis Modal -->
         <div id="cause-analysis-modal" class="popout-modal hidden">
-            <div class="popout-modal-content">
+            <div class="popout-modal-content" style="max-width: 800px;">
                 <div class="popout-modal-header">
                     <h3 class="popout-modal-title" id="cause-analysis-title">Cause Analysis Report</h3>
                     <button class="popout-modal-close" id="close-cause-analysis">&times;</button>
                 </div>
                 <div class="popout-modal-body">
-                    <div id="cause-analysis-content"></div>
+                    <div id="cause-analysis-content">
+                        <!-- Cause analysis content will be inserted here -->
+                    </div>
                 </div>
                 <div class="popout-modal-footer">
                     <button class="btn-outline" id="print-cause-analysis">🖨️ Print</button>
@@ -331,8 +659,7 @@ const BroilerMortalityModule = {
 
     this.updateStats();
     this.setupEventListeners();
-},
-
+}, 
     
     updateStats() {
         const totalLosses = this.mortalityData.reduce((sum, record) => sum + record.quantity, 0);
@@ -374,72 +701,67 @@ const BroilerMortalityModule = {
             }
         }
 
-    if (filteredMortality.length === 0) {
-    return `
-        <div class="mortality-empty">
-            <div class="empty-icon">😔</div>
-            <div class="empty-title">No mortality records</div>
-            <div class="empty-desc">
-                ${filter === 'all' ? 'No losses recorded - great job!' : `No ${filter} mortality records`}
-            </div>
-        </div>
-    `;
-}
+        if (filteredMortality.length === 0) {
+            return `
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">😔</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No mortality records</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">${filter === 'all' ? 'No losses recorded - great job!' : `No ${filter} mortality records`}</div>
+                </div>
+            `;
+        }
 
-const sortedMortality = filteredMortality
-    .slice()
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
+        const sortedMortality = filteredMortality.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
 
-return `
-    <div class="table-wrapper">
-        <table class="report-table mortality-table">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Cause</th>
-                    <th>Quantity</th>
-                    <th>Age</th>
-                    <th>Notes</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${sortedMortality.map(record => {
-                    const causeColor = this.getCauseColor(record.cause);
-
-                    return `
-                        <tr>
-                            <td>${this.formatDate(record.date)}</td>
-                            <td>
-                                <div class="cause-cell">
-                                    <span class="cause-icon">${this.getCauseIcon(record.cause)}</span>
-                                    <span class="cause-badge" style="color:${causeColor}; background:${causeColor}20;">
-                                        ${this.formatCause(record.cause)}
-                                    </span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="quantity-cell">
-                                    <div class="quantity-value">${record.quantity}</div>
-                                    <div class="quantity-label">birds</div>
-                                </div>
-                            </td>
-                            <td>${record.age ? record.age + ' days' : '-'}</td>
-                            <td class="notes-cell">${record.notes || '-'}</td>
-                            <td>
-                                <div class="actions-cell">
-                                    <button class="btn-icon edit-mortality" data-id="${record.id}" title="Edit">✏️</button>
-                                    <button class="btn-icon delete-mortality" data-id="${record.id}" title="Delete">🗑️</button>
-                                </div>
-                            </td>
+        return `
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--glass-border);">
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Date</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Cause</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Quantity</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Age</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Notes</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Actions</th>
                         </tr>
-                    `;
-                }).join('')}
-            </tbody>
-        </table>
-    </div>
-`;
-},
+                    </thead>
+                    <tbody>
+                        ${sortedMortality.map(record => {
+                            const causeColor = this.getCauseColor(record.cause);
+                            
+                            return `
+                                <tr style="border-bottom: 1px solid var(--glass-border);">
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">${this.formatDate(record.date)}</td>
+                                    <td style="padding: 12px 8px;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span style="font-size: 18px;">${this.getCauseIcon(record.cause)}</span>
+                                            <span style="padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; 
+                                                background: ${causeColor}20; color: ${causeColor};">
+                                                ${this.formatCause(record.cause)}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">
+                                        <div style="font-weight: 600; color: #ef4444;">${record.quantity}</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">birds</div>
+                                    </td>
+                                    <td style="padding: 12px 8px; color: var(--text-secondary);">${record.age ? record.age + ' days' : '-'}</td>
+                                    <td style="padding: 12px 8px; color: var(--text-secondary); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${record.notes || '-'}</td>
+                                    <td style="padding: 12px 8px;">
+                                        <div style="display: flex; gap: 4px;">
+                                            <button class="btn-icon edit-mortality" data-id="${record.id}" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary);" title="Edit">✏️</button>
+                                            <button class="btn-icon delete-mortality" data-id="${record.id}" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary);" title="Delete">🗑️</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    },
 
 renderCauseSummary() {
     const causeData = {};
@@ -462,72 +784,63 @@ renderCauseSummary() {
     // Filter to only show causes that have data
     const causesWithData = causes.filter(cause => causeData[cause].totalQuantity > 0);
     
-   if (causesWithData.length === 0) {
-    return `
-        <div class="cause-summary-grid">
-            <div class="cause-item cause-empty">
-                <div class="empty-icon">😊</div>
-                <div class="empty-title">No mortality by cause data</div>
-                <div class="empty-desc">
-                    Record some mortality data to see cause analysis
+    if (causesWithData.length === 0) {
+        return `
+            <div class="cause-summary-grid">
+                <div class="cause-item" style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">😊</div>
+                    <div style="font-size: 16px; color: var(--text-primary); margin-bottom: 8px;">No mortality by cause data</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Record some mortality data to see cause analysis</div>
                 </div>
             </div>
+        `;
+    }
+
+     return `
+        <div class="cause-summary-grid">
+            ${causesWithData.map(cause => {
+                const data = causeData[cause];
+                const percentage = totalLosses > 0 ? Math.round((data.totalQuantity / totalLosses) * 100) : 0;
+                const causeColor = this.getCauseColor(cause);
+                
+                 return `
+                    <div class="cause-item" data-cause="${cause}">
+                        <div class="cause-header">
+                            <div class="cause-icon">${this.getCauseIcon(cause)}</div>
+                            <div class="cause-title" style="color: ${causeColor};">${this.formatCause(cause)}</div>
+                        </div>
+                        
+                        <div class="cause-stats">
+                            <div class="cause-stat">
+                                <span class="cause-stat-label">Losses:</span>
+                                <span class="cause-stat-value">${data.totalQuantity} birds</span>
+                            </div>
+                            <div class="cause-stat">
+                                <span class="cause-stat-label">Records:</span>
+                                <span class="cause-stat-value">${data.count}</span>
+                            </div>
+                            <div class="cause-stat">
+                                <span class="cause-stat-label">Share:</span>
+                                <span class="cause-stat-percentage" style="color: ${causeColor};">${percentage}%</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 🔥 FIXED BUTTON CONTAINER -->
+                        <div class="cause-actions">
+                            <button class="delete-cause-records" data-cause="${cause}" title="Delete all ${this.formatCause(cause)} records">
+                                <span style="font-size: 14px;">🗑️</span>
+                                <span>Delete All</span>
+                            </button>
+                            <button class="view-cause-details" data-cause="${cause}" title="View ${this.formatCause(cause)} details">
+                                <span style="font-size: 14px;">🔍</span>
+                                <span>View Details</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
         </div>
     `;
-}
-
-return `
-    <div class="cause-summary-grid">
-        ${causesWithData.map(cause => {
-            const data = causeData[cause];
-            const percentage = totalLosses > 0
-                ? Math.round((data.totalQuantity / totalLosses) * 100)
-                : 0;
-            const causeColor = this.getCauseColor(cause);
-
-            return `
-                <div class="cause-item" data-cause="${cause}">
-                    <div class="cause-header">
-                        <div class="cause-icon">${this.getCauseIcon(cause)}</div>
-                        <div class="cause-title" style="color:${causeColor};">
-                            ${this.formatCause(cause)}
-                        </div>
-                    </div>
-
-                    <div class="cause-stats">
-                        <div class="cause-stat">
-                            <span class="cause-stat-label">Losses:</span>
-                            <span class="cause-stat-value">${data.totalQuantity} birds</span>
-                        </div>
-                        <div class="cause-stat">
-                            <span class="cause-stat-label">Records:</span>
-                            <span class="cause-stat-value">${data.count}</span>
-                        </div>
-                        <div class="cause-stat">
-                            <span class="cause-stat-label">Share:</span>
-                            <span class="cause-stat-percentage" style="color:${causeColor};">
-                                ${percentage}%
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="cause-actions">
-                        <button class="delete-cause-records" data-cause="${cause}"
-                                title="Delete all ${this.formatCause(cause)} records">
-                            <span class="action-icon">🗑️</span>
-                            <span>Delete All</span>
-                        </button>
-                        <button class="view-cause-details" data-cause="${cause}"
-                                title="View ${this.formatCause(cause)} details">
-                            <span class="action-icon">🔍</span>
-                            <span>View Details</span>
-                        </button>
-                    </div>
-                </div>
-            `;
-        }).join('')}
-    </div>
-`;
 },
     
     setupEventListeners() {
@@ -876,117 +1189,100 @@ viewCauseDetails(cause) {
         this.hideCauseAnalysisModal();
     },
 
+    // REPORT METHODS
     generateHealthReport() {
-    const stats = this.calculateDetailedStats();
-
-    let report = '<div class="report-content">';
-    report += '<h4 class="report-heading">😔 Flock Health & Mortality Report</h4>';
-
-    // Summary Section
-    report += `
-        <div class="report-section summary">
-            <h5 class="section-subtitle">📊 FLOCK HEALTH SUMMARY:</h5>
-            <div class="summary-grid">
-                <div class="summary-card">
-                    <div class="summary-label">Current Stock</div>
-                    <div class="summary-value">${stats.currentStock}</div>
+        const stats = this.calculateDetailedStats();
+        
+        let report = '<div class="report-content">';
+        report += '<h4 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">😔 Flock Health & Mortality Report</h4>';
+        
+        // Summary Section
+        report += `<div style="margin-bottom: 24px;">
+            <h5 style="color: var(--text-primary); margin-bottom: 12px;">📊 FLOCK HEALTH SUMMARY:</h5>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px;">
+                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
+                    <div style="font-size: 12px; color: var(--text-secondary);">Current Stock</div>
+                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${stats.currentStock}</div>
                 </div>
-                <div class="summary-card">
-                    <div class="summary-label">Total Losses</div>
-                    <div class="summary-value losses">${stats.totalLosses}</div>
+                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
+                    <div style="font-size: 12px; color: var(--text-secondary);">Total Losses</div>
+                    <div style="font-size: 18px; font-weight: bold; color: #ef4444;">${stats.totalLosses}</div>
                 </div>
-                <div class="summary-card">
-                    <div class="summary-label">Mortality Rate</div>
-                    <div class="summary-value rate ${parseFloat(stats.mortalityRate) > 5 ? 'rate-high' : parseFloat(stats.mortalityRate) > 2 ? 'rate-medium' : 'rate-low'}">
-                        ${stats.mortalityRate}%
-                    </div>
+                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
+                    <div style="font-size: 12px; color: var(--text-secondary);">Mortality Rate</div>
+                    <div style="font-size: 18px; font-weight: bold; color: ${parseFloat(stats.mortalityRate) > 5 ? '#ef4444' : parseFloat(stats.mortalityRate) > 2 ? '#f59e0b' : '#22c55e'};">${stats.mortalityRate}%</div>
                 </div>
-                <div class="summary-card">
-                    <div class="summary-label">Records</div>
-                    <div class="summary-value">${stats.recordsCount}</div>
+                <div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; text-align: center;">
+                    <div style="font-size: 12px; color: var(--text-secondary);">Records</div>
+                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${stats.recordsCount}</div>
                 </div>
             </div>
-        </div>
-    `;
-
-    // Cause Distribution
-    report += `
-        <div class="report-section cause-distribution">
-            <h5 class="section-subtitle">🔍 MORTALITY BY CAUSE:</h5>
-            <div class="cause-list">
-    `;
-
-    Object.entries(stats.causeDistribution).forEach(([cause, quantity]) => {
-        const percentage = stats.totalLosses > 0 ? Math.round((quantity / stats.totalLosses) * 100) : 0;
-        const causeColor = this.getCauseColor(cause);
-
-        report += `
-            <div class="cause-card" style="border-left-color:${causeColor};">
-                <div class="cause-header">
-                    <div class="cause-info">
-                        <span class="cause-icon">${this.getCauseIcon(cause)}</span>
-                        <span class="cause-name">${this.formatCause(cause)}</span>
+        </div>`;
+        
+        // Cause Distribution
+        report += `<div style="margin-bottom: 24px;">
+            <h5 style="color: var(--text-primary); margin-bottom: 12px;">🔍 MORTALITY BY CAUSE:</h5>
+            <div style="display: flex; flex-direction: column; gap: 8px;">`;
+        
+        Object.entries(stats.causeDistribution).forEach(([cause, quantity]) => {
+            const percentage = stats.totalLosses > 0 ? Math.round((quantity / stats.totalLosses) * 100) : 0;
+            const causeColor = this.getCauseColor(cause);
+            
+            report += `<div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; border-left: 4px solid ${causeColor};">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 18px;">${this.getCauseIcon(cause)}</span>
+                        <span style="font-weight: 600; color: var(--text-primary);">${this.formatCause(cause)}</span>
                     </div>
-                    <span class="cause-quantity">${quantity} birds</span>
+                    <span style="font-weight: 600; color: var(--text-primary);">${quantity} birds</span>
                 </div>
-                <div class="cause-bar">
-                    <div class="bar-track">
-                        <div class="bar-fill" style="width:${percentage}%; background:${causeColor};"></div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="flex-grow: 1; height: 8px; background: var(--glass-border); border-radius: 4px; overflow: hidden;">
+                        <div style="width: ${percentage}%; height: 100%; background: ${causeColor}; border-radius: 4px;"></div>
                     </div>
-                    <span class="bar-label">${percentage}%</span>
+                    <span style="font-size: 12px; color: var(--text-secondary);">${percentage}%</span>
                 </div>
-            </div>
-        `;
-    });
-
-    report += '</div></div>';
-
-    // Health Recommendations
-    report += `
-        <div class="report-section recommendations">
-            <h5 class="section-subtitle">💡 HEALTH RECOMMENDATIONS:</h5>
-            <div class="recommendation-box"
-                 style="background:${this.getRecommendationLevel(stats.mortalityRate, stats.causeDistribution)};
-                        border-left-color:${this.getRecommendationColor(stats.mortalityRate, stats.causeDistribution)};">
+            </div>`;
+        });
+        report += '</div></div>';
+        
+        // Health Recommendations
+        report += `<div style="margin-bottom: 20px;">
+            <h5 style="color: var(--text-primary); margin-bottom: 12px;">💡 HEALTH RECOMMENDATIONS:</h5>
+            <div style="padding: 16px; background: ${this.getRecommendationLevel(stats.mortalityRate, stats.causeDistribution)}; border-radius: 8px; border-left: 4px solid ${this.getRecommendationColor(stats.mortalityRate, stats.causeDistribution)};">
                 ${this.getHealthRecommendations(stats.mortalityRate, stats.causeDistribution)}
             </div>
-        </div>
-    `;
-
-    // Recent Activity
-    const recentMortality = this.mortalityData.slice(0, 5);
-    if (recentMortality.length > 0) {
-        report += `
-            <div class="report-section recent-activity">
-                <h5 class="section-subtitle">📋 RECENT MORTALITY ACTIVITY (Last 5):</h5>
-                <div class="activity-list">
-        `;
-
-        recentMortality.forEach(record => {
-            const causeColor = this.getCauseColor(record.cause);
-            report += `
-                <div class="activity-card" style="border-left-color:${causeColor};">
-                    <div class="activity-header">
-                        <div class="activity-info">
-                            <div class="activity-date">${this.formatDate(record.date)}</div>
-                            <div class="activity-meta">
-                                <span class="activity-cause">
+        </div>`;
+        
+        // Recent Activity
+        const recentMortality = this.mortalityData.slice(0, 5);
+        if (recentMortality.length > 0) {
+            report += `<div style="margin-bottom: 20px;">
+                <h5 style="color: var(--text-primary); margin-bottom: 12px;">📋 RECENT MORTALITY ACTIVITY (Last 5):</h5>
+                <div style="display: flex; flex-direction: column; gap: 8px;">`;
+            
+            recentMortality.forEach(record => {
+                const causeColor = this.getCauseColor(record.cause);
+                report += `<div style="padding: 12px; background: var(--glass-bg); border-radius: 8px; border-left: 4px solid ${causeColor};">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 600; color: var(--text-primary);">${this.formatDate(record.date)}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">
+                                <span style="display: inline-flex; align-items: center; gap: 4px;">
                                     ${this.getCauseIcon(record.cause)} ${this.formatCause(record.cause)}
                                 </span>
                                 ${record.age ? ` • ${record.age} days old` : ''}
                             </div>
                         </div>
-                        <div class="activity-stats">
-                            <div class="activity-quantity">${record.quantity} birds</div>
-                            <div class="activity-notes">${record.notes ? 'Has notes' : 'No notes'}</div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 600; color: #ef4444;">${record.quantity} birds</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">${record.notes ? 'Has notes' : 'No notes'}</div>
                         </div>
                     </div>
-                </div>
-            `;
-        });
-
-        report += '</div></div>';
-    }
+                </div>`;
+            });
+            report += '</div></div>';
+        }
         
         report += '</div>';
 
@@ -995,113 +1291,97 @@ viewCauseDetails(cause) {
         this.showHealthReportModal();
     },
 
-   generateTrendAnalysis() {
-    const weeklyTrends = this.calculateWeeklyTrends();
-
-    let analysis = '<div class="report-content">';
-    analysis += '<h4 class="report-heading">📈 Mortality Trend Analysis</h4>';
-
-    if (weeklyTrends.length === 0) {
-        analysis += `
-            <div class="trend-empty">
-                <div class="empty-icon">📊</div>
-                <h5 class="empty-title">Not enough data</h5>
-                <p class="empty-desc">Need more mortality records to analyze trends</p>
-            </div>
-        `;
-    } else {
-        analysis += `
-            <div class="report-section weekly-trends">
-                <h5 class="section-subtitle">📅 WEEKLY MORTALITY TRENDS:</h5>
-                <div class="trend-list">
-        `;
-
-        weeklyTrends.forEach((week, index) => {
-            const trendColor = week.rate > 5 ? '#ef4444' : week.rate > 2 ? '#f59e0b' : '#22c55e';
-            const trendIcon = week.rate > 5 ? '📈⚠️' : week.rate > 2 ? '📈' : '📉✅';
-
-            analysis += `
-                <div class="trend-card" style="border-color:${trendColor}20;">
-                    <div class="trend-header">
-                        <span class="trend-week">Week ${index + 1}</span>
-                        <span class="trend-icon">${trendIcon}</span>
+    generateTrendAnalysis() {
+        const weeklyTrends = this.calculateWeeklyTrends();
+        
+        let analysis = '<div class="report-content">';
+        analysis += '<h4 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">📈 Mortality Trend Analysis</h4>';
+        
+        if (weeklyTrends.length === 0) {
+            analysis += `<div style="text-align: center; padding: 40px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                <h5 style="color: #374151; margin-bottom: 8px;">Not enough data</h5>
+                <p style="color: var(--text-secondary);">Need more mortality records to analyze trends</p>
+            </div>`;
+        } else {
+            // Weekly Trends
+            analysis += `<div style="margin-bottom: 24px;">
+                <h5 style="color: var(--text-primary); margin-bottom: 12px;">📅 WEEKLY MORTALITY TRENDS:</h5>
+                <div style="display: flex; flex-direction: column; gap: 12px;">`;
+            
+            weeklyTrends.forEach((week, index) => {
+                const trendColor = week.rate > 5 ? '#ef4444' : week.rate > 2 ? '#f59e0b' : '#22c55e';
+                const trendIcon = week.rate > 5 ? '📈⚠️' : week.rate > 2 ? '📈' : '📉✅';
+                
+                analysis += `<div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid ${trendColor}20;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 600; color: var(--text-primary);">Week ${index + 1}</span>
+                        <span style="font-size: 18px;">${trendIcon}</span>
                     </div>
-                    <div class="trend-grid">
-                        <div class="trend-cell">
-                            <div class="trend-label">Losses</div>
-                            <div class="trend-value losses">${week.losses}</div>
-                            <div class="trend-sub">birds</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 4px;">Losses</div>
+                            <div style="font-size: 18px; font-weight: bold; color: #ef4444;">${week.losses}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">birds</div>
                         </div>
-                        <div class="trend-cell">
-                            <div class="trend-label">Rate</div>
-                            <div class="trend-value" style="color:${trendColor};">${week.rate}%</div>
-                            <div class="trend-sub">of flock</div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 4px;">Rate</div>
+                            <div style="font-size: 18px; font-weight: bold; color: ${trendColor};">${week.rate}%</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">of flock</div>
                         </div>
                     </div>
-                </div>
-            `;
-        });
-
-        analysis += '</div></div>';
-    }
-           
+                </div>`;
+            });
+            analysis += '</div></div>';
+            
             // Recommendations
             const latestWeek = weeklyTrends[weeklyTrends.length - 1];
             const previousWeek = weeklyTrends.length > 1 ? weeklyTrends[weeklyTrends.length - 2] : null;
             
-           if (previousWeek && latestWeek.rate > 0) {
-    const change = ((latestWeek.rate - previousWeek.rate) / previousWeek.rate * 100).toFixed(1);
-
-    analysis += `
-        <div class="report-section trend-insights">
-            <h5 class="section-subtitle">💡 TREND INSIGHTS:</h5>
-            <div class="insight-box ${parseFloat(change) >= 0 ? 'insight-negative' : 'insight-positive'}">
-    `;
-
-    if (parseFloat(change) > 10) {
-        analysis += `
-            <div class="insight-critical">🚨 CRITICAL: Mortality rate increased by ${change}%</div>
-            <div class="insight-details">
-                <p>⚠️ Immediate action required:</p>
-                <ul>
-                    <li>Consult with veterinarian immediately</li>
-                    <li>Review feed quality and water supply</li>
-                    <li>Check environmental conditions (temperature, ventilation)</li>
-                    <li>Consider isolating affected birds</li>
-                </ul>
-            </div>
-        `;
-    } else if (parseFloat(change) > 0) {
-        analysis += `
-            <div class="insight-warning">⚠️ WARNING: Mortality rate increased by ${change}%</div>
-            <div class="insight-details">
-                <p>Monitor closely and consider:</p>
-                <ul>
-                    <li>Review biosecurity measures</li>
-                    <li>Check flock health more frequently</li>
-                    <li>Ensure proper nutrition and water quality</li>
-                    <li>Monitor environmental stressors</li>
-                </ul>
-            </div>
-        `;
-    } else if (parseFloat(change) < 0) {
-        analysis += `
-            <div class="insight-good">✅ GOOD NEWS: Mortality rate decreased by ${Math.abs(change)}%</div>
-            <div class="insight-details">
-                <p>Current management practices are effective. Continue to:</p>
-                <ul>
-                    <li>Maintain current health protocols</li>
-                    <li>Continue regular monitoring</li>
-                    <li>Keep up with preventive care</li>
-                    <li>Monitor for any new issues</li>
-                </ul>
-            </div>
-        `;
-    }
-
-    analysis += '</div></div>';
-}
-   }
+            if (previousWeek && latestWeek.rate > 0) {
+                const change = ((latestWeek.rate - previousWeek.rate) / previousWeek.rate * 100).toFixed(1);
+                
+                analysis += `<div style="margin-bottom: 20px;">
+                    <h5 style="color: var(--text-primary); margin-bottom: 12px;">💡 TREND INSIGHTS:</h5>
+                    <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border-left: 4px solid ${parseFloat(change) >= 0 ? '#ef4444' : '#22c55e'};">`;
+                
+                if (parseFloat(change) > 10) {
+                    analysis += `<div style="color: #ef4444; font-weight: 600; margin-bottom: 8px;">🚨 CRITICAL: Mortality rate increased by ${change}%</div>
+                    <div style="color: #374151; font-size: 14px;">
+                        <p>⚠️ Immediate action required:</p>
+                        <ul style="margin-left: 20px; margin-top: 8px;">
+                            <li>Consult with veterinarian immediately</li>
+                            <li>Review feed quality and water supply</li>
+                            <li>Check environmental conditions (temperature, ventilation)</li>
+                            <li>Consider isolating affected birds</li>
+                        </ul>
+                    </div>`;
+                } else if (parseFloat(change) > 0) {
+                    analysis += `<div style="color: #f59e0b; font-weight: 600; margin-bottom: 8px;">⚠️ WARNING: Mortality rate increased by ${change}%</div>
+                    <div style="color: #374151; font-size: 14px;">
+                        <p>Monitor closely and consider:</p>
+                        <ul style="margin-left: 20px; margin-top: 8px;">
+                            <li>Review biosecurity measures</li>
+                            <li>Check flock health more frequently</li>
+                            <li>Ensure proper nutrition and water quality</li>
+                            <li>Monitor environmental stressors</li>
+                        </ul>
+                    </div>`;
+                } else if (parseFloat(change) < 0) {
+                    analysis += `<div style="color: #22c55e; font-weight: 600; margin-bottom: 8px;">✅ GOOD NEWS: Mortality rate decreased by ${Math.abs(change)}%</div>
+                    <div style="color: #374151; font-size: 14px;">
+                        <p>Current management practices are effective. Continue to:</p>
+                        <ul style="margin-left: 20px; margin-top: 8px;">
+                            <li>Maintain current health protocols</li>
+                            <li>Continue regular monitoring</li>
+                            <li>Keep up with preventive care</li>
+                            <li>Monitor for any new issues</li>
+                        </ul>
+                    </div>`;
+                }
+                analysis += '</div></div>';
+            }
+        }
         
         analysis += '</div>';
 
@@ -1111,103 +1391,84 @@ viewCauseDetails(cause) {
     },
 
     generateCauseAnalysis() {
-    const stats = this.calculateDetailedStats();
-
-    let analysis = '<div class="report-content">';
-    analysis += '<h4 class="report-heading">🔍 Mortality Cause Analysis</h4>';
-
-    if (Object.keys(stats.causeDistribution).length === 0) {
-        analysis += `
-            <div class="cause-empty">
-                <div class="empty-icon">📊</div>
-                <h5 class="empty-title">No mortality data</h5>
-                <p class="empty-desc">Record some mortality data to analyze causes</p>
-            </div>
-        `;
-    } else {
-        // Detailed cause analysis
-        analysis += `
-            <div class="report-section cause-breakdown">
-                <h5 class="section-subtitle">📊 DETAILED CAUSE BREAKDOWN:</h5>
-                <div class="cause-list">
-        `;
-
-        Object.entries(stats.causeDistribution).forEach(([cause, quantity]) => {
-            const percentage = stats.totalLosses > 0 ? ((quantity / stats.totalLosses) * 100).toFixed(1) : 0;
-            const causeColor = this.getCauseColor(cause);
-
-            analysis += `
-                <div class="cause-card" style="background:${causeColor}10; border-left-color:${causeColor};">
-                    <div class="cause-header">
-                        <div class="cause-info">
-                            <span class="cause-icon">${this.getCauseIcon(cause)}</span>
-                            <span class="cause-name" style="color:${causeColor};">${this.formatCause(cause)}</span>
+        const stats = this.calculateDetailedStats();
+        
+        let analysis = '<div class="report-content">';
+        analysis += '<h4 style="color: var(--text-primary); margin-bottom: 16px; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">🔍 Mortality Cause Analysis</h4>';
+        
+        if (Object.keys(stats.causeDistribution).length === 0) {
+            analysis += `<div style="text-align: center; padding: 40px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                <h5 style="color: #374151; margin-bottom: 8px;">No mortality data</h5>
+                <p style="color: var(--text-secondary);">Record some mortality data to analyze causes</p>
+            </div>`;
+        } else {
+            // Detailed cause analysis
+            analysis += `<div style="margin-bottom: 24px;">
+                <h5 style="color: var(--text-primary); margin-bottom: 12px;">📊 DETAILED CAUSE BREAKDOWN:</h5>
+                <div style="display: flex; flex-direction: column; gap: 12px;">`;
+            
+            Object.entries(stats.causeDistribution).forEach(([cause, quantity]) => {
+                const percentage = stats.totalLosses > 0 ? ((quantity / stats.totalLosses) * 100).toFixed(1) : 0;
+                const causeColor = this.getCauseColor(cause);
+                
+                analysis += `<div style="padding: 16px; background: ${causeColor}10; border-radius: 8px; border-left: 4px solid ${causeColor};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 20px;">${this.getCauseIcon(cause)}</span>
+                            <span style="font-weight: 600; color: ${causeColor};">${this.formatCause(cause)}</span>
                         </div>
-                        <div class="cause-stats">
-                            <div class="cause-quantity" style="color:${causeColor};">${quantity} birds</div>
-                            <div class="cause-percentage">${percentage}% of total</div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: bold; color: ${causeColor}; font-size: 18px;">${quantity} birds</div>
+                            <div style="font-size: 14px; color: var(--text-secondary);">${percentage}% of total</div>
                         </div>
                     </div>
-                    <div class="cause-recommendation">
-                        <div class="recommendation-title">💡 Prevention Recommendations:</div>
-                        <div class="recommendation-text">
+                    <div style="background: var(--glass-bg); border-radius: 6px; padding: 12px; margin-top: 8px;">
+                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">💡 Prevention Recommendations:</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">
                             ${this.getCausePrevention(cause)}
                         </div>
                     </div>
-                </div>
-            `;
-        });
-
-        analysis += '</div></div>';
-
-        // Top causes
-        const topCauses = Object.entries(stats.causeDistribution)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 3);
-
-        if (topCauses.length > 0) {
-            analysis += `
-                <div class="report-section top-causes">
-                    <h5 class="section-subtitle">🏆 TOP 3 CAUSES OF MORTALITY:</h5>
-                    <div class="top-cause-list">
-            `;
-
-            topCauses.forEach(([cause, quantity], index) => {
-                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
-                const percentage = ((quantity / stats.totalLosses) * 100).toFixed(1);
-                const causeColor = this.getCauseColor(cause);
-
-                analysis += `
-                    <div class="top-cause-card">
-                        <div class="medal">${medal}</div>
-                        <div class="top-cause-info">
-                            <div class="top-cause-name">${this.formatCause(cause)}</div>
-                            <div class="top-cause-meta">${quantity} birds (${percentage}%)</div>
-                        </div>
-                        <div class="top-cause-icon" style="color:${causeColor};">${this.getCauseIcon(cause)}</div>
-                    </div>
-                `;
+                </div>`;
             });
-
             analysis += '</div></div>';
-        }
-    }
-
-    analysis += '</div>'; // close report-content
-    return analysis;
-}
-
-           // Preventive actions
-            analysis += `
-                <div class="report-section preventive-actions">
-                    <h5 class="section-subtitle">🛡️ PREVENTIVE ACTION PLAN:</h5>
-                    <div class="preventive-box">
-                        ${this.getPreventiveActions(stats.causeDistribution)}
-                    </div>
-                </div>
-            `;
+            
+            // Top causes
+            const topCauses = Object.entries(stats.causeDistribution)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3);
+            
+            if (topCauses.length > 0) {
+                analysis += `<div style="margin-bottom: 20px;">
+                    <h5 style="color: var(--text-primary); margin-bottom: 12px;">🏆 TOP 3 CAUSES OF MORTALITY:</h5>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">`;
+                
+                topCauses.forEach(([cause, quantity], index) => {
+                    const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
+                    const percentage = ((quantity / stats.totalLosses) * 100).toFixed(1);
+                    const causeColor = this.getCauseColor(cause);
+                    
+                    analysis += `<div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--glass-bg); border-radius: 8px;">
+                        <div style="font-size: 24px;">${medal}</div>
+                        <div style="flex-grow: 1;">
+                            <div style="font-weight: 600; color: var(--text-primary);">${this.formatCause(cause)}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">${quantity} birds (${percentage}%)</div>
+                        </div>
+                        <div style="font-size: 24px; color: ${causeColor};">${this.getCauseIcon(cause)}</div>
+                    </div>`;
+                });
+                analysis += '</div></div>';
             }
-
+            
+            // Preventive actions
+            analysis += `<div style="margin-bottom: 20px;">
+                <h5 style="color: var(--text-primary); margin-bottom: 12px;">🛡️ PREVENTIVE ACTION PLAN:</h5>
+                <div style="padding: 16px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                    ${this.getPreventiveActions(stats.causeDistribution)}
+                </div>
+            </div>`;
+        }
+        
         analysis += '</div>';
 
         document.getElementById('cause-analysis-content').innerHTML = analysis;
@@ -1680,3 +1941,4 @@ viewCauseDetails(cause) {
         console.error('❌ FarmModules framework not found');
     }
 })();
+
