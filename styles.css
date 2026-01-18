@@ -193,10 +193,8 @@ body {
 }
 
 /* ==============================================================
-   Dashboard Module
+   Dashboard Module- Light Mode
    ============================================================== */
-/* (dashboard, income & expenses, transactions, etc. remain unchanged) */
-/*==============================================================*/
 .dashboard-container {
   padding: 20px;
   max-width: 1200px;
@@ -365,8 +363,76 @@ body {
   color: #999;
 }
 
+/* ==============================================================
+   Dashboard Module - Dark Mode
+   ============================================================== */
+body.dark-mode .dashboard-container {
+  background: #0f172a; /* deep slate background */
+  color: #f8fafc;
+}
+
+body.dark-mode .welcome-section {
+  background: linear-gradient(135deg, #14532d 0%, #15803d 100%);
+  color: #f8fafc !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+body.dark-mode .welcome-section h1,
+body.dark-mode .welcome-section p {
+  color: #f8fafc !important;
+}
+
+body.dark-mode .quick-actions h2,
+body.dark-mode .stats-overview h2,
+body.dark-mode .recent-activity h2 {
+  color: #f8fafc;
+}
+
+body.dark-mode .quick-action-btn {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  color: #f0f0f0;
+}
+
+body.dark-mode .quick-action-btn span:first-of-type {
+  color: #f8fafc;
+}
+
+body.dark-mode .quick-action-btn span:last-of-type {
+  color: #cbd5e1;
+}
+
+body.dark-mode .stat-card {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  color: #f0f0f0;
+}
+
+body.dark-mode .stat-card div:nth-child(2) {
+  color: #f8fafc;
+}
+
+body.dark-mode .stat-card div:last-child {
+  color: #cbd5e1;
+}
+
+body.dark-mode .activity-list {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  color: #f0f0f0;
+}
+
+body.dark-mode .activity-list > div {
+  color: #cbd5e1;
+}
+
+body.dark-mode .activity-list > div div:last-child {
+  color: #94a3b8;
+}
+
 /*=============================================================*/
 /* ===== INCOME & EXPENSES MODULE ===== */
+/*=============================================================*/
 .income-expenses-module {
   max-width: 1200px;
   margin: 0 auto;
@@ -678,6 +744,7 @@ body {
 
 /*=============================================================*/
 /* ===== REPORTS MODULE ===== */
+/*=============================================================*/
 .reports-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -782,8 +849,65 @@ body {
   flex-wrap: wrap;
 }
 
+/* ==============================================================
+        Reports Module - Dark Mode
+/* ============================================================== */
+body.dark-mode .report-type-card,
+body.dark-mode .report-output {
+  background: #1e1e1e;
+  color: #f0f0f0;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+body.dark-mode .report-type-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+}
+
+body.dark-mode .report-content h3,
+body.dark-mode .report-section h4 {
+  color: #f8fafc;
+}
+
+body.dark-mode .report-content p,
+body.dark-mode .metric-label {
+  color: #cbd5e1;
+}
+
+body.dark-mode .metric-row {
+  border-bottom: 1px solid #333;
+}
+
+body.dark-mode .metric-value.income {
+  color: #22c55e; /* green */
+}
+
+body.dark-mode .metric-value.expense {
+  color: #ef4444; /* red */
+}
+
+body.dark-mode .metric-value.profit {
+  color: #3b82f6; /* blue */
+}
+
+body.dark-mode .metric-value.warning {
+  color: #f59e0b; /* amber */
+}
+
+body.dark-mode .output-header {
+  border-bottom: 1px solid #333;
+  color: #f8fafc;
+}
+
+body.dark-mode .output-content {
+  color: #f0f0f0;
+}
+
+
 /*=============================================================*/
-/* ===== NOTIFICATIONS ===== */
+/* ================= NOTIFICATIONS =========================== */
+/*=============================================================*/
 .notification {
   position: fixed;
   top: 20px;
