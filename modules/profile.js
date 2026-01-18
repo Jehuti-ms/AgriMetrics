@@ -812,12 +812,20 @@ onThemeChange(theme) {
         const modal = document.createElement('div');
         modal.className = 'logout-modal';
         modal.innerHTML = `
-            <div class="logout-modal-content">
-                <h3>Confirm Logout</h3>
-                <p>Are you sure you want to log out? You will need to sign in again to access your farm data.</p>
-                <div class="logout-modal-buttons">
-                    <button class="logout-cancel-btn" id="logout-cancel">Cancel</button>
-                    <button class="logout-confirm-btn" id="logout-confirm">Log Out</button>
+            <!-- Add this to your profile section -->
+            <div class="logout-confirmation" id="logout-confirmation">
+                <div class="logout-modal">
+                    <div class="logout-modal-header">
+                        <div class="logout-modal-icon">⚠️</div>
+                        <h3 class="logout-modal-title">Confirm Logout</h3>
+                        <p class="logout-modal-message">
+                            Are you sure you want to logout? Any unsaved changes will be lost.
+                        </p>
+                    </div>
+                    <div class="logout-modal-actions">
+                        <button type="button" class="logout-modal-cancel" id="logout-cancel">Cancel</button>
+                        <button type="button" class="logout-modal-confirm" id="logout-confirm">Logout</button>
+                    </div>
                 </div>
             </div>
         `;
