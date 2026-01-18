@@ -106,7 +106,7 @@ const IncomeExpensesModule = {
     },
 
     // ==================== MAIN RENDER ====================
-   renderModule() {
+  renderModule() {
     if (!this.element) return;
 
     const stats = this.calculateStats();
@@ -204,13 +204,52 @@ const IncomeExpensesModule = {
                     ${this.renderCategoryBreakdown()}
                 </div>
             </div>
+
+            <!-- ==================== MODALS ==================== -->
+            <!-- Import Receipts Modal -->
+            <div id="import-receipts-modal" class="popout-modal hidden">
+                <div class="popout-modal-content">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title">📥 Import Receipts ${this.isFirebaseAvailable ? '(Firebase)' : '(Local)'}</h3>
+                        <button class="popout-modal-close" id="close-import-receipts">&times;</button>
+                    </div>
+                    <div class="popout-modal-body">
+                        <div id="import-receipts-content"></div>
+                    </div>
+                    <div class="popout-modal-footer">
+                        <button class="btn btn-outline" id="cancel-import-receipts">Cancel</button>
+                        <button class="btn btn-primary" id="process-receipts-btn" style="display: none;">
+                            <span class="btn-icon">⚡</span>
+                            <span class="btn-text">Process Receipts</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transaction Modal -->
+            <div id="transaction-modal" class="popout-modal hidden">
+                <div class="popout-modal-content">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title" id="transaction-modal-title">Add Transaction</h3>
+                        <button class="popout-modal-close" id="close-transaction-modal">&times;</button>
+                    </div>
+                    <div class="popout-modal-body">
+                        ${this.renderTransactionForm()}
+                    </div>
+                    <div class="popout-modal-footer">
+                        <button type="button" class="btn-outline" id="cancel-transaction">Cancel</button>
+                        <button type="button" class="btn-danger" id="delete-transaction" style="display: none;">Delete</button>
+                        <button type="button" class="btn-primary" id="save-transaction">Save Transaction</button>
+                    </div>
+                </div>
+            </div>
         </div>
     `;
 
     this.setupEventListeners();
     this.setupReceiptFormHandlers();
 },
-
+    
     // ==================== EVENT LISTENERS ====================
     setupEventListeners() {
         console.log('Setting up event listeners...');
