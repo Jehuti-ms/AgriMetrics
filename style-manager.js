@@ -909,171 +909,320 @@ const StyleManager = {
     align-items: stretch !important;
   }
 }
+  
+/* ===========================
+   COMPREHENSIVE DARK MODE FIX
+   For ALL module containers and elements
+   =========================== */
 
-/* Force input text and placeholders */
+/* DARK MODE BASE */
+body.dark-mode {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+/* ========== APP STRUCTURE ========== */
+body.dark-mode #app-container,
+body.dark-mode #content-area,
+body.dark-mode main,
+body.dark-mode .app-wrapper,
+body.dark-mode .app-main {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+/* ========== ALL MODULE CONTAINERS ========== */
+body.dark-mode [class*="module"],
+body.dark-mode [class*="Module"],
+body.dark-mode [class*="widget"],
+body.dark-mode [class*="Widget"],
+body.dark-mode [class*="container"],
+body.dark-mode [class*="Container"],
+body.dark-mode [class*="panel"],
+body.dark-mode [class*="Panel"],
+body.dark-mode [class*="box"],
+body.dark-mode [class*="Box"],
+body.dark-mode [class*="card"],
+body.dark-mode [class*="Card"],
+body.dark-mode [class*="section"],
+body.dark-mode [class*="Section"] {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border: 1px solid #334155 !important;
+}
+
+/* Specific common module classes */
+body.dark-mode .module,
+body.dark-mode .module-container,
+body.dark-mode .module-wrapper,
+body.dark-mode .module-content,
+body.dark-mode .module-body,
+body.dark-mode .module-footer,
+body.dark-mode .module-header,
+body.dark-mode .widget-container,
+body.dark-mode .dashboard-module,
+body.dark-mode .data-module,
+body.dark-mode .settings-module,
+body.dark-mode .admin-module,
+body.dark-mode .user-module,
+body.dark-mode .report-module,
+body.dark-mode .analytics-module,
+body.dark-mode .form-module,
+body.dark-mode .list-module,
+body.dark-mode .grid-module,
+body.dark-mode .table-module {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+/* ========== MODULE HEADERS ========== */
+body.dark-mode .module-header,
+body.dark-mode .module-title-bar,
+body.dark-mode .panel-header,
+body.dark-mode .card-header,
+body.dark-mode .widget-header {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-bottom: 1px solid #334155 !important;
+}
+
+body.dark-mode .module-title,
+body.dark-mode .panel-title,
+body.dark-mode .card-title,
+body.dark-mode .widget-title,
+body.dark-mode h1, body.dark-mode h2,
+body.dark-mode h3, body.dark-mode h4,
+body.dark-mode h5, body.dark-mode h6 {
+  color: #e2e8f0 !important;
+}
+
+/* ========== MODULE CONTENT AREAS ========== */
+body.dark-mode .module-content,
+body.dark-mode .panel-body,
+body.dark-mode .card-body,
+body.dark-mode .widget-body,
+body.dark-mode .content-area,
+body.dark-mode .content-wrapper {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+/* ========== DATA/TABLE MODULES ========== */
+body.dark-mode .data-table,
+body.dark-mode .table-container,
+body.dark-mode .grid-container,
+body.dark-mode .list-container,
+body.dark-mode .table-module,
+body.dark-mode .data-grid,
+body.dark-mode .ag-theme-alpine {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+body.dark-mode table,
+body.dark-mode .table,
+body.dark-mode .data-table table {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+body.dark-mode th,
+body.dark-mode thead th {
+  background-color: #334155 !important;
+  color: #e2e8f0 !important;
+  border-color: #475569 !important;
+}
+
+body.dark-mode td,
+body.dark-mode tbody td {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+body.dark-mode tr:hover,
+body.dark-mode tr:nth-child(even):hover {
+  background-color: #334155 !important;
+}
+
+body.dark-mode tr:nth-child(even) {
+  background-color: #1e293b !important;
+}
+
+/* ========== FORM MODULES ========== */
+body.dark-mode .form-module,
+body.dark-mode .form-container,
+body.dark-mode .form-wrapper,
+body.dark-mode .form-panel,
+body.dark-mode .settings-form,
+body.dark-mode .edit-form {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+body.dark-mode .form-group,
+body.dark-mode .form-row,
+body.dark-mode .form-field {
+  background-color: transparent !important;
+  color: #f8fafc !important;
+}
+
+/* ========== NAVIGATION ========== */
+body.dark-mode nav,
+body.dark-mode .nav,
+body.dark-mode .navbar,
+body.dark-mode .top-nav,
+body.dark-mode .side-nav,
+body.dark-mode #side-menu,
+body.dark-mode .sidebar {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+body.dark-mode .nav-item,
+body.dark-mode .nav-link,
+body.dark-mode .menu-item,
+body.dark-mode .sidebar-item {
+  color: #cbd5e1 !important;
+}
+
+body.dark-mode .nav-item:hover,
+body.dark-mode .nav-link:hover,
+body.dark-mode .menu-item:hover {
+  background-color: #334155 !important;
+  color: #ffffff !important;
+}
+
+/* ========== BUTTONS & CONTROLS ========== */
+body.dark-mode button,
+body.dark-mode .btn,
+body.dark-mode .button,
+body.dark-mode .control,
+body.dark-mode .action-btn {
+  background-color: #334155 !important;
+  color: #f8fafc !important;
+  border-color: #475569 !important;
+}
+
+body.dark-mode button:hover,
+body.dark-mode .btn:hover {
+  background-color: #475569 !important;
+}
+
+body.dark-mode button.primary,
+body.dark-mode .btn-primary {
+  background-color: #3b82f6 !important;
+  color: white !important;
+  border-color: #2563eb !important;
+}
+
+/* ========== INPUTS & FORMS ========== */
 body.dark-mode input,
 body.dark-mode select,
-body.dark-mode textarea {
-  color: #f8fafc !important; /* bright text */
-  background-color: #1e293b !important; /* dark surface */
-  border: 1px solid #374151 !important;
-}
-
-body.dark-mode input::placeholder,
-body.dark-mode textarea::placeholder {
-  color: #cbd5e1 !important; /* softer gray for placeholder */
-}
-
-/* Labels and hints */
-body.dark-mode label,
-body.dark-mode .form-label,
-body.dark-mode .form-hint,
-body.dark-mode span,
-body.dark-mode div {
+body.dark-mode textarea,
+body.dark-mode .form-control,
+body.dark-mode .input-field {
+  background-color: #334155 !important;
   color: #f8fafc !important;
+  border: 1px solid #475569 !important;
 }
 
-/* Secondary info (unit labels, helper text) */
-body.dark-mode .form-hint,
-body.dark-mode #standard-price-unit-label {
-  color: #cbd5e1 !important;
+body.dark-mode input:focus,
+body.dark-mode select:focus,
+body.dark-mode textarea:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
 }
 
-/* Inputs and selects inside modals */
-body.dark-mode .popout-modal-content .form-input,
-body.dark-mode .popout-modal-content select,
-body.dark-mode .popout-modal-content textarea {
-  background-color: var(--dm-surface-light) !important;
-  color: var(--dm-text-primary) !important;
-  border: 1px solid var(--dm-border) !important;
-}
-
-/* Placeholders */
-body.dark-mode .popout-modal-content .form-input::placeholder,
-body.dark-mode .popout-modal-content textarea::placeholder {
-  color: var(--dm-text-secondary) !important;
-}
-
-/* Labels */
-body.dark-mode .popout-modal-content .form-label {
-  color: var(--dm-text-secondary) !important;
-}
-
- /* Force text boxes in modals to show text clearly */
-body.dark-mode input.form-input[type="text"],
-body.dark-mode input.form-input[type="number"],
-body.dark-mode input.form-input[type="date"],
-body.dark-mode select.form-input,
-body.dark-mode textarea.form-input {
-  background-color: #1e293b !important;   /* dark slate background */
-  color: #f8fafc !important;              /* bright text */
-  border: 1px solid #374151 !important;   /* subtle border */
-}
-
-/* Placeholder text */
-body.dark-mode input.form-input::placeholder,
-body.dark-mode textarea.form-input::placeholder {
-  color: #cbd5e1 !important;              /* softer gray placeholder */
-}
-
-    /* Modal header + title */
-body.dark-mode .popout-modal-header,
-body.dark-mode .popout-modal-title {
-  color: #f8fafc !important; /* bright white */
-}
-
-/* Close button */
-body.dark-mode .popout-modal-close {
-  color: #f8fafc !important;
-}
-
-/* Labels and field titles */
-body.dark-mode .popout-modal-content .form-label {
-  color: #f8fafc !important;
-  font-weight: 600;
-}
-
-/* Inline helper text, unit labels, secondary info */
-body.dark-mode .popout-modal-content .form-hint,
-body.dark-mode .popout-modal-content [id$="-unit-label"],
-body.dark-mode .popout-modal-content div[style*="color:#374151"],
-body.dark-mode .popout-modal-content div[style*="color:#0369a1"],
-body.dark-mode .popout-modal-content div[style*="color:#1e40af"],
-body.dark-mode .popout-modal-content span[style*="color:#374151"],
-body.dark-mode .popout-modal-content span[style*="color:#0369a1"],
-body.dark-mode .popout-modal-content span[style*="color:#1e40af"] {
-  color: #cbd5e1 !important; /* softer gray for secondary text */
-}
-
-/* Input text + placeholders */
-body.dark-mode .popout-modal-content input,
-body.dark-mode .popout-modal-content select,
-body.dark-mode .popout-modal-content textarea {
-  color: #f8fafc !important;
+/* ========== CARDS & PANELS ========== */
+body.dark-mode .card,
+body.dark-mode .glass-card,
+body.dark-mode .stat-card,
+body.dark-mode .info-card,
+body.dark-mode .dashboard-card {
   background-color: #1e293b !important;
-  border: 1px solid #374151 !important;
+  color: #f8fafc !important;
+  border: 1px solid #334155 !important;
 }
 
-body.dark-mode .popout-modal-content input::placeholder,
-body.dark-mode .popout-modal-content textarea::placeholder {
-  color: #cbd5e1 !important;
-}
-
-/* Light mode modals inherit light palette */
-body.light-mode .popout-modal-content {
-  --module-bg: var(--module-bg, #ffffff);
-  --card-bg: var(--card-bg, #ffffff);
-  --text-primary: #111827;   /* dark text */
-  --text-secondary: #374151; /* softer gray */
-  background: var(--module-bg) !important;
-  color: var(--text-primary) !important;
-}
-
-/* Dark mode modals inherit dark palette */
+/* ========== MODALS & POPUPS ========== */
+body.dark-mode .modal,
+body.dark-mode .popup,
+body.dark-mode .dialog,
+body.dark-mode .popout-modal,
 body.dark-mode .popout-modal-content {
-  --module-bg: var(--dm-background);
-  --card-bg: var(--dm-surface);
-  --text-primary: var(--dm-text-primary);
-  --text-secondary: var(--dm-text-secondary);
-  background: var(--module-bg) !important;
-  color: var(--text-primary) !important;
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border: 1px solid #334155 !important;
 }
 
-/* Inputs inside modals */
-body.light-mode .popout-modal-content .form-input,
-body.dark-mode .popout-modal-content .form-input,
-body.light-mode .popout-modal-content select,
-body.dark-mode .popout-modal-content select,
-body.light-mode .popout-modal-content textarea,
-body.dark-mode .popout-modal-content textarea {
-  background: var(--card-bg) !important;
-  color: var(--text-primary) !important;
-  border: 1px solid var(--dm-border, #d1d5db) !important;
+/* ========== UTILITY & MISC ========== */
+body.dark-mode .alert,
+body.dark-mode .notification,
+body.dark-mode .message,
+body.dark-mode .toast {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border: 1px solid #334155 !important;
 }
 
-body.light-mode .popout-modal-content .form-input::placeholder,
-body.dark-mode .popout-modal-content .form-input::placeholder,
-body.light-mode .popout-modal-content textarea::placeholder,
-body.dark-mode .popout-modal-content textarea::placeholder {
-  color: var(--text-secondary) !important;
+body.dark-mode .badge,
+body.dark-mode .tag,
+body.dark-mode .label {
+  background-color: #334155 !important;
+  color: #f8fafc !important;
 }
 
-body.light-mode {
-  --module-bg: #ffffff;
-  --card-bg: #ffffff;
-  --text-primary: #111827;
-  --text-secondary: #374151;
-  --dm-border: #e5e7eb;
+/* ========== SCROLLBARS ========== */
+body.dark-mode::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
 }
 
-body.dark-mode {
-  --module-bg: #1e293b;
-  --card-bg: #0f172a;
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --dm-border: #374151;
+body.dark-mode::-webkit-scrollbar-track {
+  background: #1e293b;
 }
 
+body.dark-mode::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 6px;
+}
+
+body.dark-mode::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* ========== FORCE OVERRIDE NUKES ========== */
+/* Use these as last resort if specific elements still show light mode */
+
+/* Nuke all div backgrounds */
+body.dark-mode div:not(.light-mode-exception):not([class*="light"]) {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+/* Nuke all section backgrounds */
+body.dark-mode section {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+/* Nuke all article backgrounds */
+body.dark-mode article {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+/* ========== DEBUG HELPER ========== */
+/* Add this temporarily to see what's not being styled */
+body.dark-mode *:not([style*="background-color"]):not(.light-mode) {
+  /* background-color: rgba(255, 0, 0, 0.1) !important; */
+  /* border: 1px dashed red !important; */
+}
         `;
         document.head.appendChild(style);
     },
