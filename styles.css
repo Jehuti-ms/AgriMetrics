@@ -879,7 +879,7 @@ body {
     animation: pulse 1.5s ease-in-out infinite;
 }
 
-/* ===== MAIN APP BUTTONS (Keep Separate) ===== */
+/* ============= MAIN APP BUTTONS (Keep Separate) ============= */
 /* These are for the main app, not auth forms */
 .btn {
     padding: 0.75rem 1.5rem;
@@ -945,7 +945,210 @@ body {
     background: rgba(0,0,0,0.1);
 }
 
-/* ===== TOP NAVIGATION ===== */
+/* ===== PROFILE LOGOUT BUTTON ===== */
+.logout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 100%;
+    max-width: 200px;
+    margin: 30px auto 0;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);
+}
+
+.logout-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s;
+}
+
+.logout-btn:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    transform: translateY(-2px);
+    box-shadow: 
+        0 8px 25px rgba(239, 68, 68, 0.3),
+        0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.logout-btn:hover::before {
+    left: 100%;
+}
+
+.logout-btn:active {
+    transform: translateY(0);
+}
+
+.logout-btn i {
+    font-size: 16px;
+    transition: transform 0.3s ease;
+}
+
+.logout-btn:hover i {
+    transform: translateX(2px);
+}
+
+/* Dark mode support for logout button */
+.dark-mode .logout-btn {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.dark-mode .logout-btn:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+}
+
+/* Profile section specific positioning */
+.profile-section-pwa .logout-btn {
+    margin-top: 40px;
+}
+
+/* Mobile responsive for logout button */
+@media (max-width: 768px) {
+    .logout-btn {
+        padding: 12px 20px;
+        font-size: 14px;
+        max-width: 180px;
+    }
+    
+    .logout-btn i {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .logout-btn {
+        padding: 10px 16px;
+        font-size: 13px;
+        max-width: 160px;
+        gap: 8px;
+    }
+    
+    .logout-btn i {
+        font-size: 13px;
+    }
+}
+
+/* Optional: Add a confirmation dialog style */
+.logout-confirmation {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10002;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.logout-confirmation.active {
+    display: flex;
+}
+
+.logout-modal {
+    background: var(--surface-color);
+    border-radius: 16px;
+    padding: 30px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease;
+}
+
+.logout-modal-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.logout-modal-icon {
+    font-size: 48px;
+    color: #ef4444;
+    margin-bottom: 15px;
+}
+
+.logout-modal-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.logout-modal-message {
+    color: var(--text-secondary);
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.logout-modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.logout-modal-cancel {
+    flex: 1;
+    padding: 12px;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.logout-modal-cancel:hover {
+    background: var(--background-color);
+}
+
+.logout-modal-confirm {
+    flex: 1;
+    padding: 12px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.logout-modal-confirm:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* =========== TOP NAVIGATION ========== */
 header {
     position: fixed !important;
     top: 0 !important;
