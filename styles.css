@@ -1562,4 +1562,746 @@ header {
     }
 }
 
+/* ===== 16. MODULE HEADERS - PWA STYLING ===== */
+/* Module Headers with PWA Styling */
+.module-header-pwa {
+    background: linear-gradient(135deg, var(--primary-500) 0%, var(--complementary-teal) 100%);
+    margin: -20px -20px 20px -20px;
+    padding: 25px 20px;
+    border-radius: 0 0 20px 20px;
+    color: white !important;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(34, 197, 94, 0.15);
+}
+
+.module-title-pwa {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    color: white !important;
+}
+
+.module-subtitle-pwa {
+    font-size: 14px;
+    opacity: 0.9;
+    font-weight: 500;
+    color: white !important;
+}
+
+/* PWA Stats Grid */
+.stats-grid-pwa {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.stat-card-pwa {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card-pwa::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary-500), var(--complementary-teal));
+}
+
+.stat-card-pwa:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon-pwa {
+    font-size: 28px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.stat-value-pwa {
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 2px;
+    color: var(--text-primary) !important;
+}
+
+.stat-label-pwa {
+    font-size: 13px;
+    color: var(--text-secondary) !important;
+    font-weight: 600;
+}
+
+/* PWA Quick Actions */
+.quick-grid-pwa {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    justify-items: center;
+}
+
+.quick-action-btn-pwa {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    padding: 20px 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    max-width: 150px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.quick-action-btn-pwa:hover {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    background: rgba(255, 255, 255, 1);
+}
+
+.quick-icon-pwa {
+    font-size: 28px;
+    transition: transform 0.3s ease;
+}
+
+.quick-action-btn-pwa:hover .quick-icon-pwa {
+    transform: scale(1.05);
+}
+
+.quick-title-pwa {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary) !important;
+    margin-bottom: 2px;
+}
+
+.quick-desc-pwa {
+    font-size: 11px;
+    color: var(--text-secondary) !important;
+    line-height: 1.3;
+}
+
+/* PWA Form Container */
+.form-container-pwa {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border-top: 3px solid var(--complementary-teal);
+}
+
+.form-title-pwa {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary) !important;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* PWA Transactions Section */
+.transactions-section-pwa {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border-top: 3px solid var(--complementary-sky);
+}
+
+.section-header-pwa {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-title-pwa {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary) !important;
+}
+
+/* PWA Transaction Items */
+.transactions-list-pwa {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.transaction-item-pwa {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.transaction-item-pwa:hover {
+    transform: translateX(4px);
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.transaction-info-pwa {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.transaction-icon-pwa {
+    font-size: 18px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--primary-500);
+}
+
+.transaction-details-pwa {
+    flex: 1;
+}
+
+.transaction-title-pwa {
+    font-weight: 600;
+    color: var(--text-primary) !important;
+    margin-bottom: 1px;
+    font-size: 14px;
+}
+
+.transaction-meta-pwa {
+    font-size: 11px;
+    color: var(--text-secondary) !important;
+    display: flex;
+    gap: 12px;
+}
+
+.transaction-amount-pwa {
+    font-weight: 700;
+    color: var(--text-primary) !important;
+    font-size: 16px;
+}
+
+.transaction-amount-pwa.income {
+    color: var(--success-500) !important;
+}
+
+.transaction-amount-pwa.expense {
+    color: var(--warning-500) !important;
+}
+
+/* PWA Buttons */
+.btn-primary-pwa {
+    background: linear-gradient(135deg, var(--primary-500), var(--complementary-teal));
+    color: white !important;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 12px rgba(20, 184, 166, 0.3);
+}
+
+.btn-primary-pwa:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(20, 184, 166, 0.4);
+}
+
+.btn-outline-pwa {
+    background: transparent;
+    border: 1.5px solid var(--complementary-amber);
+    color: var(--complementary-amber) !important;
+    padding: 14px 28px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-outline-pwa:hover {
+    background: var(--complementary-amber);
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);
+}
+
+/* ===== 17. DARK MODE FOR PWA COMPONENTS ===== */
+.dark-mode .stat-card-pwa,
+.dark-mode .quick-action-btn-pwa,
+.dark-mode .form-container-pwa,
+.dark-mode .transactions-section-pwa,
+.dark-mode .glass-card,
+.dark-mode .section-card-pwa {
+    background: rgba(30, 41, 59, 0.95) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border) !important;
+    color: var(--text-primary) !important;
+}
+
+.dark-mode .stat-card-pwa::before {
+    background: linear-gradient(90deg, var(--primary-500), var(--complementary-teal));
+}
+
+.dark-mode .stat-value-pwa,
+.dark-mode .stat-label-pwa,
+.dark-mode .quick-title-pwa,
+.dark-mode .quick-desc-pwa,
+.dark-mode .form-title-pwa,
+.dark-mode .section-title-pwa,
+.dark-mode .transaction-title-pwa {
+    color: var(--text-primary) !important;
+}
+
+.dark-mode .form-input-pwa,
+.dark-mode .form-select-pwa {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border-color: var(--border) !important;
+    color: var(--text-primary) !important;
+}
+
+.dark-mode .form-input-pwa:focus {
+    border-color: var(--complementary-teal) !important;
+    background: rgba(30, 41, 59, 0.9) !important;
+}
+
+.dark-mode .transaction-item-pwa,
+.dark-mode .inventory-item-pwa,
+.dark-mode .record-item-pwa {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border: 1px solid var(--border) !important;
+}
+
+.dark-mode .transaction-meta-pwa,
+.dark-mode .inventory-meta-pwa,
+.dark-mode .record-meta-pwa {
+    color: var(--text-secondary) !important;
+}
+
+/* ===== 18. SIDE MENU STYLES (CRITICAL FIX) ===== */
+.side-menu {
+    position: fixed !important;
+    top: 80px !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 280px !important;
+    background: white !important;
+    border-left: 1px solid #e9ecef;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    z-index: 9999 !important;
+    overflow-y: auto;
+    box-shadow: -5px 0 20px rgba(0,0,0,0.1);
+}
+
+.side-menu.active {
+    transform: translateX(0) !important;
+}
+
+/* Side Menu Header with Gradient */
+.side-menu-header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, var(--primary-500), var(--complementary-teal)) !important;
+    color: white !important;
+}
+
+.side-menu-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: white !important;
+}
+
+.side-menu-subtitle {
+    font-size: 12px;
+    opacity: 0.9;
+    color: white !important;
+}
+
+/* Side Menu Items */
+.side-menu-items {
+    padding: 16px 0;
+    background: white !important;
+}
+
+.side-menu-section {
+    margin-bottom: 24px;
+    background: white !important;
+}
+
+.side-menu-section-title {
+    padding: 0 20px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: white !important;
+}
+
+.side-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: none;
+    background: white !important;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+}
+
+.side-menu-item:hover {
+    background: rgba(59, 130, 246, 0.1) !important;
+    color: #3b82f6;
+}
+
+.side-menu-icon {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+}
+
+/* Overlay for side menu */
+.side-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+    display: none;
+}
+
+.side-menu-overlay.active {
+    display: block;
+}
+
+/* Dark mode for side menu */
+.dark-mode .side-menu {
+    background: var(--surface) !important;
+    border-left-color: var(--border);
+}
+
+.dark-mode .side-menu-header {
+    background: linear-gradient(135deg, var(--primary-500), var(--complementary-teal)) !important;
+}
+
+.dark-mode .side-menu-items {
+    background: var(--surface) !important;
+}
+
+.dark-mode .side-menu-section {
+    background: var(--surface) !important;
+}
+
+.dark-mode .side-menu-section-title {
+    background: var(--surface) !important;
+    color: var(--text-secondary);
+}
+
+.dark-mode .side-menu-item {
+    background: var(--surface) !important;
+    color: var(--text-primary);
+}
+
+.dark-mode .side-menu-item:hover {
+    background: rgba(59, 130, 246, 0.2) !important;
+    color: #3b82f6;
+}
+
+/* ===== 19. AUTH DARK MODE SPECIFIC FIXES ===== */
+.dark-mode #auth-container {
+    background: linear-gradient(135deg, #1e3a2a 0%, #1a3b3a 50%, #1a3658 100%);
+}
+
+.dark-mode .auth-forms {
+    background: rgba(30, 41, 59, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark-mode .auth-form-title {
+    background: linear-gradient(135deg, #4ade80, #2dd4bf);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.dark-mode .auth-form-description {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.dark-mode .form-options .remember-me label {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.dark-mode .forgot-password {
+    color: #4ade80 !important;
+}
+
+.dark-mode .form-switch {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.dark-mode .form-switch a {
+    color: #4ade80 !important;
+}
+
+.dark-mode .btn-social.google {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.dark-mode .btn-social.apple {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* ===== 20. RESPONSIVE FIXES FOR SIDE MENU ===== */
+@media (max-width: 768px) {
+    .side-menu {
+        top: 60px !important;
+        width: 85% !important;
+        max-width: 300px !important;
+    }
+    
+    .side-menu-header {
+        padding: 20px 16px 12px;
+    }
+    
+    .side-menu-title {
+        font-size: 16px;
+    }
+    
+    .side-menu-item {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+    
+    .side-menu-icon {
+        font-size: 16px;
+    }
+}
+
+/* ===== 21. MODULE CONTAINER STYLES ===== */
+.module-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: calc(100vh - 80px);
+    background: linear-gradient(135deg, #f8faf9 0%, #f0f7f4 100%);
+}
+
+.dark-mode .module-container {
+    background: var(--background) !important;
+}
+
+.dashboard-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: calc(100vh - 80px);
+    background: linear-gradient(135deg, #f8faf9 0%, #f0f7f4 100%);
+}
+
+.dark-mode .dashboard-container {
+    background: var(--background) !important;
+}
+
+.income-expenses-module {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: calc(100vh - 80px);
+    background: linear-gradient(135deg, #f8faf9 0%, #f0f7f4 100%);
+}
+
+.dark-mode .income-expenses-module {
+    background: var(--background) !important;
+}
+
+/* ===== 22. FIX FOR TOP NAVIGATION ===== */
+.top-nav {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 80px !important;
+    background: var(--primary-500) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 0 20px !important;
+    z-index: 1000 !important;
+}
+
+.dark-mode .top-nav {
+    background: var(--primary-600) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3) !important;
+}
+
+/* Hamburger menu styling */
+.hamburger-menu {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    background: none !important;
+    border: none !important;
+    padding: 8px 12px !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s !important;
+    font-size: 18px !important;
+    color: white !important;
+    position: relative !important;
+    z-index: 1001 !important;
+}
+
+.hamburger-menu:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* ===== 23. PWA FORM ELEMENTS ===== */
+.form-input-pwa, .form-select-pwa {
+    width: 100%;
+    padding: 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--text-primary) !important;
+    font-size: 14px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 500;
+}
+
+.dark-mode .form-input-pwa,
+.dark-mode .form-select-pwa {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: var(--border);
+    color: var(--text-primary);
+}
+
+.form-input-pwa:focus {
+    outline: none;
+    border-color: var(--complementary-teal);
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+    transform: translateY(-1px);
+}
+
+.dark-mode .form-input-pwa:focus {
+    border-color: var(--complementary-teal);
+    background: rgba(30, 41, 59, 0.9);
+}
+
+/* ===== 24. EMPTY STATES ===== */
+.empty-state-pwa {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary) !important;
+}
+
+.empty-icon-pwa {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+    color: var(--complementary-teal);
+}
+
+.empty-title-pwa {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-primary) !important;
+}
+
+.empty-desc-pwa {
+    font-size: 13px;
+    margin-bottom: 20px;
+    color: var(--text-secondary) !important;
+}
+
+/* ===== 25. ORDERS MODULE SPECIFIC ===== */
+.orders-module {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: calc(100vh - 80px);
+    background: linear-gradient(135deg, #f8faf9 0%, #f0f7f4 100%);
+}
+
+.dark-mode .orders-module {
+    background: var(--background) !important;
+}
+
+.orders-header-pwa {
+    background: linear-gradient(135deg, var(--primary-500) 0%, var(--complementary-teal) 100%);
+    margin: -20px -20px 20px -20px;
+    padding: 25px 20px;
+    border-radius: 0 0 20px 20px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(34, 197, 94, 0.15);
+}
+
+.orders-title-pwa {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    color: white;
+}
+
+.orders-subtitle-pwa {
+    font-size: 14px;
+    opacity: 0.9;
+    font-weight: 500;
+    color: white;
+}
+
+/* ===== END OF STYLESHEET ===== */
+
 /* ===== END OF STYLESHEET ===== */
