@@ -1060,6 +1060,77 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Add this to your main.js file
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait for splash animation to complete (2 seconds + 0.5s fade)
+    setTimeout(function() {
+        // Make auth container visible
+        document.getElementById('auth-container').style.display = 'flex';
+        
+        // Set up form switching
+        setupFormSwitching();
+    }, 2500); // 2 seconds splash + 0.5s fade animation
+});
+
+function setupFormSwitching() {
+    // Get all tabs and forms
+    const tabs = document.querySelectorAll('.auth-tab');
+    const forms = document.querySelectorAll('.auth-form');
+    const formLinks = document.querySelectorAll('[id^="show-"]');
+    
+    // Tab click handler
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const targetForm = this.getAttribute('data-form');
+            
+            // Update tabs
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Show corresponding form
+            forms.forEach(form => {
+                form.classList.remove('active');
+                if (form.id === targetForm) {
+                    form.classList.add('active');
+                }
+            });
+        });
+    });
+    
+    // Link click handler for show-signup, show-signin, etc.
+    formLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.id.replace('show-', '');
+            let targetForm = '';
+            
+            if (targetId === 'signup') targetForm = 'signup-form';
+            else if (targetId === 'signin') targetForm = 'signin-form';
+            else if (targetId === 'forgot-password') targetForm = 'forgot-password-form';
+            else if (targetId === 'signin-from-forgot') targetForm = 'signin-form';
+            
+            if (targetForm) {
+                // Update tabs
+                tabs.forEach(tab => {
+                    if (tab.getAttribute('data-form') === targetForm) {
+                        tab.classList.add('active');
+                    } else {
+                        tab.classList.remove('active');
+                    }
+                });
+                
+                // Show form
+                forms.forEach(form => {
+                    form.classList.remove('active');
+                    if (form.id === targetForm) {
+                        form.classList.add('active');
+                    }
+                });
+            }
+        });
+    });
+}
+
 // Reacts to Firebase auth state changes
 firebase.auth().onAuthStateChanged(user => {
   const dashboard = document.getElementById("dashboard-container");
