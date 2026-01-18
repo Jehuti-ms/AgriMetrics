@@ -1,4 +1,4 @@
-// modules/orders.js - COMPLETE VERSION WITH DATA BROADCASTER (CLEANED CSS)
+// modules/orders.js - COMPLETE VERSION WITH DATA BROADCASTER
 console.log('Loading orders module...');
 
 const OrdersModule = {
@@ -358,57 +358,57 @@ const OrdersModule = {
                 <!-- Quick Actions -->
                 <div class="quick-action-grid">
                     <button class="quick-action-btn" id="create-order-btn">
-                        <div class="quick-action-icon">➕</div>
-                        <span class="quick-action-title">New Order</span>
-                        <span class="quick-action-subtitle">Create new order</span>
+                        <div style="font-size: 32px;">➕</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">New Order</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Create new order</span>
                     </button>
                     <button class="quick-action-btn" id="manage-customers-btn">
-                        <div class="quick-action-icon">👥</div>
-                        <span class="quick-action-title">Customers</span>
-                        <span class="quick-action-subtitle">Manage customers</span>
+                        <div style="font-size: 32px;">👥</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Customers</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Manage customers</span>
                     </button>
                     <button class="quick-action-btn" id="view-orders-btn">
-                        <div class="quick-action-icon">📋</div>
-                        <span class="quick-action-title">All Orders</span>
-                        <span class="quick-action-subtitle">View all orders</span>
+                        <div style="font-size: 32px;">📋</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">All Orders</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View all orders</span>
                     </button>
                     <button class="quick-action-btn" id="add-customer-btn">
-                        <div class="quick-action-icon">👤</div>
-                        <span class="quick-action-title">Add Customer</span>
-                        <span class="quick-action-subtitle">Add new customer</span>
+                        <div style="font-size: 32px;">👤</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Customer</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Add new customer</span>
                     </button>
                 </div>
 
                 <!-- Order Stats -->
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-icon">📦</div>
-                        <div class="stat-value">${this.orders.length}</div>
-                        <div class="stat-label">Total Orders</div>
+                        <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.orders.length}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Orders</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon">💰</div>
-                        <div class="stat-value">${this.formatCurrency(this.getTotalRevenue())}</div>
-                        <div class="stat-label">Total Revenue</div>
+                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.formatCurrency(this.getTotalRevenue())}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Revenue</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon">👥</div>
-                        <div class="stat-value">${this.customers.length}</div>
-                        <div class="stat-label">Customers</div>
+                        <div style="font-size: 24px; margin-bottom: 8px;">👥</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.customers.length}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Customers</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon">⏳</div>
-                        <div class="stat-value">${stats.pendingOrders}</div>
-                        <div class="stat-label">Pending</div>
+                        <div style="font-size: 24px; margin-bottom: 8px;">⏳</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.pendingOrders}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Pending</div>
                     </div>
                 </div>
 
                 <!-- Create Order Form -->
                 <div id="order-form-container" class="hidden">
-                    <div class="glass-card order-form-card">
-                        <h3>Create New Order</h3>
+                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                        <h3 style="color: var(--text-primary); margin-bottom: 20px;">Create New Order</h3>
                         <form id="order-form">
-                            <div class="form-row">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                                 <div>
                                     <label class="form-label">Customer</label>
                                     <select class="form-input" id="order-customer" required>
@@ -424,10 +424,10 @@ const OrdersModule = {
                                 </div>
                             </div>
                             
-                            <div class="form-section">
+                            <div style="margin-bottom: 16px;">
                                 <label class="form-label">Order Items</label>
                                 <div id="order-items">
-                                    <div class="order-item-row">
+                                    <div class="order-item" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; margin-bottom: 12px;">
                                         <select class="form-input product-select" required>
                                             <option value="">Select Product</option>
                                             ${this.products.map(product => `
@@ -436,13 +436,13 @@ const OrdersModule = {
                                         </select>
                                         <input type="number" class="form-input quantity-input" placeholder="Qty" min="1" value="1" required>
                                         <input type="number" class="form-input price-input" placeholder="Price" step="0.01" min="0" required>
-                                        <button type="button" class="btn-outline remove-item-btn">✕</button>
+                                        <button type="button" class="btn-outline remove-item" style="padding: 8px 12px;">✕</button>
                                     </div>
                                 </div>
-                                <button type="button" class="btn-outline" id="add-item-btn">+ Add Item</button>
+                                <button type="button" class="btn-outline" id="add-item-btn" style="margin-top: 8px;">+ Add Item</button>
                             </div>
                             
-                            <div class="form-section">
+                            <div style="margin-bottom: 16px;">
                                 <label class="form-label">Status</label>
                                 <select class="form-input" id="order-status">
                                     <option value="pending">Pending</option>
@@ -453,17 +453,17 @@ const OrdersModule = {
                                 </select>
                             </div>
                             
-                            <div class="form-section">
+                            <div style="margin-bottom: 20px;">
                                 <label class="form-label">Total Amount</label>
-                                <input type="number" class="form-input total-input" id="order-total" step="0.01" min="0" readonly>
+                                <input type="number" class="form-input" id="order-total" step="0.01" min="0" readonly style="font-weight: bold; font-size: 16px;">
                             </div>
                             
-                            <div class="form-section">
+                            <div style="margin-bottom: 20px;">
                                 <label class="form-label">Notes</label>
                                 <textarea class="form-input" id="order-notes" rows="2" placeholder="Order notes, special instructions..."></textarea>
                             </div>
                             
-                            <div class="form-actions">
+                            <div style="display: flex; gap: 12px;">
                                 <button type="submit" class="btn-primary">Create Order</button>
                                 <button type="button" class="btn-outline" id="cancel-order-form">Cancel</button>
                             </div>
@@ -473,10 +473,10 @@ const OrdersModule = {
 
                 <!-- Add Customer Form -->
                 <div id="customer-form-container" class="hidden">
-                    <div class="glass-card customer-form-card">
-                        <h3>Add New Customer</h3>
+                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                        <h3 style="color: var(--text-primary); margin-bottom: 20px;">Add New Customer</h3>
                         <form id="customer-form">
-                            <div class="form-row">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                                 <div>
                                     <label class="form-label">Customer Name</label>
                                     <input type="text" class="form-input" id="customer-name" required>
@@ -486,15 +486,15 @@ const OrdersModule = {
                                     <input type="tel" class="form-input" id="customer-phone" required>
                                 </div>
                             </div>
-                            <div class="form-section">
+                            <div style="margin-bottom: 16px;">
                                 <label class="form-label">Email Address</label>
                                 <input type="email" class="form-input" id="customer-email">
                             </div>
-                            <div class="form-section">
+                            <div style="margin-bottom: 20px;">
                                 <label class="form-label">Address</label>
                                 <textarea class="form-input" id="customer-address" rows="2" placeholder="Full address..."></textarea>
                             </div>
-                            <div class="form-actions">
+                            <div style="display: flex; gap: 12px;">
                                 <button type="submit" class="btn-primary">Add Customer</button>
                                 <button type="button" class="btn-outline" id="cancel-customer-form">Cancel</button>
                             </div>
@@ -503,10 +503,10 @@ const OrdersModule = {
                 </div>
 
                 <!-- Recent Orders -->
-                <div class="glass-card recent-orders-card">
-                    <div class="card-header">
-                        <h3>Recent Orders</h3>
-                        <div class="card-actions">
+                <div class="glass-card" style="padding: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: var(--text-primary); font-size: 20px;">Recent Orders</h3>
+                        <div style="display: flex; gap: 12px;">
                             <button class="btn-outline" id="export-orders-btn">Export</button>
                             <button class="btn-primary" id="show-order-form">New Order</button>
                         </div>
@@ -517,9 +517,9 @@ const OrdersModule = {
                 </div>
 
                 <!-- Customers List -->
-                <div class="glass-card customers-card" id="customers-section">
-                    <div class="card-header">
-                        <h3>Customers</h3>
+                <div class="glass-card" id="customers-section" style="padding: 24px; margin-top: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: var(--text-primary); font-size: 20px;">Customers</h3>
                         <button class="btn-primary" id="show-customer-form">Add Customer</button>
                     </div>
                     <div id="customers-list">
@@ -552,41 +552,41 @@ const OrdersModule = {
     renderOrdersList() {
         if (this.orders.length === 0) {
             return `
-                <div class="empty-state">
-                    <div class="empty-state-icon">📋</div>
-                    <div class="empty-state-title">No orders yet</div>
-                    <div class="empty-state-subtitle">Create your first order to get started</div>
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No orders yet</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Create your first order to get started</div>
                 </div>
             `;
         }
 
         return `
-            <div class="orders-list">
+            <div style="display: flex; flex-direction: column; gap: 12px;">
                 ${this.orders.map(order => {
                     const customer = this.customers.find(c => c.id === order.customerId);
                     return `
-                        <div class="order-item-card">
-                            <div class="order-item-content">
-                                <div class="order-title">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: var(--text-primary);">
                                     Order #${order.id} - ${customer?.name || 'Unknown Customer'}
                                 </div>
-                                <div class="order-subtitle">
+                                <div style="font-size: 14px; color: var(--text-secondary);">
                                     ${order.date} • ${order.items.length} item${order.items.length > 1 ? 's' : ''}
                                 </div>
-                                ${order.notes ? `<div class="order-notes">${order.notes}</div>` : ''}
+                                ${order.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${order.notes}</div>` : ''}
                             </div>
-                            <div class="order-item-actions">
-                                <div class="order-details">
-                                    <div class="order-amount">${this.formatCurrency(order.totalAmount)}</div>
-                                    <div class="order-status-badge" style="background: ${this.getStatusColor(order.status)}20; color: ${this.getStatusColor(order.status)};">
+                            <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
+                                <div>
+                                    <div style="font-weight: bold; color: var(--text-primary);">${this.formatCurrency(order.totalAmount)}</div>
+                                    <div style="font-size: 12px; padding: 2px 8px; border-radius: 8px; background: ${this.getStatusColor(order.status)}20; color: ${this.getStatusColor(order.status)}; margin-top: 4px;">
                                         ${this.formatStatus(order.status)}
                                     </div>
                                 </div>
-                                <div class="order-buttons">
-                                    <button class="btn-icon edit-order" data-id="${order.id}" title="Edit Order">
+                                <div style="display: flex; gap: 4px;">
+                                    <button class="btn-icon edit-order" data-id="${order.id}" style="background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; color: var(--text-secondary);" title="Edit Order">
                                         ✏️
                                     </button>
-                                    <button class="btn-icon delete-order" data-id="${order.id}" title="Delete Order">
+                                    <button class="btn-icon delete-order" data-id="${order.id}" style="background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; color: var(--text-secondary);" title="Delete Order">
                                         🗑️
                                     </button>
                                 </div>
@@ -601,34 +601,34 @@ const OrdersModule = {
     renderCustomersList() {
         if (this.customers.length === 0) {
             return `
-                <div class="empty-state">
-                    <div class="empty-state-icon">👥</div>
-                    <div class="empty-state-title">No customers</div>
-                    <div class="empty-state-subtitle">Add your first customer</div>
+                <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">👥</div>
+                    <div style="font-size: 14px;">No customers</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">Add your first customer</div>
                 </div>
             `;
         }
 
         return `
-            <div class="customers-list">
+            <div style="display: flex; flex-direction: column; gap: 12px;">
                 ${this.customers.map(customer => `
-                    <div class="customer-item-card">
-                        <div class="customer-item-content">
-                            <div class="customer-title">${customer.name}</div>
-                            <div class="customer-subtitle">${customer.contact}</div>
-                            ${customer.email ? `<div class="customer-email">${customer.email}</div>` : ''}
-                            ${customer.address ? `<div class="customer-address">${customer.address}</div>` : ''}
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: var(--text-primary);">${customer.name}</div>
+                            <div style="font-size: 14px; color: var(--text-secondary);">${customer.contact}</div>
+                            ${customer.email ? `<div style="font-size: 12px; color: var(--text-secondary);">${customer.email}</div>` : ''}
+                            ${customer.address ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${customer.address}</div>` : ''}
                         </div>
-                        <div class="customer-item-actions">
-                            <div class="customer-details">
-                                <div class="customer-order-count">
+                        <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
+                            <div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">
                                     ${this.getCustomerOrderCount(customer.id)} orders
                                 </div>
-                                <div class="customer-total">
+                                <div style="font-size: 12px; color: var(--text-secondary);">
                                     ${this.formatCurrency(this.getCustomerTotal(customer.id))} total
                                 </div>
                             </div>
-                            <div class="customer-buttons">
+                            <div style="display: flex; gap: 4px;">
                                 <button class="btn-icon edit-customer" data-action="edit-customer" data-id="${customer.id}" title="Edit Customer">
                                     ✏️
                                 </button>
@@ -780,22 +780,24 @@ const OrdersModule = {
     addOrderItem() {
         const itemsContainer = document.getElementById('order-items');
         const newItem = document.createElement('div');
-        newItem.className = 'order-item-row';
+        newItem.className = 'order-item';
         newItem.innerHTML = `
-            <select class="form-input product-select" required>
-                <option value="">Select Product</option>
-                ${this.products.map(product => `
-                    <option value="${product.id}" data-price="${product.price}">${product.name} - ${this.formatCurrency(product.price)}</option>
-                `).join('')}
-            </select>
-            <input type="number" class="form-input quantity-input" placeholder="Qty" min="1" value="1" required>
-            <input type="number" class="form-input price-input" placeholder="Price" step="0.01" min="0" required>
-            <button type="button" class="btn-outline remove-item-btn">✕</button>
+            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; margin-bottom: 12px;">
+                <select class="form-input product-select" required>
+                    <option value="">Select Product</option>
+                    ${this.products.map(product => `
+                        <option value="${product.id}" data-price="${product.price}">${product.name} - ${this.formatCurrency(product.price)}</option>
+                    `).join('')}
+                </select>
+                <input type="number" class="form-input quantity-input" placeholder="Qty" min="1" value="1" required>
+                <input type="number" class="form-input price-input" placeholder="Price" step="0.01" min="0" required>
+                <button type="button" class="btn-outline remove-item" style="padding: 8px 12px;">✕</button>
+            </div>
         `;
         itemsContainer.appendChild(newItem);
         
         // Add event listeners to new item
-        const removeBtn = newItem.querySelector('.remove-item-btn');
+        const removeBtn = newItem.querySelector('.remove-item');
         const quantityInput = newItem.querySelector('.quantity-input');
         const priceInput = newItem.querySelector('.price-input');
         const productSelect = newItem.querySelector('.product-select');
@@ -829,7 +831,7 @@ const OrdersModule = {
             select.addEventListener('change', (e) => {
                 const selectedOption = e.target.options[e.target.selectedIndex];
                 const price = selectedOption.dataset.price;
-                const priceInput = e.target.closest('.order-item-row').querySelector('.price-input');
+                const priceInput = e.target.closest('.order-item').querySelector('.price-input');
                 if (price && priceInput.value === '') {
                     priceInput.value = price;
                     this.calculateTotal();
@@ -838,9 +840,9 @@ const OrdersModule = {
         });
         
         // Add event listeners for remove buttons
-        document.querySelectorAll('.remove-item-btn').forEach(button => {
+        document.querySelectorAll('.remove-item').forEach(button => {
             button.addEventListener('click', (e) => {
-                e.target.closest('.order-item-row').remove();
+                e.target.closest('.order-item').remove();
                 this.calculateTotal();
             });
         });
@@ -848,7 +850,7 @@ const OrdersModule = {
 
     calculateTotal() {
         let total = 0;
-        document.querySelectorAll('.order-item-row').forEach(item => {
+        document.querySelectorAll('.order-item').forEach(item => {
             const quantity = parseFloat(item.querySelector('.quantity-input').value) || 0;
             const price = parseFloat(item.querySelector('.price-input').value) || 0;
             total += quantity * price;
@@ -861,35 +863,35 @@ const OrdersModule = {
         }
     },
 
-    setupActionHandlers() {
-        // Use event delegation for all action buttons
-        document.addEventListener('click', (e) => {
-            const button = e.target.closest('[data-action]');
-            if (!button) return;
-            
-            const action = button.getAttribute('data-action');
-            const id = parseInt(button.getAttribute('data-id'));
-            
-            switch(action) {
-                case 'delete-order':
-                    e.preventDefault();
-                    this.deleteOrder(id);
-                    break;
-                case 'edit-order':
-                    e.preventDefault();
-                    this.editOrder(id);
-                    break;
-                case 'delete-customer':
-                    e.preventDefault();
-                    this.deleteCustomer(id);
-                    break;
-                case 'edit-customer':
-                    e.preventDefault();
-                    this.editCustomer(id);
-                    break;
-            }
-        });
-    },
+setupActionHandlers() {
+    // Use event delegation for all action buttons
+    document.addEventListener('click', (e) => {
+        const button = e.target.closest('[data-action]');
+        if (!button) return;
+        
+        const action = button.getAttribute('data-action');
+        const id = parseInt(button.getAttribute('data-id'));
+        
+        switch(action) {
+            case 'delete-order':
+                e.preventDefault();
+                this.deleteOrder(id);
+                break;
+            case 'edit-order':
+                e.preventDefault();
+                this.editOrder(id);
+                break;
+            case 'delete-customer':
+                e.preventDefault();
+                this.deleteCustomer(id);
+                break;
+            case 'edit-customer':
+                e.preventDefault();
+                this.editCustomer(id);
+                break;
+        }
+    });
+},
 
     setupHoverEffects() {
         const buttons = document.querySelectorAll('.quick-action-btn');
@@ -914,7 +916,7 @@ const OrdersModule = {
         
         // Collect order items
         const items = [];
-        document.querySelectorAll('.order-item-row').forEach(item => {
+        document.querySelectorAll('.order-item').forEach(item => {
             const productSelect = item.querySelector('.product-select');
             const quantityInput = item.querySelector('.quantity-input');
             const priceInput = item.querySelector('.price-input');
@@ -1139,24 +1141,26 @@ if (window.FarmModules) {
             // Add order items
             order.items.forEach((item) => {
                 const newItem = document.createElement('div');
-                newItem.className = 'order-item-row';
+                newItem.className = 'order-item';
                 newItem.innerHTML = `
-                    <select class="form-input product-select" required>
-                        <option value="">Select Product</option>
-                        ${this.products.map(product => `
-                            <option value="${product.id}" data-price="${product.price}" ${product.id === item.productId ? 'selected' : ''}>
-                                ${product.name} - ${this.formatCurrency(product.price)}
-                            </option>
-                        `).join('')}
-                    </select>
-                    <input type="number" class="form-input quantity-input" placeholder="Qty" min="1" value="${item.quantity}" required>
-                    <input type="number" class="form-input price-input" placeholder="Price" step="0.01" min="0" value="${item.price}" required>
-                    <button type="button" class="btn-outline remove-item-btn">✕</button>
+                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; margin-bottom: 12px;">
+                        <select class="form-input product-select" required>
+                            <option value="">Select Product</option>
+                            ${this.products.map(product => `
+                                <option value="${product.id}" data-price="${product.price}" ${product.id === item.productId ? 'selected' : ''}>
+                                    ${product.name} - ${this.formatCurrency(product.price)}
+                                </option>
+                            `).join('')}
+                        </select>
+                        <input type="number" class="form-input quantity-input" placeholder="Qty" min="1" value="${item.quantity}" required>
+                        <input type="number" class="form-input price-input" placeholder="Price" step="0.01" min="0" value="${item.price}" required>
+                        <button type="button" class="btn-outline remove-item" style="padding: 8px 12px;">✕</button>
+                    </div>
                 `;
                 itemsContainer.appendChild(newItem);
                 
                 // Add event listeners
-                const removeBtn = newItem.querySelector('.remove-item-btn');
+                const removeBtn = newItem.querySelector('.remove-item');
                 const quantityInput = newItem.querySelector('.quantity-input');
                 const priceInput = newItem.querySelector('.price-input');
                 const productSelect = newItem.querySelector('.product-select');
@@ -1233,7 +1237,7 @@ if (window.FarmModules) {
         
         // Collect items
         const items = [];
-        document.querySelectorAll('.order-item-row').forEach(item => {
+        document.querySelectorAll('.order-item').forEach(item => {
             const productSelect = item.querySelector('.product-select');
             const quantityInput = item.querySelector('.quantity-input');
             const priceInput = item.querySelector('.price-input');
@@ -1304,7 +1308,7 @@ if (window.FarmModules) {
                 const itemsContainer = document.getElementById('order-items');
                 if (itemsContainer) {
                     itemsContainer.innerHTML = `
-                        <div class="order-item-row">
+                        <div class="order-item" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; margin-bottom: 12px;">
                             <select class="form-input product-select" required>
                                 <option value="">Select Product</option>
                                 ${this.products.map(product => `
@@ -1313,7 +1317,7 @@ if (window.FarmModules) {
                             </select>
                             <input type="number" class="form-input quantity-input" placeholder="Qty" min="1" value="1" required>
                             <input type="number" class="form-input price-input" placeholder="Price" step="0.01" min="0" required>
-                            <button type="button" class="btn-outline remove-item-btn">✕</button>
+                            <button type="button" class="btn-outline remove-item" style="padding: 8px 12px;">✕</button>
                         </div>
                     `;
                     this.setupTotalCalculation();
@@ -1504,3 +1508,4 @@ if (window.FarmModules) {
     console.log('✅ Complete orders & customers edit fix loaded');
     
 })();
+
