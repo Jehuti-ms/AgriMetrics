@@ -117,8 +117,714 @@ body {
     flex-direction: column !important;
 }
 
-/* ===== AUTH CONTAINER (Already Fixed) ===== */
-/* Your existing auth styles are fine, keeping them as is */
+/* ===== SPLASH SCREEN ===== */
+#splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #22c55e 0%, #14b8a6 50%, #0ea5e9 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10002;
+    animation: fadeOut 0.5s ease 2s forwards;
+}
+
+.splash-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    text-align: center;
+    padding: 20px;
+}
+
+.splash-logo {
+    width: 120px;
+    height: 120px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.splash-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.splash-title {
+    font-size: 36px;
+    font-weight: 800;
+    color: white;
+    line-height: 1.1;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    letter-spacing: -0.5px;
+}
+
+.splash-subtitle {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    max-width: 300px;
+    line-height: 1.4;
+}
+
+.splash-loader {
+    width: 60px;
+    height: 60px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s linear infinite;
+    margin-top: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1; }
+    100% { 
+        opacity: 0; 
+        visibility: hidden;
+        z-index: -1;
+    }
+}
+
+/* ===== AUTH CONTAINER FIXES ===== */
+#auth-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #22c55e 0%, #14b8a6 50%, #0ea5e9 100%);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Animated background pattern */
+#auth-container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: 
+        radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px),
+        radial-gradient(circle, rgba(255,255,255,0.05) 2px, transparent 2px);
+    background-size: 60px 60px, 120px 120px;
+    animation: floatPattern 40s linear infinite;
+    z-index: 1;
+}
+
+/* Brand Header - FIXED POSITIONING */
+.auth-brand-header {
+    position: absolute;
+    top: 30px;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    z-index: 10;
+    text-align: center;
+    padding: 0 20px;
+}
+
+.auth-brand-logo {
+    width: 70px;
+    height: 70px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    margin-bottom: 8px;
+    padding: 15px;
+}
+
+.auth-brand-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.auth-brand-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.auth-brand-title {
+    font-size: 32px;
+    font-weight: 800;
+    color: white;
+    line-height: 1.1;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    letter-spacing: -0.5px;
+}
+
+.auth-brand-subtitle {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    max-width: 300px;
+    line-height: 1.4;
+}
+
+/* Main Forms Container - ADJUSTED MARGIN */
+.auth-main-container {
+    position: relative;
+    z-index: 20;
+    width: 100%;
+    max-width: 440px;
+    margin: 140px auto 60px; /* Increased top margin to avoid overlap with brand header */
+    animation: slideUpFade 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Auth Forms - Ensure it doesn't overlap */
+.auth-forms {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    padding: 2.5rem;
+    border-radius: 24px;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.15),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Decorative top border */
+.auth-forms::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, 
+        #22c55e 0%, 
+        #14b8a6 25%, 
+        #0ea5e9 50%, 
+        #a855f7 75%, 
+        #22c55e 100%);
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+}
+
+/* Social Login Section - CENTERED FIX */
+.social-login-section {
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.social-login-label {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 0 20px;
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 1;
+    white-space: nowrap;
+}
+
+/* Social Buttons Grid - CENTERED */
+.social-buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 1rem;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Footer Message - FIXED POSITIONING */
+.auth-footer {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+    z-index: 10;
+    padding: 0 20px;
+}
+
+/* ===== FORGOT PASSWORD FORM ===== */
+#forgot-password-form {
+    display: none;
+}
+
+#forgot-password-form.active {
+    display: block;
+}
+
+.auth-form-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+    background: none;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.auth-form-back:hover {
+    background: rgba(34, 197, 94, 0.1);
+    transform: translateX(-4px);
+}
+
+.auth-form-back i {
+    font-size: 18px;
+}
+
+.forgot-password-instructions {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+    padding: 0 10px;
+}
+
+/* Reset Password Form Specific */
+.reset-success {
+    text-align: center;
+    padding: 20px;
+}
+
+.reset-success-icon {
+    font-size: 48px;
+    color: var(--success-color);
+    margin-bottom: 16px;
+}
+
+.reset-success h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.reset-success p {
+    color: var(--text-secondary);
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+/* ===== FORM SWITCH - IMPROVED ===== */
+.form-switch {
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    color: #666;
+    font-size: 15px;
+    width: 100%;
+}
+
+.form-switch-content {
+    display: inline-block;
+}
+
+.form-switch a {
+    color: #22c55e;
+    font-weight: 600;
+    text-decoration: none;
+    margin-left: 6px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    display: inline-block;
+}
+
+.form-switch a:hover {
+    background: rgba(34, 197, 94, 0.1);
+    text-decoration: underline;
+}
+
+/* ===== RESPONSIVE FIXES ===== */
+@media (max-width: 768px) {
+    /* Splash Screen Mobile */
+    .splash-logo {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .splash-title {
+        font-size: 28px;
+    }
+    
+    .splash-subtitle {
+        font-size: 16px;
+    }
+    
+    .splash-loader {
+        width: 50px;
+        height: 50px;
+    }
+    
+    /* Auth Mobile */
+    .auth-brand-header {
+        top: 20px;
+    }
+    
+    .auth-brand-logo {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .auth-brand-title {
+        font-size: 28px;
+    }
+    
+    .auth-brand-subtitle {
+        font-size: 14px;
+    }
+    
+    .auth-main-container {
+        margin-top: 120px; /* Adjusted for mobile */
+        margin-bottom: 40px;
+        padding: 0 16px;
+    }
+    
+    .auth-forms {
+        padding: 2rem;
+    }
+    
+    .social-buttons-grid {
+        grid-template-columns: 1fr;
+        max-width: 300px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .auth-footer {
+        bottom: 15px;
+        font-size: 13px;
+        padding: 0 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Splash Screen Small Mobile */
+    .splash-logo {
+        width: 80px;
+        height: 80px;
+        padding: 15px;
+    }
+    
+    .splash-title {
+        font-size: 24px;
+    }
+    
+    .splash-subtitle {
+        font-size: 14px;
+        max-width: 250px;
+    }
+    
+    .splash-loader {
+        width: 40px;
+        height: 40px;
+    }
+    
+    /* Auth Small Mobile */
+    .auth-brand-header {
+        top: 15px;
+    }
+    
+    .auth-brand-logo {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .auth-brand-title {
+        font-size: 24px;
+    }
+    
+    .auth-brand-subtitle {
+        font-size: 13px;
+        max-width: 250px;
+    }
+    
+    .auth-main-container {
+        margin-top: 100px;
+        margin-bottom: 30px;
+        padding: 0 12px;
+    }
+    
+    .auth-forms {
+        padding: 1.5rem;
+    }
+    
+    .auth-form-title {
+        font-size: 24px;
+    }
+    
+    .auth-form-description {
+        font-size: 14px;
+    }
+    
+    .form-options {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    
+    .social-login-label {
+        font-size: 13px;
+        padding: 0 15px;
+    }
+    
+    .auth-footer {
+        bottom: 10px;
+        font-size: 12px;
+    }
+}
+
+@media (max-height: 700px) {
+    /* For shorter screens */
+    .auth-brand-header {
+        top: 15px;
+    }
+    
+    .auth-brand-logo {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .auth-brand-title {
+        font-size: 24px;
+    }
+    
+    .auth-brand-subtitle {
+        font-size: 13px;
+    }
+    
+    .auth-main-container {
+        margin-top: 100px;
+        margin-bottom: 40px;
+    }
+    
+    .auth-forms {
+        padding: 1.5rem;
+    }
+    
+    .auth-form-title {
+        font-size: 24px;
+    }
+    
+    .auth-footer {
+        bottom: 10px;
+        font-size: 12px;
+    }
+}
+
+/* ===== HIDE AUTH FORMS DURING SPLASH ===== */
+body.splash-active #auth-container {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+body.splash-active #app-container {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+body:not(.splash-active) #splash-screen {
+    display: none;
+}
+
+/* ===== ENSURE PROPER STACKING ===== */
+#splash-screen {
+    z-index: 10002 !important;
+}
+
+#auth-container {
+    z-index: 10001 !important;
+}
+
+#app-container {
+    z-index: 10000 !important;
+}
+
+/* ===== LOADING STATES ===== */
+.loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s linear infinite;
+}
+
+.auth-submit-btn.loading span {
+    visibility: hidden;
+}
+
+.auth-submit-btn.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s linear infinite;
+}
+
+/* ===== FORM VALIDATION STYLES ===== */
+.form-group.error input {
+    border-color: var(--error-color) !important;
+    background: rgba(239, 68, 68, 0.05) !important;
+}
+
+.form-group.success input {
+    border-color: var(--success-color) !important;
+    background: rgba(34, 197, 94, 0.05) !important;
+}
+
+.form-group .error-message {
+    color: var(--error-color);
+    font-size: 12px;
+    margin-top: 4px;
+    display: none;
+}
+
+.form-group.error .error-message {
+    display: block;
+}
+
+.form-group .success-message {
+    color: var(--success-color);
+    font-size: 12px;
+    margin-top: 4px;
+    display: none;
+}
+
+.form-group.success .success-message {
+    display: block;
+}
+
+/* ===== FORGOT PASSWORD SPECIFIC ===== */
+#forgot-password-form .auth-form-title {
+    margin-top: 0;
+}
+
+#forgot-password-form .auth-form-description {
+    margin-bottom: 1.5rem;
+}
+
+#forgot-password-form .auth-submit-btn {
+    margin-top: 1.5rem;
+}
+
+/* ===== EMAIL SENT CONFIRMATION ===== */
+.email-sent-confirmation {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.email-sent-icon {
+    font-size: 64px;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+}
+
+.email-sent-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+}
+
+.email-sent-message {
+    color: var(--text-secondary);
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.email-sent-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.email-sent-actions .btn {
+    min-width: 120px;
+}
+
+/* Dark Mode Adjustments */
+.dark-mode .email-sent-confirmation {
+    color: var(--dm-text-primary);
+}
+
+.dark-mode .email-sent-message {
+    color: var(--dm-text-secondary);
+}
 
 /* ===== MAIN APP BUTTONS ===== */
 .btn {
