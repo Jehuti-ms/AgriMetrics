@@ -67,112 +67,112 @@ const FeedRecordModule = {
         ];
     },
 
-    renderModule() {
-        if (!this.element) return;
+  renderModule() {
+    if (!this.element) return;
 
-        const stats = this.calculateStats();
+    const stats = this.calculateStats();
 
-        this.element.innerHTML = `
-            <div class="module-container">
-                <div class="module-header">
-                    <h1 class="module-title">Feed Records</h1>
-                    <p class="module-subtitle">Track feed usage and inventory</p>
+    this.element.innerHTML = `
+        <div class="module-container feed-record-module">
+            <div class="module-header">
+                <h1 class="module-title">Feed Records</h1>
+                <p class="module-subtitle">Track feed usage and inventory</p>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-action-grid">
+                <button class="quick-action-btn" id="record-feed-btn">
+                    <div class="action-icon">📝</div>
+                    <span class="action-title">Record Feed</span>
+                    <span class="action-desc">Log feed usage</span>
+                </button>
+                <button class="quick-action-btn" id="add-stock-btn">
+                    <div class="action-icon">📦</div>
+                    <span class="action-title">Add Stock</span>
+                    <span class="action-desc">Add feed to inventory</span>
+                </button>
+                <button class="quick-action-btn" id="adjust-birds-btn">
+                    <div class="action-icon">🐔</div>
+                    <span class="action-title">Adjust Birds</span>
+                    <span class="action-desc">Update bird count</span>
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">🌾</div>
+                    <div class="stat-value">${stats.totalStock} kg</div>
+                    <div class="stat-label">Current Stock</div>
                 </div>
-
-                <!-- Quick Actions -->
-                <div class="quick-action-grid">
-                    <button class="quick-action-btn" id="record-feed-btn">
-                        <div style="font-size: 32px;">📝</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Record Feed</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Log feed usage</span>
-                    </button>
-                    <button class="quick-action-btn" id="add-stock-btn">
-                        <div style="font-size: 32px;">📦</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Stock</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Add feed to inventory</span>
-                    </button>
-                    <button class="quick-action-btn" id="adjust-birds-btn">
-                        <div style="font-size: 32px;">🐔</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Adjust Birds</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Update bird count</span>
-                    </button>
+                <div class="stat-card">
+                    <div class="stat-icon">🐔</div>
+                    <div class="stat-value">${this.birdsStock}</div>
+                    <div class="stat-label">Birds to Feed</div>
                 </div>
-
-                <!-- Stats -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">🌾</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.totalStock} kg</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Current Stock</div>
-                    </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">🐔</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.birdsStock}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Birds to Feed</div>
-                    </div>
-                    <div class="stat-card">
-                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.formatCurrency(stats.totalInventoryValue)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Inventory Value</div>
-                    </div>
-                </div>
-
-                <!-- Inventory Overview -->
-                <div class="glass-card" style="padding: 24px; margin: 24px 0;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px;">Feed Inventory</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                        ${this.renderInventoryOverview()}
-                    </div>
-                </div>
-
-                <!-- Simple Form -->
-                <div class="glass-card" style="padding: 24px; margin: 24px 0;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px;" id="feed-form-title">Record Feed Usage</h3>
-                    <form id="feed-record-form">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                            <div>
-                                <label class="form-label">Feed Type</label>
-                                <select class="form-input" id="feed-type" required>
-                                    <option value="">Select feed type</option>
-                                    ${this.feedInventory.map(item => `
-                                        <option value="${item.feedType}" ${item.currentStock <= item.minStock ? 'disabled' : ''}>
-                                            ${item.feedType.charAt(0).toUpperCase() + item.feedType.slice(1)} Feed 
-                                            ${item.currentStock <= item.minStock ? '(Low Stock)' : ''}
-                                        </option>
-                                    `).join('')}
-                                </select>
-                            </div>
-                            <div>
-                                <label class="form-label">Quantity (kg)</label>
-                                <input type="number" class="form-input" id="feed-quantity" step="0.1" min="0.1" required>
-                            </div>
-                        </div>
-                        <div style="margin-bottom: 20px;">
-                            <label class="form-label">Notes</label>
-                            <textarea class="form-input" id="feed-notes" rows="2" placeholder="Feeding details..."></textarea>
-                        </div>
-                        <div style="display: flex; gap: 12px;">
-                            <button type="submit" class="btn-primary" id="feed-submit-btn">Save Record</button>
-                            <button type="button" class="btn-outline" id="cancel-feed-edit" style="display: none;">Cancel Edit</button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Recent Records -->
-                <div class="glass-card" style="padding: 24px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="color: var(--text-primary); font-size: 20px;">Recent Feed Records</h3>
-                        <button class="btn-outline" id="export-feed-records">Export</button>
-                    </div>
-                    <div id="feed-records-list">
-                        ${this.renderFeedRecordsList()}
-                    </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-value">${this.formatCurrency(stats.totalInventoryValue)}</div>
+                    <div class="stat-label">Inventory Value</div>
                 </div>
             </div>
-        `;
 
-        this.setupEventListeners();
-    },
+            <!-- Inventory Overview -->
+            <div class="glass-card inventory-overview">
+                <h3 class="section-title">Feed Inventory</h3>
+                <div class="inventory-grid">
+                    ${this.renderInventoryOverview()}
+                </div>
+            </div>
+
+            <!-- Simple Form -->
+            <div class="glass-card feed-form">
+                <h3 class="section-title" id="feed-form-title">Record Feed Usage</h3>
+                <form id="feed-record-form">
+                    <div class="form-grid">
+                        <div>
+                            <label class="form-label">Feed Type</label>
+                            <select class="form-input" id="feed-type" required>
+                                <option value="">Select feed type</option>
+                                ${this.feedInventory.map(item => `
+                                    <option value="${item.feedType}" ${item.currentStock <= item.minStock ? 'disabled' : ''}>
+                                        ${item.feedType.charAt(0).toUpperCase() + item.feedType.slice(1)} Feed 
+                                        ${item.currentStock <= item.minStock ? '(Low Stock)' : ''}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Quantity (kg)</label>
+                            <input type="number" class="form-input" id="feed-quantity" step="0.1" min="0.1" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-input" id="feed-notes" rows="2" placeholder="Feeding details..."></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary" id="feed-submit-btn">Save Record</button>
+                        <button type="button" class="btn-outline" id="cancel-feed-edit" style="display: none;">Cancel Edit</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Recent Records -->
+            <div class="glass-card recent-records">
+                <div class="section-header">
+                    <h3 class="section-title">Recent Feed Records</h3>
+                    <button class="btn-outline" id="export-feed-records">Export</button>
+                </div>
+                <div id="feed-records-list">
+                    ${this.renderFeedRecordsList()}
+                </div>
+            </div>
+        </div>
+    `;
+
+    this.setupEventListeners();
+},
 
     calculateStats() {
         const totalStock = this.feedInventory.reduce((sum, item) => sum + item.currentStock, 0);
@@ -180,76 +180,60 @@ const FeedRecordModule = {
         return { totalStock, totalInventoryValue };
     },
 
-    renderInventoryOverview() {
-        return this.feedInventory.map(item => {
-            const isLowStock = item.currentStock <= item.minStock;
-            const stockStatus = isLowStock ? 'Low Stock' : 'Good';
-            const statusColor = isLowStock ? '#ef4444' : '#10b981';
-            
-            return `
-                <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border-left: 4px solid ${statusColor};">
-                    <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 8px;">
-                        <span style="font-weight: 600; color: var(--text-primary); text-transform: capitalize;">
-                            ${item.feedType}
-                        </span>
-                        <span style="font-size: 12px; color: ${statusColor}; font-weight: 600;">
-                            ${stockStatus}
-                        </span>
-                    </div>
-                    <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">
-                        ${item.currentStock} ${item.unit}
-                    </div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">
-                        Min: ${item.minStock}${item.unit} • ${this.formatCurrency(item.costPerKg)}/kg
-                    </div>
-                </div>
-            `;
-        }).join('');
-    },
+   renderInventoryOverview() {
+    return this.feedInventory.map(item => {
+        const isLowStock = item.currentStock <= item.minStock;
+        const stockStatus = isLowStock ? 'Low Stock' : 'Good';
+        const statusClass = isLowStock ? 'low-stock' : 'good-stock';
 
-    renderFeedRecordsList() {
-        if (this.feedRecords.length === 0) {
-            return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">🌾</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No feed records yet</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Record your first feed usage</div>
+        return `
+            <div class="inventory-card ${statusClass}">
+                <div class="inventory-header">
+                    <span class="inventory-feedtype">${item.feedType}</span>
+                    <span class="inventory-status">${stockStatus}</span>
                 </div>
-            `;
-        }
-
-        return this.feedRecords.slice(0, 5).map(record => `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border); margin-bottom: 12px;">
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; color: var(--text-primary); text-transform: capitalize;">
-                        ${record.feedType} Feed
-                    </div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">
-                        ${record.date} • ${record.quantity}kg • ${record.birdsFed} birds
-                    </div>
-                    ${record.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${record.notes}</div>` : ''}
+                <div class="inventory-amount">
+                    ${item.currentStock} ${item.unit}
                 </div>
-                <div style="text-align: right; display: flex; align-items: center; gap: 16px;">
-                    <div>
-                        <div style="font-weight: bold; color: var(--text-primary); font-size: 18px;">
-                            ${this.formatCurrency(record.cost)}
-                        </div>
-                        <div style="font-size: 12px; color: var(--text-secondary);">
-                            ${(record.cost / record.quantity).toFixed(2)}/kg
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="btn-icon edit-feed-record" data-id="${record.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Edit Record">
-                            ✏️
-                        </button>
-                        <button class="btn-icon delete-feed-record" data-id="${record.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Delete Record">
-                            🗑️
-                        </button>
-                    </div>
+                <div class="inventory-meta">
+                    Min: ${item.minStock}${item.unit} • ${this.formatCurrency(item.costPerKg)}/kg
                 </div>
             </div>
-        `).join('');
-    },
+        `;
+    }).join('');
+},
+
+   renderFeedRecordsList() {
+    if (this.feedRecords.length === 0) {
+        return `
+            <div class="no-records">
+                <div class="no-records-icon">🌾</div>
+                <div class="no-records-title">No feed records yet</div>
+                <div class="no-records-desc">Record your first feed usage</div>
+            </div>
+        `;
+    }
+
+    return this.feedRecords.slice(0, 5).map(record => `
+        <div class="feed-record-item">
+            <div class="feed-record-info">
+                <div class="feed-record-type">${record.feedType} Feed</div>
+                <div class="feed-record-meta">
+                    ${record.date} • ${record.quantity}kg • ${record.birdsFed} birds
+                </div>
+                ${record.notes ? `<div class="feed-record-notes">${record.notes}</div>` : ''}
+            </div>
+            <div class="feed-record-cost">
+                <div class="feed-record-value">${this.formatCurrency(record.cost)}</div>
+                <div class="feed-record-unit">${(record.cost / record.quantity).toFixed(2)}/kg</div>
+            </div>
+            <div class="feed-record-actions">
+                <button class="btn-icon edit-feed-record" data-id="${record.id}" title="Edit Record">✏️</button>
+                <button class="btn-icon delete-feed-record" data-id="${record.id}" title="Delete Record">🗑️</button>
+            </div>
+        </div>
+    `).join('');
+},
 
     setupEventListeners() {
         // Form submission
