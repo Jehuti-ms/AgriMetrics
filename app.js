@@ -214,7 +214,6 @@ initializeMenuPosition() {
             setTimeout(() => {
                 this.setupHamburgerMenu();
                 this.setupEventListeners(); 
-                this.setupEventListeners();
                 this.setupDarkMode(); // SETUP THEME TOGGLE AFTER NAV IS CREATED
                 this.showSection(this.currentSection);
                 this.hideLoading();
@@ -767,6 +766,62 @@ setupHamburgerMenu() {
         `;
     }
 
+    setupLogoutHandlers() {
+    console.log('🔧 Setting up logout handlers for all buttons...');
+    
+    // Method 1: Direct attachment for navbar button (when it exists)
+    const attachNavbarLogout = () => {
+        const navbarLogout = document.getElementById('navbar-logout-btn');
+        if (navbarLogout && !navbarLogout.dataset.listenerAttached) {
+            console.log('✅ Attaching direct listener to navbar logout button');
+            navbarLogout.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🖱️ Navbar logout button clicked directly');
+                this.performLogout();
+            });
+            navbarLogout.dataset.listenerAttached = 'true';
+        }
+    };
+    
+    // Method 2: Event delegation for any logout button
+    document.addEventListener('click', (e) => {
+        const logoutBtn = e.target.closest('.logout-btn');
+        if (logoutBtn) {
+            console.log('🎯 Event delegation caught logout click:', {
+                id: logoutBtn.id,
+                className: logoutBtn.className,
+                tagName: logoutBtn.tagName
+            });
+            e.preventDefault();
+            e.stopPropagation();
+            this.performLogout();
+        }
+    });
+    
+    // Method 3: Listen for custom logout events
+    document.addEventListener('user-logout', () => {
+        console.log('📢 Received custom logout event');
+        this.performLogout();
+    });
+    
+    // Try attaching to navbar button immediately and periodically
+    attachNavbarLogout();
+    
+    // Keep trying to attach for a few seconds (in case nav loads later)
+    let attempts = 0;
+    const maxAttempts = 10;
+    const interval = setInterval(() => {
+        attempts++;
+        attachNavbarLogout();
+        
+        if (attempts >= maxAttempts) {
+            clearInterval(interval);
+            console.log('⏱️ Stopped trying to attach navbar listener');
+        }
+    }, 300);
+}
+    
    async performLogout() {
     console.log('🔐 PERFORMING LOGOUT SEQUENCE...');
     
