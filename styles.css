@@ -1860,3 +1860,160 @@ header {
 #logout-confirm:active {
     transform: translateY(0);
 }
+
+/* ===== SPLASH SCREEN STYLING ===== */
+#splash-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+#splash-screen.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.splash-logo {
+  animation: splashPulse 2s infinite ease-in-out;
+  text-align: center;
+}
+
+.splash-logo img {
+  max-width: 400px;
+  width: 80%;
+  height: auto;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+}
+
+@keyframes splashPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Hide splash screen after animation */
+#splash-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ===== AUTH CONTAINER ===== */
+#auth-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+#auth-container.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.auth-forms {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  transform: translateY(20px);
+  opacity: 0;
+  transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+#auth-container.active .auth-forms {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* ===== REMEMBER ME STYLING ===== */
+.remember-me-group {
+  margin-bottom: 20px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  gap: 8px;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #667eea;
+}
+
+.checkbox-label span {
+  user-select: none;
+}
+
+/* ===== AUTH FORM STATES ===== */
+.auth-form {
+  display: none;
+}
+
+.auth-form.active {
+  display: block;
+}
+
+/* ===== INITIAL LOADING STATES ===== */
+/* Initially hide everything */
+body.loading {
+  overflow: hidden;
+}
+
+body.loading #app-container,
+body.loading #auth-container {
+  display: none;
+}
+
+/* Show splash screen first, then auth if needed */
+body.auth-visible #splash-screen {
+  opacity: 0;
+  visibility: hidden;
+}
+
+body.auth-visible #auth-container {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Hide everything when app is active */
+body.app-active #splash-screen,
+body.app-active #auth-container {
+  opacity: 0;
+  visibility: hidden;
+}
+
+body.app-active #app-container {
+  display: block;
+}
+
