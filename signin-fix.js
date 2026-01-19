@@ -1,8 +1,8 @@
-// signin-fix.js - FIXED - Only handles initial splash to auth transition
-console.log('🔧 Loading sign-in fix (splash screen only)...');
+// signin-fix.js - FIXED (No auth listener, only splash screen)
+console.log('🔧 Loading splash screen handler...');
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ DOM loaded, handling splash screen...');
+    console.log('✅ DOM loaded, handling splash screen only...');
     
     // Show splash screen initially
     const splashScreen = document.getElementById('splash-screen');
@@ -14,56 +14,30 @@ document.addEventListener('DOMContentLoaded', function() {
         splashScreen.style.display = 'flex';
         splashScreen.classList.add('active');
     }
+    
+    // Hide auth and app initially - let app.js handle auth
     if (authContainer) {
         authContainer.style.display = 'none';
-        authContainer.classList.remove('active');
     }
     if (appContainer) {
         appContainer.style.display = 'none';
     }
     
-    // Check if user is already logged in (quick check)
+    // Hide splash screen after delay
     setTimeout(() => {
-        console.log('🔍 Checking initial auth state...');
+        console.log('⏱️ Hiding splash screen...');
         
-        if (typeof firebase !== 'undefined' && firebase.auth) {
-            const currentUser = firebase.auth().currentUser;
-            
-            if (currentUser) {
-                // User is already logged in - hide splash, show app
-                console.log('👤 User already signed in, showing app');
-                if (splashScreen) {
-                    splashScreen.style.display = 'none';
-                    splashScreen.classList.remove('active');
-                }
-                if (appContainer) {
-                    appContainer.style.display = 'block';
-                }
-                if (authContainer) {
-                    authContainer.style.display = 'none';
-                }
-            } else {
-                // No user - show auth after splash
-                console.log('🔐 No user found, showing auth after splash');
-                if (splashScreen) {
-                    splashScreen.style.display = 'none';
-                    splashScreen.classList.remove('active');
-                }
-                if (authContainer) {
-                    authContainer.style.display = 'block';
-                    authContainer.classList.add('active');
-                }
-            }
-        } else {
-            console.error('❌ Firebase not available');
-            // Fallback: show auth screen
-            if (splashScreen) splashScreen.style.display = 'none';
-            if (authContainer) {
-                authContainer.style.display = 'block';
-                authContainer.classList.add('active');
-            }
+        if (splashScreen) {
+            splashScreen.style.display = 'none';
+            splashScreen.classList.remove('active');
+            console.log('🖼️ Splash screen hidden');
         }
+        
+        // IMPORTANT: Don't show auth or app here
+        // Let app.js handle that via its auth listener
+        console.log('✅ Splash complete - auth state handled by app.js');
+        
     }, 800); // Show splash for 0.8 seconds
     
-    console.log('✅ Sign-in fix (splash only) initialized');
+    console.log('✅ Splash screen handler initialized');
 });
