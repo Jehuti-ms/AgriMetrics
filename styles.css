@@ -3068,24 +3068,32 @@ body {
     
 /* Mobile phones */
 @media (max-width: 480px) {
+  /* Hide text labels, keep only icons */
+  .nav-item span:last-child,
+  .nav-brand span:last-child {
+    display: none;
+  }
+
+  /* Scrollable nav strip */
   .top-nav {
-    padding: 0 12px !important;
-    overflow-x: auto;                  /* allow horizontal scroll */
-    -webkit-overflow-scrolling: touch; /* smooth scroll on iOS */
-    scroll-snap-type: x mandatory;     /* enable snap scrolling */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
   }
 
   .nav-list {
     display: flex;
-    flex-wrap: nowrap;                 /* keep items in one row */
+    flex-wrap: nowrap;
     overflow-x: auto;
-    scroll-snap-type: x mandatory;     /* snap container */
+    scroll-snap-type: x mandatory;
   }
 
   .nav-item {
-    flex: 0 0 auto;                    /* prevent shrinking */
+    flex: 0 0 auto;              /* prevent shrinking */
     padding: 8px !important;
-    scroll-snap-align: center;         /* snap each icon to center */
+    scroll-snap-align: center;   /* snap each icon neatly */
+    text-align: center;          /* center the icon */
   }
 }
+
 
