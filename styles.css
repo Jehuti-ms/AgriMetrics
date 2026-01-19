@@ -2840,4 +2840,29 @@ body.auth-visible #auth-container {
     color: #93c5fd !important;
 }
 
+/* ===== SURGICAL FIX FOR NAVBAR GAP ===== */
+
+/* Only target the direct issue without breaking modules */
+body {
+    padding-top: 0 !important;
+}
+
+#app-container {
+    padding-top: 0 !important;
+}
+
+#content-area {
+    padding-top: 0 !important;
+}
+
+/* Only remove margin from VERY FIRST element in content area */
+#content-area > :first-child {
+    margin-top: 0 !important;
+}
+
+/* Specific fix for dashboard module if that's the issue */
+#dashboard-container.welcome-section {
+    margin-top: 0 !important;
+    padding-top: 10px !important;
+}
 
