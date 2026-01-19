@@ -777,21 +777,27 @@ setupHamburgerMenu() {
         // 1. Close side menu if open
         this.closeSideMenu();
         
-        // 2. Clear MOST local storage but KEEP remember me email
+        // 2. Check if we should preserve remember me email
         const rememberEmail = localStorage.getItem('farm_system_remember_email');
-        localStorage.clear(); // Clear everything first
-        
-        // 3. RESTORE the remember email if user wants to keep it
-        // Check if checkbox exists and is checked
         const rememberCheckbox = document.getElementById('remember-me');
+        
+        // Clear MOST local storage but KEEP remember me email if checkbox is checked
+        const itemsToPreserve = {};
+        
         if (rememberEmail && rememberCheckbox && rememberCheckbox.checked) {
-            localStorage.setItem('farm_system_remember_email', rememberEmail);
+            itemsToPreserve.farm_system_remember_email = rememberEmail;
             console.log('💾 Preserving remember me email');
-        } else {
-            console.log('🧹 Remember me email cleared');
         }
         
-        // 4. Sign out from Firebase
+        // Clear all localStorage
+        localStorage.clear();
+        
+        // Restore items we want to preserve
+        Object.keys(itemsToPreserve).forEach(key => {
+            localStorage.setItem(key, itemsToPreserve[key]);
+        });
+        
+        // 3. Sign out from Firebase
         if (typeof firebase !== 'undefined' && firebase.auth) {
             console.log('🔥 Signing out from Firebase...');
             await firebase.auth().signOut();
@@ -800,11 +806,11 @@ setupHamburgerMenu() {
             console.log('⚠️ Firebase not available, proceeding anyway');
         }
         
-        // 5. Reset app state
+        // 4. Reset app state
         this.currentUser = null;
         this.authInitialized = false;
         
-        // 6. Force UI update
+        // 5. Force UI update
         setTimeout(() => {
             console.log('🔄 Forcing UI to auth screen...');
             
