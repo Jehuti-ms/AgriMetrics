@@ -2682,3 +2682,141 @@ body.auth-visible #auth-container {
 #splash-screen:not(.active) {
     display: none;
 }
+
+/* ========== Dark Mode Fix =========== */
+/* ===== DARK MODE FIXES FOR SALES MODAL ===== */
+
+/* Fix ALL popout modal inputs in dark mode */
+.dark-mode .popout-modal .form-input {
+    background-color: #2d3748 !important;
+    color: #e2e8f0 !important;
+    border: 1px solid #4a5568 !important;
+}
+
+.dark-mode .popout-modal .form-input::placeholder {
+    color: #a0aec0 !important;
+}
+
+/* Fix the blue background sections */
+.dark-mode div[style*="background: #f0f9ff"] {
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+}
+
+.dark-mode div[style*="border: 1px solid #bae6fd"] {
+    border-color: #475569 !important;
+}
+
+/* Fix the red background section (meat details) */
+.dark-mode div[style*="background: #fef3f3"] {
+    background-color: #2c1a1a !important;
+    border-color: #7f1d1d !important;
+}
+
+.dark-mode div[style*="border: 1px solid #fed7d7"] {
+    border-color: #7f1d1d !important;
+}
+
+/* Fix text colors in blue section */
+.dark-mode div[style*="color: #0ea5e9"] {
+    color: #7dd3fc !important;
+}
+
+.dark-mode div[style*="color: #0369a1"] {
+    color: #93c5fd !important;
+}
+
+/* Fix text colors in red section */
+.dark-mode div[style*="color: #dc2626"] {
+    color: #fca5a5 !important;
+}
+
+.dark-mode div[style*="color: #7c2d12"] {
+    color: #fdba74 !important;
+}
+
+/* Fix form labels and hints */
+.dark-mode .popout-modal .form-label {
+    color: #e2e8f0 !important;
+}
+
+.dark-mode .popout-modal .form-hint {
+    color: #a0aec0 !important;
+}
+
+/* Fix the info box background */
+.dark-mode div[style*="background: #dbeafe"] {
+    background-color: #1e293b !important;
+}
+
+.dark-mode div[style*="color: #1e40af"] {
+    color: #93c5fd !important;
+}
+
+.dark-mode div[style*="color: #4b5563"] {
+    color: #a0aec0 !important;
+}
+
+/* Fix gray background boxes */
+.dark-mode div[style*="background: #f3f4f6"] {
+    background-color: #374151 !important;
+}
+
+.dark-mode div[style*="color: #6b7280"] {
+    color: #9ca3af !important;
+}
+
+/* Fix the sale total section */
+.dark-mode div[style*="background: var(--glass-bg)"] {
+    background-color: rgba(30, 41, 59, 0.8) !important;
+}
+
+.dark-mode div[style*="border: 1px solid var(--glass-border)"] {
+    border-color: #475569 !important;
+}
+
+/* Fix the dollar sign and unit labels */
+.dark-mode span[style*="color: var(--text-secondary)"] {
+    color: #94a3b8 !important;
+}
+
+/* Fix select dropdown arrow in dark mode */
+.dark-mode .popout-modal .form-input[type="select"] {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23e2e8f0' viewBox='0 0 20 20'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E") !important;
+}
+
+/* Fix buttons in popout modal footer */
+.dark-mode .popout-modal-footer .btn-outline {
+    border-color: #4a5568 !important;
+    color: #e2e8f0 !important;
+}
+
+.dark-mode .popout-modal-footer .btn-outline:hover {
+    background-color: #4a5568 !important;
+}
+
+/* Fix popout modal background */
+.dark-mode .popout-modal {
+    background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+.dark-mode .popout-modal-content {
+    background-color: #1a202c !important;
+    color: #e2e8f0 !important;
+}
+
+.dark-mode .popout-modal-header {
+    border-bottom-color: #2d3748 !important;
+}
+
+.dark-mode .popout-modal-title {
+    color: #e2e8f0 !important;
+}
+
+.dark-mode .popout-modal-close {
+    color: #e2e8f0 !important;
+}
+
+.dark-mode .popout-modal-close:hover {
+    color: #fca5a5 !important;
+}
