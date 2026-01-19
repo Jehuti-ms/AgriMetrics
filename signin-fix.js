@@ -1,41 +1,27 @@
-// signin-fix.js - MINIMAL VERSION (Fix the white screen)
-console.log('🔧 Loading splash screen ONLY...');
+// signin-fix.js - SIMPLE VERSION
+console.log('🔧 Loading splash handler...');
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ Showing splash screen only...');
+    console.log('✅ Starting splash screen...');
     
-    const splashScreen = document.getElementById('splash-screen');
+    const splash = document.getElementById('splash-screen');
     
-    // 1. SHOW SPLASH SCREEN
-    if (splashScreen) {
-        splashScreen.style.display = 'flex';
-        splashScreen.classList.add('active');
-        console.log('🖼️ Splash screen shown');
+    // Show splash
+    if (splash) {
+        splash.style.display = 'flex';
+        console.log('🖼️ Splash shown');
     }
     
-    // 2. HIDE EVERYTHING ELSE - let app.js handle it
-    const authContainer = document.getElementById('auth-container');
-    const appContainer = document.getElementById('app-container');
-    
-    if (authContainer) {
-        authContainer.style.display = 'none';
-        authContainer.classList.remove('active');
-    }
-    
-    if (appContainer) {
-        appContainer.style.display = 'none';
-    }
-    
-    // 3. HIDE SPLASH AFTER DELAY - that's it!
+    // Hide after delay
     setTimeout(() => {
-        if (splashScreen) {
-            splashScreen.style.display = 'none';
-            splashScreen.classList.remove('active');
-            console.log('🖼️ Splash screen hidden');
+        if (splash) {
+            splash.style.display = 'none';
+            console.log('🖼️ Splash hidden');
         }
         
-        console.log('✅ Splash done - app.js handles everything else');
-    }, 800); // 0.8 seconds
+        // Let app.js handle everything else
+        console.log('✅ Splash done, app.js takes over');
+    }, 800);
     
-    console.log('✅ Splash handler initialized');
+    console.log('✅ Splash handler ready');
 });
