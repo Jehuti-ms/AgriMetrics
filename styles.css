@@ -3105,18 +3105,20 @@ body {
 /* ========== Nav Scroll ===========*/
 .nav-items-scroll {
   overflow-x: auto;
-  white-space: nowrap;
   background: var(--nav-bg, #fff);
   border-bottom: 1px solid var(--border-color, #ddd);
 }
 
 .nav-items {
   display: flex;
-  gap: 0.5rem;
+  justify-content: space-between; /* pushes first item left, last item right */
+  align-items: center;
+  width: 100%;
   padding: 0.5rem;
 }
 
 .nav-item {
+  flex: 0 0 auto; /* prevents items from shrinking */
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -3130,17 +3132,5 @@ body {
   transition: background 0.2s, color 0.2s;
 }
 
-.nav-item.active {
-  background: var(--accent-bg, #e0f7fa);
-  color: var(--accent-color, #00796b);
-}
-
-.nav-item:hover {
-  background: var(--hover-bg, #f0f0f0);
-}
-
-.nav-label {
-  font-weight: 500;
-}
 
 
