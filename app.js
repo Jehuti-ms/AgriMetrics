@@ -505,19 +505,26 @@ initializeMenu() {
   }
 }
 
-    showApp() {
-        const authContainer = document.getElementById('auth-container');
-        const appContainer = document.getElementById('app-container');
-        
-        if (authContainer) authContainer.style.display = 'none';
-        if (appContainer) {
-            appContainer.style.display = 'block';
-            appContainer.classList.remove('hidden');
-        }
-        
-        console.log('🏠 App container shown');
+   showApp() {
+    const authContainer = document.getElementById('auth-container');
+    const appContainer = document.getElementById('app-container');
+    
+    if (authContainer) {
+        authContainer.style.display = 'none';
+        authContainer.classList.remove('active');
     }
-
+    if (appContainer) {
+        appContainer.style.display = 'block';
+        appContainer.classList.remove('hidden');
+    }
+    
+    // CRITICAL: Update body classes
+    document.body.classList.add('app-active');
+    document.body.classList.remove('auth-visible', 'loading');
+    
+    console.log('🏠 App container shown');
+}
+    
     createTopNavigation() {
         const appContainer = document.getElementById('app-container');
         if (!appContainer) return;
