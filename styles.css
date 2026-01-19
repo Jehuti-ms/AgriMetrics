@@ -3102,26 +3102,45 @@ body {
   border-radius: 8px;
 }
 
-/* Top nav container */
-.top-nav {
+/* ========== Nav Scroll ===========*/
+.nav-items-scroll {
+  overflow-x: auto;
+  white-space: nowrap;
+  background: var(--nav-bg, #fff);
+  border-bottom: 1px solid var(--border-color, #ddd);
+}
+
+.nav-items {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+.nav-item {
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: var(--text-color, #333);
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
 }
 
-/* Nav list aligned to the right */
-.nav-list {
-  display: flex;
-  gap: 12px;
-  margin-left: auto;          /* pushes nav items to the right */
-  justify-content: flex-end;  /* ensures they cluster near logout/hamburger */
+.nav-item.active {
+  background: var(--accent-bg, #e0f7fa);
+  color: var(--accent-color, #00796b);
 }
 
-/* Optional: tighten spacing on small screens */
-@media (max-width: 480px) {
-  .nav-list {
-    gap: 8px;
-  }
+.nav-item:hover {
+  background: var(--hover-bg, #f0f0f0);
+}
+
+.nav-label {
+  font-weight: 500;
 }
 
 
