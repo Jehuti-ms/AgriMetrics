@@ -3180,3 +3180,19 @@ body.dark-mode .nav-item.active {
 body.dark-mode {
   --nav-bg: #1e1e1e;
 }
+
+/* ============ Headers Padding ============ */
+.dashboard-container,
+.module-container {
+  margin-top: 3.5rem; /* matches navbar height */
+  padding-top: 1rem;  /* consistent spacing */
+  box-sizing: border-box;
+}
+
+@media (min-width: 992px) {
+  .dashboard-container,
+  .module-container {
+    margin-top: 3.5rem; /* lock under navbar */
+    padding-top: 0.5rem; /* reduce gap */
+  }
+}
