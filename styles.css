@@ -2425,5 +2425,146 @@ body.app-active #app-container {
     }
 }
 
+/* Auth Container - Center on all screen sizes */
+#auth-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, 
+        #4CAF50 0%,
+        #2E7D32 25%,
+        #1B5E20 50%,
+        #0D47A1 100%
+    );
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+    padding: 20px; /* Add padding for mobile safety */
+    box-sizing: border-box;
+}
+
+#auth-container.active {
+    display: flex;
+}
+
+/* Auth forms wrapper */
+.auth-forms {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 420px; /* Maximum width on large screens */
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+    
+    /* Center the form within the container */
+    margin: 0 auto;
+    
+    /* For very large screens, add a minimum width */
+    min-width: 300px;
+}
+
+/* Large screens - adjust positioning */
+@media (min-width: 1200px) {
+    .auth-forms {
+        padding: 50px;
+        max-width: 450px;
+    }
+}
+
+/* Extra large screens - prevent form from being too small */
+@media (min-width: 1600px) {
+    .auth-forms {
+        max-width: 500px;
+        padding: 60px;
+    }
+    
+    /* Optional: Add a subtle scale-up effect on very large screens */
+    #auth-container.active .auth-forms {
+        transform: scale(1.05);
+        transition: transform 0.3s ease;
+    }
+}
+
+/* Small screens adjustments */
+@media (max-width: 768px) {
+    .auth-forms {
+        padding: 30px 25px;
+        max-height: 85vh;
+        width: 95%; /* Slightly narrower on mobile */
+    }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+    .auth-forms {
+        padding: 25px 20px;
+        max-height: 90vh;
+        width: 100%;
+        border-radius: 12px;
+    }
+    
+    #auth-container {
+        padding: 10px;
+    }
+}
+
+/* Ensure forms are centered horizontally and vertically */
+.auth-forms-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+/* Fix for tall forms (like signup) */
+#signup-form .auth-forms {
+    max-height: 85vh; /* Slightly less height for signup */
+}
+
+/* Fix for form elements to prevent overflow */
+.auth-form {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.auth-form h2 {
+    margin-top: 0;
+    margin-bottom: 25px;
+    text-align: center;
+    color: #333;
+    font-size: 28px;
+}
+
+/* Ensure form groups don't overflow */
+.form-group {
+    width: 100%;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+.form-group input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Make sure buttons are centered */
+.btn-primary {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Auth links centering */
+.auth-links {
+    text-align: center;
+    margin-top: 20px;
+}
+
 
 
