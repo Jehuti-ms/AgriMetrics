@@ -1,6 +1,47 @@
 // signin-fix.js - Updated
 console.log('🔧 Loading simplified sign-in fix...');
 
+// Ensure auth forms are always centered
+function centerAuthForms() {
+    const authContainer = document.getElementById('auth-container');
+    const authForms = document.querySelector('.auth-forms');
+    
+    if (authContainer && authForms) {
+        // Calculate vertical centering
+        const containerHeight = window.innerHeight;
+        const formHeight = authForms.offsetHeight;
+        
+        // Only adjust if form is taller than viewport
+        if (formHeight < containerHeight - 100) {
+            authForms.style.marginTop = '0';
+            authForms.style.alignSelf = 'center';
+        } else {
+            // For very tall forms, add top margin
+            authForms.style.marginTop = '20px';
+            authForms.style.alignSelf = 'flex-start';
+        }
+    }
+}
+
+// Setup observer for auth container changes
+function setupAuthContainerObserver() {
+    const authContainer = document.getElementById('auth-container');
+    if (!authContainer) return;
+    
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'class' || mutation.attributeName === 'style') {
+                if (authContainer.style.display === 'block' ||
+                    authContainer.classList.contains('active')) {
+                    setTimeout(centerAuthForms, 100);
+                }
+            }
+        });
+    });
+    
+    observer.observe(authContainer, { attributes: true });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ DOM loaded, initializing auth flow...');
     
@@ -21,6 +62,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (appContainer) {
         appContainer.style.display = 'none';
     }
+    
+    // Setup centering functions
+    setupAuthContainerObserver();
+    
+    // Run centering on load and resize
+    centerAuthForms();
+    window.addEventListener('resize', centerAuthForms);
     
     // Check auth state after a short delay
     setTimeout(() => {
@@ -63,6 +111,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.getElementById('signin-password')?.focus();
                     }
                 }
+                
+                // Re-center forms after auth state change
+                setTimeout(centerAuthForms, 200);
             });
         } else {
             console.error('❌ Firebase not available');
@@ -72,6 +123,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 authContainer.style.display = 'block';
                 authContainer.classList.add('active');
             }
+            
+            // Center forms for fallback
+            setTimeout(centerAuthForms, 200);
         }
     }, 800); // Show splash for 0.8 seconds
     
