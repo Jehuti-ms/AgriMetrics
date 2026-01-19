@@ -3184,15 +3184,10 @@ body.dark-mode {
 /* ============ Headers Padding ============ */
 .dashboard-container,
 .module-container {
-  margin-top: 3.5rem; /* matches navbar height */
-  padding-top: 1rem;  /* consistent spacing */
+  position: relative;
+  top: 0;               /* reset any offset */
+  margin-top: 3.5rem;   /* equal to navbar height */
+  padding-top: 0.5rem;  /* consistent spacing */
   box-sizing: border-box;
 }
 
-@media (min-width: 992px) {
-  .dashboard-container,
-  .module-container {
-    margin-top: 3.5rem; /* lock under navbar */
-    padding-top: 0.5rem; /* reduce gap */
-  }
-}
