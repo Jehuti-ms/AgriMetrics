@@ -155,23 +155,19 @@ initializeMenuPosition() {
         });
     }
     
-    checkInitialAuth() {
-        if (typeof firebase !== 'undefined' && firebase.auth) {
-            const user = firebase.auth().currentUser;
-            if (user) {
-                console.log('👤 User already signed in:', user.email);
-                this.handleUserAuthenticated(user);
-            } else {
-                console.log('🔒 No user found initially');
-                // Give auth listener time to fire
-                setTimeout(() => {
-                    if (!this.authInitialized) {
-                        this.handleNoUser();
-                    }
-                }, 1000);
-            }
+checkInitialAuth() {
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+        const user = firebase.auth().currentUser;
+        if (user) {
+            console.log('👤 User already signed in:', user.email);
+            this.handleUserAuthenticated(user);
+        } else {
+            console.log('🔒 No user found initially - showing auth form');
+            // Show auth form IMMEDIATELY, don't wait
+            this.handleNoUser();
         }
     }
+}
 
     handleUserAuthenticated(user) {
         console.log('🎉 User authenticated, showing app...');
