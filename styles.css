@@ -2008,40 +2008,23 @@ body.auth-visible #auth-container {
   visibility: visible;
 }
 
-/* Remove or fix these rules that might be hiding everything: */
+/* Show/Hide based on body classes */
 body.app-active #splash-screen,
 body.app-active #auth-container {
-  /* DON'T hide with opacity/visibility - use display instead */
-  display: none;
+  display: none !important; /* Use display:none instead of opacity/visibility */
 }
 
 body.app-active #app-container {
-  display: block !important; /* Force show app */
+  display: block !important;
 }
 
-/* Also make sure these base states are correct: */
-#splash-screen {
-  display: none; /* Hidden by default */
+body.auth-visible #app-container,
+body.auth-visible #splash-screen {
+  display: none !important;
 }
 
-#splash-screen.active {
-  display: flex; /* Show when active */
-}
-
-#auth-container {
-  display: none; /* Hidden by default */
-}
-
-#auth-container.active {
-  display: flex; /* Show when active */
-}
-
-#app-container {
-  display: none; /* Hidden by default */
-}
-
-#app-container:not(.hidden) {
-  display: block; /* Show when not hidden */
+body.auth-visible #auth-container {
+  display: flex !important;
 }
 
 /* ============== Splash Screen ============= */
