@@ -10,47 +10,69 @@ document.addEventListener('DOMContentLoaded', function() {
     const appContainer = document.getElementById('app-container');
     
     // Ensure initial state
-    if (splashScreen) splashScreen.style.display = 'flex';
-    if (authContainer) authContainer.style.display = 'none';
-    if (appContainer) appContainer.style.display = 'none';
+    if (splashScreen) {
+        splashScreen.style.display = 'flex';
+        splashScreen.classList.add('active');
+    }
+    if (authContainer) {
+        authContainer.style.display = 'none';
+        authContainer.classList.remove('active');
+    }
+    if (appContainer) {
+        appContainer.style.display = 'none';
+    }
     
-    // Wait a moment, then check auth state
+    // Check auth state after a short delay
     setTimeout(() => {
         console.log('🔍 Checking auth state...');
         
-        firebase.auth().onAuthStateChanged((user) => {
-            // Hide splash screen
-            if (splashScreen) {
-                splashScreen.style.display = 'none';
-                console.log('🖼️ Splash screen hidden');
-            }
-            
-            if (user) {
-                // User is signed in - show app
-                console.log('👤 User already signed in:', user.email);
-                if (appContainer) {
-                    appContainer.style.display = 'block';
-                }
-                if (authContainer) {
-                    authContainer.style.display = 'none';
-                }
-            } else {
-                // User is not signed in - show login
-                console.log('🔐 User not signed in, showing login form');
-                if (authContainer) {
-                    authContainer.style.display = 'block';
-                }
-                if (appContainer) {
-                    appContainer.style.display = 'none';
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            firebase.auth().onAuthStateChanged((user) => {
+                console.log('🔥 Auth state changed in signin-fix:', user ? user.email : 'No user');
+                
+                // Hide splash screen
+                if (splashScreen) {
+                    splashScreen.style.display = 'none';
+                    splashScreen.classList.remove('active');
+                    console.log('🖼️ Splash screen hidden');
                 }
                 
-                // Focus on password field if email is already filled
-                const emailInput = document.getElementById('signin-email');
-                if (emailInput && emailInput.value) {
-                    document.getElementById('signin-password')?.focus();
+                if (user) {
+                    // User is signed in - show app
+                    console.log('👤 User signed in, showing app');
+                    if (appContainer) {
+                        appContainer.style.display = 'block';
+                    }
+                    if (authContainer) {
+                        authContainer.style.display = 'none';
+                    }
+                } else {
+                    // User is not signed in - show login
+                    console.log('🔐 User not signed in, showing login form');
+                    if (authContainer) {
+                        authContainer.style.display = 'block';
+                        authContainer.classList.add('active');
+                    }
+                    if (appContainer) {
+                        appContainer.style.display = 'none';
+                    }
+                    
+                    // Focus on password field if email is already filled
+                    const emailInput = document.getElementById('signin-email');
+                    if (emailInput && emailInput.value) {
+                        document.getElementById('signin-password')?.focus();
+                    }
                 }
+            });
+        } else {
+            console.error('❌ Firebase not available');
+            // Fallback: show auth screen
+            if (splashScreen) splashScreen.style.display = 'none';
+            if (authContainer) {
+                authContainer.style.display = 'block';
+                authContainer.classList.add('active');
             }
-        });
+        }
     }, 800); // Show splash for 0.8 seconds
     
     console.log('✅ Sign-in fix initialized');
