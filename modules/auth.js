@@ -1033,6 +1033,76 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// Simple Remember Me functionality
+class SimpleRememberMe {
+    constructor() {
+        this.STORAGE_KEY = 'farm_system_user';
+        this.init();
+    }
+    
+    init() {
+        this.loadSavedEmail();
+        this.setupFormListener();
+    }
+    
+    loadSavedEmail() {
+        try {
+            const saved = localStorage.getItem(this.STORAGE_KEY);
+            if (saved) {
+                const data = JSON.parse(saved);
+                const emailInput = document.getElementById('signin-email');
+                const rememberCheckbox = document.getElementById('remember-me');
+                
+                if (emailInput && data.email) {
+                    emailInput.value = data.email;
+                }
+                
+                if (rememberCheckbox) {
+                    rememberCheckbox.checked = true;
+                }
+            }
+        } catch (error) {
+            console.log('No saved credentials found');
+        }
+    }
+    
+    setupFormListener() {
+        const signinForm = document.getElementById('signin-form-element');
+        if (signinForm) {
+            signinForm.addEventListener('submit', (e) => {
+                this.handleSignIn();
+            });
+        }
+    }
+    
+    handleSignIn() {
+        const rememberCheckbox = document.getElementById('remember-me');
+        const emailInput = document.getElementById('signin-email');
+        
+        if (rememberCheckbox && rememberCheckbox.checked && emailInput && emailInput.value) {
+            // Save email to localStorage
+            const data = {
+                email: emailInput.value,
+                timestamp: new Date().getTime()
+            };
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+        } else {
+            // Clear if checkbox is unchecked
+            localStorage.removeItem(this.STORAGE_KEY);
+        }
+    }
+    
+    // Call this on logout
+    clear() {
+        localStorage.removeItem(this.STORAGE_KEY);
+    }
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    window.simpleRememberMe = new SimpleRememberMe();
+});
+
 // Initialize the auth module
 document.addEventListener('DOMContentLoaded', () => {
     window.authModule = new AuthModule();
