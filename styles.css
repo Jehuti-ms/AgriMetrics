@@ -2916,8 +2916,176 @@ body {
     .brand-text {
         display: none;
     }
+
+    /* ========== NAV ITEM STYLING ENHANCEMENTS ========= */
+
+/* 1. Remove ALL outlines from nav items */
+.nav-item {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.nav-item:focus {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Remove browser default focus styles */
+.nav-item::-moz-focus-inner {
+    border: 0 !important;
+}
+
+/* 2. Add green glow for active/selected state */
+.nav-item.active {
+    position: relative;
+    background: rgba(76, 175, 80, 0.1) !important;
+    border-radius: 8px !important;
+}
+
+/* Green glow effect */
+.nav-item.active::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 10px;
+    background: linear-gradient(45deg, 
+        rgba(76, 175, 80, 0.3) 0%,
+        rgba(76, 175, 80, 0.1) 50%,
+        rgba(76, 175, 80, 0.3) 100%);
+    z-index: -1;
+    animation: glowPulse 3s ease-in-out infinite;
+}
+
+/* 3. Subtler green border for active state */
+.nav-item.active {
+    border: 1px solid rgba(76, 175, 80, 0.3) !important;
+}
+
+/* 4. Icon color change for active state */
+.nav-item.active span:first-child {
+    color: #4CAF50 !important;
+    text-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
+}
+
+.nav-item.active .nav-label {
+    color: #4CAF50 !important;
+    font-weight: 600;
+}
+
+/* 5. Hover effects */
+.nav-item:hover:not(.active) {
+    background: rgba(76, 175, 80, 0.05) !important;
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+}
+
+.nav-item:hover:not(.active) span:first-child {
+    color: #4CAF50 !important;
+}
+
+/* 6. Pulse animation for the glow */
+@keyframes glowPulse {
+    0%, 100% {
+        opacity: 0.5;
+        box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+    }
+    50% {
+        opacity: 0.8;
+        box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+    }
+}
+
+/* 7. For dark mode */
+.dark-mode .nav-item.active {
+    background: rgba(76, 175, 80, 0.15) !important;
+    border-color: rgba(76, 175, 80, 0.4) !important;
+}
+
+.dark-mode .nav-item.active::after {
+    background: linear-gradient(45deg, 
+        rgba(76, 175, 80, 0.4) 0%,
+        rgba(76, 175, 80, 0.2) 50%,
+        rgba(76, 175, 80, 0.4) 100%);
+}
+
+.dark-mode .nav-item.active span:first-child {
+    color: #66BB6A !important;
+    text-shadow: 0 0 10px rgba(102, 187, 106, 0.6);
+}
+
+/* 8. Remove any default browser focus rings */
+.nav-item:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* 9. For touch devices, remove tap highlight */
+.nav-item {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+}
+
+/* 10. Ensure smooth transitions */
+.nav-item {
+    transition: all 0.3s ease;
+}
     
     .nav-brand img {
         margin-right: 0;
     }
 }
+
+/* Logout button styling */
+#navbar-logout-btn {
+    outline: none !important;
+    border: none !important;
+}
+
+#navbar-logout-btn:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Optional: Different color for logout */
+#navbar-logout-btn.active {
+    background: rgba(244, 67, 54, 0.1) !important;
+    border: 1px solid rgba(244, 67, 54, 0.3) !important;
+}
+
+#navbar-logout-btn.active span:first-child {
+    color: #F44336 !important;
+}
+
+/* Fix hamburger menu outline */
+#hamburger-menu,
+.hamburger-menu {
+    outline: none !important;
+    border: none !important;
+}
+
+#hamburger-menu:focus,
+.hamburger-menu:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Hamburger menu active state */
+#hamburger-menu.active,
+.hamburger-menu.active {
+    background: rgba(76, 175, 80, 0.1) !important;
+    border: 1px solid rgba(76, 175, 80, 0.3) !important;
+}
+
+/* Dark mode hamburger */
+.dark-mode #hamburger-menu.active,
+.dark-mode .hamburger-menu.active {
+    background: rgba(76, 175, 80, 0.15) !important;
+    border-color: rgba(76, 175, 80, 0.4) !important;
+}
+
