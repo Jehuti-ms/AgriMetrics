@@ -218,35 +218,45 @@ checkInitialAuth() {
         }
     
   handleNoUser() {
-  console.log('🔒 No user found, showing splash then auth');
-  this.authInitialized = true;
-
-  const splash = document.getElementById('splash-screen');
-  const authContainer = document.getElementById('auth-container');
-  const signin = document.getElementById('signin-form');
-
-  if (splash && authContainer && signin) {
-    // Show splash only
-    splash.style.display = 'flex';   // full-screen splash
-    authContainer.style.display = 'none';
-
-    // ✅ Hide loader immediately so it doesn’t freeze
+    console.log('🔒 No user found, showing auth');
+    this.authInitialized = true;
+    
+    const splash = document.getElementById('splash-screen');
+    const authContainer = document.getElementById('auth-container');
+    const signin = document.getElementById('signin-form');
+    const appContainer = document.getElementById('app-container');
+    
+    // Hide splash
+    if (splash) {
+        splash.style.display = 'none';
+    }
+    
+    // Show auth container
+    if (authContainer) {
+        authContainer.style.display = 'block';
+        authContainer.classList.add('active');
+        
+        // Reset to signin form
+        if (signin) {
+            signin.classList.add('active');
+        }
+    }
+    
+    // Hide app container
+    if (appContainer) {
+        appContainer.style.display = 'none';
+    }
+    
+    // CRITICAL: Update body classes
+    document.body.classList.add('auth-visible');
+    document.body.classList.remove('app-active', 'loading');
+    
+    // Hide loading
     this.hideLoading();
-
-    // After 2 seconds, hide splash and show auth
-    setTimeout(() => {
-      splash.style.display = 'none';
-      authContainer.style.display = 'block';
-      signin.classList.add('active');
-      console.log('✅ Splash finished, showing sign-in form');
-    }, 2000);
-  } else {
-    // fallback if splash not found
-    this.showAuth();
-    this.hideLoading();
-  }
+    
+    console.log('✅ Auth screen shown');
 }
-
+    
     showLoading() {
         if (!document.getElementById('app-loading')) {
             const loadingDiv = document.createElement('div');
