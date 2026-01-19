@@ -2874,3 +2874,50 @@ body {
 #content-area > .card.module-header {
     margin-top: 0 !important;
 }
+
+/* ===== RESPONSIVE BRAND TEXT ===== */
+
+/* Default: Show full brand */
+.brand-text {
+    display: inline-block;
+}
+
+.brand-subtitle {
+    display: inline-block;
+    margin-left: 8px;
+}
+
+/* On small screens, hide subtitle */
+@media (max-width: 768px) {
+    .brand-subtitle {
+        display: none;
+    }
+    
+    .brand-text {
+        font-size: 16px; /* Slightly smaller */
+    }
+}
+
+/* On very small screens, further reduce */
+@media (max-width: 480px) {
+    .brand-text {
+        font-size: 14px;
+        margin-right: 8px;
+    }
+    
+    .nav-brand img {
+        width: 32px !important;
+        height: 32px !important;
+    }
+}
+
+/* Emergency: Hide brand completely if needed */
+@media (max-width: 360px) {
+    .brand-text {
+        display: none;
+    }
+    
+    .nav-brand img {
+        margin-right: 0;
+    }
+}
