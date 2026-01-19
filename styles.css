@@ -3149,3 +3149,34 @@ body.dark-mode .nav-item.active {
   color: var(--accent-color);
 }
 
+/* ============ Theme Aware Gradient ============== */
+.nav-items-scroll {
+  position: relative;
+  overflow-x: auto;
+}
+
+.nav-items-scroll::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 2rem;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(to left, var(--nav-bg), transparent);
+}
+
+.nav-items-scroll::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2rem;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(to right, var(--nav-bg), transparent);
+}
+
+body.dark-mode {
+  --nav-bg: #1e1e1e;
+}
