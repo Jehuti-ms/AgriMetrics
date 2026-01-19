@@ -224,27 +224,30 @@
     <!-- 1. Firebase Configuration -->
     <script src="firebase/firebase-config.js"></script>
     <script src="firebase/firebase-auth.js"></script>
-
-    <!-- 2. Core Framework -->
+    
+    <!-- 2. Simple Remember Me (load early) -->
+    <script src="simple-remember.js"></script>
+    
+    <!-- 3. Core Framework -->
     <script src="modules/framework.js"></script>
     <script src="modules/core.js"></script>
-
-    <!-- 3. Style Manager -->
+    
+    <!-- 4. Style Manager -->
     <script src="style-manager.js"></script>
-
-    <!-- 4. Auth System -->
+    
+    <!-- 5. Auth System -->
     <script src="modules/auth-redirect-handler.js"></script>
     <script src="modules/ModalManager.js"></script>
     <script src="modules/auth.js"></script>
-
-    <!-- 5. Data & Utilities -->
+    
+    <!-- 6. Data & Utilities -->
     <script src="modules/data-broadcaster.js"></script>
     <script src="date-utils.js"></script>
-
-    <!-- 6. Main App -->
+    
+    <!-- 7. Main App -->
     <script src="app.js"></script>
-
-    <!-- 7. Modules -->
+    
+    <!-- 8. Modules -->
     <script src="modules/dashboard.js"></script>
     <script src="modules/income-expenses.js"></script>
     <script src="modules/inventory-check.js"></script>
@@ -255,8 +258,8 @@
     <script src="modules/production.js"></script>
     <script src="modules/reports.js"></script>
     <script src="modules/profile.js"></script>
-
-    <!-- 8. Sign-in Fix (loaded last) -->
+    
+    <!-- 9. Sign-in Fix (loaded last) -->
     <script src="signin-fix.js"></script>
     
 </body>
