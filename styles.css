@@ -2918,69 +2918,108 @@ body {
     }
 
     /* ========== NAV ITEM STYLING ENHANCEMENTS ========= */
+/* ===== FIX NAV BUTTON OUTLINES & ADD GREEN GLOW ===== */
 
-/* 1. Remove ALL outlines from nav items */
+/* 1. REMOVE ALL browser default button styling */
 .nav-item {
+    /* Remove ALL outlines and borders */
     outline: none !important;
     border: none !important;
     box-shadow: none !important;
+    
+    /* Remove browser default button styling */
+    background: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    
+    /* Remove tap highlight on mobile */
+    -webkit-tap-highlight-color: transparent !important;
+    
+    /* Reset cursor */
+    cursor: pointer !important;
 }
 
-.nav-item:focus {
+/* 2. Remove focus states COMPLETELY */
+.nav-item:focus,
+.nav-item:focus-visible,
+.nav-item:focus-within {
     outline: none !important;
     border: none !important;
     box-shadow: none !important;
+    background: none !important;
 }
 
-/* Remove browser default focus styles */
-.nav-item::-moz-focus-inner {
-    border: 0 !important;
-}
-
-/* 2. Add green glow for active/selected state */
-.nav-item.active {
-    position: relative;
+/* 3. Remove active state blue color */
+.nav-item:active {
+    color: inherit !important;
     background: rgba(76, 175, 80, 0.1) !important;
-    border-radius: 8px !important;
+    transform: translateY(1px);
 }
 
-/* Green glow effect */
-.nav-item.active::after {
+/* 4. VISIBLE GREEN GLOW for active state */
+.nav-item.active {
+    /* Solid green background */
+    background: rgba(76, 175, 80, 0.2) !important;
+    
+    /* Green border */
+    border: 2px solid #4CAF50 !important;
+    border-radius: 8px !important;
+    
+    /* Strong glow effect */
+    box-shadow: 
+        0 0 10px rgba(76, 175, 80, 0.6),
+        0 0 20px rgba(76, 175, 80, 0.4),
+        inset 0 0 10px rgba(76, 175, 80, 0.2) !important;
+    
+    /* Make it pop */
+    position: relative;
+    z-index: 10;
+}
+
+/* 5. Add pulsing outer glow */
+.nav-item.active::before {
     content: '';
     position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    border-radius: 10px;
-    background: linear-gradient(45deg, 
-        rgba(76, 175, 80, 0.3) 0%,
-        rgba(76, 175, 80, 0.1) 50%,
-        rgba(76, 175, 80, 0.3) 100%);
+    top: -6px;
+    left: -6px;
+    right: -6px;
+    bottom: -6px;
+    border-radius: 12px;
+    background: rgba(76, 175, 80, 0.3);
     z-index: -1;
-    animation: glowPulse 3s ease-in-out infinite;
+    animation: navGlow 2s ease-in-out infinite;
 }
 
-/* 3. Subtler green border for active state */
-.nav-item.active {
-    border: 1px solid rgba(76, 175, 80, 0.3) !important;
+@keyframes navGlow {
+    0%, 100% {
+        opacity: 0.6;
+        box-shadow: 0 0 15px rgba(76, 175, 80, 0.4);
+    }
+    50% {
+        opacity: 0.9;
+        box-shadow: 0 0 25px rgba(76, 175, 80, 0.7);
+    }
 }
 
-/* 4. Icon color change for active state */
+/* 6. Make icon and text green in active state */
+.nav-item.active span {
+    color: #4CAF50 !important;
+    font-weight: 600 !important;
+    text-shadow: 0 0 5px rgba(76, 175, 80, 0.5) !important;
+}
+
+/* 7. Specifically style the emoji/icon */
 .nav-item.active span:first-child {
-    color: #4CAF50 !important;
-    text-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 4px rgba(76, 175, 80, 0.7));
+    transition: transform 0.3s ease;
 }
 
-.nav-item.active .nav-label {
-    color: #4CAF50 !important;
-    font-weight: 600;
-}
-
-/* 5. Hover effects */
+/* 8. Hover effect for non-active items */
 .nav-item:hover:not(.active) {
-    background: rgba(76, 175, 80, 0.05) !important;
-    transform: translateY(-1px);
+    background: rgba(76, 175, 80, 0.08) !important;
+    transform: translateY(-2px);
     transition: all 0.2s ease;
 }
 
@@ -2988,104 +3027,50 @@ body {
     color: #4CAF50 !important;
 }
 
-/* 6. Pulse animation for the glow */
-@keyframes glowPulse {
-    0%, 100% {
-        opacity: 0.5;
-        box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
-    }
-    50% {
-        opacity: 0.8;
-        box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
-    }
+/* 9. Fix for dark mode toggle button */
+#dark-mode-toggle.nav-item.active {
+    background: rgba(251, 191, 36, 0.2) !important;
+    border-color: #FBBF24 !important;
+    box-shadow: 
+        0 0 10px rgba(251, 191, 36, 0.6),
+        0 0 20px rgba(251, 191, 36, 0.4) !important;
 }
 
-/* 7. For dark mode */
-.dark-mode .nav-item.active {
-    background: rgba(76, 175, 80, 0.15) !important;
-    border-color: rgba(76, 175, 80, 0.4) !important;
+#dark-mode-toggle.nav-item.active span {
+    color: #FBBF24 !important;
+    text-shadow: 0 0 5px rgba(251, 191, 36, 0.5) !important;
 }
 
-.dark-mode .nav-item.active::after {
-    background: linear-gradient(45deg, 
-        rgba(76, 175, 80, 0.4) 0%,
-        rgba(76, 175, 80, 0.2) 50%,
-        rgba(76, 175, 80, 0.4) 100%);
+/* 10. Fix for logout button (different color) */
+#navbar-logout-btn.nav-item {
+    /* Logout button specific styling */
 }
 
-.dark-mode .nav-item.active span:first-child {
-    color: #66BB6A !important;
-    text-shadow: 0 0 10px rgba(102, 187, 106, 0.6);
+#navbar-logout-btn.nav-item.active {
+    background: rgba(239, 68, 68, 0.2) !important;
+    border-color: #EF4444 !important;
+    box-shadow: 
+        0 0 10px rgba(239, 68, 68, 0.6),
+        0 0 20px rgba(239, 68, 68, 0.4) !important;
 }
 
-/* 8. Remove any default browser focus rings */
-.nav-item:focus-visible {
-    outline: none !important;
-    box-shadow: none !important;
+#navbar-logout-btn.nav-item.active span {
+    color: #EF4444 !important;
+    text-shadow: 0 0 5px rgba(239, 68, 68, 0.5) !important;
 }
 
-/* 9. For touch devices, remove tap highlight */
-.nav-item {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    user-select: none;
+/* 11. Fix for hamburger menu */
+#hamburger-menu.nav-item.active {
+    background: rgba(139, 92, 246, 0.2) !important;
+    border-color: #8B5CF6 !important;
+    box-shadow: 
+        0 0 10px rgba(139, 92, 246, 0.6),
+        0 0 20px rgba(139, 92, 246, 0.4) !important;
 }
 
-/* 10. Ensure smooth transitions */
-.nav-item {
-    transition: all 0.3s ease;
+#hamburger-menu.nav-item.active span {
+    color: #8B5CF6 !important;
+    text-shadow: 0 0 5px rgba(139, 92, 246, 0.5) !important;
 }
     
-    .nav-brand img {
-        margin-right: 0;
-    }
-}
-
-/* Logout button styling */
-#navbar-logout-btn {
-    outline: none !important;
-    border: none !important;
-}
-
-#navbar-logout-btn:focus {
-    outline: none !important;
-    box-shadow: none !important;
-}
-
-/* Optional: Different color for logout */
-#navbar-logout-btn.active {
-    background: rgba(244, 67, 54, 0.1) !important;
-    border: 1px solid rgba(244, 67, 54, 0.3) !important;
-}
-
-#navbar-logout-btn.active span:first-child {
-    color: #F44336 !important;
-}
-
-/* Fix hamburger menu outline */
-#hamburger-menu,
-.hamburger-menu {
-    outline: none !important;
-    border: none !important;
-}
-
-#hamburger-menu:focus,
-.hamburger-menu:focus {
-    outline: none !important;
-    box-shadow: none !important;
-}
-
-/* Hamburger menu active state */
-#hamburger-menu.active,
-.hamburger-menu.active {
-    background: rgba(76, 175, 80, 0.1) !important;
-    border: 1px solid rgba(76, 175, 80, 0.3) !important;
-}
-
-/* Dark mode hamburger */
-.dark-mode #hamburger-menu.active,
-.dark-mode .hamburger-menu.active {
-    background: rgba(76, 175, 80, 0.15) !important;
-    border-color: rgba(76, 175, 80, 0.4) !important;
-}
 
