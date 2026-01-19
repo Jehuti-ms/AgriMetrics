@@ -2839,3 +2839,63 @@ body.auth-visible #auth-container {
 .dark-mode div[style*="color: #0369a1"] {
     color: #93c5fd !important;
 }
+
+/* ===== FORCE CONTENT FLUSH WITH NAVBAR ===== */
+
+/* 1. Remove ALL gaps at the root level */
+body {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* 2. Main app container */
+#app-container {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* 3. Content area - CRITICAL */
+#content-area {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* 4. First child of content area - this is your module header */
+#content-area > *:first-child {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    margin: 0 0 20px 0 !important;
+}
+
+/* 5. Target specific module header classes */
+#content-area .module-header,
+#content-area .welcome-section,
+#content-area .dashboard-header,
+#content-area .section-header {
+    margin-top: 0 !important;
+    padding-top: 10px !important; /* Small breathing room */
+    margin: 0 0 20px 0 !important;
+}
+
+/* 6. If modules use glass-card as first element */
+#content-area .glass-card:first-child,
+#content-area .card:first-child {
+    margin-top: 0 !important;
+    padding-top: 10px !important;
+}
+
+/* 7. Remove any top margin from navbar */
+.top-nav,
+header,
+nav {
+    margin-bottom: 0 !important;
+}
+
+/* 8. Emergency nuclear option - negative margin if needed */
+#content-area.emergency-fix {
+    margin-top: -20px !important;
+    position: relative;
+    top: -20px;
+}
