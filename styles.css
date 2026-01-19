@@ -3104,6 +3104,9 @@ body {
 
 /* ========== Nav Scroll ===========*/
 .nav-items-scroll {
+  display: flex;
+  align-items: center;   /* vertically centers items */
+  height: 3.5rem;        /* lock to navbar height */
   overflow-x: auto;
   background: var(--nav-bg, #fff);
   border-bottom: 1px solid var(--border-color, #ddd);
@@ -3131,3 +3134,18 @@ body {
   border-radius: 6px;
   transition: background 0.2s, color 0.2s;
 }
+
+body.dark-mode {
+  --nav-bg: #1e1e1e;
+  --text-color: #e0e0e0;
+  --border-color: #333;
+  --hover-bg: #2a2a2a;
+  --accent-bg: #333;
+  --accent-color: #4fc3f7;
+}
+
+body.dark-mode .nav-item.active {
+  background: var(--accent-bg);
+  color: var(--accent-color);
+}
+
