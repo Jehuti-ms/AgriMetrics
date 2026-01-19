@@ -857,6 +857,9 @@ setupHamburgerMenu() {
             console.log('🔥 Signing out from Firebase...');
             await firebase.auth().signOut();
             console.log('✅ Firebase signout successful');
+            
+            // IMPORTANT: Wait for Firebase to complete signout
+            await new Promise(resolve => setTimeout(resolve, 500));
         } else {
             console.log('⚠️ Firebase not available, proceeding anyway');
         }
@@ -865,46 +868,54 @@ setupHamburgerMenu() {
         this.currentUser = null;
         this.authInitialized = false;
         
-        // 5. Force UI update
-        setTimeout(() => {
-            console.log('🔄 Forcing UI to auth screen...');
-            
-            // Hide everything app-related
-            const appContainer = document.getElementById('app-container');
-            const authContainer = document.getElementById('auth-container');
-            const splash = document.getElementById('splash-screen');
-            
-            if (appContainer) {
-                appContainer.style.display = 'none';
-                console.log('📦 App container hidden');
-            }
-            
-            if (splash) {
-                splash.style.display = 'none';
-            }
-            
-            if (authContainer) {
-                authContainer.style.display = 'block';
-                // Reset to signin form
-                const signin = document.getElementById('signin-form');
-                const signup = document.getElementById('signup-form');
-                if (signin) signin.classList.add('active');
-                if (signup) signup.classList.remove('active');
-                console.log('🔐 Auth container shown');
-            }
-            
-            // Clear content area
-            const contentArea = document.getElementById('content-area');
-            if (contentArea) {
-                contentArea.innerHTML = '';
-            }
-            
-            // Hide loading
-            this.hideLoading();
-            
-            console.log('🎉 Logout sequence complete!');
-            
-        }, 500);
+        // 5. Force UI update - SIMPLIFY THIS
+        console.log('🔄 Forcing UI to auth screen...');
+        
+        // Hide everything app-related
+        const appContainer = document.getElementById('app-container');
+        const authContainer = document.getElementById('auth-container');
+        const splash = document.getElementById('splash-screen');
+        
+        if (appContainer) {
+            appContainer.style.display = 'none';
+            console.log('📦 App container hidden');
+        }
+        
+        if (splash) {
+            splash.style.display = 'none';
+        }
+        
+        if (authContainer) {
+            authContainer.style.display = 'block';
+            // Reset to signin form
+            const signin = document.getElementById('signin-form');
+            const signup = document.getElementById('signup-form');
+            const forgot = document.getElementById('forgot-password-form');
+            if (signin) signin.classList.add('active');
+            if (signup) signup.classList.remove('active');
+            if (forgot) forgot.classList.remove('active');
+            console.log('🔐 Auth container shown');
+        }
+        
+        // Clear content area
+        const contentArea = document.getElementById('content-area');
+        if (contentArea) {
+            contentArea.innerHTML = '';
+        }
+        
+        // Also reset the top navigation
+        const header = document.querySelector('header');
+        if (header) {
+            header.remove();
+        }
+        
+        // Reset body classes
+        document.body.classList.remove('dark-mode', 'light-mode');
+        
+        // Hide loading
+        this.hideLoading();
+        
+        console.log('🎉 Logout sequence complete!');
         
     } catch (error) {
         console.error('❌ Logout error:', error);
