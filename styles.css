@@ -2820,3 +2820,22 @@ body.auth-visible #auth-container {
 .dark-mode .popout-modal-close:hover {
     color: #fca5a5 !important;
 }
+
+/* Override the inline styles for dark mode */
+.dark-mode div[style*="background: #f0f9ff"] {
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+}
+
+.dark-mode div[style*="border: 1px solid #bae6fd"] {
+    border-color: #475569 !important;
+}
+
+/* Also fix the text colors inside */
+.dark-mode div[style*="color: #0ea5e9"] {
+    color: #7dd3fc !important;
+}
+
+.dark-mode div[style*="color: #0369a1"] {
+    color: #93c5fd !important;
+}
