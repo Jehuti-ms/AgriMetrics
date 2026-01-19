@@ -3066,4 +3066,26 @@ body {
     text-shadow: 0 0 5px rgba(139, 92, 246, 0.5) !important;
 }
     
+/* Mobile phones */
+@media (max-width: 480px) {
+  .top-nav {
+    padding: 0 12px !important;
+    overflow-x: auto;                  /* allow horizontal scroll */
+    -webkit-overflow-scrolling: touch; /* smooth scroll on iOS */
+    scroll-snap-type: x mandatory;     /* enable snap scrolling */
+  }
+
+  .nav-list {
+    display: flex;
+    flex-wrap: nowrap;                 /* keep items in one row */
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;     /* snap container */
+  }
+
+  .nav-item {
+    flex: 0 0 auto;                    /* prevent shrinking */
+    padding: 8px !important;
+    scroll-snap-align: center;         /* snap each icon to center */
+  }
+}
 
