@@ -2369,55 +2369,61 @@ body.app-active #app-container {
     display: block;
 }
 
-/* Auth forms container with scrolling */
-.auth-forms {
+/* Make signup form container scrollable */
+#signup-form .auth-forms {
+    background: white;
+    border-radius: 16px;
+    padding: 30px; /* Reduced padding for more space */
+    width: 90%;
+    max-width: 420px;
+    max-height: 85vh; /* Slightly taller than other forms */
+    overflow-y: auto; /* Enable scrolling */
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* Regular auth forms (signin, forgot password) */
+#signin-form .auth-forms,
+#forgot-password-form .auth-forms {
     background: white;
     border-radius: 16px;
     padding: 40px;
     width: 90%;
     max-width: 420px;
-    max-height: 90vh; /* Limit height to 90% of viewport */
-    overflow-y: auto; /* Enable vertical scrolling */
+    overflow: visible; /* No scrolling for shorter forms */
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    transform: translateY(20px);
-    opacity: 0;
-    transition: transform 0.5s ease, opacity 0.5s ease;
 }
 
-/* Smooth scrollbar styling */
-.auth-forms::-webkit-scrollbar {
-    width: 8px;
+/* Custom scrollbar for signup form */
+#signup-form .auth-forms::-webkit-scrollbar {
+    width: 6px;
 }
 
-.auth-forms::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
+#signup-form .auth-forms::-webkit-scrollbar-track {
+    background: #f5f5f5;
+    border-radius: 10px;
 }
 
-.auth-forms::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 4px;
+#signup-form .auth-forms::-webkit-scrollbar-thumb {
+    background: #4CAF50;
+    border-radius: 10px;
 }
 
-.auth-forms::-webkit-scrollbar-thumb:hover {
-    background: #a1a1a1;
+#signup-form .auth-forms::-webkit-scrollbar-thumb:hover {
+    background: #2E7D32;
 }
 
-/* Reduce padding on mobile for signup form */
-@media (max-width: 480px) {
+/* Adjust form spacing for signup */
+#signup-form .form-group {
+    margin-bottom: 18px; /* Slightly more spacing between fields */
+}
+
+/* On mobile, reduce form height */
+@media (max-height: 700px) {
     #signup-form .auth-forms {
-        padding: 30px 20px;
-    }
-    
-    /* Make form groups more compact */
-    #signup-form .form-group {
-        margin-bottom: 15px;
+        max-height: 80vh;
+        padding: 20px 25px;
     }
 }
 
-/* For Firefox */
-.auth-forms {
-    scrollbar-width: thin;
-    scrollbar-color: #c1c1c1 #f1f1f1;
-}
+
 
