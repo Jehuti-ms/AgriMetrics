@@ -3102,5 +3102,26 @@ body {
   border-radius: 8px;
 }
 
+/* Top nav container */
+.top-nav {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+}
+
+/* Nav list aligned to the right */
+.nav-list {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;          /* pushes nav items to the right */
+  justify-content: flex-end;  /* ensures they cluster near logout/hamburger */
+}
+
+/* Optional: tighten spacing on small screens */
+@media (max-width: 480px) {
+  .nav-list {
+    gap: 8px;
+  }
+}
 
 
