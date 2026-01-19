@@ -49,32 +49,36 @@ class FarmManagementApp {
 
 // This should be a separate method, NOT inside initializeApp()
 fixContentPosition() {
-    console.log('📐 Fixing content position to be flush with navbar...');
+    console.log('📐 Fixing content position...');
     
-    // Remove ALL padding from content area
     const contentArea = document.getElementById('content-area');
-    if (contentArea) {
-        contentArea.style.paddingTop = '0';
-        contentArea.style.marginTop = '0';
-    }
+    if (!contentArea) return;
     
-    // Find the first content element and remove its top margin
-    const firstContent = contentArea?.firstElementChild;
-    if (firstContent) {
-        firstContent.style.marginTop = '0';
-        firstContent.style.paddingTop = '0';
+    // 1. Remove padding from content area only
+    contentArea.style.paddingTop = '0';
+    
+    // 2. Wait for module to load, then fix its header
+    setTimeout(() => {
+        // Find the first child (module content)
+        const firstChild = contentArea.firstElementChild;
+        if (!firstChild) return;
         
-        // If it's a welcome section or header, ensure no negative margin
-        if (firstContent.classList.contains('welcome-section') || 
-            firstContent.classList.contains('module-header')) {
-            firstContent.style.margin = '0 0 20px 0';
+        // Look for header inside module
+        const moduleHeader = firstChild.querySelector('.module-header, .welcome-section, .dashboard-header, [class*="header"]');
+        
+        if (moduleHeader) {
+            // Fix just the header, not the whole module
+            moduleHeader.style.marginTop = '0';
+            moduleHeader.style.paddingTop = '10px';
+            console.log('✅ Fixed module header position');
+        } else {
+            // If no specific header, fix first child gently
+            firstChild.style.marginTop = '0';
+            firstChild.style.paddingTop = '10px';
         }
-    }
+    }, 300); // Wait for module to render
     
-    // Also fix body
-    document.body.style.paddingTop = '0';
-    
-    console.log('✅ Content position fixed');
+    console.log('✅ Content position fixing in progress');
 }
     
  
