@@ -61,38 +61,48 @@
             <div id="auth-container">
               <div class="auth-forms">
             
-                <!-- Sign In Form -->
-                <div id="signin-form" class="auth-form active">
-                  <h2>Sign In</h2>
-            
-                  <!-- Social Login Section -->
-                  <div id="social-login-container" class="social-login-section">
-                    <!-- Google button will be automatically rendered here -->
-                  </div>
-            
-                  <div class="auth-divider">
-                    <span>or</span>
-                  </div>
-            
-                  <!-- Email/Password Form -->
-                  <form id="signin-form-element">
-                    <div class="form-group">
-                      <label>Email:</label>
-                      <input type="email" id="signin-email" required>
+               <!-- Sign In Form -->
+                    <div id="signin-form" class="auth-form active">
+                      <h2>Sign In</h2>
+                    
+                      <!-- Social Login Section -->
+                      <div id="social-login-container" class="social-login-section">
+                        <!-- Google button will be automatically rendered here -->
+                      </div>
+                    
+                      <div class="auth-divider">
+                        <span>or</span>
+                      </div>
+                    
+                      <!-- Email/Password Form -->
+                      <form id="signin-form-element">
+                        <div class="form-group">
+                          <label>Email:</label>
+                          <input type="email" id="signin-email" required>
+                        </div>
+                        
+                        <div class="form-group">
+                          <label>Password:</label>
+                          <input type="password" id="signin-password" required>
+                        </div>
+                        
+                        <!-- Remember Me Checkbox -->
+                        <div class="form-group remember-me-group">
+                          <label class="checkbox-label">
+                            <input type="checkbox" id="remember-me">
+                            <span>Remember me</span>
+                          </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Sign In</button>
+                        
+                        <div class="auth-links">
+                          <a href="#" id="show-forgot-password">Forgot Password?</a>
+                          <a href="#" id="show-signup">Sign Up</a>
+                        </div>
+                      </form>
                     </div>
-                    <div class="form-group">
-                      <label>Password:</label>
-                      <input type="password" id="signin-password" required>
-                    </div>
-                      <div class="form-options">
-                   <button type="submit" class="btn btn-primary">Sign In</button>
-                    <div class="auth-links">
-                      <a href="#" id="show-forgot-password">Forgot Password?</a>
-                      <a href="#" id="show-signup">Sign Up</a>
-                    </div>
-                  </form>
-                </div>
-            
+                                
               <!-- Sign Up Form -->
             <div id="signup-form" class="auth-form">
                 <h2>Sign Up</h2>
