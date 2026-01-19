@@ -1,46 +1,57 @@
-// signin-fix.js - Minimal version that doesn't interfere
+// signin-fix.js - Updated
 console.log('🔧 Loading simplified sign-in fix...');
 
-// Just check for existing auth and don't interfere with forms
 document.addEventListener('DOMContentLoaded', function() {
-    if (typeof firebase !== 'undefined' && firebase.auth) {
-        firebase.auth().onAuthStateChanged(function(user) {
-            if (user) {
-                console.log('✅ User authenticated via signin-fix:', user.email);
-            }
-        });
-    }
-});
-
-// Simple auth flow control
-document.addEventListener('DOMContentLoaded', function() {
-    // First, show splash screen
+    console.log('✅ DOM loaded, initializing auth flow...');
+    
+    // Show splash screen initially
     const splashScreen = document.getElementById('splash-screen');
+    const authContainer = document.getElementById('auth-container');
+    const appContainer = document.getElementById('app-container');
     
-    // Check auth state after a short delay
-    setTimeout(function() {
-        firebase.auth().onAuthStateChanged(function(user) {
+    // Ensure initial state
+    if (splashScreen) splashScreen.style.display = 'flex';
+    if (authContainer) authContainer.style.display = 'none';
+    if (appContainer) appContainer.style.display = 'none';
+    
+    // Wait a moment, then check auth state
+    setTimeout(() => {
+        console.log('🔍 Checking auth state...');
+        
+        firebase.auth().onAuthStateChanged((user) => {
+            // Hide splash screen
+            if (splashScreen) {
+                splashScreen.style.display = 'none';
+                console.log('🖼️ Splash screen hidden');
+            }
+            
             if (user) {
-                // User is logged in - show app
-                if (splashScreen) splashScreen.classList.add('hidden');
-                document.getElementById('auth-container').classList.remove('active');
-                document.getElementById('app-container').classList.remove('hidden');
+                // User is signed in - show app
+                console.log('👤 User already signed in:', user.email);
+                if (appContainer) {
+                    appContainer.style.display = 'block';
+                }
+                if (authContainer) {
+                    authContainer.style.display = 'none';
+                }
             } else {
-                // User is not logged in - show login form
-                if (splashScreen) splashScreen.classList.add('hidden');
-                document.getElementById('auth-container').classList.add('active');
+                // User is not signed in - show login
+                console.log('🔐 User not signed in, showing login form');
+                if (authContainer) {
+                    authContainer.style.display = 'block';
+                }
+                if (appContainer) {
+                    appContainer.style.display = 'none';
+                }
+                
+                // Focus on password field if email is already filled
+                const emailInput = document.getElementById('signin-email');
+                if (emailInput && emailInput.value) {
+                    document.getElementById('signin-password')?.focus();
+                }
             }
         });
-    }, 1000); // Show splash for 1 second
+    }, 800); // Show splash for 0.8 seconds
     
-    // Handle logout
-    document.addEventListener('click', function(e) {
-        if (e.target.id === 'logout-confirm' || e.target.closest('#logout-confirm')) {
-            // Clear remember me on logout
-            if (window.simpleRememberMe) {
-                window.simpleRememberMe.clear();
-            }
-            // Firebase sign out will happen via your existing code
-        }
-    });
+    console.log('✅ Sign-in fix initialized');
 });
