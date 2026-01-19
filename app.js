@@ -862,7 +862,8 @@ setupHamburgerMenu() {
         if (authContainer) authContainer.style.display = 'block';
     }
 }
-   
+}
+    
 // Reacts to Firebase auth state changes
 firebase.auth().onAuthStateChanged(user => {
   const dashboard = document.getElementById("dashboard-container");
