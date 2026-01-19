@@ -861,27 +861,8 @@ setupHamburgerMenu() {
         if (appContainer) appContainer.style.display = 'none';
         if (authContainer) authContainer.style.display = 'block';
     }
-},
-   
-// Ensures side menu starts hidden and overlay reset
-function initializeMenu() {
-  const sideMenu = document.getElementById('side-menu');
-  const overlay = document.querySelector('.side-menu-overlay');
-
-  if (sideMenu) {
-    sideMenu.classList.remove('open');
-    sideMenu.classList.add('closed');
-    sideMenu.style.transform = '';
-    sideMenu.style.left = '';
-    sideMenu.style.right = '';
-  }
-
-  if (overlay) {
-    overlay.classList.remove('active');
-    overlay.style.display = '';
-  }
 }
-
+   
 // Reacts to Firebase auth state changes
 firebase.auth().onAuthStateChanged(user => {
   const dashboard = document.getElementById("dashboard-container");
@@ -890,12 +871,12 @@ firebase.auth().onAuthStateChanged(user => {
   if (user) {
     if (dashboard) dashboard.style.display = "block";
     if (authContainer) authContainer.style.display = "none";
-    initializeMenu();
+    window.app.initializeMenu();  // <-- Call app method
     console.log("🎉 User authenticated, showing app...");
   } else {
     if (dashboard) dashboard.style.display = "none";
     if (authContainer) authContainer.style.display = "block";
-    initializeMenu();
+    window.app.initializeMenu();  // <-- Call app method
     console.log("🔒 No user, showing sign-in form...");
   }
 });
