@@ -2369,3 +2369,55 @@ body.app-active #app-container {
     display: block;
 }
 
+/* Auth forms container with scrolling */
+.auth-forms {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    width: 90%;
+    max-width: 420px;
+    max-height: 90vh; /* Limit height to 90% of viewport */
+    overflow-y: auto; /* Enable vertical scrolling */
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    transform: translateY(20px);
+    opacity: 0;
+    transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+/* Smooth scrollbar styling */
+.auth-forms::-webkit-scrollbar {
+    width: 8px;
+}
+
+.auth-forms::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.auth-forms::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.auth-forms::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+/* Reduce padding on mobile for signup form */
+@media (max-width: 480px) {
+    #signup-form .auth-forms {
+        padding: 30px 20px;
+    }
+    
+    /* Make form groups more compact */
+    #signup-form .form-group {
+        margin-bottom: 15px;
+    }
+}
+
+/* For Firefox */
+.auth-forms {
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
