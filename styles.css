@@ -3096,13 +3096,11 @@ body {
   }
 }
 
-/* Remove default outline on nav icons */
-.nav-item:focus,
-.nav-item:active,
-.nav-item button:focus,
-.nav-item button:active {
+.nav-item:focus {
   outline: none;
-  box-shadow: none;
+  box-shadow: 0 0 0 2px var(--primary-color);
+  border-radius: 8px;
 }
+
 
 
