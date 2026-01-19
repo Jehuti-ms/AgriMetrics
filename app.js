@@ -767,63 +767,7 @@ setupHamburgerMenu() {
         `;
     }
 
-    setupLogoutHandlers() {
-    console.log('🔧 Setting up logout handlers for all buttons...');
-    
-    // Method 1: Direct attachment for navbar button (when it exists)
-    const attachNavbarLogout = () => {
-        const navbarLogout = document.getElementById('navbar-logout-btn');
-        if (navbarLogout && !navbarLogout.dataset.listenerAttached) {
-            console.log('✅ Attaching direct listener to navbar logout button');
-            navbarLogout.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('🖱️ Navbar logout button clicked directly');
-                this.performLogout();
-            });
-            navbarLogout.dataset.listenerAttached = 'true';
-        }
-    };
-    
-    // Method 2: Event delegation for any logout button
-    document.addEventListener('click', (e) => {
-        const logoutBtn = e.target.closest('.logout-btn');
-        if (logoutBtn) {
-            console.log('🎯 Event delegation caught logout click:', {
-                id: logoutBtn.id,
-                className: logoutBtn.className,
-                tagName: logoutBtn.tagName
-            });
-            e.preventDefault();
-            e.stopPropagation();
-            this.performLogout();
-        }
-    });
-    
-    // Method 3: Listen for custom logout events
-    document.addEventListener('user-logout', () => {
-        console.log('📢 Received custom logout event');
-        this.performLogout();
-    });
-    
-    // Try attaching to navbar button immediately and periodically
-    attachNavbarLogout();
-    
-    // Keep trying to attach for a few seconds (in case nav loads later)
-    let attempts = 0;
-    const maxAttempts = 10;
-    const interval = setInterval(() => {
-        attempts++;
-        attachNavbarLogout();
-        
-        if (attempts >= maxAttempts) {
-            clearInterval(interval);
-            console.log('⏱️ Stopped trying to attach navbar listener');
-        }
-    }, 300);
-}
-
-async performLogout() {
+   async performLogout() {
     console.log('🔐 PERFORMING LOGOUT SEQUENCE...');
     
     try {
@@ -833,11 +777,21 @@ async performLogout() {
         // 1. Close side menu if open
         this.closeSideMenu();
         
-        // 2. Clear local storage
-        localStorage.clear();
-        console.log('🧹 Local storage cleared');
+        // 2. Clear MOST local storage but KEEP remember me email
+        const rememberEmail = localStorage.getItem('farm_system_remember_email');
+        localStorage.clear(); // Clear everything first
         
-        // 3. Sign out from Firebase
+        // 3. RESTORE the remember email if user wants to keep it
+        // Check if checkbox exists and is checked
+        const rememberCheckbox = document.getElementById('remember-me');
+        if (rememberEmail && rememberCheckbox && rememberCheckbox.checked) {
+            localStorage.setItem('farm_system_remember_email', rememberEmail);
+            console.log('💾 Preserving remember me email');
+        } else {
+            console.log('🧹 Remember me email cleared');
+        }
+        
+        // 4. Sign out from Firebase
         if (typeof firebase !== 'undefined' && firebase.auth) {
             console.log('🔥 Signing out from Firebase...');
             await firebase.auth().signOut();
@@ -846,11 +800,11 @@ async performLogout() {
             console.log('⚠️ Firebase not available, proceeding anyway');
         }
         
-        // 4. Reset app state
+        // 5. Reset app state
         this.currentUser = null;
         this.authInitialized = false;
         
-        // 5. Force UI update
+        // 6. Force UI update
         setTimeout(() => {
             console.log('🔄 Forcing UI to auth screen...');
             
@@ -900,23 +854,6 @@ async performLogout() {
         const authContainer = document.getElementById('auth-container');
         if (appContainer) appContainer.style.display = 'none';
         if (authContainer) authContainer.style.display = 'block';
-    }
-}
-    
-    // Optional helper method
-    createLogoutButton(options = {}) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'logout-btn ' + (options.className || '');
-        button.innerHTML = `
-            <span>${options.icon || '🚪'}</span>
-            <span>${options.text || 'Logout'}</span>
-        `;
-        
-        if (options.id) button.id = options.id;
-        if (options.title) button.title = options.title;
-        
-        return button;
     }
 }
    
