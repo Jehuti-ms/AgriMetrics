@@ -2875,47 +2875,40 @@ body {
     margin-top: 0 !important;
 }
 
-/* ===== RESPONSIVE BRAND TEXT ===== */
-
-/* Default: Show full brand */
-.brand-text {
-    display: inline-block;
-}
-
-.brand-subtitle {
-    display: inline-block;
-    margin-left: 8px;
-}
-
-/* On small screens, hide subtitle */
-@media (max-width: 768px) {
+/* ===== RESPONSIVE BRAND TEXT ICON SCROLLING ===== */
+ @media (max-width: 768px) {
+    .nav-items {
+        gap: 2px;
+        padding: 0 4px;
+    }
+    
+    .nav-item {
+        padding: 6px 8px !important;
+        min-width: 50px !important;
+    }
+    
+    .nav-label {
+        display: none;
+    }
+    
+    .nav-link span:not(.material-icons, .material-symbols-outlined) {
+        display: none !important;
+    }
+    
+    .nav-link i,
+    .nav-link .material-icons,
+    .nav-link .material-symbols-outlined {
+        font-size: 20px !important;
+    }
+    
     .brand-subtitle {
         display: none;
     }
     
     .brand-text {
-        font-size: 16px; /* Slightly smaller */
+        font-size: 18px;
     }
 }
-
-/* On very small screens, further reduce */
-@media (max-width: 480px) {
-    .brand-text {
-        font-size: 14px;
-        margin-right: 8px;
-    }
-    
-    .nav-brand img {
-        width: 32px !important;
-        height: 32px !important;
-    }
-}
-
-/* Emergency: Hide brand completely if needed */
-@media (max-width: 360px) {
-    .brand-text {
-        display: none;
-    }
 
     /* ========== NAV ITEM STYLING ENHANCEMENTS ========= */
 /* ===== FIX NAV BUTTON OUTLINES & ADD GREEN GLOW ===== */
