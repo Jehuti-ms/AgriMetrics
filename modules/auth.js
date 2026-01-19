@@ -1033,28 +1033,30 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Simple Remember Me functionality
+// simple-remember-me.js
+
 class SimpleRememberMe {
     constructor() {
-        this.STORAGE_KEY = 'farm_system_user';
+        this.STORAGE_KEY = 'farm_system_remember_email';
         this.init();
     }
     
     init() {
         this.loadSavedEmail();
-        this.setupFormListener();
+        this.setupListeners();
+        this.listenForLogout();
     }
     
     loadSavedEmail() {
         try {
             const saved = localStorage.getItem(this.STORAGE_KEY);
             if (saved) {
-                const data = JSON.parse(saved);
+                const email = JSON.parse(saved);
                 const emailInput = document.getElementById('signin-email');
                 const rememberCheckbox = document.getElementById('remember-me');
                 
-                if (emailInput && data.email) {
-                    emailInput.value = data.email;
+                if (emailInput) {
+                    emailInput.value = email;
                 }
                 
                 if (rememberCheckbox) {
@@ -1062,44 +1064,56 @@ class SimpleRememberMe {
                 }
             }
         } catch (error) {
-            console.log('No saved credentials found');
+            console.log('No saved email found');
         }
     }
     
-    setupFormListener() {
+    setupListeners() {
+        // Save email when sign-in form is submitted
         const signinForm = document.getElementById('signin-form-element');
         if (signinForm) {
             signinForm.addEventListener('submit', (e) => {
-                this.handleSignIn();
+                this.saveEmail();
             });
         }
     }
     
-    handleSignIn() {
+    saveEmail() {
         const rememberCheckbox = document.getElementById('remember-me');
         const emailInput = document.getElementById('signin-email');
         
         if (rememberCheckbox && rememberCheckbox.checked && emailInput && emailInput.value) {
-            // Save email to localStorage
-            const data = {
-                email: emailInput.value,
-                timestamp: new Date().getTime()
-            };
-            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+            // Save only email (never save password!)
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(emailInput.value));
         } else {
-            // Clear if checkbox is unchecked
+            // Clear if checkbox is not checked
             localStorage.removeItem(this.STORAGE_KEY);
         }
     }
     
-    // Call this on logout
-    clear() {
+    listenForLogout() {
+        // Listen for logout events from the central broadcaster
+        if (window.DataBroadcaster) {
+            window.DataBroadcaster.subscribe('user-logout', () => {
+                this.clearEmail();
+            });
+        }
+        
+        // Also listen for direct click events as backup
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'logout-confirm' || e.target.closest('#logout-confirm')) {
+                this.clearEmail();
+            }
+        });
+    }
+    
+    clearEmail() {
         localStorage.removeItem(this.STORAGE_KEY);
     }
 }
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
     window.simpleRememberMe = new SimpleRememberMe();
 });
 
