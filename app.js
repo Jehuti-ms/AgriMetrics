@@ -861,7 +861,7 @@ setupHamburgerMenu() {
         if (appContainer) appContainer.style.display = 'none';
         if (authContainer) authContainer.style.display = 'block';
     }
-}
+},
    
 // Ensures side menu starts hidden and overlay reset
 function initializeMenu() {
