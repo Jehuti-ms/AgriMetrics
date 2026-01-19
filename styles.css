@@ -2840,9 +2840,9 @@ body.auth-visible #auth-container {
     color: #93c5fd !important;
 }
 
-/* ===== SURGICAL FIX FOR NAVBAR GAP ===== */
+/* ===== SMART GAP FIX ===== */
 
-/* Only target the direct issue without breaking modules */
+/* Remove padding from containers ONLY */
 body {
     padding-top: 0 !important;
 }
@@ -2855,14 +2855,22 @@ body {
     padding-top: 0 !important;
 }
 
-/* Only remove margin from VERY FIRST element in content area */
-#content-area > :first-child {
+/* TARGET ONLY: The first element after navbar that's a module header */
+#content-area > .module-header:first-child,
+#content-area > .welcome-section:first-child,
+#content-area > .dashboard-header:first-child,
+#content-area > [class*="header"]:first-child {
     margin-top: 0 !important;
+    padding-top: 10px !important; /* Small breathing room */
 }
 
-/* Specific fix for dashboard module if that's the issue */
-#dashboard-container.welcome-section {
-    margin-top: 0 !important;
-    padding-top: 10px !important;
+/* DON'T touch anything else! */
+#content-area > * {
+    /* Leave other elements alone */
 }
 
+/* If module uses a specific container class as first child */
+#content-area > .glass-card.module-header,
+#content-area > .card.module-header {
+    margin-top: 0 !important;
+}
