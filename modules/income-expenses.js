@@ -1,4 +1,4 @@
-// modules/income-expenses.js - COMPLETE REWRITTEN VERSION WITH RECEIPT FIXES
+// modules/income-expenses.js - EDITED VERSION WITH RECEIPT FIXES
 console.log('💰 Loading Income & Expenses module (Complete with Receipt Fixes)...');
 
 const Broadcaster = window.DataBroadcaster || {
@@ -848,6 +848,44 @@ const IncomeExpensesModule = {
         if (fileInput) fileInput.value = '';
     },
 
+    // ==================== NEW: MARK RECEIPT AS PROCESSED ====================
+    markReceiptAsProcessed(receiptId) {
+        console.log(`Marking receipt ${receiptId} as processed...`);
+        
+        // Find receipt in queue
+        const receiptIndex = this.receiptQueue.findIndex(r => r.id === receiptId);
+        if (receiptIndex > -1) {
+            this.receiptQueue[receiptIndex].status = 'processed';
+            
+            // Update Firebase if available
+            if (this.isFirebaseAvailable && window.db) {
+                try {
+                    window.db.collection('receipts').doc(receiptId).update({
+                        status: 'processed',
+                        processedAt: new Date().toISOString()
+                    });
+                } catch (error) {
+                    console.error('Error updating receipt in Firebase:', error);
+                }
+            }
+            
+            // Update localStorage for local receipts
+            if (receiptId.startsWith('local_')) {
+                const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+                const localIndex = localReceipts.findIndex(r => r.id === receiptId);
+                if (localIndex > -1) {
+                    localReceipts[localIndex].status = 'processed';
+                    localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
+                }
+            }
+            
+            // Update UI
+            this.updateReceiptQueueUI();
+            
+            this.showNotification('Receipt marked as processed', 'success');
+        }
+    },
+
     // ==================== FIXED: HIDE TRANSACTION MODAL ====================
     hideTransactionModal() {
         const modal = document.getElementById('transaction-modal');
@@ -862,6 +900,101 @@ const IncomeExpensesModule = {
         
         const form = document.getElementById('transaction-form');
         if (form) form.reset();
+        
+        // Reset transaction ID
+        const idInput = document.getElementById('transaction-id');
+        if (idInput) idInput.value = '';
+        
+        // Hide delete button
+        const deleteBtn = document.getElementById('delete-transaction');
+        if (deleteBtn) deleteBtn.style.display = 'none';
+        
+        // Reset title
+        const title = document.getElementById('transaction-modal-title');
+        if (title) title.textContent = 'Add Transaction';
+        
+        // Reset form fields to defaults
+        const dateInput = document.getElementById('transaction-date');
+        if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+        
+        const typeSelect = document.getElementById('transaction-type');
+        if (typeSelect) typeSelect.value = 'income';
+        
+        const categorySelect = document.getElementById('transaction-category');
+        if (categorySelect) categorySelect.value = '';
+    },
+
+    // ==================== FIXED: EDIT TRANSACTION ====================
+    editTransaction(transactionId) {
+        console.log('Editing transaction:', transactionId);
+        const transaction = this.transactions.find(t => t.id == transactionId);
+        if (!transaction) {
+            this.showNotification('Transaction not found', 'error');
+            return;
+        }
+        
+        // Populate form
+        const idInput = document.getElementById('transaction-id');
+        if (idInput) idInput.value = transaction.id;
+        
+        const dateInput = document.getElementById('transaction-date');
+        if (dateInput) dateInput.value = transaction.date;
+        
+        const typeSelect = document.getElementById('transaction-type');
+        if (typeSelect) typeSelect.value = transaction.type;
+        
+        const categorySelect = document.getElementById('transaction-category');
+        if (categorySelect) categorySelect.value = transaction.category;
+        
+        const amountInput = document.getElementById('transaction-amount');
+        if (amountInput) amountInput.value = transaction.amount;
+        
+        const descriptionInput = document.getElementById('transaction-description');
+        if (descriptionInput) descriptionInput.value = transaction.description;
+        
+        const paymentSelect = document.getElementById('transaction-payment');
+        if (paymentSelect) paymentSelect.value = transaction.paymentMethod || 'cash';
+        
+        const referenceInput = document.getElementById('transaction-reference');
+        if (referenceInput) referenceInput.value = transaction.reference || '';
+        
+        const notesInput = document.getElementById('transaction-notes');
+        if (notesInput) notesInput.value = transaction.notes || '';
+        
+        const deleteBtn = document.getElementById('delete-transaction');
+        if (deleteBtn) deleteBtn.style.display = 'block';
+        
+        const title = document.getElementById('transaction-modal-title');
+        if (title) title.textContent = 'Edit Transaction';
+        
+        // Handle receipt if exists
+        if (transaction.receipt) {
+            this.receiptPreview = transaction.receipt;
+            this.showReceiptPreviewInTransactionModal(transaction.receipt);
+        } else {
+            this.receiptPreview = null;
+            this.clearReceiptPreview();
+        }
+        
+        // Show modal if not already visible
+        const modal = document.getElementById('transaction-modal');
+        if (modal && modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+        }
+    },
+
+    // ==================== FIXED: DELETE TRANSACTION ====================
+    deleteTransaction() {
+        const transactionId = document.getElementById('transaction-id')?.value;
+        if (!transactionId) {
+            this.showNotification('No transaction selected', 'error');
+            return;
+        }
+        
+        if (confirm('Are you sure you want to delete this transaction?')) {
+            this.deleteTransactionRecord(transactionId);
+            this.hideTransactionModal();
+        }
     },
 
     // ==================== FIREBASE RECEIPT METHODS ====================
@@ -2026,7 +2159,10 @@ const IncomeExpensesModule = {
             const ocrResults = document.getElementById('ocr-results');
             if (ocrResults) ocrResults.classList.add('hidden');
             
-            if (transactionId) this.editTransaction(transactionId);
+            if (transactionId) {
+                // Don't reset form here, editTransaction will handle it
+                setTimeout(() => this.editTransaction(transactionId), 50);
+            }
         }
     },
 
@@ -2261,65 +2397,6 @@ const IncomeExpensesModule = {
         }
         const modal = document.getElementById('category-analysis-modal');
         if (modal) modal.classList.remove('hidden');
-    },
-
-    editTransaction(transactionId) {
-        console.log('Editing transaction:', transactionId);
-        const transaction = this.transactions.find(t => t.id == transactionId);
-        if (!transaction) {
-            this.showNotification('Transaction not found', 'error');
-            return;
-        }
-        
-        // Populate form
-        const idInput = document.getElementById('transaction-id');
-        if (idInput) idInput.value = transaction.id;
-        
-        const dateInput = document.getElementById('transaction-date');
-        if (dateInput) dateInput.value = transaction.date;
-        
-        const typeSelect = document.getElementById('transaction-type');
-        if (typeSelect) typeSelect.value = transaction.type;
-        
-        const categorySelect = document.getElementById('transaction-category');
-        if (categorySelect) categorySelect.value = transaction.category;
-        
-        const amountInput = document.getElementById('transaction-amount');
-        if (amountInput) amountInput.value = transaction.amount;
-        
-        const descriptionInput = document.getElementById('transaction-description');
-        if (descriptionInput) descriptionInput.value = transaction.description;
-        
-        const paymentSelect = document.getElementById('transaction-payment');
-        if (paymentSelect) paymentSelect.value = transaction.paymentMethod || 'cash';
-        
-        const referenceInput = document.getElementById('transaction-reference');
-        if (referenceInput) referenceInput.value = transaction.reference || '';
-        
-        const notesInput = document.getElementById('transaction-notes');
-        if (notesInput) notesInput.value = transaction.notes || '';
-        
-        const deleteBtn = document.getElementById('delete-transaction');
-        if (deleteBtn) deleteBtn.style.display = 'block';
-        
-        const title = document.getElementById('transaction-modal-title');
-        if (title) title.textContent = 'Edit Transaction';
-        
-        // Handle receipt if exists
-        if (transaction.receipt) {
-            this.receiptPreview = transaction.receipt;
-            this.showReceiptPreviewInTransactionModal(transaction.receipt);
-        }
-    },
-
-    deleteTransaction() {
-        const transactionId = document.getElementById('transaction-id')?.value;
-        if (!transactionId) return;
-        
-        if (confirm('Are you sure you want to delete this transaction?')) {
-            this.deleteTransactionRecord(transactionId);
-            this.hideTransactionModal();
-        }
     },
 
     deleteTransactionRecord(transactionId) {
@@ -2749,4 +2826,3 @@ if (window.FarmModules) {
         console.error('❌ FarmModules framework not found');
     }
 })();
-
