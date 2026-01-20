@@ -420,6 +420,464 @@ const SalesRecordModule = {
         return totalItems > 0 ? (orderData.totalAmount || 0) / totalItems : 0;
     },
 
+    // Add this method to the SalesRecordModule object:
+
+// ==================== FIXED: RENDER SALES TABLE METHOD ====================
+renderSalesTable(period = 'today') {
+    const sales = window.FarmModules.appData.sales || [];
+    
+    let filteredSales = sales;
+    if (period === 'meat') {
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        filteredSales = sales.filter(sale => meatProducts.includes(sale.product));
+    } else if (period === 'production') {
+        filteredSales = sales.filter(sale => sale.productionSource);
+    } else if (period !== 'all') {
+        const cutoffDate = new Date();
+        if (period === 'today') {
+            cutoffDate.setDate(cutoffDate.getDate() - 1);
+        } else if (period === 'week') {
+            cutoffDate.setDate(cutoffDate.getDate() - 7);
+        } else if (period === 'month') {
+            cutoffDate.setDate(cutoffDate.getDate() - 30);
+        }
+        filteredSales = sales.filter(sale => new Date(sale.date) >= cutoffDate);
+    }
+
+    if (filteredSales.length === 0) {
+        return `
+            <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">💰</div>
+                <div style="font-size: 16px; margin-bottom: 8px;">No sales recorded</div>
+                <div style="font-size: 14px; color: var(--text-secondary);">Record your first sale to get started</div>
+            </div>
+        `;
+    }
+
+    const sortedSales = filteredSales.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    return `
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--glass-border);">
+                        <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Date</th>
+                        <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Product</th>
+                        <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Customer</th>
+                        <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Animals/Quantity</th>
+                        <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Unit Price</th>
+                        <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Total</th>
+                        <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Source</th>
+                        <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sortedSales.map(sale => {
+                        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+                        const isMeat = meatProducts.includes(sale.product);
+                        
+                        let quantityInfo = `${sale.quantity} ${sale.unit}`;
+                        if (isMeat && sale.weight && sale.weight > 0) {
+                            quantityInfo = `${sale.animalCount || sale.quantity} animal${(sale.animalCount || sale.quantity) !== 1 ? 's' : ''}`;
+                            if (sale.weight) {
+                                const weightUnit = sale.weightUnit || 'kg';
+                                quantityInfo += ` • ${sale.weight} ${weightUnit}`;
+                            }
+                        }
+                        
+                        const sourceBadge = sale.productionSource 
+                            ? '<span style="background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 10px; font-size: 10px; margin-left: 4px;">PROD</span>'
+                            : '';
+                        
+                        return `
+                            <tr style="border-bottom: 1px solid var(--glass-border);">
+                                <td style="padding: 12px 8px; color: var(--text-primary);">${this.formatDate(sale.date)}</td>
+                                <td style="padding: 12px 8px; color: var(--text-primary);">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="font-size: 18px;">${this.getProductIcon(sale.product)}</span>
+                                        <span style="font-weight: 500;">${this.formatProductName(sale.product)}</span>
+                                        ${sourceBadge}
+                                    </div>
+                                </td>
+                                <td style="padding: 12px 8px; color: var(--text-secondary);">${sale.customer || 'Walk-in'}</td>
+                                <td style="padding: 12px 8px; color: var(--text-primary);">${quantityInfo}</td>
+                                <td style="padding: 12px 8px; color: var(--text-primary);">
+                                    ${this.formatCurrency(sale.unitPrice)}
+                                    ${sale.weightUnit === 'lbs' ? '/lb' : sale.weightUnit ? `/${sale.weightUnit}` : sale.priceUnit === 'per-lb' ? '/lb' : '/kg'}
+                                </td>
+                                <td style="padding: 12px 8px; color: var(--text-primary); font-weight: 600;">${this.formatCurrency(sale.totalAmount)}</td>
+                                <td style="padding: 12px 8px; color: var(--text-secondary); font-size: 12px;">
+                                    ${sale.productionSource ? 'Production' : 'Direct'}
+                                </td>
+                                <td style="padding: 12px 8px;">
+                                    <div style="display: flex; gap: 4px;">
+                                        <button class="btn-icon edit-sale-btn" data-id="${sale.id}" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary);" title="Edit">✏️</button>
+                                        <button class="btn-icon delete-sale-btn" data-id="${sale.id}" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary);" title="Delete">🗑️</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+},
+
+// Also need to add these missing form field listener methods:
+
+setupFormFieldListeners() {
+    // Product change
+    const productSelect = document.getElementById('sale-product');
+    if (productSelect) {
+        productSelect.addEventListener('change', () => this.handleProductChange());
+    }
+    
+    // Real-time total calculation
+    const fieldsToWatch = [
+        'standard-quantity',
+        'standard-price',
+        'meat-animal-count',
+        'meat-weight',
+        'meat-price'
+    ];
+    
+    fieldsToWatch.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('input', () => this.calculateSaleTotal());
+        }
+    });
+    
+    // Weight unit change
+    const weightUnit = document.getElementById('meat-weight-unit');
+    if (weightUnit) {
+        weightUnit.addEventListener('change', () => {
+            this.updateMeatLabels();
+            this.calculateSaleTotal();
+        });
+    }
+    
+    // Unit change
+    const unitSelect = document.getElementById('sale-unit');
+    if (unitSelect) {
+        unitSelect.addEventListener('change', () => {
+            this.updateStandardPriceLabel();
+            this.calculateSaleTotal();
+        });
+    }
+},
+
+handleProductChange() {
+    const productSelect = document.getElementById('sale-product');
+    if (!productSelect) return;
+    
+    const selectedValue = productSelect.value;
+    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+    const isMeatProduct = meatProducts.includes(selectedValue);
+    
+    const meatSection = document.getElementById('meat-section');
+    const standardSection = document.getElementById('standard-section');
+    const meatSummary = document.getElementById('meat-summary');
+    const standardSummary = document.getElementById('standard-summary');
+    
+    if (isMeatProduct) {
+        if (meatSection) meatSection.style.display = 'block';
+        if (meatSummary) meatSummary.style.display = 'block';
+        if (standardSection) standardSection.style.display = 'none';
+        if (standardSummary) standardSummary.style.display = 'none';
+        
+        const unitSelect = document.getElementById('sale-unit');
+        if (unitSelect) unitSelect.value = 'animals';
+        
+        const weightUnit = document.getElementById('meat-weight-unit');
+        if (weightUnit && !weightUnit.value) {
+            weightUnit.value = 'kg';
+        }
+        
+        this.updateMeatLabels();
+        
+        const standardQuantity = document.getElementById('standard-quantity');
+        const standardPrice = document.getElementById('standard-price');
+        if (standardQuantity) standardQuantity.value = '';
+        if (standardPrice) standardPrice.value = '';
+    } else {
+        if (meatSection) meatSection.style.display = 'none';
+        if (meatSummary) meatSummary.style.display = 'none';
+        if (standardSection) standardSection.style.display = 'block';
+        if (standardSummary) standardSummary.style.display = 'block';
+        
+        const unitSelect = document.getElementById('sale-unit');
+        if (unitSelect) {
+            if (!unitSelect.value || unitSelect.value === '') {
+                if (selectedValue === 'eggs') {
+                    unitSelect.value = 'dozen';
+                } else if (selectedValue === 'milk') {
+                    unitSelect.value = 'liters';
+                } else if (selectedValue === 'broilers-live' || selectedValue === 'layers' || selectedValue === 'chicks') {
+                    unitSelect.value = 'birds';
+                } else {
+                    unitSelect.value = 'kg';
+                }
+            }
+        }
+        
+        this.updateStandardPriceLabel();
+        
+        const meatAnimalCount = document.getElementById('meat-animal-count');
+        const meatWeight = document.getElementById('meat-weight');
+        const meatPrice = document.getElementById('meat-price');
+        if (meatAnimalCount) meatAnimalCount.value = '';
+        if (meatWeight) meatWeight.value = '';
+        if (meatPrice) meatPrice.value = '';
+    }
+    
+    this.calculateSaleTotal();
+    this.setDefaultPrice(selectedValue);
+},
+
+updateMeatLabels() {
+    const weightUnit = document.getElementById('meat-weight-unit');
+    if (!weightUnit) return;
+    
+    const weightUnitValue = weightUnit.value;
+    const priceLabel = document.getElementById('meat-price-label');
+    const priceUnitLabel = document.getElementById('meat-price-unit-label');
+    const avgWeightElement = document.getElementById('meat-avg-weight');
+    
+    if (weightUnitValue === 'lbs') {
+        if (priceLabel) priceLabel.textContent = 'Price per lb *';
+        if (priceUnitLabel) priceUnitLabel.textContent = 'per lb';
+        if (avgWeightElement && avgWeightElement.textContent.includes('kg')) {
+            avgWeightElement.textContent = avgWeightElement.textContent.replace('kg', 'lbs');
+        }
+    } else {
+        if (priceLabel) priceLabel.textContent = 'Price per kg *';
+        if (priceUnitLabel) priceUnitLabel.textContent = 'per kg';
+        if (avgWeightElement && avgWeightElement.textContent.includes('lbs')) {
+            avgWeightElement.textContent = avgWeightElement.textContent.replace('lbs', 'kg');
+        }
+    }
+},
+
+updateStandardPriceLabel() {
+    const unitSelect = document.getElementById('sale-unit');
+    const productSelect = document.getElementById('sale-product');
+    const standardPriceUnitLabel = document.getElementById('standard-price-unit-label');
+    
+    if (!unitSelect || !standardPriceUnitLabel || !productSelect) return;
+    
+    const unit = unitSelect.value;
+    const product = productSelect.value;
+    
+    let labelText = 'per unit';
+    const unitLabels = {
+        'kg': 'per kg',
+        'lbs': 'per lb',
+        'birds': 'per bird',
+        'animals': 'per animal',
+        'dozen': 'per dozen',
+        'liters': 'per liter',
+        'pieces': 'per piece',
+        'case': 'per case',
+        'crate': 'per crate',
+        'bag': 'per bag',
+        'bottle': 'per bottle',
+        'jar': 'per jar'
+    };
+    
+    if (unit === 'birds') {
+        if (product.includes('chicks')) labelText = 'per chick';
+        else if (product.includes('layers')) labelText = 'per layer';
+        else if (product.includes('broilers')) labelText = 'per bird';
+        else labelText = 'per bird';
+    } else if (unit === 'animals') {
+        if (product === 'pork') labelText = 'per pig';
+        else if (product === 'beef') labelText = 'per head';
+        else if (product === 'goat') labelText = 'per goat';
+        else if (product === 'lamb') labelText = 'per lamb';
+        else labelText = 'per animal';
+    } else if (unitLabels[unit]) {
+        labelText = unitLabels[unit];
+    }
+    
+    standardPriceUnitLabel.textContent = labelText;
+},
+
+calculateSaleTotal() {
+    const productSelect = document.getElementById('sale-product');
+    if (!productSelect) return;
+    
+    const product = productSelect.value;
+    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+    
+    let total = 0;
+    
+    if (meatProducts.includes(product)) {
+        const animalCountInput = document.getElementById('meat-animal-count');
+        const weightInput = document.getElementById('meat-weight');
+        const weightUnitSelect = document.getElementById('meat-weight-unit');
+        const priceInput = document.getElementById('meat-price');
+        
+        const animalCount = animalCountInput ? parseFloat(animalCountInput.value) || 0 : 0;
+        const weight = weightInput ? parseFloat(weightInput.value) || 0 : 0;
+        const weightUnit = weightUnitSelect ? weightUnitSelect.value : 'kg';
+        const pricePerUnit = priceInput ? parseFloat(priceInput.value) || 0 : 0;
+        
+        total = weight * pricePerUnit;
+        
+        const meatSummary = document.getElementById('meat-summary-info');
+        const avgWeightElement = document.getElementById('meat-avg-weight');
+        const avgValueElement = document.getElementById('meat-avg-value');
+        
+        if (meatSummary && avgWeightElement && avgValueElement) {
+            if (animalCount > 0 && weight > 0) {
+                const avgWeight = weight / animalCount;
+                const avgValue = total / animalCount;
+                const weightUnitText = weightUnit === 'lbs' ? 'lbs' : 'kg';
+                
+                meatSummary.textContent = `${animalCount} animal${animalCount !== 1 ? 's' : ''} • ${weight.toFixed(2)} ${weightUnitText} total • ${this.formatCurrency(avgValue)} per animal`;
+                avgWeightElement.textContent = `${avgWeight.toFixed(2)} ${weightUnitText}/animal`;
+                avgValueElement.textContent = `${this.formatCurrency(avgValue)}/animal`;
+            } else {
+                const weightUnitText = weightUnit === 'lbs' ? 'lbs' : 'kg';
+                meatSummary.textContent = `0 animals • 0 ${weightUnitText} total • $0.00 per animal`;
+                avgWeightElement.textContent = `0.00 ${weightUnitText}/animal`;
+                avgValueElement.textContent = '$0.00/animal';
+            }
+        }
+    } else {
+        const quantityInput = document.getElementById('standard-quantity');
+        const priceInput = document.getElementById('standard-price');
+        const unitSelect = document.getElementById('sale-unit');
+        
+        const quantity = quantityInput ? parseFloat(quantityInput.value) || 0 : 0;
+        const price = priceInput ? parseFloat(priceInput.value) || 0 : 0;
+        const unit = unitSelect ? unitSelect.value || 'unit' : 'unit';
+        
+        total = quantity * price;
+        
+        const standardSummary = document.getElementById('standard-summary-info');
+        if (standardSummary) {
+            const unitLabel = this.getUnitDisplayName(unit, product);
+            standardSummary.textContent = `${quantity} ${unitLabel} at ${this.formatCurrency(price)} ${this.getPriceUnitLabel(unit, product)}`;
+        }
+    }
+    
+    const totalElement = document.getElementById('sale-total-amount');
+    if (totalElement) {
+        totalElement.textContent = this.formatCurrency(total);
+    }
+},
+
+// And these helper methods:
+
+getUnitDisplayName(unit, product) {
+    const unitDisplayMap = {
+        'kg': 'kg',
+        'lbs': 'lbs',
+        'birds': product === 'chicks' ? 'chicks' : product === 'layers' ? 'layers' : 'birds',
+        'animals': this.getAnimalDisplayName(product),
+        'pieces': 'pieces',
+        'dozen': 'dozen',
+        'liters': 'liters',
+        'case': 'cases',
+        'crate': 'crates',
+        'bag': 'bags',
+        'bottle': 'bottles',
+        'jar': 'jars'
+    };
+    
+    return unitDisplayMap[unit] || unit;
+},
+
+getAnimalDisplayName(product) {
+    const animalMap = {
+        'pork': 'pigs',
+        'beef': 'cattle',
+        'goat': 'goats',
+        'lamb': 'lambs',
+        'broilers-dressed': 'birds',
+        'broilers-live': 'birds',
+        'chicken-parts': 'packages'
+    };
+    
+    return animalMap[product] || 'animals';
+},
+
+getPriceUnitLabel(unit, product) {
+    const priceUnitMap = {
+        'kg': '/kg',
+        'lbs': '/lb',
+        'birds': product === 'chicks' ? '/chick' : '/bird',
+        'animals': this.getPerAnimalLabel(product),
+        'dozen': '/dozen',
+        'liters': '/liter',
+        'pieces': '/piece',
+        'case': '/case',
+        'crate': '/crate',
+        'bag': '/bag',
+        'bottle': '/bottle',
+        'jar': '/jar'
+    };
+    
+    return priceUnitMap[unit] || '/unit';
+},
+
+getPerAnimalLabel(product) {
+    const animalLabelMap = {
+        'pork': '/pig',
+        'beef': '/head',
+        'goat': '/goat',
+        'lamb': '/lamb',
+        'broilers-dressed': '/bird',
+        'broilers-live': '/bird'
+    };
+    
+    return animalLabelMap[product] || '/animal';
+},
+
+setDefaultPrice(product) {
+    const defaultPrices = {
+        'broilers-dressed': 5.50,
+        'pork': 4.25,
+        'beef': 6.75,
+        'chicken-parts': 3.95,
+        'goat': 5.25,
+        'lamb': 6.50,
+        'broilers-live': 4.00,
+        'layers': 12.00,
+        'chicks': 2.50,
+        'eggs': 3.25,
+        'tomatoes': 1.75,
+        'peppers': 2.25,
+        'cucumbers': 1.50,
+        'lettuce': 1.25,
+        'carrots': 1.00,
+        'potatoes': 0.75,
+        'milk': 2.50,
+        'cheese': 6.00,
+        'yogurt': 3.50,
+        'butter': 4.50,
+        'honey': 8.00,
+        'jam': 5.00,
+        'bread': 2.75
+    };
+    
+    if (defaultPrices[product]) {
+        const price = defaultPrices[product];
+        
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        if (meatProducts.includes(product)) {
+            const priceInput = document.getElementById('meat-price');
+            if (priceInput) priceInput.value = price;
+        } else {
+            const priceStandardInput = document.getElementById('standard-price');
+            if (priceStandardInput) priceStandardInput.value = price;
+        }
+    }
+},
+    
     // ==================== FIXED: RENDER MODULE ====================
     renderModule() {
         if (!this.element) return;
