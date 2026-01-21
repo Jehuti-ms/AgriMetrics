@@ -52,35 +52,107 @@ fixContentPosition() {
     console.log('📐 Fixing content position...');
     
     const contentArea = document.getElementById('content-area');
+    const navbar = document.querySelector('.navbar');
+    
+    if (contentArea && navbar) {
+        const navbarHeight = navbar.offsetHeight;
+        const isLargeScreen = window.innerWidth >= 1024;
+        
+        // Different positioning for large vs small screens
+        if (isLargeScreen) {
+            // For large screens - more aggressive positioning
+            contentArea.style.cssText = `
+                margin-top: -10px !important;  /* Negative margin to pull up */
+                padding-top: 0 !important;
+                position: relative;
+                top: -10px !important;
+                min-height: calc(100vh - ${navbarHeight - 10}px);
+            `;
+            
+            // Target specific problematic modules more aggressively
+            const problemModules = ['income', 'profile', 'broiler', 'production'];
+            problemModules.forEach(module => {
+                const elements = contentArea.querySelectorAll(`[class*="${module}"] .module-header`);
+                elements.forEach(el => {
+                    el.style.marginTop = '-15px !important';
+                    el.style.paddingTop = '0 !important';
+                    el.style.position = 'relative';
+                    el.style.top = '-5px !important';
+                });
+            });
+        } else {
+            // For small screens - normal positioning
+            contentArea.style.cssText = `
+                margin-top: 0 !important;
+                padding-top: 0 !important;
+                position: relative;
+                top: 0;
+                min-height: calc(100vh - ${navbarHeight}px);
+            `;
+        }
+        
+        // Also fix any module headers globally
+        const moduleHeaders = contentArea.querySelectorAll('.module-header');
+        moduleHeaders.forEach(header => {
+            header.style.marginTop = '0';
+            header.style.paddingTop = isLargeScreen ? '0' : '10px';
+        });
+    }
+    
+    console.log('✅ Content position fixed for', window.innerWidth >= 1024 ? 'large screen' : 'small screen');
+    
+    // Re-check after a short delay to ensure it sticks
+    setTimeout(() => {
+        this.fixModuleHeaderSpecifics();
+    }, 100);
+}
+
+// NEW METHOD: Fix specific problematic modules
+fixModuleHeaderSpecifics() {
+    const contentArea = document.getElementById('content-area');
     if (!contentArea) return;
     
-    // 1. Remove padding from content area only
-    contentArea.style.paddingTop = '0';
+    // List of problematic module classes/ids
+    const problemSelectors = [
+        '.income-module',
+        '.profile-module', 
+        '.broiler-module',
+        '.production-module',
+        '[class*="income"]',
+        '[class*="profile"]',
+        '[class*="broiler"]',
+        '[class*="production"]'
+    ];
     
-    // 2. Wait for module to load, then fix its header
-    setTimeout(() => {
-        // Find the first child (module content)
-        const firstChild = contentArea.firstElementChild;
-        if (!firstChild) return;
-        
-        // Look for header inside module
-        const moduleHeader = firstChild.querySelector('.module-header, .welcome-section, .dashboard-header, [class*="header"]');
-        
-        if (moduleHeader) {
-            // Fix just the header, not the whole module
-            moduleHeader.style.marginTop = '0';
-            moduleHeader.style.paddingTop = '10px';
-            console.log('✅ Fixed module header position');
-        } else {
-            // If no specific header, fix first child gently
-            firstChild.style.marginTop = '0';
-            firstChild.style.paddingTop = '10px';
-        }
-    }, 300); // Wait for module to render
-    
-    console.log('✅ Content position fixing in progress');
-}
-    
+    problemSelectors.forEach(selector => {
+        const elements = contentArea.querySelectorAll(selector);
+        elements.forEach(element => {
+            // Find headers within these modules
+            const headers = element.querySelectorAll('.module-header, h1, h2.module-title');
+            headers.forEach(header => {
+                // Force position to top
+                header.style.cssText = `
+                    margin-top: 0 !important;
+                    padding-top: 0 !important;
+                    position: relative !important;
+                    top: 0 !important;
+                    z-index: 100;
+                `;
+                
+                // Ensure parent doesn't have padding
+                const parent = header.parentElement;
+                if (parent) {
+                    parent.style.paddingTop = '0 !important';
+                    parent.style.marginTop = '0 !important';
+                }
+            });
+            
+            // Also fix the module container itself
+            element.style.marginTop = '0 !important';
+            element.style.paddingTop = '0 !important';
+        });
+    });
+}    
  
     // Add this method to your App class
 fixOverflowingForms() {
