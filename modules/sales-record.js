@@ -3253,7 +3253,7 @@ setQuickDefaultPrice(product) {
     if (notificationStyles) {
         notificationStyles.remove();
     }
-};
+}
 };
 
 // ==================== UNIVERSAL REGISTRATION ====================
