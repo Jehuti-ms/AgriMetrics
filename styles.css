@@ -3232,7 +3232,7 @@ body.dark-mode {
     /* ============ DASHBOARD: NEEDS TO COME DOWN ============ */
     /* Since dashboard is at 0px margin-top, to come DOWN we need POSITIVE margin */
     #content-area .dashboard-container {
-        margin-top: 15px !important; /* POSITIVE to push DOWN */
+        margin-top: 10px !important; /* POSITIVE to push DOWN */
         padding-top: 0.5rem !important;
         position: relative;
         top: 0 !important;
