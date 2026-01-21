@@ -1,11 +1,11 @@
 /**
  * COMPLETE SALES RECORD MODULE
- * Version: 3.0.0
+ * Version: 3.0.0 - Using Existing StyleManager CSS
  * Features: Production Integration, Weight-based Sales, Broadcaster Support
  * Date: 2024-01-21
  */
 
-console.log('💰 Loading Complete Sales Record Module v3.0...');
+console.log('💰 Loading Sales Record Module v3.0...');
 
 const SalesRecordModule = {
     name: 'sales-record',
@@ -21,14 +21,12 @@ const SalesRecordModule = {
     initialize() {
         console.log('🔄 Initializing Sales Record Module...');
         
-        // Check for content area
         this.element = document.getElementById('content-area');
         if (!this.element) {
             console.error('❌ Content area not found');
             return false;
         }
         
-        // Check dependencies
         if (!this.checkDependencies()) {
             console.error('❌ Missing required dependencies');
             return false;
@@ -65,7 +63,6 @@ const SalesRecordModule = {
     },
 
     checkDependencies() {
-        // Check for essential dependencies
         if (!window.FarmModules) {
             console.error('❌ FarmModules framework not found');
             return false;
@@ -101,13 +98,11 @@ const SalesRecordModule = {
             localStorage.setItem('farm_sales_data', JSON.stringify(window.FarmModules.appData.sales));
             console.log('💾 Sales data saved');
             
-            // Broadcast data saved event
             this.broadcast('sales-data-saved', {
                 count: window.FarmModules.appData.sales.length,
                 timestamp: new Date().toISOString()
             });
             
-            // Update stats
             this.updateDashboardStats();
             
             return true;
@@ -123,19 +118,16 @@ const SalesRecordModule = {
     setupBroadcasterListeners() {
         if (!this.broadcaster) return;
         
-        // Listen for order completions
         this.broadcaster.on('order-completed', (data) => {
             console.log('📦 Converting order to sale:', data);
             this.convertOrderToSale(data);
         });
         
-        // Listen for production updates
         this.broadcaster.on('production-updated', (data) => {
             console.log('🏭 Production updated, refreshing available items');
             this.refreshProductionItems();
         });
         
-        // Listen for inventory updates
         this.broadcaster.on('inventory-updated', (data) => {
             console.log('📦 Inventory updated, checking stock');
             this.checkInventoryLevels(data);
@@ -165,14 +157,12 @@ const SalesRecordModule = {
             date: sale.date
         });
         
-        // Broadcast income update
         this.broadcast('income-updated', {
             amount: sale.totalAmount,
             type: 'sales',
             source: 'sales-record'
         });
         
-        // Broadcast meat-specific event if applicable
         if (this.isMeatProduct(sale.product)) {
             this.broadcast('meat-sold', {
                 product: sale.product,
@@ -196,59 +186,51 @@ const SalesRecordModule = {
         const stats = this.calculateStats();
         
         this.element.innerHTML = `
-            <div class="sales-module-container">
+            <div class="module-container">
                 <!-- Header Section -->
-                <div class="sales-header">
-                    <div class="header-content">
-                        <h1 class="module-title">
-                            <span class="header-icon">💰</span>
-                            Sales Records
-                        </h1>
+                <div class="module-header">
+                    <div class="header-title">
+                        <h1 class="module-title">💰 Sales Records</h1>
                         <p class="module-subtitle">Track sales, revenue, and production integration</p>
                     </div>
                     <div class="header-actions">
-                        <button class="sales-btn sales-btn-primary" id="sales-btn-new">
-                            <span class="btn-icon">➕</span>
-                            Record Sale
+                        <button class="btn btn-primary" id="sales-btn-new">
+                            ➕ Record Sale
                         </button>
-                        <button class="sales-btn sales-btn-secondary" id="sales-btn-production">
-                            <span class="btn-icon">🏭</span>
-                            Sell from Production
+                        <button class="btn btn-secondary" id="sales-btn-production">
+                            🏭 Sell from Production
                         </button>
                     </div>
                 </div>
                 
                 <!-- Stats Dashboard -->
-                <div class="stats-dashboard">
+                <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon">💰</div>
-                        <div class="stat-value" id="stat-today-revenue">${this.formatCurrency(stats.todayRevenue)}</div>
+                        <div class="stat-value">${this.formatCurrency(stats.todayRevenue)}</div>
                         <div class="stat-label">Today's Revenue</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">📊</div>
-                        <div class="stat-value" id="stat-total-sales">${stats.totalSales}</div>
+                        <div class="stat-value">${stats.totalSales}</div>
                         <div class="stat-label">Total Sales</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">🍗</div>
-                        <div class="stat-value" id="stat-meat-weight">${stats.meatWeight.toFixed(1)} kg</div>
+                        <div class="stat-value">${stats.meatWeight.toFixed(1)} kg</div>
                         <div class="stat-label">Meat Sold</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">🐄</div>
-                        <div class="stat-value" id="stat-animals-sold">${stats.animalsSold}</div>
+                        <div class="stat-value">${stats.animalsSold}</div>
                         <div class="stat-label">Animals Sold</div>
                     </div>
                 </div>
                 
                 <!-- Quick Actions -->
-                <div class="quick-actions-section">
-                    <h3 class="section-title">
-                        <span class="section-icon">⚡</span>
-                        Quick Actions
-                    </h3>
-                    <div class="actions-grid">
+                <div class="quick-actions">
+                    <h3>⚡ Quick Actions</h3>
+                    <div class="action-grid">
                         <button class="action-card" data-action="quick-sale">
                             <div class="action-icon">💰</div>
                             <div class="action-title">Quick Sale</div>
@@ -273,13 +255,10 @@ const SalesRecordModule = {
                 </div>
                 
                 <!-- Production Integration -->
-                <div class="production-integration-section">
+                <div class="glass-card production-section">
                     <div class="section-header">
-                        <h3 class="section-title">
-                            <span class="section-icon">🔄</span>
-                            Production Integration
-                        </h3>
-                        <p class="section-subtitle">Sell items directly from production records</p>
+                        <h3>🔄 Production Integration</h3>
+                        <p>Sell items directly from production records</p>
                     </div>
                     <div id="production-items-container">
                         ${this.renderProductionItems()}
@@ -287,14 +266,11 @@ const SalesRecordModule = {
                 </div>
                 
                 <!-- Recent Sales Table -->
-                <div class="sales-table-section">
+                <div class="sales-section">
                     <div class="section-header">
-                        <h3 class="section-title">
-                            <span class="section-icon">📋</span>
-                            Recent Sales
-                        </h3>
-                        <div class="table-controls">
-                            <select id="sales-period-filter" class="sales-filter-select">
+                        <h3>📋 Recent Sales</h3>
+                        <div class="filter-controls">
+                            <select id="sales-period-filter" class="form-select">
                                 <option value="today">Today</option>
                                 <option value="week">This Week</option>
                                 <option value="month">This Month</option>
@@ -309,18 +285,18 @@ const SalesRecordModule = {
             </div>
             
             <!-- Sale Modal -->
-            <div class="sales-modal" id="sales-modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 class="modal-title" id="sales-modal-title">Record New Sale</h3>
-                        <button class="modal-close" id="sales-modal-close">&times;</button>
+            <div class="popout-modal hidden" id="sales-modal">
+                <div class="popout-modal-content">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title" id="sales-modal-title">Record New Sale</h3>
+                        <button class="popout-modal-close" id="sales-modal-close">&times;</button>
                     </div>
-                    <div class="modal-body">
+                    <div class="popout-modal-body">
                         <form id="sales-form">
                             <input type="hidden" id="sale-id">
                             <input type="hidden" id="production-source-id">
                             
-                            <div class="form-row">
+                            <div class="form-grid">
                                 <div class="form-group">
                                     <label for="sale-date" class="form-label">Sale Date *</label>
                                     <input type="date" id="sale-date" class="form-input" required>
@@ -331,7 +307,7 @@ const SalesRecordModule = {
                                 </div>
                             </div>
                             
-                            <div class="form-row">
+                            <div class="form-grid">
                                 <div class="form-group">
                                     <label for="sale-product" class="form-label">Product *</label>
                                     <select id="sale-product" class="form-input" required>
@@ -349,21 +325,20 @@ const SalesRecordModule = {
                             </div>
                             
                             <!-- Meat Sale Section -->
-                            <div id="meat-sale-section" class="sale-type-section" style="display: none;">
-                                <div class="section-header">
-                                    <div class="section-icon">🍗</div>
-                                    <h4>Meat Sale Details</h4>
+                            <div id="meat-sale-section" style="display: none; margin-bottom: 20px;">
+                                <div class="form-section-header">
+                                    <span class="section-icon">🍗</span> Meat Sale Details
                                 </div>
-                                <div class="form-row">
+                                <div class="form-grid">
                                     <div class="form-group">
                                         <label for="meat-animal-count" class="form-label">Number of Animals *</label>
                                         <input type="number" id="meat-animal-count" class="form-input" min="1" step="1">
                                     </div>
                                     <div class="form-group">
                                         <label for="meat-weight" class="form-label">Total Weight *</label>
-                                        <div class="input-with-unit">
-                                            <input type="number" id="meat-weight" class="form-input" min="0.1" step="0.1">
-                                            <select id="meat-weight-unit" class="form-unit-select">
+                                        <div style="display: flex;">
+                                            <input type="number" id="meat-weight" class="form-input" min="0.1" step="0.1" style="border-right: 0; border-top-right-radius: 0; border-bottom-right-radius: 0;">
+                                            <select id="meat-weight-unit" class="form-input" style="border-top-left-radius: 0; border-bottom-left-radius: 0; width: auto;">
                                                 <option value="kg">kg</option>
                                                 <option value="lbs">lbs</option>
                                             </select>
@@ -377,12 +352,11 @@ const SalesRecordModule = {
                             </div>
                             
                             <!-- Standard Sale Section -->
-                            <div id="standard-sale-section" class="sale-type-section">
-                                <div class="section-header">
-                                    <div class="section-icon">📦</div>
-                                    <h4>Standard Sale Details</h4>
+                            <div id="standard-sale-section">
+                                <div class="form-section-header">
+                                    <span class="section-icon">📦</span> Standard Sale Details
                                 </div>
-                                <div class="form-row">
+                                <div class="form-grid">
                                     <div class="form-group">
                                         <label for="standard-quantity" class="form-label">Quantity *</label>
                                         <input type="number" id="standard-quantity" class="form-input" min="0.01" step="0.01">
@@ -394,7 +368,7 @@ const SalesRecordModule = {
                                 </div>
                             </div>
                             
-                            <div class="form-row">
+                            <div class="form-grid">
                                 <div class="form-group">
                                     <label for="sale-payment" class="form-label">Payment Method *</label>
                                     <select id="sale-payment" class="form-input" required>
@@ -419,67 +393,57 @@ const SalesRecordModule = {
                                 <textarea id="sale-notes" class="form-input" rows="3" placeholder="Additional notes..."></textarea>
                             </div>
                             
-                            <div class="sale-total-display">
+                            <div class="total-display">
                                 <div class="total-label">Sale Total:</div>
                                 <div class="total-amount" id="sale-total-display">$0.00</div>
                             </div>
                         </form>
                     </div>
-                    <div class="modal-footer">
-                        <button class="sales-btn sales-btn-secondary" id="sales-modal-cancel">Cancel</button>
-                        <button class="sales-btn sales-btn-danger" id="sales-modal-delete" style="display: none;">Delete</button>
-                        <button class="sales-btn sales-btn-primary" id="sales-modal-save">Save Sale</button>
+                    <div class="popout-modal-footer">
+                        <button class="btn btn-secondary" id="sales-modal-cancel">Cancel</button>
+                        <button class="btn btn-danger" id="sales-modal-delete" style="display: none;">Delete</button>
+                        <button class="btn btn-primary" id="sales-modal-save">Save Sale</button>
                     </div>
                 </div>
             </div>
             
             <!-- Production Items Modal -->
-            <div class="sales-modal" id="production-items-modal">
-                <div class="modal-content" style="max-width: 800px;">
-                    <div class="modal-header">
-                        <h3 class="modal-title">
-                            <span class="modal-icon">🏭</span>
-                            Available Production Items
-                        </h3>
-                        <button class="modal-close" id="production-modal-close">&times;</button>
+            <div class="popout-modal hidden" id="production-items-modal">
+                <div class="popout-modal-content" style="max-width: 800px;">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title">🏭 Available Production Items</h3>
+                        <button class="popout-modal-close" id="production-modal-close">&times;</button>
                     </div>
-                    <div class="modal-body" id="production-items-list">
+                    <div class="popout-modal-body" id="production-items-list">
                         <!-- Production items will be loaded here -->
                     </div>
-                    <div class="modal-footer">
-                        <button class="sales-btn sales-btn-secondary" id="production-modal-close-btn">Close</button>
-                        <button class="sales-btn sales-btn-primary" id="production-modal-new">New Sale</button>
+                    <div class="popout-modal-footer">
+                        <button class="btn btn-secondary" id="production-modal-close-btn">Close</button>
+                        <button class="btn btn-primary" id="production-modal-new">New Sale</button>
                     </div>
                 </div>
             </div>
             
             <!-- Report Modal -->
-            <div class="sales-modal" id="report-modal">
-                <div class="modal-content" style="max-width: 800px;">
-                    <div class="modal-header">
-                        <h3 class="modal-title">
-                            <span class="modal-icon">📊</span>
-                            Sales Report
-                        </h3>
-                        <button class="modal-close" id="report-modal-close">&times;</button>
+            <div class="popout-modal hidden" id="report-modal">
+                <div class="popout-modal-content" style="max-width: 800px;">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title">📊 Sales Report</h3>
+                        <button class="popout-modal-close" id="report-modal-close">&times;</button>
                     </div>
-                    <div class="modal-body" id="report-content">
+                    <div class="popout-modal-body" id="report-content">
                         <!-- Report content will be loaded here -->
                     </div>
-                    <div class="modal-footer">
-                        <button class="sales-btn sales-btn-secondary" id="report-modal-close-btn">Close</button>
-                        <button class="sales-btn sales-btn-primary" id="report-modal-print">🖨️ Print</button>
+                    <div class="popout-modal-footer">
+                        <button class="btn btn-secondary" id="report-modal-close-btn">Close</button>
+                        <button class="btn btn-primary" id="report-modal-print">🖨️ Print</button>
                     </div>
                 </div>
             </div>
         `;
         
-        // Initialize event listeners
         this.setupEventListeners();
-        
-        // Initialize date picker
         this.initializeDatePicker();
-        
         console.log('✅ Module rendered successfully');
     },
 
@@ -488,47 +452,45 @@ const SalesRecordModule = {
     renderProductOptions() {
         const productGroups = {
             'Livestock (Meat)': [
-                { value: 'broilers-dressed', label: 'Broilers (Dressed)', emoji: '🍗' },
-                { value: 'pork', label: 'Pork', emoji: '🐖' },
-                { value: 'beef', label: 'Beef', emoji: '🐄' },
-                { value: 'chicken-parts', label: 'Chicken Parts', emoji: '🍗' },
-                { value: 'goat', label: 'Goat', emoji: '🐐' },
-                { value: 'lamb', label: 'Lamb', emoji: '🐑' }
+                { value: 'broilers-dressed', label: 'Broilers (Dressed)' },
+                { value: 'pork', label: 'Pork' },
+                { value: 'beef', label: 'Beef' },
+                { value: 'chicken-parts', label: 'Chicken Parts' },
+                { value: 'goat', label: 'Goat' },
+                { value: 'lamb', label: 'Lamb' }
             ],
             'Poultry': [
-                { value: 'broilers-live', label: 'Broilers (Live)', emoji: '🐔' },
-                { value: 'layers', label: 'Layers', emoji: '🐓' },
-                { value: 'chicks', label: 'Baby Chicks', emoji: '🐤' }
+                { value: 'broilers-live', label: 'Broilers (Live)' },
+                { value: 'layers', label: 'Layers' },
+                { value: 'chicks', label: 'Baby Chicks' }
             ],
             'Eggs & Dairy': [
-                { value: 'eggs', label: 'Eggs', emoji: '🥚' },
-                { value: 'milk', label: 'Milk', emoji: '🥛' },
-                { value: 'cheese', label: 'Cheese', emoji: '🧀' },
-                { value: 'yogurt', label: 'Yogurt', emoji: '🥛' }
+                { value: 'eggs', label: 'Eggs' },
+                { value: 'milk', label: 'Milk' },
+                { value: 'cheese', label: 'Cheese' },
+                { value: 'yogurt', label: 'Yogurt' }
             ],
             'Produce': [
-                { value: 'tomatoes', label: 'Tomatoes', emoji: '🍅' },
-                { value: 'peppers', label: 'Peppers', emoji: '🌶️' },
-                { value: 'cucumbers', label: 'Cucumbers', emoji: '🥒' },
-                { value: 'lettuce', label: 'Lettuce', emoji: '🥬' }
+                { value: 'tomatoes', label: 'Tomatoes' },
+                { value: 'peppers', label: 'Peppers' },
+                { value: 'cucumbers', label: 'Cucumbers' },
+                { value: 'lettuce', label: 'Lettuce' }
             ],
-            'Other Products': [
-                { value: 'honey', label: 'Honey', emoji: '🍯' },
-                { value: 'bread', label: 'Bread', emoji: '🍞' },
-                { value: 'other', label: 'Other', emoji: '📦' }
+            'Other': [
+                { value: 'honey', label: 'Honey' },
+                { value: 'bread', label: 'Bread' },
+                { value: 'other', label: 'Other' }
             ]
         };
         
         let html = '';
-        
         for (const [groupName, products] of Object.entries(productGroups)) {
             html += `<optgroup label="${groupName}">`;
             products.forEach(product => {
-                html += `<option value="${product.value}">${product.emoji} ${product.label}</option>`;
+                html += `<option value="${product.value}">${product.label}</option>`;
             });
             html += '</optgroup>';
         }
-        
         return html;
     },
 
@@ -542,11 +504,9 @@ const SalesRecordModule = {
             { value: 'pieces', label: 'Pieces', category: 'count' },
             { value: 'liters', label: 'Liters', category: 'volume' },
             { value: 'cases', label: 'Cases', category: 'count' },
-            { value: 'crates', label: 'Crates', category: 'count' },
-            { value: 'bags', label: 'Bags', category: 'count' }
+            { value: 'crates', label: 'Crates', category: 'count' }
         ];
         
-        // Group by category
         const grouped = {};
         units.forEach(unit => {
             if (!grouped[unit.category]) grouped[unit.category] = [];
@@ -554,7 +514,6 @@ const SalesRecordModule = {
         });
         
         let html = '';
-        
         for (const [category, categoryUnits] of Object.entries(grouped)) {
             const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1);
             html += `<optgroup label="${categoryLabel}">`;
@@ -563,12 +522,10 @@ const SalesRecordModule = {
             });
             html += '</optgroup>';
         }
-        
         return html;
     },
 
     renderProductionItems() {
-        // Get production data
         const productionData = JSON.parse(localStorage.getItem('farm_production_data') || '[]');
         const availableItems = this.getAvailableProductionItems(productionData);
         
@@ -576,9 +533,9 @@ const SalesRecordModule = {
             return `
                 <div class="empty-state">
                     <div class="empty-icon">🏭</div>
-                    <h4 class="empty-title">No Production Items Available</h4>
-                    <p class="empty-message">Add production records to sell them here</p>
-                    <button class="sales-btn sales-btn-secondary" data-action="navigate-to-production">
+                    <h4>No Production Items Available</h4>
+                    <p>Add production records to sell them here</p>
+                    <button class="btn btn-secondary" data-action="navigate-to-production">
                         Go to Production Module
                     </button>
                 </div>
@@ -586,40 +543,34 @@ const SalesRecordModule = {
         }
         
         return `
-            <div class="production-items-grid">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
                 ${availableItems.slice(0, 4).map(item => `
-                    <div class="production-item-card" data-item-id="${item.id}">
-                        <div class="item-header">
-                            <span class="item-icon">${this.getProductIcon(item.product)}</span>
-                            <span class="item-name">${this.formatProductName(item.product)}</span>
-                        </div>
-                        <div class="item-details">
-                            <div class="detail-row">
-                                <span class="detail-label">Available:</span>
-                                <span class="detail-value">${item.availableQuantity} ${item.unit}</span>
+                    <div class="production-item" data-item-id="${item.id}">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                            <span style="font-size: 24px;">${this.getProductIcon(item.product)}</span>
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary);">${this.formatProductName(item.product)}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">Produced: ${this.formatDate(item.date)}</div>
                             </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Produced:</span>
-                                <span class="detail-value">${this.formatDate(item.date)}</span>
-                            </div>
-                            ${item.notes ? `
-                                <div class="detail-row">
-                                    <span class="detail-label">Notes:</span>
-                                    <span class="detail-value notes">${item.notes}</span>
-                                </div>
-                            ` : ''}
                         </div>
-                        <button class="sales-btn sales-btn-small sales-btn-primary" 
+                        <div style="margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
+                                <span style="color: var(--text-secondary);">Available:</span>
+                                <span style="font-weight: 500; color: var(--text-primary);">${item.availableQuantity} ${item.unit}</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-small btn-primary" 
                                 data-action="sell-production-item" 
-                                data-item-id="${item.id}">
+                                data-item-id="${item.id}"
+                                style="width: 100%;">
                             Sell This Item
                         </button>
                     </div>
                 `).join('')}
             </div>
             ${availableItems.length > 4 ? `
-                <div class="view-more-section">
-                    <button class="sales-btn sales-btn-link" data-action="view-all-production">
+                <div style="margin-top: 20px; text-align: center;">
+                    <button class="btn btn-link" data-action="view-all-production">
                         View all ${availableItems.length} production items →
                     </button>
                 </div>
@@ -634,15 +585,15 @@ const SalesRecordModule = {
             return `
                 <div class="empty-state">
                     <div class="empty-icon">📊</div>
-                    <h4 class="empty-title">No Sales Found</h4>
-                    <p class="empty-message">Record your first sale to get started</p>
+                    <h4>No Sales Found</h4>
+                    <p>Record your first sale to get started</p>
                 </div>
             `;
         }
         
         return `
-            <div class="sales-table-wrapper">
-                <table class="sales-table">
+            <div style="overflow-x: auto;">
+                <table class="data-table">
                     <thead>
                         <tr>
                             <th>Date</th>
@@ -659,21 +610,21 @@ const SalesRecordModule = {
                             <tr data-sale-id="${sale.id}">
                                 <td>${this.formatDate(sale.date)}</td>
                                 <td>
-                                    <div class="product-cell">
-                                        <span class="product-icon">${this.getProductIcon(sale.product)}</span>
-                                        <span class="product-name">${this.formatProductName(sale.product)}</span>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="font-size: 18px;">${this.getProductIcon(sale.product)}</span>
+                                        <span>${this.formatProductName(sale.product)}</span>
                                     </div>
                                 </td>
                                 <td>${sale.customer || 'Walk-in'}</td>
                                 <td>${this.formatQuantity(sale)}</td>
                                 <td>${this.formatCurrency(sale.unitPrice)}/${this.getUnitDisplay(sale)}</td>
-                                <td class="total-cell">${this.formatCurrency(sale.totalAmount)}</td>
+                                <td style="font-weight: 600;">${this.formatCurrency(sale.totalAmount)}</td>
                                 <td>
-                                    <div class="table-actions">
-                                        <button class="action-btn edit-btn" data-action="edit-sale" data-sale-id="${sale.id}" title="Edit">
+                                    <div style="display: flex; gap: 4px;">
+                                        <button class="btn-icon" data-action="edit-sale" data-sale-id="${sale.id}" title="Edit">
                                             ✏️
                                         </button>
-                                        <button class="action-btn delete-btn" data-action="delete-sale" data-sale-id="${sale.id}" title="Delete">
+                                        <button class="btn-icon" data-action="delete-sale" data-sale-id="${sale.id}" title="Delete">
                                             🗑️
                                         </button>
                                     </div>
@@ -686,17 +637,11 @@ const SalesRecordModule = {
         `;
     },
 
-    // ==================== EVENT HANDLING SYSTEM ====================
+    // ==================== EVENT HANDLING ====================
 
     setupEventSystem() {
-        // Remove any existing listeners
         this.removeEventListeners();
-        
-        // Set up click delegation
         this.setupClickDelegation();
-        
-        // Set up input/change listeners
-        this.setupInputListeners();
     },
 
     setupEventListeners() {
@@ -750,7 +695,6 @@ const SalesRecordModule = {
             e.preventDefault();
             
             switch (action) {
-                // Quick actions
                 case 'quick-sale':
                     this.showQuickSaleForm();
                     break;
@@ -766,19 +710,13 @@ const SalesRecordModule = {
                 case 'view-all-production':
                     this.showProductionModal();
                     break;
-                    
-                // Production items
                 case 'sell-production-item':
                     const itemId = target.dataset.itemId || target.closest('[data-item-id]')?.dataset.itemId;
                     if (itemId) this.sellProductionItem(itemId);
                     break;
-                    
-                // Navigation
                 case 'navigate-to-production':
                     this.navigateToProduction();
                     break;
-                    
-                // Table actions
                 case 'edit-sale':
                     const saleId = target.dataset.saleId || target.closest('[data-sale-id]')?.dataset.saleId;
                     if (saleId) this.editSale(saleId);
@@ -791,27 +729,8 @@ const SalesRecordModule = {
         });
     },
 
-    setupInputListeners() {
-        // Global input/change listeners
-        document.addEventListener('input', this.handleGlobalInput.bind(this));
-        document.addEventListener('change', this.handleGlobalChange.bind(this));
-    },
-
-    handleGlobalInput(e) {
-        // Handle any global input events if needed
-    },
-
-    handleGlobalChange(e) {
-        // Handle any global change events if needed
-    },
-
     removeEventListeners() {
-        // Clean up event listeners
-        const eventTypes = ['click', 'input', 'change'];
-        eventTypes.forEach(type => {
-            document.removeEventListener(type, this.handleGlobalInput);
-            document.removeEventListener(type, this.handleGlobalChange);
-        });
+        // Clean up if needed
     },
 
     // ==================== SALE MANAGEMENT FUNCTIONS ====================
@@ -820,35 +739,26 @@ const SalesRecordModule = {
         const modal = document.getElementById('sales-modal');
         if (!modal) return;
         
-        // Reset form first
         this.resetSaleForm();
         
         if (saleData) {
-            // Edit mode
             this.currentSaleId = saleData.id;
             document.getElementById('sales-modal-title').textContent = 'Edit Sale';
             document.getElementById('sales-modal-delete').style.display = 'inline-block';
             this.populateSaleForm(saleData);
         } else {
-            // New sale mode
             this.currentSaleId = null;
             document.getElementById('sales-modal-title').textContent = 'Record New Sale';
             document.getElementById('sales-modal-delete').style.display = 'none';
             
-            // If we have pending production sale, pre-fill
             if (this.pendingProductionSale) {
                 this.prefillFromProduction(this.pendingProductionSale);
                 this.pendingProductionSale = null;
             }
         }
         
-        // Show modal
-        modal.classList.add('active');
-        
-        // Initialize date
+        modal.classList.remove('hidden');
         this.initializeDatePicker();
-        
-        // Calculate initial total
         this.calculateTotal();
     },
 
@@ -856,31 +766,25 @@ const SalesRecordModule = {
         const form = document.getElementById('sales-form');
         if (form) form.reset();
         
-        // Set default date
         const dateInput = document.getElementById('sale-date');
         if (dateInput) {
             dateInput.value = this.getCurrentDate();
         }
         
-        // Set default payment method
         const paymentSelect = document.getElementById('sale-payment');
         if (paymentSelect) paymentSelect.value = 'cash';
         
-        // Set default status
         const statusSelect = document.getElementById('sale-status');
         if (statusSelect) statusSelect.value = 'paid';
         
-        // Reset hidden fields
         document.getElementById('sale-id').value = '';
         document.getElementById('production-source-id').value = '';
         
-        // Reset sections
         document.getElementById('meat-sale-section').style.display = 'none';
         document.getElementById('standard-sale-section').style.display = 'block';
     },
 
     populateSaleForm(sale) {
-        // Populate basic fields
         document.getElementById('sale-id').value = sale.id;
         document.getElementById('sale-date').value = sale.date;
         document.getElementById('sale-customer').value = sale.customer || '';
@@ -890,7 +794,6 @@ const SalesRecordModule = {
         document.getElementById('sale-status').value = sale.paymentStatus || 'paid';
         document.getElementById('sale-notes').value = sale.notes || '';
         
-        // Populate sale type specific fields
         if (this.isMeatProduct(sale.product)) {
             document.getElementById('meat-animal-count').value = sale.animalCount || '';
             document.getElementById('meat-weight').value = sale.weight || '';
@@ -901,44 +804,35 @@ const SalesRecordModule = {
             document.getElementById('standard-price').value = sale.unitPrice || '';
         }
         
-        // Handle product change
         this.handleProductChange();
-        
-        // Update total
         this.calculateTotal();
     },
 
     prefillFromProduction(productionData) {
         if (!productionData) return;
         
-        // Set product
         const productSelect = document.getElementById('sale-product');
         if (productSelect) {
             productSelect.value = productionData.product || '';
             this.handleProductChange();
         }
         
-        // Set unit
         const unitSelect = document.getElementById('sale-unit');
         if (unitSelect) unitSelect.value = productionData.unit || '';
         
-        // Set quantity
         if (this.isMeatProduct(productionData.product)) {
             document.getElementById('meat-animal-count').value = productionData.availableQuantity || '';
         } else {
             document.getElementById('standard-quantity').value = productionData.availableQuantity || '';
         }
         
-        // Set source ID
         document.getElementById('production-source-id').value = productionData.id || '';
         
-        // Add note
         const notesField = document.getElementById('sale-notes');
         if (notesField && productionData.id) {
             notesField.value = `From production: ${productionData.product} (ID: ${productionData.id})`;
         }
         
-        // Set default price
         this.setDefaultPrice(productionData.product);
     },
 
@@ -947,11 +841,9 @@ const SalesRecordModule = {
         const product = productSelect ? productSelect.value : '';
         const isMeat = this.isMeatProduct(product);
         
-        // Show/hide sections
         document.getElementById('meat-sale-section').style.display = isMeat ? 'block' : 'none';
         document.getElementById('standard-sale-section').style.display = isMeat ? 'none' : 'block';
         
-        // Set appropriate unit
         const unitSelect = document.getElementById('sale-unit');
         if (unitSelect && !unitSelect.value) {
             if (isMeat) {
@@ -965,7 +857,6 @@ const SalesRecordModule = {
             }
         }
         
-        // Set weight unit for meat
         if (isMeat) {
             const weightUnit = document.getElementById('meat-weight-unit');
             if (weightUnit && !weightUnit.value) {
@@ -974,10 +865,7 @@ const SalesRecordModule = {
             this.updateMeatPriceLabel();
         }
         
-        // Set default price
         this.setDefaultPrice(product);
-        
-        // Recalculate total
         this.calculateTotal();
     },
 
@@ -1005,7 +893,6 @@ const SalesRecordModule = {
             total = quantity * price;
         }
         
-        // Update display
         const totalDisplay = document.getElementById('sale-total-display');
         if (totalDisplay) {
             totalDisplay.textContent = this.formatCurrency(total);
@@ -1030,14 +917,12 @@ const SalesRecordModule = {
             createdAt: new Date().toISOString()
         };
         
-        // Get production source if any
         const productionSourceId = formData.get('production-source-id');
         if (productionSourceId) {
             sale.productionSourceId = productionSourceId;
             sale.productionSource = true;
         }
         
-        // Add sale type specific data
         if (this.isMeatProduct(sale.product)) {
             sale.animalCount = parseInt(formData.get('meat-animal-count')) || 0;
             sale.weight = parseFloat(formData.get('meat-weight')) || 0;
@@ -1057,13 +942,11 @@ const SalesRecordModule = {
     validateSale(sale) {
         const errors = [];
         
-        // Required fields
         if (!sale.date) errors.push('Sale date is required');
         if (!sale.product) errors.push('Product is required');
         if (!sale.unit) errors.push('Unit is required');
         if (!sale.paymentMethod) errors.push('Payment method is required');
         
-        // Validate based on product type
         if (this.isMeatProduct(sale.product)) {
             if (!sale.animalCount || sale.animalCount <= 0) errors.push('Number of animals must be greater than 0');
             if (!sale.weight || sale.weight <= 0) errors.push('Weight must be greater than 0');
@@ -1089,11 +972,9 @@ const SalesRecordModule = {
         }
         
         if (this.currentSaleId) {
-            // Update existing sale
             this.updateSale(this.currentSaleId, saleData);
             this.showNotification('Sale updated successfully!', 'success');
         } else {
-            // Add new sale
             this.addSale(saleData);
             this.showNotification('Sale recorded successfully!', 'success');
         }
@@ -1114,7 +995,6 @@ const SalesRecordModule = {
             const oldSale = window.FarmModules.appData.sales[index];
             window.FarmModules.appData.sales[index] = { ...oldSale, ...updatedData };
             
-            // Broadcast update
             this.broadcast('sale-updated', {
                 saleId: saleId,
                 oldTotal: oldSale.totalAmount,
@@ -1136,21 +1016,17 @@ const SalesRecordModule = {
             return;
         }
         
-        // Remove from array
         window.FarmModules.appData.sales = window.FarmModules.appData.sales.filter(s => s.id !== saleId);
         
-        // Broadcast deletion
         this.broadcast('sale-deleted', {
             saleId: saleId,
             amount: sale.totalAmount
         });
         
-        // Update UI and save
         this.renderModule();
         this.saveData();
         this.showNotification('Sale deleted successfully', 'success');
         
-        // Close modal if open
         this.hideSaleModal();
     },
 
@@ -1169,11 +1045,8 @@ const SalesRecordModule = {
         const modal = document.getElementById('production-items-modal');
         if (!modal) return;
         
-        // Load production items
         this.loadProductionItems();
-        
-        // Show modal
-        modal.classList.add('active');
+        modal.classList.remove('hidden');
     },
 
     loadProductionItems() {
@@ -1187,9 +1060,9 @@ const SalesRecordModule = {
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">🏭</div>
-                    <h4 class="empty-title">No Production Items Available</h4>
-                    <p class="empty-message">Add production records to sell them here</p>
-                    <button class="sales-btn sales-btn-secondary" data-action="navigate-to-production">
+                    <h4>No Production Items Available</h4>
+                    <p>Add production records to sell them here</p>
+                    <button class="btn btn-secondary" data-action="navigate-to-production">
                         Go to Production Module
                     </button>
                 </div>
@@ -1198,41 +1071,60 @@ const SalesRecordModule = {
         }
         
         let html = `
-            <div class="production-items-full-grid">
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; max-height: 60vh; overflow-y: auto; padding: 8px;">
                 ${availableItems.map(item => `
-                    <div class="production-item-full-card" data-item-id="${item.id}">
-                        <div class="item-full-header">
-                            <span class="item-full-icon">${this.getProductIcon(item.product)}</span>
-                            <div class="item-full-info">
-                                <h4 class="item-full-name">${this.formatProductName(item.product)}</h4>
-                                <div class="item-full-date">Produced: ${this.formatDate(item.date)}</div>
+                    <div class="production-item-card" data-item-id="${item.id}">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <span style="font-size: 32px; background: #f3f4f6; padding: 12px; border-radius: 8px;">
+                                ${this.getProductIcon(item.product)}
+                            </span>
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0 0 4px 0; font-size: 16px; color: var(--text-primary);">
+                                    ${this.formatProductName(item.product)}
+                                </h4>
+                                <div style="font-size: 13px; color: var(--text-secondary);">
+                                    Produced: ${this.formatDate(item.date)}
+                                </div>
                             </div>
                         </div>
-                        <div class="item-full-stats">
-                            <div class="stat-item">
-                                <div class="stat-label">Total Produced</div>
-                                <div class="stat-value">${item.quantity} ${item.unit}</div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; text-align: center;">
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">
+                                    Total Produced
+                                </div>
+                                <div style="font-size: 16px; font-weight: 600; color: var(--text-primary);">
+                                    ${item.quantity} ${item.unit}
+                                </div>
                             </div>
-                            <div class="stat-item">
-                                <div class="stat-label">Available</div>
-                                <div class="stat-value available">${item.availableQuantity} ${item.unit}</div>
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">
+                                    Available
+                                </div>
+                                <div style="font-size: 16px; font-weight: 600; color: #10b981;">
+                                    ${item.availableQuantity} ${item.unit}
+                                </div>
                             </div>
-                            <div class="stat-item">
-                                <div class="stat-label">Sold</div>
-                                <div class="stat-value">${item.quantity - item.availableQuantity} ${item.unit}</div>
+                            <div>
+                                <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">
+                                    Sold
+                                </div>
+                                <div style="font-size: 16px; font-weight: 600; color: var(--text-primary);">
+                                    ${item.quantity - item.availableQuantity} ${item.unit}
+                                </div>
                             </div>
                         </div>
                         ${item.notes ? `
-                            <div class="item-full-notes">
-                                <div class="notes-label">Notes:</div>
-                                <div class="notes-content">${item.notes}</div>
+                            <div style="background: #f8fafc; border-radius: 6px; padding: 12px; margin-bottom: 16px; font-size: 13px;">
+                                <div style="font-weight: 600; color: #374151; margin-bottom: 4px;">Notes:</div>
+                                <div style="color: #6b7280; line-height: 1.5;">${item.notes}</div>
                             </div>
                         ` : ''}
-                        <div class="item-full-actions">
-                            <button class="sales-btn sales-btn-primary" 
+                        <div style="text-align: center;">
+                            <button class="btn btn-primary" 
                                     data-action="sell-production-item" 
-                                    data-item-id="${item.id}">
-                                <span class="btn-icon">💰</span>
+                                    data-item-id="${item.id}"
+                                    style="width: 100%;">
+                                <span style="margin-right: 8px;">💰</span>
                                 Sell This Item
                             </button>
                         </div>
@@ -1247,14 +1139,12 @@ const SalesRecordModule = {
     getAvailableProductionItems(productionData) {
         const soldItems = {};
         
-        // Calculate sold quantities from sales
         window.FarmModules.appData.sales.forEach(sale => {
             if (sale.productionSourceId) {
                 soldItems[sale.productionSourceId] = (soldItems[sale.productionSourceId] || 0) + sale.quantity;
             }
         });
         
-        // Filter and map available items
         return productionData
             .filter(item => {
                 const sold = soldItems[item.id] || 0;
@@ -1264,7 +1154,7 @@ const SalesRecordModule = {
                 ...item,
                 availableQuantity: item.quantity - (soldItems[item.id] || 0)
             }))
-            .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date, newest first
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
     },
 
     sellProductionItem(itemId) {
@@ -1276,7 +1166,6 @@ const SalesRecordModule = {
             return;
         }
         
-        // Get available quantity
         const availableItems = this.getAvailableProductionItems(productionData);
         const availableItem = availableItems.find(a => a.id === itemId);
         
@@ -1285,454 +1174,26 @@ const SalesRecordModule = {
             return;
         }
         
-        // Set as pending production sale
         this.pendingProductionSale = availableItem;
-        
-        // Close production modal and open sale modal
         this.hideProductionModal();
         this.showSaleModal();
     },
 
     refreshProductionItems() {
-        // Refresh the production items display
         const container = document.getElementById('production-items-container');
         if (container) {
             container.innerHTML = this.renderProductionItems();
         }
         
-        // Refresh modal if open
         const modalContainer = document.getElementById('production-items-list');
         if (modalContainer) {
             this.loadProductionItems();
         }
     },
 
-    // ==================== REPORT FUNCTIONS ====================
-
-    generateDailyReport() {
-        const today = this.getCurrentDate();
-        const sales = this.getFilteredSales('today');
-        
-        if (sales.length === 0) {
-            this.showNotification('No sales recorded today', 'info');
-            return;
-        }
-        
-        const reportContent = this.generateReportContent('Today\'s Sales Report', today, sales);
-        this.showReportModal(reportContent);
-    },
-
-    generateReportContent(title, date, sales) {
-        const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
-        const avgSale = sales.length > 0 ? totalRevenue / sales.length : 0;
-        
-        // Group by product
-        const productSummary = {};
-        sales.forEach(sale => {
-            const productName = this.formatProductName(sale.product);
-            if (!productSummary[productName]) {
-                productSummary[productName] = {
-                    quantity: 0,
-                    revenue: 0,
-                    count: 0
-                };
-            }
-            productSummary[productName].quantity += sale.quantity;
-            productSummary[productName].revenue += sale.totalAmount;
-            productSummary[productName].count++;
-        });
-        
-        // Group by payment method
-        const paymentSummary = {};
-        sales.forEach(sale => {
-            const method = sale.paymentMethod || 'cash';
-            if (!paymentSummary[method]) {
-                paymentSummary[method] = {
-                    count: 0,
-                    revenue: 0
-                };
-            }
-            paymentSummary[method].count++;
-            paymentSummary[method].revenue += sale.totalAmount;
-        });
-        
-        return `
-            <div class="report-content">
-                <div class="report-header">
-                    <h2 class="report-title">${title}</h2>
-                    <div class="report-date">${this.formatDate(date)}</div>
-                </div>
-                
-                <div class="report-summary-stats">
-                    <div class="summary-stat">
-                        <div class="summary-value">${sales.length}</div>
-                        <div class="summary-label">Total Sales</div>
-                    </div>
-                    <div class="summary-stat">
-                        <div class="summary-value">${this.formatCurrency(totalRevenue)}</div>
-                        <div class="summary-label">Total Revenue</div>
-                    </div>
-                    <div class="summary-stat">
-                        <div class="summary-value">${this.formatCurrency(avgSale)}</div>
-                        <div class="summary-label">Average Sale</div>
-                    </div>
-                </div>
-                
-                <div class="report-section">
-                    <h3 class="section-title">📦 Products Sold</h3>
-                    <div class="report-table-container">
-                        <table class="report-table">
-                            <thead>
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Quantity</th>
-                                    <th>Revenue</th>
-                                    <th>Average Price</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${Object.entries(productSummary).map(([product, data]) => `
-                                    <tr>
-                                        <td>${product}</td>
-                                        <td>${data.quantity}</td>
-                                        <td>${this.formatCurrency(data.revenue)}</td>
-                                        <td>${this.formatCurrency(data.revenue / data.quantity)}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <div class="report-section">
-                    <h3 class="section-title">💳 Payment Methods</h3>
-                    <div class="payment-methods-grid">
-                        ${Object.entries(paymentSummary).map(([method, data]) => `
-                            <div class="payment-method-card">
-                                <div class="payment-method-name">${method.toUpperCase()}</div>
-                                <div class="payment-stats">
-                                    <div class="payment-count">${data.count} sales</div>
-                                    <div class="payment-amount">${this.formatCurrency(data.revenue)}</div>
-                                </div>
-                                <div class="payment-percentage">
-                                    ${((data.revenue / totalRevenue) * 100).toFixed(1)}% of total
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                
-                <div class="report-footer">
-                    <div class="report-generated">
-                        Generated on ${this.formatDate(new Date().toISOString())}
-                    </div>
-                </div>
-            </div>
-        `;
-    },
-
-    showReportModal(content) {
-        const modal = document.getElementById('report-modal');
-        const container = document.getElementById('report-content');
-        
-        if (!modal || !container) return;
-        
-        container.innerHTML = content;
-        modal.classList.add('active');
-    },
-
-    printReport() {
-        const printContent = document.getElementById('report-content')?.innerHTML;
-        if (!printContent) return;
-        
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Sales Report</title>
-                <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; }
-                    h1 { color: #333; border-bottom: 2px solid #4f46e5; padding-bottom: 10px; }
-                    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
-                    th { background-color: #f8f9fa; font-weight: bold; }
-                    .summary { display: flex; justify-content: space-between; margin: 20px 0; }
-                    .summary-item { text-align: center; }
-                    .summary-value { font-size: 24px; font-weight: bold; color: #4f46e5; }
-                    .summary-label { font-size: 14px; color: #666; }
-                    @media print {
-                        body { padding: 0; }
-                        .no-print { display: none; }
-                    }
-                </style>
-            </head>
-            <body>
-                ${printContent}
-                <div class="no-print" style="margin-top: 30px; text-align: center;">
-                    <button onclick="window.print()" style="padding: 10px 20px; background: #4f46e5; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">
-                        Print Report
-                    </button>
-                    <button onclick="window.close()" style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                        Close
-                    </button>
-                </div>
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
-    },
-
-    // ==================== QUICK SALE FUNCTIONS ====================
-
-    showQuickSaleForm() {
-        const formHTML = `
-            <div class="quick-sale-form">
-                <h4 class="form-title">⚡ Quick Sale</h4>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Product</label>
-                        <select class="form-input" id="quick-sale-product">
-                            <option value="broilers-dressed">🍗 Broilers (Dressed)</option>
-                            <option value="eggs">🥚 Eggs</option>
-                            <option value="milk">🥛 Milk</option>
-                            <option value="tomatoes">🍅 Tomatoes</option>
-                            <option value="broilers-live">🐔 Broilers (Live)</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Quantity</label>
-                        <input type="number" class="form-input" id="quick-sale-quantity" value="1" min="1">
-                    </div>
-                    <div class="form-group">
-                        <label>Unit Price</label>
-                        <input type="number" class="form-input" id="quick-sale-price" step="0.01" min="0">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Customer (optional)</label>
-                    <input type="text" class="form-input" id="quick-sale-customer" placeholder="Customer name">
-                </div>
-                <div class="quick-sale-total">
-                    Total: <span id="quick-sale-total">$0.00</span>
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="sales-btn sales-btn-secondary" data-action="cancel-quick-sale">Cancel</button>
-                    <button type="button" class="sales-btn sales-btn-primary" data-action="save-quick-sale">Record Sale</button>
-                </div>
-            </div>
-        `;
-        
-        // Create and show modal
-        this.showCustomModal(formHTML, 'quick-sale-modal');
-        
-        // Set up event listeners
-        this.setupQuickSaleListeners();
-    },
-
-    setupQuickSaleListeners() {
-        const modal = document.getElementById('quick-sale-modal');
-        if (!modal) return;
-        
-        // Calculate total on input
-        modal.querySelector('#quick-sale-quantity')?.addEventListener('input', () => this.calculateQuickSaleTotal());
-        modal.querySelector('#quick-sale-price')?.addEventListener('input', () => this.calculateQuickSaleTotal());
-        modal.querySelector('#quick-sale-product')?.addEventListener('change', () => this.setQuickDefaultPrice());
-        
-        // Save button
-        modal.querySelector('[data-action="save-quick-sale"]')?.addEventListener('click', () => this.saveQuickSale());
-        
-        // Cancel button
-        modal.querySelector('[data-action="cancel-quick-sale"]')?.addEventListener('click', () => {
-            this.hideModal('quick-sale-modal');
-        });
-        
-        // Set initial price
-        this.setQuickDefaultPrice();
-        this.calculateQuickSaleTotal();
-    },
-
-    calculateQuickSaleTotal() {
-        const modal = document.getElementById('quick-sale-modal');
-        if (!modal) return;
-        
-        const quantity = parseFloat(modal.querySelector('#quick-sale-quantity')?.value) || 0;
-        const price = parseFloat(modal.querySelector('#quick-sale-price')?.value) || 0;
-        const total = quantity * price;
-        
-        const totalElement = modal.querySelector('#quick-sale-total');
-        if (totalElement) {
-            totalElement.textContent = this.formatCurrency(total);
-        }
-    },
-
-    setQuickDefaultPrice() {
-        const modal = document.getElementById('quick-sale-modal');
-        if (!modal) return;
-        
-        const productSelect = modal.querySelector('#quick-sale-product');
-        const priceInput = modal.querySelector('#quick-sale-price');
-        
-        if (!productSelect || !priceInput) return;
-        
-        const product = productSelect.value;
-        const defaultPrices = {
-            'broilers-dressed': 5.50,
-            'eggs': 3.25,
-            'milk': 2.50,
-            'tomatoes': 1.75,
-            'broilers-live': 4.00
-        };
-        
-        if (defaultPrices[product] && !priceInput.value) {
-            priceInput.value = defaultPrices[product];
-            this.calculateQuickSaleTotal();
-        }
-    },
-
-    saveQuickSale() {
-        const modal = document.getElementById('quick-sale-modal');
-        if (!modal) return;
-        
-        const product = modal.querySelector('#quick-sale-product')?.value;
-        const quantity = parseFloat(modal.querySelector('#quick-sale-quantity')?.value) || 0;
-        const price = parseFloat(modal.querySelector('#quick-sale-price')?.value) || 0;
-        const customer = modal.querySelector('#quick-sale-customer')?.value;
-        
-        if (!product || quantity <= 0 || price <= 0) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
-        }
-        
-        const sale = {
-            id: 'QS-' + Date.now(),
-            date: this.getCurrentDate(),
-            product: product,
-            quantity: quantity,
-            unit: 'units',
-            unitPrice: price,
-            totalAmount: quantity * price,
-            customer: customer || 'Walk-in',
-            paymentMethod: 'cash',
-            paymentStatus: 'paid',
-            createdAt: new Date().toISOString()
-        };
-        
-        this.addSale(sale);
-        this.hideModal('quick-sale-modal');
-        this.renderModule();
-        this.saveData();
-        this.showNotification('Quick sale recorded!', 'success');
-    },
-
-    // ==================== MODAL MANAGEMENT ====================
-
-    showCustomModal(content, modalId) {
-        // Remove existing modal if any
-        const existingModal = document.getElementById(modalId);
-        if (existingModal) {
-            existingModal.remove();
-        }
-        
-        // Create new modal
-        const modal = document.createElement('div');
-        modal.id = modalId;
-        modal.className = 'sales-modal active';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button class="modal-close" data-action="close-custom-modal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    ${content}
-                </div>
-            </div>
-        `;
-        
-        // Add to page
-        document.body.appendChild(modal);
-        
-        // Add click outside to close
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.remove();
-            }
-        });
-        
-        // Add close button listener
-        modal.querySelector('[data-action="close-custom-modal"]')?.addEventListener('click', () => {
-            modal.remove();
-        });
-    },
-
-    hideModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.remove('active');
-        }
-    },
-
-    hideSaleModal() {
-        this.hideModal('sales-modal');
-        this.currentSaleId = null;
-        this.pendingProductionSale = null;
-    },
-
-    hideProductionModal() {
-        this.hideModal('production-items-modal');
-    },
-
-    hideReportModal() {
-        this.hideModal('report-modal');
-    },
-
-    // ==================== NAVIGATION FUNCTIONS ====================
-
-    navigateToProduction() {
-        console.log('🔄 Navigating to Production module...');
-        
-        // Try multiple navigation strategies
-        if (window.FarmModules && window.FarmModules.Production) {
-            // Direct module access
-            if (typeof window.FarmModules.Production.initialize === 'function') {
-                window.FarmModules.Production.initialize();
-                return true;
-            }
-        }
-        
-        if (window.FarmModules && window.FarmModules.showModule) {
-            // Use module loader
-            window.FarmModules.showModule('production');
-            return true;
-        }
-        
-        if (window.FarmModules && window.FarmModules.modules) {
-            // Search in modules map
-            const module = window.FarmModules.modules.get('production') || 
-                          window.FarmModules.modules.get('Production');
-            if (module && typeof module.initialize === 'function') {
-                module.initialize();
-                return true;
-            }
-        }
-        
-        // Fallback to hash navigation
-        window.location.hash = '#production';
-        setTimeout(() => {
-            if (window.location.hash === '#production') {
-                location.reload();
-            } else {
-                this.showNotification('Please select "Production" from the sidebar menu', 'info');
-            }
-        }, 100);
-        
-        return false;
-    },
-
     // ==================== UTILITY FUNCTIONS ====================
 
     getCurrentDate() {
-        // Use DateUtils if available, otherwise fallback
         if (window.DateUtils && window.DateUtils.getToday) {
             return window.DateUtils.getToday();
         }
@@ -1747,7 +1208,6 @@ const SalesRecordModule = {
     formatDate(dateString) {
         if (!dateString) return '';
         
-        // Use DateUtils if available
         if (window.DateUtils && window.DateUtils.formatDate) {
             return window.DateUtils.formatDate(dateString);
         }
@@ -1868,20 +1328,16 @@ const SalesRecordModule = {
         
         switch (period) {
             case 'today':
-                // Get sales from today
                 const today = this.getCurrentDate();
                 return sales
                     .filter(sale => sale.date === today)
                     .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
-                
             case 'week':
                 cutoffDate.setDate(now.getDate() - 7);
                 break;
-                
             case 'month':
                 cutoffDate.setMonth(now.getMonth() - 1);
                 break;
-                
             default:
                 return sales;
         }
@@ -1960,7 +1416,6 @@ const SalesRecordModule = {
     showMeatSaleForm() {
         this.showSaleModal();
         
-        // Set to meat product
         setTimeout(() => {
             const productSelect = document.getElementById('sale-product');
             if (productSelect) {
@@ -1970,18 +1425,12 @@ const SalesRecordModule = {
         }, 100);
     },
 
-    showProductionItems() {
-        this.showProductionModal();
-    },
-
     initializeDatePicker() {
         const dateInput = document.getElementById('sale-date');
         if (dateInput) {
-            // Set max date to today
             const today = new Date().toISOString().split('T')[0];
             dateInput.max = today;
             
-            // Set value if empty
             if (!dateInput.value) {
                 dateInput.value = today;
             }
@@ -2050,16 +1499,13 @@ const SalesRecordModule = {
 
     checkInventoryLevels(inventoryData) {
         console.log('📦 Checking inventory levels:', inventoryData);
-        // Implement inventory check logic here
     },
 
     showNotification(message, type = 'info') {
-        // Create notification element
         const notification = document.createElement('div');
-        notification.className = `sales-notification sales-notification-${type}`;
+        notification.className = `notification notification-${type}`;
         notification.textContent = message;
         
-        // Add styles
         notification.style.cssText = `
             position: fixed;
             top: 20px;
@@ -2072,7 +1518,6 @@ const SalesRecordModule = {
             animation: slideIn 0.3s ease;
         `;
         
-        // Set background based on type
         const backgrounds = {
             'success': '#10b981',
             'error': '#ef4444',
@@ -2082,10 +1527,8 @@ const SalesRecordModule = {
         
         notification.style.backgroundColor = backgrounds[type] || '#3b82f6';
         
-        // Add to page
         document.body.appendChild(notification);
         
-        // Remove after 3 seconds
         setTimeout(() => {
             notification.style.animation = 'slideOut 0.3s ease';
             setTimeout(() => {
@@ -2096,15 +1539,445 @@ const SalesRecordModule = {
         }, 3000);
     },
 
+    hideModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    },
+
+    hideSaleModal() {
+        this.hideModal('sales-modal');
+        this.currentSaleId = null;
+        this.pendingProductionSale = null;
+    },
+
+    hideProductionModal() {
+        this.hideModal('production-items-modal');
+    },
+
+    hideReportModal() {
+        this.hideModal('report-modal');
+    },
+
+    // ==================== QUICK SALE FUNCTIONS ====================
+
+    showQuickSaleForm() {
+        const formHTML = `
+            <div style="padding: 20px;">
+                <h4 style="margin: 0 0 20px 0; font-size: 18px; color: var(--text-primary); text-align: center;">
+                    ⚡ Quick Sale
+                </h4>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-primary); font-size: 14px;">
+                            Product
+                        </label>
+                        <select class="form-input" id="quick-sale-product">
+                            <option value="broilers-dressed">Broilers (Dressed)</option>
+                            <option value="eggs">Eggs</option>
+                            <option value="milk">Milk</option>
+                            <option value="tomatoes">Tomatoes</option>
+                            <option value="broilers-live">Broilers (Live)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-primary); font-size: 14px;">
+                            Quantity
+                        </label>
+                        <input type="number" class="form-input" id="quick-sale-quantity" value="1" min="1">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-primary); font-size: 14px;">
+                            Unit Price
+                        </label>
+                        <input type="number" class="form-input" id="quick-sale-price" step="0.01" min="0">
+                    </div>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-primary); font-size: 14px;">
+                        Customer (optional)
+                    </label>
+                    <input type="text" class="form-input" id="quick-sale-customer" placeholder="Customer name">
+                </div>
+                <div style="text-align: center; font-size: 20px; font-weight: 600; color: var(--text-primary); margin: 20px 0;">
+                    Total: <span id="quick-sale-total">$0.00</span>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                    <button class="btn btn-secondary" data-action="cancel-quick-sale">Cancel</button>
+                    <button class="btn btn-primary" data-action="save-quick-sale">Record Sale</button>
+                </div>
+            </div>
+        `;
+        
+        this.showCustomModal(formHTML, 'quick-sale-modal');
+        this.setupQuickSaleListeners();
+    },
+
+    setupQuickSaleListeners() {
+        const modal = document.getElementById('quick-sale-modal');
+        if (!modal) return;
+        
+        modal.querySelector('#quick-sale-quantity')?.addEventListener('input', () => this.calculateQuickSaleTotal());
+        modal.querySelector('#quick-sale-price')?.addEventListener('input', () => this.calculateQuickSaleTotal());
+        modal.querySelector('#quick-sale-product')?.addEventListener('change', () => this.setQuickDefaultPrice());
+        
+        modal.querySelector('[data-action="save-quick-sale"]')?.addEventListener('click', () => this.saveQuickSale());
+        modal.querySelector('[data-action="cancel-quick-sale"]')?.addEventListener('click', () => {
+            this.hideModal('quick-sale-modal');
+        });
+        
+        this.setQuickDefaultPrice();
+        this.calculateQuickSaleTotal();
+    },
+
+    calculateQuickSaleTotal() {
+        const modal = document.getElementById('quick-sale-modal');
+        if (!modal) return;
+        
+        const quantity = parseFloat(modal.querySelector('#quick-sale-quantity')?.value) || 0;
+        const price = parseFloat(modal.querySelector('#quick-sale-price')?.value) || 0;
+        const total = quantity * price;
+        
+        const totalElement = modal.querySelector('#quick-sale-total');
+        if (totalElement) {
+            totalElement.textContent = this.formatCurrency(total);
+        }
+    },
+
+    setQuickDefaultPrice() {
+        const modal = document.getElementById('quick-sale-modal');
+        if (!modal) return;
+        
+        const productSelect = modal.querySelector('#quick-sale-product');
+        const priceInput = modal.querySelector('#quick-sale-price');
+        
+        if (!productSelect || !priceInput) return;
+        
+        const product = productSelect.value;
+        const defaultPrices = {
+            'broilers-dressed': 5.50,
+            'eggs': 3.25,
+            'milk': 2.50,
+            'tomatoes': 1.75,
+            'broilers-live': 4.00
+        };
+        
+        if (defaultPrices[product] && !priceInput.value) {
+            priceInput.value = defaultPrices[product];
+            this.calculateQuickSaleTotal();
+        }
+    },
+
+    saveQuickSale() {
+        const modal = document.getElementById('quick-sale-modal');
+        if (!modal) return;
+        
+        const product = modal.querySelector('#quick-sale-product')?.value;
+        const quantity = parseFloat(modal.querySelector('#quick-sale-quantity')?.value) || 0;
+        const price = parseFloat(modal.querySelector('#quick-sale-price')?.value) || 0;
+        const customer = modal.querySelector('#quick-sale-customer')?.value;
+        
+        if (!product || quantity <= 0 || price <= 0) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        const sale = {
+            id: 'QS-' + Date.now(),
+            date: this.getCurrentDate(),
+            product: product,
+            quantity: quantity,
+            unit: 'units',
+            unitPrice: price,
+            totalAmount: quantity * price,
+            customer: customer || 'Walk-in',
+            paymentMethod: 'cash',
+            paymentStatus: 'paid',
+            createdAt: new Date().toISOString()
+        };
+        
+        this.addSale(sale);
+        this.hideModal('quick-sale-modal');
+        this.renderModule();
+        this.saveData();
+        this.showNotification('Quick sale recorded!', 'success');
+    },
+
+    showCustomModal(content, modalId) {
+        const existingModal = document.getElementById(modalId);
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        const modal = document.createElement('div');
+        modal.id = modalId;
+        modal.className = 'popout-modal';
+        modal.innerHTML = `
+            <div class="popout-modal-content">
+                <div class="popout-modal-header">
+                    <button class="popout-modal-close" data-action="close-custom-modal">&times;</button>
+                </div>
+                <div class="popout-modal-body">
+                    ${content}
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+        
+        modal.querySelector('[data-action="close-custom-modal"]')?.addEventListener('click', () => {
+            modal.remove();
+        });
+        
+        modal.classList.remove('hidden');
+    },
+
+    // ==================== REPORT FUNCTIONS ====================
+
+    generateDailyReport() {
+        const today = this.getCurrentDate();
+        const sales = this.getFilteredSales('today');
+        
+        if (sales.length === 0) {
+            this.showNotification('No sales recorded today', 'info');
+            return;
+        }
+        
+        const reportContent = this.generateReportContent('Today\'s Sales Report', today, sales);
+        this.showReportModal(reportContent);
+    },
+
+    generateReportContent(title, date, sales) {
+        const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+        const avgSale = sales.length > 0 ? totalRevenue / sales.length : 0;
+        
+        const productSummary = {};
+        sales.forEach(sale => {
+            const productName = this.formatProductName(sale.product);
+            if (!productSummary[productName]) {
+                productSummary[productName] = {
+                    quantity: 0,
+                    revenue: 0,
+                    count: 0
+                };
+            }
+            productSummary[productName].quantity += sale.quantity;
+            productSummary[productName].revenue += sale.totalAmount;
+            productSummary[productName].count++;
+        });
+        
+        const paymentSummary = {};
+        sales.forEach(sale => {
+            const method = sale.paymentMethod || 'cash';
+            if (!paymentSummary[method]) {
+                paymentSummary[method] = {
+                    count: 0,
+                    revenue: 0
+                };
+            }
+            paymentSummary[method].count++;
+            paymentSummary[method].revenue += sale.totalAmount;
+        });
+        
+        return `
+            <div style="padding: 20px;">
+                <div style="text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid var(--glass-border);">
+                    <h2 style="margin: 0 0 8px 0; color: var(--text-primary);">${title}</h2>
+                    <div style="color: var(--text-secondary); font-size: 14px;">${this.formatDate(date)}</div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px;">
+                    <div style="text-align: center; padding: 20px; background: var(--glass-bg); border-radius: 8px;">
+                        <div style="font-size: 28px; font-weight: 700; color: var(--primary-color); margin-bottom: 4px;">
+                            ${sales.length}
+                        </div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Sales</div>
+                    </div>
+                    <div style="text-align: center; padding: 20px; background: var(--glass-bg); border-radius: 8px;">
+                        <div style="font-size: 28px; font-weight: 700; color: var(--primary-color); margin-bottom: 4px;">
+                            ${this.formatCurrency(totalRevenue)}
+                        </div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Revenue</div>
+                    </div>
+                    <div style="text-align: center; padding: 20px; background: var(--glass-bg); border-radius: 8px;">
+                        <div style="font-size: 28px; font-weight: 700; color: var(--primary-color); margin-bottom: 4px;">
+                            ${this.formatCurrency(avgSale)}
+                        </div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Average Sale</div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 32px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 16px;">📦 Products Sold</h3>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="padding: 12px; text-align: left; color: var(--text-secondary); background: var(--glass-bg);">
+                                        Product
+                                    </th>
+                                    <th style="padding: 12px; text-align: left; color: var(--text-secondary); background: var(--glass-bg);">
+                                        Quantity
+                                    </th>
+                                    <th style="padding: 12px; text-align: left; color: var(--text-secondary); background: var(--glass-bg);">
+                                        Revenue
+                                    </th>
+                                    <th style="padding: 12px; text-align: left; color: var(--text-secondary); background: var(--glass-bg);">
+                                        Avg Price
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${Object.entries(productSummary).map(([product, data]) => `
+                                    <tr>
+                                        <td style="padding: 12px; border-bottom: 1px solid var(--glass-border); color: var(--text-primary);">
+                                            ${product}
+                                        </td>
+                                        <td style="padding: 12px; border-bottom: 1px solid var(--glass-border); color: var(--text-primary);">
+                                            ${data.quantity}
+                                        </td>
+                                        <td style="padding: 12px; border-bottom: 1px solid var(--glass-border); color: var(--text-primary);">
+                                            ${this.formatCurrency(data.revenue)}
+                                        </td>
+                                        <td style="padding: 12px; border-bottom: 1px solid var(--glass-border); color: var(--text-primary);">
+                                            ${this.formatCurrency(data.revenue / data.quantity)}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 style="color: var(--text-primary); margin-bottom: 16px;">💳 Payment Methods</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                        ${Object.entries(paymentSummary).map(([method, data]) => `
+                            <div style="background: var(--glass-bg); border-radius: 8px; padding: 16px; border: 1px solid var(--glass-border);">
+                                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
+                                    ${method.toUpperCase()}
+                                </div>
+                                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 4px;">
+                                    ${data.count} sales
+                                </div>
+                                <div style="font-size: 20px; font-weight: 700; color: var(--primary-color);">
+                                    ${this.formatCurrency(data.revenue)}
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                    ${((data.revenue / totalRevenue) * 100).toFixed(1)}% of total
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div style="text-align: center; padding-top: 20px; border-top: 1px solid var(--glass-border); color: var(--text-secondary); font-size: 13px;">
+                    Generated on ${this.formatDate(new Date().toISOString())}
+                </div>
+            </div>
+        `;
+    },
+
+    showReportModal(content) {
+        const modal = document.getElementById('report-modal');
+        const container = document.getElementById('report-content');
+        
+        if (!modal || !container) return;
+        
+        container.innerHTML = content;
+        modal.classList.remove('hidden');
+    },
+
+    printReport() {
+        const printContent = document.getElementById('report-content')?.innerHTML;
+        if (!printContent) return;
+        
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Sales Report</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; }
+                    h1 { color: #333; border-bottom: 2px solid #4f46e5; padding-bottom: 10px; }
+                    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+                    th { background-color: #f8f9fa; font-weight: bold; }
+                    @media print {
+                        body { padding: 0; }
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                ${printContent}
+                <div class="no-print" style="margin-top: 30px; text-align: center;">
+                    <button onclick="window.print()" style="padding: 10px 20px; background: #4f46e5; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">
+                        Print Report
+                    </button>
+                    <button onclick="window.close()" style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Close
+                    </button>
+                </div>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    },
+
+    // ==================== NAVIGATION ====================
+
+    navigateToProduction() {
+        console.log('🔄 Navigating to Production module...');
+        
+        if (window.FarmModules && window.FarmModules.Production) {
+            if (typeof window.FarmModules.Production.initialize === 'function') {
+                window.FarmModules.Production.initialize();
+                return true;
+            }
+        }
+        
+        if (window.FarmModules && window.FarmModules.showModule) {
+            window.FarmModules.showModule('production');
+            return true;
+        }
+        
+        if (window.FarmModules && window.FarmModules.modules) {
+            const module = window.FarmModules.modules.get('production') || 
+                          window.FarmModules.modules.get('Production');
+            if (module && typeof module.initialize === 'function') {
+                module.initialize();
+                return true;
+            }
+        }
+        
+        window.location.hash = '#production';
+        setTimeout(() => {
+            if (window.location.hash === '#production') {
+                location.reload();
+            } else {
+                this.showNotification('Please select "Production" from the sidebar menu', 'info');
+            }
+        }, 100);
+        
+        return false;
+    },
+
     // ==================== MODULE LIFECYCLE ====================
 
     unload() {
         console.log('📦 Unloading Sales Record Module...');
         
-        // Clean up event listeners
         this.removeEventListeners();
         
-        // Clear references
         this.element = null;
         this.broadcaster = null;
         this.initialized = false;
@@ -2118,17 +1991,14 @@ const SalesRecordModule = {
 (function registerSalesModule() {
     console.log('📝 Registering Sales Record Module...');
     
-    // Ensure FarmModules exists
     if (!window.FarmModules) {
         console.error('❌ FarmModules framework not found');
         window.FarmModules = {};
     }
     
-    // Register the module
     window.FarmModules.SalesRecord = SalesRecordModule;
     window.FarmModules.Sales = SalesRecordModule;
     
-    // Add to modules map
     if (!window.FarmModules.modules) {
         window.FarmModules.modules = new Map();
     }
@@ -2138,7 +2008,6 @@ const SalesRecordModule = {
     
     console.log('✅ Sales Record Module registered successfully');
     
-    // Auto-initialize if in content area context
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             if (document.getElementById('content-area') && !SalesRecordModule.initialized) {
@@ -2150,7 +2019,6 @@ const SalesRecordModule = {
     }
 })();
 
-// Export for module loading
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = SalesRecordModule;
 }
