@@ -3182,17 +3182,16 @@ body.dark-mode {
 }
 
 /* ============ Headers Padding ============ */
-/*.dashboard-container,
+.dashboard-container,
 .module-container {
   position: relative;
   top: 0;               /* reset any offset */
-/*  margin-top: 3.5rem;   /* equal to navbar height */
-/*  padding-top: 0.5rem;  /* consistent spacing */
-/*  box-sizing: border-box;
+  margin-top: 3.5rem;   /* equal to navbar height */
+  padding-top: 0.5rem;  /* consistent spacing */
+  box-sizing: border-box;
 }
 
 /* ============ Base styles for all screens ============ */
-/* Base styles for all screens */
 .module-header {
     margin-top: 0 !important;
     padding-top: 10px !important;
@@ -3200,12 +3199,12 @@ body.dark-mode {
 
 /* For large screens (desktop) - more aggressive positioning */
 @media (min-width: 1024px) {
-     Target the specific problematic modules on large screens */
+    /* Target the specific problematic modules on large screens */
     #content-area .income-module .module-header,
     #content-area .profile-module .module-header,
     #content-area .broiler-module .module-header,
     #content-area .production-module .module-header {
-        margin-top: -20px !important; /* Pull it up more on large screens */
+        margin-top: -20px !important;
         padding-top: 0 !important;
         position: relative;
         top: -10px !important;
@@ -3220,10 +3219,32 @@ body.dark-mode {
         padding-top: 0 !important;
     }
     
+    /* ============ CRITICAL FIX: Override dashboard container rule ============ */
+    /* Remove the 3.5rem margin from dashboard on large screens */
+    #content-area .dashboard-container,
+    #content-area .dashboard-module,
+    #content-area [class*="dashboard"].module-container,
+    #content-area .dashboard-container.module-container {
+        margin-top: 0 !important; /* OVERRIDE the 3.5rem */
+        padding-top: 0 !important;
+        position: relative;
+        top: -10px !important; /* Pull it up */
+    }
+    
+    /* Fix dashboard header specifically */
+    #content-area .dashboard-container .module-header,
+    #content-area .dashboard-module .module-header,
+    #content-area [class*="dashboard"] .module-header {
+        margin-top: -30px !important; /* More aggressive pull-up */
+        padding-top: 0 !important;
+        position: relative;
+        top: -20px !important;
+    }
+    
     /* Check for extra spacing in module containers */
     #content-area .module-container {
         margin-top: 0 !important;
         padding-top: 0 !important;
     }
-} 
+}
 
