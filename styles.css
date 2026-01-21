@@ -3205,7 +3205,7 @@ body.dark-mode {
     #content-area .profile-module .module-header,
     #content-area .broiler-module .module-header,
     #content-area .production-module .module-header {
-        margin-top: -35px !important;
+        margin-top: -40px !important;
         padding-top: 0 !important;
         position: relative;
         top: -10px !important;
