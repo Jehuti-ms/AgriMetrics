@@ -2627,7 +2627,7 @@ const IncomeExpensesModule = {
         // Update UI
         this.updateReceiptQueueUI();
         
-        this.showNotification('Cleaned up broken receipts', 'info');
+        /*this.showNotification('Cleaned up broken receipts', 'info');*/
     },
     
     // ==================== BATCH OPERATIONS ====================
