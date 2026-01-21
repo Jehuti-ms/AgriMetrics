@@ -3251,17 +3251,27 @@ body.dark-mode {
     }
 }
 
-/* Base rule for all modules */
-.dashboard-container,
-.module-container {
-  margin-top: 0 !important;   /* no extra vertical offset */
-  padding-top: 0 !important;  /* no internal gap */
-  position: relative;
-  box-sizing: border-box;
+@media (min-width: 1024px) {
+  #content-area .income-module .module-header,
+  #content-area .profile-module .module-header,
+  #content-area .broiler-module .module-header,
+  #content-area .production-module .module-header {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    top: 0 !important;
+  }
+
+  #content-area .income-module,
+  #content-area .profile-module,
+  #content-area .broiler-module,
+  #content-area .production-module {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  #content-area .dashboard-container {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
 }
 
-/* Module headers */
-.module-header {
-  margin-top: 0 !important;   /* flush against container top */
-  padding-top: 0 !important;
-}
