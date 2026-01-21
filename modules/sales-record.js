@@ -1449,7 +1449,7 @@ const SalesRecordModule = {
                 const action = productionNavBtn.getAttribute('data-action');
                 this.handleProductionNavAction(action);
             }
-            
+          
             // NEW: Handle sell production item buttons
             const sellItemBtn = e.target.closest('.sell-production-item-btn');
             if (sellItemBtn) {
@@ -1461,6 +1461,72 @@ const SalesRecordModule = {
                 }
             }
         });
+
+          // DIRECT LISTENER for main page production button
+    setTimeout(() => {
+        const mainPageProductionBtns = document.querySelectorAll('.production-nav-btn[data-action="navigate-to-production"]');
+        console.log(`🔍 Found ${mainPageProductionBtns.length} main page production buttons`);
+        
+        mainPageProductionBtns.forEach((btn, index) => {
+            // Skip if it's inside a modal (those work already)
+            if (btn.closest('.popout-modal')) {
+                console.log(`Button ${index}: Inside modal, skipping direct listener`);
+                return;
+            }
+            
+            // Add direct click listener
+            if (!btn.hasAttribute('data-direct-listener')) {
+                btn.setAttribute('data-direct-listener', 'true');
+                
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    console.log('🔥 MAIN PAGE BUTTON DIRECT CLICK!', {
+                        button: btn,
+                        parent: btn.parentElement?.className,
+                        isInModal: !!btn.closest('.popout-modal')
+                    });
+                    
+                    this.navigateToProduction();
+                });
+                
+                console.log(`✅ Added direct listener to main page button ${index}`);
+            }
+        });
+    }, 300);  // DIRECT LISTENER for main page production button
+    setTimeout(() => {
+        const mainPageProductionBtns = document.querySelectorAll('.production-nav-btn[data-action="navigate-to-production"]');
+        console.log(`🔍 Found ${mainPageProductionBtns.length} main page production buttons`);
+        
+        mainPageProductionBtns.forEach((btn, index) => {
+            // Skip if it's inside a modal (those work already)
+            if (btn.closest('.popout-modal')) {
+                console.log(`Button ${index}: Inside modal, skipping direct listener`);
+                return;
+            }
+            
+            // Add direct click listener
+            if (!btn.hasAttribute('data-direct-listener')) {
+                btn.setAttribute('data-direct-listener', 'true');
+                
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    console.log('🔥 MAIN PAGE BUTTON DIRECT CLICK!', {
+                        button: btn,
+                        parent: btn.parentElement?.className,
+                        isInModal: !!btn.closest('.popout-modal')
+                    });
+                    
+                    this.navigateToProduction();
+                });
+                
+                console.log(`✅ Added direct listener to main page button ${index}`);
+            }
+        });
+    }, 300);
         
         console.log('✅ Event listeners set up');
     },
