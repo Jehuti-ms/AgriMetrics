@@ -3223,7 +3223,7 @@ body.dark-mode {
     /* ============ DASHBOARD: MATCH OLD STYLES ============ */
     /* Dashboard container - cancel the 3.5rem margin like old styles */
     #content-area .dashboard-container {
-        margin-top: -3.5rem !important; /* Cancel out the 3.5rem completely */
+        margin-top: -3rem !important; /* Cancel out the 3.5rem completely */
         padding-top: 0 !important;
         position: relative;
     }
