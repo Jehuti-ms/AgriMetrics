@@ -3296,5 +3296,133 @@ body.dark-mode {
     }
 }
 
+/* ===== HEADER ACTION BUTTONS FIX ===== */
 
+/* Target Income & Expenses module header actions */
+.income-expenses-module .module-header-pwa .header-actions {
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right on larger screens */
+    gap: 8px;
+    margin-top: 15px;
+    align-items: center;
+}
+
+/* Target Sales module header actions */
+.sales-module .module-header-pwa .header-actions {
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right on larger screens */
+    gap: 8px;
+    margin-top: 15px;
+    align-items: center;
+}
+
+/* Smaller buttons in header actions */
+.income-expenses-module .module-header-pwa .header-actions .btn,
+.sales-module .module-header-pwa .header-actions .btn {
+    padding: 10px 20px !important; /* Smaller padding */
+    font-size: 13px !important; /* Smaller font size */
+    border: none !important; /* Remove all borders */
+    border-radius: 8px !important; /* Smaller border radius */
+    min-height: 36px !important; /* Smaller height */
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important; /* Subtle shadow instead of border */
+}
+
+/* Primary button in header - no border */
+.income-expenses-module .module-header-pwa .header-actions .btn-primary,
+.sales-module .module-header-pwa .header-actions .btn-primary {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1)) !important;
+    color: white !important;
+    border: none !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2) !important; /* Subtle glass effect border */
+}
+
+.income-expenses-module .module-header-pwa .header-actions .btn-primary:hover,
+.sales-module .module-header-pwa .header-actions .btn-primary:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.2)) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Outline button in header - remove border, make glass effect */
+.income-expenses-module .module-header-pwa .header-actions .btn-outline,
+.sales-module .module-header-pwa .header-actions .btn-outline {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05)) !important;
+    color: white !important;
+    border: none !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15) !important; /* Subtle glass effect */
+}
+
+.income-expenses-module .module-header-pwa .header-actions .btn-outline:hover,
+.sales-module .module-header-pwa .header-actions .btn-outline:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.15)) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+@media (max-width: 768px) {
+    /* Stack buttons vertically on mobile */
+    .income-expenses-module .module-header-pwa .header-actions,
+    .sales-module .module-header-pwa .header-actions {
+        justify-content: flex-start !important; /* Left align on mobile */
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .income-expenses-module .module-header-pwa .header-actions .btn,
+    .sales-module .module-header-pwa .header-actions .btn {
+        width: 100% !important; /* Full width on mobile */
+        justify-content: center;
+    }
+}
+
+/* For larger screens, keep buttons inline */
+@media (min-width: 769px) {
+    .income-expenses-module .module-header-pwa .header-actions,
+    .sales-module .module-header-pwa .header-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+}
+
+/* ===== CONSISTENCY WITH OTHER MODULES ===== */
+
+/* Apply similar styling to other modules with header actions */
+.module-container .module-header .header-actions,
+.orders-module .orders-header-pwa .header-actions,
+.feed-module .module-header-pwa .header-actions,
+.production-module .production-header-pwa .header-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.module-container .module-header .header-actions .btn,
+.orders-module .orders-header-pwa .header-actions .btn,
+.feed-module .module-header-pwa .header-actions .btn,
+.production-module .production-header-pwa .header-actions .btn {
+    padding: 10px 20px !important;
+    font-size: 13px !important;
+    border: none !important;
+    border-radius: 8px !important;
+    min-height: 36px !important;
+}
+
+/* Glass effect buttons for all modules */
+.module-container .module-header .header-actions .btn-primary,
+.orders-module .orders-header-pwa .header-actions .btn-primary,
+.feed-module .module-header-pwa .header-actions .btn-primary,
+.production-module .production-header-pwa .header-actions .btn-primary {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1)) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(10px);
+}
 
