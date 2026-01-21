@@ -3181,9 +3181,9 @@ body.dark-mode {
   --nav-bg: #1e1e1e;
 }
 
-/* ===== MODULE HEADER POSITIONING FIX ===== */
+/* ===== FIX MODULE HEADER POSITIONING ===== */
 
-/* Fix for all module containers */
+/* Remove all top padding from module containers */
 .dashboard-container,
 .income-expenses-module,
 .module-container,
@@ -3195,14 +3195,11 @@ body.dark-mode {
 .profile-module,
 .inventory-module,
 .health-module {
-    padding-top: 80px; /* Match navbar height */
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-bottom: 20px;
+    padding-top: 0 !important; /* Remove top padding */
     min-height: calc(100vh - 80px);
 }
 
-/* Fix header negative margins to account for navbar */
+/* Make headers sit right below navbar */
 .dashboard-container .welcome-section,
 .income-expenses-module .module-header-pwa,
 .module-container .module-header,
@@ -3212,30 +3209,32 @@ body.dark-mode {
 .sales-module .module-header-pwa,
 .section.active .module-header,
 .profile-module .profile-header-pwa {
-    margin-top: -80px; /* Pull header up to cover navbar gap */
+    margin-top: 0 !important; /* Remove negative top margin */
     margin-left: -20px;
     margin-right: -20px;
+    padding-top: 25px;
+    padding-bottom: 25px;
 }
 
-/* ===== RESPONSIVE FIXES ===== */
+/* Keep the existing padding on sides and bottom */
+.dashboard-container,
+.income-expenses-module,
+.module-container,
+.orders-module,
+.feed-module,
+.production-module,
+.sales-module,
+.section.active,
+.profile-module,
+.inventory-module,
+.health-module {
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 20px;
+}
 
+/* Responsive fixes */
 @media (max-width: 768px) {
-    .dashboard-container,
-    .income-expenses-module,
-    .module-container,
-    .orders-module,
-    .feed-module,
-    .production-module,
-    .sales-module,
-    .section.active,
-    .profile-module,
-    .inventory-module,
-    .health-module {
-        padding-top: 80px;
-        padding-left: 16px;
-        padding-right: 16px;
-    }
-    
     .dashboard-container .welcome-section,
     .income-expenses-module .module-header-pwa,
     .module-container .module-header,
@@ -3248,9 +3247,7 @@ body.dark-mode {
         margin-left: -16px;
         margin-right: -16px;
     }
-}
-
-@media (max-width: 480px) {
+    
     .dashboard-container,
     .income-expenses-module,
     .module-container,
@@ -3262,11 +3259,13 @@ body.dark-mode {
     .profile-module,
     .inventory-module,
     .health-module {
-        padding-top: 80px;
-        padding-left: 12px;
-        padding-right: 12px;
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-bottom: 16px;
     }
-    
+}
+
+@media (max-width: 480px) {
     .dashboard-container .welcome-section,
     .income-expenses-module .module-header-pwa,
     .module-container .module-header,
@@ -3279,8 +3278,23 @@ body.dark-mode {
         margin-left: -12px;
         margin-right: -12px;
     }
+    
+    .dashboard-container,
+    .income-expenses-module,
+    .module-container,
+    .orders-module,
+    .feed-module,
+    .production-module,
+    .sales-module,
+    .section.active,
+    .profile-module,
+    .inventory-module,
+    .health-module {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-bottom: 12px;
+    }
 }
-
 
 
 
