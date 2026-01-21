@@ -3241,16 +3241,7 @@ setQuickDefaultPrice(product) {
         }, 3000);
     },
     
-    unload() {
-        console.log('📦 Unloading Sales module...');
-        this.initialized = false;
-        this.element = null;
-        this.broadcaster = null;
-        this.removeEventListeners();
-    }
-};
-
-      unload() {
+       unload() {
     console.log('📦 Unloading Sales module...');
     this.initialized = false;
     this.element = null;
