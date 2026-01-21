@@ -3250,3 +3250,18 @@ body.dark-mode {
         padding-top: 0 !important;
     }
 }
+
+/* Base rule for all modules */
+.dashboard-container,
+.module-container {
+  margin-top: 0 !important;   /* no extra vertical offset */
+  padding-top: 0 !important;  /* no internal gap */
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* Module headers */
+.module-header {
+  margin-top: 0 !important;   /* flush against container top */
+  padding-top: 0 !important;
+}
