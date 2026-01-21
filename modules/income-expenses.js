@@ -511,12 +511,19 @@ const IncomeExpensesModule = {
                 return false;
             });
             
-            uploadReceiptBtn.onclick = (e) => {
-                console.log('Direct onclick fired as backup');
+            // ==== REMOVE OR COMMENT OUT THIS BACKUP ====
+            // uploadReceiptBtn.onclick = (e) => {
+            //     console.log('Direct onclick fired as backup');
+            //     e.preventDefault();
+            //     this.showImportReceiptsModal();
+            //     return false;
+            // };
+            
+            // Add mobile touch fixes
+            uploadReceiptBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                this.showImportReceiptsModal();
-                return false;
-            };
+                e.stopPropagation();
+            }, { passive: false });
             
         } else {
             console.error('ERROR: upload-receipt-btn not found!');
