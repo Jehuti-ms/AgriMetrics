@@ -3251,7 +3251,41 @@ body.dark-mode {
     }
 }
 
+/* Navbar baseline */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.5rem; /* lock navbar height */
+  z-index: 1000;
+}
+
+/* Main content starts exactly below navbar */
+#content-area {
+  margin-top: 3.5rem !important; /* equal to navbar height */
+  padding-top: 0 !important;     /* remove extra gap */
+}
+
+/* All module containers */
+.dashboard-container,
+.module-container {
+  margin-top: 0 !important;   /* no extra offset */
+  padding-top: 0 !important;
+}
+
+/* Module headers flush under navbar */
+.module-header {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
 @media (min-width: 1024px) {
+  #content-area {
+    margin-top: 3.5rem !important; /* same as navbar height */
+    padding-top: 0 !important;
+  }
+
   #content-area .income-module .module-header,
   #content-area .profile-module .module-header,
   #content-area .broiler-module .module-header,
@@ -3260,18 +3294,6 @@ body.dark-mode {
     padding-top: 0 !important;
     top: 0 !important;
   }
-
-  #content-area .income-module,
-  #content-area .profile-module,
-  #content-area .broiler-module,
-  #content-area .production-module {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-  }
-
-  #content-area .dashboard-container {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-  }
 }
+
 
