@@ -3186,9 +3186,9 @@ body.dark-mode {
 .dashboard-container,
 .module-container {
   position: relative;
-  top: 0;               /* reset any offset */
-  margin-top: 3.5rem;   /* equal to navbar height */
-  padding-top: 0.5rem;  /* consistent spacing */
+  top: 0;
+  margin-top: 3.5rem;
+  padding-top: 0.5rem;
   box-sizing: border-box;
 }
 
@@ -3205,7 +3205,7 @@ body.dark-mode {
     #content-area .profile-module .module-header,
     #content-area .broiler-module .module-header,
     #content-area .production-module .module-header {
-        margin-top: -40px !important;
+        margin-top: -20px !important;
         padding-top: 0 !important;
         position: relative;
         top: -10px !important;
@@ -3220,28 +3220,40 @@ body.dark-mode {
         padding-top: 0 !important;
     }
     
-    /* ============ DASHBOARD: NEEDS TO COME DOWN ============ */
-    /* Since dashboard is at 0px margin-top, to come DOWN we need POSITIVE margin */
+    /* ============ DASHBOARD: MATCH OLD STYLES ============ */
+    /* Dashboard container - cancel the 3.5rem margin like old styles */
     #content-area .dashboard-container {
-        margin-top: 10px !important; /* POSITIVE to push DOWN */
-        padding-top: 0.5rem !important;
+        margin-top: -3.5rem !important; /* Cancel out the 3.5rem completely */
+        padding-top: 0 !important;
         position: relative;
-        top: 0 !important;
     }
     
-    /* Target dashboard welcome header - also push DOWN */
-    #content-area .dashboard-container .welcome-section h1 {
-        margin-top: 10px !important; /* POSITIVE to push DOWN */
-        padding-top: 1rem !important;
-        position: relative;
-        top: 0 !important;
-        transform: none !important;
-    }
-    
-    /* Also adjust the welcome section container */
+    /* Dashboard welcome section - use negative margin like old styles */
     #content-area .dashboard-container .welcome-section {
-        margin-top: 10px !important; /* POSITIVE */
-        padding-top: 1rem !important;
+        margin: -20px -20px 30px -20px !important; /* EXACTLY like old styles */
+        padding: 25px 20px !important;
+        border-radius: 0 0 20px 20px !important;
+        background: linear-gradient(135deg, #22c55e 0%, #14b8a6 100%) !important;
+        color: white !important;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(34, 197, 94, 0.15) !important;
+    }
+    
+    /* Dashboard welcome header */
+    #content-area .dashboard-container .welcome-section h1 {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        color: white !important;
+        font-size: 28px !important;
+        font-weight: 700 !important;
+        margin-bottom: 8px !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+    }
+    
+    /* Also pull up the dashboard content area */
+    #content-area {
+        padding-top: 0 !important; /* Remove the 80px padding that pushes it down */
     }
     
     /* Check for extra spacing in module containers */
