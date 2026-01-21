@@ -3230,7 +3230,7 @@ body.dark-mode {
     
     /* Dashboard welcome section - use negative margin like old styles */
     #content-area .dashboard-container .welcome-section {
-        margin: -20px -20px 30px -20px !important; /* EXACTLY like old styles */
+        margin: -15px -20px 30px -20px !important; /* EXACTLY like old styles */
         padding: 25px 20px !important;
         border-radius: 0 0 20px 20px !important;
         background: linear-gradient(135deg, #22c55e 0%, #14b8a6 100%) !important;
