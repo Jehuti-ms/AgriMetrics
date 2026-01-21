@@ -3181,6 +3181,106 @@ body.dark-mode {
   --nav-bg: #1e1e1e;
 }
 
+/* ===== MODULE HEADER POSITIONING FIX ===== */
+
+/* Fix for all module containers */
+.dashboard-container,
+.income-expenses-module,
+.module-container,
+.orders-module,
+.feed-module,
+.production-module,
+.sales-module,
+.section.active,
+.profile-module,
+.inventory-module,
+.health-module {
+    padding-top: 80px; /* Match navbar height */
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 20px;
+    min-height: calc(100vh - 80px);
+}
+
+/* Fix header negative margins to account for navbar */
+.dashboard-container .welcome-section,
+.income-expenses-module .module-header-pwa,
+.module-container .module-header,
+.orders-module .orders-header-pwa,
+.feed-module .module-header-pwa,
+.production-module .production-header-pwa,
+.sales-module .module-header-pwa,
+.section.active .module-header,
+.profile-module .profile-header-pwa {
+    margin-top: -80px; /* Pull header up to cover navbar gap */
+    margin-left: -20px;
+    margin-right: -20px;
+}
+
+/* ===== RESPONSIVE FIXES ===== */
+
+@media (max-width: 768px) {
+    .dashboard-container,
+    .income-expenses-module,
+    .module-container,
+    .orders-module,
+    .feed-module,
+    .production-module,
+    .sales-module,
+    .section.active,
+    .profile-module,
+    .inventory-module,
+    .health-module {
+        padding-top: 80px;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+    
+    .dashboard-container .welcome-section,
+    .income-expenses-module .module-header-pwa,
+    .module-container .module-header,
+    .orders-module .orders-header-pwa,
+    .feed-module .module-header-pwa,
+    .production-module .production-header-pwa,
+    .sales-module .module-header-pwa,
+    .section.active .module-header,
+    .profile-module .profile-header-pwa {
+        margin-left: -16px;
+        margin-right: -16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-container,
+    .income-expenses-module,
+    .module-container,
+    .orders-module,
+    .feed-module,
+    .production-module,
+    .sales-module,
+    .section.active,
+    .profile-module,
+    .inventory-module,
+    .health-module {
+        padding-top: 80px;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    
+    .dashboard-container .welcome-section,
+    .income-expenses-module .module-header-pwa,
+    .module-container .module-header,
+    .orders-module .orders-header-pwa,
+    .feed-module .module-header-pwa,
+    .production-module .production-header-pwa,
+    .sales-module .module-header-pwa,
+    .section.active .module-header,
+    .profile-module .profile-header-pwa {
+        margin-left: -12px;
+        margin-right: -12px;
+    }
+}
+
 
 
 
