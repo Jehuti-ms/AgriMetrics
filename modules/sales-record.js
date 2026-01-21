@@ -1881,7 +1881,7 @@ const SalesRecordModule = {
     }
     
     this.setQuickDefaultPrice(product);
-}
+},
 
 setQuickDefaultPrice(product) {
     const defaultPrices = {
