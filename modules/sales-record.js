@@ -36,8 +36,12 @@ const SalesRecordModule = {
         
         this.loadSalesData();
         this.renderModule();
+        
+         setTimeout(() => {
         this.setupEventListeners();
-        this.setupBroadcasterListeners(); // NEW: Setup broadcaster listeners
+        this.setupBroadcasterListeners();
+         }, 100);
+        
         this.initialized = true;
         
         console.log('✅ Enhanced Sales Records initialized with Data Broadcaster');
@@ -407,6 +411,23 @@ const SalesRecordModule = {
             }
         }, 300);
     },
+
+    handleProductionNavAction(action) {
+    console.log('🔄 Handling production nav action:', action);
+    
+    switch(action) {
+        case 'navigate-to-production':
+            console.log('🚀 Navigating to production module...');
+            this.navigateToProduction();
+            break;
+        case 'show-production-items':
+            console.log('📦 Showing production items...');
+            this.showProductionItems();
+            break;
+        default:
+            console.warn('Unknown production nav action:', action);
+    }
+},
 
     checkDependencies() {
         if (!window.FarmModules || !window.FarmModules.appData) {
@@ -1370,6 +1391,16 @@ const SalesRecordModule = {
             });
         }
 
+        // Add this to properly handle modal close buttons
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('popout-modal-close')) {
+                    const modal = e.target.closest('.popout-modal');
+                    if (modal) {
+                        modal.classList.add('hidden');
+                    }
+                }
+            });
+        
         // Close modals when clicking outside
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('popout-modal')) {
@@ -1493,6 +1524,32 @@ const SalesRecordModule = {
         const closeProductionItemsBtn2 = document.getElementById('close-production-items-btn');
         if (closeProductionItemsBtn2) closeProductionItemsBtn2.addEventListener('click', () => this.hideProductionItemsModal());
     },
+
+    removeEventListeners() {
+    // This method clones elements to remove event listeners
+    const elementIds = [
+        'add-sale', 'add-sale-btn', 'from-production-btn', 'from-production-btn-2',
+        'meat-sales-btn', 'daily-report-btn', 'save-sale', 'delete-sale',
+        'cancel-sale', 'close-sale-modal', 'close-daily-report', 'close-daily-report-btn',
+        'print-daily-report', 'close-meat-sales', 'close-meat-sales-btn', 'print-meat-sales',
+        'close-production-items', 'close-production-items-btn', 'quick-product', 'period-filter'
+    ];
+    
+    elementIds.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            const newElement = element.cloneNode(true);
+            element.parentNode.replaceChild(newElement, element);
+        }
+    });
+    
+    // Also remove the quick sale form listener
+    const quickSaleForm = document.getElementById('quick-sale-form');
+    if (quickSaleForm) {
+        const newForm = quickSaleForm.cloneNode(true);
+        quickSaleForm.parentNode.replaceChild(newForm, quickSaleForm);
+    }
+},
     
     setupProductionItemsListeners() {
         // This is called after showing production items modal to set up listeners for dynamic content
@@ -1737,6 +1794,12 @@ const SalesRecordModule = {
         if (productSelect) {
             productSelect.addEventListener('change', () => this.handleProductChange());
         }
+
+          // Add this missing listener for quick product
+        const quickProduct = document.getElementById('quick-product');
+        if (quickProduct) {
+            quickProduct.addEventListener('change', () => this.handleQuickProductChange());
+        }
         
         // Real-time total calculation
         const fieldsToWatch = [
@@ -1796,6 +1859,64 @@ const SalesRecordModule = {
             }
         }
     },
+
+    handleQuickProductChange() {
+    const productSelect = document.getElementById('quick-product');
+    const unitSelect = document.getElementById('quick-unit');
+    const priceLabel = document.getElementById('quick-price-label');
+    
+    if (!productSelect || !unitSelect || !priceLabel) return;
+    
+    const product = productSelect.value;
+    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+    
+    if (meatProducts.includes(product)) {
+        if (unitSelect.value === 'kg' || unitSelect.value === 'lbs') {
+            priceLabel.textContent = `Price (per ${unitSelect.value === 'lbs' ? 'lb' : 'kg'}) *`;
+        } else {
+            priceLabel.textContent = 'Price *';
+        }
+    } else {
+        priceLabel.textContent = 'Price *';
+    }
+    
+    this.setQuickDefaultPrice(product);
+}
+
+setQuickDefaultPrice(product) {
+    const defaultPrices = {
+        'broilers-dressed': 5.50,
+        'pork': 4.25,
+        'beef': 6.75,
+        'chicken-parts': 3.95,
+        'goat': 5.25,
+        'lamb': 6.50,
+        'broilers-live': 4.00,
+        'layers': 12.00,
+        'chicks': 2.50,
+        'eggs': 3.25,
+        'tomatoes': 1.75,
+        'peppers': 2.25,
+        'cucumbers': 1.50,
+        'lettuce': 1.25,
+        'carrots': 1.00,
+        'potatoes': 0.75,
+        'milk': 2.50,
+        'honey': 8.00,
+        'cheese': 6.00,
+        'yogurt': 3.50,
+        'butter': 4.50,
+        'jam': 5.00,
+        'bread': 2.75
+    };
+    
+    if (defaultPrices[product]) {
+        const priceInput = document.getElementById('quick-price');
+        if (priceInput) {
+            priceInput.value = defaultPrices[product];
+        }
+    }
+},
 
     handleProductChange() {
         const productSelect = document.getElementById('sale-product');
@@ -2472,11 +2593,15 @@ const SalesRecordModule = {
     deleteSaleRecord(saleId) {
         console.log('🗑️ Deleting sale:', saleId);
         
-        // Find the sale before deleting
-        const saleToDelete = window.FarmModules.appData.sales.find(s => s.id === saleId);
-        
-        // Filter out the sale to be deleted
-        window.FarmModules.appData.sales = window.FarmModules.appData.sales.filter(s => s.id !== saleId);
+       // Find the sale before deleting
+    const saleToDelete = window.FarmModules.appData.sales.find(s => s.id === saleId);
+    if (!saleToDelete) {
+        this.showNotification('Sale not found', 'error');
+        return;
+    }
+    
+    // Filter out the sale to be deleted
+    window.FarmModules.appData.sales = window.FarmModules.appData.sales.filter(s => s.id !== saleId);
         
         // Save the updated data
         this.saveData();
@@ -2745,45 +2870,45 @@ const SalesRecordModule = {
         }
     },
     
-    generateMeatSalesReport() {
-        const sales = window.FarmModules.appData.sales || [];
-        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+  generateMeatSalesReport() {
+    const sales = window.FarmModules.appData.sales || [];
+    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+    
+    const meatSales = sales.filter(sale => meatProducts.includes(sale.product));
+    
+    const totalWeight = meatSales.reduce((sum, sale) => {
+        if (sale.weightUnit === 'lbs') {
+            return sum + (sale.weight || 0) * 0.453592;
+        }
+        return sum + (sale.weight || 0);
+    }, 0);
+    
+    const totalAnimals = meatSales.reduce((sum, sale) => sum + (sale.animalCount || sale.quantity || 0), 0);
+    const totalRevenue = meatSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+    
+    // ✅ FIXED: Properly initialize productBreakdown object
+    const productBreakdown = {};
+    
+    meatSales.forEach(sale => {
+        const productName = this.formatProductName(sale.product);
+        if (!productBreakdown[productName]) {
+            productBreakdown[productName] = {
+                weight: 0,
+                animals: 0,
+                revenue: 0
+            };
+        }
         
-        const meatSales = sales.filter(sale => meatProducts.includes(sale.product));
+        let weight = sale.weight || 0;
+        if (sale.weightUnit === 'lbs') {
+            weight = weight * 0.453592;
+        }
         
-        const totalWeight = meatSales.reduce((sum, sale) => {
-            if (sale.weightUnit === 'lbs') {
-                return sum + (sale.weight || 0) * 0.453592; // Convert lbs to kg
-            }
-            return sum + (sale.weight || 0);
-        }, 0);
-        
-        const totalAnimals = meatSales.reduce((sum, sale) => sum + (sale.animalCount || sale.quantity || 0), 0);
-        const totalRevenue = meatSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
-        
-        // ✅ FIXED: Properly initialize productBreakdown object
-        const productBreakdown = {};
-        
-        meatSales.forEach(sale => {
-            const productName = this.formatProductName(sale.product);
-            if (!productBreakdown[productName]) {
-                productBreakdown[productName] = {
-                    weight: 0,
-                    animals: 0,
-                    revenue: 0
-                };
-            }
-            
-            let weight = sale.weight || 0;
-            if (sale.weightUnit === 'lbs') {
-                weight = weight * 0.453592; // Convert to kg for consistent reporting
-            }
-            
-            productBreakdown[productName].weight += weight;
-            productBreakdown[productName].animals += sale.animalCount || sale.quantity || 0;
-            productBreakdown[productName].revenue += sale.totalAmount;
-        });
-        
+        productBreakdown[productName].weight += weight;
+        productBreakdown[productName].animals += sale.animalCount || sale.quantity || 0;
+        productBreakdown[productName].revenue += sale.totalAmount;
+    });
+    
         // ✅ Broadcast meat report generation
         if (this.broadcaster) {
             this.broadcaster.broadcast('meat-report-generated', {
@@ -3058,7 +3183,24 @@ const SalesRecordModule = {
         }).format(amount);
     },
 
-    showNotification(message, type = 'info') {
+   showNotification(message, type = 'info') {
+    // Add animation styles to document head
+    if (!document.querySelector('#notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'notification-styles';
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+        
         // Create notification element
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
@@ -3107,6 +3249,20 @@ const SalesRecordModule = {
         this.removeEventListeners();
     }
 };
+
+      unload() {
+    console.log('📦 Unloading Sales module...');
+    this.initialized = false;
+    this.element = null;
+    this.broadcaster = null;
+    this.removeEventListeners();
+    
+    // Remove any notification styles
+    const notificationStyles = document.querySelector('#notification-styles');
+    if (notificationStyles) {
+        notificationStyles.remove();
+    }
+}
 
 // ==================== UNIVERSAL REGISTRATION ====================
 (function() {
