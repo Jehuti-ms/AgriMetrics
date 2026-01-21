@@ -3192,6 +3192,7 @@ body.dark-mode {
 }
 
 /* ============ Base styles for all screens ============ */
+/* Base styles for all screens */
 .module-header {
     margin-top: 0 !important;
     padding-top: 10px !important;
@@ -3204,20 +3205,10 @@ body.dark-mode {
     #content-area .profile-module .module-header,
     #content-area .broiler-module .module-header,
     #content-area .production-module .module-header {
-        margin-top: -10px !important;
+        margin-top: -20px !important; /* Pull it up more on large screens */
         padding-top: 0 !important;
         position: relative;
         top: -10px !important;
-    }
-    
-    /* EXCEPTION: Dashboard gets NORMAL positioning */
-    #content-area .dashboard-module .module-header,
-    #content-area [class*="dashboard"] .module-header,
-    #content-area [id*="dashboard"] .module-header {
-        margin-top: 0 !important; /* Reset to normal */
-        padding-top: 10px !important; /* Normal padding */
-        position: relative;
-        top: 0 !important; /* No negative positioning */
     }
     
     /* Also adjust their containers */
@@ -3229,12 +3220,10 @@ body.dark-mode {
         padding-top: 0 !important;
     }
     
-    /* Dashboard container gets normal spacing */
-    #content-area .dashboard-module,
-    #content-area [class*="dashboard"],
-    #content-area [id*="dashboard"] {
+    /* Check for extra spacing in module containers */
+    #content-area .module-container {
         margin-top: 0 !important;
-        padding-top: 10px !important; /* Normal top padding */
+        padding-top: 0 !important;
     }
 }
 
