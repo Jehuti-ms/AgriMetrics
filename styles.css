@@ -473,8 +473,8 @@ header {
     transform: scale(1.05) !important;
 }
 
-/* ===== SIDE MENU ===== */
-#side-menu {
+/* ========== SIDE MENU ========= */
+/*#side-menu {
     position: fixed !important;
     top: 80px !important;
     right: 0 !important;
@@ -490,7 +490,22 @@ header {
     visibility: visible !important;
     opacity: 1 !important;
     box-shadow: -5px 0 20px rgba(0,0,0,0.1) !important;
+} */
+
+#side-menu {
+  position: fixed;          /* lock to viewport */
+  top: var(--navbar-height, 80px); /* start below navbar */
+  right: 0;
+  width: 280px;
+  height: calc(100vh - var(--navbar-height, 80px)); /* fill remaining viewport */
+  overflow-y: auto;         /* scroll internally if too long */
+  background: var(--surface-color);
+  border-left: 1px solid var(--border-color);
+  transform: translateX(280px);
+  transition: transform 0.3s ease;
+  z-index: 10001;
 }
+
 
 #side-menu.open {
     transform: translateX(0) !important;
