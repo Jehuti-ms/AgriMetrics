@@ -3191,3 +3191,38 @@ body.dark-mode {
   box-sizing: border-box;
 }
 
+/* Base styles for all screens */
+.module-header {
+    margin-top: 0 !important;
+    padding-top: 10px !important;
+}
+
+/* For large screens (desktop) - more aggressive positioning */
+@media (min-width: 1024px) {
+    /* Target the specific problematic modules on large screens */
+    #content-area .income-module .module-header,
+    #content-area .profile-module .module-header,
+    #content-area .broiler-module .module-header,
+    #content-area .production-module .module-header {
+        margin-top: -20px !important; /* Pull it up more on large screens */
+        padding-top: 0 !important;
+        position: relative;
+        top: -10px !important;
+    }
+    
+    /* Also adjust their containers */
+    #content-area .income-module,
+    #content-area .profile-module,
+    #content-area .broiler-module,
+    #content-area .production-module {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    
+    /* Check for extra spacing in module containers */
+    #content-area .module-container {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+}
+
