@@ -2611,24 +2611,37 @@ const IncomeExpensesModule = {
         }
     },
     
-    cleanupBrokenReceipts() {
-        // Clean local receipts
-        const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
-        const validReceipts = localReceipts.filter(r => this.isValidReceiptURL(r.downloadURL));
-        
-        if (validReceipts.length !== localReceipts.length) {
-            localStorage.setItem('local-receipts', JSON.stringify(validReceipts));
-            console.log(`Cleaned up ${localReceipts.length - validReceipts.length} broken receipts`);
-        }
-        
-        // Clean local queue
-        this.receiptQueue = this.receiptQueue.filter(r => this.isValidReceiptURL(r.downloadURL));
-        
-        // Update UI
-        this.updateReceiptQueueUI();
-        
-        /*this.showNotification('Cleaned up broken receipts', 'info');*/
-    },
+   // ==================== FIXED: CLEANUP BROKEN RECEIPTS ====================
+cleanupBrokenReceipts() {
+    console.log('🔄 Checking for broken receipts...');
+    
+    // Clean local receipts
+    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+    const validReceipts = localReceipts.filter(r => this.isValidReceiptURL(r.downloadURL));
+    
+    let cleanedCount = 0;
+    
+    if (validReceipts.length !== localReceipts.length) {
+        cleanedCount = localReceipts.length - validReceipts.length;
+        localStorage.setItem('local-receipts', JSON.stringify(validReceipts));
+        console.log(`🗑️ Cleaned up ${cleanedCount} broken receipts`);
+    }
+    
+    // Clean local queue
+    const beforeClean = this.receiptQueue.length;
+    this.receiptQueue = this.receiptQueue.filter(r => this.isValidReceiptURL(r.downloadURL));
+    cleanedCount += (beforeClean - this.receiptQueue.length);
+    
+    // Only show notification if something was actually cleaned
+    if (cleanedCount > 0) {
+        this.showNotification(`Cleaned up ${cleanedCount} broken receipt(s)`, 'info');
+    } else {
+        console.log('✅ No broken receipts found');
+    }
+    
+    // Update UI
+    this.updateReceiptQueueUI();
+},
     
     // ==================== BATCH OPERATIONS ====================
     
