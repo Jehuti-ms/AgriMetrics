@@ -3228,7 +3228,7 @@ body.dark-mode {
         margin-top: 0 !important; /* OVERRIDE the 3.5rem */
         padding-top: 0 !important;
         position: relative;
-        top: -20px !important; /* Pull it up */
+        top: -30px !important; /* Pull it up */
     }
     
     /* Fix dashboard header specifically */
