@@ -3235,10 +3235,10 @@ body.dark-mode {
     #content-area .dashboard-container .module-header,
     #content-area .dashboard-module .module-header,
     #content-area [class*="dashboard"] .module-header {
-        margin-top: -30px !important; /* More aggressive pull-up */
+        margin-top: -50px !important; /* More aggressive pull-up */
         padding-top: 0 !important;
         position: relative;
-        top: -50px !important;
+        top: -20px !important;
     }
     
     /* Check for extra spacing in module containers */
