@@ -654,11 +654,11 @@ header {
 
 /* ===== DASHBOARD FILTER BUTTON ACTIVE STATE ===== */
 /* Active State - Green Theme Highlight ONLY */
-.time-filter-btn.active {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+.time-filter-btn.active,
+.time-filter-btn[data-active="true"] {
+    background: #22c55e !important; /* Your green color */
     color: white !important;
-    border-color: var(--primary-color);
-    font-weight: 700;
+    border-color: #22c55e !important;
 }
 
 /* ===== INCOME & EXPENSES MODULE ===== */
