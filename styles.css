@@ -3181,15 +3181,6 @@ body.dark-mode {
   --nav-bg: #1e1e1e;
 }
 
-/* ============ Headers Padding ============ */
-.dashboard-container,
-.module-container {
-  position: relative;
-  top: 0;               /* reset any offset */
-  margin-top: 3.5rem;   /* equal to navbar height */
-  padding-top: 0.5rem;  /* consistent spacing */
-  box-sizing: border-box;
-}
 
 /* ============ Headers Padding ============ */
 .dashboard-container,
@@ -3214,7 +3205,7 @@ body.dark-mode {
     #content-area .profile-module .module-header,
     #content-area .broiler-module .module-header,
     #content-area .production-module .module-header {
-        margin-top: -20px !important;
+        margin-top: -30px !important;
         padding-top: 0 !important;
         position: relative;
         top: -10px !important;
