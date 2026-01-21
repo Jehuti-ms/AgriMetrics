@@ -3182,37 +3182,37 @@ body.dark-mode {
 }
 
 /* ============ Headers Padding ============ */
-.dashboard-container,
+/*.dashboard-container,
 .module-container {
   position: relative;
   top: 0;               /* reset any offset */
-  margin-top: 3.5rem;   /* equal to navbar height */
-  padding-top: 0.5rem;  /* consistent spacing */
-  box-sizing: border-box;
+/*  margin-top: 3.5rem;   /* equal to navbar height */
+/*  padding-top: 0.5rem;  /* consistent spacing */
+/*  box-sizing: border-box;
 }
 
 /* ============ Base styles for all screens ============ */
 /* Base styles for all screens */
-/*.module-header {
+.module-header {
     margin-top: 0 !important;
     padding-top: 10px !important;
 }
 
 /* For large screens (desktop) - more aggressive positioning */
-/*@media (min-width: 1024px) {
-    /* Target the specific problematic modules on large screens */
-   /* #content-area .income-module .module-header,
+@media (min-width: 1024px) {
+     Target the specific problematic modules on large screens */
+    #content-area .income-module .module-header,
     #content-area .profile-module .module-header,
     #content-area .broiler-module .module-header,
     #content-area .production-module .module-header {
         margin-top: -20px !important; /* Pull it up more on large screens */
-   /*     padding-top: 0 !important;
+        padding-top: 0 !important;
         position: relative;
         top: -10px !important;
     }
     
     /* Also adjust their containers */
-  /*  #content-area .income-module,
+    #content-area .income-module,
     #content-area .profile-module,
     #content-area .broiler-module,
     #content-area .production-module {
@@ -3221,42 +3221,9 @@ body.dark-mode {
     }
     
     /* Check for extra spacing in module containers */
-/*    #content-area .module-container {
+    #content-area .module-container {
         margin-top: 0 !important;
         padding-top: 0 !important;
     }
-} */
-
-@media (min-width: 1024px) {
-    /* OTHER MODULES: Current positioning */
-    #content-area .income-module .module-header,
-    #content-area .profile-module .module-header,
-    #content-area .broiler-module .module-header,
-    #content-area .production-module .module-header {
-        margin-top: -20px !important;
-        padding-top: 0 !important;
-        position: relative;
-        top: -10px !important;
-    }
-    
-    /* DASHBOARD: Use transform for more control */
-    #content-area .dashboard-module .module-header,
-    #content-area [class*="dashboard"] .module-header {
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-        position: relative;
-        top: 0 !important;
-        transform: translateY(-30px) !important; /* Pulls it up 30px */
-    }
-    
-    /* Also adjust dashboard container */
-    #content-area .dashboard-module,
-    #content-area [class*="dashboard"] {
-        margin-top: -25px !important;
-        padding-top: 0 !important;
-        transform: translateY(-10px) !important;
-    }
-}
-
-
+} 
 
