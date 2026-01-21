@@ -3205,32 +3205,31 @@ body.dark-mode {
     #content-area .profile-module .module-header,
     #content-area .broiler-module .module-header,
     #content-area .production-module .module-header {
-        margin-top: -20px !important;
-        padding-top: 0 !important;
+        margin-top: 20px !important;   /* push header down */
+        padding-top: 10px !important;  /* keep internal spacing */
         position: relative;
-        top: -10px !important;
+        top: 0 !important;             /* no upward offset */
     }
-    
-    /* Also adjust their containers */
+
+    /* Adjust their containers */
     #content-area .income-module,
     #content-area .profile-module,
     #content-area .broiler-module,
     #content-area .production-module {
-        margin-top: 0 !important;
-        padding-top: 0 !important;
+        margin-top: 3.5rem !important; /* align under navbar */
+        padding-top: 0.5rem !important;
     }
-    
-    /* ============ DASHBOARD: MATCH OLD STYLES ============ */
-    /* Dashboard container - cancel the 3.5rem margin like old styles */
+
+    /* Dashboard container */
     #content-area .dashboard-container {
-        margin-top: -3rem !important; /* Cancel out the 3.5rem completely */
-        padding-top: 0 !important;
+        margin-top: 3.5rem !important; /* same baseline as others */
+        padding-top: 0.5rem !important;
         position: relative;
     }
-    
-    /* Dashboard welcome section - use negative margin like old styles */
+
+    /* Dashboard welcome section */
     #content-area .dashboard-container .welcome-section {
-        margin: -5px -20px 30px -20px !important; /* EXACTLY like old styles */
+        margin: 20px 0 30px 0 !important; /* positive margin instead of negative */
         padding: 25px 20px !important;
         border-radius: 0 0 20px 20px !important;
         background: linear-gradient(135deg, #22c55e 0%, #14b8a6 100%) !important;
@@ -3239,18 +3238,8 @@ body.dark-mode {
         overflow: hidden;
         box-shadow: 0 4px 20px rgba(34, 197, 94, 0.15) !important;
     }
-    
-    /* Dashboard welcome header */
-    #content-area .dashboard-container .welcome-section h1 {
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-        color: white !important;
-        font-size: 28px !important;
-        font-weight: 700 !important;
-        margin-bottom: 8px !important;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
-    }
-    
+}
+   
     /* Also pull up the dashboard content area */
     #content-area {
         padding-top: 0 !important; /* Remove the 80px padding that pushes it down */
