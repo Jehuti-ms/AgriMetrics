@@ -4178,3 +4178,93 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 }
 
+/* ===== CRITICAL FIX: IMPORT RECEIPTS MODAL VISIBILITY ===== */
+
+/* 1. OVERRIDE ANY HIDDEN STATES */
+#import-receipts-modal:not(.hidden) {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+/* 2. FIX MODAL POSITIONING (might be off-screen) */
+#import-receipts-modal .popout-modal-content {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 20002 !important;
+    animation: modalAppear 0.3s ease-out !important;
+}
+
+@keyframes modalAppear {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* 3. FIX TOUCH EVENT CONFLICT (the error in console) */
+#import-receipts-modal .camera-controls .btn {
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Remove passive event listener issues */
+.upload-receipt-btn,
+#import-receipts-modal .btn {
+    touch-action: auto !important;
+}
+
+/* 4. ENSURE MODAL BACKDROP IS VISIBLE */
+#import-receipts-modal.popout-modal {
+    background: rgba(0, 0, 0, 0.7) !important;
+    backdrop-filter: blur(5px) !important;
+}
+
+/* 5. FIX FOR MOBILE SPECIFICALLY */
+@media (max-width: 768px) {
+    /* Full screen modal on mobile */
+    #import-receipts-modal .popout-modal-content {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        max-width: 100vw !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
+        transform: none !important;
+        position: fixed !important;
+    }
+    
+    /* Ensure modal body is scrollable */
+    #import-receipts-modal .popout-modal-body {
+        max-height: calc(100vh - 140px) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    /* Fix camera preview sizing */
+    #import-receipts-modal .camera-preview {
+        height: 40vh !important;
+        max-height: 300px !important;
+        min-height: 200px !important;
+    }
+}
+
+/* 6. DEBUG VISIBILITY (remove after fixing) */
+#import-receipts-modal.debug-visible {
+    border: 5px solid #00ff00 !important;
+    background: rgba(0, 255, 0, 0.1) !important;
+}
+
+#import-receipts-modal .popout-modal-content.debug-visible {
+    border: 3px solid #ff0000 !important;
+    background: rgba(255, 0, 0, 0.1) !important;
+}
