@@ -3538,7 +3538,7 @@ body.dark-mode {
 
 [data-theme="dark"] .popout-modal-header,
 .dark-mode .popout-modal-header {
-    background: linear-gradient(135deg, #1e40af, #7c3aed) !important;
+    background: linear-gradient(135deg, #16a34a, #0d9488) !important; 
 }
 
 [data-theme="dark"] .popout-modal-body,
