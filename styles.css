@@ -4076,5 +4076,40 @@ body.modal-open {
     z-index: 15 !important;
 }
 
+/* ===== MAKE IMPORT RECEIPTS MODAL VISIBLE ===== */
+
+/* If modal is open but invisible, make it visible */
+#import-receipts-modal:not(.hidden) {
+    /* Force visibility */
+    opacity: 1 !important;
+    visibility: visible !important;
+    
+    /* Make sure it has proper background */
+    background: rgba(0, 0, 0, 0.85) !important;
+    backdrop-filter: blur(10px) !important;
+    
+    /* Ensure it's on top */
+    z-index: 20000 !important;
+}
+
+/* Modal content should be visible too */
+#import-receipts-modal:not(.hidden) .popout-modal-content {
+    opacity: 1 !important;
+    visibility: visible !important;
+    background: var(--surface-color) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* DEBUG: Make modal obviously visible */
+#import-receipts-modal.debug-visible {
+    background: rgba(255, 0, 0, 0.3) !important;
+}
+
+#import-receipts-modal.debug-visible .popout-modal-content {
+    background: white !important;
+    border: 5px solid blue !important;
+}
+
 
 
