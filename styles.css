@@ -3946,41 +3946,235 @@ body.modal-open {
     }
 }
 
-/* ===== JAVASCRIPT HELPER ===== */
-/*
-// Add this JavaScript to dynamically adjust button text
-function optimizeButtonTextForScreen() {
-    const buttons = document.querySelectorAll('.camera-controls .btn');
-    const screenWidth = window.innerWidth;
-    
-    buttons.forEach(button => {
-        const span = button.querySelector('span');
-        if (!span) return;
-        
-        if (screenWidth <= 375) {
-            // Store original text if not already stored
-            if (!button.dataset.originalText) {
-                button.dataset.originalText = span.textContent;
-            }
-            
-            // Apply short text
-            const text = span.textContent;
-            if (text.includes('Gallery')) span.textContent = 'Gallery';
-            else if (text.includes('Upload')) span.textContent = 'Upload';
-            else if (text.includes('Photo')) span.textContent = 'Photo';
-            else if (text.length > 10) {
-                span.textContent = text.substring(0, 8) + '...';
-            }
-        } else {
-            // Restore original text
-            if (button.dataset.originalText) {
-                span.textContent = button.dataset.originalText;
-            }
-        }
-    });
+/* ===== IMPORT RECEIPTS BUTTON FIX FOR SMALL SCREENS ===== */
+
+/* Fix for the main import receipts button in header */
+.income-expenses-module .module-header-pwa .header-actions .btn[onclick*="import"],
+.income-expenses-module .module-header-pwa .header-actions .btn:contains("Import"),
+.sales-module .module-header-pwa .header-actions .btn[onclick*="import"],
+.sales-module .module-header-pwa .header-actions .btn:contains("Import") {
+    /* Ensure it's clickable */
+    position: relative;
+    z-index: 10 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
 }
 
-// Run on load and resize
-window.addEventListener('load', optimizeButtonTextForScreen);
-window.addEventListener('resize', optimizeButtonTextForScreen);
+/* Mobile-specific fixes */
+@media (max-width: 768px) {
+    /* Header actions container fix */
+    .income-expenses-module .module-header-pwa .header-actions,
+    .sales-module .module-header-pwa .header-actions {
+        position: relative;
+        z-index: 100 !important;
+        margin-top: 20px;
+    }
+    
+    /* Import receipts button specific fixes */
+    .income-expenses-module .module-header-pwa .header-actions .btn,
+    .sales-module .module-header-pwa .header-actions .btn {
+        /* Touch target sizing */
+        min-height: 44px !important;
+        min-width: 44px !important;
+        padding: 12px 20px !important;
+        font-size: 14px !important;
+        font-weight: 600;
+        
+        /* Ensure it's visible and clickable */
+        opacity: 1 !important;
+        visibility: visible !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        
+        /* Prevent any overlap issues */
+        position: relative;
+        z-index: 50 !important;
+        
+        /* Visual feedback */
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15)) !important;
+        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+        border-radius: 10px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+    }
+    
+    /* Hover/active states */
+    .income-expenses-module .module-header-pwa .header-actions .btn:active,
+    .sales-module .module-header-pwa .header-actions .btn:active {
+        transform: translateY(2px) !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.25)) !important;
+    }
+    
+    /* Fix for potential parent container issues */
+    .module-header-pwa {
+        position: relative;
+        overflow: visible !important;
+    }
+    
+    .module-header-pwa::after {
+        content: '';
+        position: absolute;
+        bottom: -20px;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: transparent;
+        pointer-events: none;
+    }
+}
+
+/* Ultra-small screens (iPhone SE) */
+@media (max-width: 375px) {
+    .income-expenses-module .module-header-pwa .header-actions .btn,
+    .sales-module .module-header-pwa .header-actions .btn {
+        padding: 10px 16px !important;
+        font-size: 13px !important;
+        min-height: 40px !important;
+        min-width: 40px !important;
+    }
+    
+    /* Shorten button text on very small screens */
+    .income-expenses-module .module-header-pwa .header-actions .btn:contains("Import Receipts"),
+    .sales-module .module-header-pwa .header-actions .btn:contains("Import Receipts") {
+        padding: 10px 12px !important;
+    }
+    
+    .income-expenses-module .module-header-pwa .header-actions .btn:contains("Import Receipts") span,
+    .sales-module .module-header-pwa .header-actions .btn:contains("Import Receipts") span {
+        display: inline-block;
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+/* Fix for button text contrast */
+.income-expenses-module .module-header-pwa .header-actions .btn span,
+.sales-module .module-header-pwa .header-actions .btn span {
+    color: white !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    font-weight: 600;
+}
+
+/* ===== DEBUG MODE - Uncomment to see button boundaries ===== */
+/*
+.income-expenses-module .module-header-pwa .header-actions .btn,
+.sales-module .module-header-pwa .header-actions .btn {
+    border: 2px solid #ff0000 !important;
+    background: rgba(255, 0, 0, 0.1) !important;
+}
 */
+
+/* ===== JAVASCRIPT FIX FOR CLICK EVENTS ===== */
+/*
+// Add this JavaScript to ensure buttons work
+document.addEventListener('DOMContentLoaded', function() {
+    // Fix for import receipts buttons
+    const importButtons = document.querySelectorAll('.btn[onclick*="import"], .btn:contains("Import")');
+    
+    importButtons.forEach(button => {
+        // Ensure button is visible and clickable
+        button.style.pointerEvents = 'auto';
+        button.style.cursor = 'pointer';
+        button.style.opacity = '1';
+        button.style.visibility = 'visible';
+        
+        // Add touch event for mobile
+        button.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            this.style.transform = 'translateY(2px)';
+            this.style.opacity = '0.9';
+        }, { passive: false });
+        
+        button.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            this.style.transform = '';
+            this.style.opacity = '1';
+            
+            // Trigger click after visual feedback
+            setTimeout(() => {
+                if (this.onclick) this.onclick();
+                else if (this.getAttribute('onclick')) {
+                    eval(this.getAttribute('onclick'));
+                }
+            }, 50);
+        }, { passive: false });
+    });
+    
+    // Fix for any parent container preventing clicks
+    const headerActions = document.querySelectorAll('.header-actions');
+    headerActions.forEach(container => {
+        container.style.pointerEvents = 'auto';
+        container.style.overflow = 'visible';
+    });
+});
+*/
+
+/* ===== Z-INDEX STACKING FIX ===== */
+/* Ensure buttons are above any overlapping elements */
+.income-expenses-module .module-header-pwa {
+    position: relative;
+    z-index: 5;
+}
+
+.income-expenses-module .module-header-pwa .header-actions {
+    position: relative;
+    z-index: 10;
+}
+
+.income-expenses-module .module-header-pwa .header-actions .btn {
+    position: relative;
+    z-index: 15 !important;
+}
+
+/* ===== FIX FOR MODULE HEADER OVERFLOW ===== */
+/* Sometimes the gradient background interferes with clicks */
+.module-header-pwa {
+    overflow: visible !important;
+}
+
+.module-header-pwa::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #22c55e 0%, #14b8a6 100%);
+    z-index: 1;
+    border-radius: 0 0 20px 20px;
+}
+
+.module-header-pwa > *:not(.header-actions) {
+    position: relative;
+    z-index: 2;
+}
+
+.module-header-pwa .header-actions {
+    position: relative;
+    z-index: 3 !important;
+}
+
+/* ===== FIX FOR BUTTONS INSIDE MODAL ===== */
+/* If the button is inside the import receipts modal */
+#import-receipts-modal .camera-controls .btn {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    padding: 12px 16px !important;
+    font-size: 14px !important;
+    margin: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+@media (max-width: 480px) {
+    #import-receipts-modal .camera-controls .btn {
+        width: 100% !important;
+        margin: 4px 0 !important;
+    }
+}
+
