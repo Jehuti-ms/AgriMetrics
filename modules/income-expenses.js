@@ -511,19 +511,12 @@ const IncomeExpensesModule = {
                 return false;
             });
             
-            // ==== REMOVE OR COMMENT OUT THIS BACKUP ====
-            // uploadReceiptBtn.onclick = (e) => {
-            //     console.log('Direct onclick fired as backup');
-            //     e.preventDefault();
-            //     this.showImportReceiptsModal();
-            //     return false;
-            // };
-            
-            // Add mobile touch fixes
-            uploadReceiptBtn.addEventListener('touchstart', (e) => {
+            uploadReceiptBtn.onclick = (e) => {
+                console.log('Direct onclick fired as backup');
                 e.preventDefault();
-                e.stopPropagation();
-            }, { passive: false });
+                this.showImportReceiptsModal();
+                return false;
+            };
             
         } else {
             console.error('ERROR: upload-receipt-btn not found!');
@@ -1005,65 +998,34 @@ const IncomeExpensesModule = {
     },
 
     // ==================== FIREBASE RECEIPT METHODS ====================
-   showImportReceiptsModal() {
-    console.log('=== SHOW IMPORT RECEIPTS MODAL (SIMPLE) ===');
-    
-    // Get modal
-    const modal = document.getElementById('import-receipts-modal');
-    if (!modal) {
-        console.error('Modal not found!');
-        return;
-    }
-    
-    // SIMPLE: Just remove hidden class
-    modal.classList.remove('hidden');
-    
-    // Add debug class temporarily
-    modal.classList.add('debug-visible');
-    
-    // FOR MOBILE: Add inline styles if needed
-    if (window.innerWidth <= 768) {
-        modal.style.cssText = `
-            display: flex !important;
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            background: rgba(0, 0, 0, 0.9) !important;
-            z-index: 99999 !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-            align-items: center !important;
-            justify-content: center !important;
-        `;
+    showImportReceiptsModal() {
+        console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
         
-        const content = modal.querySelector('.popout-modal-content');
-        if (content) {
-            content.style.cssText = `
-                width: 100vw !important;
-                height: 100vh !important;
-                max-width: 100vw !important;
-                border-radius: 0 !important;
-                background: white !important;
-                color: black !important;
-                border: 3px solid red !important;
-            `;
+        // Hide all other modals
+        this.hideAllModals();
+        
+        // Get or create modal
+        let modal = document.getElementById('import-receipts-modal');
+        if (!modal) {
+            console.error('Modal not found in DOM!');
+            return;
         }
-    }
-    
-    // Update content
-    const contentDiv = document.getElementById('import-receipts-content');
-    if (contentDiv) {
-        contentDiv.innerHTML = this.renderImportReceiptsModal();
-    }
-    
-    // Setup handlers
-    this.setupImportReceiptsHandlers();
-    
-    console.log('✅ Modal should be visible with RED border on mobile');
-},
-    
+        
+        // Show modal
+        modal.classList.remove('hidden');
+        
+        // Update content
+        const content = document.getElementById('import-receipts-content');
+        if (content) {
+            content.innerHTML = this.renderImportReceiptsModal();
+        }
+        
+        // Setup handlers
+        this.setupImportReceiptsHandlers();
+        
+        console.log('Modal should now be visible');
+    },
+
     renderImportReceiptsModal() {
         return `
             <div class="import-receipts-container">
@@ -2204,30 +2166,14 @@ const IncomeExpensesModule = {
         }
     },
 
-   hideAllModals() {
-    console.log('Hiding all modals...');
-    
-    const modals = document.querySelectorAll('.popout-modal, .modal');
-    modals.forEach(modal => {
-        // Add hidden class
-        modal.classList.add('hidden');
-        
-        // Remove inline styles
-        modal.removeAttribute('style');
-        
-        // Reset modal content styles
-        const modalContent = modal.querySelector('.popout-modal-content, .modal-content');
-        if (modalContent) {
-            modalContent.removeAttribute('style');
-        }
-    });
-    
-    // Restore body scroll
-    document.body.style.overflow = '';
-    document.body.classList.remove('modal-open');
-    
-    console.log(`${modals.length} modals hidden`);
-},
+    hideAllModals() {
+        this.hideTransactionModal();
+        this.hideImportReceiptsModal();
+        const scannerModal = document.getElementById('receipt-scanner-modal');
+        if (scannerModal) scannerModal.classList.add('hidden');
+        const reportModal = document.getElementById('financial-report-modal');
+        if (reportModal) reportModal.classList.add('hidden');
+    },
 
     // ==================== TRANSACTION METHODS ====================
     showAddIncome() {
