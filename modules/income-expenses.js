@@ -1005,114 +1005,63 @@ const IncomeExpensesModule = {
     },
 
     // ==================== FIREBASE RECEIPT METHODS ====================
-    showImportReceiptsModal() {
-    console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
-    
-    // Hide all other modals
-    this.hideAllModals();
+   showImportReceiptsModal() {
+    console.log('=== SHOW IMPORT RECEIPTS MODAL (SIMPLE) ===');
     
     // Get modal
-    let modal = document.getElementById('import-receipts-modal');
+    const modal = document.getElementById('import-receipts-modal');
     if (!modal) {
-        console.error('Modal not found in DOM!');
+        console.error('Modal not found!');
         return;
     }
     
-    // CRITICAL: Remove hidden class FIRST
+    // SIMPLE: Just remove hidden class
     modal.classList.remove('hidden');
     
-    // CRITICAL: Check if we're on mobile
-    const isMobile = window.innerWidth <= 768;
+    // Add debug class temporarily
+    modal.classList.add('debug-visible');
     
-    if (isMobile) {
-        console.log('Mobile detected - applying mobile modal styles');
-        
-        // Apply mobile-specific inline styles
+    // FOR MOBILE: Add inline styles if needed
+    if (window.innerWidth <= 768) {
         modal.style.cssText = `
-            /* Force visibility */
             display: flex !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-            pointer-events: auto !important;
-            
-            /* Full screen positioning */
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
             width: 100vw !important;
             height: 100vh !important;
-            
-            /* Visible background */
             background: rgba(0, 0, 0, 0.9) !important;
-            backdrop-filter: blur(10px) !important;
-            
-            /* High z-index */
-            z-index: 20000 !important;
-            
-            /* Center content */
+            z-index: 99999 !important;
+            opacity: 1 !important;
+            visibility: visible !important;
             align-items: center !important;
             justify-content: center !important;
         `;
         
-        // Also style modal content for mobile
-        const modalContent = modal.querySelector('.popout-modal-content');
-        if (modalContent) {
-            modalContent.style.cssText = `
-                /* Make content visible */
-                opacity: 1 !important;
-                visibility: visible !important;
-                
-                /* Full screen on mobile */
+        const content = modal.querySelector('.popout-modal-content');
+        if (content) {
+            content.style.cssText = `
                 width: 100vw !important;
                 height: 100vh !important;
                 max-width: 100vw !important;
-                max-height: 100vh !important;
-                margin: 0 !important;
                 border-radius: 0 !important;
-                
-                /* Visible background */
-                background: var(--surface-color, white) !important;
-                border: none !important;
-                
-                /* Scrollable */
-                overflow-y: auto !important;
-                -webkit-overflow-scrolling: touch !important;
+                background: white !important;
+                color: black !important;
+                border: 3px solid red !important;
             `;
         }
-        
-        // Prevent body scroll on mobile
-        document.body.style.overflow = 'hidden';
-        document.body.classList.add('modal-open');
-    } else {
-        // Desktop - just ensure visibility
-        modal.style.cssText = `
-            display: flex !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-        `;
     }
     
     // Update content
-    const content = document.getElementById('import-receipts-content');
-    if (content) {
-        content.innerHTML = this.renderImportReceiptsModal();
+    const contentDiv = document.getElementById('import-receipts-content');
+    if (contentDiv) {
+        contentDiv.innerHTML = this.renderImportReceiptsModal();
     }
     
     // Setup handlers
     this.setupImportReceiptsHandlers();
     
-    // Debug logging
-    console.log('Modal visibility applied:', {
-        isMobile: isMobile,
-        display: modal.style.display,
-        opacity: modal.style.opacity,
-        zIndex: modal.style.zIndex
-    });
-    
-    // Force a browser reflow/repaint
-    modal.offsetHeight;
-    
-    console.log('Modal should now be visible');
+    console.log('✅ Modal should be visible with RED border on mobile');
 },
     
     renderImportReceiptsModal() {
