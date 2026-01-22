@@ -1006,33 +1006,115 @@ const IncomeExpensesModule = {
 
     // ==================== FIREBASE RECEIPT METHODS ====================
     showImportReceiptsModal() {
-        console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
+    console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
+    
+    // Hide all other modals
+    this.hideAllModals();
+    
+    // Get modal
+    let modal = document.getElementById('import-receipts-modal');
+    if (!modal) {
+        console.error('Modal not found in DOM!');
+        return;
+    }
+    
+    // CRITICAL: Remove hidden class FIRST
+    modal.classList.remove('hidden');
+    
+    // CRITICAL: Check if we're on mobile
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+        console.log('Mobile detected - applying mobile modal styles');
         
-        // Hide all other modals
-        this.hideAllModals();
+        // Apply mobile-specific inline styles
+        modal.style.cssText = `
+            /* Force visibility */
+            display: flex !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+            
+            /* Full screen positioning */
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            
+            /* Visible background */
+            background: rgba(0, 0, 0, 0.9) !important;
+            backdrop-filter: blur(10px) !important;
+            
+            /* High z-index */
+            z-index: 20000 !important;
+            
+            /* Center content */
+            align-items: center !important;
+            justify-content: center !important;
+        `;
         
-        // Get or create modal
-        let modal = document.getElementById('import-receipts-modal');
-        if (!modal) {
-            console.error('Modal not found in DOM!');
-            return;
+        // Also style modal content for mobile
+        const modalContent = modal.querySelector('.popout-modal-content');
+        if (modalContent) {
+            modalContent.style.cssText = `
+                /* Make content visible */
+                opacity: 1 !important;
+                visibility: visible !important;
+                
+                /* Full screen on mobile */
+                width: 100vw !important;
+                height: 100vh !important;
+                max-width: 100vw !important;
+                max-height: 100vh !important;
+                margin: 0 !important;
+                border-radius: 0 !important;
+                
+                /* Visible background */
+                background: var(--surface-color, white) !important;
+                border: none !important;
+                
+                /* Scrollable */
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            `;
         }
         
-        // Show modal
-        modal.classList.remove('hidden');
-        
-        // Update content
-        const content = document.getElementById('import-receipts-content');
-        if (content) {
-            content.innerHTML = this.renderImportReceiptsModal();
-        }
-        
-        // Setup handlers
-        this.setupImportReceiptsHandlers();
-        
-        console.log('Modal should now be visible');
-    },
-
+        // Prevent body scroll on mobile
+        document.body.style.overflow = 'hidden';
+        document.body.classList.add('modal-open');
+    } else {
+        // Desktop - just ensure visibility
+        modal.style.cssText = `
+            display: flex !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        `;
+    }
+    
+    // Update content
+    const content = document.getElementById('import-receipts-content');
+    if (content) {
+        content.innerHTML = this.renderImportReceiptsModal();
+    }
+    
+    // Setup handlers
+    this.setupImportReceiptsHandlers();
+    
+    // Debug logging
+    console.log('Modal visibility applied:', {
+        isMobile: isMobile,
+        display: modal.style.display,
+        opacity: modal.style.opacity,
+        zIndex: modal.style.zIndex
+    });
+    
+    // Force a browser reflow/repaint
+    modal.offsetHeight;
+    
+    console.log('Modal should now be visible');
+},
+    
     renderImportReceiptsModal() {
         return `
             <div class="import-receipts-container">
@@ -2173,14 +2255,30 @@ const IncomeExpensesModule = {
         }
     },
 
-    hideAllModals() {
-        this.hideTransactionModal();
-        this.hideImportReceiptsModal();
-        const scannerModal = document.getElementById('receipt-scanner-modal');
-        if (scannerModal) scannerModal.classList.add('hidden');
-        const reportModal = document.getElementById('financial-report-modal');
-        if (reportModal) reportModal.classList.add('hidden');
-    },
+   hideAllModals() {
+    console.log('Hiding all modals...');
+    
+    const modals = document.querySelectorAll('.popout-modal, .modal');
+    modals.forEach(modal => {
+        // Add hidden class
+        modal.classList.add('hidden');
+        
+        // Remove inline styles
+        modal.removeAttribute('style');
+        
+        // Reset modal content styles
+        const modalContent = modal.querySelector('.popout-modal-content, .modal-content');
+        if (modalContent) {
+            modalContent.removeAttribute('style');
+        }
+    });
+    
+    // Restore body scroll
+    document.body.style.overflow = '';
+    document.body.classList.remove('modal-open');
+    
+    console.log(`${modals.length} modals hidden`);
+},
 
     // ==================== TRANSACTION METHODS ====================
     showAddIncome() {
