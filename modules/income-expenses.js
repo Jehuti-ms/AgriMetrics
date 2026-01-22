@@ -999,32 +999,34 @@ const IncomeExpensesModule = {
 
     // ==================== FIREBASE RECEIPT METHODS ====================
     showImportReceiptsModal() {
-        console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
-        
-        // Hide all other modals
-        this.hideAllModals();
-        
-        // Get or create modal
-        let modal = document.getElementById('import-receipts-modal');
-        if (!modal) {
-            console.error('Modal not found in DOM!');
-            return;
-        }
-        
-        // Show modal
-        modal.classList.remove('hidden');
-        
-        // Update content
-        const content = document.getElementById('import-receipts-content');
-        if (content) {
-            content.innerHTML = this.renderImportReceiptsModal();
-        }
-        
-        // Setup handlers
+    console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
+    
+    // Hide all other modals
+    this.hideAllModals();
+    
+    // Get modal
+    let modal = document.getElementById('import-receipts-modal');
+    if (!modal) {
+        console.error('Modal not found in DOM!');
+        return;
+    }
+    
+    // Show modal - CSS will handle the rest
+    modal.classList.remove('hidden');
+    
+    // Update content
+    const content = document.getElementById('import-receipts-content');
+    if (content) {
+        content.innerHTML = this.renderImportReceiptsModal();
+    }
+    
+    // Setup handlers AFTER content is rendered
+    setTimeout(() => {
         this.setupImportReceiptsHandlers();
-        
-        console.log('Modal should now be visible');
-    },
+    }, 50);
+    
+    console.log('Modal should now be visible with sales-module styling');
+},
 
     renderImportReceiptsModal() {
         return `
