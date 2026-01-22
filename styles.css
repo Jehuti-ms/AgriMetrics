@@ -3378,4 +3378,254 @@ body.dark-mode {
     backdrop-filter: blur(10px);
 }
 
+/* ===== INCOME & EXPENSES MODAL RESPONSIVE FIXES ===== */
+
+/* Target income/expenses modals specifically */
+#import-receipts-modal .popout-modal-content,
+#transaction-modal .popout-modal-content {
+    max-width: 95vw;
+    width: 95vw;
+    max-height: 90vh;
+    margin: 20px;
+}
+
+/* Transaction form grid optimization */
+#transaction-form .form-grid,
+.transaction-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+/* Make amount input prominent */
+.amount-input-container {
+    grid-column: span 1;
+    position: relative;
+}
+
+.amount-input-container input {
+    font-size: 1.1em;
+    font-weight: 600;
+    padding-right: 40px;
+}
+
+.amount-input-container::after {
+    content: '€';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+/* Receipt upload area fixes */
+#receipt-upload-area {
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+    max-width: 100%;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#receipt-upload-area:hover {
+    border-color: var(--primary-color);
+    background: rgba(var(--primary-color-rgb, 34, 197, 94), 0.1);
+}
+
+/* OCR results styling */
+#ocr-results {
+    background: #f0f9ff;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    border: 1px solid #bfdbfe;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+/* ===== MOBILE FIXES FOR INCOME/EXPENSES MODALS ===== */
+@media (max-width: 768px) {
+    /* Full screen on mobile */
+    #import-receipts-modal .popout-modal-content,
+    #transaction-modal .popout-modal-content {
+        width: 100vw;
+        height: 100vh;
+        max-height: 100vh;
+        margin: 0;
+        border-radius: 0;
+    }
+    
+    .popout-modal-body {
+        max-height: calc(100vh - 140px);
+        padding: 16px;
+    }
+    
+    /* Stack form columns */
+    #transaction-form .form-grid,
+    .transaction-form-grid,
+    .form-grid-pwa {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    /* Make amount input full width */
+    .amount-input-container {
+        grid-column: span 1;
+    }
+    
+    /* Camera preview optimization */
+    .camera-preview {
+        height: 250px;
+        margin-bottom: 12px;
+    }
+    
+    /* Receipt upload area on mobile */
+    #receipt-upload-area {
+        min-height: 100px;
+        padding: 16px;
+    }
+    
+    /* Stack action buttons */
+    #import-receipts-modal .popout-modal-footer,
+    #transaction-modal .popout-modal-footer,
+    .camera-controls {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    #import-receipts-modal .popout-modal-footer .btn,
+    #transaction-modal .popout-modal-footer .btn,
+    .camera-controls .btn {
+        width: 100%;
+        margin: 2px 0;
+    }
+    
+    /* Upload methods grid */
+    .card-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
+
+/* ===== TABLET OPTIMIZATIONS ===== */
+@media (min-width: 769px) and (max-width: 1024px) {
+    #import-receipts-modal .popout-modal-content,
+    #transaction-modal .popout-modal-content {
+        max-width: 85vw;
+        width: 85vw;
+        max-height: 95vh;
+    }
+    
+    .popout-modal-body {
+        max-height: calc(95vh - 150px);
+    }
+    
+    #transaction-form .form-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    /* Make amount input span both columns on tablet */
+    .amount-input-container {
+        grid-column: span 2;
+    }
+    
+    .camera-preview {
+        height: 300px;
+    }
+}
+
+/* ===== DARK MODE FIXES ===== */
+.dark-mode #receipt-upload-area {
+    border-color: var(--dm-border);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode #receipt-upload-area:hover {
+    border-color: var(--primary-color);
+    background: rgba(34, 197, 94, 0.1);
+}
+
+.dark-mode #ocr-results {
+    background: rgba(30, 64, 175, 0.2);
+    border-color: var(--dm-border);
+    color: #e2e8f0;
+}
+
+.dark-mode .amount-input-container::after {
+    color: #94a3b8;
+}
+
+/* ===== SPECIFIC FORM ELEMENT FIXES ===== */
+
+/* Category select styling */
+.category-select-container {
+    position: relative;
+}
+
+.category-select-container select {
+    padding-right: 40px;
+}
+
+/* Date picker optimization */
+.date-picker-container {
+    position: relative;
+}
+
+/* Textarea resizing */
+.transaction-notes {
+    min-height: 80px;
+    resize: vertical;
+    max-width: 100%;
+}
+
+/* Payment method styling */
+.payment-method-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.payment-method-option {
+    flex: 1;
+    min-width: 120px;
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+    #import-receipts-modal .popout-modal-content,
+    #transaction-modal .popout-modal-content {
+        max-width: none !important;
+        width: auto !important;
+        height: auto !important;
+        max-height: none !important;
+        margin: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        position: static !important;
+    }
+    
+    .popout-modal-header,
+    .popout-modal-footer,
+    .camera-controls {
+        display: none !important;
+    }
+    
+    .popout-modal-body {
+        max-height: none !important;
+        overflow: visible !important;
+        padding: 0 !important;
+    }
+}
+
 
