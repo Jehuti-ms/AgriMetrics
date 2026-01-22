@@ -3427,7 +3427,7 @@ body.dark-mode {
 
 /* Modal header - match sales module gradient */
 .popout-modal-header {
-    background: var(--modal-header-bg, linear-gradient(135deg, #3b82f6, #8b5cf6)) !important;
+    background: var(--modal-header-bg, linear-gradient(135deg, #22c55e, #14b8a6)) !important;
     color: var(--modal-header-text, #ffffff) !important;
     border-bottom: 1px solid var(--modal-header-border, rgba(255, 255, 255, 0.2)) !important;
     padding: 1.5rem 2rem !important;
