@@ -3378,43 +3378,69 @@ body.dark-mode {
     backdrop-filter: blur(10px);
 }
 
-/* ===== ALL MODALS RESPONSIVE FIXES ===== */
+/* ===== TRANSACTION MODALS RESPONSIVE FIX - DROP IN ===== */
+/* Add this to your CSS file or <style> tag */
 
-/* Common modal fixes for ALL modals */
+/* Reset and base modal fixes */
 #import-receipts-modal .popout-modal-content,
 #transaction-modal .popout-modal-content {
     max-width: 95vw;
     width: 95vw;
     max-height: 90vh;
     margin: 20px;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    position: relative;
 }
 
-/* Modal body should scroll if content is too tall */
+/* Modal scrolling */
 .popout-modal-body {
-    max-height: calc(90vh - 150px); /* Account for header/footer */
+    max-height: none !important;
     overflow-y: auto;
     padding: 20px;
+    flex: 1;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
-/* Ensure form elements don't overflow */
+/* Form responsiveness */
 .form-grid-pwa,
 .form-grid,
-.health-form .form-row {
+.health-form .form-row,
+#transaction-form .form-grid,
+#transaction-form .form-grid-pwa {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 16px;
 }
 
-/* Make sure inputs don't overflow */
+/* Prevent overflow in forms */
+.form-grid-pwa > *,
+.form-grid > *,
+.health-form .form-row > * {
+    min-width: 0;
+}
+
+/* Input controls */
 .form-input,
 .form-select,
 .form-input-pwa,
-.form-select-pwa {
+.form-select-pwa,
+textarea.form-input {
     max-width: 100%;
     box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* Button containers - ensure buttons stay in bounds */
+/* Textarea specific */
+textarea.form-input {
+    min-height: 80px;
+    resize: vertical;
+    white-space: pre-wrap;
+}
+
+/* Button containers */
 .camera-controls,
 .popout-modal-footer,
 .receipt-actions {
@@ -3422,88 +3448,10 @@ body.dark-mode {
     gap: 12px;
     flex-wrap: wrap;
     justify-content: center;
+    padding: 16px 20px;
 }
 
-/* Responsive sizing */
-@media (min-width: 768px) {
-    #import-receipts-modal .popout-modal-content,
-    #transaction-modal .popout-modal-content {
-        max-width: 700px;
-        width: 90vw;
-    }
-    
-    /* 2-column forms on tablets and larger */
-    .form-grid-pwa,
-    .form-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
-@media (min-width: 1024px) {
-    #import-receipts-modal .popout-modal-content {
-        max-width: 800px;
-        width: 85vw;
-    }
-    
-    #transaction-modal .popout-modal-content {
-        max-width: 600px;
-        width: 85vw;
-    }
-}
-
-/* Mobile-specific fixes */
-@media (max-width: 767px) {
-    /* Full-screen modals on mobile */
-    #import-receipts-modal .popout-modal-content,
-    #transaction-modal .popout-modal-content {
-        width: 100vw;
-        height: 100vh;
-        max-height: 100vh;
-        margin: 0;
-        border-radius: 0;
-    }
-    
-    .popout-modal-body {
-        max-height: calc(100vh - 140px);
-        padding: 16px;
-    }
-    
-    /* Single column forms on mobile */
-    .form-grid-pwa,
-    .form-grid,
-    .health-form .form-row {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-    
-    /* Smaller padding on mobile */
-    .popout-modal-header,
-    .popout-modal-footer {
-        padding: 16px;
-    }
-    
-    .popout-modal-body {
-        padding: 12px;
-    }
-    
-    /* Stack buttons vertically on very small screens */
-    @media (max-width: 480px) {
-        .camera-controls,
-        .popout-modal-footer {
-            flex-direction: column;
-            align-items: stretch;
-        }
-        
-        .camera-controls .btn,
-        .popout-modal-footer .btn {
-            width: 100%;
-            margin: 4px 0;
-        }
-    }
-}
-
-/* ===== SPECIFIC FIXES FOR IMPORT RECEIPTS MODAL ===== */
-
+/* ===== IMPORT RECEIPTS MODAL SPECIFIC ===== */
 .camera-preview {
     width: 100%;
     height: 300px;
@@ -3512,6 +3460,7 @@ body.dark-mode {
     overflow: hidden;
     margin-bottom: 16px;
     position: relative;
+    border: 1px solid var(--glass-border);
 }
 
 .camera-preview video {
@@ -3520,21 +3469,13 @@ body.dark-mode {
     object-fit: cover;
 }
 
-.camera-controls {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    flex-wrap: wrap;
-    padding: 0 10px;
-}
-
 .camera-controls .btn {
     min-width: 120px;
     flex: 1;
     max-width: 200px;
 }
 
-/* Upload methods grid */
+/* Upload methods */
 .card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -3542,9 +3483,7 @@ body.dark-mode {
     margin-bottom: 24px;
 }
 
-/* ===== SPECIFIC FIXES FOR TRANSACTION MODAL ===== */
-
-/* Receipt upload area */
+/* ===== TRANSACTION MODAL SPECIFIC ===== */
 #receipt-upload-area {
     border: 2px dashed var(--glass-border);
     border-radius: 8px;
@@ -3554,6 +3493,10 @@ body.dark-mode {
     margin-bottom: 12px;
     transition: all 0.3s ease;
     max-width: 100%;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #receipt-upload-area:hover {
@@ -3561,7 +3504,6 @@ body.dark-mode {
     background: var(--primary-color)10;
 }
 
-/* OCR results */
 #ocr-results {
     background: #f0f9ff;
     border-radius: 8px;
@@ -3570,29 +3512,201 @@ body.dark-mode {
     border: 1px solid #bfdbfe;
     max-width: 100%;
     overflow-wrap: break-word;
+    word-break: break-word;
 }
 
-/* Textarea resizing */
-textarea.form-input {
-    min-height: 80px;
-    resize: vertical;
-    max-width: 100%;
+/* Amount input highlight */
+.amount-input-container {
+    position: relative;
+    grid-column: span 1;
 }
 
+.amount-input-container input {
+    font-size: 1.1em;
+    font-weight: 600;
+    padding-right: 40px;
+}
+
+.amount-input-container::after {
+    content: '€';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    font-weight: 600;
+}
+
+/* ===== TABLET (768px and up) ===== */
+@media (min-width: 768px) {
+    #import-receipts-modal .popout-modal-content,
+    #transaction-modal .popout-modal-content {
+        max-width: 700px;
+        width: 90vw;
+        max-height: 85vh;
+    }
+    
+    .form-grid-pwa,
+    .form-grid,
+    #transaction-form .form-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    /* Important fields can span both columns */
+    .form-grid > .span-full,
+    #transaction-form .amount-input-container {
+        grid-column: 1 / -1;
+    }
+    
+    .camera-preview {
+        height: 350px;
+    }
+}
+
+/* ===== DESKTOP (1024px and up) ===== */
+@media (min-width: 1024px) {
+    #import-receipts-modal .popout-modal-content {
+        max-width: 800px;
+        width: 85vw;
+        max-height: 80vh;
+    }
+    
+    #transaction-modal .popout-modal-content {
+        max-width: 600px;
+        width: 85vw;
+        max-height: 80vh;
+    }
+    
+    .form-grid-pwa,
+    .form-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+}
+
+/* ===== MOBILE (767px and below) ===== */
+@media (max-width: 767px) {
+    /* Full-screen mobile modals */
+    #import-receipts-modal .popout-modal-content,
+    #transaction-modal .popout-modal-content {
+        width: 100vw;
+        height: 100vh;
+        max-height: 100vh;
+        margin: 0;
+        border-radius: 0;
+        z-index: 1001;
+    }
+    
+    .popout-modal-body {
+        max-height: calc(100vh - 140px);
+        padding: 16px;
+    }
+    
+    /* Single column on mobile */
+    .form-grid-pwa,
+    .form-grid,
+    .health-form .form-row,
+    #transaction-form .form-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    /* Compact spacing */
+    .popout-modal-header,
+    .popout-modal-footer {
+        padding: 16px;
+    }
+    
+    .popout-modal-body {
+        padding: 12px 16px;
+    }
+    
+    /* Touch-friendly buttons */
+    .btn {
+        min-height: 44px;
+        padding: 12px 16px;
+        font-size: 1em;
+    }
+    
+    .btn-icon {
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .camera-preview {
+        height: 250px;
+        margin-bottom: 12px;
+    }
+    
+    #receipt-upload-area {
+        min-height: 100px;
+        padding: 16px;
+    }
+    
+    /* Stack buttons vertically on very small screens */
+    @media (max-width: 480px) {
+        .camera-controls,
+        .popout-modal-footer,
+        .receipt-actions {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+        }
+        
+        .camera-controls .btn,
+        .popout-modal-footer .btn {
+            width: 100%;
+            margin: 2px 0;
+        }
+        
+        .popout-modal-header h2 {
+            font-size: 1.3em;
+        }
+        
+        .card-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+    }
+    
+    /* Extra small phones */
+    @media (max-width: 320px) {
+        .popout-modal-header h2 {
+            font-size: 1.2em;
+        }
+        
+        .btn {
+            padding: 10px 12px;
+            font-size: 0.9em;
+        }
+        
+        .form-input,
+        .form-select {
+            font-size: 16px; /* Prevents iOS zoom */
+        }
+    }
+}
+
+/* ===== TABLET SPECIAL CASES ===== */
 /* Portrait tablets */
 @media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
     #import-receipts-modal .popout-modal-content {
         max-width: 90vw;
         width: 90vw;
+        max-height: 90vh;
     }
     
     #transaction-modal .popout-modal-content {
         max-width: 90vw;
         width: 90vw;
+        max-height: 90vh;
     }
     
     .camera-preview {
-        height: 350px;
+        height: 400px;
     }
 }
 
@@ -3610,41 +3724,33 @@ textarea.form-input {
     }
     
     .camera-preview {
-        height: 250px;
-    }
-}
-
-/* Ensure buttons have minimum touch target size on mobile */
-@media (max-width: 767px) {
-    .btn {
-        min-height: 44px; /* Minimum touch target */
-        padding: 12px 16px;
+        height: 280px;
     }
     
-    .btn-icon {
-        min-width: 44px;
-        min-height: 44px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    .form-grid-pwa,
+    .form-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
-/* Prevent text overflow in transaction list */
+/* ===== TEXT OVERFLOW FIXES ===== */
 .transaction-item-pwa .transaction-title-pwa,
-.inventory-item-pwa .inventory-name-pwa {
+.inventory-item-pwa .inventory-name-pwa,
+.form-input,
+.form-select {
     word-break: break-word;
     overflow-wrap: break-word;
     max-width: 100%;
 }
 
-/* Dark mode adjustments */
+/* ===== DARK MODE ===== */
 .dark-mode .camera-preview {
-    border: 1px solid var(--dm-border);
+    border-color: var(--dm-border);
 }
 
 .dark-mode #receipt-upload-area {
     border-color: var(--dm-border);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .dark-mode #receipt-upload-area:hover {
@@ -3655,4 +3761,36 @@ textarea.form-input {
 .dark-mode #ocr-results {
     background: rgba(30, 64, 175, 0.2);
     border-color: var(--dm-border);
+    color: #e2e8f0;
+}
+
+.dark-mode .amount-input-container::after {
+    color: #94a3b8;
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+    .popout-modal-content {
+        max-width: none !important;
+        width: auto !important;
+        height: auto !important;
+        max-height: none !important;
+        margin: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        position: static !important;
+    }
+    
+    .popout-modal-header,
+    .popout-modal-footer,
+    .camera-controls,
+    .receipt-actions {
+        display: none !important;
+    }
+    
+    .popout-modal-body {
+        max-height: none !important;
+        overflow: visible !important;
+        padding: 0 !important;
+    }
 }
