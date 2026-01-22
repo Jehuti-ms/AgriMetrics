@@ -4228,5 +4228,54 @@ body.modal-open {
     background: white !important;
 }
 
+/* ===== CRITICAL FIX: IMPORT RECEIPTS MODAL VISIBILITY ===== */
+
+/* 1. Make modal visible when not hidden */
+#import-receipts-modal:not(.hidden) {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    z-index: 99999 !important;
+}
+
+/* 2. Force mobile visibility */
+@media (max-width: 768px) {
+    #import-receipts-modal:not(.hidden) {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0, 0, 0, 0.9) !important;
+        backdrop-filter: blur(10px) !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    #import-receipts-modal:not(.hidden) .popout-modal-content {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        background: white !important;
+        overflow-y: auto !important;
+    }
+}
+
+/* 3. DEBUG: Make modal OBVIOUSLY visible (remove after testing) */
+#import-receipts-modal.debug-visible:not(.hidden) {
+    background: rgba(255, 0, 0, 0.3) !important;
+    border: 5px solid yellow !important;
+}
+
+#import-receipts-modal.debug-visible:not(.hidden) .popout-modal-content {
+    background: white !important;
+    border: 3px solid blue !important;
+    color: black !important;
+}
+
 
 
