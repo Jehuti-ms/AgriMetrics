@@ -3378,3 +3378,21 @@ body.dark-mode {
     backdrop-filter: blur(10px);
 }
 
+/* ========== Income & Expenses Modals ========== */
+.income-module .modal,
+.expenses-module .modal {
+  position: fixed;        /* lock to viewport */
+  top: 80px;              /* start directly under navbar (adjust if navbar height changes) */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;           /* or max-width: 90% for responsiveness */
+  max-height: calc(100vh - 80px); /* prevent stretching past viewport */
+  overflow-y: auto;       /* scroll internally if content is long */
+  margin: 0;              /* remove extra spacing */
+  padding: 20px;          /* internal spacing */
+  background: var(--surface-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  z-index: 11000;         /* above side menu */
+}
+
