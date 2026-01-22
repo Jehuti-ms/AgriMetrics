@@ -1192,58 +1192,43 @@
     }
 }
 
-/* ===== FIX POPOUT-MODAL FOR MOBILE VISIBILITY ===== */
+/* ===== FIX: POPOUT-MODAL MOBILE VISIBILITY ===== */
+/* Add this to your existing modal styles */
 
-/* Make popout-modal visible when not hidden */
+/* CRITICAL: When popout-modal is NOT hidden, make it visible */
 .popout-modal:not(.hidden) {
-    /* CRITICAL: Force visibility */
+    /* These styles MUST match what worked in console */
+    display: flex !important;
     opacity: 1 !important;
     visibility: visible !important;
     
-    /* CRITICAL: Full screen background */
+    /* Full screen background */
     background: rgba(0, 0, 0, 0.85) !important;
     backdrop-filter: blur(10px) !important;
-    
-    /* CRITICAL: Full screen on mobile */
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    
-    /* Center content */
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
     
     /* High z-index */
     z-index: 20000 !important;
 }
 
-/* Popout modal content - visible */
-.popout-modal:not(.hidden) .popout-modal-content {
-    /* CRITICAL: Make it visible */
-    opacity: 1 !important;
-    visibility: visible !important;
-    
-    /* Ensure background */
-    background: var(--modal-bg) !important;
-    color: var(--modal-body-text) !important;
-    border: 1px solid var(--modal-border) !important;
-    
-    /* Responsive sizing */
-    width: 95% !important;
-    max-width: 600px !important;
-    max-height: 90vh !important;
-    
-    /* Scrollable */
-    overflow-y: auto !important;
-}
-
-/* ===== MOBILE-SPECIFIC FIXES ===== */
+/* Mobile-specific styles */
 @media (max-width: 768px) {
-    /* Full screen modal on mobile */
+    .popout-modal:not(.hidden) {
+        /* Full screen on mobile */
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        
+        /* Center content */
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
     .popout-modal:not(.hidden) .popout-modal-content {
+        /* Full screen content on mobile */
         width: 100vw !important;
         height: 100vh !important;
         max-width: 100vw !important;
@@ -1251,44 +1236,51 @@
         margin: 0 !important;
         border-radius: 0 !important;
         border: none !important;
+        
+        /* Ensure visibility */
+        background: var(--surface-color, white) !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        
+        /* Scroll if needed */
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
     
-    /* Ensure content is visible */
-    .popout-modal:not(.hidden) {
-        background: rgba(0, 0, 0, 0.9) !important;
-    }
-    
-    /* Make sure text is readable */
-    .popout-modal-body {
-        color: var(--modal-body-text) !important;
-    }
-    
-    .popout-modal-body * {
-        color: var(--modal-body-text) !important;
+    /* Prevent body scroll when modal is open */
+    body.modal-open {
+        overflow: hidden !important;
+        position: fixed !important;
+        width: 100% !important;
+        height: 100% !important;
     }
 }
 
-/* ===== DEBUG: MAKE MODAL OBVIOUSLY VISIBLE ===== */
-/* Add this temporarily to see if modal appears */
-.popout-modal.debug-visible:not(.hidden) {
-    background: rgba(255, 0, 0, 0.3) !important;
+/* ===== FIX: When modal IS hidden ===== */
+.popout-modal.hidden {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
 }
 
-.popout-modal.debug-visible:not(.hidden) .popout-modal-content {
-    background: white !important;
-    border: 5px solid blue !important;
-    color: black !important;
-}
-
-/* ===== DARK MODE FIX FOR POPOUT-MODAL ===== */
-[data-theme="dark"] .popout-modal:not(.hidden),
-.dark-mode .popout-modal:not(.hidden) {
+/* ===== EMERGENCY OVERRIDE ===== */
+/* If nothing else works, this will force visibility */
+#import-receipts-modal.force-visible {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
     background: rgba(0, 0, 0, 0.9) !important;
+    z-index: 99999 !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
 }
 
-[data-theme="dark"] .popout-modal:not(.hidden) .popout-modal-content,
-.dark-mode .popout-modal:not(.hidden) .popout-modal-content {
-    background: var(--modal-bg) !important;
-    color: var(--modal-body-text) !important;
-    border: 1px solid var(--modal-border) !important;
+#import-receipts-modal.force-visible .popout-modal-content {
+    background: white !important;
+    border: 5px solid red !important;
+    color: black !important;
 }
