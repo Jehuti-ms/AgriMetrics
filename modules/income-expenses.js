@@ -680,11 +680,30 @@ onThemeChange(theme) {
     },
 
     setupButton(id, handler) {
-        const button = document.getElementById(id);
-        if (button) {
-            button.addEventListener('click', handler);
-        }
-    },
+    console.log(`🔧 Setting up button: ${id}`);
+    
+    const button = document.getElementById(id);
+    if (!button) {
+        console.error(`❌ Button #${id} not found`);
+        return;
+    }
+    
+    console.log(`✅ Button #${id} found`);
+    
+    // Remove any existing listeners to prevent duplicates
+    const newButton = button.cloneNode(true);
+    button.parentNode.replaceChild(newButton, button);
+    
+    // Add the new listener with proper context binding
+    newButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        console.log(`🎯 Button #${id} clicked`);
+        
+        // Call handler with proper `this` context
+        handler.call(this, event);
+    });
+},
 
     // ==================== FIXED: RECEIPT UPLOAD FOR TRANSACTION FORM ====================
     handleTransactionReceiptUpload(file) {
