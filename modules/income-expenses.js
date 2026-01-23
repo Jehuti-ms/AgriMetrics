@@ -1210,83 +1210,122 @@ fixButtonOverflow() {
         `;
     },
 
-    setupImportReceiptsHandlers() {
-        console.log('Setting up import receipt handlers');
+   setupImportReceiptsHandlers() {
+    console.log('Setting up import receipt handlers');
+
+    // First, add the missing method
+    if (!this.showUploadInterface) {
+        this.showUploadInterface = () => {
+            console.log('📁 Showing upload interface');
+            const cameraSection = document.getElementById('camera-section');
+            const uploadSection = document.getElementById('upload-section');
+            const recentSection = document.getElementById('recent-section');
+            if (cameraSection) cameraSection.style.display = 'none';
+            if (uploadSection) uploadSection.style.display = 'block';
+            if (recentSection) recentSection.style.display = 'block';
+        };
+    }
+    
+    // Check camera availability
+    this.checkCameraAvailability().then(hasCamera => {
+        console.log(hasCamera ? '✅ Camera available' : '❌ No camera available');
         
-        // Camera option
-        this.setupButton('camera-option', () => {
-            document.getElementById('upload-section').style.display = 'none';
-            document.getElementById('camera-section').style.display = 'block';
-            document.getElementById('recent-section').style.display = 'none';
-            this.initializeCamera();
-        });
-        
-        // Upload option
-        this.setupButton('upload-option', () => {
-            document.getElementById('camera-section').style.display = 'none';
-            document.getElementById('upload-section').style.display = 'block';
-            document.getElementById('recent-section').style.display = 'block';
-        });
-        
-        // Firebase option
-        this.setupButton('firebase-option', () => {
-            this.loadReceiptsFromFirebase();
-            this.showNotification('Loaded receipts from Firebase', 'success');
-        });
-        
-        // File upload handlers
-        this.setupButton('browse-receipts-btn', () => {
-            document.getElementById('receipt-upload-input').click();
-        });
-        
-        const fileInput = document.getElementById('receipt-upload-input');
-        if (fileInput) {
-            fileInput.onchange = (e) => {
-                this.handleFileUpload(e.target.files);
-            };
-        }
-        
-        // Drag and drop
-        const dropArea = document.getElementById('drop-area');
-        if (dropArea) {
-            dropArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropArea.classList.add('drag-over');
-            });
-            
-            dropArea.addEventListener('dragleave', () => {
-                dropArea.classList.remove('drag-over');
-            });
-            
-            dropArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropArea.classList.remove('drag-over');
-                this.handleFileUpload(e.dataTransfer.files);
-            });
-        }
-        
-        // Camera controls
-        this.setupButton('capture-photo', () => this.capturePhoto());
-        this.setupButton('switch-camera', () => this.switchCamera());
-        this.setupButton('cancel-camera', () => {
-            this.stopCamera();
-            document.getElementById('camera-section').style.display = 'none';
-            document.getElementById('upload-section').style.display = 'block';
-            document.getElementById('recent-section').style.display = 'block';
-        });
-        
-        // Refresh receipts
-        this.setupButton('refresh-receipts', () => {
-            this.loadReceiptsFromFirebase();
-            const recentList = document.getElementById('recent-receipts-list');
-            if (recentList) {
-                recentList.innerHTML = this.renderRecentReceiptsList();
+        if (!hasCamera) {
+            this.showUploadInterface();
+            // Hide camera option if no camera
+            const cameraOption = document.getElementById('camera-option');
+            if (cameraOption) {
+                cameraOption.style.display = 'none';
             }
+        }
+    });
+    
+    // Camera option - ONLY ONCE
+    this.setupButton('camera-option', () => {
+        document.getElementById('upload-section').style.display = 'none';
+        document.getElementById('camera-section').style.display = 'block';
+        document.getElementById('recent-section').style.display = 'none';
+        this.initializeCamera();
+    });
+    
+    // Upload option
+    this.setupButton('upload-option', () => {
+        document.getElementById('camera-section').style.display = 'none';
+        document.getElementById('upload-section').style.display = 'block';
+        document.getElementById('recent-section').style.display = 'block';
+    });
+    
+    // Firebase option
+    this.setupButton('firebase-option', () => {
+        this.loadReceiptsFromFirebase();
+        this.showNotification('Loaded receipts from Firebase', 'success');
+    });
+    
+    // File upload handlers
+    this.setupButton('browse-receipts-btn', () => {
+        document.getElementById('receipt-upload-input').click();
+    });
+    
+    const fileInput = document.getElementById('receipt-upload-input');
+    if (fileInput) {
+        fileInput.onchange = (e) => {
+            this.handleFileUpload(e.target.files);
+        };
+    }
+    
+    // Drag and drop
+    const dropArea = document.getElementById('drop-area');
+    if (dropArea) {
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.classList.add('drag-over');
         });
         
-        // Process button
-        this.setupButton('process-receipts-btn', () => this.processPendingReceipts());
-    },
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.classList.remove('drag-over');
+        });
+        
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.classList.remove('drag-over');
+            this.handleFileUpload(e.dataTransfer.files);
+        });
+    }
+    
+    // Camera controls
+    this.setupButton('capture-photo', () => this.capturePhoto());
+    this.setupButton('switch-camera', () => this.switchCamera());
+    this.setupButton('cancel-camera', () => {
+        this.stopCamera();
+        document.getElementById('camera-section').style.display = 'none';
+        document.getElementById('upload-section').style.display = 'block';
+        document.getElementById('recent-section').style.display = 'block';
+    });
+    
+    // Refresh receipts
+    this.setupButton('refresh-receipts', () => {
+        this.loadReceiptsFromFirebase();
+        const recentList = document.getElementById('recent-receipts-list');
+        if (recentList) {
+            recentList.innerHTML = this.renderRecentReceiptsList();
+        }
+    });
+    
+    // Process button
+    this.setupButton('process-receipts-btn', () => this.processPendingReceipts());
+},
+
+// This goes OUTSIDE setupImportReceiptsHandlers, as a separate method
+initializeCamera() {
+    console.log('📷 Initializing camera...');
+    
+    try {
+        // Your camera initialization code...
+    } catch (error) {
+        console.error('Camera error:', error);
+        this.showUploadInterface(); // Show upload interface on error
+    }
+},
 
     // ==================== RECEIPT PROCESSING ====================
     renderRecentReceiptsList() {
@@ -1725,31 +1764,84 @@ fixButtonOverflow() {
             });
         });
     },
+
+    showUploadInterface() {
+    console.log('📁 Showing upload interface (camera fallback)');
+    
+    const cameraControls = document.getElementById('camera-controls');
+    const uploadInterface = document.getElementById('upload-interface');
+    const video = document.getElementById('camera-preview');
+    
+    if (cameraControls) cameraControls.style.display = 'none';
+    if (uploadInterface) uploadInterface.style.display = 'block';
+    if (video && video.srcObject) {
+        const stream = video.srcObject;
+        stream.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+    }
+},
     
     // ==================== CAMERA METHODS ====================
     async initializeCamera() {
-        try {
-            const video = document.getElementById('camera-preview');
-            const status = document.getElementById('camera-status');
-            
-            if (!video) return;
-            
-            // Get camera access
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment' },
-                audio: false
-            });
-            
-            video.srcObject = stream;
-            this.cameraStream = stream;
-            if (status) status.textContent = 'Camera Ready';
-            
-        } catch (error) {
-            console.error('Camera error:', error);
-            this.showNotification('Camera access denied. Please upload files instead.', 'error');
-            this.showUploadInterface();
+    console.log('📷 Initializing camera...');
+    
+    const video = document.getElementById('camera-preview');
+    if (!video) {
+        console.error('❌ Camera preview element not found');
+        this.showUploadInterface(); // Fallback to upload
+        return;
+    }
+    
+    navigator.mediaDevices.getUserMedia({ 
+        video: { 
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+        },
+        audio: false 
+    })
+    .then(stream => {
+        console.log('✅ Camera access granted');
+        video.srcObject = stream;
+        video.play();
+        
+        // Show camera controls
+        const cameraControls = document.getElementById('camera-controls');
+        if (cameraControls) {
+            cameraControls.style.display = 'flex';
         }
-    },
+        
+        // Hide upload interface
+        const uploadInterface = document.getElementById('upload-interface');
+        if (uploadInterface) {
+            uploadInterface.style.display = 'none';
+        }
+    })
+    .catch(error => {
+        console.error('❌ Camera error:', error.name, error.message);
+        
+        // Check error type
+        if (error.name === 'NotReadableError' || 
+            error.name === 'NotFoundError' ||
+            error.name === 'NotAllowedError') {
+            console.log('⚠️ Camera not available, showing upload interface');
+            
+            // IMPORTANT: Check if method exists
+            if (this.showUploadInterface) {
+                this.showUploadInterface();
+            } else {
+                console.error('❌ showUploadInterface method not found');
+                // Fallback: Show upload interface directly
+                const cameraControls = document.getElementById('camera-controls');
+                const uploadInterface = document.getElementById('upload-interface');
+                if (cameraControls && uploadInterface) {
+                    cameraControls.style.display = 'none';
+                    uploadInterface.style.display = 'block';
+                }
+            }
+        }
+    });
+},
 
     async switchCamera() {
         if (!this.cameraStream) return;
