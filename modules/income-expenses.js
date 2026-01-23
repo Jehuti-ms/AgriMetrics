@@ -998,30 +998,87 @@ const IncomeExpensesModule = {
     },
 
     // ==================== FIREBASE RECEIPT METHODS ====================
-   showImportReceiptsModal() {
+  showImportReceiptsModal() {
     console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
 
-    // Ensure modal exists or create it
-    let modal = this.ensureModalExists();
+    // FIRST: Ensure modal exists
+    let modal = document.getElementById('import-receipts-modal');
+    if (!modal) {
+        console.log('⚠️ Modal not found, checking if it needs rendering...');
+        
+        // Try to find it in rendered content
+        modal = document.querySelector('#import-receipts-modal');
+        if (!modal) {
+            console.error('❌ Modal not found in DOM!');
+            
+            // Emergency creation with FULL content
+            const modalHTML = `
+            <div id="import-receipts-modal" class="popout-modal hidden">
+                <div class="popout-modal-content">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title">Upload Receipts</h3>
+                        <button class="popout-modal-close">&times;</button>
+                    </div>
+                    <div class="popout-modal-body">
+                        <div id="import-receipts-content">
+                            <!-- Content will be rendered here -->
+                        </div>
+                    </div>
+                    <div class="popout-modal-footer">
+                        <button type="button" class="btn btn-outline" id="cancel-receipt-upload">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="process-receipts-btn" style="display: none;">
+                            <span class="btn-icon">⚡</span>
+                            <span class="btn-text">Process Receipts</span>
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            modal = document.getElementById('import-receipts-modal');
+            console.log('✅ Emergency modal created');
+        }
+    }
     
     // Hide all other modals
     this.hideAllModals();
     
-    // Update content
-    this.updateModalContent();
+    // Update content BEFORE showing
+    const content = document.getElementById('import-receipts-content');
+    if (content && this.renderImportReceiptsModal) {
+        content.innerHTML = this.renderImportReceiptsModal();
+    }
     
-    // Show modal
+    // Show modal - CSS will handle the rest
     modal.classList.remove('hidden');
     
-    // Fix button overflow
-    this.fixButtonOverflow();
+    // Fix button overflow IMMEDIATELY
+    const processBtn = document.getElementById('process-receipts-btn');
+    if (processBtn) {
+        processBtn.style.maxWidth = '100%';
+        processBtn.style.overflow = 'hidden';
+        processBtn.style.whiteSpace = 'nowrap';
+        processBtn.style.boxSizing = 'border-box';
+        processBtn.style.textOverflow = 'ellipsis';
+        
+        // Mobile-specific fixes
+        if (window.innerWidth <= 768) {
+            processBtn.style.width = '100%';
+            processBtn.style.padding = '12px 16px';
+            processBtn.style.fontSize = '14px';
+        }
+    }
     
-    // Setup handlers
-    setTimeout(() => this.setupImportReceiptsHandlers(), 50);
+    // Setup handlers AFTER content is rendered
+    setTimeout(() => {
+        if (this.setupImportReceiptsHandlers) {
+            this.setupImportReceiptsHandlers();
+        }
+    }, 50);
     
-    console.log('✅ Modal visible with sales-module styling');
+    console.log('Modal should now be visible with sales-module styling');
 },
-
+    
 // Helper method: Ensure modal exists
 ensureModalExists() {
     let modal = document.getElementById('import-receipts-modal');
