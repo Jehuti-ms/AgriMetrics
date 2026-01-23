@@ -3378,7 +3378,7 @@ body.dark-mode {
     backdrop-filter: blur(10px);
 }
 
-/* ===== INCOME/EXPENSES MODALS - MATCH SALES MODULE ===== */
+/* ===== INCOME/EXPENSES MODALS - MATCH APP GREEN THEME ===== */
 
 /* Make popout-modals behave like sales module modal */
 .popout-modal:not(.hidden) {
@@ -3409,11 +3409,11 @@ body.dark-mode {
 /* Modal content - match sales module styling */
 .popout-modal-content {
     /* Match sales module modal styling */
-    background: var(--modal-bg, #ffffff) !important;
-    color: var(--modal-body-text, #1a1a1a) !important;
-    border: 1px solid var(--modal-border, #e1e5e9) !important;
-    border-radius: var(--border-radius, 8px) !important;
-    box-shadow: var(--modal-shadow, 0 20px 40px rgba(0, 0, 0, 0.1)) !important;
+    background: var(--modal-bg, var(--surface-color, #ffffff)) !important;
+    color: var(--modal-body-text, var(--text-primary, #1a1a1a)) !important;
+    border: 1px solid var(--modal-border, var(--border-color, #e5e7eb)) !important;
+    border-radius: var(--border-radius, 12px) !important;
+    box-shadow: var(--modal-shadow, 0 20px 40px rgba(0, 0, 0, 0.15)) !important;
     
     /* Responsive sizing - like sales module */
     width: 95% !important;
@@ -3425,26 +3425,75 @@ body.dark-mode {
     flex-direction: column !important;
 }
 
-/* Modal header - match sales module gradient */
+/* Modal header - UPDATE TO MATCH APP GREEN GRADIENT THEME */
 .popout-modal-header {
-    background: var(--modal-header-bg, linear-gradient(135deg, #22c55e, #14b8a6)) !important;
+    /* App green gradient - using your primary colors */
+    background: var(--modal-header-bg, 
+        linear-gradient(135deg, 
+            var(--primary-color, #22c55e) 0%, 
+            var(--complementary-teal, #14b8a6) 50%, 
+            var(--primary-dark, #16a34a) 100%
+        )) !important;
+    
+    /* Enhanced gradient with smooth transition */
+    background-size: 200% 200% !important;
+    animation: gradientShift 8s ease infinite !important;
+    
     color: var(--modal-header-text, #ffffff) !important;
-    border-bottom: 1px solid var(--modal-header-border, rgba(255, 255, 255, 0.2)) !important;
+    border-bottom: 1px solid var(--modal-header-border, rgba(255, 255, 255, 0.25)) !important;
     padding: 1.5rem 2rem !important;
-    border-radius: var(--border-radius, 8px) var(--border-radius, 8px) 0 0 !important;
+    border-radius: var(--border-radius, 12px) var(--border-radius, 12px) 0 0 !important;
+    
+    /* Subtle shine effect */
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+/* Subtle shine animation for gradient */
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Optional: Add a subtle shine overlay */
+.popout-modal-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.15),
+        transparent
+    );
+    animation: shine 3s ease-in-out infinite;
+}
+
+@keyframes shine {
+    0% { left: -100%; }
+    20% { left: 100%; }
+    100% { left: 100%; }
 }
 
 .popout-modal-title {
     color: var(--modal-header-text, #ffffff) !important;
     margin: 0 !important;
-    font-size: 1.4rem !important;
+    font-size: 1.5rem !important;
     font-weight: 700 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+    letter-spacing: -0.02em !important;
+    position: relative !important; /* Ensures it's above the overlay */
+    z-index: 2 !important;
 }
 
 /* Modal body */
 .popout-modal-body {
-    background: var(--modal-body-bg, #ffffff) !important;
-    color: var(--modal-body-text, #1a1a1a) !important;
+    background: var(--modal-body-bg, var(--surface-color, #ffffff)) !important;
+    color: var(--modal-body-text, var(--text-primary, #1a1a1a)) !important;
     padding: 2rem !important;
     flex: 1 !important;
     overflow-y: auto !important;
@@ -3453,59 +3502,118 @@ body.dark-mode {
 
 /* Modal footer */
 .popout-modal-footer {
-    background: var(--modal-footer-bg, #f8f9fa) !important;
-    color: var(--modal-footer-text, #1a1a1a) !important;
+    background: var(--modal-footer-bg, var(--background-color, #f8faf9)) !important;
+    color: var(--modal-footer-text, var(--text-primary, #1a1a1a)) !important;
     padding: 1.5rem 2rem !important;
-    border-top: 1px solid var(--modal-footer-border, #e1e5e9) !important;
-    border-radius: 0 0 var(--border-radius, 8px) var(--border-radius, 8px) !important;
+    border-top: 1px solid var(--modal-footer-border, var(--border-color, #e5e7eb)) !important;
+    border-radius: 0 0 var(--border-radius, 12px) var(--border-radius, 12px) !important;
     display: flex !important;
     justify-content: flex-end !important;
     gap: 1rem !important;
 }
 
-/* Close button - match sales module */
+/* Close button - update to match green theme */
 .popout-modal-close {
-    background: var(--modal-close-bg, rgba(255, 255, 255, 0.2)) !important;
-    border: none !important;
+    background: var(--modal-close-bg, rgba(255, 255, 255, 0.25)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
     color: var(--modal-close-color, #ffffff) !important;
-    width: 32px !important;
-    height: 32px !important;
+    width: 36px !important;
+    height: 36px !important;
     border-radius: 50% !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     cursor: pointer !important;
     font-size: 1.2rem !important;
-    font-weight: bold !important;
-    transition: var(--transition-fast, all 0.2s ease) !important;
+    font-weight: 600 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    backdrop-filter: blur(4px) !important;
+    position: relative !important;
+    z-index: 3 !important;
 }
 
 .popout-modal-close:hover {
-    background: var(--modal-close-hover, rgba(255, 255, 255, 0.3)) !important;
-    transform: scale(1.1) !important;
+    background: var(--modal-close-hover, rgba(255, 255, 255, 0.35)) !important;
+    transform: scale(1.1) rotate(90deg) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* ===== DARK MODE SUPPORT ===== */
+.dark-mode .popout-modal:not(.hidden) {
+    background: rgba(0, 0, 0, 0.85) !important;
+    backdrop-filter: blur(12px) !important;
+}
+
+.dark-mode .popout-modal-content {
+    background: var(--dm-surface, #1e293b) !important;
+    color: var(--dm-text-primary, #f8fafc) !important;
+    border-color: var(--dm-border, #374151) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Dark mode green gradient - darker, richer tones */
+.dark-mode .popout-modal-header {
+    background: linear-gradient(135deg, 
+        var(--primary-dark, #15803d) 0%, 
+        #0d9488 50%, 
+        #115e59 100%
+    ) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.dark-mode .popout-modal-header::before {
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+    ) !important;
+}
+
+.dark-mode .popout-modal-body {
+    background: var(--dm-surface, #1e293b) !important;
+    color: var(--dm-text-primary, #f8fafc) !important;
+}
+
+.dark-mode .popout-modal-footer {
+    background: var(--dm-background, #0f172a) !important;
+    color: var(--dm-text-primary, #f8fafc) !important;
+    border-color: var(--dm-border, #374151) !important;
+}
+
+.dark-mode .popout-modal-close {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.dark-mode .popout-modal-close:hover {
+    background: rgba(255, 255, 255, 0.25) !important;
 }
 
 /* ===== MOBILE RESPONSIVENESS ===== */
 @media (max-width: 768px) {
     .popout-modal:not(.hidden) {
-        /* Full screen on mobile */
         align-items: flex-start !important;
         padding: 1rem !important;
         background: rgba(0, 0, 0, 0.9) !important;
+        backdrop-filter: blur(10px) !important;
     }
     
     .popout-modal-content {
-        /* Full width on mobile */
         width: 100% !important;
         max-width: 100% !important;
         max-height: 95vh !important;
         margin: 0 !important;
-        border-radius: var(--radius-lg, 16px) !important;
+        border-radius: 16px !important;
     }
     
     .popout-modal-header {
         padding: 1.25rem 1.5rem !important;
-        border-radius: var(--radius-lg, 16px) var(--radius-lg, 16px) 0 0 !important;
+        border-radius: 16px 16px 0 0 !important;
+    }
+    
+    .popout-modal-title {
+        font-size: 1.3rem !important;
     }
     
     .popout-modal-body {
@@ -3523,34 +3631,19 @@ body.dark-mode {
     }
 }
 
-/* ===== DARK MODE SUPPORT ===== */
-[data-theme="dark"] .popout-modal:not(.hidden),
-.dark-mode .popout-modal:not(.hidden) {
-    background: rgba(0, 0, 0, 0.8) !important;
+/* ===== SPECIFIC MODAL TYPES ===== */
+/* Income modal specific - slight variation */
+.popout-modal[data-modal-type="income"] .popout-modal-header {
+    background: linear-gradient(135deg, 
+        var(--primary-color, #22c55e) 0%, 
+        var(--success-color, #22c55e) 100%
+    ) !important;
 }
 
-[data-theme="dark"] .popout-modal-content,
-.dark-mode .popout-modal-content {
-    background: var(--dm-surface, #1e293b) !important;
-    color: var(--dm-text-primary, #f8fafc) !important;
-    border-color: var(--dm-border, #374151) !important;
+/* Expenses modal specific - slight variation */
+.popout-modal[data-modal-type="expense"] .popout-modal-header {
+    background: linear-gradient(135deg, 
+        var(--complementary-teal, #14b8a6) 0%, 
+        var(--complementary-sky, #0ea5e9) 100%
+    ) !important;
 }
-
-[data-theme="dark"] .popout-modal-header,
-.dark-mode .popout-modal-header {
-    background: linear-gradient(135deg, #16a34a, #0d9488) !important; 
-}
-
-[data-theme="dark"] .popout-modal-body,
-.dark-mode .popout-modal-body {
-    background: var(--dm-surface, #1e293b) !important;
-    color: var(--dm-text-primary, #f8fafc) !important;
-}
-
-[data-theme="dark"] .popout-modal-footer,
-.dark-mode .popout-modal-footer {
-    background: var(--dm-background, #0f172a) !important;
-    color: var(--dm-text-primary, #f8fafc) !important;
-    border-color: var(--dm-border, #374151) !important;
-}
-
