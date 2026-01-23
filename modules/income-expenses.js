@@ -23,57 +23,47 @@ const IncomeExpensesModule = {
 
     // ==================== INITIALIZATION ====================
     initialize() {
-        console.log('💰 Initializing Income & Expenses...');
-
-         // Return a promise
-        return new Promise((resolve, reject) => {
-            if (this.initialized) {
-                console.log('✅ Already initialized');
-                resolve(true);
-                return;
-            }
-
-        // Prevent re-initialization
-        if (this.initialized) {
-            console.log('⚠️ Already initialized, skipping...');
-            return true;
-        }
-        
-        this.element = document.getElementById('content-area');
-        if (!this.element) {
-            console.error('Content area element not found');
-            return false;
-        }
-
-        // Check Firebase availability
-        this.isFirebaseAvailable = !!(window.firebase && window.firebase.storage && window.firebase.firestore);
-        console.log('Firebase available:', this.isFirebaseAvailable);
-
-        if (window.StyleManager) {
-            StyleManager.registerModule(this.name, this.element, this);
-        }
-
-        this.loadData();
-        this.cleanupBrokenReceipts();
-        this.loadReceiptsFromFirebase();
-        this.renderModule();
-        this.initialized = true;
-
-        // Camera properties
-        this.useFrontCamera = false;
-        this.currentStream = null;
-        this.receiptQueue = [];
-
-        // Mark as initialized
-        this.initialized = true;
-        console.log('✅ Income & Expenses initialized');
+    console.log('💰 Initializing Income & Expenses...');
+    
+    if (this.initialized) {
+        console.log('✅ Already initialized');
         return true;
-    },
+    }
+    
+    this.element = document.getElementById('content-area');
+    if (!this.element) {
+        console.error('Content area element not found');
+        return false;
+    }
 
-    onThemeChange(theme) {
-        console.log(`Income & Expenses updating for theme: ${theme}`);
-    },
+    // Check Firebase availability
+    this.isFirebaseAvailable = !!(window.firebase && window.firebase.storage && window.firebase.firestore);
+    console.log('Firebase available:', this.isFirebaseAvailable);
 
+    if (window.StyleManager) {
+        StyleManager.registerModule(this.name, this.element, this);
+    }
+
+    this.loadData();
+    this.cleanupBrokenReceipts();
+    this.loadReceiptsFromFirebase();
+    this.renderModule();
+
+    // Camera properties
+    this.useFrontCamera = false;
+    this.currentStream = null;
+    this.receiptQueue = [];
+
+    // Mark as initialized
+    this.initialized = true;
+    console.log('✅ Income & Expenses initialized');
+    return true;
+},
+
+onThemeChange(theme) {
+    console.log(`Income & Expenses updating for theme: ${theme}`);
+},
+    
     // ==================== DATA MANAGEMENT ====================
     loadData() {
         const saved = localStorage.getItem('farm-transactions');
