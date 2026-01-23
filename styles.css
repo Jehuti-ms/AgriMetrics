@@ -3648,3 +3648,24 @@ body.dark-mode {
         var(--complementary-sky, #0ea5e9) 100%
     ) !important;
 }
+
+/* FIX MODAL HEADER COLOR */
+.popout-modal-header {
+    background: linear-gradient(135deg, #22c55e, #14b8a6, #16a34a) !important;
+    color: white !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25) !important;
+}
+
+.popout-modal-title,
+.popout-modal-close {
+    color: white !important;
+}
+
+.popout-modal-close:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Dark mode */
+.dark-mode .popout-modal-header {
+    background: linear-gradient(135deg, #15803d, #0d9488, #115e59) !important;
+}
