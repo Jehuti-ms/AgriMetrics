@@ -3643,173 +3643,97 @@ body.dark-mode {
     text-align: center;
 }
 
-/* ===== SMALL SCREEN TEXT FLOW FIXES ===== */
+/* ===== BUTTON OVERFLOW FIXES - SIMPLIFIED ===== */
 
-/* Tablets and smaller */
+/* 1. PREVENT ALL BUTTON OVERFLOWS */
+.btn {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* 2. SPECIFIC PROCESS RECEIPTS BUTTON */
+#process-receipts-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+}
+
+/* 3. MODAL FOOTER LAYOUT */
+.popout-modal-footer {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    padding: 16px 24px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* 4. MOBILE - STACK BUTTONS */
 @media (max-width: 768px) {
-    .camera-controls {
-        gap: 8px;
-        padding: 0 8px;
+    .popout-modal-footer {
+        flex-direction: column !important;
+        padding: 12px 16px !important;
+        gap: 8px !important;
     }
     
-    .camera-controls .btn {
-        min-width: 100px;
-        max-width: 180px;
-        padding: 10px 12px;
-        font-size: 13px;
-        min-height: 40px;
-    }
-    
-    /* Two-line button text support */
-    .camera-controls .btn.multi-line {
-        min-height: 48px;
-        padding: 8px 10px;
-    }
-}
-
-/* Small mobile devices */
-@media (max-width: 480px) {
-    .camera-controls {
-        flex-direction: column; /* Stack buttons vertically */
-        align-items: stretch;
-        gap: 6px;
-        padding: 0;
-    }
-    
-    .camera-controls .btn {
+    .popout-modal-footer .btn,
+    .popout-modal-header .btn {
         width: 100% !important;
-        max-width: 100% !important;
-        min-width: 0 !important;
-        margin: 0 !important;
-        padding: 12px 10px !important;
+        padding: 12px 16px !important;
         font-size: 14px !important;
-        min-height: 44px;
     }
     
-    /* Force text to wrap nicely */
-    .camera-controls .btn span {
-        display: inline-block;
-        max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: normal;
-        line-height: 1.2;
-    }
-    
-    /* Icon + text buttons */
-    .camera-controls .btn i + span,
-    .camera-controls .btn .material-icons + span {
-        margin-left: 6px;
+    /* Process Receipts button specific */
+    #process-receipts-btn {
+        width: 100% !important;
+        padding: 12px 16px !important;
     }
 }
 
-/* Ultra-small screens (iPhone 5/SE) */
+/* 5. EXTRA SMALL SCREENS */
 @media (max-width: 320px) {
-    .camera-controls {
-        gap: 4px;
+    .popout-modal-content {
+        width: 100vw !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
     }
     
-    .camera-controls .btn {
-        padding: 10px 8px !important;
-        font-size: 12px !important;
-        min-height: 40px;
+    .popout-modal-footer .btn {
+        padding: 10px 12px !important;
+        font-size: 13px !important;
     }
     
-    /* Reduce icon size on tiny screens */
-    .camera-controls .btn i,
-    .camera-controls .btn .material-icons {
-        font-size: 18px !important;
-        margin-right: 4px;
-    }
-    
-    /* Hide text on ultra-small if needed, show only icon */
-    .camera-controls .btn.hide-text-on-tiny span {
-        display: none;
-    }
-    
-    .camera-controls .btn.hide-text-on-tiny {
-        width: 44px !important;
-        height: 44px !important;
-        border-radius: 50% !important;
-        padding: 0 !important;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    #process-receipts-btn {
+        padding: 10px 12px !important;
+        font-size: 13px !important;
     }
 }
 
-/* ===== BUTTON TEXT OPTIMIZATION ===== */
-
-/* Shorter text alternatives for small screens */
-@media (max-width: 375px) {
-    /* Replace long text with shorter versions */
-    .camera-controls .btn[data-full-text="Take Photo"] span::after {
-        content: "Photo";
-    }
-    
-    .camera-controls .btn[data-full-text="Choose from Gallery"] span::after {
-        content: "Gallery";
-    }
-    
-    .camera-controls .btn[data-full-text="Upload File"] span::after {
-        content: "Upload";
-    }
-    
-    .camera-controls .btn[data-full-text="Cancel Capture"] span::after {
-        content: "Cancel";
-    }
-    
-    .camera-controls .btn[data-full-text="Retake Photo"] span::after {
-        content: "Retake";
-    }
-    
-    .camera-controls .btn[data-full-text="Use Photo"] span::after {
-        content: "Use";
-    }
-    
-    /* Hide original text */
-    .camera-controls .btn[data-full-text] span::before {
-        display: none;
-    }
+/* 6. NUCLEAR OPTION - If nothing else works */
+.btn-force-contain {
+    all: unset !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 12px 20px !important;
+    background: #22c55e !important;
+    color: white !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
 }
 
-/* ===== LANDSCAPE ORIENTATION FIXES ===== */
-
-@media (max-width: 768px) and (orientation: landscape) {
-    .camera-controls {
-        flex-direction: row; /* Keep buttons horizontal in landscape */
-        flex-wrap: wrap;
-    }
-    
-    .camera-controls .btn {
-        flex: 1;
-        min-width: 140px;
-        max-width: 45%;
-    }
-    
-    /* Shorter button text for landscape */
-    .camera-controls .btn span {
-        font-size: 12px;
-    }
-}
-
-/* ===== FIX FOR SPECIFIC BUTTON TEXTS ===== */
-
-/* Common long button texts that need special handling */
-.camera-controls .btn:contains("Gallery"),
-.camera-controls .btn:contains("Upload") {
-    word-break: break-word;
-    hyphens: auto;
-}
-
-/* Emergency text truncation if all else fails */
-@media (max-width: 360px) {
-    .camera-controls .btn.emergency-truncate span {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        max-width: 90%;
-        display: block;
+@media (max-width: 768px) {
+    .btn-force-contain {
+        width: 100% !important;
     }
 }
 
