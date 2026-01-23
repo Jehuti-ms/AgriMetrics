@@ -22,7 +22,7 @@ const IncomeExpensesModule = {
     currentUploadTask: null,
 
     // ==================== INITIALIZATION ====================
-    initialize() {
+  /*  initialize() {
     console.log('💰 Initializing Income & Expenses...');
     
     if (this.initialized) {
@@ -62,7 +62,38 @@ const IncomeExpensesModule = {
 
 onThemeChange(theme) {
     console.log(`Income & Expenses updating for theme: ${theme}`);
-},
+}, */
+
+     initialize() {
+        console.log('💰 Initializing Income & Expenses...');
+        
+        this.element = document.getElementById('content-area');
+        if (!this.element) {
+            console.error('Content area element not found');
+            return false;
+        }
+
+        // Check Firebase availability
+        this.isFirebaseAvailable = !!(window.firebase && window.firebase.storage && window.firebase.firestore);
+        console.log('Firebase available:', this.isFirebaseAvailable);
+
+        if (window.StyleManager) {
+            StyleManager.registerModule(this.name, this.element, this);
+        }
+
+        this.loadData();
+        this.cleanupBrokenReceipts();
+        this.loadReceiptsFromFirebase();
+        this.renderModule();
+        this.initialized = true;
+        
+        console.log('✅ Income & Expenses initialized');
+        return true;
+    },
+
+    onThemeChange(theme) {
+        console.log(`Income & Expenses updating for theme: ${theme}`);
+    },
     
     // ==================== DATA MANAGEMENT ====================
     loadData() {
