@@ -1782,6 +1782,28 @@ initializeCamera() {
 },
     
     // ==================== CAMERA METHODS ====================
+
+    checkCameraAvailability() {
+    return new Promise((resolve) => {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+            console.log('📱 Media devices API not available');
+            resolve(false);
+            return;
+        }
+        
+        navigator.mediaDevices.enumerateDevices()
+            .then(devices => {
+                const hasVideoDevice = devices.some(device => device.kind === 'videoinput');
+                console.log('📹 Video devices found:', hasVideoDevice);
+                resolve(hasVideoDevice);
+            })
+            .catch(() => {
+                console.log('❌ Cannot enumerate devices');
+                resolve(false);
+            });
+    });
+},
+    
     async initializeCamera() {
     console.log('📷 Initializing camera...');
     
@@ -1930,7 +1952,7 @@ initializeCamera() {
         const video = document.getElementById('camera-preview');
         if (video) video.srcObject = null;
     },
-
+    
     // ==================== FIREBASE UPLOAD METHODS ====================
     async handleFileUpload(files) {
         if (!files || files.length === 0) return;
