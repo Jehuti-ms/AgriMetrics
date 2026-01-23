@@ -22,7 +22,7 @@ const IncomeExpensesModule = {
     currentUploadTask: null,
 
     // ==================== INITIALIZATION ====================
-  initialize() {
+/*   initialize() {
     console.log('💰 Initializing Income & Expenses...');
     
     if (this.initialized) {
@@ -62,9 +62,9 @@ const IncomeExpensesModule = {
 
 onThemeChange(theme) {
     console.log(`Income & Expenses updating for theme: ${theme}`);
-}, 
+},  */
 
-/*     initialize() {
+    initialize() {
         console.log('💰 Initializing Income & Expenses...');
         
         this.element = document.getElementById('content-area');
@@ -93,7 +93,7 @@ onThemeChange(theme) {
 
     onThemeChange(theme) {
         console.log(`Income & Expenses updating for theme: ${theme}`);
-    }, */
+    },
     
     // ==================== DATA MANAGEMENT ====================
     loadData() {
