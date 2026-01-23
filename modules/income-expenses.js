@@ -22,7 +22,7 @@ const IncomeExpensesModule = {
     currentUploadTask: null,
 
     // ==================== INITIALIZATION ====================
-  /*  initialize() {
+  initialize() {
     console.log('💰 Initializing Income & Expenses...');
     
     if (this.initialized) {
@@ -62,9 +62,9 @@ const IncomeExpensesModule = {
 
 onThemeChange(theme) {
     console.log(`Income & Expenses updating for theme: ${theme}`);
-}, */
+}, 
 
-     initialize() {
+/*     initialize() {
         console.log('💰 Initializing Income & Expenses...');
         
         this.element = document.getElementById('content-area');
@@ -93,7 +93,7 @@ onThemeChange(theme) {
 
     onThemeChange(theme) {
         console.log(`Income & Expenses updating for theme: ${theme}`);
-    },
+    }, */
     
     // ==================== DATA MANAGEMENT ====================
     loadData() {
@@ -1252,13 +1252,7 @@ fixButtonOverflow() {
         `;
     },
 
-  // ===== CAMERA SYSTEM PROPERTIES =====
-// Add these properties to your object (in constructor or init):
-// this.useFrontCamera = false;
-// this.currentStream = null;
-// this.receiptQueue = [];
-
-// ===== SETUP IMPORT RECEIPTS HANDLERS =====
+ // ===== SETUP IMPORT RECEIPTS HANDLERS =====
 setupImportReceiptsHandlers() {
     console.log('Setting up import receipt handlers');
 
@@ -1489,7 +1483,7 @@ stopCamera() {
 },
 
 // ===== CAPTURE PHOTO =====
-capturePhoto() {
+/*capturePhoto() {
     console.log('📸 Capturing photo...');
     
     const video = document.getElementById('camera-preview');
@@ -1516,7 +1510,7 @@ capturePhoto() {
     
     // Show success message
     this.showNotification('Photo captured successfully!', 'success');
-},
+}, */
 
 // ===== CONVERT DATA URL TO FILE =====
 convertDataURLToFile(dataURL, filename) {
