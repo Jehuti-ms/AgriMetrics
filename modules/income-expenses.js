@@ -1041,9 +1041,11 @@ const IncomeExpensesModule = {
     }
     
     // Hide all other modals
-    this.hideAllModals();
+    if (this.hideAllModals) {
+        this.hideAllModals();
+    }
     
-    // Update content BEFORE showing
+    // Update content BEFORE showing - WITHOUT calling updateModalContent
     const content = document.getElementById('import-receipts-content');
     if (content && this.renderImportReceiptsModal) {
         content.innerHTML = this.renderImportReceiptsModal();
@@ -1076,48 +1078,9 @@ const IncomeExpensesModule = {
         }
     }, 50);
     
-    console.log('Modal should now be visible with sales-module styling');
+    console.log('✅ Modal should now be visible with sales-module styling');
 },
     
-// Helper method: Ensure modal exists
-ensureModalExists() {
-    let modal = document.getElementById('import-receipts-modal');
-    
-    if (!modal) {
-        console.log('⚠️ Creating missing modal...');
-        modal = this.createModalElement();
-        document.body.appendChild(modal);
-    }
-    
-    return modal;
-},
-
-// Helper method: Create modal HTML
-createModalElement() {
-    const modal = document.createElement('div');
-    modal.id = 'import-receipts-modal';
-    modal.className = 'popout-modal hidden';
-    modal.innerHTML = `
-        <div class="popout-modal-content">
-            <div class="popout-modal-header">
-                <h3 class="popout-modal-title">Upload Receipts</h3>
-                <button class="popout-modal-close">&times;</button>
-            </div>
-            <div class="popout-modal-body">
-                <div id="import-receipts-content"></div>
-            </div>
-            <div class="popout-modal-footer">
-                <button type="button" class="btn btn-outline" id="cancel-receipt-upload">Cancel</button>
-                <button type="button" class="btn btn-primary" id="process-receipts-btn" style="display: none;">
-                    <span class="btn-icon">⚡</span>
-                    <span class="btn-text">Process Receipts</span>
-                </button>
-            </div>
-        </div>`;
-    
-    return modal;
-},
-
 // Helper method: Fix button overflow
 fixButtonOverflow() {
     const processBtn = document.getElementById('process-receipts-btn');
