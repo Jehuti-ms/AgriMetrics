@@ -1483,7 +1483,7 @@ stopCamera() {
 },
 
 // ===== CAPTURE PHOTO =====
-/*capturePhoto() {
+capturePhoto() {
     console.log('📸 Capturing photo...');
     
     const video = document.getElementById('camera-preview');
@@ -1510,7 +1510,7 @@ stopCamera() {
     
     // Show success message
     this.showNotification('Photo captured successfully!', 'success');
-}, */
+}, 
 
 // ===== CONVERT DATA URL TO FILE =====
 convertDataURLToFile(dataURL, filename) {
