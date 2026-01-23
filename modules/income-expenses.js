@@ -998,34 +998,87 @@ const IncomeExpensesModule = {
     },
 
     // ==================== FIREBASE RECEIPT METHODS ====================
-    showImportReceiptsModal() {
+   showImportReceiptsModal() {
     console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
+
+    // Ensure modal exists or create it
+    let modal = this.ensureModalExists();
     
     // Hide all other modals
     this.hideAllModals();
     
-    // Get modal
-    let modal = document.getElementById('import-receipts-modal');
-    if (!modal) {
-        console.error('Modal not found in DOM!');
-        return;
-    }
+    // Update content
+    this.updateModalContent();
     
-    // Show modal - CSS will handle the rest
+    // Show modal
     modal.classList.remove('hidden');
     
-    // Update content
-    const content = document.getElementById('import-receipts-content');
-    if (content) {
-        content.innerHTML = this.renderImportReceiptsModal();
+    // Fix button overflow
+    this.fixButtonOverflow();
+    
+    // Setup handlers
+    setTimeout(() => this.setupImportReceiptsHandlers(), 50);
+    
+    console.log('✅ Modal visible with sales-module styling');
+},
+
+// Helper method: Ensure modal exists
+ensureModalExists() {
+    let modal = document.getElementById('import-receipts-modal');
+    
+    if (!modal) {
+        console.log('⚠️ Creating missing modal...');
+        modal = this.createModalElement();
+        document.body.appendChild(modal);
     }
     
-    // Setup handlers AFTER content is rendered
-    setTimeout(() => {
-        this.setupImportReceiptsHandlers();
-    }, 50);
+    return modal;
+},
+
+// Helper method: Create modal HTML
+createModalElement() {
+    const modal = document.createElement('div');
+    modal.id = 'import-receipts-modal';
+    modal.className = 'popout-modal hidden';
+    modal.innerHTML = `
+        <div class="popout-modal-content">
+            <div class="popout-modal-header">
+                <h3 class="popout-modal-title">Upload Receipts</h3>
+                <button class="popout-modal-close">&times;</button>
+            </div>
+            <div class="popout-modal-body">
+                <div id="import-receipts-content"></div>
+            </div>
+            <div class="popout-modal-footer">
+                <button type="button" class="btn btn-outline" id="cancel-receipt-upload">Cancel</button>
+                <button type="button" class="btn btn-primary" id="process-receipts-btn" style="display: none;">
+                    <span class="btn-icon">⚡</span>
+                    <span class="btn-text">Process Receipts</span>
+                </button>
+            </div>
+        </div>`;
     
-    console.log('Modal should now be visible with sales-module styling');
+    return modal;
+},
+
+// Helper method: Fix button overflow
+fixButtonOverflow() {
+    const processBtn = document.getElementById('process-receipts-btn');
+    if (!processBtn) return;
+    
+    // Apply overflow fixes
+    processBtn.style.maxWidth = '100%';
+    processBtn.style.overflow = 'hidden';
+    processBtn.style.whiteSpace = 'nowrap';
+    processBtn.style.textOverflow = 'ellipsis';
+    processBtn.style.boxSizing = 'border-box';
+    
+    // Mobile-specific
+    if (window.innerWidth <= 768) {
+        processBtn.style.width = '100%';
+        processBtn.style.padding = '12px 16px';
+        processBtn.style.fontSize = '14px';
+    }
 },
 
     renderImportReceiptsModal() {
