@@ -1,4 +1,4 @@
-// modules/income-expenses.js - EDITED VERSION WITH RECEIPT FIXES
+ // modules/income-expenses.js - EDITED VERSION WITH RECEIPT FIXES
 console.log('💰 Loading Income & Expenses module (Complete with Receipt Fixes)...');
 
 const Broadcaster = window.DataBroadcaster || {
@@ -679,7 +679,7 @@ onThemeChange(theme) {
         });
     },
 
-    setupButton(id, handler) {
+   setupButton(id, handler) {
     console.log(`🔧 Setting up button: ${id}`);
     
     const button = document.getElementById(id);
