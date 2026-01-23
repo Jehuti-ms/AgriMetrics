@@ -4087,3 +4087,14 @@ body.dark-mode {
     opacity: 0.9;
 }
 
+/* Force modal visibility fix */
+.popout-modal:not(.hidden) {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Fix for dynamically created modals */
+.popout-modal[style*="display: none"]:not(.hidden) {
+    display: flex !important;
+}
