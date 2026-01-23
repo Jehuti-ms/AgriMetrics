@@ -24,6 +24,12 @@ const IncomeExpensesModule = {
     // ==================== INITIALIZATION ====================
     initialize() {
         console.log('💰 Initializing Income & Expenses...');
+
+        // Prevent re-initialization
+        if (this.initialized) {
+            console.log('⚠️ Already initialized, skipping...');
+            return true;
+        }
         
         this.element = document.getElementById('content-area');
         if (!this.element) {
@@ -44,6 +50,11 @@ const IncomeExpensesModule = {
         this.loadReceiptsFromFirebase();
         this.renderModule();
         this.initialized = true;
+
+        // Camera properties
+        this.useFrontCamera = false;
+        this.currentStream = null;
+        this.receiptQueue = [];
         
         console.log('✅ Income & Expenses initialized');
         return true;
@@ -1210,7 +1221,14 @@ fixButtonOverflow() {
         `;
     },
 
-   setupImportReceiptsHandlers() {
+  // ===== CAMERA SYSTEM PROPERTIES =====
+// Add these properties to your object (in constructor or init):
+// this.useFrontCamera = false;
+// this.currentStream = null;
+// this.receiptQueue = [];
+
+// ===== SETUP IMPORT RECEIPTS HANDLERS =====
+setupImportReceiptsHandlers() {
     console.log('Setting up import receipt handlers');
 
     // First, add the missing method
@@ -1240,7 +1258,7 @@ fixButtonOverflow() {
         }
     });
     
-    // Camera option - ONLY ONCE
+    // Camera option
     this.setupButton('camera-option', () => {
         document.getElementById('upload-section').style.display = 'none';
         document.getElementById('camera-section').style.display = 'block';
@@ -1315,18 +1333,240 @@ fixButtonOverflow() {
     this.setupButton('process-receipts-btn', () => this.processPendingReceipts());
 },
 
-// This goes OUTSIDE setupImportReceiptsHandlers, as a separate method
+// ===== CAMERA AVAILABILITY CHECK =====
+checkCameraAvailability() {
+    return new Promise((resolve) => {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+            console.log('📱 Media devices API not available');
+            resolve(false);
+            return;
+        }
+        
+        navigator.mediaDevices.enumerateDevices()
+            .then(devices => {
+                const hasVideoDevice = devices.some(device => device.kind === 'videoinput');
+                console.log('📹 Video devices found:', hasVideoDevice);
+                resolve(hasVideoDevice);
+            })
+            .catch(() => {
+                console.log('❌ Cannot enumerate devices');
+                resolve(false);
+            });
+    });
+},
+
+// ===== INITIALIZE CAMERA =====
 initializeCamera() {
     console.log('📷 Initializing camera...');
     
     try {
-        // Your camera initialization code...
+        const video = document.getElementById('camera-preview');
+        if (!video) {
+            console.error('Camera preview element not found');
+            this.showUploadInterface();
+            return;
+        }
+        
+        // Stop any existing stream
+        if (this.currentStream) {
+            this.currentStream.getTracks().forEach(track => track.stop());
+        }
+        
+        // Define constraints based on front/back camera
+        const constraints = {
+            video: {
+                facingMode: this.useFrontCamera ? 'user' : 'environment',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            },
+            audio: false
+        };
+        
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then(stream => {
+                console.log('✅ Camera access granted');
+                this.currentStream = stream;
+                video.srcObject = stream;
+                video.play();
+                
+                // Show camera controls
+                const cameraControls = document.getElementById('camera-controls');
+                if (cameraControls) {
+                    cameraControls.style.display = 'flex';
+                }
+                
+                // Update camera status
+                const cameraStatus = document.getElementById('camera-status');
+                if (cameraStatus) {
+                    cameraStatus.textContent = this.useFrontCamera ? 'Front Camera' : 'Rear Camera';
+                }
+                
+                // Hide upload interface
+                const uploadInterface = document.getElementById('upload-section');
+                if (uploadInterface) {
+                    uploadInterface.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('❌ Camera error:', error.name, error.message);
+                this.showUploadInterface();
+            });
+            
     } catch (error) {
-        console.error('Camera error:', error);
-        this.showUploadInterface(); // Show upload interface on error
+        console.error('Camera initialization error:', error);
+        this.showUploadInterface();
     }
 },
 
+// ===== SWITCH CAMERA =====
+switchCamera() {
+    console.log('🔄 Switching camera...');
+    
+    // Toggle between front and back camera
+    this.useFrontCamera = !this.useFrontCamera;
+    
+    // Restart camera with new facing mode
+    setTimeout(() => {
+        this.initializeCamera();
+    }, 100);
+},
+
+// ===== STOP CAMERA =====
+stopCamera() {
+    console.log('📷 Stopping camera...');
+    
+    const video = document.getElementById('camera-preview');
+    if (video && video.srcObject) {
+        const stream = video.srcObject;
+        const tracks = stream.getTracks();
+        
+        tracks.forEach(track => {
+            track.stop();
+        });
+        
+        video.srcObject = null;
+    }
+    
+    // Clear current stream reference
+    this.currentStream = null;
+    
+    // Update camera status
+    const cameraStatus = document.getElementById('camera-status');
+    if (cameraStatus) {
+        cameraStatus.textContent = 'Camera stopped';
+    }
+},
+
+// ===== CAPTURE PHOTO =====
+capturePhoto() {
+    console.log('📸 Capturing photo...');
+    
+    const video = document.getElementById('camera-preview');
+    const canvas = document.getElementById('camera-canvas');
+    
+    if (!video || !canvas) {
+        console.error('Camera elements not found');
+        return;
+    }
+    
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Draw video frame to canvas
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Convert to data URL
+    const photoData = canvas.toDataURL('image/jpeg');
+    
+    // Create file object from data URL
+    this.convertDataURLToFile(photoData, 'receipt-photo.jpg');
+    
+    // Show success message
+    this.showNotification('Photo captured successfully!', 'success');
+},
+
+// ===== CONVERT DATA URL TO FILE =====
+convertDataURLToFile(dataURL, filename) {
+    console.log('Converting data URL to file:', filename);
+    
+    try {
+        // Convert base64 to binary
+        const arr = dataURL.split(',');
+        const mime = arr[0].match(/:(.*?);/)[1];
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        
+        // Create file object
+        const file = new File([u8arr], filename, { type: mime });
+        
+        // Add to receipt queue
+        this.addToReceiptQueue(file);
+        
+        return file;
+    } catch (error) {
+        console.error('Error converting data URL to file:', error);
+        this.showNotification('Failed to save photo', 'error');
+        return null;
+    }
+},
+
+// ===== ADD TO RECEIPT QUEUE =====
+addToReceiptQueue(file) {
+    console.log('Adding to receipt queue:', file.name);
+    
+    // Create receipt object
+    const receipt = {
+        id: 'local_' + Date.now(),
+        name: file.name,
+        file: file,
+        timestamp: new Date().toISOString(),
+        status: 'pending',
+        type: file.type,
+        size: file.size
+    };
+    
+    // Add to queue
+    if (!this.receiptQueue) this.receiptQueue = [];
+    this.receiptQueue.push(receipt);
+    
+    // Update UI
+    this.updateReceiptsList();
+    
+    // Show notification
+    this.showNotification(`Added "${file.name}" to receipt queue`, 'success');
+    
+    // Show process button if queue has items
+    const processBtn = document.getElementById('process-receipts-btn');
+    if (processBtn && this.receiptQueue.length > 0) {
+        processBtn.style.display = 'flex';
+    }
+},
+
+// ===== UPDATE RECEIPTS LIST =====
+updateReceiptsList() {
+    const recentList = document.getElementById('recent-receipts-list');
+    if (recentList) {
+        recentList.innerHTML = this.renderRecentReceiptsList();
+    }
+    
+    // Show/hide recent section
+    const recentSection = document.getElementById('recent-section');
+    if (recentSection) {
+        if (this.receiptQueue && this.receiptQueue.length > 0) {
+            recentSection.style.display = 'block';
+        } else {
+            recentSection.style.display = 'none';
+        }
+    }
+},
+    
     // ==================== RECEIPT PROCESSING ====================
     renderRecentReceiptsList() {
         if (this.receiptQueue.length === 0) {
