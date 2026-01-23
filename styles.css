@@ -1342,13 +1342,14 @@ header {
     justify-content: space-between;
     align-items: center;
     padding: 24px;
-    border-bottom: 1px solid var(--border-color);
-    background: var(--surface-color);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25); /* Changed */
+    background: linear-gradient(135deg, #22c55e, #14b8a6, #16a34a); /* ADDED */
+    color: white; /* ADDED */
     border-radius: 16px 16px 0 0;
 }
 
 .popout-modal-title {
-    color: var(--text-primary);
+    color: white;
     margin: 0;
     font-size: 24px;
     font-weight: 700;
@@ -1359,7 +1360,7 @@ header {
     border: none;
     font-size: 24px;
     cursor: pointer;
-    color: var(--text-secondary);
+    color: white;
     padding: 8px;
     border-radius: 8px;
     transition: all 0.2s;
@@ -1371,8 +1372,8 @@ header {
 }
 
 .popout-modal-close:hover {
-    background: var(--surface-color);
-    color: var(--text-primary);
+   background: rgba(255, 255, 255, 0.2); /* Changed */
+   color: white; /* Changed */
 }
 
 .popout-modal-body {
