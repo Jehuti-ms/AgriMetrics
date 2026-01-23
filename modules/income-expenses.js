@@ -25,6 +25,14 @@ const IncomeExpensesModule = {
     initialize() {
         console.log('💰 Initializing Income & Expenses...');
 
+         // Return a promise
+        return new Promise((resolve, reject) => {
+            if (this.initialized) {
+                console.log('✅ Already initialized');
+                resolve(true);
+                return;
+            }
+
         // Prevent re-initialization
         if (this.initialized) {
             console.log('⚠️ Already initialized, skipping...');
@@ -55,7 +63,9 @@ const IncomeExpensesModule = {
         this.useFrontCamera = false;
         this.currentStream = null;
         this.receiptQueue = [];
-        
+
+        // Mark as initialized
+        this.initialized = true;
         console.log('✅ Income & Expenses initialized');
         return true;
     },
