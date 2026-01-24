@@ -828,10 +828,10 @@ showImportReceiptsModal() {
     // Setup handlers
     this.setupImportReceiptsHandlers();
     
-    // Setup upload handlers specifically
+    // Setup upload handlers after a short delay
     setTimeout(() => {
         this.setupUploadHandlers();
-    }, 100);
+    }, 200);
     
     console.log('✅ Modal should now be visible');
 },
@@ -968,82 +968,6 @@ setupImportReceiptsHandlers() {
         }
     });
 
-    // ==================== UPLOAD HANDLERS SETUP ====================
-        setupUploadHandlers() {
-            console.log('🔧 Setting up upload handlers...');
-            
-            // Browse receipts button
-            const browseBtn = document.getElementById('browse-receipts-btn');
-            if (browseBtn) {
-                console.log('✅ Found browse button');
-                
-                // Remove any existing listeners
-                const newBrowseBtn = browseBtn.cloneNode(true);
-                browseBtn.parentNode.replaceChild(newBrowseBtn, browseBtn);
-                
-                newBrowseBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('🎯 Browse button clicked');
-                    
-                    const fileInput = document.getElementById('receipt-upload-input');
-                    if (fileInput) {
-                        console.log('📁 Opening file dialog...');
-                        fileInput.click();
-                    } else {
-                        console.error('❌ File input not found');
-                    }
-                });
-            } else {
-                console.error('❌ Browse button not found');
-            }
-            
-            // File input handler
-            const fileInput = document.getElementById('receipt-upload-input');
-            if (fileInput) {
-                console.log('✅ Found file input');
-                
-                // Remove any existing listeners
-                fileInput.onchange = null;
-                
-                fileInput.onchange = (e) => {
-                    console.log('📁 Files selected:', e.target.files?.length || 0);
-                    if (e.target.files && e.target.files.length > 0) {
-                        this.handleFileUpload(e.target.files);
-                    }
-                };
-            }
-            
-            // Drag and drop area
-            const dropArea = document.getElementById('drop-area');
-            if (dropArea) {
-                console.log('✅ Found drop area');
-                
-                // Remove existing listeners
-                dropArea.removeEventListener('dragover', this.dragOverHandler);
-                dropArea.removeEventListener('dragleave', this.dragLeaveHandler);
-                dropArea.removeEventListener('drop', this.dropHandler);
-                
-                // Add new listeners
-                dropArea.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    dropArea.classList.add('drag-over');
-                });
-                
-                dropArea.addEventListener('dragleave', () => {
-                    dropArea.classList.remove('drag-over');
-                });
-                
-                dropArea.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    dropArea.classList.remove('drag-over');
-                    console.log('📁 Files dropped:', e.dataTransfer.files?.length || 0);
-                    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                        this.handleFileUpload(e.dataTransfer.files);
-                    }
-                });
-            }
-        },
     // Upload option - FIXED VERSION
     this.setupButton('upload-option', () => {
         console.log('🎯 Button #upload-option clicked');
@@ -1133,6 +1057,83 @@ setupImportReceiptsHandlers() {
     });
 },
 
+    // ==================== UPLOAD HANDLERS SETUP ====================
+setupUploadHandlers() {
+    console.log('🔧 Setting up upload handlers...');
+    
+    // Browse receipts button
+    const browseBtn = document.getElementById('browse-receipts-btn');
+    if (browseBtn) {
+        console.log('✅ Found browse button');
+        
+        // Remove any existing listeners
+        const newBrowseBtn = browseBtn.cloneNode(true);
+        browseBtn.parentNode.replaceChild(newBrowseBtn, browseBtn);
+        
+        newBrowseBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🎯 Browse button clicked');
+            
+            const fileInput = document.getElementById('receipt-upload-input');
+            if (fileInput) {
+                console.log('📁 Opening file dialog...');
+                fileInput.click();
+            } else {
+                console.error('❌ File input not found');
+            }
+        });
+    } else {
+        console.error('❌ Browse button not found');
+    }
+    
+    // File input handler
+    const fileInput = document.getElementById('receipt-upload-input');
+    if (fileInput) {
+        console.log('✅ Found file input');
+        
+        // Remove any existing listeners
+        fileInput.onchange = null;
+        
+        fileInput.onchange = (e) => {
+            console.log('📁 Files selected:', e.target.files?.length || 0);
+            if (e.target.files && e.target.files.length > 0) {
+                this.handleFileUpload(e.target.files);
+            }
+        };
+    }
+    
+    // Drag and drop area
+    const dropArea = document.getElementById('drop-area');
+    if (dropArea) {
+        console.log('✅ Found drop area');
+        
+        // Remove existing listeners
+        ['dragover', 'dragleave', 'drop'].forEach(eventType => {
+            dropArea.removeEventListener(eventType, this[`${eventType}Handler`]);
+        });
+        
+        // Add new listeners
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.classList.add('drag-over');
+        });
+        
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.classList.remove('drag-over');
+        });
+        
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.classList.remove('drag-over');
+            console.log('📁 Files dropped:', e.dataTransfer.files?.length || 0);
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                this.handleFileUpload(e.dataTransfer.files);
+            }
+        });
+    }
+},
+    
 showTransactionModal(transactionId = null) {
     this.hideAllModals();
     const modal = document.getElementById('transaction-modal');
