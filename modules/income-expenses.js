@@ -1,4 +1,4 @@
-// modules/income-expenses.js - COMPLETE FIXED VERSION
+// modules/income-expenses.js - FIXED VERSION
 console.log('💰 Loading Income & Expenses module (Complete with Camera Fix)...');
 
 const Broadcaster = window.DataBroadcaster || {
@@ -1564,32 +1564,38 @@ const IncomeExpensesModule = {
         }
     },
 
-    async uploadToFirebase(file, onProgress = null) {
-        try {
-            // Generate unique filename
-            const timestamp = Date.now();
-            const fileExt = file.name.split('.').pop();
-            const fileName = `receipts/${timestamp}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+    uploadToFirebase(file, onProgress = null) {
+        return new Promise((resolve, reject) => {
+            // Check if Firebase is available
+            if (!this.isFirebaseAvailable || !window.storage || !window.db) {
+                reject(new Error('Firebase is not available'));
+                return;
+            }
             
-            // Create storage reference
-            const storageRef = window.storage.ref();
-            const fileRef = storageRef.child(fileName);
-            
-            // Upload file to Firebase Storage with metadata
-            const metadata = {
-                contentType: file.type,
-                customMetadata: {
-                    originalName: file.name,
-                    uploadedBy: this.getCurrentUser(),
-                    uploadedAt: new Date().toISOString()
-                }
-            };
-            
-            const uploadTask = fileRef.put(file, metadata);
-            this.currentUploadTask = uploadTask;
-            
-            // Track upload progress
-            return new Promise((resolve, reject) => {
+            try {
+                // Generate unique filename
+                const timestamp = Date.now();
+                const fileExt = file.name.split('.').pop();
+                const fileName = `receipts/${timestamp}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+                
+                // Create storage reference
+                const storageRef = window.storage.ref();
+                const fileRef = storageRef.child(fileName);
+                
+                // Upload file to Firebase Storage with metadata
+                const metadata = {
+                    contentType: file.type,
+                    customMetadata: {
+                        originalName: file.name,
+                        uploadedBy: this.getCurrentUser(),
+                        uploadedAt: new Date().toISOString()
+                    }
+                };
+                
+                const uploadTask = fileRef.put(file, metadata);
+                this.currentUploadTask = uploadTask;
+                
+                // Track upload progress
                 uploadTask.on('state_changed',
                     // Progress callback
                     (snapshot) => {
@@ -1622,7 +1628,7 @@ const IncomeExpensesModule = {
                                 size: file.size,
                                 type: file.type,
                                 status: 'pending',
-                                uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                uploadedAt: new Date().toISOString(),
                                 uploadedBy: this.getCurrentUser() || 'unknown',
                                 metadata: {
                                     contentType: file.type,
@@ -1654,12 +1660,12 @@ const IncomeExpensesModule = {
                         }
                     }
                 );
-            });
-        } catch (error) {
-            this.currentUploadTask = null;
-            console.error('Firebase upload error:', error);
-            throw new Error(`Firebase upload failed: ${error.message}`);
-        }
+            } catch (error) {
+                this.currentUploadTask = null;
+                console.error('Firebase upload error:', error);
+                reject(new Error(`Firebase upload failed: ${error.message}`));
+            }
+        });
     },
 
     storeReceiptLocally(file) {
@@ -1714,52 +1720,58 @@ const IncomeExpensesModule = {
         });
     },
     
-    async loadReceiptsFromFirebase() {
-        try {
-            if (this.isFirebaseAvailable) {
-                // Load from Firebase
-                const receiptsRef = window.db.collection('receipts');
-                const snapshot = await receiptsRef
-                    .where('status', '==', 'pending')
-                    .orderBy('uploadedAt', 'desc')
-                    .limit(10)
-                    .get();
-                
-                this.receiptQueue = [];
-                snapshot.forEach(doc => {
-                    this.receiptQueue.push(doc.data());
-                });
-                
-                console.log('Loaded receipts from Firebase:', this.receiptQueue.length);
-            } else {
-                // Load from localStorage and fix broken blob URLs
-                const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
-                
-                // Filter out broken blob URLs
-                this.receiptQueue = localReceipts.filter(r => {
-                    if (r.downloadURL && r.downloadURL.startsWith('blob:')) {
-                        console.warn('Skipping broken blob URL receipt:', r.name);
-                        return false;
+    loadReceiptsFromFirebase() {
+        // This method should be async but we need to handle the async properly
+        const loadData = async () => {
+            try {
+                if (this.isFirebaseAvailable && window.db) {
+                    // Load from Firebase
+                    const receiptsRef = window.db.collection('receipts');
+                    const snapshot = await receiptsRef
+                        .where('status', '==', 'pending')
+                        .orderBy('uploadedAt', 'desc')
+                        .limit(10)
+                        .get();
+                    
+                    this.receiptQueue = [];
+                    snapshot.forEach(doc => {
+                        this.receiptQueue.push(doc.data());
+                    });
+                    
+                    console.log('Loaded receipts from Firebase:', this.receiptQueue.length);
+                } else {
+                    // Load from localStorage and fix broken blob URLs
+                    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+                    
+                    // Filter out broken blob URLs
+                    this.receiptQueue = localReceipts.filter(r => {
+                        if (r.downloadURL && r.downloadURL.startsWith('blob:')) {
+                            console.warn('Skipping broken blob URL receipt:', r.name);
+                            return false;
+                        }
+                        return r.status === 'pending';
+                    });
+                    
+                    console.log('Loaded receipts from localStorage:', this.receiptQueue.length);
+                    
+                    // Clean up localStorage by removing broken receipts
+                    const validReceipts = localReceipts.filter(r => !r.downloadURL?.startsWith('blob:'));
+                    if (validReceipts.length !== localReceipts.length) {
+                        localStorage.setItem('local-receipts', JSON.stringify(validReceipts));
+                        console.log('Cleaned up broken blob URLs from localStorage');
                     }
-                    return r.status === 'pending';
-                });
-                
-                console.log('Loaded receipts from localStorage:', this.receiptQueue.length);
-                
-                // Clean up localStorage by removing broken receipts
-                const validReceipts = localReceipts.filter(r => !r.downloadURL?.startsWith('blob:'));
-                if (validReceipts.length !== localReceipts.length) {
-                    localStorage.setItem('local-receipts', JSON.stringify(validReceipts));
-                    console.log('Cleaned up broken blob URLs from localStorage');
                 }
+                
+                // Update UI
+                this.updateReceiptQueueUI();
+                
+            } catch (error) {
+                console.error('Error loading receipts:', error);
             }
-            
-            // Update UI
-            this.updateReceiptQueueUI();
-            
-        } catch (error) {
-            console.error('Error loading receipts:', error);
-        }
+        };
+        
+        // Call the async function
+        loadData();
     },
 
     // ==================== RECEIPT PROCESSING ====================
@@ -1851,7 +1863,7 @@ const IncomeExpensesModule = {
         `;
     },
 
-    async processSingleReceipt(receiptId) {
+    processSingleReceipt(receiptId) {
         const receipt = this.receiptQueue.find(r => r.id === receiptId);
         if (!receipt) {
             this.showNotification('Receipt not found', 'error');
@@ -1942,13 +1954,13 @@ const IncomeExpensesModule = {
                 </div>
                 <div style="margin-bottom: 8px;">
                     <span style="font-weight: 600;">Status:</span>
-                                    <span style="margin-left: 8px; color: #f59e0b;">Pending processing</span>
-                                </div>
-                                <div style="font-size: 12px; color: #6b7280; margin-top: 8px;">
-                                    <em>Fill in the transaction details and save to mark as processed</em>
-                                </div>
-                            `;
-                            
+                    <span style="margin-left: 8px; color: #f59e0b;">Pending processing</span>
+                </div>
+                <div style="font-size: 12px; color: #6b7280; margin-top: 8px;">
+                    <em>Fill in the transaction details and save to mark as processed</em>
+                </div>
+            `;
+            
             // Setup apply button
             const useOCRBtn = document.getElementById('use-ocr-data');
             if (useOCRBtn) {
@@ -1959,7 +1971,7 @@ const IncomeExpensesModule = {
         }
     },
 
-    async processPendingReceipts() {
+    processPendingReceipts() {
         const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
         
         if (pendingReceipts.length === 0) {
@@ -1968,14 +1980,14 @@ const IncomeExpensesModule = {
         }
         
         if (pendingReceipts.length === 1) {
-            await this.processSingleReceipt(pendingReceipts[0].id);
+            this.processSingleReceipt(pendingReceipts[0].id);
         } else {
             this.showNotification(`Open the Import Receipts modal to process ${pendingReceipts.length} receipts`, 'info');
             this.showImportReceiptsModal();
         }
     },
 
-    async deleteReceipt(receiptId, deleteFromStorage = true) {
+    deleteReceipt(receiptId, deleteFromStorage = true) {
         const receipt = this.receiptQueue.find(r => r.id === receiptId);
         if (!receipt) {
             this.showNotification('Receipt not found', 'error');
@@ -1995,36 +2007,37 @@ const IncomeExpensesModule = {
             // Delete from storage if requested and available
             if (deleteFromStorage && receipt.fileName) {
                 if (this.isFirebaseAvailable && window.storage) {
-                    try {
-                        const storageRef = window.storage.ref();
-                        await storageRef.child(receipt.fileName).delete();
-                        this.showNotification('Receipt deleted from storage', 'success');
-                        
-                        // Broadcast storage deletion
-                        Broadcaster.recordDeleted('income-expenses', {
-                            id: receiptId,
-                            data: receipt,
-                            timestamp: new Date().toISOString(),
-                            module: 'income-expenses',
-                            action: 'receipt_deleted_from_storage',
-                            storageType: 'firebase'
+                    // Try to delete from Firebase storage
+                    const storageRef = window.storage.ref();
+                    storageRef.child(receipt.fileName).delete()
+                        .then(() => {
+                            this.showNotification('Receipt deleted from storage', 'success');
+                            
+                            // Broadcast storage deletion
+                            Broadcaster.recordDeleted('income-expenses', {
+                                id: receiptId,
+                                data: receipt,
+                                timestamp: new Date().toISOString(),
+                                module: 'income-expenses',
+                                action: 'receipt_deleted_from_storage',
+                                storageType: 'firebase'
+                            });
+                        })
+                        .catch(storageError => {
+                            console.error('Storage delete error:', storageError);
+                            deleteSuccessful = false;
+                            this.showNotification('Could not delete from storage (file might not exist)', 'warning');
                         });
-                    } catch (storageError) {
-                        console.error('Storage delete error:', storageError);
-                        deleteSuccessful = false;
-                        this.showNotification('Could not delete from storage (file might not exist)', 'warning');
-                    }
                 }
             }
             
             // Delete from Firestore if available
             if (this.isFirebaseAvailable && window.db) {
-                try {
-                    await window.db.collection('receipts').doc(receiptId).delete();
-                } catch (firestoreError) {
-                    console.error('Firestore delete error:', firestoreError);
-                    // Don't fail the entire operation if Firestore delete fails
-                }
+                window.db.collection('receipts').doc(receiptId).delete()
+                    .catch(firestoreError => {
+                        console.error('Firestore delete error:', firestoreError);
+                        // Don't fail the entire operation if Firestore delete fails
+                    });
             }
             
             // Delete from localStorage if it's a local receipt
@@ -2319,13 +2332,11 @@ const IncomeExpensesModule = {
 
     generateFinancialReport() {
         console.log('Generating financial report...');
-        // Implementation for financial report
         this.showNotification('Financial report feature coming soon', 'info');
     },
 
     generateCategoryAnalysis() {
         console.log('Generating category analysis...');
-        // Implementation for category analysis
         this.showNotification('Category analysis feature coming soon', 'info');
     },
 
@@ -2574,8 +2585,8 @@ if (window.FarmModules) {
     console.log(`📦 Registering ${MODULE_NAME} module...`);
     
     if (window.FarmModules) {
-        FarmModules.registerModule(MODULE_NAME, MODULE_OBJECT);
-        console.log(`✅ ${MODULE_NAME} module registered successfully!`);
+        FarmModules.registerModule('income-expenses', MODULE_OBJECT);
+        console.log(`✅ income-expenses module registered successfully!`);
     } else {
         console.error('❌ FarmModules framework not found');
     }
