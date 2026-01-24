@@ -832,10 +832,69 @@ showImportReceiptsModal() {
     // Setup handlers
     this.setupImportReceiptsHandlers();
     
-    // Setup upload handlers after a short delay
+    // Setup DIRECT upload handlers after a short delay
     setTimeout(() => {
-        this.setupUploadHandlers();
-    }, 200);
+        const dropArea = document.getElementById('drop-area');
+        const browseBtn = document.getElementById('browse-receipts-btn');
+        
+        if (dropArea) {
+            console.log('✅ Adding direct click handler to upload area');
+            dropArea.onclick = () => {
+                console.log('📁 Direct click on upload area');
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.multiple = true;
+                input.accept = '.jpg,.jpeg,.png,.pdf';
+                input.onchange = (e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                        console.log('📁 Files selected via direct handler:', e.target.files.length);
+                        this.handleFileUpload(e.target.files);
+                    }
+                };
+                input.click();
+            };
+        }
+        
+        if (browseBtn) {
+            console.log('✅ Adding direct click handler to browse button');
+            browseBtn.onclick = (e) => {
+                e.stopPropagation();
+                console.log('📁 Direct click on browse button');
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.multiple = true;
+                input.accept = '.jpg,.jpeg,.png,.pdf';
+                input.onchange = (e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                        console.log('📁 Files selected via button handler:', e.target.files.length);
+                        this.handleFileUpload(e.target.files);
+                    }
+                };
+                input.click();
+            };
+        }
+        
+        // Also setup drag and drop
+        if (dropArea) {
+            dropArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropArea.classList.add('drag-over');
+            });
+            
+            dropArea.addEventListener('dragleave', () => {
+                dropArea.classList.remove('drag-over');
+            });
+            
+            dropArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropArea.classList.remove('drag-over');
+                console.log('📁 Files dropped:', e.dataTransfer.files?.length || 0);
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    this.handleFileUpload(e.dataTransfer.files);
+                }
+            });
+        }
+    }, 100);
     
     console.log('✅ Modal should now be visible');
 },
@@ -981,54 +1040,7 @@ setupImportReceiptsHandlers() {
             cameraSection.style.display = 'none';
         }
     });
-    
-    // Call setupUploadHandlers initially for the default view
-    setTimeout(() => {
-        this.setupUploadHandlers();
-    }, 100);
-    
-    // Browse receipts button
-    this.setupButton('browse-receipts-btn', () => {
-        console.log('🎯 Button #browse-receipts-btn clicked');
-        const fileInput = document.getElementById('receipt-upload-input');
-        if (fileInput) {
-            fileInput.click();
-        }
-    });
-    
-    // File input handler
-    const fileInput = document.getElementById('receipt-upload-input');
-    if (fileInput) {
-        fileInput.onchange = (e) => {
-            console.log('File input changed:', e.target.files?.length || 0);
-            if (e.target.files && e.target.files.length > 0) {
-                this.handleFileUpload(e.target.files);
-            }
-        };
-    }
-    
-    // Drag and drop
-    const dropArea = document.getElementById('drop-area');
-    if (dropArea) {
-        dropArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropArea.classList.add('drag-over');
-        });
-        
-        dropArea.addEventListener('dragleave', () => {
-            dropArea.classList.remove('drag-over');
-        });
-        
-        dropArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropArea.classList.remove('drag-over');
-            console.log('📁 Files dropped:', e.dataTransfer.files?.length || 0);
-            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                this.handleFileUpload(e.dataTransfer.files);
-            }
-        });
-    }
-    
+       
     // Camera controls
     this.setupButton('capture-photo', () => this.capturePhoto());
     this.setupButton('switch-camera', () => this.switchCamera());
@@ -1039,10 +1051,10 @@ setupImportReceiptsHandlers() {
         document.getElementById('upload-section').style.display = 'block';
     });
     
-    // Refresh receipts button - this will show already uploaded receipts
+    // Refresh receipts button
     this.setupButton('refresh-receipts', () => {
         console.log('🔄 Refresh receipts clicked');
-        this.loadReceiptsFromFirebase(); // This loads receipts from Firebase
+        this.loadReceiptsFromFirebase();
         const recentList = document.getElementById('recent-receipts-list');
         if (recentList) {
             recentList.innerHTML = this.renderRecentReceiptsList();
@@ -1050,7 +1062,7 @@ setupImportReceiptsHandlers() {
         this.showNotification('Receipts list refreshed', 'success');
     });
 },
-
+    
     // ==================== UPLOAD HANDLERS SETUP ====================
 setupUploadHandlers() {
     console.log('🔧 Setting up upload handlers...');
