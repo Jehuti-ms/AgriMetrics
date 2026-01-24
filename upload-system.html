@@ -1,0 +1,248 @@
+<!-- upload-system.html - COMPLETE STANDALONE UPLOAD SYSTEM -->
+<div class="upload-system-container" id="upload-system">
+    <!-- Toggle Switch -->
+    <div class="upload-mode-toggle">
+        <div class="toggle-switch">
+            <input type="radio" id="mode-receipts" name="upload-mode" value="receipts" checked>
+            <label for="mode-receipts" class="toggle-label">
+                <i class="fas fa-receipt"></i>
+                <span>Receipts</span>
+            </label>
+            
+            <input type="radio" id="mode-transactions" name="upload-mode" value="transactions">
+            <label for="mode-transactions" class="toggle-label">
+                <i class="fas fa-file-csv"></i>
+                <span>Transactions</span>
+            </label>
+            
+            <div class="toggle-slider"></div>
+        </div>
+    </div>
+    
+    <!-- Receipts Upload Section -->
+    <div class="upload-section active" data-mode="receipts">
+        <div class="upload-header">
+            <h3 class="upload-title">
+                <i class="fas fa-receipt text-primary"></i>
+                Upload Receipts
+            </h3>
+            <p class="upload-subtitle">Take photos or scan receipts to track expenses</p>
+        </div>
+        
+        <div class="upload-dropzone" id="receipt-dropzone">
+            <div class="dropzone-content">
+                <div class="dropzone-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <h4 class="dropzone-title">Drop receipt files here</h4>
+                <p class="dropzone-subtitle">or click to browse</p>
+                <div class="file-types">
+                    <span class="file-type-badge">JPG</span>
+                    <span class="file-type-badge">PNG</span>
+                    <span class="file-type-badge">PDF</span>
+                    <span class="file-type-badge">HEIC</span>
+                </div>
+            </div>
+            <input type="file" id="receipt-file-input" 
+                   accept="image/*,.pdf,.heic,.heif" 
+                   multiple 
+                   class="dropzone-input">
+        </div>
+        
+        <div class="upload-progress-container" id="receipt-progress-container">
+            <div class="progress-header">
+                <span>Uploading...</span>
+                <button class="btn-cancel-upload" id="cancel-receipt-upload">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="receipt-progress-fill"></div>
+            </div>
+            <div class="progress-info">
+                <span id="receipt-file-info">No file selected</span>
+                <span id="receipt-progress-text">0%</span>
+            </div>
+        </div>
+        
+        <div class="uploaded-files-container">
+            <h5 class="files-title">
+                <i class="fas fa-paperclip"></i>
+                Uploaded Receipts
+                <span class="badge" id="receipt-count">0</span>
+            </h5>
+            <div class="files-list" id="receipt-files-list">
+                <!-- Receipt files will appear here -->
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>No receipts uploaded yet</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="upload-actions">
+            <button class="btn btn-process" id="process-receipts-btn" disabled>
+                <i class="fas fa-magic"></i>
+                Extract Data from Receipts
+            </button>
+        </div>
+    </div>
+    
+    <!-- Transactions Upload Section -->
+    <div class="upload-section" data-mode="transactions">
+        <div class="upload-header">
+            <h3 class="upload-title">
+                <i class="fas fa-file-csv text-success"></i>
+                Import Transactions
+            </h3>
+            <p class="upload-subtitle">Upload CSV or Excel files to import transactions in bulk</p>
+        </div>
+        
+        <div class="upload-dropzone" id="transaction-dropzone">
+            <div class="dropzone-content">
+                <div class="dropzone-icon">
+                    <i class="fas fa-file-import"></i>
+                </div>
+                <h4 class="dropzone-title">Drop transaction files here</h4>
+                <p class="dropzone-subtitle">or click to browse</p>
+                <div class="file-types">
+                    <span class="file-type-badge">CSV</span>
+                    <span class="file-type-badge">Excel</span>
+                    <span class="file-type-badge">XLSX</span>
+                    <span class="file-type-badge">XLS</span>
+                </div>
+            </div>
+            <input type="file" id="transaction-file-input" 
+                   accept=".csv,.xlsx,.xls,.txt" 
+                   multiple 
+                   class="dropzone-input">
+        </div>
+        
+        <div class="upload-progress-container" id="transaction-progress-container">
+            <div class="progress-header">
+                <span>Processing...</span>
+                <button class="btn-cancel-upload" id="cancel-transaction-upload">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="transaction-progress-fill"></div>
+            </div>
+            <div class="progress-info">
+                <span id="transaction-file-info">No file selected</span>
+                <span id="transaction-progress-text">0%</span>
+            </div>
+        </div>
+        
+        <!-- Transaction Preview -->
+        <div class="transaction-preview-container">
+            <h5 class="files-title">
+                <i class="fas fa-table"></i>
+                Transaction Preview
+                <span class="badge" id="transaction-count">0</span>
+            </h5>
+            
+            <div class="preview-controls">
+                <div class="preview-actions">
+                    <button class="btn-preview-action" id="preview-prev">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span id="preview-range">1-10 of 0</span>
+                    <button class="btn-preview-action" id="preview-next">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <button class="btn-clear-preview" id="clear-preview">
+                    <i class="fas fa-trash"></i> Clear
+                </button>
+            </div>
+            
+            <div class="preview-table-container">
+                <table class="preview-table" id="transaction-preview">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Category</th>
+                            <th>Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Transactions will be loaded here -->
+                        <tr class="empty-row">
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <i class="fas fa-file-excel"></i>
+                                    <p>Upload a file to preview transactions</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="preview-summary">
+                <div class="summary-item">
+                    <span class="summary-label">Total Transactions:</span>
+                    <span class="summary-value" id="summary-total">0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Total Amount:</span>
+                    <span class="summary-value" id="summary-amount">$0.00</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Date Range:</span>
+                    <span class="summary-value" id="summary-date-range">-</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="upload-actions">
+            <button class="btn btn-process" id="import-transactions-btn" disabled>
+                <i class="fas fa-database"></i>
+                Import Transactions
+            </button>
+        </div>
+    </div>
+    
+    <!-- Status Messages -->
+    <div class="status-messages">
+        <div class="status-message" id="status-message"></div>
+    </div>
+</div>
+
+<!-- Template for uploaded receipt files -->
+<template id="receipt-file-template">
+    <div class="file-item">
+        <div class="file-icon">
+            <i class="fas fa-file"></i>
+        </div>
+        <div class="file-info">
+            <div class="file-name" data-name></div>
+            <div class="file-meta">
+                <span class="file-size" data-size></span>
+                <span class="file-status" data-status></span>
+            </div>
+        </div>
+        <div class="file-actions">
+            <button class="btn-file-action" data-action="preview">
+                <i class="fas fa-eye"></i>
+            </button>
+            <button class="btn-file-action" data-action="delete">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </div>
+</template>
+
+<!-- Template for transaction rows -->
+<template id="transaction-row-template">
+    <tr>
+        <td data-field="date"></td>
+        <td data-field="description"></td>
+        <td data-field="amount"></td>
+        <td data-field="category"></td>
+        <td data-field="type"></td>
+    </tr>
+</template>
