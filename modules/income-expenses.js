@@ -2314,7 +2314,7 @@ updateReceiptsList() {
         console.error('Camera initialization error:', error);
         this.showUploadInterface();
     }
-}
+},
 
 // Add the switchCamera method
 switchCamera() {
