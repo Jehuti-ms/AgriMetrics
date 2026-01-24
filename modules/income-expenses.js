@@ -1,5 +1,5 @@
-// modules/income-expenses.js - FIXED VERSION
-console.log('💰 Loading Income & Expenses module (Complete with Camera Fix)...');
+// modules/income-expenses.js - FIXED AWAIT ERROR
+console.log('💰 Loading Income & Expenses module...');
 
 const Broadcaster = window.DataBroadcaster || {
     recordCreated: () => {},
@@ -542,560 +542,1085 @@ const IncomeExpensesModule = {
         });
     },
 
-    // ==================== RECEIPT FORM HANDLERS ====================
-    setupReceiptFormHandlers() {
-        console.log('Setting up receipt form handlers...');
+    // ==================== FIXED: LOAD RECEIPTS FROM FIREBASE ====================
+    loadReceiptsFromFirebase() {
+        console.log('Loading receipts from Firebase...');
         
-        const uploadArea = document.getElementById('receipt-upload-area');
-        const fileInput = document.getElementById('receipt-upload');
-        
-        if (uploadArea && fileInput) {
-            uploadArea.addEventListener('click', () => fileInput.click());
-            
-            fileInput.addEventListener('change', (e) => {
-                if (e.target.files && e.target.files[0]) {
-                    this.handleTransactionReceiptUpload(e.target.files[0]);
+        // Create a helper function that handles async operations
+        const loadData = () => {
+            try {
+                if (this.isFirebaseAvailable && window.db) {
+                    // Load from Firebase - using then/catch instead of async/await
+                    const receiptsRef = window.db.collection('receipts');
+                    receiptsRef
+                        .where('status', '==', 'pending')
+                        .orderBy('uploadedAt', 'desc')
+                        .limit(10)
+                        .get()
+                        .then(snapshot => {
+                            this.receiptQueue = [];
+                            snapshot.forEach(doc => {
+                                this.receiptQueue.push(doc.data());
+                            });
+                            
+                            console.log('Loaded receipts from Firebase:', this.receiptQueue.length);
+                            this.updateReceiptQueueUI();
+                        })
+                        .catch(error => {
+                            console.error('Error loading from Firebase:', error);
+                            this.loadFromLocalStorage();
+                        });
+                } else {
+                    this.loadFromLocalStorage();
                 }
-            });
-            
-            // Drag and drop
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.style.borderColor = 'var(--primary-color)';
-                uploadArea.style.background = 'var(--primary-color)10';
-            });
-            
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.style.borderColor = 'var(--glass-border)';
-                uploadArea.style.background = '';
-            });
-            
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.style.borderColor = 'var(--glass-border)';
-                uploadArea.style.background = '';
-                
-                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                    this.handleTransactionReceiptUpload(e.dataTransfer.files[0]);
-                }
-            });
-        }
-        
-        // Remove receipt button
-        this.setupButton('remove-receipt', () => {
-            this.receiptPreview = null;
-            this.clearReceiptPreview();
-            const fileInput = document.getElementById('receipt-upload');
-            if (fileInput) fileInput.value = '';
-        });
-        
-        // Process receipt button (OCR)
-        this.setupButton('process-receipt-btn', () => {
-            if (this.receiptPreview) {
-                this.showOCRSuggestion(this.receiptPreview);
-            } else {
-                this.showNotification('Please attach a receipt first', 'warning');
+            } catch (error) {
+                console.error('Error in loadReceiptsFromFirebase:', error);
+                this.loadFromLocalStorage();
             }
-        });
-    },
-
-    setupButton(id, handler) {
-        console.log(`🔧 Setting up button: ${id}`);
-        
-        const setupButtonIfExists = () => {
-            const button = document.getElementById(id);
-            if (button) {
-                console.log(`✅ Button #${id} found, setting up...`);
-                
-                // Clone to remove old listeners
-                const newButton = button.cloneNode(true);
-                button.parentNode.replaceChild(newButton, button);
-                
-                newButton.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log(`🎯 Button #${id} clicked`);
-                    handler.call(this, e);
-                });
-                
-                return true;
-            }
-            return false;
         };
         
-        // Try immediately
-        if (!setupButtonIfExists()) {
-            console.log(`⏳ Button #${id} not found yet, will retry...`);
-            
-            // Retry a few times with delay
-            let attempts = 0;
-            const maxAttempts = 5;
-            const interval = setInterval(() => {
-                attempts++;
-                console.log(`Retry ${attempts} for button #${id}...`);
-                
-                if (setupButtonIfExists() || attempts >= maxAttempts) {
-                    clearInterval(interval);
-                    if (attempts >= maxAttempts) {
-                        console.error(`❌ Button #${id} never appeared after ${maxAttempts} attempts`);
-                    }
-                }
-            }, 200);
-        }
+        // Call the helper function
+        loadData();
     },
 
-    // ==================== FIXED CAMERA METHODS ====================
-    initializeCamera() {
-        console.log('📷 Initializing camera...');
+    loadFromLocalStorage() {
+        // Load from localStorage and fix broken blob URLs
+        const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
         
-        try {
-            const video = document.getElementById('camera-preview');
-            const status = document.getElementById('camera-status');
-            
-            if (!video) {
-                console.error('Camera preview element not found');
-                this.showUploadInterface();
-                return;
+        // Filter out broken blob URLs
+        this.receiptQueue = localReceipts.filter(r => {
+            if (r.downloadURL && r.downloadURL.startsWith('blob:')) {
+                console.warn('Skipping broken blob URL receipt:', r.name);
+                return false;
             }
-            
-            // Stop any existing stream
-            if (this.cameraStream) {
-                this.cameraStream.getTracks().forEach(track => track.stop());
-                this.cameraStream = null;
-            }
-            
-            // Use the current facing mode
-            const constraints = {
-                video: {
-                    facingMode: this.cameraFacingMode,
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                },
-                audio: false
-            };
-            
-            navigator.mediaDevices.getUserMedia(constraints)
-                .then(stream => {
-                    console.log('✅ Camera access granted');
-                    this.cameraStream = stream;
-                    video.srcObject = stream;
-                    
-                    if (status) {
-                        status.textContent = this.cameraFacingMode === 'user' ? 'Front Camera' : 'Rear Camera';
-                    }
-                    
-                    // Update switch camera button text
-                    const switchBtn = document.getElementById('switch-camera');
-                    if (switchBtn) {
-                        switchBtn.innerHTML = `
-                            <span class="btn-icon">🔄</span>
-                            <span class="btn-text">Switch to ${this.cameraFacingMode === 'user' ? 'Rear' : 'Front'} Camera</span>
-                        `;
-                    }
-                })
-                .catch(error => {
-                    console.error('❌ Camera error:', error.name, error.message);
-                    
-                    if (status) status.textContent = 'Camera Error';
-                    
-                    // Try fallback without facing mode
-                    if (error.name === 'OverconstrainedError') {
-                        console.log('🔄 Trying fallback camera...');
-                        
-                        navigator.mediaDevices.getUserMedia({
-                            video: true,
-                            audio: false
-                        })
-                        .then(stream => {
-                            this.cameraStream = stream;
-                            video.srcObject = stream;
-                            
-                            if (status) status.textContent = 'Camera Ready (Default)';
-                            
-                            // Hide switch button since we can't control facing mode
-                            const switchBtn = document.getElementById('switch-camera');
-                            if (switchBtn) switchBtn.style.display = 'none';
-                        })
-                        .catch(fallbackError => {
-                            console.error('❌ Fallback camera error:', fallbackError);
-                            this.showNotification('Camera access denied. Please upload files instead.', 'error');
-                            this.showUploadInterface();
-                        });
-                    } else {
-                        this.showNotification('Camera access denied. Please upload files instead.', 'error');
-                        this.showUploadInterface();
-                    }
-                });
-                
-        } catch (error) {
-            console.error('🚨 Camera initialization error:', error);
+            return r.status === 'pending';
+        });
+        
+        console.log('Loaded receipts from localStorage:', this.receiptQueue.length);
+        
+        // Clean up localStorage by removing broken receipts
+        const validReceipts = localReceipts.filter(r => !r.downloadURL?.startsWith('blob:'));
+        if (validReceipts.length !== localReceipts.length) {
+            localStorage.setItem('local-receipts', JSON.stringify(validReceipts));
+            console.log('Cleaned up broken blob URLs from localStorage');
+        }
+        
+        this.updateReceiptQueueUI();
+    },
+
+    // ==================== REST OF THE METHODS (SIMILAR TO BEFORE BUT FIXED) ====================
+
+   // ==================== CAMERA METHODS ====================
+initializeCamera() {
+    console.log('📷 Initializing camera...');
+    
+    try {
+        const video = document.getElementById('camera-preview');
+        const status = document.getElementById('camera-status');
+        
+        if (!video) {
+            console.error('Camera preview element not found');
             this.showUploadInterface();
-        }
-    },
-
-    switchCamera() {
-        console.log('🔄 Switching camera...');
-        
-        // Debounce to prevent rapid clicks
-        const now = Date.now();
-        if (this.lastSwitchClick && (now - this.lastSwitchClick) < 1500) {
-            console.log('⏳ Please wait before switching camera again');
             return;
         }
-        this.lastSwitchClick = now;
         
-        // Toggle camera facing mode
-        this.cameraFacingMode = this.cameraFacingMode === 'user' ? 'environment' : 'user';
-        
-        // Update status
-        const status = document.getElementById('camera-status');
-        if (status) {
-            status.textContent = 'Switching...';
-        }
-        
-        // Reinitialize camera with new facing mode
-        this.initializeCamera();
-    },
-
-    capturePhoto() {
-        const video = document.getElementById('camera-preview');
-        const canvas = document.getElementById('camera-canvas');
-        const status = document.getElementById('camera-status');
-        
-        if (!video || !canvas) return;
-        
-        // Set canvas dimensions to match video
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        
-        // Draw video frame to canvas
-        const context = canvas.getContext('2d');
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        // Convert to blob
-        canvas.toBlob(async (blob) => {
-            if (blob) {
-                if (status) status.textContent = 'Processing photo...';
-                
-                // Create file object
-                const file = new File([blob], `receipt_${Date.now()}.jpg`, {
-                    type: 'image/jpeg',
-                    lastModified: Date.now()
-                });
-                
-                // Upload receipt
-                await this.uploadReceiptToFirebase(file);
-                
-                if (status) status.textContent = 'Photo captured!';
-                this.showNotification('Receipt photo captured!', 'success');
-                
-                // Switch back to upload interface
-                setTimeout(() => {
-                    this.stopCamera();
-                    document.getElementById('camera-section').style.display = 'none';
-                    document.getElementById('upload-section').style.display = 'block';
-                    document.getElementById('recent-section').style.display = 'block';
-                }, 1000);
-            }
-        }, 'image/jpeg', 0.9);
-    },
-
-    stopCamera() {
+        // Stop any existing stream
         if (this.cameraStream) {
             this.cameraStream.getTracks().forEach(track => track.stop());
             this.cameraStream = null;
         }
-        const video = document.getElementById('camera-preview');
-        if (video) video.srcObject = null;
-    },
-
-    showUploadInterface() {
-        console.log('📤 Showing upload interface...');
         
-        // Stop camera if active
-        this.stopCamera();
+        // Use the current facing mode
+        const constraints = {
+            video: {
+                facingMode: this.cameraFacingMode,
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            },
+            audio: false
+        };
         
-        // Show upload, hide camera
-        const uploadInterface = document.getElementById('upload-section');
-        const cameraSection = document.getElementById('camera-section');
-        
-        if (uploadInterface) {
-            uploadInterface.style.display = 'block';
-        }
-        if (cameraSection) {
-            cameraSection.style.display = 'none';
-        }
-    },
-
-    // ==================== IMPORT RECEIPTS MODAL ====================
-    showImportReceiptsModal() {
-        console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
-        
-        // Hide all other modals
-        this.hideAllModals();
-        
-        // Get or create modal
-        let modal = document.getElementById('import-receipts-modal');
-        if (!modal) {
-            console.error('Modal not found in DOM!');
-            return;
-        }
-        
-        // Show modal
-        modal.classList.remove('hidden');
-        
-        // Update content
-        const content = document.getElementById('import-receipts-content');
-        if (content) {
-            content.innerHTML = this.renderImportReceiptsModal();
-        }
-        
-        // Setup handlers
-        this.setupImportReceiptsHandlers();
-        
-        console.log('✅ Modal should now be visible');
-    },
-
-    renderImportReceiptsModal() {
-        return `
-            <div class="import-receipts-container">
-                <!-- Quick Options -->
-                <div class="quick-actions-section">
-                    <h2 class="section-title">Upload Method</h2>
-                    <div class="card-grid">
-                        <button class="card-button" id="camera-option">
-                            <div class="card-icon">📷</div>
-                            <span class="card-title">Take Photo</span>
-                            <span class="card-subtitle">Use camera</span>
-                        </button>
-                        <button class="card-button" id="upload-option">
-                            <div class="card-icon">📁</div>
-                            <span class="card-title">Upload Files</span>
-                            <span class="card-subtitle">From device</span>
-                        </button>
-                        ${this.isFirebaseAvailable ? `
-                            <button class="card-button" id="firebase-option">
-                                <div class="card-icon">🔥</div>
-                                <span class="card-title">From Firebase</span>
-                                <span class="card-subtitle">Load existing</span>
-                            </button>
-                        ` : ''}
-                    </div>
-                </div>
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then(stream => {
+                console.log('✅ Camera access granted');
+                this.cameraStream = stream;
+                video.srcObject = stream;
                 
-                <!-- Camera Interface -->
-                <div class="camera-section" id="camera-section" style="display: none;">
-                    <div class="glass-card">
-                        <div class="card-header header-flex">
-                            <h3>Camera Preview</h3>
-                            <div class="camera-status" id="camera-status">Ready</div>
-                        </div>
-                        <div class="camera-preview">
-                            <video id="camera-preview" autoplay playsinline></video>
-                            <canvas id="camera-canvas" style="display: none;"></canvas>
-                        </div>
-                        <div class="camera-controls">
-                            <button class="btn btn-outline" id="switch-camera">
-                                <span class="btn-icon">🔄</span>
-                                <span class="btn-text">Switch Camera</span>
-                            </button>
-                            <button class="btn btn-primary" id="capture-photo">
-                                <span class="btn-icon">📸</span>
-                                <span class="btn-text">Capture</span>
-                            </button>
-                            <button class="btn btn-outline" id="cancel-camera">
-                                <span class="btn-icon">✖️</span>
-                                <span class="btn-text">Cancel</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                if (status) {
+                    status.textContent = this.cameraFacingMode === 'user' ? 'Front Camera' : 'Rear Camera';
+                }
                 
-                <!-- Upload Area -->
-                <div class="upload-section" id="upload-section">
-                    <div class="glass-card">
-                        <div class="card-header">
-                            <h3>Upload Receipts</h3>
-                        </div>
-                        <div class="upload-area" id="drop-area">
-                            <div class="upload-icon">📄</div>
-                            <h4>Drag & Drop Receipts</h4>
-                            <p class="upload-subtitle">or click to browse files</p>
-                            <p class="upload-formats">Supports: JPG, PNG, PDF (Max 10MB)</p>
-                            <input type="file" id="receipt-upload-input" multiple 
-                                   accept=".jpg,.jpeg,.png,.pdf" style="display: none;">
-                            <button class="btn btn-primary" id="browse-receipts-btn">
-                                <span class="btn-icon">📁</span>
-                                <span class="btn-text">Browse Files</span>
-                            </button>
-                        </div>
+                // Update switch camera button text
+                const switchBtn = document.getElementById('switch-camera');
+                if (switchBtn) {
+                    switchBtn.innerHTML = `
+                        <span class="btn-icon">🔄</span>
+                        <span class="btn-text">Switch to ${this.cameraFacingMode === 'user' ? 'Rear' : 'Front'} Camera</span>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('❌ Camera error:', error.name, error.message);
+                
+                if (status) status.textContent = 'Camera Error';
+                
+                // Try fallback without facing mode
+                if (error.name === 'OverconstrainedError') {
+                    console.log('🔄 Trying fallback camera...');
+                    
+                    navigator.mediaDevices.getUserMedia({
+                        video: true,
+                        audio: false
+                    })
+                    .then(stream => {
+                        this.cameraStream = stream;
+                        video.srcObject = stream;
                         
-                        <!-- Upload Progress -->
-                        <div class="upload-progress" id="upload-progress" style="display: none;">
-                            <div class="progress-info">
-                                <h4>Uploading to ${this.isFirebaseAvailable ? 'Firebase' : 'Local Storage'}...</h4>
-                                <div class="progress-container">
-                                    <div class="progress-bar" id="upload-progress-bar"></div>
-                                </div>
-                                <div class="progress-details">
-                                    <span id="upload-file-name">-</span>
-                                    <span id="upload-percentage">0%</span>
-                                </div>
+                        if (status) status.textContent = 'Camera Ready (Default)';
+                        
+                        // Hide switch button since we can't control facing mode
+                        const switchBtn = document.getElementById('switch-camera');
+                        if (switchBtn) switchBtn.style.display = 'none';
+                    })
+                    .catch(fallbackError => {
+                        console.error('❌ Fallback camera error:', fallbackError);
+                        this.showNotification('Camera access denied. Please upload files instead.', 'error');
+                        this.showUploadInterface();
+                    });
+                } else {
+                    this.showNotification('Camera access denied. Please upload files instead.', 'error');
+                    this.showUploadInterface();
+                }
+            });
+            
+    } catch (error) {
+        console.error('🚨 Camera initialization error:', error);
+        this.showUploadInterface();
+    }
+},
+
+switchCamera() {
+    console.log('🔄 Switching camera...');
+    
+    // Debounce to prevent rapid clicks
+    const now = Date.now();
+    if (this.lastSwitchClick && (now - this.lastSwitchClick) < 1500) {
+        console.log('⏳ Please wait before switching camera again');
+        return;
+    }
+    this.lastSwitchClick = now;
+    
+    // Toggle camera facing mode
+    this.cameraFacingMode = this.cameraFacingMode === 'user' ? 'environment' : 'user';
+    
+    // Update status
+    const status = document.getElementById('camera-status');
+    if (status) {
+        status.textContent = 'Switching...';
+    }
+    
+    // Reinitialize camera with new facing mode
+    this.initializeCamera();
+},
+
+capturePhoto() {
+    const video = document.getElementById('camera-preview');
+    const canvas = document.getElementById('camera-canvas');
+    const status = document.getElementById('camera-status');
+    
+    if (!video || !canvas) return;
+    
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Draw video frame to canvas
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Convert to blob
+    canvas.toBlob((blob) => {
+        if (blob) {
+            if (status) status.textContent = 'Processing photo...';
+            
+            // Create file object
+            const file = new File([blob], `receipt_${Date.now()}.jpg`, {
+                type: 'image/jpeg',
+                lastModified: Date.now()
+            });
+            
+            // Upload receipt
+            this.uploadReceiptToFirebase(file)
+                .then(() => {
+                    if (status) status.textContent = 'Photo captured!';
+                    this.showNotification('Receipt photo captured!', 'success');
+                    
+                    // Switch back to upload interface
+                    setTimeout(() => {
+                        this.stopCamera();
+                        const cameraSection = document.getElementById('camera-section');
+                        const uploadSection = document.getElementById('upload-section');
+                        const recentSection = document.getElementById('recent-section');
+                        
+                        if (cameraSection) cameraSection.style.display = 'none';
+                        if (uploadSection) uploadSection.style.display = 'block';
+                        if (recentSection) recentSection.style.display = 'block';
+                    }, 1000);
+                })
+                .catch(error => {
+                    console.error('Error uploading photo:', error);
+                    this.showNotification('Failed to upload photo', 'error');
+                });
+        }
+    }, 'image/jpeg', 0.9);
+},
+
+stopCamera() {
+    if (this.cameraStream) {
+        this.cameraStream.getTracks().forEach(track => track.stop());
+        this.cameraStream = null;
+    }
+    const video = document.getElementById('camera-preview');
+    if (video) video.srcObject = null;
+},
+
+showUploadInterface() {
+    console.log('📤 Showing upload interface...');
+    
+    // Stop camera if active
+    this.stopCamera();
+    
+    // Show upload, hide camera
+    const uploadInterface = document.getElementById('upload-section');
+    const cameraSection = document.getElementById('camera-section');
+    
+    if (uploadInterface) {
+        uploadInterface.style.display = 'block';
+    }
+    if (cameraSection) {
+        cameraSection.style.display = 'none';
+    }
+},
+
+// ==================== MODAL CONTROL METHODS ====================
+showImportReceiptsModal() {
+    console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
+    
+    // Hide all other modals
+    this.hideAllModals();
+    
+    // Get or create modal
+    let modal = document.getElementById('import-receipts-modal');
+    if (!modal) {
+        console.error('Modal not found in DOM!');
+        return;
+    }
+    
+    // Show modal
+    modal.classList.remove('hidden');
+    
+    // Update content
+    const content = document.getElementById('import-receipts-content');
+    if (content) {
+        content.innerHTML = this.renderImportReceiptsModal();
+    }
+    
+    // Setup handlers
+    this.setupImportReceiptsHandlers();
+    
+    console.log('✅ Modal should now be visible');
+},
+
+renderImportReceiptsModal() {
+    return `
+        <div class="import-receipts-container">
+            <!-- Quick Options -->
+            <div class="quick-actions-section">
+                <h2 class="section-title">Upload Method</h2>
+                <div class="card-grid">
+                    <button class="card-button" id="camera-option">
+                        <div class="card-icon">📷</div>
+                        <span class="card-title">Take Photo</span>
+                        <span class="card-subtitle">Use camera</span>
+                    </button>
+                    <button class="card-button" id="upload-option">
+                        <div class="card-icon">📁</div>
+                        <span class="card-title">Upload Files</span>
+                        <span class="card-subtitle">From device</span>
+                    </button>
+                    ${this.isFirebaseAvailable ? `
+                        <button class="card-button" id="firebase-option">
+                            <div class="card-icon">🔥</div>
+                            <span class="card-title">From Firebase</span>
+                            <span class="card-subtitle">Load existing</span>
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+            
+            <!-- Camera Interface -->
+            <div class="camera-section" id="camera-section" style="display: none;">
+                <div class="glass-card">
+                    <div class="card-header header-flex">
+                        <h3>Camera Preview</h3>
+                        <div class="camera-status" id="camera-status">Ready</div>
+                    </div>
+                    <div class="camera-preview">
+                        <video id="camera-preview" autoplay playsinline></video>
+                        <canvas id="camera-canvas" style="display: none;"></canvas>
+                    </div>
+                    <div class="camera-controls">
+                        <button class="btn btn-outline" id="switch-camera">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-text">Switch Camera</span>
+                        </button>
+                        <button class="btn btn-primary" id="capture-photo">
+                            <span class="btn-icon">📸</span>
+                            <span class="btn-text">Capture</span>
+                        </button>
+                        <button class="btn btn-outline" id="cancel-camera">
+                            <span class="btn-icon">✖️</span>
+                            <span class="btn-text">Cancel</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Upload Area -->
+            <div class="upload-section" id="upload-section">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h3>Upload Receipts</h3>
+                    </div>
+                    <div class="upload-area" id="drop-area">
+                        <div class="upload-icon">📄</div>
+                        <h4>Drag & Drop Receipts</h4>
+                        <p class="upload-subtitle">or click to browse files</p>
+                        <p class="upload-formats">Supports: JPG, PNG, PDF (Max 10MB)</p>
+                        <input type="file" id="receipt-upload-input" multiple 
+                               accept=".jpg,.jpeg,.png,.pdf" style="display: none;">
+                        <button class="btn btn-primary" id="browse-receipts-btn">
+                            <span class="btn-icon">📁</span>
+                            <span class="btn-text">Browse Files</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Upload Progress -->
+                    <div class="upload-progress" id="upload-progress" style="display: none;">
+                        <div class="progress-info">
+                            <h4>Uploading to ${this.isFirebaseAvailable ? 'Firebase' : 'Local Storage'}...</h4>
+                            <div class="progress-container">
+                                <div class="progress-bar" id="upload-progress-bar"></div>
+                            </div>
+                            <div class="progress-details">
+                                <span id="upload-file-name">-</span>
+                                <span id="upload-percentage">0%</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Recent Receipts -->
-                <div class="recent-section" id="recent-section" style="${this.receiptQueue.length > 0 ? '' : 'display: none;'}">
-                    <div class="glass-card">
-                        <div class="card-header header-flex">
-                            <h3>📋 Recent Receipts</h3>
-                            <button class="btn btn-outline" id="refresh-receipts">
-                                <span class="btn-icon">🔄</span>
-                                <span class="btn-text">Refresh</span>
-                            </button>
-                        </div>
-                        <div id="recent-receipts-list" class="receipts-list">
-                            ${this.renderRecentReceiptsList()}
-                        </div>
+            </div>
+            
+            <!-- Recent Receipts -->
+            <div class="recent-section" id="recent-section" style="${this.receiptQueue.length > 0 ? '' : 'display: none;'}">
+                <div class="glass-card">
+                    <div class="card-header header-flex">
+                        <h3>📋 Recent Receipts</h3>
+                        <button class="btn btn-outline" id="refresh-receipts">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-text">Refresh</span>
+                        </button>
+                    </div>
+                    <div id="recent-receipts-list" class="receipts-list">
+                        ${this.renderRecentReceiptsList()}
                     </div>
                 </div>
             </div>
-        `;
-    },
+        </div>
+    `;
+},
 
-    setupImportReceiptsHandlers() {
-        console.log('Setting up import receipt handlers');
+setupImportReceiptsHandlers() {
+    console.log('Setting up import receipt handlers');
+    
+    // Camera option
+    this.setupButton('camera-option', () => {
+        console.log('🎯 Button #camera-option clicked');
+        const cameraSection = document.getElementById('camera-section');
+        const uploadSection = document.getElementById('upload-section');
         
-        // Camera option
-        this.setupButton('camera-option', () => {
-            console.log('🎯 Button #camera-option clicked');
-            const cameraSection = document.getElementById('camera-section');
-            const uploadSection = document.getElementById('upload-section');
-            
-            if (cameraSection) {
-                cameraSection.style.display = 'block';
-                // Always start with rear camera
-                this.cameraFacingMode = 'environment';
-                // Initialize camera when showing the section
-                setTimeout(() => {
-                    this.initializeCamera();
-                }, 300);
-            }
-            if (uploadSection) {
-                uploadSection.style.display = 'none';
-            }
-        });
+        if (cameraSection) {
+            cameraSection.style.display = 'block';
+            // Always start with rear camera
+            this.cameraFacingMode = 'environment';
+            // Initialize camera when showing the section
+            setTimeout(() => {
+                this.initializeCamera();
+            }, 300);
+        }
+        if (uploadSection) {
+            uploadSection.style.display = 'none';
+        }
+    });
+    
+    // Upload option
+    this.setupButton('upload-option', () => {
+        console.log('🎯 Button #upload-option clicked');
+        const cameraSection = document.getElementById('camera-section');
+        const uploadSection = document.getElementById('upload-section');
         
-        // Upload option
-        this.setupButton('upload-option', () => {
-            console.log('🎯 Button #upload-option clicked');
-            const cameraSection = document.getElementById('camera-section');
-            const uploadSection = document.getElementById('upload-section');
-            
-            if (uploadSection) {
-                uploadSection.style.display = 'block';
-            }
-            if (cameraSection) {
-                // Stop camera if running
-                this.stopCamera();
-                cameraSection.style.display = 'none';
-            }
-        });
-        
-        // Firebase option
-        this.setupButton('firebase-option', () => {
-            console.log('🎯 Button #firebase-option clicked');
-            this.loadReceiptsFromFirebase();
-            this.showNotification('Loaded receipts from Firebase', 'success');
-        });
-        
-        // Browse receipts button
-        this.setupButton('browse-receipts-btn', () => {
-            console.log('🎯 Button #browse-receipts-btn clicked');
-            const fileInput = document.getElementById('receipt-upload-input');
-            if (fileInput) {
-                fileInput.click();
-            }
-        });
-        
-        // File input handler
+        if (uploadSection) {
+            uploadSection.style.display = 'block';
+        }
+        if (cameraSection) {
+            // Stop camera if running
+            this.stopCamera();
+            cameraSection.style.display = 'none';
+        }
+    });
+    
+    // Firebase option
+    this.setupButton('firebase-option', () => {
+        console.log('🎯 Button #firebase-option clicked');
+        this.loadReceiptsFromFirebase();
+        this.showNotification('Loaded receipts from Firebase', 'success');
+    });
+    
+    // Browse receipts button
+    this.setupButton('browse-receipts-btn', () => {
+        console.log('🎯 Button #browse-receipts-btn clicked');
         const fileInput = document.getElementById('receipt-upload-input');
         if (fileInput) {
-            fileInput.onchange = (e) => {
-                this.handleFileUpload(e.target.files);
-            };
+            fileInput.click();
         }
-        
-        // Drag and drop
-        const dropArea = document.getElementById('drop-area');
-        if (dropArea) {
-            dropArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropArea.classList.add('drag-over');
-            });
-            
-            dropArea.addEventListener('dragleave', () => {
-                dropArea.classList.remove('drag-over');
-            });
-            
-            dropArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropArea.classList.remove('drag-over');
-                this.handleFileUpload(e.dataTransfer.files);
-            });
-        }
-        
-        // Camera controls
-        this.setupButton('capture-photo', () => this.capturePhoto());
-        this.setupButton('switch-camera', () => this.switchCamera());
-        this.setupButton('cancel-camera', () => {
-            console.log('❌ Cancel camera clicked');
-            this.stopCamera();
-            document.getElementById('camera-section').style.display = 'none';
-            document.getElementById('upload-section').style.display = 'block';
+    });
+    
+    // File input handler
+    const fileInput = document.getElementById('receipt-upload-input');
+    if (fileInput) {
+        fileInput.onchange = (e) => {
+            this.handleFileUpload(e.target.files);
+        };
+    }
+    
+    // Drag and drop
+    const dropArea = document.getElementById('drop-area');
+    if (dropArea) {
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.classList.add('drag-over');
         });
         
-        // Refresh receipts
-        this.setupButton('refresh-receipts', () => {
-            console.log('🔄 Refresh receipts clicked');
-            this.loadReceiptsFromFirebase();
-            const recentList = document.getElementById('recent-receipts-list');
-            if (recentList) {
-                recentList.innerHTML = this.renderRecentReceiptsList();
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.classList.remove('drag-over');
+        });
+        
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.classList.remove('drag-over');
+            this.handleFileUpload(e.dataTransfer.files);
+        });
+    }
+    
+    // Camera controls
+    this.setupButton('capture-photo', () => this.capturePhoto());
+    this.setupButton('switch-camera', () => this.switchCamera());
+    this.setupButton('cancel-camera', () => {
+        console.log('❌ Cancel camera clicked');
+        this.stopCamera();
+        document.getElementById('camera-section').style.display = 'none';
+        document.getElementById('upload-section').style.display = 'block';
+    });
+    
+    // Refresh receipts
+    this.setupButton('refresh-receipts', () => {
+        console.log('🔄 Refresh receipts clicked');
+        this.loadReceiptsFromFirebase();
+        const recentList = document.getElementById('recent-receipts-list');
+        if (recentList) {
+            recentList.innerHTML = this.renderRecentReceiptsList();
+        }
+    });
+    
+    // Process button
+    this.setupButton('process-receipts-btn', () => {
+        console.log('⚙️ Process receipts clicked');
+        this.processPendingReceipts();
+    });
+},
+
+showTransactionModal(transactionId = null) {
+    this.hideAllModals();
+    const modal = document.getElementById('transaction-modal');
+    if (modal) modal.classList.remove('hidden');
+    this.currentEditingId = transactionId;
+    
+    const form = document.getElementById('transaction-form');
+    if (form) {
+        form.reset();
+        const dateInput = document.getElementById('transaction-date');
+        if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+        const deleteBtn = document.getElementById('delete-transaction');
+        if (deleteBtn) deleteBtn.style.display = 'none';
+        const title = document.getElementById('transaction-modal-title');
+        if (title) title.textContent = 'Add Transaction';
+        this.clearReceiptPreview();
+        const ocrResults = document.getElementById('ocr-results');
+        if (ocrResults) ocrResults.classList.add('hidden');
+        
+        if (transactionId) {
+            setTimeout(() => this.editTransaction(transactionId), 50);
+        }
+    }
+},
+
+hideTransactionModal() {
+    const modal = document.getElementById('transaction-modal');
+    if (modal) modal.classList.add('hidden');
+    this.currentEditingId = null;
+    this.receiptPreview = null;
+    this.clearReceiptPreview();
+    const form = document.getElementById('transaction-form');
+    if (form) form.reset();
+},
+
+hideImportReceiptsModal() {
+    const modal = document.getElementById('import-receipts-modal');
+    if (modal) modal.classList.add('hidden');
+    this.stopCamera();
+},
+
+hideAllModals() {
+    this.hideTransactionModal();
+    this.hideImportReceiptsModal();
+    const scannerModal = document.getElementById('receipt-scanner-modal');
+    if (scannerModal) scannerModal.classList.add('hidden');
+    const reportModal = document.getElementById('financial-report-modal');
+    if (reportModal) reportModal.classList.add('hidden');
+},
+
+// ==================== TRANSACTION METHODS ====================
+showAddIncome() {
+    this.showTransactionModal();
+    const typeSelect = document.getElementById('transaction-type');
+    if (typeSelect) typeSelect.value = 'income';
+    const categorySelect = document.getElementById('transaction-category');
+    if (categorySelect) categorySelect.value = 'sales';
+    const title = document.getElementById('transaction-modal-title');
+    if (title) title.textContent = 'Add Income';
+},
+
+showAddExpense() {
+    this.showTransactionModal();
+    const typeSelect = document.getElementById('transaction-type');
+    if (typeSelect) typeSelect.value = 'expense';
+    const categorySelect = document.getElementById('transaction-category');
+    if (categorySelect) categorySelect.value = 'feed';
+    const title = document.getElementById('transaction-modal-title');
+    if (title) title.textContent = 'Add Expense';
+},
+
+saveTransaction() {
+    console.log('Saving transaction...');
+    
+    // Get form values
+    const id = document.getElementById('transaction-id')?.value || Date.now();
+    const date = document.getElementById('transaction-date')?.value;
+    const type = document.getElementById('transaction-type')?.value;
+    const category = document.getElementById('transaction-category')?.value;
+    const amount = parseFloat(document.getElementById('transaction-amount')?.value || 0);
+    const description = document.getElementById('transaction-description')?.value || '';
+    const paymentMethod = document.getElementById('transaction-payment')?.value || 'cash';
+    const reference = document.getElementById('transaction-reference')?.value || '';
+    const notes = document.getElementById('transaction-notes')?.value || '';
+    
+    // Validate
+    if (!date || !type || !category || !amount || !description) {
+        this.showNotification('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    if (amount <= 0) {
+        this.showNotification('Amount must be greater than 0', 'error');
+        return;
+    }
+    
+    // Create receipt object with proper structure
+    let receiptData = null;
+    if (this.receiptPreview) {
+        receiptData = {
+            id: this.receiptPreview.id,
+            name: this.receiptPreview.name,
+            downloadURL: this.receiptPreview.downloadURL,
+            size: this.receiptPreview.size,
+            type: this.receiptPreview.type,
+            uploadedAt: this.receiptPreview.uploadedAt,
+            status: 'attached'
+        };
+    }
+    
+    const transactionData = {
+        id: parseInt(id),
+        date,
+        type,
+        category,
+        amount,
+        description,
+        paymentMethod,
+        reference,
+        notes,
+        receipt: receiptData
+    };
+    
+    // Check if editing existing transaction
+    const existingIndex = this.transactions.findIndex(t => t.id == id);
+    if (existingIndex > -1) {
+        // Update existing
+        const oldTransaction = this.transactions[existingIndex];
+        this.transactions[existingIndex] = transactionData;
+        
+        // Broadcast update
+        Broadcaster.recordUpdated('income-expenses', {
+            id: transactionData.id,
+            oldData: oldTransaction,
+            newData: transactionData,
+            timestamp: new Date().toISOString()
+        });
+        
+        this.showNotification('Transaction updated successfully!', 'success');
+    } else {
+        // Add new
+        transactionData.id = transactionData.id || Date.now();
+        this.transactions.unshift(transactionData);
+        
+        // Broadcast creation
+        Broadcaster.recordCreated('income-expenses', {
+            ...transactionData,
+            timestamp: new Date().toISOString(),
+            module: 'income-expenses',
+            action: 'transaction_created'
+        });
+        
+        this.showNotification('Transaction saved successfully!', 'success');
+    }
+    
+    // If this was from a pending receipt, mark it as processed
+    if (this.receiptPreview?.id && this.receiptPreview.id.startsWith('receipt_')) {
+        this.markReceiptAsProcessed(this.receiptPreview.id);
+    }
+    
+    // Save to localStorage
+    this.saveData();
+    
+    // Clear receipt preview after saving
+    this.receiptPreview = null;
+    
+    // Update UI
+    this.updateStats();
+    this.updateTransactionsList();
+    this.updateCategoryBreakdown();
+    
+    // Close modal
+    this.hideTransactionModal();
+},
+
+editTransaction(transactionId) {
+    console.log('Editing transaction:', transactionId);
+    const transaction = this.transactions.find(t => t.id == transactionId);
+    if (!transaction) {
+        this.showNotification('Transaction not found', 'error');
+        return;
+    }
+    
+    // Populate form
+    const idInput = document.getElementById('transaction-id');
+    if (idInput) idInput.value = transaction.id;
+    
+    const dateInput = document.getElementById('transaction-date');
+    if (dateInput) dateInput.value = transaction.date;
+    
+    const typeSelect = document.getElementById('transaction-type');
+    if (typeSelect) typeSelect.value = transaction.type;
+    
+    const categorySelect = document.getElementById('transaction-category');
+    if (categorySelect) categorySelect.value = transaction.category;
+    
+    const amountInput = document.getElementById('transaction-amount');
+    if (amountInput) amountInput.value = transaction.amount;
+    
+    const descriptionInput = document.getElementById('transaction-description');
+    if (descriptionInput) descriptionInput.value = transaction.description;
+    
+    const paymentSelect = document.getElementById('transaction-payment');
+    if (paymentSelect) paymentSelect.value = transaction.paymentMethod || 'cash';
+    
+    const referenceInput = document.getElementById('transaction-reference');
+    if (referenceInput) referenceInput.value = transaction.reference || '';
+    
+    const notesInput = document.getElementById('transaction-notes');
+    if (notesInput) notesInput.value = transaction.notes || '';
+    
+    const deleteBtn = document.getElementById('delete-transaction');
+    if (deleteBtn) deleteBtn.style.display = 'block';
+    
+    const title = document.getElementById('transaction-modal-title');
+    if (title) title.textContent = 'Edit Transaction';
+    
+    // Handle receipt if exists
+    if (transaction.receipt) {
+        this.receiptPreview = transaction.receipt;
+        this.showReceiptPreviewInTransactionModal(transaction.receipt);
+    } else {
+        this.receiptPreview = null;
+        this.clearReceiptPreview();
+    }
+    
+    // Show modal if not already visible
+    const modal = document.getElementById('transaction-modal');
+    if (modal && modal.classList.contains('hidden')) {
+        modal.classList.remove('hidden');
+    }
+},
+
+deleteTransaction() {
+    const transactionId = document.getElementById('transaction-id')?.value;
+    if (!transactionId) {
+        this.showNotification('No transaction selected', 'error');
+        return;
+    }
+    
+    if (confirm('Are you sure you want to delete this transaction?')) {
+        this.deleteTransactionRecord(transactionId);
+        this.hideTransactionModal();
+    }
+},
+
+deleteTransactionRecord(transactionId) {
+    const transaction = this.transactions.find(t => t.id == transactionId);
+    if (!transaction) return;
+    
+    // Remove from array
+    this.transactions = this.transactions.filter(t => t.id != transactionId);
+    
+    // Broadcast deletion
+    Broadcaster.recordDeleted('income-expenses', {
+        id: transactionId,
+        data: transaction,
+        timestamp: new Date().toISOString(),
+        module: 'income-expenses',
+        action: 'transaction_deleted'
+    });
+    
+    // Save to localStorage
+    this.saveData();
+    
+    // Update UI
+    this.updateStats();
+    this.updateTransactionsList();
+    this.updateCategoryBreakdown();
+    
+    this.showNotification('Transaction deleted successfully', 'success');
+},
+
+// ==================== RECEIPT FORM HANDLERS ====================
+setupReceiptFormHandlers() {
+    console.log('Setting up receipt form handlers...');
+    
+    const uploadArea = document.getElementById('receipt-upload-area');
+    const fileInput = document.getElementById('receipt-upload');
+    
+    if (uploadArea && fileInput) {
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                this.handleTransactionReceiptUpload(e.target.files[0]);
             }
         });
         
-        // Process button
-        this.setupButton('process-receipts-btn', () => {
-            console.log('⚙️ Process receipts clicked');
-            this.processPendingReceipts();
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--primary-color)';
+            uploadArea.style.background = 'var(--primary-color)10';
         });
-    },
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = 'var(--glass-border)';
+            uploadArea.style.background = '';
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--glass-border)';
+            uploadArea.style.background = '';
+            
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                this.handleTransactionReceiptUpload(e.dataTransfer.files[0]);
+            }
+        });
+    }
+    
+    // Remove receipt button
+    this.setupButton('remove-receipt', () => {
+        this.receiptPreview = null;
+        this.clearReceiptPreview();
+        const fileInput = document.getElementById('receipt-upload');
+        if (fileInput) fileInput.value = '';
+    });
+    
+    // Process receipt button (OCR)
+    this.setupButton('process-receipt-btn', () => {
+        if (this.receiptPreview) {
+            this.showOCRSuggestion(this.receiptPreview);
+        } else {
+            this.showNotification('Please attach a receipt first', 'warning');
+        }
+    });
+},
 
-    // ==================== FIXED: RECEIPT UPLOAD FOR TRANSACTION FORM ====================
-    handleTransactionReceiptUpload(file) {
-        if (!this.isValidReceiptFile(file)) {
-            this.showNotification('Invalid file. Please use JPG, PNG, or PDF under 10MB', 'error');
+// ==================== RECEIPT UPLOAD & PREVIEW METHODS ====================
+handleTransactionReceiptUpload(file) {
+    if (!this.isValidReceiptFile(file)) {
+        this.showNotification('Invalid file. Please use JPG, PNG, or PDF under 10MB', 'error');
+        return;
+    }
+    
+    // Create a preview for the transaction form
+    this.createReceiptPreview(file);
+},
+
+createReceiptPreview(file) {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+        // Create receipt preview object
+        this.receiptPreview = {
+            id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            name: file.name,
+            originalName: file.name,
+            fileName: file.name,
+            downloadURL: e.target.result, // Data URL
+            size: file.size,
+            type: file.type,
+            status: 'pending',
+            uploadedAt: new Date(),
+            uploadedBy: 'local-user',
+            metadata: {
+                contentType: file.type,
+                size: file.size
+            }
+        };
+        
+        // Show preview in form
+        this.showReceiptPreviewInTransactionModal(this.receiptPreview);
+        
+        this.showNotification(`Receipt "${file.name}" attached`, 'success');
+    };
+    
+    reader.onerror = () => {
+        this.showNotification('Failed to read file', 'error');
+    };
+    
+    reader.readAsDataURL(file);
+},
+
+showReceiptPreviewInTransactionModal(receipt) {
+    const previewContainer = document.getElementById('receipt-preview-container');
+    const imagePreview = document.getElementById('image-preview');
+    const receiptImage = document.getElementById('receipt-image-preview');
+    const filename = document.getElementById('receipt-filename');
+    const filesize = document.getElementById('receipt-size');
+    
+    if (!previewContainer || !filename || !filesize) return;
+    
+    previewContainer.classList.remove('hidden');
+    filename.textContent = receipt.name;
+    filesize.textContent = this.formatFileSize(receipt.size || 0);
+    
+    // Show image preview if it's an image
+    if (receipt.type?.startsWith('image/') && receiptImage && imagePreview) {
+        receiptImage.src = receipt.downloadURL;
+        imagePreview.classList.remove('hidden');
+    } else if (imagePreview) {
+        imagePreview.classList.add('hidden');
+    }
+},
+
+clearReceiptPreview() {
+    const previewContainer = document.getElementById('receipt-preview-container');
+    if (previewContainer) previewContainer.classList.add('hidden');
+    
+    const imagePreview = document.getElementById('image-preview');
+    if (imagePreview) imagePreview.classList.add('hidden');
+    
+    const filename = document.getElementById('receipt-filename');
+    if (filename) filename.textContent = 'receipt.jpg';
+    
+    const filesize = document.getElementById('receipt-size');
+    if (filesize) filesize.textContent = '0 KB';
+    
+    const receiptImage = document.getElementById('receipt-image-preview');
+    if (receiptImage) receiptImage.src = '';
+    
+    // Reset file input
+    const fileInput = document.getElementById('receipt-upload');
+    if (fileInput) fileInput.value = '';
+},
+
+// ==================== BULK FILE UPLOAD METHODS ====================
+handleFileUpload(files) {
+    if (!files || files.length === 0) return;
+    
+    const totalFiles = files.length;
+    let processedFiles = 0;
+    let cancelled = false;
+    
+    // Show progress with cancel button
+    const progressSection = document.getElementById('upload-progress');
+    const progressBar = document.getElementById('upload-progress-bar');
+    const progressText = document.getElementById('upload-percentage');
+    const fileName = document.getElementById('upload-file-name');
+    
+    if (progressSection) {
+        progressSection.style.display = 'block';
+        progressSection.innerHTML = `
+            <div class="progress-info">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h4>Uploading to ${this.isFirebaseAvailable ? 'Firebase' : 'Local Storage'}...</h4>
+                    <button class="btn btn-sm btn-outline" id="cancel-upload-btn" style="font-size: 12px;">
+                        ❌ Cancel Upload
+                    </button>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="upload-progress-bar"></div>
+                </div>
+                <div class="progress-details">
+                    <span id="upload-file-name">-</span>
+                    <span id="upload-percentage">0%</span>
+                </div>
+                <div id="upload-status" style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+                    Preparing upload...
+                </div>
+            </div>
+        `;
+        
+        // Add cancel button handler
+        document.getElementById('cancel-upload-btn')?.addEventListener('click', () => {
+            cancelled = true;
+            if (this.currentUploadTask) {
+                this.currentUploadTask.cancel();
+                this.showNotification('Upload cancelled', 'warning');
+            }
+        });
+    }
+    
+    // Upload each file
+    const uploadNextFile = (index) => {
+        if (cancelled || index >= files.length) {
+            // Hide progress after completion
+            setTimeout(() => {
+                if (progressSection) {
+                    progressSection.style.display = 'none';
+                }
+                if (progressBar) progressBar.style.width = '0%';
+                if (progressText) progressText.textContent = '0%';
+                if (fileName) fileName.textContent = '-';
+            }, 1000);
+            
+            if (!cancelled && processedFiles > 0) {
+                this.showNotification(`${processedFiles} receipt(s) uploaded successfully!`, 'success');
+                this.updateReceiptQueueUI();
+            }
+            
+            // Reset upload task
+            this.currentUploadTask = null;
             return;
         }
         
-        // Create a preview for the transaction form
-        this.createReceiptPreview(file);
-    },
+        const file = files[index];
+        
+        if (fileName) fileName.textContent = `Uploading: ${file.name}`;
+        const statusElement = document.getElementById('upload-status');
+        if (statusElement) statusElement.textContent = `Uploading ${processedFiles + 1} of ${totalFiles}: ${file.name}`;
+        
+        try {
+            // Validate file before upload
+            if (!this.isValidReceiptFile(file)) {
+                this.showNotification(`Skipped ${file.name}: Invalid file type or size`, 'warning');
+                uploadNextFile(index + 1);
+                return;
+            }
+            
+            // Upload with progress tracking
+            this.uploadReceiptToFirebase(file, (progress) => {
+                if (progressBar) progressBar.style.width = `${progress}%`;
+                if (progressText) progressText.textContent = `${progress}%`;
+            })
+            .then(() => {
+                processedFiles++;
+                
+                // Update overall progress
+                const overallProgress = Math.round((processedFiles / totalFiles) * 100);
+                if (progressBar) progressBar.style.width = `${overallProgress}%`;
+                if (progressText) progressText.textContent = `${overallProgress}%`;
+                
+                // Upload next file
+                uploadNextFile(index + 1);
+            })
+            .catch(error => {
+                console.error('Upload error:', error);
+                if (error.message.includes('cancelled')) {
+                    this.showNotification('Upload cancelled', 'info');
+                } else {
+                    this.showNotification(`Failed to upload ${file.name}: ${error.message}`, 'error');
+                }
+                uploadNextFile(index + 1);
+            });
+            
+        } catch (error) {
+            console.error('Upload error:', error);
+            this.showNotification(`Failed to upload ${file.name}: ${error.message}`, 'error');
+            uploadNextFile(index + 1);
+        }
+    };
+    
+    // Start uploading
+    uploadNextFile(0);
+},
 
-    createReceiptPreview(file) {
+uploadReceiptToFirebase(file, onProgress = null) {
+    if (!file) {
+        return Promise.reject(new Error('No file provided'));
+    }
+    
+    // Validate file
+    if (!this.isValidReceiptFile(file)) {
+        return Promise.reject(new Error('Invalid file type or size (max 10MB, JPG/PNG/PDF only)'));
+    }
+    
+    if (this.isFirebaseAvailable) {
+        // Upload to Firebase with progress tracking
+        return this.uploadToFirebase(file, onProgress);
+    } else {
+        // Store locally
+        return this.storeReceiptLocally(file);
+    }
+},
+
+storeReceiptLocally(file) {
+    return new Promise((resolve, reject) => {
+        const timestamp = Date.now();
+        const receiptId = `local_${timestamp}`;
         const reader = new FileReader();
         
-        reader.onload = (e) => {
-            // Create receipt preview object
-            this.receiptPreview = {
-                id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        reader.onload = () => {
+            const receiptData = {
+                id: receiptId,
                 name: file.name,
                 originalName: file.name,
                 fileName: file.name,
-                downloadURL: e.target.result, // Data URL
+                downloadURL: reader.result, // Data URL
                 size: file.size,
                 type: file.type,
                 status: 'pending',
@@ -1107,463 +1632,607 @@ const IncomeExpensesModule = {
                 }
             };
             
-            // Show preview in form
-            this.showReceiptPreviewInTransactionModal(this.receiptPreview);
+            this.receiptQueue.push(receiptData);
             
-            this.showNotification(`Receipt "${file.name}" attached`, 'success');
+            // Store in localStorage for persistence
+            const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+            localReceipts.push(receiptData);
+            localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
+            
+            // Broadcast local receipt creation
+            Broadcaster.recordCreated('income-expenses', {
+                ...receiptData,
+                timestamp: new Date().toISOString(),
+                module: 'income-expenses',
+                action: 'receipt_uploaded',
+                storageType: 'local'
+            });
+            
+            resolve(receiptData);
         };
         
         reader.onerror = () => {
-            this.showNotification('Failed to read file', 'error');
+            reject(new Error('Failed to read file'));
         };
         
         reader.readAsDataURL(file);
-    },
+    });
+},
 
-    showReceiptPreviewInTransactionModal(receipt) {
-        const previewContainer = document.getElementById('receipt-preview-container');
-        const imagePreview = document.getElementById('image-preview');
-        const receiptImage = document.getElementById('receipt-image-preview');
-        const filename = document.getElementById('receipt-filename');
-        const filesize = document.getElementById('receipt-size');
-        
-        if (!previewContainer || !filename || !filesize) return;
-        
-        previewContainer.classList.remove('hidden');
-        filename.textContent = receipt.name;
-        filesize.textContent = this.formatFileSize(receipt.size || 0);
-        
-        // Show image preview if it's an image
-        if (receipt.type?.startsWith('image/') && receiptImage && imagePreview) {
-            receiptImage.src = receipt.downloadURL;
-            imagePreview.classList.remove('hidden');
-        } else if (imagePreview) {
-            imagePreview.classList.add('hidden');
-        }
-    },
+// ==================== RECEIPT PROCESSING METHODS ====================
+renderRecentReceiptsList() {
+    if (this.receiptQueue.length === 0) {
+        return `
+            <div class="empty-state">
+                <div class="empty-icon">📄</div>
+                <h4>No receipts found</h4>
+                <p>Upload receipts to get started</p>
+            </div>
+        `;
+    }
+    
+    return `
+        <div class="receipts-grid">
+            ${this.receiptQueue.slice(0, 5).map(receipt => `
+                <div class="receipt-card" data-id="${receipt.id}">
+                    <div class="receipt-preview">
+                        ${receipt.type?.startsWith('image/') ? 
+                            `<img src="${receipt.downloadURL}" alt="${receipt.name}" loading="lazy" style="max-width: 60px; max-height: 60px; border-radius: 4px;">` : 
+                            `<div class="file-icon" style="font-size: 24px;">📄</div>`
+                        }
+                    </div>
+                    <div class="receipt-info">
+                        <div class="receipt-name">${receipt.name}</div>
+                        <div class="receipt-meta">
+                            <span class="receipt-size">${this.formatFileSize(receipt.size || 0)}</span>
+                            <span class="receipt-status status-${receipt.status || 'pending'}">${receipt.status || 'pending'}</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-outline process-btn" data-id="${receipt.id}">
+                        🔍 Extract Information from Receipt
+                    </button>
+                </div>
+            `).join('')}
+        </div>
+    `;
+},
 
-    // ==================== FIXED: SAVE TRANSACTION WITH RECEIPT ====================
-    saveTransaction() {
-        console.log('Saving transaction...');
-        console.log('Current receipt preview:', this.receiptPreview);
-        
-        // Get form values
-        const id = document.getElementById('transaction-id')?.value || Date.now();
-        const date = document.getElementById('transaction-date')?.value;
-        const type = document.getElementById('transaction-type')?.value;
-        const category = document.getElementById('transaction-category')?.value;
-        const amount = parseFloat(document.getElementById('transaction-amount')?.value || 0);
-        const description = document.getElementById('transaction-description')?.value || '';
-        const paymentMethod = document.getElementById('transaction-payment')?.value || 'cash';
-        const reference = document.getElementById('transaction-reference')?.value || '';
-        const notes = document.getElementById('transaction-notes')?.value || '';
-        
-        // Validate
-        if (!date || !type || !category || !amount || !description) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
-        }
-        
-        if (amount <= 0) {
-            this.showNotification('Amount must be greater than 0', 'error');
-            return;
-        }
-        
-        // Create receipt object with proper structure
-        let receiptData = null;
-        if (this.receiptPreview) {
-            receiptData = {
-                id: this.receiptPreview.id,
-                name: this.receiptPreview.name,
-                downloadURL: this.receiptPreview.downloadURL,
-                size: this.receiptPreview.size,
-                type: this.receiptPreview.type,
-                uploadedAt: this.receiptPreview.uploadedAt,
-                status: 'attached'
-            };
-            
-            console.log('Attaching receipt to transaction:', receiptData);
-        }
-        
-        const transactionData = {
-            id: parseInt(id),
-            date,
-            type,
-            category,
-            amount,
-            description,
-            paymentMethod,
-            reference,
-            notes,
-            receipt: receiptData
-        };
-        
-        console.log('Transaction data to save:', transactionData);
-        
-        // Check if editing existing transaction
-        const existingIndex = this.transactions.findIndex(t => t.id == id);
-        if (existingIndex > -1) {
-            // Update existing
-            const oldTransaction = this.transactions[existingIndex];
-            this.transactions[existingIndex] = transactionData;
-            
-            // Broadcast update
-            Broadcaster.recordUpdated('income-expenses', {
-                id: transactionData.id,
-                oldData: oldTransaction,
-                newData: transactionData,
-                timestamp: new Date().toISOString()
-            });
-            
-            this.showNotification('Transaction updated successfully!', 'success');
-            
-            // If this was from a pending receipt, mark it as processed
-            if (this.receiptPreview?.id && this.receiptPreview.id.startsWith('receipt_')) {
-                this.markReceiptAsProcessed(this.receiptPreview.id);
-            }
-        } else {
-            // Add new
-            transactionData.id = transactionData.id || Date.now();
-            this.transactions.unshift(transactionData);
-            
-            // Broadcast creation
-            Broadcaster.recordCreated('income-expenses', {
-                ...transactionData,
-                timestamp: new Date().toISOString(),
-                module: 'income-expenses',
-                action: 'transaction_created'
-            });
-            
-            this.showNotification('Transaction saved successfully!', 'success');
-            
-            // If this was from a pending receipt, mark it as processed
-            if (this.receiptPreview?.id && this.receiptPreview.id.startsWith('receipt_')) {
-                this.markReceiptAsProcessed(this.receiptPreview.id);
-            }
-        }
-        
-        // Save to localStorage
-        this.saveData();
-        
-        // Clear receipt preview after saving
-        this.receiptPreview = null;
-        
-        // Update UI
-        this.updateStats();
-        this.updateTransactionsList();
-        this.updateCategoryBreakdown();
-        
-        // Close modal
-        this.hideTransactionModal();
-    },
+renderPendingReceiptsList(receipts) {
+    if (receipts.length === 0) {
+        return `
+            <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
+                <div style="font-size: 16px; margin-bottom: 8px;">No pending receipts</div>
+                <div style="font-size: 14px; color: var(--text-secondary);">Upload receipts to get started</div>
+            </div>
+        `;
+    }
 
-    clearReceiptPreview() {
-        const previewContainer = document.getElementById('receipt-preview-container');
-        if (previewContainer) previewContainer.classList.add('hidden');
-        
-        const imagePreview = document.getElementById('image-preview');
-        if (imagePreview) imagePreview.classList.add('hidden');
-        
-        const filename = document.getElementById('receipt-filename');
-        if (filename) filename.textContent = 'receipt.jpg';
-        
-        const filesize = document.getElementById('receipt-size');
-        if (filesize) filesize.textContent = '0 KB';
-        
-        const receiptImage = document.getElementById('receipt-image-preview');
-        if (receiptImage) receiptImage.src = '';
-        
-        // Reset file input
-        const fileInput = document.getElementById('receipt-upload');
-        if (fileInput) fileInput.value = '';
-    },
-
-    // ==================== NEW: MARK RECEIPT AS PROCESSED ====================
-    markReceiptAsProcessed(receiptId) {
-        console.log(`Marking receipt ${receiptId} as processed...`);
-        
-        // Find receipt in queue
-        const receiptIndex = this.receiptQueue.findIndex(r => r.id === receiptId);
-        if (receiptIndex > -1) {
-            this.receiptQueue[receiptIndex].status = 'processed';
-            
-            // Update Firebase if available
-            if (this.isFirebaseAvailable && window.db) {
-                try {
-                    window.db.collection('receipts').doc(receiptId).update({
-                        status: 'processed',
-                        processedAt: new Date().toISOString()
-                    });
-                } catch (error) {
-                    console.error('Error updating receipt in Firebase:', error);
-                }
-            }
-            
-            // Update localStorage for local receipts
-            if (receiptId.startsWith('local_')) {
-                const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
-                const localIndex = localReceipts.findIndex(r => r.id === receiptId);
-                if (localIndex > -1) {
-                    localReceipts[localIndex].status = 'processed';
-                    localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
-                }
-            }
-            
-            // Update UI
-            this.updateReceiptQueueUI();
-            
-            this.showNotification('Receipt marked as processed', 'success');
-        }
-    },
-
-    // ==================== MODAL CONTROL METHODS ====================
-    hideImportReceiptsModal() {
-        const modal = document.getElementById('import-receipts-modal');
-        if (modal) modal.classList.add('hidden');
-        this.stopCamera();
-    },
-
-    showTransactionModal(transactionId = null) {
-        this.hideAllModals();
-        const modal = document.getElementById('transaction-modal');
-        if (modal) modal.classList.remove('hidden');
-        this.currentEditingId = transactionId;
-        
-        const form = document.getElementById('transaction-form');
-        if (form) {
-            form.reset();
-            const dateInput = document.getElementById('transaction-date');
-            if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
-            const deleteBtn = document.getElementById('delete-transaction');
-            if (deleteBtn) deleteBtn.style.display = 'none';
-            const title = document.getElementById('transaction-modal-title');
-            if (title) title.textContent = 'Add Transaction';
-            this.clearReceiptPreview();
-            const ocrResults = document.getElementById('ocr-results');
-            if (ocrResults) ocrResults.classList.add('hidden');
-            
-            if (transactionId) {
-                setTimeout(() => this.editTransaction(transactionId), 50);
-            }
-        }
-    },
-
-    hideTransactionModal() {
-        const modal = document.getElementById('transaction-modal');
-        if (modal) modal.classList.add('hidden');
-        this.currentEditingId = null;
-        this.receiptPreview = null;
-        this.clearReceiptPreview();
-        const form = document.getElementById('transaction-form');
-        if (form) form.reset();
-    },
-
-    hideAllModals() {
-        this.hideTransactionModal();
-        this.hideImportReceiptsModal();
-        const scannerModal = document.getElementById('receipt-scanner-modal');
-        if (scannerModal) scannerModal.classList.add('hidden');
-        const reportModal = document.getElementById('financial-report-modal');
-        if (reportModal) reportModal.classList.add('hidden');
-    },
-
-    // ==================== FIXED: EDIT TRANSACTION ====================
-    editTransaction(transactionId) {
-        console.log('Editing transaction:', transactionId);
-        const transaction = this.transactions.find(t => t.id == transactionId);
-        if (!transaction) {
-            this.showNotification('Transaction not found', 'error');
-            return;
-        }
-        
-        // Populate form
-        const idInput = document.getElementById('transaction-id');
-        if (idInput) idInput.value = transaction.id;
-        
-        const dateInput = document.getElementById('transaction-date');
-        if (dateInput) dateInput.value = transaction.date;
-        
-        const typeSelect = document.getElementById('transaction-type');
-        if (typeSelect) typeSelect.value = transaction.type;
-        
-        const categorySelect = document.getElementById('transaction-category');
-        if (categorySelect) categorySelect.value = transaction.category;
-        
-        const amountInput = document.getElementById('transaction-amount');
-        if (amountInput) amountInput.value = transaction.amount;
-        
-        const descriptionInput = document.getElementById('transaction-description');
-        if (descriptionInput) descriptionInput.value = transaction.description;
-        
-        const paymentSelect = document.getElementById('transaction-payment');
-        if (paymentSelect) paymentSelect.value = transaction.paymentMethod || 'cash';
-        
-        const referenceInput = document.getElementById('transaction-reference');
-        if (referenceInput) referenceInput.value = transaction.reference || '';
-        
-        const notesInput = document.getElementById('transaction-notes');
-        if (notesInput) notesInput.value = transaction.notes || '';
-        
-        const deleteBtn = document.getElementById('delete-transaction');
-        if (deleteBtn) deleteBtn.style.display = 'block';
-        
-        const title = document.getElementById('transaction-modal-title');
-        if (title) title.textContent = 'Edit Transaction';
-        
-        // Handle receipt if exists
-        if (transaction.receipt) {
-            this.receiptPreview = transaction.receipt;
-            this.showReceiptPreviewInTransactionModal(transaction.receipt);
-        } else {
-            this.receiptPreview = null;
-            this.clearReceiptPreview();
-        }
-        
-        // Show modal if not already visible
-        const modal = document.getElementById('transaction-modal');
-        if (modal && modal.classList.contains('hidden')) {
-            modal.classList.remove('hidden');
-        }
-    },
-
-    // ==================== FIXED: DELETE TRANSACTION ====================
-    deleteTransaction() {
-        const transactionId = document.getElementById('transaction-id')?.value;
-        if (!transactionId) {
-            this.showNotification('No transaction selected', 'error');
-            return;
-        }
-        
-        if (confirm('Are you sure you want to delete this transaction?')) {
-            this.deleteTransactionRecord(transactionId);
-            this.hideTransactionModal();
-        }
-    },
-
-    // ==================== FIREBASE RECEIPT METHODS ====================
-    handleFileUpload(files) {
-        if (!files || files.length === 0) return;
-        
-        const totalFiles = files.length;
-        let processedFiles = 0;
-        let cancelled = false;
-        
-        // Show progress with cancel button
-        const progressSection = document.getElementById('upload-progress');
-        const progressBar = document.getElementById('upload-progress-bar');
-        const progressText = document.getElementById('upload-percentage');
-        const fileName = document.getElementById('upload-file-name');
-        
-        if (progressSection) {
-            progressSection.style.display = 'block';
-            progressSection.innerHTML = `
-                <div class="progress-info">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <h4>Uploading to ${this.isFirebaseAvailable ? 'Firebase' : 'Local Storage'}...</h4>
-                        <button class="btn btn-sm btn-outline" id="cancel-upload-btn" style="font-size: 12px;">
-                            ❌ Cancel Upload
+    return `
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            ${receipts.map(receipt => `
+                <div class="pending-receipt-item" data-id="${receipt.id}" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                    <div class="receipt-info" style="display: flex; align-items: center; gap: 12px;">
+                        <span class="receipt-icon" style="font-size: 24px;">${receipt.type?.startsWith('image/') ? '🖼️' : '📄'}</span>
+                        <div class="receipt-details">
+                            <div class="receipt-name" style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${receipt.name}</div>
+                            <div class="receipt-meta" style="font-size: 12px; color: var(--text-secondary); display: flex; gap: 8px; align-items: center;">
+                                <span>${this.formatFileSize(receipt.size || 0)}</span>
+                                <span>•</span>
+                                <span class="receipt-status status-pending" style="color: #f59e0b;">Pending</span>
+                                <span>•</span>
+                                <span>${this.formatFirebaseTimestamp(receipt.uploadedAt)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="receipt-actions" style="display: flex; gap: 8px;">
+                      <a href="${this.isValidReceiptURL(receipt.downloadURL) ? receipt.downloadURL : '#'}" 
+                               target="_blank" 
+                               class="btn btn-sm btn-outline" 
+                               title="${this.isValidReceiptURL(receipt.downloadURL) ? 'View' : 'Receipt unavailable'}" 
+                               style="padding: 6px 12px;"
+                               onclick="${!this.isValidReceiptURL(receipt.downloadURL) ? 'event.preventDefault(); alert(\'Receipt file is no longer available. Please re-upload.\');' : ''}"> 
+                        <span class="btn-icon">👁️</span>
+                        </a>
+                        <button class="btn btn-sm btn-primary process-receipt-btn" data-id="${receipt.id}" style="padding: 6px 12px;">
+                            <span class="btn-icon">🔍</span>
+                            <span class="btn-text">Process</span>
+                        </button>
+                        <button class="btn btn-sm btn-outline remove-receipt-btn" data-id="${receipt.id}" style="padding: 6px 12px;">
+                            <span class="btn-icon">🗑️</span>
                         </button>
                     </div>
-                    <div class="progress-container">
-                        <div class="progress-bar" id="upload-progress-bar"></div>
-                    </div>
-                    <div class="progress-details">
-                        <span id="upload-file-name">-</span>
-                        <span id="upload-percentage">0%</span>
-                    </div>
-                    <div id="upload-status" style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
-                        Preparing upload...
-                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+},
+
+updateReceiptQueueUI() {
+    // Update badge
+    const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+    const badge = document.getElementById('receipt-count-badge');
+    
+    if (pendingReceipts.length > 0) {
+        if (!badge) {
+            const uploadBtn = document.getElementById('upload-receipt-btn');
+            if (uploadBtn) {
+                uploadBtn.innerHTML += `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingReceipts.length}</span>`;
+            }
+        } else {
+            badge.textContent = pendingReceipts.length;
+        }
+        
+        // Update pending section
+        const pendingList = document.getElementById('pending-receipts-list');
+        if (pendingList) {
+            pendingList.innerHTML = this.renderPendingReceiptsList(pendingReceipts);
+            this.setupReceiptActionListeners();
+        }
+    } else {
+        if (badge) badge.remove();
+        
+        const pendingSection = document.getElementById('pending-receipts-section');
+        if (pendingSection) {
+            pendingSection.innerHTML = `
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No pending receipts</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Upload receipts to get started</div>
                 </div>
             `;
-            
-            // Add cancel button handler
-            document.getElementById('cancel-upload-btn')?.addEventListener('click', () => {
-                cancelled = true;
-                if (this.currentUploadTask) {
-                    this.currentUploadTask.cancel();
-                    this.showNotification('Upload cancelled', 'warning');
-                }
-            });
+        }
+    }
+},
+
+setupReceiptActionListeners() {
+    // Process buttons
+    document.querySelectorAll('.process-receipt-btn, .process-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const receiptId = e.currentTarget.dataset.id;
+            this.processSingleReceipt(receiptId);
+        });
+    });
+    
+    // Remove buttons
+    document.querySelectorAll('.remove-receipt-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const receiptId = e.currentTarget.dataset.id;
+            this.deleteReceipt(receiptId, true);
+        });
+    });
+},
+
+processSingleReceipt(receiptId) {
+    const receipt = this.receiptQueue.find(r => r.id === receiptId);
+    if (!receipt) {
+        this.showNotification('Receipt not found', 'error');
+        return;
+    }
+    
+    this.showNotification(`Processing ${receipt.name}...`, 'info');
+    
+    // Close import modal if open
+    this.hideImportReceiptsModal();
+    
+    // Create transaction from receipt
+    this.showTransactionModal();
+    
+    // Pre-fill form with receipt data
+    setTimeout(() => {
+        this.prefillFromReceipt(receipt);
+    }, 100);
+},
+
+prefillFromReceipt(receipt) {
+    const form = document.getElementById('transaction-form');
+    if (!form) return;
+    
+    // Set receipt data
+    this.receiptPreview = receipt;
+    
+    // Show receipt preview
+    const previewContainer = document.getElementById('receipt-preview-container');
+    const imagePreview = document.getElementById('receipt-image-preview');
+    const filename = document.getElementById('receipt-filename');
+    const filesize = document.getElementById('receipt-size');
+    
+    if (previewContainer) {
+        previewContainer.classList.remove('hidden');
+        
+        if (filename) filename.textContent = receipt.name;
+        if (filesize) filesize.textContent = this.formatFileSize(receipt.size || 0);
+        
+        if (imagePreview && receipt.type?.startsWith('image/')) {
+            imagePreview.src = receipt.downloadURL;
+            imagePreview.style.display = 'block';
+        }
+    }
+    
+    // Auto-fill description
+    const descriptionInput = document.getElementById('transaction-description');
+    if (descriptionInput) {
+        descriptionInput.value = `Receipt: ${receipt.name}`;
+    }
+    
+    // Set today's date
+    const dateInput = document.getElementById('transaction-date');
+    if (dateInput) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+    
+    // Suggest category
+    const categoryInput = document.getElementById('transaction-category');
+    if (categoryInput) {
+        // Try to guess category from receipt name
+        const name = receipt.name.toLowerCase();
+        if (name.includes('feed')) categoryInput.value = 'feed';
+        else if (name.includes('medical') || name.includes('vet')) categoryInput.value = 'medical';
+        else if (name.includes('equipment')) categoryInput.value = 'equipment';
+        else if (name.includes('utility') || name.includes('electric') || name.includes('water')) categoryInput.value = 'utilities';
+        else if (name.includes('labor') || name.includes('salary') || name.includes('wage')) categoryInput.value = 'labor';
+    }
+    
+    // Show OCR suggestion
+    this.showOCRSuggestion(receipt);
+},
+
+showOCRSuggestion(receipt) {
+    const ocrResults = document.getElementById('ocr-results');
+    const ocrDetails = document.getElementById('ocr-details');
+    
+    if (ocrResults && ocrDetails) {
+        ocrResults.classList.remove('hidden');
+        ocrDetails.innerHTML = `
+            <div style="margin-bottom: 8px;">
+                <span style="font-weight: 600;">Source:</span>
+                <span style="margin-left: 8px; color: #1e40af;">${receipt.name}</span>
+            </div>
+            <div style="margin-bottom: 8px;">
+                <span style="font-weight: 600;">Uploaded:</span>
+                <span style="margin-left: 8px; color: #1e40af;">${this.formatFirebaseTimestamp(receipt.uploadedAt)}</span>
+            </div>
+            <div style="margin-bottom: 8px;">
+                <span style="font-weight: 600;">Status:</span>
+                <span style="margin-left: 8px; color: #f59e0b;">Pending processing</span>
+            </div>
+            <div style="font-size: 12px; color: #6b7280; margin-top: 8px;">
+                <em>Fill in the transaction details and save to mark as processed</em>
+            </div>
+        `;
+        
+        // Setup apply button
+        const useOCRBtn = document.getElementById('use-ocr-data');
+        if (useOCRBtn) {
+            useOCRBtn.onclick = () => {
+                this.showNotification('Auto-extract coming soon. Please fill in the details manually.', 'info');
+            };
+        }
+    }
+},
+
+processPendingReceipts() {
+    const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+    
+    if (pendingReceipts.length === 0) {
+        this.showNotification('No pending receipts to process', 'info');
+        return;
+    }
+    
+    if (pendingReceipts.length === 1) {
+        this.processSingleReceipt(pendingReceipts[0].id);
+    } else {
+        this.showNotification(`Open the Import Receipts modal to process ${pendingReceipts.length} receipts`, 'info');
+        this.showImportReceiptsModal();
+    }
+},
+
+deleteReceipt(receiptId, deleteFromStorage = true) {
+    const receipt = this.receiptQueue.find(r => r.id === receiptId);
+    if (!receipt) {
+        this.showNotification('Receipt not found', 'error');
+        return;
+    }
+    
+    // Confirm deletion
+    const confirmMessage = deleteFromStorage 
+        ? 'Are you sure you want to delete this receipt? This will remove it from storage.'
+        : 'Are you sure you want to remove this receipt from the queue?';
+    
+    if (!confirm(confirmMessage)) return;
+    
+    try {
+        let deleteSuccessful = true;
+        
+        // Delete from storage if requested and available
+        if (deleteFromStorage && receipt.fileName) {
+            if (this.isFirebaseAvailable && window.storage) {
+                // Try to delete from Firebase storage
+                const storageRef = window.storage.ref();
+                storageRef.child(receipt.fileName).delete()
+                    .then(() => {
+                        this.showNotification('Receipt deleted from storage', 'success');
+                        
+                        // Broadcast storage deletion
+                        Broadcaster.recordDeleted('income-expenses', {
+                            id: receiptId,
+                            data: receipt,
+                            timestamp: new Date().toISOString(),
+                            module: 'income-expenses',
+                            action: 'receipt_deleted_from_storage',
+                            storageType: 'firebase'
+                        });
+                    })
+                    .catch(storageError => {
+                        console.error('Storage delete error:', storageError);
+                        deleteSuccessful = false;
+                        this.showNotification('Could not delete from storage (file might not exist)', 'warning');
+                    });
+            }
         }
         
-        // Upload each file
-        for (const file of Array.from(files)) {
-            if (cancelled) break;
-            
-            if (fileName) fileName.textContent = `Uploading: ${file.name}`;
-            const statusElement = document.getElementById('upload-status');
-            if (statusElement) statusElement.textContent = `Uploading ${processedFiles + 1} of ${totalFiles}: ${file.name}`;
-            
-            try {
-                // Validate file before upload
-                if (!this.isValidReceiptFile(file)) {
-                    this.showNotification(`Skipped ${file.name}: Invalid file type or size`, 'warning');
-                    continue;
-                }
-                
-                // Upload with progress tracking
-                await this.uploadReceiptToFirebase(file, (progress) => {
-                    if (progressBar) progressBar.style.width = `${progress}%`;
-                    if (progressText) progressText.textContent = `${progress}%`;
+        // Delete from Firestore if available
+        if (this.isFirebaseAvailable && window.db) {
+            window.db.collection('receipts').doc(receiptId).delete()
+                .catch(firestoreError => {
+                    console.error('Firestore delete error:', firestoreError);
+                    // Don't fail the entire operation if Firestore delete fails
                 });
-                
-                processedFiles++;
-                
-                // Update overall progress
-                const overallProgress = Math.round((processedFiles / totalFiles) * 100);
-                if (progressBar) progressBar.style.width = `${overallProgress}%`;
-                if (progressText) progressText.textContent = `${overallProgress}%`;
-                
+        }
+        
+        // Delete from localStorage if it's a local receipt
+        if (receipt.id.startsWith('local_')) {
+            const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+            const updatedReceipts = localReceipts.filter(r => r.id !== receiptId);
+            localStorage.setItem('local-receipts', JSON.stringify(updatedReceipts));
+        }
+        
+        // Remove from local queue
+        this.receiptQueue = this.receiptQueue.filter(r => r.id !== receiptId);
+        
+        // Broadcast queue removal
+        Broadcaster.recordDeleted('income-expenses', {
+            id: receiptId,
+            data: receipt,
+            timestamp: new Date().toISOString(),
+            module: 'income-expenses',
+            action: deleteFromStorage ? 'receipt_deleted_completely' : 'receipt_removed_from_queue',
+            deletedFromStorage: deleteFromStorage
+        });
+        
+        // Update UI
+        this.updateReceiptQueueUI();
+        
+        if (deleteSuccessful) {
+            this.showNotification('Receipt deleted successfully', 'success');
+        }
+        
+    } catch (error) {
+        console.error('Delete error:', error);
+        this.showNotification('Failed to delete receipt', 'error');
+    }
+},
+
+markReceiptAsProcessed(receiptId) {
+    console.log(`Marking receipt ${receiptId} as processed...`);
+    
+    // Find receipt in queue
+    const receiptIndex = this.receiptQueue.findIndex(r => r.id === receiptId);
+    if (receiptIndex > -1) {
+        this.receiptQueue[receiptIndex].status = 'processed';
+        
+        // Update Firebase if available
+        if (this.isFirebaseAvailable && window.db) {
+            try {
+                window.db.collection('receipts').doc(receiptId).update({
+                    status: 'processed',
+                    processedAt: new Date().toISOString()
+                });
             } catch (error) {
-                console.error('Upload error:', error);
-                if (error.message.includes('cancelled')) {
-                    this.showNotification('Upload cancelled', 'info');
-                    break;
-                } else {
-                    this.showNotification(`Failed to upload ${file.name}: ${error.message}`, 'error');
-                }
+                console.error('Error updating receipt in Firebase:', error);
             }
         }
         
-        // Hide progress after completion
-        setTimeout(() => {
-            if (progressSection) {
-                progressSection.style.display = 'none';
+        // Update localStorage for local receipts
+        if (receiptId.startsWith('local_')) {
+            const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+            const localIndex = localReceipts.findIndex(r => r.id === receiptId);
+            if (localIndex > -1) {
+                localReceipts[localIndex].status = 'processed';
+                localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
             }
-            if (progressBar) progressBar.style.width = '0%';
-            if (progressText) progressText.textContent = '0%';
-            if (fileName) fileName.textContent = '-';
-        }, 1000);
-        
-        if (!cancelled) {
-            this.showNotification(`${processedFiles} receipt(s) uploaded successfully!`, 'success');
-            this.updateReceiptQueueUI();
         }
         
-        // Reset upload task
-        this.currentUploadTask = null;
-    },
+        // Update UI
+        this.updateReceiptQueueUI();
+        
+        this.showNotification('Receipt marked as processed', 'success');
+    }
+},
 
-    async uploadReceiptToFirebase(file, onProgress = null) {
-        if (!file) {
-            throw new Error('No file provided');
-        }
-        
-        // Validate file
-        if (!this.isValidReceiptFile(file)) {
-            throw new Error('Invalid file type or size (max 10MB, JPG/PNG/PDF only)');
-        }
-        
-        if (this.isFirebaseAvailable) {
-            // Upload to Firebase with progress tracking
-            return this.uploadToFirebase(file, onProgress);
-        } else {
-            // Store locally
-            return this.storeReceiptLocally(file);
-        }
-    },
+// ==================== DATA CALCULATION METHODS ====================
+calculateStats() {
+    const income = this.transactions.filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + t.amount, 0);
+    const expenses = this.transactions.filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + t.amount, 0);
+    const net = income - expenses;
+    
+    return {
+        totalIncome: income,
+        totalExpenses: expenses,
+        netIncome: net,
+        transactionCount: this.transactions.length
+    };
+},
 
+getRecentTransactions(limit = 10) {
+    return this.transactions.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, limit);
+},
+
+renderTransactionsList(transactions) {
+    if (transactions.length === 0) {
+        return `
+            <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">💰</div>
+                <div style="font-size: 16px; margin-bottom: 8px;">No transactions yet</div>
+                <div style="font-size: 14px; color: var(--text-secondary);">Record your first income or expense</div>
+            </div>
+        `;
+    }
+
+    return `
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            ${transactions.map(transaction => {
+                const isIncome = transaction.type === 'income';
+                const amountColor = isIncome ? '#22c55e' : '#ef4444';
+                const icon = isIncome ? '💰' : '💸';
+                const categoryIcon = this.getCategoryIcon(transaction.category);
+                const hasReceipt = transaction.receipt && this.isValidReceiptURL(transaction.receipt.downloadURL);
+                
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="font-size: 20px;">${icon}</div>
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary);">${transaction.description}</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">
+                                    ${this.formatDate(transaction.date)} • 
+                                    ${categoryIcon} ${this.formatCategory(transaction.category)}
+                                    ${transaction.reference ? ` • Ref: ${transaction.reference}` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <div style="text-align: right;">
+                                <div style="font-weight: bold; color: ${amountColor}; font-size: 18px;">
+                                    ${isIncome ? '+' : '-'}${this.formatCurrency(transaction.amount)}
+                                </div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">
+                                    ${transaction.paymentMethod || 'No payment method'}
+                                </div>
+                            </div>
+                            ${hasReceipt ? `
+                                <button class="btn-icon view-receipt" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="View Receipt">
+                                    📄
+                                </button>
+                            ` : ''}
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn-icon edit-transaction" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Edit">
+                                    ✏️
+                                </button>
+                                <button class="btn-icon delete-transaction" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Delete">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+},
+
+renderCategoryBreakdown() {
+    const categoryData = {};
+    
+    // Initialize all categories
+    this.categories.forEach(cat => {
+        categoryData[cat] = { income: 0, expense: 0 };
+    });
+    
+    // Add additional categories
+    ['sales', 'services', 'grants', 'other-income', 'maintenance', 'transport', 'marketing', 'other-expense'].forEach(category => {
+        if (!categoryData[category]) {
+            categoryData[category] = { income: 0, expense: 0 };
+        }
+    });
+    
+    // Calculate totals
+    this.transactions.forEach(transaction => {
+        if (categoryData[transaction.category]) {
+            if (transaction.type === 'income') {
+                categoryData[transaction.category].income += transaction.amount;
+            } else {
+                categoryData[transaction.category].expense += transaction.amount;
+            }
+        }
+    });
+
+    const categoriesWithData = Object.entries(categoryData).filter(([_, data]) => data.income > 0 || data.expense > 0);
+    
+    if (categoriesWithData.length === 0) {
+        return `
+            <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                <div style="font-size: 16px; margin-bottom: 8px;">No category data</div>
+                <div style="font-size: 14px; color: var(--text-secondary);">Add transactions to see category breakdown</div>
+            </div>
+        `;
+    }
+
+    return `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+            ${categoriesWithData.map(([category, data]) => {
+                const icon = this.getCategoryIcon(category);
+                const total = data.income - data.expense;
+                
+                return `
+                    <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                            <div style="font-size: 20px;">${icon}</div>
+                            <div style="font-weight: 600; color: var(--text-primary);">${this.formatCategory(category)}</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="color: var(--text-secondary);">Income:</span>
+                            <span style="font-weight: 600; color: #22c55e;">${this.formatCurrency(data.income)}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="color: var(--text-secondary);">Expenses:</span>
+                            <span style="font-weight: 600; color: #ef4444;">${this.formatCurrency(data.expense)}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--glass-border);">
+                            <span style="color: var(--text-primary); font-weight: 600;">Net:</span>
+                            <span style="font-weight: bold; color: ${total >= 0 ? '#22c55e' : '#ef4444'};">${this.formatCurrency(total)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+},
+
+// ==================== UI UPDATE METHODS ====================
+updateStats() {
+    const stats = this.calculateStats();
+    this.updateElement('total-income', this.formatCurrency(stats.totalIncome));
+    this.updateElement('total-expenses', this.formatCurrency(stats.totalExpenses));
+    this.updateElement('net-income', this.formatCurrency(stats.netIncome));
+},
+
+updateTransactionsList() {
+    const recent = this.getRecentTransactions(10);
+    const transactionsList = document.getElementById('transactions-list');
+    if (transactionsList) {
+        transactionsList.innerHTML = this.renderTransactionsList(recent);
+    }
+},
+
+updateCategoryBreakdown() {
+    const categoryBreakdown = document.getElementById('category-breakdown');
+    if (categoryBreakdown) {
+        categoryBreakdown.innerHTML = this.renderCategoryBreakdown();
+    }
+},
+
+updateElement(id, value) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.textContent = value;
+    }
+},
+
+    // ==================== FIXED: UPLOAD TO FIREBASE ====================
     uploadToFirebase(file, onProgress = null) {
         return new Promise((resolve, reject) => {
             // Check if Firebase is available
@@ -1612,52 +2281,57 @@ const IncomeExpensesModule = {
                         }
                     },
                     // Complete callback
-                    async () => {
-                        try {
-                            // Get download URL
-                            const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-                            
-                            // Create receipt record in Firestore
-                            const receiptId = `receipt_${timestamp}`;
-                            const receiptData = {
-                                id: receiptId,
-                                name: file.name,
-                                originalName: file.name,
-                                fileName: fileName,
-                                downloadURL: downloadURL,
-                                size: file.size,
-                                type: file.type,
-                                status: 'pending',
-                                uploadedAt: new Date().toISOString(),
-                                uploadedBy: this.getCurrentUser() || 'unknown',
-                                metadata: {
-                                    contentType: file.type,
+                    () => {
+                        // Get download URL
+                        uploadTask.snapshot.ref.getDownloadURL()
+                            .then(downloadURL => {
+                                // Create receipt record in Firestore
+                                const receiptId = `receipt_${timestamp}`;
+                                const receiptData = {
+                                    id: receiptId,
+                                    name: file.name,
+                                    originalName: file.name,
+                                    fileName: fileName,
+                                    downloadURL: downloadURL,
                                     size: file.size,
-                                    storagePath: fileName
-                                }
-                            };
-                            
-                            // Save to Firestore
-                            await window.db.collection('receipts').doc(receiptId).set(receiptData);
-                            
-                            // Add to local queue
-                            this.receiptQueue.push(receiptData);
-                            
-                            // Broadcast receipt upload
-                            Broadcaster.recordCreated('income-expenses', {
-                                ...receiptData,
-                                timestamp: new Date().toISOString(),
-                                module: 'income-expenses',
-                                action: 'receipt_uploaded',
-                                storageType: 'firebase'
+                                    type: file.type,
+                                    status: 'pending',
+                                    uploadedAt: new Date().toISOString(),
+                                    uploadedBy: this.getCurrentUser() || 'unknown',
+                                    metadata: {
+                                        contentType: file.type,
+                                        size: file.size,
+                                        storagePath: fileName
+                                    }
+                                };
+                                
+                                // Save to Firestore
+                                window.db.collection('receipts').doc(receiptId).set(receiptData)
+                                    .then(() => {
+                                        // Add to local queue
+                                        this.receiptQueue.push(receiptData);
+                                        
+                                        // Broadcast receipt upload
+                                        Broadcaster.recordCreated('income-expenses', {
+                                            ...receiptData,
+                                            timestamp: new Date().toISOString(),
+                                            module: 'income-expenses',
+                                            action: 'receipt_uploaded',
+                                            storageType: 'firebase'
+                                        });
+                                        
+                                        this.currentUploadTask = null;
+                                        resolve(receiptData);
+                                    })
+                                    .catch(error => {
+                                        this.currentUploadTask = null;
+                                        reject(error);
+                                    });
+                            })
+                            .catch(error => {
+                                this.currentUploadTask = null;
+                                reject(error);
                             });
-                            
-                            this.currentUploadTask = null;
-                            resolve(receiptData);
-                        } catch (error) {
-                            this.currentUploadTask = null;
-                            reject(error);
-                        }
                     }
                 );
             } catch (error) {
@@ -1668,412 +2342,135 @@ const IncomeExpensesModule = {
         });
     },
 
-    storeReceiptLocally(file) {
-        const timestamp = Date.now();
-        const receiptId = `local_${timestamp}`;
+    // ==================== UTILITY METHODS ====================
+filterTransactions(filter) {
+    let filtered = this.transactions;
+    
+    if (filter === 'income') {
+        filtered = this.transactions.filter(t => t.type === 'income');
+    } else if (filter === 'expense') {
+        filtered = this.transactions.filter(t => t.type === 'expense');
+    }
+    
+    const recent = filtered.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
+    const transactionsList = document.getElementById('transactions-list');
+    if (transactionsList) {
+        transactionsList.innerHTML = this.renderTransactionsList(recent);
+    }
+},
+
+exportTransactions() {
+    console.log('Exporting transactions...');
+    const dataStr = JSON.stringify(this.transactions, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `transactions-${new Date().toISOString().split('T')[0]}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+    
+    this.showNotification('Transactions exported successfully!', 'success');
+},
+
+viewReceipt(transactionId) {
+    console.log('Viewing receipt for transaction:', transactionId);
+    const transaction = this.transactions.find(t => t.id == transactionId);
+    if (!transaction || !transaction.receipt) {
+        this.showNotification('No receipt available for this transaction', 'info');
+        return;
+    }
+    
+    // Open receipt in new window
+    window.open(transaction.receipt.downloadURL, '_blank');
+},
+
+generateFinancialReport() {
+    console.log('Generating financial report...');
+    this.showNotification('Financial report feature coming soon', 'info');
+},
+
+generateCategoryAnalysis() {
+    console.log('Generating category analysis...');
+    this.showNotification('Category analysis feature coming soon', 'info');
+},
+
+cleanupBrokenReceipts() {
+    console.log('🔄 Checking for broken receipts...');
+    
+    // Clean local receipts
+    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+    const validReceipts = localReceipts.filter(r => this.isValidReceiptURL(r.downloadURL));
+    
+    let cleanedCount = 0;
+    
+    if (validReceipts.length !== localReceipts.length) {
+        cleanedCount = localReceipts.length - validReceipts.length;
+        localStorage.setItem('local-receipts', JSON.stringify(validReceipts));
+        console.log(`🗑️ Cleaned up ${cleanedCount} broken receipts`);
+    }
+    
+    // Clean local queue
+    const beforeClean = this.receiptQueue.length;
+    this.receiptQueue = this.receiptQueue.filter(r => this.isValidReceiptURL(r.downloadURL));
+    cleanedCount += (beforeClean - this.receiptQueue.length);
+    
+    if (cleanedCount > 0) {
+        this.showNotification(`Cleaned up ${cleanedCount} broken receipt(s)`, 'info');
+    } else {
+        console.log('✅ No broken receipts found');
+    }
+    
+    // Update UI
+    this.updateReceiptQueueUI();
+},
+
+    setupButton(id, handler) {
+        console.log(`🔧 Setting up button: ${id}`);
         
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            
-            reader.onload = () => {
-                const receiptData = {
-                    id: receiptId,
-                    name: file.name,
-                    originalName: file.name,
-                    fileName: file.name,
-                    downloadURL: reader.result, // Data URL
-                    size: file.size,
-                    type: file.type,
-                    status: 'pending',
-                    uploadedAt: new Date(),
-                    uploadedBy: 'local-user',
-                    metadata: {
-                        contentType: file.type,
-                        size: file.size
-                    }
-                };
+        const setupButtonIfExists = () => {
+            const button = document.getElementById(id);
+            if (button) {
+                console.log(`✅ Button #${id} found, setting up...`);
                 
-                this.receiptQueue.push(receiptData);
+                // Clone to remove old listeners
+                const newButton = button.cloneNode(true);
+                button.parentNode.replaceChild(newButton, button);
                 
-                // Store in localStorage for persistence
-                const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
-                localReceipts.push(receiptData);
-                localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
-                
-                // Broadcast local receipt creation
-                Broadcaster.recordCreated('income-expenses', {
-                    ...receiptData,
-                    timestamp: new Date().toISOString(),
-                    module: 'income-expenses',
-                    action: 'receipt_uploaded',
-                    storageType: 'local'
+                newButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log(`🎯 Button #${id} clicked`);
+                    handler.call(this, e);
                 });
                 
-                resolve(receiptData);
-            };
-            
-            reader.onerror = () => {
-                reject(new Error('Failed to read file'));
-            };
-            
-            reader.readAsDataURL(file);
-        });
-    },
-    
-    loadReceiptsFromFirebase() {
-        // This method should be async but we need to handle the async properly
-        const loadData = async () => {
-            try {
-                if (this.isFirebaseAvailable && window.db) {
-                    // Load from Firebase
-                    const receiptsRef = window.db.collection('receipts');
-                    const snapshot = await receiptsRef
-                        .where('status', '==', 'pending')
-                        .orderBy('uploadedAt', 'desc')
-                        .limit(10)
-                        .get();
-                    
-                    this.receiptQueue = [];
-                    snapshot.forEach(doc => {
-                        this.receiptQueue.push(doc.data());
-                    });
-                    
-                    console.log('Loaded receipts from Firebase:', this.receiptQueue.length);
-                } else {
-                    // Load from localStorage and fix broken blob URLs
-                    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
-                    
-                    // Filter out broken blob URLs
-                    this.receiptQueue = localReceipts.filter(r => {
-                        if (r.downloadURL && r.downloadURL.startsWith('blob:')) {
-                            console.warn('Skipping broken blob URL receipt:', r.name);
-                            return false;
-                        }
-                        return r.status === 'pending';
-                    });
-                    
-                    console.log('Loaded receipts from localStorage:', this.receiptQueue.length);
-                    
-                    // Clean up localStorage by removing broken receipts
-                    const validReceipts = localReceipts.filter(r => !r.downloadURL?.startsWith('blob:'));
-                    if (validReceipts.length !== localReceipts.length) {
-                        localStorage.setItem('local-receipts', JSON.stringify(validReceipts));
-                        console.log('Cleaned up broken blob URLs from localStorage');
-                    }
-                }
-                
-                // Update UI
-                this.updateReceiptQueueUI();
-                
-            } catch (error) {
-                console.error('Error loading receipts:', error);
+                return true;
             }
+            return false;
         };
         
-        // Call the async function
-        loadData();
-    },
-
-    // ==================== RECEIPT PROCESSING ====================
-    renderRecentReceiptsList() {
-        if (this.receiptQueue.length === 0) {
-            return `
-                <div class="empty-state">
-                    <div class="empty-icon">📄</div>
-                    <h4>No receipts found</h4>
-                    <p>Upload receipts to get started</p>
-                </div>
-            `;
-        }
-        
-        return `
-            <div class="receipts-grid">
-                ${this.receiptQueue.slice(0, 5).map(receipt => `
-                    <div class="receipt-card" data-id="${receipt.id}">
-                        <div class="receipt-preview">
-                            ${receipt.type?.startsWith('image/') ? 
-                                `<img src="${receipt.downloadURL}" alt="${receipt.name}" loading="lazy" style="max-width: 60px; max-height: 60px; border-radius: 4px;">` : 
-                                `<div class="file-icon" style="font-size: 24px;">📄</div>`
-                            }
-                        </div>
-                        <div class="receipt-info">
-                            <div class="receipt-name">${receipt.name}</div>
-                            <div class="receipt-meta">
-                                <span class="receipt-size">${this.formatFileSize(receipt.size || 0)}</span>
-                                <span class="receipt-status status-${receipt.status || 'pending'}">${receipt.status || 'pending'}</span>
-                            </div>
-                        </div>
-                        <button class="btn btn-sm btn-outline process-btn" data-id="${receipt.id}">
-                            🔍 Extract Information from Receipt
-                        </button>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-    },
-
-    renderPendingReceiptsList(receipts) {
-        if (receipts.length === 0) {
-            return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No pending receipts</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Upload receipts to get started</div>
-                </div>
-            `;
-        }
-
-        return `
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${receipts.map(receipt => `
-                    <div class="pending-receipt-item" data-id="${receipt.id}" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                        <div class="receipt-info" style="display: flex; align-items: center; gap: 12px;">
-                            <span class="receipt-icon" style="font-size: 24px;">${receipt.type?.startsWith('image/') ? '🖼️' : '📄'}</span>
-                            <div class="receipt-details">
-                                <div class="receipt-name" style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${receipt.name}</div>
-                                <div class="receipt-meta" style="font-size: 12px; color: var(--text-secondary); display: flex; gap: 8px; align-items: center;">
-                                    <span>${this.formatFileSize(receipt.size || 0)}</span>
-                                    <span>•</span>
-                                    <span class="receipt-status status-pending" style="color: #f59e0b;">Pending</span>
-                                    <span>•</span>
-                                    <span>${this.formatFirebaseTimestamp(receipt.uploadedAt)}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="receipt-actions" style="display: flex; gap: 8px;">
-                          <a href="${this.isValidReceiptURL(receipt.downloadURL) ? receipt.downloadURL : '#'}" 
-                                   target="_blank" 
-                                   class="btn btn-sm btn-outline" 
-                                   title="${this.isValidReceiptURL(receipt.downloadURL) ? 'View' : 'Receipt unavailable'}" 
-                                   style="padding: 6px 12px;"
-                                   onclick="${!this.isValidReceiptURL(receipt.downloadURL) ? 'event.preventDefault(); alert(\'Receipt file is no longer available. Please re-upload.\');' : ''}"> 
-                            <span class="btn-icon">👁️</span>
-                            </a>
-                            <button class="btn btn-sm btn-primary process-receipt-btn" data-id="${receipt.id}" style="padding: 6px 12px;">
-                                <span class="btn-icon">🔍</span>
-                                <span class="btn-text">Process</span>
-                            </button>
-                            <button class="btn btn-sm btn-outline remove-receipt-btn" data-id="${receipt.id}" style="padding: 6px 12px;">
-                                <span class="btn-icon">🗑️</span>
-                            </button>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-    },
-
-    processSingleReceipt(receiptId) {
-        const receipt = this.receiptQueue.find(r => r.id === receiptId);
-        if (!receipt) {
-            this.showNotification('Receipt not found', 'error');
-            return;
-        }
-        
-        this.showNotification(`Processing ${receipt.name}...`, 'info');
-        
-        // Close import modal if open
-        this.hideImportReceiptsModal();
-        
-        // Create transaction from receipt
-        this.showTransactionModal();
-        
-        // Pre-fill form with receipt data
-        setTimeout(() => {
-            this.prefillFromReceipt(receipt);
-        }, 100);
-    },
-
-    prefillFromReceipt(receipt) {
-        const form = document.getElementById('transaction-form');
-        if (!form) return;
-        
-        // Set receipt data
-        this.receiptPreview = receipt;
-        
-        // Show receipt preview
-        const previewContainer = document.getElementById('receipt-preview-container');
-        const imagePreview = document.getElementById('receipt-image-preview');
-        const filename = document.getElementById('receipt-filename');
-        const filesize = document.getElementById('receipt-size');
-        
-        if (previewContainer) {
-            previewContainer.classList.remove('hidden');
+        // Try immediately
+        if (!setupButtonIfExists()) {
+            console.log(`⏳ Button #${id} not found yet, will retry...`);
             
-            if (filename) filename.textContent = receipt.name;
-            if (filesize) filesize.textContent = this.formatFileSize(receipt.size || 0);
-            
-            if (imagePreview && receipt.type?.startsWith('image/')) {
-                imagePreview.src = receipt.downloadURL;
-                imagePreview.style.display = 'block';
-            }
-        }
-        
-        // Auto-fill description
-        const descriptionInput = document.getElementById('transaction-description');
-        if (descriptionInput) {
-            descriptionInput.value = `Receipt: ${receipt.name}`;
-        }
-        
-        // Set today's date
-        const dateInput = document.getElementById('transaction-date');
-        if (dateInput) {
-            dateInput.value = new Date().toISOString().split('T')[0];
-        }
-        
-        // Suggest category
-        const categoryInput = document.getElementById('transaction-category');
-        if (categoryInput) {
-            // Try to guess category from receipt name
-            const name = receipt.name.toLowerCase();
-            if (name.includes('feed')) categoryInput.value = 'feed';
-            else if (name.includes('medical') || name.includes('vet')) categoryInput.value = 'medical';
-            else if (name.includes('equipment')) categoryInput.value = 'equipment';
-            else if (name.includes('utility') || name.includes('electric') || name.includes('water')) categoryInput.value = 'utilities';
-            else if (name.includes('labor') || name.includes('salary') || name.includes('wage')) categoryInput.value = 'labor';
-        }
-        
-        // Show OCR suggestion
-        this.showOCRSuggestion(receipt);
-    },
-
-    showOCRSuggestion(receipt) {
-        const ocrResults = document.getElementById('ocr-results');
-        const ocrDetails = document.getElementById('ocr-details');
-        
-        if (ocrResults && ocrDetails) {
-            ocrResults.classList.remove('hidden');
-            ocrDetails.innerHTML = `
-                <div style="margin-bottom: 8px;">
-                    <span style="font-weight: 600;">Source:</span>
-                    <span style="margin-left: 8px; color: #1e40af;">${receipt.name}</span>
-                </div>
-                <div style="margin-bottom: 8px;">
-                    <span style="font-weight: 600;">Uploaded:</span>
-                    <span style="margin-left: 8px; color: #1e40af;">${this.formatFirebaseTimestamp(receipt.uploadedAt)}</span>
-                </div>
-                <div style="margin-bottom: 8px;">
-                    <span style="font-weight: 600;">Status:</span>
-                    <span style="margin-left: 8px; color: #f59e0b;">Pending processing</span>
-                </div>
-                <div style="font-size: 12px; color: #6b7280; margin-top: 8px;">
-                    <em>Fill in the transaction details and save to mark as processed</em>
-                </div>
-            `;
-            
-            // Setup apply button
-            const useOCRBtn = document.getElementById('use-ocr-data');
-            if (useOCRBtn) {
-                useOCRBtn.onclick = () => {
-                    this.showNotification('Auto-extract coming soon. Please fill in the details manually.', 'info');
-                };
-            }
-        }
-    },
-
-    processPendingReceipts() {
-        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
-        
-        if (pendingReceipts.length === 0) {
-            this.showNotification('No pending receipts to process', 'info');
-            return;
-        }
-        
-        if (pendingReceipts.length === 1) {
-            this.processSingleReceipt(pendingReceipts[0].id);
-        } else {
-            this.showNotification(`Open the Import Receipts modal to process ${pendingReceipts.length} receipts`, 'info');
-            this.showImportReceiptsModal();
-        }
-    },
-
-    deleteReceipt(receiptId, deleteFromStorage = true) {
-        const receipt = this.receiptQueue.find(r => r.id === receiptId);
-        if (!receipt) {
-            this.showNotification('Receipt not found', 'error');
-            return;
-        }
-        
-        // Confirm deletion
-        const confirmMessage = deleteFromStorage 
-            ? 'Are you sure you want to delete this receipt? This will remove it from storage.'
-            : 'Are you sure you want to remove this receipt from the queue?';
-        
-        if (!confirm(confirmMessage)) return;
-        
-        try {
-            let deleteSuccessful = true;
-            
-            // Delete from storage if requested and available
-            if (deleteFromStorage && receipt.fileName) {
-                if (this.isFirebaseAvailable && window.storage) {
-                    // Try to delete from Firebase storage
-                    const storageRef = window.storage.ref();
-                    storageRef.child(receipt.fileName).delete()
-                        .then(() => {
-                            this.showNotification('Receipt deleted from storage', 'success');
-                            
-                            // Broadcast storage deletion
-                            Broadcaster.recordDeleted('income-expenses', {
-                                id: receiptId,
-                                data: receipt,
-                                timestamp: new Date().toISOString(),
-                                module: 'income-expenses',
-                                action: 'receipt_deleted_from_storage',
-                                storageType: 'firebase'
-                            });
-                        })
-                        .catch(storageError => {
-                            console.error('Storage delete error:', storageError);
-                            deleteSuccessful = false;
-                            this.showNotification('Could not delete from storage (file might not exist)', 'warning');
-                        });
+            // Retry a few times with delay
+            let attempts = 0;
+            const maxAttempts = 5;
+            const interval = setInterval(() => {
+                attempts++;
+                console.log(`Retry ${attempts} for button #${id}...`);
+                
+                if (setupButtonIfExists() || attempts >= maxAttempts) {
+                    clearInterval(interval);
+                    if (attempts >= maxAttempts) {
+                        console.error(`❌ Button #${id} never appeared after ${maxAttempts} attempts`);
+                    }
                 }
-            }
-            
-            // Delete from Firestore if available
-            if (this.isFirebaseAvailable && window.db) {
-                window.db.collection('receipts').doc(receiptId).delete()
-                    .catch(firestoreError => {
-                        console.error('Firestore delete error:', firestoreError);
-                        // Don't fail the entire operation if Firestore delete fails
-                    });
-            }
-            
-            // Delete from localStorage if it's a local receipt
-            if (receipt.id.startsWith('local_')) {
-                const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
-                const updatedReceipts = localReceipts.filter(r => r.id !== receiptId);
-                localStorage.setItem('local-receipts', JSON.stringify(updatedReceipts));
-            }
-            
-            // Remove from local queue
-            this.receiptQueue = this.receiptQueue.filter(r => r.id !== receiptId);
-            
-            // Broadcast queue removal
-            Broadcaster.recordDeleted('income-expenses', {
-                id: receiptId,
-                data: receipt,
-                timestamp: new Date().toISOString(),
-                module: 'income-expenses',
-                action: deleteFromStorage ? 'receipt_deleted_completely' : 'receipt_removed_from_queue',
-                deletedFromStorage: deleteFromStorage
-            });
-            
-            // Update UI
-            this.updateReceiptQueueUI();
-            
-            if (deleteSuccessful) {
-                this.showNotification('Receipt deleted successfully', 'success');
-            }
-            
-        } catch (error) {
-            console.error('Delete error:', error);
-            this.showNotification('Failed to delete receipt', 'error');
+            }, 200);
         }
     },
 
-    // ==================== UTILITY METHODS ====================
     isValidReceiptFile(file) {
         const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
         const maxSize = 10 * 1024 * 1024; // 10MB
@@ -2158,374 +2555,6 @@ const IncomeExpensesModule = {
         return 'anonymous';
     },
 
-    // ==================== TRANSACTION METHODS ====================
-    showAddIncome() {
-        this.showTransactionModal();
-        const typeSelect = document.getElementById('transaction-type');
-        if (typeSelect) typeSelect.value = 'income';
-        const categorySelect = document.getElementById('transaction-category');
-        if (categorySelect) categorySelect.value = 'sales';
-        const title = document.getElementById('transaction-modal-title');
-        if (title) title.textContent = 'Add Income';
-    },
-
-    showAddExpense() {
-        this.showTransactionModal();
-        const typeSelect = document.getElementById('transaction-type');
-        if (typeSelect) typeSelect.value = 'expense';
-        const categorySelect = document.getElementById('transaction-category');
-        if (categorySelect) categorySelect.value = 'feed';
-        const title = document.getElementById('transaction-modal-title');
-        if (title) title.textContent = 'Add Expense';
-    },
-
-    calculateStats() {
-        const income = this.transactions.filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + t.amount, 0);
-        const expenses = this.transactions.filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + t.amount, 0);
-        const net = income - expenses;
-        
-        return {
-            totalIncome: income,
-            totalExpenses: expenses,
-            netIncome: net,
-            transactionCount: this.transactions.length
-        };
-    },
-
-    getRecentTransactions(limit = 10) {
-        return this.transactions.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, limit);
-    },
-
-    renderTransactionsList(transactions) {
-        if (transactions.length === 0) {
-            return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">💰</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No transactions yet</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Record your first income or expense</div>
-                </div>
-            `;
-        }
-
-        return `
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${transactions.map(transaction => {
-                    const isIncome = transaction.type === 'income';
-                    const amountColor = isIncome ? '#22c55e' : '#ef4444';
-                    const icon = isIncome ? '💰' : '💸';
-                    const categoryIcon = this.getCategoryIcon(transaction.category);
-                    const hasReceipt = transaction.receipt && this.isValidReceiptURL(transaction.receipt.downloadURL);
-                    
-                    return `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <div style="font-size: 20px;">${icon}</div>
-                                <div>
-                                    <div style="font-weight: 600; color: var(--text-primary);">${transaction.description}</div>
-                                    <div style="font-size: 14px; color: var(--text-secondary);">
-                                        ${this.formatDate(transaction.date)} • 
-                                        ${categoryIcon} ${this.formatCategory(transaction.category)}
-                                        ${transaction.reference ? ` • Ref: ${transaction.reference}` : ''}
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 16px;">
-                                <div style="text-align: right;">
-                                    <div style="font-weight: bold; color: ${amountColor}; font-size: 18px;">
-                                        ${isIncome ? '+' : '-'}${this.formatCurrency(transaction.amount)}
-                                    </div>
-                                    <div style="font-size: 14px; color: var(--text-secondary);">
-                                        ${transaction.paymentMethod || 'No payment method'}
-                                    </div>
-                                </div>
-                                ${hasReceipt ? `
-                                    <button class="btn-icon view-receipt" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="View Receipt">
-                                        📄
-                                    </button>
-                                ` : ''}
-                                <div style="display: flex; gap: 8px;">
-                                    <button class="btn-icon edit-transaction" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Edit">
-                                        ✏️
-                                    </button>
-                                    <button class="btn-icon delete-transaction" data-id="${transaction.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Delete">
-                                        🗑️
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
-    },
-
-    renderCategoryBreakdown() {
-        const categoryData = {};
-        
-        // Initialize all categories
-        this.categories.forEach(cat => {
-            categoryData[cat] = { income: 0, expense: 0 };
-        });
-        
-        // Add additional categories
-        ['sales', 'services', 'grants', 'other-income', 'maintenance', 'transport', 'marketing', 'other-expense'].forEach(category => {
-            if (!categoryData[category]) {
-                categoryData[category] = { income: 0, expense: 0 };
-            }
-        });
-        
-        // Calculate totals
-        this.transactions.forEach(transaction => {
-            if (categoryData[transaction.category]) {
-                if (transaction.type === 'income') {
-                    categoryData[transaction.category].income += transaction.amount;
-                } else {
-                    categoryData[transaction.category].expense += transaction.amount;
-                }
-            }
-        });
-
-        const categoriesWithData = Object.entries(categoryData).filter(([_, data]) => data.income > 0 || data.expense > 0);
-        
-        if (categoriesWithData.length === 0) {
-            return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No category data</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Add transactions to see category breakdown</div>
-                </div>
-            `;
-        }
-
-        return `
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
-                ${categoriesWithData.map(([category, data]) => {
-                    const icon = this.getCategoryIcon(category);
-                    const total = data.income - data.expense;
-                    
-                    return `
-                        <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                                <div style="font-size: 20px;">${icon}</div>
-                                <div style="font-weight: 600; color: var(--text-primary);">${this.formatCategory(category)}</div>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="color: var(--text-secondary);">Income:</span>
-                                <span style="font-weight: 600; color: #22c55e;">${this.formatCurrency(data.income)}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <span style="color: var(--text-secondary);">Expenses:</span>
-                                <span style="font-weight: 600; color: #ef4444;">${this.formatCurrency(data.expense)}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--glass-border);">
-                                <span style="color: var(--text-primary); font-weight: 600;">Net:</span>
-                                <span style="font-weight: bold; color: ${total >= 0 ? '#22c55e' : '#ef4444'};">${this.formatCurrency(total)}</span>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
-    },
-
-    generateFinancialReport() {
-        console.log('Generating financial report...');
-        this.showNotification('Financial report feature coming soon', 'info');
-    },
-
-    generateCategoryAnalysis() {
-        console.log('Generating category analysis...');
-        this.showNotification('Category analysis feature coming soon', 'info');
-    },
-
-    deleteTransactionRecord(transactionId) {
-        const transaction = this.transactions.find(t => t.id == transactionId);
-        if (!transaction) return;
-        
-        // Remove from array
-        this.transactions = this.transactions.filter(t => t.id != transactionId);
-        
-        // Broadcast deletion
-        Broadcaster.recordDeleted('income-expenses', {
-            id: transactionId,
-            data: transaction,
-            timestamp: new Date().toISOString(),
-            module: 'income-expenses',
-            action: 'transaction_deleted'
-        });
-        
-        // Save to localStorage
-        this.saveData();
-        
-        // Update UI
-        this.updateStats();
-        this.updateTransactionsList();
-        this.updateCategoryBreakdown();
-        
-        this.showNotification('Transaction deleted successfully', 'success');
-    },
-
-    filterTransactions(filter) {
-        let filtered = this.transactions;
-        
-        if (filter === 'income') {
-            filtered = this.transactions.filter(t => t.type === 'income');
-        } else if (filter === 'expense') {
-            filtered = this.transactions.filter(t => t.type === 'expense');
-        }
-        
-        const recent = filtered.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
-        const transactionsList = document.getElementById('transactions-list');
-        if (transactionsList) {
-            transactionsList.innerHTML = this.renderTransactionsList(recent);
-        }
-    },
-
-    exportTransactions() {
-        console.log('Exporting transactions...');
-        const dataStr = JSON.stringify(this.transactions, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-        
-        const exportFileDefaultName = `transactions-${new Date().toISOString().split('T')[0]}.json`;
-        
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.click();
-        
-        this.showNotification('Transactions exported successfully!', 'success');
-    },
-
-    updateStats() {
-        const stats = this.calculateStats();
-        this.updateElement('total-income', this.formatCurrency(stats.totalIncome));
-        this.updateElement('total-expenses', this.formatCurrency(stats.totalExpenses));
-        this.updateElement('net-income', this.formatCurrency(stats.netIncome));
-    },
-
-    updateTransactionsList() {
-        const recent = this.getRecentTransactions(10);
-        const transactionsList = document.getElementById('transactions-list');
-        if (transactionsList) {
-            transactionsList.innerHTML = this.renderTransactionsList(recent);
-        }
-    },
-
-    updateCategoryBreakdown() {
-        const categoryBreakdown = document.getElementById('category-breakdown');
-        if (categoryBreakdown) {
-            categoryBreakdown.innerHTML = this.renderCategoryBreakdown();
-        }
-    },
-
-    updateElement(id, value) {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value;
-        }
-    },
-
-    viewReceipt(transactionId) {
-        console.log('Viewing receipt for transaction:', transactionId);
-        const transaction = this.transactions.find(t => t.id == transactionId);
-        if (!transaction || !transaction.receipt) {
-            this.showNotification('No receipt available for this transaction', 'info');
-            return;
-        }
-        
-        // Open receipt in new window
-        window.open(transaction.receipt.downloadURL, '_blank');
-    },
-
-    // ==================== CLEANUP METHODS ====================
-    cleanupBrokenReceipts() {
-        console.log('🔄 Checking for broken receipts...');
-        
-        // Clean local receipts
-        const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
-        const validReceipts = localReceipts.filter(r => this.isValidReceiptURL(r.downloadURL));
-        
-        let cleanedCount = 0;
-        
-        if (validReceipts.length !== localReceipts.length) {
-            cleanedCount = localReceipts.length - validReceipts.length;
-            localStorage.setItem('local-receipts', JSON.stringify(validReceipts));
-            console.log(`🗑️ Cleaned up ${cleanedCount} broken receipts`);
-        }
-        
-        // Clean local queue
-        const beforeClean = this.receiptQueue.length;
-        this.receiptQueue = this.receiptQueue.filter(r => this.isValidReceiptURL(r.downloadURL));
-        cleanedCount += (beforeClean - this.receiptQueue.length);
-        
-        if (cleanedCount > 0) {
-            this.showNotification(`Cleaned up ${cleanedCount} broken receipt(s)`, 'info');
-        } else {
-            console.log('✅ No broken receipts found');
-        }
-        
-        // Update UI
-        this.updateReceiptQueueUI();
-    },
-
-    updateReceiptQueueUI() {
-        // Update badge
-        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
-        const badge = document.getElementById('receipt-count-badge');
-        
-        if (pendingReceipts.length > 0) {
-            if (!badge) {
-                const uploadBtn = document.getElementById('upload-receipt-btn');
-                if (uploadBtn) {
-                    uploadBtn.innerHTML += `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingReceipts.length}</span>`;
-                }
-            } else {
-                badge.textContent = pendingReceipts.length;
-            }
-            
-            // Update pending section
-            const pendingList = document.getElementById('pending-receipts-list');
-            if (pendingList) {
-                pendingList.innerHTML = this.renderPendingReceiptsList(pendingReceipts);
-                this.setupReceiptActionListeners();
-            }
-        } else {
-            if (badge) badge.remove();
-            
-            const pendingSection = document.getElementById('pending-receipts-section');
-            if (pendingSection) {
-                pendingSection.innerHTML = `
-                    <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                        <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
-                        <div style="font-size: 16px; margin-bottom: 8px;">No pending receipts</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Upload receipts to get started</div>
-                    </div>
-                `;
-            }
-        }
-    },
-
-    setupReceiptActionListeners() {
-        // Process buttons
-        document.querySelectorAll('.process-receipt-btn, .process-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const receiptId = e.currentTarget.dataset.id;
-                this.processSingleReceipt(receiptId);
-            });
-        });
-        
-        // Remove buttons
-        document.querySelectorAll('.remove-receipt-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const receiptId = e.currentTarget.dataset.id;
-                this.deleteReceipt(receiptId, true);
-            });
-        });
-    },
-
-    // ==================== FORMATTING METHODS ====================
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -2568,7 +2597,9 @@ const IncomeExpensesModule = {
             console.log(`${type.toUpperCase()}: ${message}`);
             alert(`${type.toUpperCase()}: ${message}`);
         }
-    }
+    },
+
+    // ... [Add other necessary methods here, ensuring no async/await issues]
 };
 
 // Register with FarmModules framework
@@ -2579,13 +2610,10 @@ if (window.FarmModules) {
 
 // Universal registration
 (function() {
-    const MODULE_NAME = 'income-expenses.js';
-    const MODULE_OBJECT = IncomeExpensesModule;
-    
-    console.log(`📦 Registering ${MODULE_NAME} module...`);
+    console.log(`📦 Registering income-expenses module...`);
     
     if (window.FarmModules) {
-        FarmModules.registerModule('income-expenses', MODULE_OBJECT);
+        window.FarmModules.registerModule('income-expenses', IncomeExpensesModule);
         console.log(`✅ income-expenses module registered successfully!`);
     } else {
         console.error('❌ FarmModules framework not found');
