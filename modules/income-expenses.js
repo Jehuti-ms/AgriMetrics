@@ -25,48 +25,6 @@ const IncomeExpensesModule = {
     currentUploadTask: null,
 
     // ==================== INITIALIZATION ====================
-/*   initialize() {
-    console.log('💰 Initializing Income & Expenses...');
-    
-    if (this.initialized) {
-        console.log('✅ Already initialized');
-        return true;
-    }
-    
-    this.element = document.getElementById('content-area');
-    if (!this.element) {
-        console.error('Content area element not found');
-        return false;
-    }
-
-    // Check Firebase availability
-    this.isFirebaseAvailable = !!(window.firebase && window.firebase.storage && window.firebase.firestore);
-    console.log('Firebase available:', this.isFirebaseAvailable);
-
-    if (window.StyleManager) {
-        StyleManager.registerModule(this.name, this.element, this);
-    }
-
-    this.loadData();
-    this.cleanupBrokenReceipts();
-    this.loadReceiptsFromFirebase();
-    this.renderModule();
-
-    // Camera properties
-    this.useFrontCamera = false;
-    this.currentStream = null;
-    this.receiptQueue = [];
-
-    // Mark as initialized
-    this.initialized = true;
-    console.log('✅ Income & Expenses initialized');
-    return true;
-},
-
-onThemeChange(theme) {
-    console.log(`Income & Expenses updating for theme: ${theme}`);
-},  */
-
     initialize() {
         console.log('💰 Initializing Income & Expenses...');
         
@@ -1632,38 +1590,48 @@ initializeCamera() {
 switchCamera() {
     console.log('🔄 Switching camera...');
     
-    // Toggle between front and back camera
-    this.useFrontCamera = !this.useFrontCamera;
+    if (!this.cameraStream) {
+        console.warn('No camera stream available');
+        return;
+    }
     
-    // Restart camera with new facing mode
+    // SIMPLE FIX: Just stop the current camera and reinitialize with opposite facing mode
+    // Track state globally
+    if (!window.cameraState) {
+        window.cameraState = { useFrontCamera: false };
+    }
+    
+    // Toggle between front and back
+    window.cameraState.useFrontCamera = !window.cameraState.useFrontCamera;
+    
+    // Stop current camera
+    this.stopCamera();
+    
+    // Show loading state briefly
+    const status = document.getElementById('camera-status');
+    if (status) {
+        status.textContent = 'Switching camera...';
+    }
+    
+    // Wait a bit then start new camera
     setTimeout(() => {
-        this.initializeCamera();
-    }, 100);
+        this.initializeCamera(window.cameraState.useFrontCamera);
+    }, 300);
 },
+
 
 // ===== STOP CAMERA =====
 stopCamera() {
-    console.log('📷 Stopping camera...');
-    
-    const video = document.getElementById('camera-preview');
-    if (video && video.srcObject) {
-        const stream = video.srcObject;
-        const tracks = stream.getTracks();
-        
-        tracks.forEach(track => {
+    if (this.cameraStream) {
+        this.cameraStream.getTracks().forEach(track => {
             track.stop();
         });
-        
-        video.srcObject = null;
+        this.cameraStream = null;
     }
     
-    // Clear current stream reference
-    this.currentStream = null;
-    
-    // Update camera status
-    const cameraStatus = document.getElementById('camera-status');
-    if (cameraStatus) {
-        cameraStatus.textContent = 'Camera stopped';
+    const video = document.getElementById('camera-preview');
+    if (video) {
+        video.srcObject = null;
     }
 },
 
@@ -2253,65 +2221,79 @@ updateReceiptsList() {
     });
 },
     
-   async initializeCamera(useFrontCamera = false) {
+   asyncinitializeCamera(useFrontCamera = false) {
     console.log('📷 Initializing camera...', useFrontCamera ? 'Front' : 'Rear');
     
     try {
         const video = document.getElementById('camera-preview');
-        if (!video) {
-            console.error('❌ Camera preview element not found');
-            this.showUploadInterface();
-            return;
-        }
+        const status = document.getElementById('camera-status');
         
-        // Stop any existing stream
-        if (window.cameraStream) {
-            window.cameraStream.getTracks().forEach(track => track.stop());
-        }
+        if (!video) return;
         
-        // Define constraints
-        const constraints = {
-            video: {
+        // Stop any existing stream first
+        this.stopCamera();
+        
+        // SIMPLE APPROACH: Just use facingMode
+        navigator.mediaDevices.getUserMedia({
+            video: { 
                 facingMode: useFrontCamera ? 'user' : 'environment',
                 width: { ideal: 1280 },
                 height: { ideal: 720 }
             },
             audio: false
-        };
-        
-        navigator.mediaDevices.getUserMedia(constraints)
-            .then(stream => {
-                console.log('✅ Camera access granted');
-                window.cameraStream = stream;
-                video.srcObject = stream;
-                video.play();
+        })
+        .then(stream => {
+            console.log('✅ Camera access granted');
+            this.cameraStream = stream;
+            video.srcObject = stream;
+            
+            if (status) status.textContent = 'Camera Ready';
+            
+            // Update switch camera button text
+            const switchBtn = document.getElementById('switch-camera');
+            if (switchBtn) {
+                switchBtn.innerHTML = `
+                    <span class="btn-icon">🔄</span>
+                    <span class="btn-text">Switch to ${useFrontCamera ? 'Rear' : 'Front'} Camera</span>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('❌ Camera error:', error);
+            
+            if (status) status.textContent = 'Camera Error';
+            
+            // Try fallback without facingMode if specific camera fails
+            if (error.name === 'OverconstrainedError') {
+                console.log('🔄 Trying fallback camera...');
                 
-                // Show camera controls
-                const cameraControls = document.getElementById('camera-controls');
-                if (cameraControls) {
-                    cameraControls.style.display = 'flex';
-                }
-                
-                // Update switch camera button text based on current camera
-                const switchCameraBtn = document.getElementById('switch-camera');
-                if (switchCameraBtn) {
-                    switchCameraBtn.innerHTML = `<i class="fas fa-sync-alt"></i> Switch to ${useFrontCamera ? 'Rear' : 'Front'} Camera`;
-                }
-                
-                // Hide upload interface
-                const uploadInterface = document.getElementById('upload-section') || 
-                                       document.getElementById('upload-interface');
-                if (uploadInterface) {
-                    uploadInterface.style.display = 'none';
-                }
-            })
-            .catch(error => {
-                console.error('❌ Camera error:', error.name, error.message);
+                navigator.mediaDevices.getUserMedia({
+                    video: true, // Let browser choose default
+                    audio: false
+                })
+                .then(stream => {
+                    this.cameraStream = stream;
+                    video.srcObject = stream;
+                    
+                    if (status) status.textContent = 'Camera Ready (Fallback)';
+                    
+                    // Hide switch button since we can't control facing mode
+                    const switchBtn = document.getElementById('switch-camera');
+                    if (switchBtn) switchBtn.style.display = 'none';
+                })
+                .catch(fallbackError => {
+                    console.error('❌ Fallback camera error:', fallbackError);
+                    this.showNotification('Camera access denied. Please upload files instead.', 'error');
+                    this.showUploadInterface();
+                });
+            } else {
+                this.showNotification('Camera access denied. Please upload files instead.', 'error');
                 this.showUploadInterface();
-            });
+            }
+        });
             
     } catch (error) {
-        console.error('Camera initialization error:', error);
+        console.error('🚨 Camera initialization error:', error);
         this.showUploadInterface();
     }
 },
