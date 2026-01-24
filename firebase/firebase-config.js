@@ -12,7 +12,7 @@ const firebaseConfig = {
 // Enhanced initialization with debugging
 if (typeof firebase !== 'undefined') {
     try {
-        console.log('🔧 Initializing Firebase...');
+        console.log('🔧 Initializing Firebase (Compat v9.22.0)...');
         console.log('Current domain:', window.location.hostname);
         console.log('Protocol:', window.location.protocol);
         console.log('Full URL:', window.location.href);
@@ -36,10 +36,10 @@ if (typeof firebase !== 'undefined') {
             console.log('✅ Firebase already initialized');
         }
         
-        // Initialize ALL Firebase services
+        // Initialize ALL Firebase services (Compat API)
         const auth = firebase.auth();
         const db = firebase.firestore();
-        const storage = firebase.storage();
+        const storage = firebase.storage(); // This requires firebase-storage-compat.js
         
         // Make them globally available
         window.firebase = firebase;
@@ -53,10 +53,12 @@ if (typeof firebase !== 'undefined') {
         console.log('Firestore available:', !!db);
         console.log('Storage available:', !!storage);
         
-        // Test Firestore connection
-        db.enablePersistence().catch((err) => {
-            console.warn('Firestore persistence not enabled:', err);
-        });
+        // Test Firestore connection (optional)
+        if (db && db.enablePersistence) {
+            db.enablePersistence().catch((err) => {
+                console.log('Firestore persistence:', err.code);
+            });
+        }
         
         console.log('📋 Firebase Configuration:');
         console.log('- API Key configured:', !!firebaseConfig.apiKey);
@@ -64,6 +66,7 @@ if (typeof firebase !== 'undefined') {
         console.log('- Project ID:', firebaseConfig.projectId);
         console.log('- Firestore ready:', !!db);
         console.log('- Storage ready:', !!storage);
+        console.log('- Using Compat version: true');
         
         // Dispatch event that Firebase is ready
         window.dispatchEvent(new CustomEvent('firebase-ready'));
@@ -81,8 +84,8 @@ if (typeof firebase !== 'undefined') {
 } else {
     console.error('❌ Firebase SDK not loaded!');
     console.error('Make sure you have these scripts in your HTML:');
-    console.error('<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>');
-    console.error('<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>');
-    console.error('<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>');
-    console.error('<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-storage.js"></script>');
+    console.error('<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>');
+    console.error('<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>');
+    console.error('<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>');
+    console.error('<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>');
 }
