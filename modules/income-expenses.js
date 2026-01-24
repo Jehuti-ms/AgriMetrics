@@ -682,29 +682,48 @@ onThemeChange(theme) {
    setupButton(id, handler) {
     console.log(`🔧 Setting up button: ${id}`);
     
-    const button = document.getElementById(id);
-    if (!button) {
-        console.error(`❌ Button #${id} not found`);
-        return;
-    }
+    const setupButtonIfExists = () => {
+        const button = document.getElementById(id);
+        if (button) {
+            console.log(`✅ Button #${id} found, setting up...`);
+            
+            // Clone to remove old listeners
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
+            
+            newButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log(`🎯 Button #${id} clicked`);
+                handler.call(this, e);
+            });
+            
+            return true;
+        }
+        return false;
+    };
     
-    console.log(`✅ Button #${id} found`);
-    
-    // Remove any existing listeners to prevent duplicates
-    const newButton = button.cloneNode(true);
-    button.parentNode.replaceChild(newButton, button);
-    
-    // Add the new listener with proper context binding
-    newButton.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        console.log(`🎯 Button #${id} clicked`);
+    // Try immediately
+    if (!setupButtonIfExists()) {
+        console.log(`⏳ Button #${id} not found yet, will retry...`);
         
-        // Call handler with proper `this` context
-        handler.call(this, event);
-    });
+        // Retry a few times with delay
+        let attempts = 0;
+        const maxAttempts = 5;
+        const interval = setInterval(() => {
+            attempts++;
+            console.log(`Retry ${attempts} for button #${id}...`);
+            
+            if (setupButtonIfExists() || attempts >= maxAttempts) {
+                clearInterval(interval);
+                if (attempts >= maxAttempts) {
+                    console.error(`❌ Button #${id} never appeared after ${maxAttempts} attempts`);
+                }
+            }
+        }, 200);
+    }
 },
-
+ 
     // ==================== FIXED: RECEIPT UPLOAD FOR TRANSACTION FORM ====================
     handleTransactionReceiptUpload(file) {
         if (!this.isValidReceiptFile(file)) {
