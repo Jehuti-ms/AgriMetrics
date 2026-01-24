@@ -2330,7 +2330,7 @@ switchCamera() {
     
     // Reinitialize with new camera
     this.initializeCamera(window.cameraState.useFrontCamera);
-}
+},
 
 // Add the showUploadInterface method
 showUploadInterface() {
