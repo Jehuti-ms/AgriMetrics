@@ -4452,3 +4452,330 @@ body.dark-mode {
     }
 }
 
+/* ===== RESPONSIVE BUTTON FIXES ===== */
+
+/* Modal footer buttons - FIXED */
+.popout-modal-footer {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    padding: 16px 24px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    justify-content: center !important; /* Center buttons on larger screens */
+    align-items: center !important;
+}
+
+/* Modal footer buttons - responsive sizing */
+.popout-modal-footer .btn {
+    flex: 1 !important;
+    min-width: 120px !important;
+    max-width: 250px !important; /* Increased max-width for larger screens */
+    padding: 14px 20px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    white-space: normal !important; /* Allow text to wrap */
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    line-height: 1.4 !important;
+    height: auto !important;
+    min-height: 50px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Button text container */
+.popout-modal-footer .btn span {
+    display: block !important;
+    width: 100% !important;
+    text-align: center !important;
+    line-height: 1.3 !important;
+}
+
+/* For 2-button layouts - better spacing */
+.popout-modal-footer:has(.btn:nth-child(2):last-child) {
+    justify-content: space-between !important;
+}
+
+.popout-modal-footer:has(.btn:nth-child(2):last-child) .btn {
+    flex: 0 1 calc(50% - 6px) !important;
+    min-width: calc(50% - 6px) !important;
+}
+
+/* Camera controls in import receipts modal */
+.camera-controls {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    justify-content: center !important;
+    width: 100% !important;
+    padding: 0 10px !important;
+    box-sizing: border-box !important;
+}
+
+.camera-controls .btn {
+    flex: 1 !important;
+    min-width: 140px !important; /* Increased min-width */
+    max-width: 220px !important; /* Increased max-width */
+    padding: 14px 16px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    white-space: normal !important; /* Allow wrapping */
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    line-height: 1.3 !important;
+    min-height: 50px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+/* Button text in camera controls */
+.camera-controls .btn span {
+    display: block !important;
+    width: 100% !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+}
+
+/* Header action buttons */
+.header-actions .btn {
+    padding: 12px 20px !important;
+    font-size: 14px !important;
+    min-height: 44px !important;
+    white-space: nowrap !important; /* Keep header buttons on one line */
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* ===== RESPONSIVE BREAKPOINTS ===== */
+
+/* Large screens (1200px and up) */
+@media (min-width: 1200px) {
+    .popout-modal-footer .btn {
+        padding: 16px 24px !important;
+        font-size: 16px !important;
+        min-height: 56px !important;
+        max-width: 280px !important;
+    }
+    
+    .camera-controls .btn {
+        padding: 16px 20px !important;
+        font-size: 15px !important;
+        min-height: 54px !important;
+        max-width: 240px !important;
+    }
+    
+    .header-actions .btn {
+        padding: 14px 24px !important;
+        font-size: 15px !important;
+    }
+}
+
+/* Tablets and smaller desktops (768px - 1199px) */
+@media (max-width: 1199px) and (min-width: 768px) {
+    .popout-modal-footer {
+        padding: 16px 20px !important;
+        gap: 10px !important;
+    }
+    
+    .popout-modal-footer .btn {
+        padding: 12px 18px !important;
+        font-size: 14px !important;
+        min-height: 48px !important;
+        max-width: 200px !important;
+    }
+    
+    .camera-controls {
+        gap: 10px !important;
+    }
+    
+    .camera-controls .btn {
+        padding: 12px 14px !important;
+        font-size: 13px !important;
+        min-width: 130px !important;
+        max-width: 180px !important;
+        min-height: 46px !important;
+    }
+}
+
+/* Tablets (768px and below) */
+@media (max-width: 768px) {
+    .popout-modal-footer {
+        flex-direction: column !important;
+        padding: 16px !important;
+        gap: 10px !important;
+    }
+    
+    .popout-modal-footer .btn {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 14px 16px !important;
+        font-size: 15px !important;
+        min-height: 52px !important;
+    }
+    
+    .popout-modal-footer:has(.btn:nth-child(2):last-child) .btn {
+        flex: 0 1 100% !important;
+        min-width: 100% !important;
+    }
+    
+    .camera-controls {
+        flex-direction: column !important;
+        padding: 0 !important;
+        gap: 8px !important;
+    }
+    
+    .camera-controls .btn {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 14px 16px !important;
+        font-size: 15px !important;
+        min-height: 52px !important;
+    }
+    
+    /* Stack header buttons on mobile */
+    .header-actions {
+        flex-direction: column !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+    
+    .header-actions .btn {
+        width: 100% !important;
+        padding: 14px 16px !important;
+        font-size: 15px !important;
+    }
+}
+
+/* Mobile phones (480px and below) */
+@media (max-width: 480px) {
+    .popout-modal-footer {
+        padding: 12px 16px !important;
+        gap: 8px !important;
+    }
+    
+    .popout-modal-footer .btn {
+        padding: 12px 14px !important;
+        font-size: 14px !important;
+        min-height: 48px !important;
+    }
+    
+    .camera-controls .btn {
+        padding: 12px 14px !important;
+        font-size: 14px !important;
+        min-height: 46px !important;
+    }
+    
+    /* Process button specific fix */
+    #process-receipts-btn {
+        padding: 12px 14px !important;
+        font-size: 14px !important;
+    }
+    
+    #process-receipts-btn .btn-text {
+        font-size: 14px !important;
+        line-height: 1.3 !important;
+    }
+}
+
+/* Extra small phones (320px and below) */
+@media (max-width: 320px) {
+    .popout-modal-footer .btn {
+        padding: 10px 12px !important;
+        font-size: 13px !important;
+        min-height: 44px !important;
+    }
+    
+    .camera-controls .btn {
+        padding: 10px 12px !important;
+        font-size: 13px !important;
+        min-height: 42px !important;
+    }
+    
+    /* For very small screens, show icon-only on some buttons */
+    .camera-controls .btn span:not(.btn-icon) {
+        font-size: 12px !important;
+    }
+    
+    /* Process button - ensure text fits */
+    #process-receipts-btn .btn-text {
+        font-size: 13px !important;
+        line-height: 1.2 !important;
+    }
+}
+
+/* ===== SPECIFIC BUTTON FIXES ===== */
+
+/* Process Receipts button - ensure it's always visible */
+#process-receipts-btn {
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    color: white !important;
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3) !important;
+}
+
+#process-receipts-btn:hover {
+    background: linear-gradient(135deg, #16a34a, #15803d) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4) !important;
+}
+
+/* Cancel button styling */
+#cancel-import-receipts {
+    border: 2px solid var(--border-color) !important;
+    background: transparent !important;
+    color: var(--text-primary) !important;
+}
+
+#cancel-import-receipts:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-color: var(--primary-color) !important;
+}
+
+/* Button icons spacing */
+.btn .btn-icon + .btn-text {
+    margin-left: 8px !important;
+}
+
+/* Ensure button text never overflows container */
+.btn {
+    position: relative !important;
+    overflow: visible !important; /* Change from hidden to visible */
+}
+
+.btn-text {
+    display: inline-block !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    text-overflow: clip !important; /* Change from ellipsis to clip */
+}
+
+/* ===== IMPORT RECEIPTS MODAL SPECIFIC ===== */
+
+/* Import receipts modal footer */
+#import-receipts-modal .popout-modal-footer {
+    display: flex !important;
+    justify-content: space-between !important;
+    background: var(--surface-color) !important;
+    border-top: 1px solid var(--border-color) !important;
+}
+
+/* Make sure both buttons are equally sized */
+#import-receipts-modal .popout-modal-footer .btn {
+    flex: 0 1 calc(50% - 6px) !important;
+    margin: 0 !important;
+}
+
+/* On larger screens, add more padding to modal footer */
+@media (min-width: 1024px) {
+    #import-receipts-modal .popout-modal-footer {
+        padding: 20px 32px !important;
+    }
+}
