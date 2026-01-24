@@ -23,31 +23,36 @@ const IncomeExpensesModule = {
     lastSwitchClick: 0,
 
     // ==================== INITIALIZATION ====================
-    initialize() {
-        console.log('💰 Initializing Income & Expenses...');
-        
-        this.element = document.getElementById('content-area');
-        if (!this.element) {
-            console.error('Content area element not found');
-            return false;
-        }
+   initialize() {
+    console.log('💰 Initializing Income & Expenses...');
+    
+    this.element = document.getElementById('content-area');
+    if (!this.element) {
+        console.error('Content area element not found');
+        return false;
+    }
 
-        this.isFirebaseAvailable = !!(window.firebase && window.firebase.storage && window.firebase.firestore);
-        console.log('Firebase available:', this.isFirebaseAvailable);
+    // Check if Firebase services are available
+    this.isFirebaseAvailable = !!(window.db && window.storage);
+    console.log('Firebase available:', this.isFirebaseAvailable, {
+        db: !!window.db,
+        storage: !!window.storage,
+        firebase: !!window.firebase
+    });
 
-        if (window.StyleManager) {
-            StyleManager.registerModule(this.name, this.element, this);
-        }
+    if (window.StyleManager) {
+        StyleManager.registerModule(this.name, this.element, this);
+    }
 
-        this.loadData();
-        this.cleanupBrokenReceipts();
-        this.loadReceiptsFromFirebase();
-        this.renderModule();
-        this.initialized = true;
-        
-        console.log('✅ Income & Expenses initialized');
-        return true;
-    },
+    this.loadData();
+    this.cleanupBrokenReceipts();
+    this.loadReceiptsFromFirebase();
+    this.renderModule();
+    this.initialized = true;
+    
+    console.log('✅ Income & Expenses initialized');
+    return true;
+},
 
     onThemeChange(theme) {
         console.log(`Income & Expenses updating for theme: ${theme}`);
@@ -968,7 +973,7 @@ setupImportReceiptsHandlers() {
         }
     });
 
-    // Upload option - FIXED VERSION
+    // Upload option
     this.setupButton('upload-option', () => {
         console.log('🎯 Button #upload-option clicked');
         const cameraSection = document.getElementById('camera-section');
@@ -976,9 +981,6 @@ setupImportReceiptsHandlers() {
         
         if (uploadSection) {
             uploadSection.style.display = 'block';
-            
-            // Re-initialize the upload handlers since they were removed
-            this.setupUploadHandlers();
         }
         if (cameraSection) {
             // Stop camera if running
@@ -987,12 +989,10 @@ setupImportReceiptsHandlers() {
         }
     });
     
-    // Firebase option
-    this.setupButton('firebase-option', () => {
-        console.log('🎯 Button #firebase-option clicked');
-        this.loadReceiptsFromFirebase();
-        this.showNotification('Loaded receipts from Firebase', 'success');
-    });
+    // Call setupUploadHandlers initially for the default view
+    setTimeout(() => {
+        this.setupUploadHandlers();
+    }, 100);
     
     // Browse receipts button
     this.setupButton('browse-receipts-btn', () => {
