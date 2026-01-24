@@ -828,6 +828,11 @@ showImportReceiptsModal() {
     // Setup handlers
     this.setupImportReceiptsHandlers();
     
+    // Setup upload handlers specifically
+    setTimeout(() => {
+        this.setupUploadHandlers();
+    }, 100);
+    
     console.log('✅ Modal should now be visible');
 },
 
@@ -887,7 +892,7 @@ renderImportReceiptsModal() {
             </div>
             
             <!-- Upload Area -->
-            <div class="upload-section" id="upload-section">
+            <div class="upload-section" id="upload-section" style="display: block;">
                 <div class="glass-card">
                     <div class="card-header">
                         <h3>Upload Receipts</h3>
@@ -962,8 +967,84 @@ setupImportReceiptsHandlers() {
             uploadSection.style.display = 'none';
         }
     });
-    
-    // Upload option
+
+    // ==================== UPLOAD HANDLERS SETUP ====================
+        setupUploadHandlers() {
+            console.log('🔧 Setting up upload handlers...');
+            
+            // Browse receipts button
+            const browseBtn = document.getElementById('browse-receipts-btn');
+            if (browseBtn) {
+                console.log('✅ Found browse button');
+                
+                // Remove any existing listeners
+                const newBrowseBtn = browseBtn.cloneNode(true);
+                browseBtn.parentNode.replaceChild(newBrowseBtn, browseBtn);
+                
+                newBrowseBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🎯 Browse button clicked');
+                    
+                    const fileInput = document.getElementById('receipt-upload-input');
+                    if (fileInput) {
+                        console.log('📁 Opening file dialog...');
+                        fileInput.click();
+                    } else {
+                        console.error('❌ File input not found');
+                    }
+                });
+            } else {
+                console.error('❌ Browse button not found');
+            }
+            
+            // File input handler
+            const fileInput = document.getElementById('receipt-upload-input');
+            if (fileInput) {
+                console.log('✅ Found file input');
+                
+                // Remove any existing listeners
+                fileInput.onchange = null;
+                
+                fileInput.onchange = (e) => {
+                    console.log('📁 Files selected:', e.target.files?.length || 0);
+                    if (e.target.files && e.target.files.length > 0) {
+                        this.handleFileUpload(e.target.files);
+                    }
+                };
+            }
+            
+            // Drag and drop area
+            const dropArea = document.getElementById('drop-area');
+            if (dropArea) {
+                console.log('✅ Found drop area');
+                
+                // Remove existing listeners
+                dropArea.removeEventListener('dragover', this.dragOverHandler);
+                dropArea.removeEventListener('dragleave', this.dragLeaveHandler);
+                dropArea.removeEventListener('drop', this.dropHandler);
+                
+                // Add new listeners
+                dropArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropArea.classList.add('drag-over');
+                });
+                
+                dropArea.addEventListener('dragleave', () => {
+                    dropArea.classList.remove('drag-over');
+                });
+                
+                dropArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropArea.classList.remove('drag-over');
+                    console.log('📁 Files dropped:', e.dataTransfer.files?.length || 0);
+                    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                        this.handleFileUpload(e.dataTransfer.files);
+                    }
+                });
+            }
+        },
+    // Upload option - FIXED VERSION
     this.setupButton('upload-option', () => {
         console.log('🎯 Button #upload-option clicked');
         const cameraSection = document.getElementById('camera-section');
@@ -971,6 +1052,9 @@ setupImportReceiptsHandlers() {
         
         if (uploadSection) {
             uploadSection.style.display = 'block';
+            
+            // Re-initialize the upload handlers since they were removed
+            this.setupUploadHandlers();
         }
         if (cameraSection) {
             // Stop camera if running
@@ -1470,11 +1554,14 @@ clearReceiptPreview() {
 
 // ==================== BULK FILE UPLOAD METHODS ====================
 handleFileUpload(files) {
-    if (!files || files.length === 0) return;
+    console.log('=== HANDLE FILE UPLOAD CALLED ===');
+    console.log('Files received:', files);
+    console.log('Number of files:', files.length);
     
-    const totalFiles = files.length;
-    let processedFiles = 0;
-    let cancelled = false;
+    if (!files || files.length === 0) {
+        console.error('❌ No files provided');
+        return;
+    }
     
     // Show progress with cancel button
     const progressSection = document.getElementById('upload-progress');
