@@ -24,30 +24,49 @@ if (typeof firebase !== 'undefined') {
             console.error('  - npx serve .');
             console.error('  - python -m http.server 8000');
             alert('ERROR: Please run this through a local server (http://localhost), not by opening the file directly.');
+            return;
         }
         
+        let app;
         if (!firebase.apps.length) {
-            const app = firebase.initializeApp(firebaseConfig);
+            app = firebase.initializeApp(firebaseConfig);
             console.log('✅ Firebase initialized successfully');
-            console.log('Project ID:', app.options.projectId);
-            console.log('Auth Domain:', app.options.authDomain);
-            
-            // Test authentication availability
-            const auth = firebase.auth();
-            console.log('Firebase Auth available:', !!auth);
-            
         } else {
+            app = firebase.apps[0];
             console.log('✅ Firebase already initialized');
-            const app = firebase.apps[0];
-            console.log('Project ID:', app.options.projectId);
-            console.log('Auth Domain:', app.options.authDomain);
         }
         
-        // Log all authorized domains from config
+        // Initialize ALL Firebase services
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        
+        // Make them globally available
+        window.firebase = firebase;
+        window.firebaseAuth = auth;
+        window.db = db;
+        window.storage = storage;
+        
+        console.log('Project ID:', app.options.projectId);
+        console.log('Auth Domain:', app.options.authDomain);
+        console.log('Firebase Auth available:', !!auth);
+        console.log('Firestore available:', !!db);
+        console.log('Storage available:', !!storage);
+        
+        // Test Firestore connection
+        db.enablePersistence().catch((err) => {
+            console.warn('Firestore persistence not enabled:', err);
+        });
+        
         console.log('📋 Firebase Configuration:');
         console.log('- API Key configured:', !!firebaseConfig.apiKey);
         console.log('- Auth Domain:', firebaseConfig.authDomain);
         console.log('- Project ID:', firebaseConfig.projectId);
+        console.log('- Firestore ready:', !!db);
+        console.log('- Storage ready:', !!storage);
+        
+        // Dispatch event that Firebase is ready
+        window.dispatchEvent(new CustomEvent('firebase-ready'));
         
     } catch (error) {
         console.error('❌ Error initializing Firebase:', error);
@@ -60,9 +79,10 @@ if (typeof firebase !== 'undefined') {
         }
     }
 } else {
-    console.log('⚠️ Firebase SDK not loaded');
-    console.log('Make sure you have these scripts in your HTML:');
-    console.log('<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>');
-    console.log('<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>');
-    console.log('<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>');
+    console.error('❌ Firebase SDK not loaded!');
+    console.error('Make sure you have these scripts in your HTML:');
+    console.error('<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>');
+    console.error('<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>');
+    console.error('<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>');
+    console.error('<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-storage.js"></script>');
 }
