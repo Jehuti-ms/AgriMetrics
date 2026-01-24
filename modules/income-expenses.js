@@ -857,13 +857,41 @@ renderImportReceiptsModal() {
                         <span class="card-title">Upload Files</span>
                         <span class="card-subtitle">From device</span>
                     </button>
-                    ${this.isFirebaseAvailable ? `
-                        <button class="card-button" id="firebase-option">
-                            <div class="card-icon">🔥</div>
-                            <span class="card-title">From Firebase</span>
-                            <span class="card-subtitle">Load existing</span>
+                </div>
+            </div>
+            
+            <!-- Upload Area (Always visible by default) -->
+            <div class="upload-section" id="upload-section" style="display: block;">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h3>Upload Receipts</h3>
+                    </div>
+                    <div class="upload-area" id="drop-area">
+                        <div class="upload-icon">📄</div>
+                        <h4>Drag & Drop Receipts</h4>
+                        <p class="upload-subtitle">or click to browse files</p>
+                        <p class="upload-formats">Supports: JPG, PNG, PDF (Max 10MB)</p>
+                        <input type="file" id="receipt-upload-input" multiple 
+                               accept=".jpg,.jpeg,.png,.pdf" style="display: none;">
+                        <button class="btn btn-primary" id="browse-receipts-btn">
+                            <span class="btn-icon">📁</span>
+                            <span class="btn-text">Browse Files</span>
                         </button>
-                    ` : ''}
+                    </div>
+                    
+                    <!-- Upload Progress -->
+                    <div class="upload-progress" id="upload-progress" style="display: none;">
+                        <div class="progress-info">
+                            <h4>Uploading...</h4>
+                            <div class="progress-container">
+                                <div class="progress-bar" id="upload-progress-bar"></div>
+                            </div>
+                            <div class="progress-details">
+                                <span id="upload-file-name">-</span>
+                                <span id="upload-percentage">0%</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -895,42 +923,7 @@ renderImportReceiptsModal() {
                 </div>
             </div>
             
-            <!-- Upload Area -->
-            <div class="upload-section" id="upload-section" style="display: block;">
-                <div class="glass-card">
-                    <div class="card-header">
-                        <h3>Upload Receipts</h3>
-                    </div>
-                    <div class="upload-area" id="drop-area">
-                        <div class="upload-icon">📄</div>
-                        <h4>Drag & Drop Receipts</h4>
-                        <p class="upload-subtitle">or click to browse files</p>
-                        <p class="upload-formats">Supports: JPG, PNG, PDF (Max 10MB)</p>
-                        <input type="file" id="receipt-upload-input" multiple 
-                               accept=".jpg,.jpeg,.png,.pdf" style="display: none;">
-                        <button class="btn btn-primary" id="browse-receipts-btn">
-                            <span class="btn-icon">📁</span>
-                            <span class="btn-text">Browse Files</span>
-                        </button>
-                    </div>
-                    
-                    <!-- Upload Progress -->
-                    <div class="upload-progress" id="upload-progress" style="display: none;">
-                        <div class="progress-info">
-                            <h4>Uploading to ${this.isFirebaseAvailable ? 'Firebase' : 'Local Storage'}...</h4>
-                            <div class="progress-container">
-                                <div class="progress-bar" id="upload-progress-bar"></div>
-                            </div>
-                            <div class="progress-details">
-                                <span id="upload-file-name">-</span>
-                                <span id="upload-percentage">0%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Recent Receipts -->
+            <!-- Recent Receipts Section -->
             <div class="recent-section" id="recent-section" style="${this.receiptQueue.length > 0 ? '' : 'display: none;'}">
                 <div class="glass-card">
                     <div class="card-header header-flex">
@@ -948,7 +941,7 @@ renderImportReceiptsModal() {
         </div>
     `;
 },
-
+    
 setupImportReceiptsHandlers() {
     console.log('Setting up import receipt handlers');
     
