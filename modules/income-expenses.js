@@ -205,8 +205,7 @@ const IncomeExpensesModule = {
                             ➕ Add Transaction
                         </button>
                         <button class="btn btn-primary" id="upload-receipt-btn" style="display: flex; align-items: center; gap: 8px;">
-                            📄 Import Receipts
-                            ${this.isFirebaseAvailable ? '<span class="firebase-badge">Firebase</span>' : ''}
+                             📄 Import Receipts
                             ${pendingReceipts.length > 0 ? `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingReceipts.length}</span>` : ''}
                         </button>
                     </div>
@@ -1007,7 +1006,10 @@ setupImportReceiptsHandlers() {
     const fileInput = document.getElementById('receipt-upload-input');
     if (fileInput) {
         fileInput.onchange = (e) => {
-            this.handleFileUpload(e.target.files);
+            console.log('File input changed:', e.target.files?.length || 0);
+            if (e.target.files && e.target.files.length > 0) {
+                this.handleFileUpload(e.target.files);
+            }
         };
     }
     
@@ -1026,7 +1028,10 @@ setupImportReceiptsHandlers() {
         dropArea.addEventListener('drop', (e) => {
             e.preventDefault();
             dropArea.classList.remove('drag-over');
-            this.handleFileUpload(e.dataTransfer.files);
+            console.log('📁 Files dropped:', e.dataTransfer.files?.length || 0);
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                this.handleFileUpload(e.dataTransfer.files);
+            }
         });
     }
     
@@ -1040,20 +1045,15 @@ setupImportReceiptsHandlers() {
         document.getElementById('upload-section').style.display = 'block';
     });
     
-    // Refresh receipts
+    // Refresh receipts button - this will show already uploaded receipts
     this.setupButton('refresh-receipts', () => {
         console.log('🔄 Refresh receipts clicked');
-        this.loadReceiptsFromFirebase();
+        this.loadReceiptsFromFirebase(); // This loads receipts from Firebase
         const recentList = document.getElementById('recent-receipts-list');
         if (recentList) {
             recentList.innerHTML = this.renderRecentReceiptsList();
         }
-    });
-    
-    // Process button
-    this.setupButton('process-receipts-btn', () => {
-        console.log('⚙️ Process receipts clicked');
-        this.processPendingReceipts();
+        this.showNotification('Receipts list refreshed', 'success');
     });
 },
 
@@ -1575,7 +1575,7 @@ handleFileUpload(files) {
         progressSection.innerHTML = `
             <div class="progress-info">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <h4>Uploading to ${this.isFirebaseAvailable ? 'Firebase' : 'Local Storage'}...</h4>
+                    <h4>Uploading...</h4>
                     <button class="btn btn-sm btn-outline" id="cancel-upload-btn" style="font-size: 12px;">
                         ❌ Cancel Upload
                     </button>
