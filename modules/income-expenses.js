@@ -877,6 +877,7 @@ renderImportReceiptsModal() {
                             <span class="btn-icon">📁</span>
                             <span class="btn-text">Browse Files</span>
                         </button>
+                        <div class="upload-area" id="drop-area" onclick="document.getElementById('receipt-upload-input')?.click();">
                     </div>
                     
                     <!-- Upload Progress -->
@@ -1054,46 +1055,52 @@ setupImportReceiptsHandlers() {
 setupUploadHandlers() {
     console.log('🔧 Setting up upload handlers...');
     
-    // Browse receipts button
+    // Browse receipts button - SIMPLIFIED DIRECT APPROACH
     const browseBtn = document.getElementById('browse-receipts-btn');
     if (browseBtn) {
-        console.log('✅ Found browse button');
+        console.log('✅ Found browse button, setting up direct click handler');
         
-        // Remove any existing listeners
+        // Remove old listener and add new one
         const newBrowseBtn = browseBtn.cloneNode(true);
         browseBtn.parentNode.replaceChild(newBrowseBtn, browseBtn);
         
         newBrowseBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('🎯 Browse button clicked');
+            console.log('🎯 DIRECT: Browse button clicked');
             
             const fileInput = document.getElementById('receipt-upload-input');
             if (fileInput) {
-                console.log('📁 Opening file dialog...');
+                console.log('📁 DIRECT: Clicking file input');
                 fileInput.click();
             } else {
                 console.error('❌ File input not found');
+                // Create a file input if it doesn't exist
+                this.createFileInput();
             }
         });
     } else {
-        console.error('❌ Browse button not found');
+        console.error('❌ Browse button not found in setupUploadHandlers');
     }
     
-    // File input handler
+    // File input handler - SIMPLIFIED
     const fileInput = document.getElementById('receipt-upload-input');
     if (fileInput) {
-        console.log('✅ Found file input');
+        console.log('✅ Found file input, setting up change handler');
         
-        // Remove any existing listeners
+        // Remove old handler
         fileInput.onchange = null;
         
-        fileInput.onchange = (e) => {
-            console.log('📁 Files selected:', e.target.files?.length || 0);
+        // Add new handler
+        fileInput.addEventListener('change', (e) => {
+            console.log('📁 FILE INPUT: Files selected:', e.target.files?.length || 0);
             if (e.target.files && e.target.files.length > 0) {
+                console.log('📁 Starting upload of', e.target.files.length, 'files');
                 this.handleFileUpload(e.target.files);
+            } else {
+                console.log('📁 No files selected');
             }
-        };
+        });
     }
     
     // Drag and drop area
@@ -1101,12 +1108,7 @@ setupUploadHandlers() {
     if (dropArea) {
         console.log('✅ Found drop area');
         
-        // Remove existing listeners
-        ['dragover', 'dragleave', 'drop'].forEach(eventType => {
-            dropArea.removeEventListener(eventType, this[`${eventType}Handler`]);
-        });
-        
-        // Add new listeners
+        // Add drag and drop listeners
         dropArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             dropArea.classList.add('drag-over');
@@ -1125,6 +1127,27 @@ setupUploadHandlers() {
             }
         });
     }
+},
+
+// Add this helper method if file input doesn't exist
+createFileInput() {
+    console.log('🔧 Creating file input');
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.id = 'receipt-upload-input';
+    fileInput.multiple = true;
+    fileInput.accept = '.jpg,.jpeg,.png,.pdf';
+    fileInput.style.display = 'none';
+    
+    fileInput.addEventListener('change', (e) => {
+        console.log('📁 Created file input: Files selected:', e.target.files?.length || 0);
+        if (e.target.files && e.target.files.length > 0) {
+            this.handleFileUpload(e.target.files);
+        }
+    });
+    
+    document.body.appendChild(fileInput);
+    return fileInput;
 },
     
 showTransactionModal(transactionId = null) {
@@ -2314,115 +2337,78 @@ updateElement(id, value) {
 },
 
     // ==================== FIXED: UPLOAD TO FIREBASE ====================
-    uploadToFirebase(file, onProgress = null) {
-        return new Promise((resolve, reject) => {
-            // Check if Firebase is available
-            if (!this.isFirebaseAvailable || !window.storage || !window.db) {
-                reject(new Error('Firebase is not available'));
-                return;
-            }
+   uploadToFirebase(file, onProgress = null) {
+    return new Promise((resolve, reject) => {
+        console.log('📤 Starting Firebase upload for:', file.name);
+        
+        // Check if Firebase Storage is available
+        if (!window.storage) {
+            console.error('❌ Firebase Storage not available');
+            reject(new Error('Firebase Storage not available'));
+            return;
+        }
+        
+        try {
+            // Generate unique filename
+            const timestamp = Date.now();
+            const fileExt = file.name.split('.').pop();
+            const fileName = `receipts/${timestamp}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
             
-            try {
-                // Generate unique filename
-                const timestamp = Date.now();
-                const fileExt = file.name.split('.').pop();
-                const fileName = `receipts/${timestamp}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-                
-                // Create storage reference
-                const storageRef = window.storage.ref();
-                const fileRef = storageRef.child(fileName);
-                
-                // Upload file to Firebase Storage with metadata
-                const metadata = {
-                    contentType: file.type,
-                    customMetadata: {
-                        originalName: file.name,
-                        uploadedBy: this.getCurrentUser(),
-                        uploadedAt: new Date().toISOString()
-                    }
-                };
-                
-                const uploadTask = fileRef.put(file, metadata);
-                this.currentUploadTask = uploadTask;
-                
-                // Track upload progress
-                uploadTask.on('state_changed',
-                    // Progress callback
-                    (snapshot) => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        if (onProgress) onProgress(Math.round(progress));
-                    },
-                    // Error callback
-                    (error) => {
-                        this.currentUploadTask = null;
-                        if (error.code === 'storage/canceled') {
-                            reject(new Error('Upload cancelled by user'));
-                        } else {
+            // Create storage reference
+            const storageRef = window.storage.ref();
+            const fileRef = storageRef.child(fileName);
+            
+            console.log('📤 Uploading to:', fileName);
+            
+            // Upload file
+            const uploadTask = fileRef.put(file);
+            
+            // Track upload progress
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    console.log(`📤 Upload progress: ${Math.round(progress)}%`);
+                    if (onProgress) onProgress(Math.round(progress));
+                },
+                (error) => {
+                    console.error('❌ Upload error:', error);
+                    reject(new Error(`Upload failed: ${error.message}`));
+                },
+                () => {
+                    // Upload complete
+                    uploadTask.snapshot.ref.getDownloadURL()
+                        .then(downloadURL => {
+                            console.log('✅ Upload complete, URL:', downloadURL);
+                            
+                            // Create receipt object
+                            const receiptId = `receipt_${timestamp}`;
+                            const receiptData = {
+                                id: receiptId,
+                                name: file.name,
+                                downloadURL: downloadURL,
+                                size: file.size,
+                                type: file.type,
+                                status: 'pending',
+                                uploadedAt: new Date().toISOString()
+                            };
+                            
+                            console.log('✅ Receipt data created:', receiptData);
+                            resolve(receiptData);
+                        })
+                        .catch(error => {
+                            console.error('❌ Error getting download URL:', error);
                             reject(error);
-                        }
-                    },
-                    // Complete callback
-                    () => {
-                        // Get download URL
-                        uploadTask.snapshot.ref.getDownloadURL()
-                            .then(downloadURL => {
-                                // Create receipt record in Firestore
-                                const receiptId = `receipt_${timestamp}`;
-                                const receiptData = {
-                                    id: receiptId,
-                                    name: file.name,
-                                    originalName: file.name,
-                                    fileName: fileName,
-                                    downloadURL: downloadURL,
-                                    size: file.size,
-                                    type: file.type,
-                                    status: 'pending',
-                                    uploadedAt: new Date().toISOString(),
-                                    uploadedBy: this.getCurrentUser() || 'unknown',
-                                    metadata: {
-                                        contentType: file.type,
-                                        size: file.size,
-                                        storagePath: fileName
-                                    }
-                                };
-                                
-                                // Save to Firestore
-                                window.db.collection('receipts').doc(receiptId).set(receiptData)
-                                    .then(() => {
-                                        // Add to local queue
-                                        this.receiptQueue.push(receiptData);
-                                        
-                                        // Broadcast receipt upload
-                                        Broadcaster.recordCreated('income-expenses', {
-                                            ...receiptData,
-                                            timestamp: new Date().toISOString(),
-                                            module: 'income-expenses',
-                                            action: 'receipt_uploaded',
-                                            storageType: 'firebase'
-                                        });
-                                        
-                                        this.currentUploadTask = null;
-                                        resolve(receiptData);
-                                    })
-                                    .catch(error => {
-                                        this.currentUploadTask = null;
-                                        reject(error);
-                                    });
-                            })
-                            .catch(error => {
-                                this.currentUploadTask = null;
-                                reject(error);
-                            });
-                    }
-                );
-            } catch (error) {
-                this.currentUploadTask = null;
-                console.error('Firebase upload error:', error);
-                reject(new Error(`Firebase upload failed: ${error.message}`));
-            }
-        });
-    },
-
+                        });
+                }
+            );
+            
+        } catch (error) {
+            console.error('❌ Firebase upload error:', error);
+            reject(new Error(`Firebase upload failed: ${error.message}`));
+        }
+    });
+},
+    
     // ==================== UTILITY METHODS ====================
 filterTransactions(filter) {
     let filtered = this.transactions;
