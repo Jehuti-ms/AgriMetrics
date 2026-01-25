@@ -194,58 +194,49 @@ const IncomeExpensesModule = {
                     border: 1px solid var(--glass-border);
                 }
 
-                /* Camera specific fixes */
-                .camera-section {
-                    transition: all 0.3s ease;
-                }
-                
-                .camera-preview {
-                    width: 100%;
-                    height: 300px;
-                    background: #000;
-                    border-radius: 8px;
-                    overflow: hidden;
-                    margin-bottom: 16px;
-                    position: relative;
-                }
-                
-                .camera-preview video {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                    background: #000;
-                    display: block;
-                }
-                
-                #camera-preview {
-                    display: block !important;
-                    width: 100% !important;
-                    height: 100% !important;
-                    background: #000 !important;
-                }
-                
-                .camera-controls {
-                    display: flex;
-                    gap: 12px;
-                    justify-content: center;
-                    padding: 16px;
-                    flex-wrap: wrap;
-                }
-                
-                #camera-status {
-                    font-size: 14px;
-                    color: var(--text-secondary);
-                    padding: 4px 8px;
-                    background: var(--glass-bg);
-                    border-radius: 4px;
-                }
-                
-                /* Ensure camera section is visible when shown */
-                #camera-section[style*="display: block"] {
-                    display: block !important;
-                    opacity: 1 !important;
-                    visibility: visible !important;
-                }
+               /* Ensure camera preview is visible */
+.camera-preview {
+    width: 100%;
+    height: 400px;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    position: relative;
+    display: block !important;
+}
+
+.camera-preview video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover;
+    display: block !important;
+    background: #000 !important;
+}
+
+/* Make sure camera section shows when display:block */
+#camera-section {
+    display: none;
+}
+
+#camera-section[style*="display: block"],
+#camera-section[style*="display:block"] {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Button styling for better visibility */
+#camera-option {
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+#camera-option:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
             </style>
 
             <div class="module-container">
@@ -2771,51 +2762,45 @@ cleanupBrokenReceipts() {
     this.updateReceiptQueueUI();
 },
 
-    setupButton(id, handler) {
-        console.log(`🔧 Setting up button: ${id}`);
+  setupButton(id, handler) {
+    console.log(`🔧 Setting up button: ${id}`);
+    
+    const button = document.getElementById(id);
+    if (button) {
+        console.log(`✅ Button #${id} found`);
         
-        const setupButtonIfExists = () => {
-            const button = document.getElementById(id);
-            if (button) {
-                console.log(`✅ Button #${id} found, setting up...`);
-                
-                // Clone to remove old listeners
-                const newButton = button.cloneNode(true);
-                button.parentNode.replaceChild(newButton, button);
-                
-                newButton.addEventListener('click', (e) => {
+        // Remove existing listeners by cloning
+        const newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
+        
+        newButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log(`🎯 Button #${id} clicked`);
+            handler.call(this, e);
+        });
+        
+        return true;
+    } else {
+        console.warn(`⚠️ Button #${id} not found`);
+        
+        // Try again after a short delay (DOM might not be ready yet)
+        setTimeout(() => {
+            const retryButton = document.getElementById(id);
+            if (retryButton) {
+                console.log(`✅ Button #${id} found on retry`);
+                retryButton.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log(`🎯 Button #${id} clicked`);
                     handler.call(this, e);
                 });
-                
-                return true;
             }
-            return false;
-        };
+        }, 500);
         
-        // Try immediately
-        if (!setupButtonIfExists()) {
-            console.log(`⏳ Button #${id} not found yet, will retry...`);
-            
-            // Retry a few times with delay
-            let attempts = 0;
-            const maxAttempts = 5;
-            const interval = setInterval(() => {
-                attempts++;
-                console.log(`Retry ${attempts} for button #${id}...`);
-                
-                if (setupButtonIfExists() || attempts >= maxAttempts) {
-                    clearInterval(interval);
-                    if (attempts >= maxAttempts) {
-                        console.error(`❌ Button #${id} never appeared after ${maxAttempts} attempts`);
-                    }
-                }
-            }, 200);
-        }
-    },
-
+        return false;
+    }
+},
+    
     isValidReceiptFile(file) {
         const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
         const maxSize = 10 * 1024 * 1024; // 10MB
