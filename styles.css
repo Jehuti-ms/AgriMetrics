@@ -4451,3 +4451,21 @@ body.dark-mode {
         width: 100%;
     }
 }
+
+/* TEMPORARY TEST - Remove after fixing */
+.camera-preview {
+    border: 5px solid red !important;
+    background: yellow !important;
+    min-height: 300px !important;
+}
+
+#camera-preview {
+    border: 3px solid blue !important;
+    background: lime !important;
+}
+
+.camera-section {
+    border: 5px dashed green !important;
+    background: rgba(0,255,0,0.1) !important;
+    padding: 20px !important;
+}
