@@ -238,22 +238,60 @@ const IncomeExpensesModule = {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* ==================== MODAL & BUTTON FIXES ==================== */
+/* ==================== MODAL POSITIONING FIX ==================== */
 
-/* Modal Header */
+/* Modal container */
+.popout-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 1;
+    visibility: visible;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.popout-modal.hidden {
+    display: none !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Modal content box */
+.popout-modal-content {
+    background: var(--background-color);
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+
+/* Modal Header - FIXED POSITION */
 .popout-modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 24px;
+    padding: 16px 24px;
     border-bottom: 1px solid var(--glass-border);
     background: var(--glass-bg);
-    border-top-left-radius: 16px;
-    border-top-right-radius: 16px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
     margin: 0;
+    flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .popout-modal-title {
@@ -261,7 +299,7 @@ const IncomeExpensesModule = {
     font-size: 20px;
     font-weight: 600;
     color: var(--text-primary);
-    line-height: 1.4;
+    line-height: 1.2;
 }
 
 .popout-modal-close {
@@ -278,6 +316,7 @@ const IncomeExpensesModule = {
     align-items: center;
     justify-content: center;
     border-radius: 6px;
+    flex-shrink: 0;
 }
 
 .popout-modal-close:hover {
@@ -285,25 +324,12 @@ const IncomeExpensesModule = {
     color: var(--text-primary);
 }
 
-/* Modal Content */
-.popout-modal-content {
-    background: var(--background-color);
-    border-radius: 20px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    max-width: 800px;
-    width: 90%;
-    max-height: 90vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    margin: auto;
-}
-
+/* Modal Body */
 .popout-modal-body {
     padding: 24px;
     overflow-y: auto;
     flex: 1;
-    max-height: calc(90vh - 140px);
+    min-height: 0; /* Allow body to shrink */
 }
 
 /* Modal Footer */
@@ -311,13 +337,14 @@ const IncomeExpensesModule = {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 24px;
+    padding: 16px 24px;
     border-top: 1px solid var(--glass-border);
     background: var(--glass-bg);
-    border-bottom-left-radius: 16px;
-    border-bottom-right-radius: 16px;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
     gap: 16px;
     flex-wrap: wrap;
+    flex-shrink: 0; /* Prevent footer from shrinking */
 }
 
 .popout-modal-footer .btn {
@@ -332,8 +359,7 @@ const IncomeExpensesModule = {
     overflow: hidden;
     text-overflow: ellipsis;
     flex: 1;
-    min-width: 140px;
-    max-width: 200px;
+    min-width: 0;
 }
 
 /* Cancel Button */
@@ -402,46 +428,114 @@ const IncomeExpensesModule = {
     animation: badgePulse 0.3s ease;
 }
 
-/* Responsive Stacking */
+/* ==================== RESPONSIVE BREAKPOINTS ==================== */
+
+/* Medium screens (768px - 900px) */
 @media (max-width: 900px) {
+    .popout-modal {
+        padding: 16px;
+    }
+    
+    .popout-modal-content {
+        max-height: 85vh;
+    }
+    
     .popout-modal-footer {
         flex-direction: column;
         gap: 12px;
+        padding: 16px 20px;
     }
     
     .popout-modal-footer .btn {
         width: 100%;
         max-width: 100%;
         min-width: 0;
+        min-height: 48px;
+        font-size: 15px;
     }
     
     #process-receipts-btn {
         order: -1;
     }
-}
-
-@media (max-width: 640px) {
-    .popout-modal-content {
-        width: 95%;
-        margin: 10px;
-    }
-    
-    .popout-modal-header {
-        padding: 16px 20px;
-    }
     
     .popout-modal-body {
         padding: 20px;
-        max-height: calc(90vh - 120px);
+    }
+    
+    .popout-modal-header {
+        padding: 14px 20px;
+    }
+}
+
+/* Tablet screens (640px - 768px) */
+@media (max-width: 768px) {
+    .popout-modal {
+        padding: 12px;
+    }
+    
+    .popout-modal-content {
+        max-height: 85vh;
+    }
+    
+    /* Camera controls for tablets */
+    .camera-controls {
+        gap: 10px;
+        padding: 16px;
+    }
+    
+    .camera-controls .btn {
+        min-width: 120px;
+        max-width: 150px;
+        height: 44px;
+        font-size: 14px;
+        padding: 0 12px;
+    }
+    
+    .camera-controls .btn-icon {
+        font-size: 18px;
+    }
+}
+
+/* Small mobile screens (under 640px) */
+@media (max-width: 640px) {
+    .popout-modal {
+        padding: 0;
+    }
+    
+    .popout-modal-content {
+        width: 100%;
+        height: 100vh;
+        max-height: 100vh;
+        border-radius: 0;
+        margin: 0;
+    }
+    
+    .popout-modal-header {
+        padding: 16px;
+        border-radius: 0;
+    }
+    
+    .popout-modal-body {
+        padding: 16px;
     }
     
     .popout-modal-footer {
-        padding: 16px 20px;
+        padding: 16px;
+        border-radius: 0;
     }
     
     .popout-modal-footer .btn {
-        height: 48px;
-        font-size: 15px;
+        height: 52px;
+        font-size: 16px;
+    }
+}
+
+/* Large screens (901px and up) */
+@media (min-width: 901px) {
+    .popout-modal-footer .btn {
+        flex: 0 1 auto;
+        min-width: 160px;
+        max-width: 220px;
     }
 }
 
@@ -486,36 +580,20 @@ const IncomeExpensesModule = {
     text-align: center;
 }
 
-@media (max-width: 768px) {
-    .camera-controls {
-        gap: 10px;
-        padding: 16px;
-    }
-    
-    .camera-controls .btn {
-        min-width: 120px;
-        max-width: 150px;
-        height: 44px;
-        font-size: 14px;
-        padding: 0 12px;
-    }
-    
-    .camera-controls .btn-icon {
-        font-size: 18px;
-    }
-}
-
+/* Mobile camera controls */
 @media (max-width: 480px) {
     .camera-controls {
         flex-direction: column;
         align-items: stretch;
         gap: 12px;
+        padding: 16px;
     }
     
     .camera-controls .btn {
         max-width: 100%;
         width: 100%;
-        height: 52px;
+        height: 56px;
+        font-size: 16px;
     }
 }
 
@@ -537,6 +615,7 @@ const IncomeExpensesModule = {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
             </style>
 
             <div class="module-container">
@@ -654,9 +733,9 @@ const IncomeExpensesModule = {
             <!-- ==================== MODALS ==================== -->
             <!-- Import Receipts Modal -->
             <div id="import-receipts-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 800px;">
+                <div class="popout-modal-content">
                     <div class="popout-modal-header">
-                        <h3 class="popout-modal-title">📥 Import Receipts ${this.isFirebaseAvailable ? '' : '(Local)'}</h3>
+                        <h3 class="popout-modal-title">📥 Import Receipts ${this.isFirebaseAvailable ? '(Firebase)' : '(Local)'}</h3>
                         <button class="popout-modal-close" id="close-import-receipts">&times;</button>
                     </div>
                     <div class="popout-modal-body">
@@ -664,15 +743,12 @@ const IncomeExpensesModule = {
                             <!-- Content loaded dynamically -->
                         </div>
                     </div>
-                    <div class="popout-modal-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 20px; gap: 16px;">
-                        <button class="btn btn-outline" id="cancel-import-receipts" style="flex: 1; max-width: 120px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            <span class="btn-icon">✖️</span>
-                            <span class="btn-text">Cancel</span>
-                        </button>
-                        <button class="btn btn-primary" id="process-receipts-btn" style="display: none; flex: 1; max-width: 180px; display: flex; align-items: center; justify-content: center; gap: 8px; position: relative;">
+                    <div class="popout-modal-footer">
+                        <button class="btn btn-outline" id="cancel-import-receipts" style="flex: 1; min-width: 0;">Cancel</button>
+                        <button class="btn btn-primary" id="process-receipts-btn" style="display: none; flex: 1; min-width: 0; position: relative;">
                             <span class="btn-icon">⚡</span>
                             <span class="btn-text">Process Receipts</span>
-                            <span id="process-receipts-count" style="position: absolute; top: -8px; right: -8px; background: white; color: var(--primary-color); border-radius: 10px; padding: 2px 6px; font-size: 11px; font-weight: 600; border: 2px solid var(--primary-color);">
+                            <span id="process-receipts-count" style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border-radius: 12px; padding: 3px 8px; font-size: 12px; font-weight: 700; border: 2px solid white; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3); min-width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;">
                                 0
                             </span>
                         </button>
