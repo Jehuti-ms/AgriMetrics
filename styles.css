@@ -4452,4 +4452,81 @@ body.dark-mode {
     }
 }
 
+/* Camera specific improvements */
+.camera-preview video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #000;
+    display: block;
+    transform: scaleX(1); /* Remove mirror for rear camera */
+}
+
+.camera-preview {
+    position: relative;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 0 auto 20px auto;
+    max-width: 100%;
+    min-height: 300px;
+}
+
+/* Camera controls styling */
+.camera-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    padding: 16px;
+    background: var(--glass-bg);
+    border-radius: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.camera-controls .btn {
+    min-width: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* Camera status indicator */
+#camera-status {
+    background: var(--primary-color-10);
+    color: var(--primary-color);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Capture button special styling */
+#capture-photo {
+    background: linear-gradient(135deg, var(--primary-color), #4f46e5);
+    border: none;
+    color: white;
+    font-weight: 600;
+}
+
+#capture-photo:hover {
+    background: linear-gradient(135deg, #4f46e5, var(--primary-color));
+    transform: scale(1.05);
+}
+
+/* Section transitions */
+.camera-section, .upload-section, .recent-section {
+    transition: all 0.3s ease-in-out;
+}
+
+.camera-section[style*="display: block"] {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 
