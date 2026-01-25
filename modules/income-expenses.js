@@ -249,7 +249,7 @@ const IncomeExpensesModule = {
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(10px);
     display: flex;
-    align-items: center;
+    align-items: center; /* Default: center vertically */
     justify-content: center;
     z-index: 10000;
     padding: 20px;
@@ -282,6 +282,91 @@ const IncomeExpensesModule = {
     margin: 0;
     flex-shrink: 0;
 }
+
+/* ==================== FIX: HEADER AT TOP ON SMALL/MEDIUM SCREENS ==================== */
+/* This overrides the vertical centering for screens 900px and below */
+
+@media (max-width: 900px) {
+    .popout-modal {
+        align-items: flex-start !important; /* Force to top */
+        padding-top: 0 !important; /* Remove top padding */
+        padding-bottom: 10px; /* Keep small bottom padding */
+    }
+    
+    .popout-modal-content {
+        margin-top: 0 !important; /* Remove auto margin that causes centering */
+        margin-bottom: auto; /* Push to top */
+    }
+    
+    .popout-modal-header {
+        margin-top: 0 !important; /* Ensure no margin above header */
+        padding-top: 16px; /* Keep original padding */
+    }
+}
+
+/* ==================== RESPONSIVE BREAKPOINTS ==================== */
+
+/* Medium screens (901px to 768px) - Already handled above */
+
+/* Tablet screens (768px and below) */
+@media (max-width: 768px) {
+    .popout-modal {
+        padding: 0 15px 15px; /* Top:0, Sides:15px, Bottom:15px */
+    }
+    
+    .popout-modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+    
+    .popout-modal-header {
+        padding: 12px 18px;
+    }
+    
+    .popout-modal-title {
+        font-size: 18px;
+    }
+}
+
+/* Mobile screens (640px and below) */
+@media (max-width: 640px) {
+    .popout-modal {
+        padding: 0 10px 10px; /* Top:0, Sides:10px, Bottom:10px */
+    }
+    
+    .popout-modal-content {
+        width: 100%;
+        max-height: 95vh;
+        border-radius: 16px;
+    }
+    
+    .popout-modal-header {
+        padding: 12px 16px;
+        border-radius: 16px 16px 0 0;
+    }
+}
+
+/* Very small phones (400px and below) - full screen */
+@media (max-width: 400px) {
+    .popout-modal {
+        padding: 0 !important; /* No padding on any side */
+    }
+    
+    .popout-modal-content {
+        width: 100%;
+        height: 100vh;
+        max-height: 100vh;
+        border-radius: 0;
+        margin: 0;
+    }
+    
+    .popout-modal-header {
+        padding: 12px 16px;
+        border-radius: 0;
+    }
+}
+
+/* ==================== REST OF THE STYLES (UNCHANGED) ==================== */
 
 .popout-modal-title {
     margin: 0;
@@ -334,111 +419,6 @@ const IncomeExpensesModule = {
     gap: 16px;
     flex-wrap: wrap;
     flex-shrink: 0;
-}
-
-/* ==================== RESPONSIVE BREAKPOINTS ==================== */
-
-/* Medium screens (901px to 768px) */
-@media (max-width: 900px) {
-    .popout-modal {
-        align-items: flex-start;
-        padding: 40px 20px;
-    }
-    
-    .popout-modal-content {
-        max-height: 85vh;
-        margin-top: 0;
-    }
-    
-    .popout-modal-header {
-        padding: 14px 20px;
-    }
-    
-    .popout-modal-body {
-        padding: 20px;
-    }
-    
-    .popout-modal-footer {
-        padding: 16px 20px;
-    }
-}
-
-/* Tablet screens (768px and below) */
-@media (max-width: 768px) {
-    .popout-modal {
-        padding: 30px 15px;
-    }
-    
-    .popout-modal-content {
-        width: 95%;
-        max-height: 90vh;
-    }
-    
-    .popout-modal-header {
-        padding: 12px 18px;
-    }
-    
-    .popout-modal-title {
-        font-size: 18px;
-    }
-}
-
-/* Mobile screens (640px and below) */
-@media (max-width: 640px) {
-    .popout-modal {
-        padding: 20px 10px;
-    }
-    
-    .popout-modal-content {
-        width: 100%;
-        max-height: 95vh;
-        border-radius: 16px;
-    }
-    
-    .popout-modal-header {
-        padding: 12px 16px;
-        border-radius: 16px 16px 0 0;
-    }
-    
-    .popout-modal-body {
-        padding: 16px;
-    }
-    
-    .popout-modal-footer {
-        padding: 12px 16px;
-        border-radius: 0 0 16px 16px;
-    }
-}
-
-/* Very small phones (400px and below) */
-@media (max-width: 400px) {
-    .popout-modal {
-        padding: 0;
-        align-items: stretch;
-    }
-    
-    .popout-modal-content {
-        width: 100%;
-        height: 100vh;
-        max-height: 100vh;
-        border-radius: 0;
-        margin: 0;
-    }
-    
-    .popout-modal-header {
-        padding: 12px 16px;
-        border-radius: 0;
-    }
-    
-    .popout-modal-body {
-        padding: 16px;
-        max-height: calc(100vh - 120px);
-    }
-    
-    .popout-modal-footer {
-        padding: 12px 16px;
-        border-radius: 0;
-    }
 }
 
 /* ==================== FOOTER BUTTON STYLES ==================== */
@@ -525,7 +505,6 @@ const IncomeExpensesModule = {
 }
 
 /* ==================== IMPORT OPTION BUTTON FIXES ==================== */
-/* Fixes for button text truncation and display */
 
 .import-option {
     display: flex;
@@ -572,17 +551,7 @@ const IncomeExpensesModule = {
     }
 }
 
-/* Alternative text handling for extremely small screens */
-@media (max-width: 360px) {
-    .import-option-text {
-        white-space: normal;
-        word-break: break-word;
-        line-height: 1.3;
-    }
-}
-
 /* ==================== SCROLLING FIXES ==================== */
-/* Ensures last button is visible when scrolling */
 
 .popout-modal-body {
     padding-bottom: 30px;
@@ -590,70 +559,6 @@ const IncomeExpensesModule = {
 
 .import-options-container {
     padding-bottom: 8px;
-}
-
-/* ==================== IMPORT RECEIPTS MODAL SPECIFIC FIXES ==================== */
-/* Only apply these fixes to the specific modal if needed */
-
-#import-receipts-modal .popout-modal-header {
-    /* Add any specific header styles here if different from base */
-}
-
-/* Ensure proper scrolling in import receipts modal */
-#import-receipts-modal .popout-modal-body {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-/* ==================== MEDIUM SCREEN HEADER POSITION FIX ==================== */
-/* Additional fix for medium screens if header is still too low */
-
-@media (min-width: 641px) and (max-width: 900px) {
-    #import-receipts-modal.popout-modal {
-        align-items: flex-start;
-        padding-top: 5px;
-    }
-    
-    #import-receipts-modal .popout-modal-content {
-        margin-top: 0;
-        max-height: calc(100vh - 10px);
-    }
-}
-
-/* ==================== SMALL SCREEN OPTIMIZATIONS ==================== */
-/* Additional optimizations for very small screens */
-
-@media (max-width: 640px) {
-    #import-receipts-modal.popout-modal {
-        padding: 0;
-    }
-    
-    #import-receipts-modal .popout-modal-content {
-        margin: 0;
-        width: 100%;
-        height: 100vh;
-        max-height: 100vh;
-        border-radius: 0;
-    }
-    
-    #import-receipts-modal .popout-modal-header {
-        position: sticky;
-        top: 0;
-        z-index: 100;
-        padding-top: 20px;
-    }
-}
-
-/* ==================== DEBUG HELPERS (REMOVE IN PRODUCTION) ==================== */
-/*
-.import-option-text {
-    border: 1px solid red;
-}
-
-.popout-modal-header {
-    background-color: rgba(255, 0, 0, 0.1);
-}
-*/
 }
             </style>
 
