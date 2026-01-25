@@ -193,6 +193,59 @@ const IncomeExpensesModule = {
                     margin-top: 8px;
                     border: 1px solid var(--glass-border);
                 }
+
+                /* Camera specific fixes */
+                .camera-section {
+                    transition: all 0.3s ease;
+                }
+                
+                .camera-preview {
+                    width: 100%;
+                    height: 300px;
+                    background: #000;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    margin-bottom: 16px;
+                    position: relative;
+                }
+                
+                .camera-preview video {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    background: #000;
+                    display: block;
+                }
+                
+                #camera-preview {
+                    display: block !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    background: #000 !important;
+                }
+                
+                .camera-controls {
+                    display: flex;
+                    gap: 12px;
+                    justify-content: center;
+                    padding: 16px;
+                    flex-wrap: wrap;
+                }
+                
+                #camera-status {
+                    font-size: 14px;
+                    color: var(--text-secondary);
+                    padding: 4px 8px;
+                    background: var(--glass-bg);
+                    border-radius: 4px;
+                }
+                
+                /* Ensure camera section is visible when shown */
+                #camera-section[style*="display: block"] {
+                    display: block !important;
+                    opacity: 1 !important;
+                    visibility: visible !important;
+                }
             </style>
 
             <div class="module-container">
@@ -712,37 +765,7 @@ initializeCamera() {
     }
 },
 
-switchCamera() {
-    console.log('🔄 Switching camera...');
-    
-    // Debounce
-    const now = Date.now();
-    if (this.lastSwitchClick && (now - this.lastSwitchClick) < 1500) {
-        console.log('⏳ Please wait before switching camera again');
-        return;
-    }
-    this.lastSwitchClick = now;
-    
-    // Toggle camera facing mode
-    this.cameraFacingMode = this.cameraFacingMode === 'user' ? 'environment' : 'user';
-    
-    console.log('📸 New camera mode:', this.cameraFacingMode);
-    
-    // Update status
-    const status = document.getElementById('camera-status');
-    if (status) {
-        status.textContent = 'Switching...';
-    }
-    
-    // Stop current camera and restart
-    this.stopCamera();
-    
-    // Small delay before restarting
-    setTimeout(() => {
-        this.initializeCamera();
-    }, 300);
-},
-
+// ==================== CAMERA MANAGEMENT METHODS ====================
 capturePhoto() {
     const video = document.getElementById('camera-preview');
     const canvas = document.getElementById('camera-canvas');
@@ -797,22 +820,24 @@ capturePhoto() {
 
 stopCamera() {
     console.log('🛑 Stopping camera...');
+    
     if (this.cameraStream) {
         this.cameraStream.getTracks().forEach(track => {
+            console.log('📹 Stopping track:', track.kind);
             track.stop();
-            console.log('📹 Track stopped:', track.kind);
         });
         this.cameraStream = null;
     }
+    
     const video = document.getElementById('camera-preview');
     if (video) {
         video.srcObject = null;
         video.pause();
     }
+    
     console.log('✅ Camera stopped');
 },
 
-    // ==================== CAMERA INTERFACE METHODS ====================
 showUploadInterface() {
     console.log('📤 Showing upload interface...');
     
@@ -827,18 +852,110 @@ showUploadInterface() {
     // Show upload, hide camera
     if (uploadSection) {
         uploadSection.style.display = 'block';
-    }
-    if (cameraSection) {
-        cameraSection.style.display = 'none';
+        console.log('✅ Upload section shown');
     }
     
-    // Show recent section if there are receipts
+    if (cameraSection) {
+        cameraSection.style.display = 'none';
+        console.log('✅ Camera section hidden');
+    }
+    
+    // Show recent section only if there are receipts
     if (recentSection) {
         if (this.receiptQueue.length > 0) {
             recentSection.style.display = 'block';
+            console.log('✅ Recent section shown (has receipts)');
         } else {
             recentSection.style.display = 'none';
+            console.log('✅ Recent section hidden (no receipts)');
         }
+    }
+    
+    console.log('✅ Upload interface shown');
+},
+
+switchCamera() {
+    console.log('🔄 Switching camera...');
+    
+    // Debounce to prevent rapid clicks
+    const now = Date.now();
+    if (this.lastSwitchClick && (now - this.lastSwitchClick) < 1500) {
+        console.log('⏳ Please wait before switching camera again');
+        return;
+    }
+    this.lastSwitchClick = now;
+    
+    // Toggle camera facing mode
+    this.cameraFacingMode = this.cameraFacingMode === 'user' ? 'environment' : 'user';
+    
+    // Update status
+    const status = document.getElementById('camera-status');
+    if (status) {
+        status.textContent = 'Switching...';
+    }
+    
+    // Stop and restart camera with new facing mode
+    this.stopCamera();
+    
+    setTimeout(() => {
+        this.initializeCamera();
+    }, 300);
+},
+
+showUploadInterfaceFromCamera() {
+    console.log('📤 Switching from camera to upload...');
+    
+    // Clear status
+    const status = document.getElementById('camera-status');
+    if (status) status.textContent = 'Ready';
+    
+    // Stop camera
+    this.stopCamera();
+    
+    // Hide camera, show upload and recent
+    const cameraSection = document.getElementById('camera-section');
+    const uploadSection = document.getElementById('upload-section');
+    const recentSection = document.getElementById('recent-section');
+    
+    if (cameraSection) {
+        cameraSection.style.display = 'none';
+        console.log('✅ Camera section hidden');
+    }
+    
+    if (uploadSection) {
+        uploadSection.style.display = 'block';
+        console.log('✅ Upload section shown');
+    }
+    
+    if (recentSection) {
+        recentSection.style.display = this.receiptQueue.length > 0 ? 'block' : 'none';
+        console.log(`✅ Recent section ${this.receiptQueue.length > 0 ? 'shown' : 'hidden'}`);
+    }
+},
+
+    debugCamera() {
+    console.log('🔍 Camera Debug:');
+    
+    const sections = ['camera-section', 'upload-section', 'recent-section'];
+    sections.forEach(id => {
+        const el = document.getElementById(id);
+        console.log(`${id}:`, {
+            exists: !!el,
+            display: el?.style?.display,
+            computedDisplay: el ? window.getComputedStyle(el).display : 'N/A',
+            inDOM: el?.parentNode ? true : false
+        });
+    });
+    
+    const video = document.getElementById('camera-preview');
+    if (video) {
+        console.log('📹 Video:', {
+            hasStream: !!video.srcObject,
+            playing: !video.paused,
+            readyState: video.readyState,
+            videoWidth: video.videoWidth,
+            videoHeight: video.videoHeight
+        });
     }
 },
     
@@ -1088,20 +1205,10 @@ this.setupButton('camera-option', () => {
 });
 
     // Upload option
-        this.setupButton('upload-option', () => {
-            console.log('🎯 Button #upload-option clicked');
-            const cameraSection = document.getElementById('camera-section');
-            const uploadSection = document.getElementById('upload-section');
-            
-            if (uploadSection) {
-                uploadSection.style.display = 'block';
-            }
-            if (cameraSection) {
-                // Stop camera if running
-                this.stopCamera();
-                cameraSection.style.display = 'none';
-            }
-        });
+this.setupButton('upload-option', () => {
+    console.log('🎯 Button #upload-option clicked');
+    this.showUploadInterface();
+});
                
     // Camera controls
     this.setupButton('capture-photo', () => this.capturePhoto());
