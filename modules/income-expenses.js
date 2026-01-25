@@ -533,51 +533,97 @@ const IncomeExpensesModule = {
         order: -1;
     }
 
-/* ==================== COMBINED FIX FOR ALL ISSUES ==================== */
-
-/* 1. FIX MODAL HEADER AT TOP ON MOBILE */
-@media (max-width: 900px) {
-    /* Force modal to align to top on mobile/tablet */
+/* ==================== FIX FOR MEDIUM SCREENS (HEADER TOO FAR DOWN) ==================== */
+@media (min-width: 641px) and (max-width: 900px) {
     #import-receipts-modal.popout-modal {
         align-items: flex-start !important;
-        padding-top: 10px !important;
-        padding-bottom: 10px !important;
-        overflow-y: auto !important;
+        padding-top: 5px !important; /* Reduced padding */
     }
     
-    /* Make modal content hug the top */
     #import-receipts-modal .popout-modal-content {
         margin-top: 0 !important;
-        margin-bottom: auto !important;
-        max-height: calc(100vh - 20px) !important;
-        display: flex !important;
-        flex-direction: column !important;
+        max-height: calc(100vh - 10px) !important; /* Reduced from 20px */
     }
     
-    /* Ensure header has no extra space above */
     #import-receipts-modal .popout-modal-header {
-        margin-top: 0 !important;
-        padding-top: 14px !important;
-        padding-bottom: 14px !important;
-        flex-shrink: 0 !important; /* Prevent header from shrinking */
-    }
-    
-    /* Push body content down to account for header */
-    #import-receipts-modal .popout-modal-body {
-        padding-top: 8px !important;
-        flex: 1 !important;
-        overflow-y: auto !important;
-        min-height: 0 !important; /* Critical for scrolling */
-        padding-bottom: 20px !important; /* Space for last button */
+        padding-top: 12px !important; /* Reduced padding */
+        padding-bottom: 12px !important;
     }
 }
 
-/* 2. FIX BUTTON TEXT TRUNCATION */
+/* ==================== FIX FOR VERY SMALL SCREENS (TEXT CUTOFF) ==================== */
+@media (max-width: 640px) {
+    /* Keep existing positioning fixes */
+    #import-receipts-modal.popout-modal {
+        padding: 0 !important;
+        align-items: flex-start !important;
+    }
+    
+    #import-receipts-modal .popout-modal-content {
+        margin: 8px !important; /* Reduced from 10px */
+        margin-top: 0 !important;
+        width: calc(100% - 16px) !important;
+        height: calc(100vh - 16px) !important;
+        max-height: none !important;
+    }
+    
+    #import-receipts-modal .popout-modal-header {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 10 !important;
+        background: white !important;
+        border-bottom: 1px solid #e5e7eb !important;
+        padding-top: 14px !important;
+        padding-bottom: 14px !important;
+    }
+    
+    /* FIX BUTTON TEXT CUTOFF ON SMALL SCREENS */
+    .import-option {
+        min-height: 44px !important;
+        padding: 10px 12px !important; /* Reduced padding */
+    }
+    
+    .import-option-icon {
+        margin-right: 10px !important; /* Reduced spacing */
+        width: 22px !important;
+        height: 22px !important;
+    }
+    
+    .import-option-text {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        font-size: 14px !important; /* Slightly smaller font */
+        min-width: 0 !important;
+        flex: 1 !important;
+    }
+    
+    /* For extremely small screens, adjust further */
+    @media (max-width: 400px) {
+        .import-option {
+            padding: 8px 10px !important;
+        }
+        
+        .import-option-text {
+            font-size: 13.5px !important;
+        }
+        
+        .import-option-icon {
+            margin-right: 8px !important;
+            width: 20px !important;
+            height: 20px !important;
+        }
+    }
+}
+
+/* ==================== UNIVERSAL BUTTON FIX ==================== */
+/* Apply to all screen sizes */
 .import-option {
     display: flex !important;
     align-items: center !important;
     min-height: 48px !important;
     padding: 12px 16px !important;
+    width: 100% !important;
 }
 
 .import-option-icon {
@@ -587,93 +633,31 @@ const IncomeExpensesModule = {
     height: 24px !important;
 }
 
+/* CRITICAL FIX: This enables proper text truncation */
 .import-option-text {
     flex: 1 !important;
-    min-width: 0 !important; /* CRITICAL - allows text truncation to work */
+    min-width: 0 !important; /* This is essential for text truncation */
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     text-align: left !important;
 }
 
-/* On very small screens, allow text to wrap instead of truncating */
-@media (max-width: 480px) {
-    .import-option-text {
-        white-space: normal !important;
-        word-break: break-word !important;
-        line-height: 1.3 !important;
-    }
-    
-    .import-option {
-        padding: 10px 14px !important;
-        min-height: 44px !important;
-    }
-}
-
-/* 3. FIX SCROLLING TO SHOW LAST BUTTON */
-/* Ensure modal body can scroll and has proper bottom padding */
+/* ==================== MODAL BODY SCROLLING FIX ==================== */
+/* Ensure modal body can scroll properly */
 .popout-modal-body {
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 20px !important; /* Space for last button */
+    min-height: 0 !important; /* Important for flex children */
 }
 
-/* Add extra space at the bottom for scrolling */
+/* Container for the buttons */
 .import-options-container {
-    padding-bottom: 24px !important; /* Extra space for last button */
+    padding-bottom: 8px !important;
 }
 
-/* For very small screens, use absolute positioning */
-@media (max-width: 640px) {
-    #import-receipts-modal.popout-modal {
-        padding: 0 !important;
-    }
-    
-    #import-receipts-modal .popout-modal-content {
-        margin: 10px !important;
-        margin-top: 0 !important;
-        width: calc(100% - 20px) !important;
-        height: calc(100vh - 20px) !important;
-        max-height: none !important;
-    }
-    
-    #import-receipts-modal .popout-modal-header {
-        position: sticky !important;
-        top: 0 !important;
-        z-index: 10 !important;
-        background: white !important; /* Ensure header covers content */
-        border-bottom: 1px solid #e5e7eb !important;
-    }
-    
-    /* Make sure modal body scrolls independently */
-    #import-receipts-modal .popout-modal-body {
-        flex: 1 !important;
-        overflow-y: auto !important;
-        padding-bottom: 30px !important; /* Extra bottom padding */
-    }
-}
 
-/* 4. FIX FOR SPECIFIC BUTTON TYPES */
-/* If buttons have different structures, this ensures consistency */
-.import-option-button {
-    width: 100% !important;
-    text-align: left !important;
-    justify-content: flex-start !important;
-    display: flex !important;
-    align-items: center !important;
-}
-
-/* If using a container with multiple buttons */
-.button-group {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 8px !important;
-    margin-top: 16px !important;
-}
-
-  .import-option-text {
-    border: 1px solid red !important;
-    min-width: 0 !important; /* This should fix the truncation */
-}
             </style>
 
             <div class="module-container">
