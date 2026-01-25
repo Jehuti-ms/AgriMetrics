@@ -662,6 +662,160 @@ const IncomeExpensesModule = {
     min-width: 0 !important; /* This should fix the truncation */
 }
 
+/* ==================== FIX FOR MEDIUM SCREENS (641px-900px) ==================== */
+@media (min-width: 641px) and (max-width: 900px) {
+    #import-receipts-modal.popout-modal {
+        align-items: flex-start !important;
+        padding-top: 0 !important; /* Remove padding at modal level */
+    }
+    
+    #import-receipts-modal .popout-modal-content {
+        margin-top: 0 !important;
+        margin-bottom: auto !important;
+        max-height: 100vh !important; /* Use full viewport height */
+        transform: translateY(0) !important; /* Remove any vertical centering */
+        top: 0 !important;
+        position: relative !important;
+    }
+    
+    /* Restore header gradient */
+    #import-receipts-modal .popout-modal-header {
+        padding-top: 16px !important;
+        padding-bottom: 16px !important;
+        background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%) !important;
+        color: white !important;
+        margin-top: 0 !important;
+    }
+    
+    /* Ensure modal takes full height */
+    #import-receipts-modal .popout-modal-body {
+        max-height: calc(100vh - 70px) !important; /* Adjust based on header height */
+        overflow-y: auto !important;
+    }
+}
+
+/* ==================== FIX FOR SMALL SCREENS (≤640px) ==================== */
+@media (max-width: 640px) {
+    #import-receipts-modal.popout-modal {
+        padding: 0 !important;
+        align-items: flex-start !important;
+        background-color: rgba(0, 0, 0, 0.5) !important; /* Restore backdrop */
+    }
+    
+    #import-receipts-modal .popout-modal-content {
+        margin: 0 !important;
+        width: 100% !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important; /* Full screen on mobile */
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        transform: none !important;
+    }
+    
+    /* RESTORE HEADER GRADIENT ON MOBILE */
+    #import-receipts-modal .popout-modal-header {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 10 !important;
+        background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%) !important;
+        color: white !important;
+        padding-top: 20px !important; /* Extra padding for status bar */
+        padding-bottom: 16px !important;
+        margin: 0 !important;
+        border-bottom: none !important; /* Remove border since we have gradient */
+    }
+    
+    /* Header text styling */
+    #import-receipts-modal .popout-modal-header h2 {
+        color: white !important;
+        font-weight: 600 !important;
+        margin: 0 !important;
+    }
+    
+    /* Close button styling for gradient header */
+    #import-receipts-modal .popout-modal-header .close-button {
+        color: white !important;
+        background: rgba(255, 255, 255, 0.2) !important;
+        border: none !important;
+    }
+    
+    /* Modal body adjustments */
+    #import-receipts-modal .popout-modal-body {
+        padding-top: 8px !important;
+        padding-bottom: 30px !important;
+        height: calc(100vh - 80px) !important; /* Account for header */
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+}
+
+/* ==================== BUTTON TEXT FIX (ALL SCREENS) ==================== */
+.import-option {
+    display: flex !important;
+    align-items: center !important;
+    min-height: 48px !important;
+    padding: 12px 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.import-option-icon {
+    flex-shrink: 0 !important;
+    margin-right: 12px !important;
+    width: 24px !important;
+    height: 24px !important;
+}
+
+/* CRITICAL: Proper text truncation */
+.import-option-text {
+    flex: 1 1 0% !important; /* Use 0% as basis */
+    min-width: 0 !important; /* Essential for text truncation */
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    text-align: left !important;
+    font-size: 16px !important;
+}
+
+/* Alternative for very small text - use word break */
+@media (max-width: 360px) {
+    .import-option-text {
+        font-size: 14px !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        line-height: 1.3 !important;
+    }
+    
+    .import-option {
+        padding: 10px 12px !important;
+        min-height: 44px !important;
+    }
+    
+    .import-option-icon {
+        margin-right: 10px !important;
+        width: 22px !important;
+        height: 22px !important;
+    }
+}
+
+/* ==================== ENSURE MODAL CONTENT STRUCTURE ==================== */
+.popout-modal-content {
+    display: flex !important;
+    flex-direction: column !important;
+    max-height: 100vh !important;
+}
+
+.popout-modal-header {
+    flex-shrink: 0 !important; /* Don't let header shrink */
+}
+
+.popout-modal-body {
+    flex: 1 !important;
+    min-height: 0 !important; /* Allow body to shrink */
+    overflow-y: auto !important;
+}
             </style>
 
             <div class="module-container">
