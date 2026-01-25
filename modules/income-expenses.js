@@ -23,7 +23,7 @@ const IncomeExpensesModule = {
     lastSwitchClick: 0,
 
     // ==================== INITIALIZATION ====================
-   initialize() {
+initialize() {
     console.log('💰 Initializing Income & Expenses...');
     
     this.element = document.getElementById('content-area');
@@ -44,9 +44,28 @@ const IncomeExpensesModule = {
         StyleManager.registerModule(this.name, this.element, this);
     }
 
+    // Setup network detection for automatic sync
+    this.setupNetworkDetection();
+    
+    // Load transactions with Firebase fallback
     this.loadData();
+    
+    // Clean up any broken receipts
     this.cleanupBrokenReceipts();
+    
+    // Load receipts with Firebase fallback
     this.loadReceiptsFromFirebase();
+    
+    // Process any pending syncs if Firebase is available
+    if (this.isFirebaseAvailable) {
+        // Give the UI time to render, then sync
+        setTimeout(() => {
+            this.processFirebaseSyncQueue();
+            // Also try to sync any local transactions to Firebase
+            this.syncLocalTransactionsToFirebase();
+        }, 3000); // Wait 3 seconds to ensure UI is ready
+    }
+    
     this.renderModule();
     this.initialized = true;
     
@@ -54,49 +73,356 @@ const IncomeExpensesModule = {
     return true;
 },
 
-    onThemeChange(theme) {
-        console.log(`Income & Expenses updating for theme: ${theme}`);
-    },
+onThemeChange(theme) {
+    console.log(`Income & Expenses updating for theme: ${theme}`);
+},
+
+// ==================== NEW METHODS TO ADD ====================
+
+setupNetworkDetection() {
+    // Store current network status
+    this.isOnline = navigator.onLine;
+    console.log(`🌐 Initial network status: ${this.isOnline ? 'Online' : 'Offline'}`);
+    
+    // Listen for network changes
+    window.addEventListener('online', () => {
+        console.log('🌐 Device came online');
+        this.isOnline = true;
+        this.showNotification('Back online. Syncing data...', 'info');
+        
+        // Process any pending syncs
+        if (this.isFirebaseAvailable) {
+            this.processFirebaseSyncQueue();
+            this.loadReceiptsFromFirebase();
+            this.syncLocalTransactionsToFirebase();
+        }
+    });
+    
+    window.addEventListener('offline', () => {
+        console.log('📴 Device went offline');
+        this.isOnline = false;
+        this.showNotification('You are offline. Changes will be saved locally and sync when connection is restored.', 'info');
+    });
+},
+
+async syncLocalTransactionsToFirebase() {
+    if (!this.isFirebaseAvailable || !window.db) {
+        console.log('Firebase not available, skipping transaction sync');
+        return;
+    }
+    
+    console.log('🔄 Syncing local transactions to Firebase...');
+    
+    try {
+        // Get all local transactions
+        const localTransactions = this.transactions || [];
+        
+        // Check each transaction in Firebase
+        for (const transaction of localTransactions) {
+            try {
+                const docRef = window.db.collection('transactions').doc(transaction.id.toString());
+                const doc = await docRef.get();
+                
+                if (!doc.exists) {
+                    // Transaction doesn't exist in Firebase, add it
+                    await docRef.set({
+                        ...transaction,
+                        syncedAt: new Date().toISOString(),
+                        source: 'local-sync'
+                    });
+                    console.log(`✅ Synced transaction to Firebase: ${transaction.id}`);
+                } else {
+                    // Check if local is newer than Firebase
+                    const firebaseData = doc.data();
+                    const localUpdated = new Date(transaction.updatedAt || transaction.createdAt || 0);
+                    const firebaseUpdated = new Date(firebaseData.updatedAt || firebaseData.createdAt || 0);
+                    
+                    if (localUpdated > firebaseUpdated) {
+                        // Local is newer, update Firebase
+                        await docRef.update({
+                            ...transaction,
+                            updatedAt: new Date().toISOString(),
+                            syncedAt: new Date().toISOString(),
+                            source: 'local-sync-update'
+                        });
+                        console.log(`✅ Updated transaction in Firebase: ${transaction.id}`);
+                    }
+                }
+            } catch (error) {
+                console.warn(`⚠️ Failed to sync transaction ${transaction.id}:`, error.message);
+                // Continue with other transactions
+            }
+        }
+        
+        console.log('✅ Transaction sync complete');
+        
+    } catch (error) {
+        console.error('❌ Error syncing transactions to Firebase:', error);
+    }
+},
+
+async loadData() {
+    console.log('Loading transactions...');
+    
+    try {
+        let loadedFromFirebase = false;
+        
+        // Try to load from Firebase first if available
+        if (this.isFirebaseAvailable && window.db) {
+            try {
+                const snapshot = await window.db.collection('transactions')
+                    .orderBy('createdAt', 'desc')
+                    .limit(100) // Limit to reasonable number
+                    .get();
+                
+                if (!snapshot.empty) {
+                    this.transactions = snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        // Ensure all transactions have required fields
+                        return {
+                            id: data.id || parseInt(doc.id),
+                            date: data.date,
+                            type: data.type,
+                            category: data.category,
+                            amount: parseFloat(data.amount) || 0,
+                            description: data.description || '',
+                            paymentMethod: data.paymentMethod || 'cash',
+                            reference: data.reference || '',
+                            notes: data.notes || '',
+                            receipt: data.receipt || null,
+                            createdAt: data.createdAt || new Date().toISOString(),
+                            updatedAt: data.updatedAt || new Date().toISOString(),
+                            syncedAt: data.syncedAt,
+                            source: data.source || 'firebase'
+                        };
+                    });
+                    
+                    console.log('✅ Loaded transactions from Firebase:', this.transactions.length);
+                    loadedFromFirebase = true;
+                    
+                    // Save to localStorage for offline use
+                    localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+                    
+                    // Also save a timestamp of last successful Firebase sync
+                    localStorage.setItem('last-firebase-sync', new Date().toISOString());
+                }
+            } catch (firebaseError) {
+                console.warn('⚠️ Firebase load error:', firebaseError.message);
+                loadedFromFirebase = false;
+            }
+        }
+        
+        // Fallback to localStorage if Firebase failed or no data
+        if (!loadedFromFirebase) {
+            console.log('🔄 Falling back to localStorage');
+            const saved = localStorage.getItem('farm-transactions');
+            this.transactions = saved ? JSON.parse(saved) : this.getDemoData();
+            
+            // Add source marker for local transactions
+            this.transactions.forEach(t => {
+                if (!t.source) {
+                    t.source = 'local';
+                    t.updatedAt = t.updatedAt || new Date().toISOString();
+                }
+            });
+            
+            console.log('📁 Loaded transactions from localStorage:', this.transactions.length);
+        }
+        
+    } catch (error) {
+        console.error('❌ Error loading transactions:', error);
+        // Ultimate fallback to demo data
+        this.transactions = this.getDemoData();
+        console.log('📝 Loaded demo transactions:', this.transactions.length);
+    }
+},
+
+// ==================== ENHANCED RECEIPT LOADING ====================
+
+async loadReceiptsFromFirebase() {
+    console.log('Loading receipts from Firebase...');
+    
+    try {
+        let loadedFromFirebase = false;
+        
+        if (this.isFirebaseAvailable && window.db) {
+            try {
+                // Try to get pending receipts from Firebase
+                const snapshot = await window.db.collection('receipts')
+                    .where('status', '==', 'pending')
+                    .orderBy('uploadedAt', 'desc')
+                    .limit(50)
+                    .get();
+                
+                if (!snapshot.empty) {
+                    const firebaseReceipts = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        firebaseReceipts.push({
+                            ...data,
+                            source: 'firebase',
+                            syncedAt: new Date().toISOString()
+                        });
+                    });
+                    
+                    console.log('✅ Loaded receipts from Firebase:', firebaseReceipts.length);
+                    
+                    // Merge with local receipts
+                    this.mergeReceiptsFromSources(firebaseReceipts);
+                    loadedFromFirebase = true;
+                }
+            } catch (firebaseError) {
+                console.warn('⚠️ Firebase receipts load error:', firebaseError.message);
+                loadedFromFirebase = false;
+            }
+        }
+        
+        if (!loadedFromFirebase) {
+            console.log('🔄 Falling back to localStorage for receipts');
+            this.loadFromLocalStorage();
+        }
+        
+        // Update UI
+        this.updateReceiptQueueUI();
+        this.updateProcessReceiptsButton();
+        
+    } catch (error) {
+        console.error('❌ Error in loadReceiptsFromFirebase:', error);
+        this.loadFromLocalStorage();
+    }
+},
+
+mergeReceiptsFromSources(firebaseReceipts) {
+    // Load local receipts
+    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+    
+    // Create a map of receipt IDs to avoid duplicates
+    const receiptMap = new Map();
+    
+    // Add Firebase receipts first (most recent/authoritative)
+    firebaseReceipts.forEach(receipt => {
+        receiptMap.set(receipt.id, receipt);
+    });
+    
+    // Add local receipts that don't exist in Firebase
+    localReceipts.forEach(localReceipt => {
+        if (!receiptMap.has(localReceipt.id) && localReceipt.status === 'pending') {
+            // Mark local receipts as needing sync
+            receiptMap.set(localReceipt.id, {
+                ...localReceipt,
+                source: 'local',
+                needsSync: true
+            });
+        }
+    });
+    
+    // Convert back to array
+    this.receiptQueue = Array.from(receiptMap.values());
+    
+    console.log('✅ Merged receipts. Total:', this.receiptQueue.length, 
+                `(Firebase: ${firebaseReceipts.length}, Local: ${localReceipts.length})`);
+    
+    // Save the merged list locally
+    localStorage.setItem('local-receipts', JSON.stringify(this.receiptQueue));
+},
+
+// ==================== PROCESS SYNC QUEUE ====================
+
+async processFirebaseSyncQueue() {
+    if (!this.isOnline || !this.isFirebaseAvailable || !window.db) {
+        console.log('Skipping sync queue - offline or Firebase unavailable');
+        return;
+    }
+    
+    const syncQueue = JSON.parse(localStorage.getItem('firebase-sync-queue') || '[]');
+    if (syncQueue.length === 0) {
+        console.log('✅ No pending syncs');
+        return;
+    }
+    
+    console.log(`🔄 Processing ${syncQueue.length} pending syncs...`);
+    
+    const failedItems = [];
+    
+    for (const item of syncQueue) {
+        try {
+            if (item.type === 'receipt') {
+                if (item.action === 'create') {
+                    await window.db.collection('receipts').doc(item.data.id).set(item.data);
+                    console.log('✅ Synced receipt to Firebase:', item.data.id);
+                    
+                    // Update local receipt with synced status
+                    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+                    const index = localReceipts.findIndex(r => r.id === item.data.id);
+                    if (index > -1) {
+                        localReceipts[index].syncedAt = new Date().toISOString();
+                        localReceipts[index].source = 'firebase';
+                        localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
+                    }
+                }
+            } else if (item.type === 'transaction') {
+                if (item.action === 'create') {
+                    await window.db.collection('transactions').doc(item.data.id.toString()).set(item.data);
+                    console.log('✅ Synced transaction to Firebase:', item.data.id);
+                }
+            }
+            
+            // Small delay between operations to avoid rate limiting
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+        } catch (error) {
+            console.warn('❌ Failed to sync item:', error.message);
+            failedItems.push(item);
+        }
+    }
+    
+    // Update the queue
+    localStorage.setItem('firebase-sync-queue', JSON.stringify(failedItems));
+    
+    const successCount = syncQueue.length - failedItems.length;
+    if (successCount > 0) {
+        console.log(`✅ Successfully synced ${successCount} items`);
+        this.showNotification(`Synced ${successCount} item(s) to cloud`, 'success');
+        
+        // Refresh UI
+        this.updateReceiptQueueUI();
+        this.updateProcessReceiptsButton();
+    }
+    
+    if (failedItems.length > 0) {
+        console.warn(`⚠️ ${failedItems.length} items failed to sync`);
+    }
+},
     
     // ==================== DATA MANAGEMENT ====================
-    loadData() {
-        const saved = localStorage.getItem('farm-transactions');
-        this.transactions = saved ? JSON.parse(saved) : this.getDemoData();
-        console.log('Loaded transactions:', this.transactions.length);
-    },
-
-    saveData() {
-        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-    },
-
-    getDemoData() {
-        return [
-            {
-                id: 1,
-                date: '2024-03-15',
-                type: 'income',
-                category: 'sales',
-                description: 'Egg sales - Market day',
-                amount: 450.00,
-                paymentMethod: 'cash',
-                reference: 'EGG-001',
-                receipt: null,
-                notes: 'Sold 30 dozen eggs at $15/dozen'
-            },
-            {
-                id: 2,
-                date: '2024-03-14',
-                type: 'expense',
-                category: 'feed',
-                description: 'Chicken feed purchase',
-                amount: 120.00,
-                paymentMethod: 'card',
-                reference: 'INV-78910',
-                receipt: null,
-                notes: '50kg starter feed from FeedCo'
+async loadData() {
+    console.log('Loading transactions...');
+    
+    // Try to load from Firebase first if available
+    if (this.isFirebaseAvailable && window.db) {
+        try {
+            const snapshot = await window.db.collection('transactions')
+                .orderBy('createdAt', 'desc')
+                .get();
+            
+            if (!snapshot.empty) {
+                this.transactions = snapshot.docs.map(doc => doc.data());
+                console.log('Loaded transactions from Firebase:', this.transactions.length);
+                
+                // Save to localStorage for offline use
+                localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+                return;
             }
-        ];
-    },
+        } catch (error) {
+            console.warn('Error loading from Firebase, using localStorage:', error);
+        }
+    }
+    
+    // Fallback to localStorage
+    const saved = localStorage.getItem('farm-transactions');
+    this.transactions = saved ? JSON.parse(saved) : this.getDemoData();
+    console.log('Loaded transactions from localStorage:', this.transactions.length);
+},
 
     // ==================== MAIN RENDER ====================
     renderModule() {
@@ -2103,7 +2429,7 @@ showAddExpense() {
     if (title) title.textContent = 'Add Expense';
 },
 
-saveTransaction() {
+async saveTransaction() {
     console.log('Saving transaction...');
     console.log('Current receipt preview:', this.receiptPreview);
     
@@ -2155,55 +2481,88 @@ saveTransaction() {
         paymentMethod,
         reference,
         notes,
-        receipt: receiptData
+        receipt: receiptData,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
     };
     
     console.log('Transaction data to save:', transactionData);
     
     // Check if editing existing transaction
     const existingIndex = this.transactions.findIndex(t => t.id == id);
-    if (existingIndex > -1) {
-        // Update existing
-        const oldTransaction = this.transactions[existingIndex];
-        this.transactions[existingIndex] = transactionData;
-        
-        // Broadcast update
-        Broadcaster.recordUpdated('income-expenses', {
-            id: transactionData.id,
-            oldData: oldTransaction,
-            newData: transactionData,
-            timestamp: new Date().toISOString()
-        });
-        
-        this.showNotification('Transaction updated successfully!', 'success');
-        
-        // If this was from a pending receipt, mark it as processed
-        if (this.receiptPreview?.id && this.receiptPreview.id.startsWith('receipt_')) {
-            this.markReceiptAsProcessed(this.receiptPreview.id);
-        }
-    } else {
-        // Add new
-        transactionData.id = transactionData.id || Date.now();
-        this.transactions.unshift(transactionData);
-        
-        // Broadcast creation
-        Broadcaster.recordCreated('income-expenses', {
-            ...transactionData,
-            timestamp: new Date().toISOString(),
-            module: 'income-expenses',
-            action: 'transaction_created'
-        });
-        
-        this.showNotification('Transaction saved successfully!', 'success');
-        
-        // If this was from a pending receipt, mark it as processed
-        if (this.receiptPreview?.id && this.receiptPreview.id.startsWith('receipt_')) {
-            this.markReceiptAsProcessed(this.receiptPreview.id);
-        }
-    }
     
-    // Save to localStorage
-    this.saveData();
+    try {
+        if (existingIndex > -1) {
+            // Update existing
+            const oldTransaction = this.transactions[existingIndex];
+            this.transactions[existingIndex] = transactionData;
+            
+            // 1. Save to localStorage FIRST (always works)
+            this.saveData();
+            
+            // 2. Try to save to Firebase (if available)
+            if (this.isFirebaseAvailable && window.db) {
+                try {
+                    await window.db.collection('transactions')
+                        .doc(id.toString())
+                        .set(transactionData, { merge: true });
+                    console.log('Transaction updated in Firebase:', id);
+                } catch (firebaseError) {
+                    console.warn('Failed to update in Firebase, keeping local only:', firebaseError.message);
+                }
+            }
+            
+            // Broadcast update
+            Broadcaster.recordUpdated('income-expenses', {
+                id: transactionData.id,
+                oldData: oldTransaction,
+                newData: transactionData,
+                timestamp: new Date().toISOString()
+            });
+            
+            this.showNotification('Transaction updated successfully!', 'success');
+            
+        } else {
+            // Add new
+            transactionData.id = transactionData.id || Date.now();
+            this.transactions.unshift(transactionData);
+            
+            // 1. Save to localStorage FIRST (always works)
+            this.saveData();
+            
+            // 2. Try to save to Firebase (if available)
+            if (this.isFirebaseAvailable && window.db) {
+                try {
+                    await window.db.collection('transactions')
+                        .doc(transactionData.id.toString())
+                        .set(transactionData);
+                    console.log('Transaction saved to Firebase:', transactionData.id);
+                } catch (firebaseError) {
+                    console.warn('Failed to save to Firebase, keeping local only:', firebaseError.message);
+                }
+            }
+            
+            // Broadcast creation
+            Broadcaster.recordCreated('income-expenses', {
+                ...transactionData,
+                timestamp: new Date().toISOString(),
+                module: 'income-expenses',
+                action: 'transaction_created'
+            });
+            
+            this.showNotification('Transaction saved successfully!', 'success');
+        }
+        
+        // If this was from a pending receipt, mark it as processed
+        if (this.receiptPreview?.id && this.receiptPreview.id.startsWith('receipt_')) {
+            this.markReceiptAsProcessed(this.receiptPreview.id);
+        }
+        
+    } catch (error) {
+        console.error('Error saving transaction:', error);
+        this.showNotification('Error saving transaction: ' + error.message, 'error');
+        return;
+    }
     
     // Clear receipt preview after saving
     this.receiptPreview = null;
@@ -2291,12 +2650,27 @@ deleteTransaction() {
     }
 },
 
-deleteTransactionRecord(transactionId) {
+async deleteTransactionRecord(transactionId) {
     const transaction = this.transactions.find(t => t.id == transactionId);
     if (!transaction) return;
     
     // Remove from array
     this.transactions = this.transactions.filter(t => t.id != transactionId);
+    
+    // 1. Save to localStorage
+    this.saveData();
+    
+    // 2. Try to delete from Firebase
+    if (this.isFirebaseAvailable && window.db) {
+        try {
+            await window.db.collection('transactions')
+                .doc(transactionId.toString())
+                .delete();
+            console.log('Transaction deleted from Firebase:', transactionId);
+        } catch (firebaseError) {
+            console.warn('Failed to delete from Firebase:', firebaseError.message);
+        }
+    }
     
     // Broadcast deletion
     Broadcaster.recordDeleted('income-expenses', {
@@ -2307,9 +2681,6 @@ deleteTransactionRecord(transactionId) {
         action: 'transaction_deleted'
     });
     
-    // Save to localStorage
-    this.saveData();
-    
     // Update UI
     this.updateStats();
     this.updateTransactionsList();
@@ -2317,7 +2688,7 @@ deleteTransactionRecord(transactionId) {
     
     this.showNotification('Transaction deleted successfully', 'success');
 },
-
+    
 // ==================== RECEIPT FORM HANDLERS ====================
 setupReceiptFormHandlers() {
     console.log('Setting up receipt form handlers...');
@@ -2631,20 +3002,27 @@ storeReceiptLocally(file) {
                 size: file.size,
                 type: file.type,
                 status: 'pending',
-                uploadedAt: new Date(),
+                uploadedAt: new Date().toISOString(),
                 uploadedBy: 'local-user',
+                storageType: 'local',
                 metadata: {
                     contentType: file.type,
                     size: file.size
                 }
             };
             
+            // Store in memory
             this.receiptQueue.push(receiptData);
             
             // Store in localStorage for persistence
             const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
             localReceipts.push(receiptData);
             localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
+            
+            // Try to save to Firebase if available (queue for later sync)
+            if (this.isFirebaseAvailable && window.db) {
+                this.queueForFirebaseSync(receiptData);
+            }
             
             // Broadcast local receipt creation
             Broadcaster.recordCreated('income-expenses', {
@@ -2664,6 +3042,59 @@ storeReceiptLocally(file) {
         
         reader.readAsDataURL(file);
     });
+},
+
+    queueForFirebaseSync(receiptData) {
+    if (!window.db) return;
+    
+    // Store in a sync queue
+    const syncQueue = JSON.parse(localStorage.getItem('firebase-sync-queue') || '[]');
+    syncQueue.push({
+        type: 'receipt',
+        data: receiptData,
+        timestamp: Date.now(),
+        action: 'create'
+    });
+    localStorage.setItem('firebase-sync-queue', JSON.stringify(syncQueue));
+    
+    // Try to sync immediately
+    this.processFirebaseSyncQueue();
+},
+
+processFirebaseSyncQueue() {
+    if (!window.db || !this.isFirebaseAvailable) return;
+    
+    const syncQueue = JSON.parse(localStorage.getItem('firebase-sync-queue') || '[]');
+    if (syncQueue.length === 0) return;
+    
+    const failedItems = [];
+    
+    // Process each item in the queue
+    syncQueue.forEach(async (item) => {
+        try {
+            if (item.type === 'receipt' && item.action === 'create') {
+                await window.db.collection('receipts').doc(item.data.id).set(item.data);
+                console.log('✅ Synced receipt to Firebase:', item.data.id);
+            } else if (item.type === 'receipt' && item.action === 'update') {
+                await window.db.collection('receipts').doc(item.data.id).update(item.data);
+                console.log('✅ Updated receipt in Firebase:', item.data.id);
+            }
+        } catch (error) {
+            console.warn('Failed to sync item, keeping in queue:', error);
+            failedItems.push(item);
+        }
+    });
+    
+    // Update the queue with failed items
+    localStorage.setItem('firebase-sync-queue', JSON.stringify(failedItems));
+    
+    // If sync was successful, update the UI
+    if (failedItems.length !== syncQueue.length) {
+        setTimeout(() => {
+            this.updateReceiptQueueUI();
+            this.updateProcessReceiptsButton();
+        }, 500);
+    }
 },
 
 // ==================== RECEIPT PROCESSING METHODS ====================
@@ -3256,7 +3687,11 @@ updateElement(id, value) {
         // Check if Firebase Storage is available
         if (!window.storage) {
             console.error('❌ Firebase Storage not available');
-            reject(new Error('Firebase Storage not available'));
+            // Fallback to local storage immediately
+            console.log('🔄 Falling back to local storage');
+            this.storeReceiptLocally(file)
+                .then(resolve)
+                .catch(reject);
             return;
         }
         
@@ -3283,8 +3718,12 @@ updateElement(id, value) {
                     if (onProgress) onProgress(Math.round(progress));
                 },
                 (error) => {
-                    console.error('❌ Upload error:', error);
-                    reject(new Error(`Upload failed: ${error.message}`));
+                    console.error('❌ Firebase upload error:', error);
+                    console.log('🔄 Falling back to local storage');
+                    // Try local storage as fallback
+                    this.storeReceiptLocally(file)
+                        .then(resolve)
+                        .catch(reject);
                 },
                 () => {
                     // Upload complete
@@ -3301,22 +3740,45 @@ updateElement(id, value) {
                                 size: file.size,
                                 type: file.type,
                                 status: 'pending',
-                                uploadedAt: new Date().toISOString()
+                                uploadedAt: new Date().toISOString(),
+                                storageType: 'firebase',
+                                fileName: fileName
                             };
                             
                             console.log('✅ Receipt data created:', receiptData);
+                            
+                            // Save to Firestore if available
+                            if (window.db) {
+                                window.db.collection('receipts').doc(receiptId).set(receiptData)
+                                    .catch(firestoreError => {
+                                        console.warn('Failed to save receipt to Firestore:', firestoreError);
+                                        // Continue anyway - we have the storage URL
+                                    });
+                            }
+                            
+                            // Also save locally for redundancy
+                            const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+                            localReceipts.push(receiptData);
+                            localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
+                            
                             resolve(receiptData);
                         })
                         .catch(error => {
                             console.error('❌ Error getting download URL:', error);
-                            reject(error);
+                            // Fallback to local storage
+                            this.storeReceiptLocally(file)
+                                .then(resolve)
+                                .catch(reject);
                         });
                 }
             );
             
         } catch (error) {
             console.error('❌ Firebase upload error:', error);
-            reject(new Error(`Firebase upload failed: ${error.message}`));
+            // Fallback to local storage
+            this.storeReceiptLocally(file)
+                .then(resolve)
+                .catch(reject);
         }
     });
 },
