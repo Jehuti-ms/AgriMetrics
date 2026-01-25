@@ -830,6 +830,17 @@ const IncomeExpensesModule = {
                     </div>
                 </div>
             </div>
+
+            <! --- Test --- >
+            // Add this button somewhere in your renderModule() HTML:
+<button class="btn btn-outline" id="debug-modal-btn" style="margin: 10px;">
+    🐛 Debug Modal Position
+</button>
+
+// Add this to your setupEventListeners():
+this.setupButton('debug-modal-btn', () => {
+    this.debugModalHeader();
+});
         `;
 
         this.setupEventListeners();
@@ -3565,7 +3576,225 @@ cleanupBrokenReceipts() {
         }
     },
 
-    // ... [Add other necessary methods here, ensuring no async/await issues]
+    // ============== Debugging ===============
+    debugModalHeader() {
+    console.group('🔍 DEBUG: Modal Header Position Issue');
+    
+    const modal = document.getElementById('import-receipts-modal');
+    if (!modal) {
+        console.error('❌ Modal not found');
+        console.groupEnd();
+        return;
+    }
+    
+    // Show modal if hidden
+    const wasHidden = modal.classList.contains('hidden');
+    if (wasHidden) {
+        modal.classList.remove('hidden');
+    }
+    
+    // Get elements
+    const header = modal.querySelector('.popout-modal-header');
+    const content = modal.querySelector('.popout-modal-content');
+    
+    if (!header || !content) {
+        console.error('❌ Header or content not found');
+        console.groupEnd();
+        return;
+    }
+    
+    // Get all computed styles
+    const modalStyle = window.getComputedStyle(modal);
+    const headerStyle = window.getComputedStyle(header);
+    const contentStyle = window.getComputedStyle(content);
+    
+    console.log('📏 DIMENSIONS:');
+    console.log('Screen width:', window.innerWidth, 'px');
+    console.log('Screen height:', window.innerHeight, 'px');
+    console.log('');
+    
+    console.log('🎯 MODAL STYLES:');
+    console.log('- display:', modalStyle.display);
+    console.log('- alignItems:', modalStyle.alignItems);
+    console.log('- justifyContent:', modalStyle.justifyContent);
+    console.log('- padding:', modalStyle.padding);
+    console.log('- paddingTop:', modalStyle.paddingTop);
+    console.log('- margin:', modalStyle.margin);
+    console.log('');
+    
+    console.log('📦 CONTENT STYLES:');
+    console.log('- margin:', contentStyle.margin);
+    console.log('- marginTop:', contentStyle.marginTop);
+    console.log('- maxHeight:', contentStyle.maxHeight);
+    console.log('- height:', contentStyle.height);
+    console.log('');
+    
+    console.log('🏷️ HEADER STYLES:');
+    console.log('- padding:', headerStyle.padding);
+    console.log('- paddingTop:', headerStyle.paddingTop);
+    console.log('- margin:', headerStyle.margin);
+    console.log('- marginTop:', headerStyle.marginTop);
+    console.log('- position:', headerStyle.position);
+    console.log('- top:', headerStyle.top);
+    console.log('');
+    
+    // Get actual positions
+    const modalRect = modal.getBoundingClientRect();
+    const headerRect = header.getBoundingClientRect();
+    const contentRect = content.getBoundingClientRect();
+    
+    console.log('📍 POSITIONS:');
+    console.log('Modal top:', modalRect.top, 'px (from viewport top)');
+    console.log('Content top:', contentRect.top, 'px (from viewport top)');
+    console.log('Header top:', headerRect.top, 'px (from viewport top)');
+    console.log('Header top relative to modal:', headerRect.top - modalRect.top, 'px');
+    console.log('Header top relative to content:', headerRect.top - contentRect.top, 'px');
+    console.log('');
+    
+    // Check what CSS is actually being applied
+    console.log('🎨 ACTIVE CSS RULES:');
+    
+    // Check for #import-receipts-modal rules
+    const sheets = document.styleSheets;
+    for (let i = 0; i < sheets.length; i++) {
+        try {
+            const rules = sheets[i].cssRules || sheets[i].rules;
+            if (rules) {
+                for (let j = 0; j < rules.length; j++) {
+                    const rule = rules[j];
+                    if (rule.selectorText && (
+                        rule.selectorText.includes('#import-receipts-modal') ||
+                        rule.selectorText.includes('.popout-modal') ||
+                        rule.selectorText.includes('.popout-modal-header')
+                    )) {
+                        console.log('Rule:', rule.selectorText);
+                        console.log('  ', rule.cssText);
+                    }
+                }
+            }
+        } catch (e) {
+            // Cross-origin stylesheet, skip
+        }
+    }
+    
+    // Create visual debug overlay
+    this.createPositionOverlay(modalRect, headerRect, contentRect);
+    
+    // Hide modal again if it was hidden
+    if (wasHidden) {
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 5000);
+    }
+    
+    console.groupEnd();
+},
+
+createPositionOverlay(modalRect, headerRect, contentRect) {
+    // Remove existing overlays
+    document.querySelectorAll('.position-debug').forEach(el => el.remove());
+    
+    // Modal overlay (red)
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'position-debug';
+    modalOverlay.style.cssText = `
+        position: fixed;
+        top: ${modalRect.top}px;
+        left: ${modalRect.left}px;
+        width: ${modalRect.width}px;
+        height: 5px;
+        background: red;
+        z-index: 99999;
+        pointer-events: none;
+    `;
+    
+    // Content overlay (blue)
+    const contentOverlay = document.createElement('div');
+    contentOverlay.className = 'position-debug';
+    contentOverlay.style.cssText = `
+        position: fixed;
+        top: ${contentRect.top}px;
+        left: ${contentRect.left}px;
+        width: ${contentRect.width}px;
+        height: 5px;
+        background: blue;
+        z-index: 99999;
+        pointer-events: none;
+    `;
+    
+    // Header overlay (green)
+    const headerOverlay = document.createElement('div');
+    headerOverlay.className = 'position-debug';
+    headerOverlay.style.cssText = `
+        position: fixed;
+        top: ${headerRect.top}px;
+        left: ${headerRect.left}px;
+        width: ${headerRect.width}px;
+        height: 5px;
+        background: green;
+        z-index: 99999;
+        pointer-events: none;
+    `;
+    
+    // Add labels
+    const modalLabel = document.createElement('div');
+    modalLabel.className = 'position-debug';
+    modalLabel.style.cssText = `
+        position: fixed;
+        top: ${modalRect.top - 20}px;
+        left: ${modalRect.left}px;
+        color: red;
+        background: white;
+        padding: 2px 6px;
+        font-size: 12px;
+        font-weight: bold;
+        z-index: 99999;
+    `;
+    modalLabel.textContent = `Modal top: ${modalRect.top}px`;
+    
+    const contentLabel = document.createElement('div');
+    contentLabel.className = 'position-debug';
+    contentLabel.style.cssText = `
+        position: fixed;
+        top: ${contentRect.top - 20}px;
+        left: ${contentRect.left}px;
+        color: blue;
+        background: white;
+        padding: 2px 6px;
+        font-size: 12px;
+        font-weight: bold;
+        z-index: 99999;
+    `;
+    contentLabel.textContent = `Content top: ${contentRect.top}px`;
+    
+    const headerLabel = document.createElement('div');
+    headerLabel.className = 'position-debug';
+    headerLabel.style.cssText = `
+        position: fixed;
+        top: ${headerRect.top - 20}px;
+        left: ${headerRect.left}px;
+        color: green;
+        background: white;
+        padding: 2px 6px;
+        font-size: 12px;
+        font-weight: bold;
+        z-index: 99999;
+    `;
+    headerLabel.textContent = `Header top: ${headerRect.top}px`;
+    
+    document.body.appendChild(modalOverlay);
+    document.body.appendChild(contentOverlay);
+    document.body.appendChild(headerOverlay);
+    document.body.appendChild(modalLabel);
+    document.body.appendChild(contentLabel);
+    document.body.appendChild(headerLabel);
+    
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+        document.querySelectorAll('.position-debug').forEach(el => el.remove());
+    }, 10000);
+}
+    
 };
 
 // Register with FarmModules framework
