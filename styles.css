@@ -4956,3 +4956,43 @@ body.dark-mode {
     50% { opacity: 1; }
     100% { opacity: 0; }
 }
+
+/* Camera Modal Specific Styles */
+#camera-modal {
+    width: 95%;
+    max-width: 800px;
+}
+
+#camera-container {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    background-color: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 15px 0;
+}
+
+#camera-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1); /* Mirror effect for front camera */
+}
+
+/* Camera Controls */
+.camera-controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding: 15px;
+}
+
+/* Ensure modal body has proper spacing */
+#camera-modal .modal-body {
+    padding: 20px;
+    min-height: 500px;
+    display: flex;
+    flex-direction: column;
+}
