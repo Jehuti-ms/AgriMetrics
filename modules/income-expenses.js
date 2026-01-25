@@ -238,156 +238,80 @@ const IncomeExpensesModule = {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Add to your existing CSS in renderModule() */
+/* ==================== MODAL & BUTTON FIXES ==================== */
 
-/* Fix camera controls button overflow */
-.camera-controls {
+/* Modal Header */
+.popout-modal-header {
     display: flex;
-    gap: 12px;
-    justify-content: center;
-    padding: 16px;
-    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    margin: 0;
 }
 
-.camera-controls .btn {
-    min-width: 120px;
-    max-width: 180px;
-    height: 44px;
+.popout-modal-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.4;
+}
+
+.popout-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 4px;
+    line-height: 1;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    font-size: 14px;
-    white-space: nowrap;
+    border-radius: 6px;
+}
+
+.popout-modal-close:hover {
+    background: var(--glass-bg-hover);
+    color: var(--text-primary);
+}
+
+/* Modal Content */
+.popout-modal-content {
+    background: var(--background-color);
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
     overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 8px 12px;
-}
-
-/* Specifically for the switch camera button */
-#switch-camera {
-    flex: 1;
-    min-width: 140px;
-}
-
-/* For smaller screens */
-@media (max-width: 768px) {
-    .camera-controls {
-        gap: 8px;
-    }
-    
-    .camera-controls .btn {
-        min-width: 110px;
-        font-size: 13px;
-        padding: 6px 10px;
-    }
-    
-    .camera-controls .btn .btn-icon {
-        font-size: 16px;
-    }
-}
-
-/* Ensure button text doesn't wrap */
-.camera-controls .btn-text {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 80px;
-}
-
-/* ==================== FIXED CAMERA BUTTON OVERFLOW ==================== */
-.camera-controls {
     display: flex;
-    gap: 12px;
-    justify-content: center;
-    padding: 16px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    margin: auto;
 }
 
-.camera-controls .btn {
-    min-width: 120px;
-    max-width: 160px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-size: 14px;
-    white-space: nowrap;
-    overflow: hidden;
-    padding: 8px 12px;
+.popout-modal-body {
+    padding: 24px;
+    overflow-y: auto;
     flex: 1;
+    max-height: calc(90vh - 140px);
 }
 
-.camera-controls .btn-text {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-    text-align: center;
-    min-width: 0; /* Allow text to shrink */
-}
-
-.camera-controls .btn-icon {
-    flex-shrink: 0;
-    font-size: 18px;
-}
-
-/* Specific button adjustments */
-#switch-camera .btn-text {
-    max-width: 80px;
-}
-
-#capture-photo .btn-text {
-    max-width: 70px;
-}
-
-#cancel-camera .btn-text {
-    max-width: 60px;
-}
-
-/* For smaller screens */
-@media (max-width: 768px) {
-    .camera-controls {
-        gap: 8px;
-        padding: 12px;
-    }
-    
-    .camera-controls .btn {
-        min-width: 100px;
-        max-width: 140px;
-        height: 40px;
-        font-size: 13px;
-        padding: 6px 10px;
-    }
-    
-    .camera-controls .btn-icon {
-        font-size: 16px;
-    }
-    
-    .camera-controls .btn-text {
-        font-size: 12px;
-    }
-}
-
-@media (max-width: 480px) {
-    .camera-controls {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .camera-controls .btn {
-        max-width: 100%;
-        width: 100%;
-    }
-}
-
-/* ==================== FIXED MODAL FOOTER ==================== */
+/* Modal Footer */
 .popout-modal-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
+    padding: 20px 24px;
     border-top: 1px solid var(--glass-border);
     background: var(--glass-bg);
     border-bottom-left-radius: 16px;
@@ -407,14 +331,15 @@ const IncomeExpensesModule = {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex: 1;
+    min-width: 140px;
+    max-width: 200px;
 }
 
+/* Cancel Button */
 #cancel-import-receipts {
-    min-width: 100px;
-    max-width: 120px;
     border: 1px solid var(--glass-border);
     background: var(--glass-bg);
-    flex: 1;
 }
 
 #cancel-import-receipts:hover {
@@ -422,43 +347,66 @@ const IncomeExpensesModule = {
     background: var(--glass-bg-hover);
 }
 
+/* Process Button with Badge */
 #process-receipts-btn {
-    min-width: 140px;
-    max-width: 180px;
+    position: relative;
+    padding-right: 40px !important;
+    overflow: visible !important;
     background: linear-gradient(135deg, var(--primary-color), #4f46e5);
     border: none;
-    position: relative;
-    flex: 1;
-    padding-right: 20px; /* Extra space for badge */
+    color: white;
 }
 
 #process-receipts-btn:hover {
     background: linear-gradient(135deg, #4f46e5, var(--primary-color));
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
 #process-receipts-count {
     position: absolute;
     top: -8px;
     right: -8px;
-    background: white;
-    color: var(--primary-color);
-    border-radius: 10px;
-    padding: 2px 6px;
-    font-size: 11px;
-    font-weight: 600;
-    border: 2px solid var(--primary-color);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    min-width: 20px;
-    text-align: center;
+    background: #ef4444 !important;
+    color: white !important;
+    border-radius: 12px;
+    padding: 3px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    min-width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    line-height: 1;
 }
 
-/* Responsive modal footer */
-@media (max-width: 640px) {
+#process-receipts-btn:hover #process-receipts-count {
+    background: #dc2626 !important;
+    box-shadow: 0 3px 10px rgba(220, 38, 38, 0.4);
+    transform: scale(1.1);
+    transition: all 0.2s ease;
+}
+
+/* Badge Animation */
+@keyframes badgePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+.badge-updated {
+    animation: badgePulse 0.3s ease;
+}
+
+/* Responsive Stacking */
+@media (max-width: 900px) {
     .popout-modal-footer {
         flex-direction: column;
         gap: 12px;
-        padding: 16px;
     }
     
     .popout-modal-footer .btn {
@@ -468,15 +416,126 @@ const IncomeExpensesModule = {
     }
     
     #process-receipts-btn {
-        order: -1; /* Process button first on mobile */
+        order: -1;
+    }
+}
+
+@media (max-width: 640px) {
+    .popout-modal-content {
+        width: 95%;
+        margin: 10px;
     }
     
-    #process-receipts-count {
-        top: -6px;
-        right: -6px;
-        font-size: 10px;
-        padding: 1px 5px;
+    .popout-modal-header {
+        padding: 16px 20px;
     }
+    
+    .popout-modal-body {
+        padding: 20px;
+        max-height: calc(90vh - 120px);
+    }
+    
+    .popout-modal-footer {
+        padding: 16px 20px;
+    }
+    
+    .popout-modal-footer .btn {
+        height: 48px;
+        font-size: 15px;
+    }
+}
+
+/* Camera Button Fixes */
+.camera-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    padding: 20px;
+    flex-wrap: wrap;
+}
+
+.camera-controls .btn {
+    min-width: 140px;
+    max-width: 180px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 0 16px;
+    flex: 1;
+    position: relative;
+}
+
+.camera-controls .btn-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    text-align: center;
+    min-width: 0;
+    max-width: calc(100% - 30px);
+}
+
+.camera-controls .btn-icon {
+    flex-shrink: 0;
+    font-size: 20px;
+    width: 24px;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .camera-controls {
+        gap: 10px;
+        padding: 16px;
+    }
+    
+    .camera-controls .btn {
+        min-width: 120px;
+        max-width: 150px;
+        height: 44px;
+        font-size: 14px;
+        padding: 0 12px;
+    }
+    
+    .camera-controls .btn-icon {
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .camera-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    
+    .camera-controls .btn {
+        max-width: 100%;
+        width: 100%;
+        height: 52px;
+    }
+}
+
+/* Container animation */
+.import-receipts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.quick-actions-section,
+.upload-section,
+.camera-section,
+.recent-section {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
             </style>
 
@@ -925,24 +984,38 @@ updateProcessReceiptsButton() {
         // Show the button
         processBtn.style.display = 'flex';
         processCount.textContent = pendingCount;
+        processCount.style.display = 'flex';
+        
+        // Add pulse animation
+        processCount.classList.remove('badge-updated');
+        void processCount.offsetWidth; // Trigger reflow
+        processCount.classList.add('badge-updated');
+        
+        // Remove animation after it completes
+        setTimeout(() => {
+            processCount.classList.remove('badge-updated');
+        }, 300);
         
         // Add tooltip
         processBtn.title = `Process ${pendingCount} pending receipt${pendingCount !== 1 ? 's' : ''}`;
         
         // Adjust badge size for larger numbers
         if (pendingCount > 9) {
-            processCount.style.padding = '2px 5px';
-            processCount.style.fontSize = '10px';
+            processCount.style.padding = '3px 6px';
+            processCount.style.fontSize = '11px';
+            processCount.style.minWidth = '24px';
         } else if (pendingCount > 99) {
             processCount.textContent = '99+';
-            processCount.style.padding = '2px 4px';
-            processCount.style.fontSize = '9px';
+            processCount.style.padding = '3px 5px';
+            processCount.style.fontSize = '10px';
+            processCount.style.minWidth = '26px';
         }
         
         console.log(`✅ Process button updated: ${pendingCount} pending receipts`);
     } else {
-        // Hide the button
+        // Hide the button and badge
         processBtn.style.display = 'none';
+        processCount.style.display = 'none';
         console.log('✅ No pending receipts, process button hidden');
     }
 },
