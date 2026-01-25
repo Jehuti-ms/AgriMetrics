@@ -612,8 +612,6 @@ const IncomeExpensesModule = {
         this.updateReceiptQueueUI();
     },
 
-    // ==================== REST OF THE METHODS (SIMILAR TO BEFORE BUT FIXED) ====================
-
    // ==================== CAMERA METHODS ====================
 initializeCamera() {
     console.log('📷 Initializing camera...');
@@ -623,10 +621,14 @@ initializeCamera() {
         const status = document.getElementById('camera-status');
         
         if (!video) {
-            console.error('Camera preview element not found');
+            console.error('❌ Camera preview element not found');
+            this.showNotification('Camera preview element missing', 'error');
             this.showUploadInterface();
             return;
         }
+        
+        // Clear any existing video
+        video.srcObject = null;
         
         // Stop any existing stream
         if (this.cameraStream) {
@@ -634,7 +636,9 @@ initializeCamera() {
             this.cameraStream = null;
         }
         
-        // Use the current facing mode
+        if (status) status.textContent = 'Requesting camera...';
+        
+        // Camera constraints
         const constraints = {
             video: {
                 facingMode: this.cameraFacingMode,
@@ -650,16 +654,26 @@ initializeCamera() {
                 this.cameraStream = stream;
                 video.srcObject = stream;
                 
-                if (status) {
-                    status.textContent = this.cameraFacingMode === 'user' ? 'Front Camera' : 'Rear Camera';
-                }
+                // Wait for video to be ready
+                video.onloadedmetadata = () => {
+                    video.play().then(() => {
+                        console.log('📹 Video is playing');
+                        if (status) {
+                            status.textContent = this.cameraFacingMode === 'user' ? 'Front Camera' : 'Rear Camera';
+                        }
+                    }).catch(error => {
+                        console.error('❌ Video play error:', error);
+                        if (status) status.textContent = 'Playback error';
+                    });
+                };
                 
-                // Update switch camera button text
+                // Update switch button
                 const switchBtn = document.getElementById('switch-camera');
                 if (switchBtn) {
+                    const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
                     switchBtn.innerHTML = `
                         <span class="btn-icon">🔄</span>
-                        <span class="btn-text">Switch to ${this.cameraFacingMode === 'user' ? 'Rear' : 'Front'} Camera</span>
+                        <span class="btn-text">Switch to ${nextMode} Camera</span>
                     `;
                 }
             })
@@ -668,37 +682,32 @@ initializeCamera() {
                 
                 if (status) status.textContent = 'Camera Error';
                 
-                // Try fallback without facing mode
-                if (error.name === 'OverconstrainedError') {
-                    console.log('🔄 Trying fallback camera...');
+                // Fallback: try without facing mode constraints
+                console.log('🔄 Trying fallback camera...');
+                navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: false
+                })
+                .then(stream => {
+                    this.cameraStream = stream;
+                    video.srcObject = stream;
                     
-                    navigator.mediaDevices.getUserMedia({
-                        video: true,
-                        audio: false
-                    })
-                    .then(stream => {
-                        this.cameraStream = stream;
-                        video.srcObject = stream;
-                        
-                        if (status) status.textContent = 'Camera Ready (Default)';
-                        
-                        // Hide switch button since we can't control facing mode
-                        const switchBtn = document.getElementById('switch-camera');
-                        if (switchBtn) switchBtn.style.display = 'none';
-                    })
-                    .catch(fallbackError => {
-                        console.error('❌ Fallback camera error:', fallbackError);
-                        this.showNotification('Camera access denied. Please upload files instead.', 'error');
-                        this.showUploadInterface();
-                    });
-                } else {
+                    if (status) status.textContent = 'Camera Ready';
+                    
+                    // Hide switch button since we can't control facing mode
+                    const switchBtn = document.getElementById('switch-camera');
+                    if (switchBtn) switchBtn.style.display = 'none';
+                })
+                .catch(fallbackError => {
+                    console.error('❌ Fallback camera error:', fallbackError);
                     this.showNotification('Camera access denied. Please upload files instead.', 'error');
                     this.showUploadInterface();
-                }
+                });
             });
             
     } catch (error) {
         console.error('🚨 Camera initialization error:', error);
+        this.showNotification('Camera initialization failed', 'error');
         this.showUploadInterface();
     }
 },
@@ -706,7 +715,7 @@ initializeCamera() {
 switchCamera() {
     console.log('🔄 Switching camera...');
     
-    // Debounce to prevent rapid clicks
+    // Debounce
     const now = Date.now();
     if (this.lastSwitchClick && (now - this.lastSwitchClick) < 1500) {
         console.log('⏳ Please wait before switching camera again');
@@ -717,14 +726,21 @@ switchCamera() {
     // Toggle camera facing mode
     this.cameraFacingMode = this.cameraFacingMode === 'user' ? 'environment' : 'user';
     
+    console.log('📸 New camera mode:', this.cameraFacingMode);
+    
     // Update status
     const status = document.getElementById('camera-status');
     if (status) {
         status.textContent = 'Switching...';
     }
     
-    // Reinitialize camera with new facing mode
-    this.initializeCamera();
+    // Stop current camera and restart
+    this.stopCamera();
+    
+    // Small delay before restarting
+    setTimeout(() => {
+        this.initializeCamera();
+    }, 300);
 },
 
 capturePhoto() {
@@ -780,32 +796,52 @@ capturePhoto() {
 },
 
 stopCamera() {
+    console.log('🛑 Stopping camera...');
     if (this.cameraStream) {
-        this.cameraStream.getTracks().forEach(track => track.stop());
+        this.cameraStream.getTracks().forEach(track => {
+            track.stop();
+            console.log('📹 Track stopped:', track.kind);
+        });
         this.cameraStream = null;
     }
     const video = document.getElementById('camera-preview');
-    if (video) video.srcObject = null;
+    if (video) {
+        video.srcObject = null;
+        video.pause();
+    }
+    console.log('✅ Camera stopped');
 },
 
+    // ==================== CAMERA INTERFACE METHODS ====================
 showUploadInterface() {
     console.log('📤 Showing upload interface...');
     
     // Stop camera if active
     this.stopCamera();
     
-    // Show upload, hide camera
-    const uploadInterface = document.getElementById('upload-section');
+    // Get all sections
+    const uploadSection = document.getElementById('upload-section');
     const cameraSection = document.getElementById('camera-section');
+    const recentSection = document.getElementById('recent-section');
     
-    if (uploadInterface) {
-        uploadInterface.style.display = 'block';
+    // Show upload, hide camera
+    if (uploadSection) {
+        uploadSection.style.display = 'block';
     }
     if (cameraSection) {
         cameraSection.style.display = 'none';
     }
+    
+    // Show recent section if there are receipts
+    if (recentSection) {
+        if (this.receiptQueue.length > 0) {
+            recentSection.style.display = 'block';
+        } else {
+            recentSection.style.display = 'none';
+        }
+    }
 },
-
+    
 // ==================== MODAL CONTROL METHODS ====================
 showImportReceiptsModal() {
     console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
@@ -1005,51 +1041,75 @@ renderImportReceiptsModal() {
 setupImportReceiptsHandlers() {
     console.log('Setting up import receipt handlers');
     
-    // Camera option
-    this.setupButton('camera-option', () => {
-        console.log('🎯 Button #camera-option clicked');
-        const cameraSection = document.getElementById('camera-section');
-        const uploadSection = document.getElementById('upload-section');
-        
-        if (cameraSection) {
-            cameraSection.style.display = 'block';
-            // Always start with rear camera
-            this.cameraFacingMode = 'environment';
-            // Initialize camera when showing the section
-            setTimeout(() => {
-                this.initializeCamera();
-            }, 300);
-        }
-        if (uploadSection) {
-            uploadSection.style.display = 'none';
-        }
+   // Camera option - FIXED VERSION
+this.setupButton('camera-option', () => {
+    console.log('🎯 Button #camera-option clicked');
+    
+    // Get all sections
+    const cameraSection = document.getElementById('camera-section');
+    const uploadSection = document.getElementById('upload-section');
+    const recentSection = document.getElementById('recent-section');
+    
+    // Debug logging
+    console.log('📊 Section states before:', {
+        camera: cameraSection?.style.display,
+        upload: uploadSection?.style.display,
+        recent: recentSection?.style.display
     });
+    
+    // Show camera, hide everything else
+    if (cameraSection) {
+        cameraSection.style.display = 'block';
+        cameraSection.style.visibility = 'visible';
+        cameraSection.style.opacity = '1';
+        console.log('✅ Camera section shown');
+    }
+    
+    if (uploadSection) {
+        uploadSection.style.display = 'none';
+        console.log('✅ Upload section hidden');
+    }
+    
+    if (recentSection) {
+        recentSection.style.display = 'none';
+        console.log('✅ Recent section hidden');
+    }
+    
+    // Set camera mode and initialize
+    this.cameraFacingMode = 'environment'; // Use back camera by default
+    
+    // Stop any existing camera
+    this.stopCamera();
+    
+    // Initialize camera immediately, not after delay
+    setTimeout(() => {
+        this.initializeCamera();
+    }, 50); // Small delay to ensure DOM is updated
+});
 
     // Upload option
-    this.setupButton('upload-option', () => {
-        console.log('🎯 Button #upload-option clicked');
-        const cameraSection = document.getElementById('camera-section');
-        const uploadSection = document.getElementById('upload-section');
-        
-        if (uploadSection) {
-            uploadSection.style.display = 'block';
-        }
-        if (cameraSection) {
-            // Stop camera if running
-            this.stopCamera();
-            cameraSection.style.display = 'none';
-        }
-    });
-       
+        this.setupButton('upload-option', () => {
+            console.log('🎯 Button #upload-option clicked');
+            const cameraSection = document.getElementById('camera-section');
+            const uploadSection = document.getElementById('upload-section');
+            
+            if (uploadSection) {
+                uploadSection.style.display = 'block';
+            }
+            if (cameraSection) {
+                // Stop camera if running
+                this.stopCamera();
+                cameraSection.style.display = 'none';
+            }
+        });
+               
     // Camera controls
     this.setupButton('capture-photo', () => this.capturePhoto());
     this.setupButton('switch-camera', () => this.switchCamera());
     this.setupButton('cancel-camera', () => {
-        console.log('❌ Cancel camera clicked');
-        this.stopCamera();
-        document.getElementById('camera-section').style.display = 'none';
-        document.getElementById('upload-section').style.display = 'block';
-    });
+    console.log('❌ Cancel camera clicked');
+    this.showUploadInterface();
+});
     
     // Refresh receipts button
     this.setupButton('refresh-receipts', () => {
