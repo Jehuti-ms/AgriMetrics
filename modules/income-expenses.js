@@ -3793,7 +3793,7 @@ createPositionOverlay(modalRect, headerRect, contentRect) {
     setTimeout(() => {
         document.querySelectorAll('.position-debug').forEach(el => el.remove());
     }, 10000);
-}
+},
     
 };
 
