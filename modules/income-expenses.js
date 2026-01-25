@@ -616,6 +616,188 @@ const IncomeExpensesModule = {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* ==================== MODAL HEADER POSITION FIX ==================== */
+
+/* Modal container - remove outer padding for small screens */
+.popout-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px; /* Default padding for larger screens */
+    box-sizing: border-box;
+}
+
+/* Modal content - ensure it takes full height on mobile */
+.popout-modal-content {
+    background: var(--background-color);
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-width: 600px !important;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+
+/* Modal Header - fixed at top with no extra space */
+.popout-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    margin: 0;
+    flex-shrink: 0;
+    position: relative;
+    top: 0;
+    width: 100%;
+}
+
+.popout-modal-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+    flex: 1;
+}
+
+.popout-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 4px;
+    line-height: 1;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+
+/* ==================== SMALL SCREEN FIXES ==================== */
+
+/* Mobile screens (under 768px) */
+@media (max-width: 768px) {
+    .popout-modal {
+        padding: 10px; /* Reduce outer padding */
+        align-items: flex-start; /* Align to top on mobile */
+        padding-top: 20px; /* Add top padding */
+    }
+    
+    .popout-modal-content {
+        width: 100%;
+        max-width: 100% !important;
+        max-height: 95vh; /* Slightly less than full viewport */
+        margin: 0;
+    }
+    
+    .popout-modal-header {
+        padding: 14px 20px; /* Slightly reduced padding */
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+    }
+    
+    .popout-modal-title {
+        font-size: 18px; /* Slightly smaller font */
+    }
+    
+    .popout-modal-close {
+        font-size: 22px;
+        width: 30px;
+        height: 30px;
+    }
+}
+
+/* Small mobile screens (under 640px) */
+@media (max-width: 640px) {
+    .popout-modal {
+        padding: 0; /* Remove all padding for full-screen modal */
+        align-items: stretch; /* Stretch modal to fill screen */
+    }
+    
+    .popout-modal-content {
+        width: 100%;
+        height: 100vh;
+        max-height: 100vh;
+        border-radius: 0;
+        margin: 0;
+    }
+    
+    .popout-modal-header {
+        padding: 12px 16px; /* Even tighter padding */
+        border-radius: 0; /* Remove rounded corners on mobile */
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+    }
+    
+    .popout-modal-title {
+        font-size: 17px;
+    }
+    
+    .popout-modal-close {
+        font-size: 20px;
+        width: 28px;
+        height: 28px;
+    }
+}
+
+/* Very small phones (under 400px) */
+@media (max-width: 400px) {
+    .popout-modal-header {
+        padding: 10px 14px;
+    }
+    
+    .popout-modal-title {
+        font-size: 16px;
+    }
+    
+    .popout-modal-close {
+        font-size: 18px;
+        width: 26px;
+        height: 26px;
+        margin-left: 8px;
+    }
+}
+
+/* Modal body - ensure it fills remaining space */
+.popout-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+/* Adjust body padding for mobile */
+@media (max-width: 768px) {
+    .popout-modal-body {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 640px) {
+    .popout-modal-body {
+        padding: 16px;
+    }
+}
             </style>
 
             <div class="module-container">
