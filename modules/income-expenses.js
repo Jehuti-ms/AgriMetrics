@@ -816,6 +816,135 @@ const IncomeExpensesModule = {
     min-height: 0 !important; /* Allow body to shrink */
     overflow-y: auto !important;
 }
+
+/* ==================== FIX HEADER POSITION WITHOUT CHANGING STYLES ==================== */
+
+/* MEDIUM SCREENS (641px-900px) - Fix positioning only */
+@media (min-width: 641px) and (max-width: 900px) {
+    #import-receipts-modal.popout-modal {
+        align-items: flex-start !important;
+        padding-top: 0 !important;
+        justify-content: flex-start !important;
+    }
+    
+    #import-receipts-modal .popout-modal-content {
+        margin-top: 0 !important;
+        transform: translateY(0) !important;
+        position: relative !important;
+        top: 0 !important;
+        align-self: flex-start !important;
+    }
+    
+    /* Remove any top margin/padding that pushes header down */
+    #import-receipts-modal .popout-modal-header {
+        margin-top: 0 !important;
+        padding-top: 16px !important; /* Keep original padding, just ensure no extra space above */
+    }
+}
+
+/* SMALL SCREENS (≤640px) - Fix positioning only */
+@media (max-width: 640px) {
+    #import-receipts-modal.popout-modal {
+        align-items: flex-start !important;
+        padding-top: 0 !important;
+        justify-content: flex-start !important;
+    }
+    
+    #import-receipts-modal .popout-modal-content {
+        margin-top: 0 !important;
+        max-height: 100vh !important;
+        align-self: flex-start !important;
+    }
+    
+    /* For full-screen mobile experience */
+    #import-receipts-modal.popout-modal {
+        padding: 0 !important;
+    }
+    
+    #import-receipts-modal .popout-modal-content {
+        width: 100% !important;
+        height: 100vh !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+    }
+    
+    /* Ensure header sticks to top */
+    #import-receipts-modal .popout-modal-header {
+        margin-top: 0 !important;
+        padding-top: 20px !important; /* Adjust for mobile status bar */
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 100 !important;
+    }
+}
+
+/* ==================== BUTTON TEXT FIX ==================== */
+/* Keep text truncation fix but don't affect gradient */
+
+.import-option-text {
+    flex: 1 !important;
+    min-width: 0 !important; /* This fixes text truncation */
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Alternative for very small screens */
+@media (max-width: 400px) {
+    .import-option-text {
+        font-size: 14px !important;
+    }
+    
+    /* Option: allow text to wrap if truncation still happens */
+    .import-option-text.truncated-fix {
+        white-space: normal !important;
+        word-break: break-word !important;
+        line-height: 1.3 !important;
+    }
+}
+
+/* ==================== SCROLLING FIX ==================== */
+/* Ensure last button is visible */
+.popout-modal-body {
+    padding-bottom: 30px !important; /* Space for last button */
+    overflow-y: auto !important;
+}
+
+/* ==================== MINIMAL FIX VERSION ==================== */
+/* If above doesn't work, try this ultra-minimal version */
+
+@media (max-width: 900px) {
+    /* ONE LINE FIX: Just move modal to top */
+    #import-receipts-modal.popout-modal {
+        align-items: flex-start !important;
+        padding-top: 0 !important;
+    }
+    
+    /* Remove any vertical centering */
+    #import-receipts-modal .popout-modal-content {
+        margin-top: 0 !important;
+        top: 0 !important;
+        transform: none !important;
+    }
+    
+    /* Remove any space above header */
+    #import-receipts-modal .popout-modal-header {
+        margin-top: 0 !important;
+    }
+}
+
+/* For mobile full-screen */
+@media (max-width: 640px) {
+    #import-receipts-modal.popout-modal {
+        padding: 0 !important;
+    }
+    
+    #import-receipts-modal .popout-modal-content {
+        height: 100vh !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important;
+    }
+}
             </style>
 
             <div class="module-container">
