@@ -666,9 +666,9 @@ const IncomeExpensesModule = {
     },
 
    // ==================== CAMERA METHODS ====================
+// ==================== CAMERA METHODS - IMPROVED VERSION ====================
 initializeCamera() {
     console.log('📷 Initializing camera...');
-    console.log('🎯 initializeCamera() WAS CALLED - CHECK CONSOLE FOR THIS MESSAGE');
     
     try {
         const video = document.getElementById('camera-preview');
@@ -683,80 +683,126 @@ initializeCamera() {
         
         // Clear any existing video
         video.srcObject = null;
+        video.pause();
         
         // Stop any existing stream
         if (this.cameraStream) {
-            this.cameraStream.getTracks().forEach(track => track.stop());
+            this.cameraStream.getTracks().forEach(track => {
+                console.log(`📹 Stopping existing track: ${track.kind}`);
+                track.stop();
+            });
             this.cameraStream = null;
         }
         
-        if (status) status.textContent = 'Requesting camera...';
+        if (status) status.textContent = 'Requesting camera access...';
         
-        // Camera constraints
+        // Camera constraints with fallback
         const constraints = {
             video: {
                 facingMode: this.cameraFacingMode,
                 width: { ideal: 1280 },
-                height: { ideal: 720 }
+                height: { ideal: 720 },
+                frameRate: { ideal: 30 }
             },
             audio: false
         };
         
+        // First try with exact constraints
         navigator.mediaDevices.getUserMedia(constraints)
             .then(stream => {
                 console.log('✅ Camera access granted');
                 this.cameraStream = stream;
                 video.srcObject = stream;
                 
+                // Set video properties
+                video.muted = true;
+                video.playsInline = true;
+                
                 // Wait for video to be ready
-                video.onloadedmetadata = () => {
-                    video.play().then(() => {
-                        console.log('📹 Video is playing');
-                        if (status) {
-                            status.textContent = this.cameraFacingMode === 'user' ? 'Front Camera' : 'Rear Camera';
-                        }
-                    }).catch(error => {
-                        console.error('❌ Video play error:', error);
-                        if (status) status.textContent = 'Playback error';
-                    });
+                const onLoaded = () => {
+                    console.log('📹 Video metadata loaded');
+                    video.play()
+                        .then(() => {
+                            console.log('📹 Video is playing successfully');
+                            const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
+                            if (status) status.textContent = `${cameraType} Camera - Ready`;
+                            
+                            // Update switch button text
+                            const switchBtn = document.getElementById('switch-camera');
+                            if (switchBtn) {
+                                const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
+                                switchBtn.innerHTML = `
+                                    <span class="btn-icon">🔄</span>
+                                    <span class="btn-text">Switch to ${nextMode}</span>
+                                `;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('❌ Video play error:', error);
+                            if (status) status.textContent = 'Playback error';
+                            this.showNotification('Failed to start camera playback', 'error');
+                        });
                 };
                 
-                // Update switch button
-                const switchBtn = document.getElementById('switch-camera');
-                if (switchBtn) {
-                    const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
-                    switchBtn.innerHTML = `
-                        <span class="btn-icon">🔄</span>
-                        <span class="btn-text">Switch to ${nextMode} Camera</span>
-                    `;
+                if (video.readyState >= 3) {
+                    onLoaded();
+                } else {
+                    video.onloadedmetadata = onLoaded;
+                    video.onerror = () => {
+                        console.error('❌ Video load error');
+                        if (status) status.textContent = 'Load error';
+                    };
                 }
             })
             .catch(error => {
-                console.error('❌ Camera error:', error.name, error.message);
+                console.error('❌ Primary camera error:', error.name, error.message);
                 
-                if (status) status.textContent = 'Camera Error';
-                
-                // Fallback: try without facing mode constraints
+                // Try fallback without facing mode constraint
                 console.log('🔄 Trying fallback camera...');
-                navigator.mediaDevices.getUserMedia({
-                    video: true,
+                if (status) status.textContent = 'Trying fallback...';
+                
+                const fallbackConstraints = {
+                    video: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
                     audio: false
-                })
-                .then(stream => {
-                    this.cameraStream = stream;
-                    video.srcObject = stream;
-                    
-                    if (status) status.textContent = 'Camera Ready';
-                    
-                    // Hide switch button since we can't control facing mode
-                    const switchBtn = document.getElementById('switch-camera');
-                    if (switchBtn) switchBtn.style.display = 'none';
-                })
-                .catch(fallbackError => {
-                    console.error('❌ Fallback camera error:', fallbackError);
-                    this.showNotification('Camera access denied. Please upload files instead.', 'error');
-                    this.showUploadInterface();
-                });
+                };
+                
+                navigator.mediaDevices.getUserMedia(fallbackConstraints)
+                    .then(stream => {
+                        console.log('✅ Fallback camera access granted');
+                        this.cameraStream = stream;
+                        video.srcObject = stream;
+                        
+                        video.play()
+                            .then(() => {
+                                console.log('📹 Fallback camera playing');
+                                if (status) status.textContent = 'Camera Ready';
+                                
+                                // Hide switch button since we can't control facing mode
+                                const switchBtn = document.getElementById('switch-camera');
+                                if (switchBtn) switchBtn.style.display = 'none';
+                            })
+                            .catch(playError => {
+                                console.error('❌ Fallback play error:', playError);
+                                this.showUploadInterface();
+                            });
+                    })
+                    .catch(fallbackError => {
+                        console.error('❌ Fallback camera error:', fallbackError);
+                        if (status) status.textContent = 'Camera Error';
+                        
+                        let errorMessage = 'Camera access denied.';
+                        if (fallbackError.name === 'NotFoundError') {
+                            errorMessage = 'No camera found on this device.';
+                        } else if (fallbackError.name === 'NotAllowedError') {
+                            errorMessage = 'Camera permission denied. Please allow camera access in your browser settings.';
+                        }
+                        
+                        this.showNotification(errorMessage, 'error');
+                        this.showUploadInterface();
+                    });
             });
             
     } catch (error) {
@@ -767,12 +813,27 @@ initializeCamera() {
 },
 
 // ==================== CAMERA MANAGEMENT METHODS ====================
+// ==================== CAMERA MANAGEMENT METHODS - FIXED ====================
 capturePhoto() {
     const video = document.getElementById('camera-preview');
     const canvas = document.getElementById('camera-canvas');
     const status = document.getElementById('camera-status');
     
-    if (!video || !canvas) return;
+    if (!video || !canvas) {
+        console.error('Video or canvas element not found');
+        this.showNotification('Camera elements missing', 'error');
+        return;
+    }
+    
+    if (!this.cameraStream || video.paused || video.readyState < 2) {
+        console.error('Camera not ready:', {
+            hasStream: !!this.cameraStream,
+            isPaused: video.paused,
+            readyState: video.readyState
+        });
+        this.showNotification('Camera not ready. Please wait for camera to initialize.', 'error');
+        return;
+    }
     
     // Set canvas dimensions to match video
     canvas.width = video.videoWidth;
@@ -780,45 +841,68 @@ capturePhoto() {
     
     // Draw video frame to canvas
     const context = canvas.getContext('2d');
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
     
-    // Convert to blob
-    canvas.toBlob((blob) => {
-        if (blob) {
-            if (status) status.textContent = 'Processing photo...';
-            
-            // Create file object
-            const file = new File([blob], `receipt_${Date.now()}.jpg`, {
-                type: 'image/jpeg',
-                lastModified: Date.now()
-            });
-            
-            // Upload receipt
-            this.uploadReceiptToFirebase(file)
-                .then(() => {
-                    if (status) status.textContent = 'Photo captured!';
-                    this.showNotification('Receipt photo captured!', 'success');
-                    
-                    // Switch back to upload interface
-                    setTimeout(() => {
-                        this.stopCamera();
-                        const cameraSection = document.getElementById('camera-section');
-                        const uploadSection = document.getElementById('upload-section');
-                        const recentSection = document.getElementById('recent-section');
-                        
-                        if (cameraSection) cameraSection.style.display = 'none';
-                        if (uploadSection) uploadSection.style.display = 'block';
-                        if (recentSection) recentSection.style.display = 'block';
-                    }, 1000);
-                })
-                .catch(error => {
-                    console.error('Error uploading photo:', error);
-                    this.showNotification('Failed to upload photo', 'error');
+    try {
+        // Clear canvas first
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw current video frame
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Add visual feedback
+        if (status) status.textContent = 'Processing photo...';
+        
+        // Add capture flash effect
+        video.style.filter = 'brightness(150%) contrast(120%)';
+        setTimeout(() => {
+            video.style.filter = '';
+        }, 200);
+        
+        // Convert to blob with high quality for receipts
+        canvas.toBlob((blob) => {
+            if (blob) {
+                // Create file object
+                const timestamp = Date.now();
+                const file = new File([blob], `receipt_${timestamp}.jpg`, {
+                    type: 'image/jpeg',
+                    lastModified: timestamp
                 });
-        }
-    }, 'image/jpeg', 0.9);
+                
+                // Show processing status
+                if (status) status.textContent = 'Saving photo...';
+                
+                // Upload receipt
+                this.uploadReceiptToFirebase(file)
+                    .then((result) => {
+                        console.log('✅ Photo uploaded successfully:', result);
+                        
+                        if (status) status.textContent = 'Photo saved!';
+                        this.showNotification('Receipt photo captured successfully!', 'success');
+                        
+                        // Switch back to upload interface after a short delay
+                        setTimeout(() => {
+                            this.showUploadInterface();
+                        }, 1000);
+                    })
+                    .catch(error => {
+                        console.error('❌ Error uploading photo:', error);
+                        if (status) status.textContent = 'Upload failed';
+                        this.showNotification(`Failed to upload photo: ${error.message}`, 'error');
+                    });
+            } else {
+                console.error('❌ Failed to create blob from canvas');
+                if (status) status.textContent = 'Capture failed';
+                this.showNotification('Failed to capture photo', 'error');
+            }
+        }, 'image/jpeg', 0.9); // 90% quality for good balance
+        
+    } catch (error) {
+        console.error('❌ Error capturing photo:', error);
+        if (status) status.textContent = 'Error';
+        this.showNotification('Failed to capture photo', 'error');
+    }
 },
-
+    
 stopCamera() {
     console.log('🛑 Stopping camera...');
     
@@ -839,6 +923,7 @@ stopCamera() {
     console.log('✅ Camera stopped');
 },
 
+// ==================== FIXED: SHOW UPLOAD INTERFACE ====================
 showUploadInterface() {
     console.log('📤 Showing upload interface...');
     
@@ -846,19 +931,19 @@ showUploadInterface() {
     this.stopCamera();
     
     // Get all sections
-    const uploadSection = document.getElementById('upload-section');
     const cameraSection = document.getElementById('camera-section');
+    const uploadSection = document.getElementById('upload-section');
     const recentSection = document.getElementById('recent-section');
     
     // Show upload, hide camera
-    if (uploadSection) {
-        uploadSection.style.display = 'block';
-        console.log('✅ Upload section shown');
-    }
-    
     if (cameraSection) {
         cameraSection.style.display = 'none';
         console.log('✅ Camera section hidden');
+    }
+    
+    if (uploadSection) {
+        uploadSection.style.display = 'block';
+        console.log('✅ Upload section shown');
     }
     
     // Show recent section only if there are receipts
@@ -871,6 +956,11 @@ showUploadInterface() {
             console.log('✅ Recent section hidden (no receipts)');
         }
     }
+    
+    // Setup upload handlers again since DOM was recreated
+    setTimeout(() => {
+        this.setupUploadHandlers();
+    }, 100);
     
     console.log('✅ Upload interface shown');
 },
@@ -1168,41 +1258,24 @@ this.setupButton('camera-option', () => {
     const uploadSection = document.getElementById('upload-section');
     const recentSection = document.getElementById('recent-section');
     
-    // Debug logging
-    console.log('📊 Section states before:', {
-        camera: cameraSection?.style.display,
-        upload: uploadSection?.style.display,
-        recent: recentSection?.style.display
-    });
+    // Hide everything except camera
+    if (uploadSection) uploadSection.style.display = 'none';
+    if (recentSection) recentSection.style.display = 'none';
     
-    // Show camera, hide everything else
+    // Show camera section
     if (cameraSection) {
         cameraSection.style.display = 'block';
-        cameraSection.style.visibility = 'visible';
-        cameraSection.style.opacity = '1';
-        console.log('✅ Camera section shown');
+        // Force reflow to ensure display:block takes effect
+        cameraSection.offsetHeight;
+        
+        // Reset camera facing mode to rear camera by default
+        this.cameraFacingMode = 'environment';
+        
+        // Initialize camera after a short delay to ensure DOM is ready
+        setTimeout(() => {
+            this.initializeCamera();
+        }, 50);
     }
-    
-    if (uploadSection) {
-        uploadSection.style.display = 'none';
-        console.log('✅ Upload section hidden');
-    }
-    
-    if (recentSection) {
-        recentSection.style.display = 'none';
-        console.log('✅ Recent section hidden');
-    }
-    
-    // Set camera mode and initialize
-    this.cameraFacingMode = 'environment'; // Use back camera by default
-    
-    // Stop any existing camera
-    this.stopCamera();
-    
-    // Initialize camera immediately, not after delay
-    setTimeout(() => {
-        this.initializeCamera();
-    }, 50); // Small delay to ensure DOM is updated
 });
 
     // Upload option
@@ -1750,6 +1823,7 @@ clearReceiptPreview() {
 },
 
 // ==================== BULK FILE UPLOAD METHODS ====================
+// ==================== BULK FILE UPLOAD METHODS - FIXED VERSION ====================
 handleFileUpload(files) {
     console.log('=== HANDLE FILE UPLOAD CALLED ===');
     console.log('Files received:', files);
@@ -1759,6 +1833,11 @@ handleFileUpload(files) {
         console.error('❌ No files provided');
         return;
     }
+    
+    // DECLARE VARIABLES THAT WERE MISSING
+    let cancelled = false;
+    let processedFiles = 0;
+    const totalFiles = files.length;
     
     // Show progress with cancel button
     const progressSection = document.getElementById('upload-progress');
@@ -1872,7 +1951,7 @@ handleFileUpload(files) {
     // Start uploading
     uploadNextFile(0);
 },
-
+    
 uploadReceiptToFirebase(file, onProgress = null) {
     if (!file) {
         return Promise.reject(new Error('No file provided'));
