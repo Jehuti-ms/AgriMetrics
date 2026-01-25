@@ -238,9 +238,9 @@ const IncomeExpensesModule = {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* ==================== MODAL POSITIONING FIX ==================== */
+/* ==================== MODAL CONTAINER FIX ==================== */
 
-/* Modal container */
+/* Modal container - center on large screens, top-align on small */
 .popout-modal {
     position: fixed;
     top: 0;
@@ -250,37 +250,29 @@ const IncomeExpensesModule = {
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(10px);
     display: flex;
-    align-items: center;
+    align-items: center; /* Center vertically on large screens */
     justify-content: center;
     z-index: 10000;
-    opacity: 1;
-    visibility: visible;
     padding: 20px;
     box-sizing: border-box;
+    overflow-y: auto; /* Allow scrolling if modal is tall */
 }
 
-.popout-modal.hidden {
-    display: none !important;
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-}
-
-/* Modal content box */
+/* Modal content */
 .popout-modal-content {
     background: var(--background-color);
     border-radius: 20px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    max-width: 800px;
-    width: 100%;
+    max-width: 600px !important;
+    width: 90%;
     max-height: 90vh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    margin: 0;
+    margin: auto;
 }
 
-/* Modal Header - FIXED POSITION */
+/* Modal Header */
 .popout-modal-header {
     display: flex;
     justify-content: space-between;
@@ -291,7 +283,7 @@ const IncomeExpensesModule = {
     border-top-left-radius: 20px;
     border-top-right-radius: 20px;
     margin: 0;
-    flex-shrink: 0; /* Prevent header from shrinking */
+    flex-shrink: 0;
 }
 
 .popout-modal-title {
@@ -300,6 +292,7 @@ const IncomeExpensesModule = {
     font-weight: 600;
     color: var(--text-primary);
     line-height: 1.2;
+    flex: 1;
 }
 
 .popout-modal-close {
@@ -317,6 +310,7 @@ const IncomeExpensesModule = {
     justify-content: center;
     border-radius: 6px;
     flex-shrink: 0;
+    margin-left: 12px;
 }
 
 .popout-modal-close:hover {
@@ -329,7 +323,7 @@ const IncomeExpensesModule = {
     padding: 24px;
     overflow-y: auto;
     flex: 1;
-    min-height: 0; /* Allow body to shrink */
+    min-height: 0;
 }
 
 /* Modal Footer */
@@ -344,8 +338,118 @@ const IncomeExpensesModule = {
     border-bottom-right-radius: 20px;
     gap: 16px;
     flex-wrap: wrap;
-    flex-shrink: 0; /* Prevent footer from shrinking */
+    flex-shrink: 0;
 }
+
+/* ==================== SMALL SCREEN FIXES ==================== */
+
+/* Medium screens (900px and below) */
+@media (max-width: 900px) {
+    .popout-modal {
+        align-items: flex-start; /* Align to top instead of center */
+        padding-top: 40px; /* Add some top padding */
+        padding-bottom: 40px; /* Add bottom padding for scroll */
+    }
+    
+    .popout-modal-content {
+        margin-top: 0; /* Remove auto margin */
+        max-height: 85vh; /* Slightly less than viewport */
+    }
+    
+    .popout-modal-header {
+        padding: 14px 20px;
+    }
+    
+    .popout-modal-body {
+        padding: 20px;
+    }
+    
+    .popout-modal-footer {
+        padding: 16px 20px;
+    }
+}
+
+/* Tablet screens (768px and below) */
+@media (max-width: 768px) {
+    .popout-modal {
+        padding: 30px 15px; /* Reduced side padding */
+        align-items: flex-start;
+    }
+    
+    .popout-modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+    
+    .popout-modal-header {
+        padding: 12px 18px;
+    }
+    
+    .popout-modal-title {
+        font-size: 18px;
+    }
+}
+
+/* Mobile screens (640px and below) */
+@media (max-width: 640px) {
+    .popout-modal {
+        padding: 20px 10px;
+        align-items: flex-start;
+    }
+    
+    .popout-modal-content {
+        width: 100%;
+        max-height: 95vh;
+        border-radius: 16px;
+    }
+    
+    .popout-modal-header {
+        padding: 12px 16px;
+        border-radius: 16px 16px 0 0;
+    }
+    
+    .popout-modal-body {
+        padding: 16px;
+    }
+    
+    .popout-modal-footer {
+        padding: 12px 16px;
+        border-radius: 0 0 16px 16px;
+    }
+}
+
+/* Very small phones (400px and below) - full screen modal */
+@media (max-width: 400px) {
+    .popout-modal {
+        padding: 0;
+        align-items: stretch; /* Stretch to fill screen */
+    }
+    
+    .popout-modal-content {
+        width: 100%;
+        height: 100vh;
+        max-height: 100vh;
+        border-radius: 0;
+        margin: 0;
+    }
+    
+    .popout-modal-header {
+        padding: 12px 16px;
+        border-radius: 0;
+    }
+    
+    .popout-modal-body {
+        padding: 16px;
+        max-height: calc(100vh - 120px); /* Account for header/footer */
+    }
+    
+    .popout-modal-footer {
+        padding: 12px 16px;
+        border-radius: 0;
+    }
+}
+
+/* ==================== FOOTER BUTTON FIXES ==================== */
 
 .popout-modal-footer .btn {
     min-height: 44px;
@@ -373,7 +477,7 @@ const IncomeExpensesModule = {
     background: var(--glass-bg-hover);
 }
 
-/* Process Button with Badge */
+/* Process Button */
 #process-receipts-btn {
     position: relative;
     padding-right: 40px !important;
@@ -410,40 +514,11 @@ const IncomeExpensesModule = {
     line-height: 1;
 }
 
-#process-receipts-btn:hover #process-receipts-count {
-    background: #dc2626 !important;
-    box-shadow: 0 3px 10px rgba(220, 38, 38, 0.4);
-    transform: scale(1.1);
-    transition: all 0.2s ease;
-}
-
-/* Badge Animation */
-@keyframes badgePulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.15); }
-    100% { transform: scale(1); }
-}
-
-.badge-updated {
-    animation: badgePulse 0.3s ease;
-}
-
-/* ==================== RESPONSIVE BREAKPOINTS ==================== */
-
-/* Medium screens (768px - 900px) */
+/* Stack buttons on medium/small screens */
 @media (max-width: 900px) {
-    .popout-modal {
-        padding: 16px;
-    }
-    
-    .popout-modal-content {
-        max-height: 85vh;
-    }
-    
     .popout-modal-footer {
         flex-direction: column;
         gap: 12px;
-        padding: 16px 20px;
     }
     
     .popout-modal-footer .btn {
@@ -456,346 +531,6 @@ const IncomeExpensesModule = {
     
     #process-receipts-btn {
         order: -1;
-    }
-    
-    .popout-modal-body {
-        padding: 20px;
-    }
-    
-    .popout-modal-header {
-        padding: 14px 20px;
-    }
-}
-
-/* Tablet screens (640px - 768px) */
-@media (max-width: 768px) {
-    .popout-modal {
-        padding: 12px;
-    }
-    
-    .popout-modal-content {
-        max-height: 85vh;
-    }
-    
-    /* Camera controls for tablets */
-    .camera-controls {
-        gap: 10px;
-        padding: 16px;
-    }
-    
-    .camera-controls .btn {
-        min-width: 120px;
-        max-width: 150px;
-        height: 44px;
-        font-size: 14px;
-        padding: 0 12px;
-    }
-    
-    .camera-controls .btn-icon {
-        font-size: 18px;
-    }
-}
-
-/* Small mobile screens (under 640px) */
-@media (max-width: 640px) {
-    .popout-modal {
-        padding: 0;
-    }
-    
-    .popout-modal-content {
-        width: 100%;
-        height: 100vh;
-        max-height: 100vh;
-        border-radius: 0;
-        margin: 0;
-    }
-    
-    .popout-modal-header {
-        padding: 16px;
-        border-radius: 0;
-    }
-    
-    .popout-modal-body {
-        padding: 16px;
-    }
-    
-    .popout-modal-footer {
-        padding: 16px;
-        border-radius: 0;
-    }
-    
-    .popout-modal-footer .btn {
-        height: 52px;
-        font-size: 16px;
-    }
-}
-
-/* Large screens (901px and up) */
-@media (min-width: 901px) {
-    .popout-modal-footer .btn {
-        flex: 0 1 auto;
-        min-width: 160px;
-        max-width: 220px;
-    }
-}
-
-/* Camera Button Fixes */
-.camera-controls {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    padding: 20px;
-    flex-wrap: wrap;
-}
-
-.camera-controls .btn {
-    min-width: 140px;
-    max-width: 180px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    font-size: 15px;
-    font-weight: 500;
-    padding: 0 16px;
-    flex: 1;
-    position: relative;
-}
-
-.camera-controls .btn-text {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-    text-align: center;
-    min-width: 0;
-    max-width: calc(100% - 30px);
-}
-
-.camera-controls .btn-icon {
-    flex-shrink: 0;
-    font-size: 20px;
-    width: 24px;
-    text-align: center;
-}
-
-/* Mobile camera controls */
-@media (max-width: 480px) {
-    .camera-controls {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-        padding: 16px;
-    }
-    
-    .camera-controls .btn {
-        max-width: 100%;
-        width: 100%;
-        height: 56px;
-        font-size: 16px;
-    }
-}
-
-/* Container animation */
-.import-receipts-container {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-
-.quick-actions-section,
-.upload-section,
-.camera-section,
-.recent-section {
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* ==================== MODAL HEADER POSITION FIX ==================== */
-
-/* Modal container - remove outer padding for small screens */
-.popout-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(10px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    padding: 20px; /* Default padding for larger screens */
-    box-sizing: border-box;
-}
-
-/* Modal content - ensure it takes full height on mobile */
-.popout-modal-content {
-    background: var(--background-color);
-    border-radius: 20px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    max-width: 600px !important;
-    width: 90%;
-    max-height: 90vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    margin: 0;
-}
-
-/* Modal Header - fixed at top with no extra space */
-.popout-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 24px;
-    border-bottom: 1px solid var(--glass-border);
-    background: var(--glass-bg);
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
-    margin: 0;
-    flex-shrink: 0;
-    position: relative;
-    top: 0;
-    width: 100%;
-}
-
-.popout-modal-title {
-    margin: 0;
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--text-primary);
-    line-height: 1.2;
-    flex: 1;
-}
-
-.popout-modal-close {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: var(--text-secondary);
-    padding: 4px;
-    line-height: 1;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
-    flex-shrink: 0;
-    margin-left: 12px;
-}
-
-/* ==================== SMALL SCREEN FIXES ==================== */
-
-/* Mobile screens (under 768px) */
-@media (max-width: 768px) {
-    .popout-modal {
-        padding: 10px; /* Reduce outer padding */
-        align-items: flex-start; /* Align to top on mobile */
-        padding-top: 20px; /* Add top padding */
-    }
-    
-    .popout-modal-content {
-        width: 100%;
-        max-width: 100% !important;
-        max-height: 95vh; /* Slightly less than full viewport */
-        margin: 0;
-    }
-    
-    .popout-modal-header {
-        padding: 14px 20px; /* Slightly reduced padding */
-        border-top-left-radius: 16px;
-        border-top-right-radius: 16px;
-    }
-    
-    .popout-modal-title {
-        font-size: 18px; /* Slightly smaller font */
-    }
-    
-    .popout-modal-close {
-        font-size: 22px;
-        width: 30px;
-        height: 30px;
-    }
-}
-
-/* Small mobile screens (under 640px) */
-@media (max-width: 640px) {
-    .popout-modal {
-        padding: 0; /* Remove all padding for full-screen modal */
-        align-items: stretch; /* Stretch modal to fill screen */
-    }
-    
-    .popout-modal-content {
-        width: 100%;
-        height: 100vh;
-        max-height: 100vh;
-        border-radius: 0;
-        margin: 0;
-    }
-    
-    .popout-modal-header {
-        padding: 12px 16px; /* Even tighter padding */
-        border-radius: 0; /* Remove rounded corners on mobile */
-        border-top-left-radius: 0;
-        border-top-right-radius: 0;
-    }
-    
-    .popout-modal-title {
-        font-size: 17px;
-    }
-    
-    .popout-modal-close {
-        font-size: 20px;
-        width: 28px;
-        height: 28px;
-    }
-}
-
-/* Very small phones (under 400px) */
-@media (max-width: 400px) {
-    .popout-modal-header {
-        padding: 10px 14px;
-    }
-    
-    .popout-modal-title {
-        font-size: 16px;
-    }
-    
-    .popout-modal-close {
-        font-size: 18px;
-        width: 26px;
-        height: 26px;
-        margin-left: 8px;
-    }
-}
-
-/* Modal body - ensure it fills remaining space */
-.popout-modal-body {
-    padding: 24px;
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
-}
-
-/* Adjust body padding for mobile */
-@media (max-width: 768px) {
-    .popout-modal-body {
-        padding: 20px;
-    }
-}
-
-@media (max-width: 640px) {
-    .popout-modal-body {
-        padding: 16px;
     }
 }
             </style>
