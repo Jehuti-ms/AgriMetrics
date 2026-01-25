@@ -1180,7 +1180,6 @@ renderImportReceiptsModal() {
                             <span class="btn-icon">📁</span>
                             <span class="btn-text">Browse Files</span>
                         </button>
-                        <div class="upload-area" id="drop-area" onclick="document.getElementById('receipt-upload-input')?.click();">
                     </div>
                     
                     <!-- Upload Progress -->
