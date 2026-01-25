@@ -1762,6 +1762,200 @@ showImportReceiptsModal() {
     
     console.log('✅ Modal should now be visible');
 },
+
+    // ==================== DEBUG MODAL POSITION ====================
+debugModalPosition() {
+    console.group('🔍 DEBUG: Modal Header Position');
+    
+    const modal = document.getElementById('import-receipts-modal');
+    if (!modal) {
+        console.error('❌ Modal not found');
+        console.groupEnd();
+        return;
+    }
+    
+    // Check if modal is visible
+    const isVisible = !modal.classList.contains('hidden');
+    console.log('Modal visible:', isVisible);
+    
+    if (!isVisible) {
+        console.log('⚠️ Modal is hidden, temporarily showing it...');
+        modal.classList.remove('hidden');
+    }
+    
+    // Get all relevant elements
+    const modalContent = modal.querySelector('.popout-modal-content');
+    const modalHeader = modal.querySelector('.popout-modal-header');
+    const modalBody = modal.querySelector('.popout-modal-body');
+    const modalFooter = modal.querySelector('.popout-modal-footer');
+    
+    // Get computed styles and positions
+    const modalRect = modal.getBoundingClientRect();
+    const contentRect = modalContent?.getBoundingClientRect();
+    const headerRect = modalHeader?.getBoundingClientRect();
+    const bodyRect = modalBody?.getBoundingClientRect();
+    const footerRect = modalFooter?.getBoundingClientRect();
+    
+    console.log('📐 DIMENSIONS:');
+    console.log('- Viewport height:', window.innerHeight, 'px');
+    console.log('- Modal total height:', modalRect.height, 'px');
+    console.log('- Modal top position:', modalRect.top, 'px');
+    
+    if (modalContent) {
+        const contentStyle = window.getComputedStyle(modalContent);
+        console.log('- Content max-height:', contentStyle.maxHeight);
+        console.log('- Content height:', contentRect?.height, 'px');
+    }
+    
+    if (modalHeader) {
+        const headerStyle = window.getComputedStyle(modalHeader);
+        console.log('📋 HEADER INFO:');
+        console.log('  - Height:', headerRect?.height, 'px');
+        console.log('  - Top (relative to modal):', headerRect?.top - modalRect.top, 'px');
+        console.log('  - Top (viewport):', headerRect?.top, 'px');
+        console.log('  - Padding:', headerStyle.padding);
+        console.log('  - Margin:', headerStyle.margin);
+        console.log('  - Border:', headerStyle.border);
+        console.log('  - Position:', headerStyle.position);
+    }
+    
+    if (modalBody) {
+        const bodyStyle = window.getComputedStyle(modalBody);
+        console.log('📄 BODY INFO:');
+        console.log('  - Height:', bodyRect?.height, 'px');
+        console.log('  - Top:', bodyRect?.top, 'px');
+        console.log('  - Padding:', bodyStyle.padding);
+        console.log('  - Margin:', bodyStyle.margin);
+    }
+    
+    if (modalFooter) {
+        const footerStyle = window.getComputedStyle(modalFooter);
+        console.log('👣 FOOTER INFO:');
+        console.log('  - Height:', footerRect?.height, 'px');
+        console.log('  - Bottom:', footerRect?.bottom, 'px');
+        console.log('  - Padding:', footerStyle.padding);
+    }
+    
+    // Check for any inline styles that might be causing issues
+    console.log('🎨 INLINE STYLES:');
+    console.log('- Modal inline style:', modal.style.cssText);
+    console.log('- Content inline style:', modalContent?.style.cssText);
+    console.log('- Header inline style:', modalHeader?.style.cssText);
+    
+    // Check parent elements
+    console.log('👨‍👦 PARENT ELEMENTS:');
+    let parent = modal.parentElement;
+    let level = 0;
+    while (parent && level < 5) {
+        const parentRect = parent.getBoundingClientRect();
+        const parentStyle = window.getComputedStyle(parent);
+        console.log(`  Level ${level}: ${parent.tagName}${parent.id ? '#' + parent.id : ''}${parent.className ? '.' + parent.className : ''}`);
+        console.log(`    - Display: ${parentStyle.display}`);
+        console.log(`    - Position: ${parentStyle.position}`);
+        console.log(`    - Padding: ${parentStyle.padding}`);
+        console.log(`    - Margin: ${parentStyle.margin}`);
+        console.log(`    - Top: ${parentRect.top}px`);
+        parent = parent.parentElement;
+        level++;
+    }
+    
+    // Visual overlay for debugging
+    this.createDebugOverlay(modalRect, headerRect);
+    
+    if (!isVisible) {
+        console.log('⏱️ Hiding modal again in 5 seconds...');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 5000);
+    }
+    
+    console.groupEnd();
+},
+
+createDebugOverlay(modalRect, headerRect) {
+    // Remove existing overlays
+    document.querySelectorAll('.debug-overlay').forEach(el => el.remove());
+    
+    // Create modal overlay
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'debug-overlay';
+    modalOverlay.style.cssText = `
+        position: fixed;
+        top: ${modalRect.top}px;
+        left: ${modalRect.left}px;
+        width: ${modalRect.width}px;
+        height: ${modalRect.height}px;
+        border: 3px dashed #ff0000;
+        background: rgba(255, 0, 0, 0.1);
+        pointer-events: none;
+        z-index: 99999;
+        box-sizing: border-box;
+    `;
+    
+    // Create header overlay
+    if (headerRect) {
+        const headerOverlay = document.createElement('div');
+        headerOverlay.className = 'debug-overlay';
+        headerOverlay.style.cssText = `
+            position: fixed;
+            top: ${headerRect.top}px;
+            left: ${headerRect.left}px;
+            width: ${headerRect.width}px;
+            height: ${headerRect.height}px;
+            border: 3px dashed #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+            pointer-events: none;
+            z-index: 99999;
+            box-sizing: border-box;
+        `;
+        document.body.appendChild(headerOverlay);
+    }
+    
+    document.body.appendChild(modalOverlay);
+    
+    // Add labels
+    const modalLabel = document.createElement('div');
+    modalLabel.className = 'debug-overlay';
+    modalLabel.style.cssText = `
+        position: fixed;
+        top: ${modalRect.top - 25}px;
+        left: ${modalRect.left}px;
+        color: red;
+        background: white;
+        padding: 2px 6px;
+        font-size: 12px;
+        font-weight: bold;
+        z-index: 99999;
+        pointer-events: none;
+    `;
+    modalLabel.textContent = `Modal: ${modalRect.top}px from top`;
+    
+    if (headerRect) {
+        const headerLabel = document.createElement('div');
+        headerLabel.className = 'debug-overlay';
+        headerLabel.style.cssText = `
+            position: fixed;
+            top: ${headerRect.top - 25}px;
+            left: ${headerRect.left}px;
+            color: green;
+            background: white;
+            padding: 2px 6px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 99999;
+            pointer-events: none;
+        `;
+        headerLabel.textContent = `Header: ${headerRect.top}px from top`;
+        document.body.appendChild(headerLabel);
+    }
+    
+    document.body.appendChild(modalLabel);
+    
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+        document.querySelectorAll('.debug-overlay').forEach(el => el.remove());
+    }, 10000);
+},
     
 renderImportReceiptsModal() {
     return `
