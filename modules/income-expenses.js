@@ -735,7 +735,7 @@ const IncomeExpensesModule = {
             <div id="import-receipts-modal" class="popout-modal hidden">
                 <div class="popout-modal-content">
                     <div class="popout-modal-header">
-                        <h3 class="popout-modal-title">📥 Import Receipts ${this.isFirebaseAvailable ? '(Firebase)' : '(Local)'}</h3>
+                        <h3 class="popout-modal-title">📥 Import Receipts ${this.isFirebaseAvailable ? '' : '(Local)'}</h3>
                         <button class="popout-modal-close" id="close-import-receipts">&times;</button>
                     </div>
                     <div class="popout-modal-body">
