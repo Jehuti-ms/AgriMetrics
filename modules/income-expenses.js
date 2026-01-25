@@ -657,6 +657,10 @@ const IncomeExpensesModule = {
     padding-bottom: 8px !important;
 }
 
+.import-option-text {
+    border: 1px solid red !important;
+    min-width: 0 !important; /* This should fix the truncation */
+}
 
             </style>
 
