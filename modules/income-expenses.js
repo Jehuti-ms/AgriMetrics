@@ -1248,48 +1248,65 @@ renderImportReceiptsModal() {
 setupImportReceiptsHandlers() {
     console.log('Setting up import receipt handlers');
     
-   // Camera option - FIXED VERSION
-this.setupButton('camera-option', () => {
-    console.log('🎯 Button #camera-option clicked');
-    
-    // Get all sections
-    const cameraSection = document.getElementById('camera-section');
-    const uploadSection = document.getElementById('upload-section');
-    const recentSection = document.getElementById('recent-section');
-    
-    // Hide everything except camera
-    if (uploadSection) uploadSection.style.display = 'none';
-    if (recentSection) recentSection.style.display = 'none';
-    
-    // Show camera section
-    if (cameraSection) {
-        cameraSection.style.display = 'block';
-        // Force reflow to ensure display:block takes effect
-        cameraSection.offsetHeight;
+    // Camera option - SIMPLIFIED AND RELIABLE VERSION
+    const cameraOptionBtn = document.getElementById('camera-option');
+    if (cameraOptionBtn) {
+        // Remove any existing listeners
+        const newCameraBtn = cameraOptionBtn.cloneNode(true);
+        cameraOptionBtn.parentNode.replaceChild(newCameraBtn, cameraOptionBtn);
         
-        // Reset camera facing mode to rear camera by default
-        this.cameraFacingMode = 'environment';
-        
-        // Initialize camera after a short delay to ensure DOM is ready
-        setTimeout(() => {
-            this.initializeCamera();
-        }, 50);
+        newCameraBtn.addEventListener('click', () => {
+            console.log('🎯 Camera button clicked - Switching to camera view');
+            
+            // Get all sections
+            const cameraSection = document.getElementById('camera-section');
+            const uploadSection = document.getElementById('upload-section');
+            const recentSection = document.getElementById('recent-section');
+            
+            // Hide upload and recent sections
+            if (uploadSection) {
+                uploadSection.style.display = 'none';
+                console.log('✅ Upload section hidden');
+            }
+            
+            if (recentSection) {
+                recentSection.style.display = 'none';
+                console.log('✅ Recent section hidden');
+            }
+            
+            // Show camera section
+            if (cameraSection) {
+                cameraSection.style.display = 'block';
+                console.log('✅ Camera section shown');
+                
+                // Initialize camera after a short delay
+                setTimeout(() => {
+                    console.log('🔄 Initializing camera...');
+                    this.initializeCamera();
+                }, 100);
+            } else {
+                console.error('❌ Camera section element not found!');
+                this.showNotification('Camera section not found in DOM', 'error');
+            }
+        });
     }
-});
-
+    
     // Upload option
-this.setupButton('upload-option', () => {
-    console.log('🎯 Button #upload-option clicked');
-    this.showUploadInterface();
-});
+    const uploadOptionBtn = document.getElementById('upload-option');
+    if (uploadOptionBtn) {
+        uploadOptionBtn.addEventListener('click', () => {
+            console.log('📁 Upload button clicked');
+            this.showUploadInterface();
+        });
+    }
                
     // Camera controls
     this.setupButton('capture-photo', () => this.capturePhoto());
     this.setupButton('switch-camera', () => this.switchCamera());
     this.setupButton('cancel-camera', () => {
-    console.log('❌ Cancel camera clicked');
-    this.showUploadInterface();
-});
+        console.log('❌ Cancel camera clicked');
+        this.showUploadInterface();
+    });
     
     // Refresh receipts button
     this.setupButton('refresh-receipts', () => {
@@ -1301,6 +1318,9 @@ this.setupButton('upload-option', () => {
         }
         this.showNotification('Receipts list refreshed', 'success');
     });
+    
+    // Setup upload handlers
+    this.setupUploadHandlers();
 },
     
     // ==================== UPLOAD HANDLERS SETUP ====================
