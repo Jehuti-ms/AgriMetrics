@@ -582,6 +582,56 @@ const IncomeExpensesModule = {
         top: 0 !important;
         z-index: 10 !important;
     }
+
+    /* ======= Fix for modal content scrolling and button text truncation ========*/
+.modal-content {
+  max-height: 85vh; /* Ensure there's room for modal container */
+  overflow-y: auto;
+  width: 100%;
+}
+
+/* Fix button text truncation - allow wrapping or proper ellipsis */
+.button-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%; /* Ensure it doesn't overflow container */
+}
+
+/* Alternative: Allow text to wrap on very small screens */
+@media (max-width: 480px) {
+  .button-text {
+    white-space: normal;
+    word-break: break-word;
+  }
+}
+
+/* Ensure modal body has proper padding at bottom for last button */
+.modal-body {
+  padding-bottom: 20px; /* Add space at bottom */
+}
+
+/* Make sure modal container doesn't exceed viewport */
+.modal-container {
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Adjust the previous fix for top alignment */
+@media (max-width: 900px) {
+  .modal-container {
+    align-items: flex-start;
+    margin-top: 20px; /* Add some margin from top */
+  }
+  
+  /* Ensure modal doesn't touch top on very small screens */
+  @media (max-height: 600px) {
+    .modal-container {
+      margin-top: 10px;
+      max-height: 95vh;
+    }
+  }
 }
 
             </style>
