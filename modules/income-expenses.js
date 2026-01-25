@@ -532,7 +532,27 @@ const IncomeExpensesModule = {
     #process-receipts-btn {
         order: -1;
     }
+
+    /* ==================== HEADER AT TOP FIX ==================== */
+@media (max-width: 900px) {
+    /* Remove all space above modal on small screens */
+    #import-receipts-modal.popout-modal {
+        padding-top: 0 !important;
+        align-items: flex-start !important;
+    }
+    
+    /* Ensure modal content starts at top */
+    #import-receipts-modal .popout-modal-content {
+        margin-top: 10px !important; /* Small top margin instead of auto */
+        max-height: calc(100vh - 20px) !important; /* Account for margin */
+    }
+    
+    /* Make header flush with top of content */
+    #import-receipts-modal .popout-modal-header {
+        padding-top: 12px !important;
+    }
 }
+
             </style>
 
             <div class="module-container">
