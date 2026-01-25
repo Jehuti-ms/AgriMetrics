@@ -533,7 +533,9 @@ const IncomeExpensesModule = {
         order: -1;
     }
 
-   /* ==================== MODAL HEADER TOP FIX (PERMANENT) ==================== */
+/* ==================== COMBINED FIX FOR ALL ISSUES ==================== */
+
+/* 1. FIX MODAL HEADER AT TOP ON MOBILE */
 @media (max-width: 900px) {
     /* Force modal to align to top on mobile/tablet */
     #import-receipts-modal.popout-modal {
@@ -548,6 +550,8 @@ const IncomeExpensesModule = {
         margin-top: 0 !important;
         margin-bottom: auto !important;
         max-height: calc(100vh - 20px) !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
     
     /* Ensure header has no extra space above */
@@ -555,12 +559,67 @@ const IncomeExpensesModule = {
         margin-top: 0 !important;
         padding-top: 14px !important;
         padding-bottom: 14px !important;
+        flex-shrink: 0 !important; /* Prevent header from shrinking */
     }
     
     /* Push body content down to account for header */
     #import-receipts-modal .popout-modal-body {
         padding-top: 8px !important;
+        flex: 1 !important;
+        overflow-y: auto !important;
+        min-height: 0 !important; /* Critical for scrolling */
+        padding-bottom: 20px !important; /* Space for last button */
     }
+}
+
+/* 2. FIX BUTTON TEXT TRUNCATION */
+.import-option {
+    display: flex !important;
+    align-items: center !important;
+    min-height: 48px !important;
+    padding: 12px 16px !important;
+}
+
+.import-option-icon {
+    flex-shrink: 0 !important;
+    margin-right: 12px !important;
+    width: 24px !important;
+    height: 24px !important;
+}
+
+.import-option-text {
+    flex: 1 !important;
+    min-width: 0 !important; /* CRITICAL - allows text truncation to work */
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    text-align: left !important;
+}
+
+/* On very small screens, allow text to wrap instead of truncating */
+@media (max-width: 480px) {
+    .import-option-text {
+        white-space: normal !important;
+        word-break: break-word !important;
+        line-height: 1.3 !important;
+    }
+    
+    .import-option {
+        padding: 10px 14px !important;
+        min-height: 44px !important;
+    }
+}
+
+/* 3. FIX SCROLLING TO SHOW LAST BUTTON */
+/* Ensure modal body can scroll and has proper bottom padding */
+.popout-modal-body {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+/* Add extra space at the bottom for scrolling */
+.import-options-container {
+    padding-bottom: 24px !important; /* Extra space for last button */
 }
 
 /* For very small screens, use absolute positioning */
@@ -581,59 +640,36 @@ const IncomeExpensesModule = {
         position: sticky !important;
         top: 0 !important;
         z-index: 10 !important;
+        background: white !important; /* Ensure header covers content */
+        border-bottom: 1px solid #e5e7eb !important;
     }
-
-    /* ======= Fix for modal content scrolling and button text truncation ========*/
-.modal-content {
-  max-height: 85vh; /* Ensure there's room for modal container */
-  overflow-y: auto;
-  width: 100%;
+    
+    /* Make sure modal body scrolls independently */
+    #import-receipts-modal .popout-modal-body {
+        flex: 1 !important;
+        overflow-y: auto !important;
+        padding-bottom: 30px !important; /* Extra bottom padding */
+    }
 }
 
-/* Fix button text truncation - allow wrapping or proper ellipsis */
-.button-text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%; /* Ensure it doesn't overflow container */
+/* 4. FIX FOR SPECIFIC BUTTON TYPES */
+/* If buttons have different structures, this ensures consistency */
+.import-option-button {
+    width: 100% !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    display: flex !important;
+    align-items: center !important;
 }
 
-/* Alternative: Allow text to wrap on very small screens */
-@media (max-width: 480px) {
-  .button-text {
-    white-space: normal;
-    word-break: break-word;
-  }
+/* If using a container with multiple buttons */
+.button-group {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    margin-top: 16px !important;
 }
-
-/* Ensure modal body has proper padding at bottom for last button */
-.modal-body {
-  padding-bottom: 20px; /* Add space at bottom */
-}
-
-/* Make sure modal container doesn't exceed viewport */
-.modal-container {
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Adjust the previous fix for top alignment */
-@media (max-width: 900px) {
-  .modal-container {
-    align-items: flex-start;
-    margin-top: 20px; /* Add some margin from top */
-  }
   
-  /* Ensure modal doesn't touch top on very small screens */
-  @media (max-height: 600px) {
-    .modal-container {
-      margin-top: 10px;
-      max-height: 95vh;
-    }
-  }
-}
-
             </style>
 
             <div class="module-container">
